@@ -58,9 +58,9 @@ main (int argc, char *argv[])
             micron.utime = timestamp_now();
             if(acfr_sensor_read(sensor, buf, sizeof(buf)) > 0)
             {
-                // parse out the voltage value leaving the mV off then end
+                // parse out the range value leaving the m off then end
                 memset(value, 0, sizeof(value));
-                strncpy(value, buf, strlen(buf) - 2);
+                strncpy(value, buf, strlen(buf) - 1);
                 micron.altitude = atof(value);
                 
                 senlcm_micron_sounder_t_publish(lcm, "MICRON_SOUNDER", &micron);

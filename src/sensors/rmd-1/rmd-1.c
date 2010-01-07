@@ -60,7 +60,7 @@ main (int argc, char *argv[])
             {
                 // parse out the voltage value leaving the mV off then end
                 memset(value, 0, sizeof(value));
-                strncpy(value, buf, strlen(buf) - 2);
+                strncpy(value, &buf[4], strlen(buf) - 6);
                 rmd.voltage = atoi(value);
                 
                 senlcm_rmd1_t_publish(lcm, "RMD-1", &rmd);
