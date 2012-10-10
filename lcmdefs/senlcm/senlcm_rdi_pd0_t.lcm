@@ -1,0 +1,70 @@
+package senlcm;
+
+struct rdi_pd0_t
+{
+    int64_t utime;
+        
+    // fixed leader
+    byte cpu_fw_ver;
+    byte cpu_fw_rev;
+    int16_t system_config;
+    byte sim_flag;
+    byte num_beams;
+    byte num_cells;
+    int16_t pings_per_ens;
+    double depth_cell_length;
+    double blank_after_xmit;   
+    byte profiling_mode;
+    byte low_corr_threshold;
+    byte num_code_reps;
+    byte gd_min;
+    double err_vel_max;
+    byte tpp_mins;
+    byte tpp_secs;
+    byte tpp_hund;
+    byte coord_trans;
+    double heading_align;
+    double heading_bias;
+    byte sensor_source;
+    byte sensors_avail;
+    double bin1_dist;
+    double xmit_pulse_len;
+    int16_t wp_ref_avg;
+    byte false_target;
+    double xmit_lag_dist;
+    int16_t cpu_serial;
+    int16_t sys_bw;
+
+    // variable leader
+    int16_t ens_num;
+    byte rtc_year;
+    byte rtc_month;
+    byte rtc_day;
+    byte rtc_hour;
+    byte rtc_min;
+    byte rtc_sec;
+    byte rtc_hund;
+    byte ens_msb;
+    int16_t bit_result;
+    int16_t sos;
+    double depth;
+    double heading;
+    double pitch;
+    double roll;
+    int16_t salinity;
+    double temp;
+    byte mpt_min;
+    byte mpt_sec;
+    byte mpt_hund;
+    byte head_std;
+    double pitch_std;
+    double roll_std;
+    byte adc[8];
+    int32_t error;
+    double pressure;
+    double press_var;
+
+    // velocity data
+    int16_t num_velocities;
+    double velocity[num_velocities];
+}
