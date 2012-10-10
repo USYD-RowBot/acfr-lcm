@@ -1,0 +1,18 @@
+package perllcm;
+
+struct auv_safety_rules_t
+{
+    int64_t utime;
+
+    // safety rules set by config
+    int64_t safety_rules_active;
+
+    // safety rules currently violated
+    int64_t safety_rules_violated;
+
+    // individual safetey rules
+    const int64_t SAFETY_DEPTH_CONSENSUS = 1,
+                  SAFETY_DEPTH_TIME_CONSENSUS = 2,
+                  SAFETY_HEADING_CONSENSUS = 4,
+                  SAFETY_HEADING_TIME_CONSENSUS = 8;
+}

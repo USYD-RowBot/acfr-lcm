@@ -1,0 +1,19 @@
+package perllcm;
+
+struct auv_mission_status_t
+{ 
+    // navigator <-> os_remotehelm interaction
+    // navigator waits till it has enough data to init then signals with
+    //      init_data_ready = 1;
+    // os-remote signals that it wants to start
+    //      waiting_to_start = 1;
+    // navigator then starts the filter and signals
+    //      filter_running = 1
+    // then os-remotehelm starts mission and signals with
+    //      mission_running = 1;
+    
+    // 1 for mission running, 0 otherwise
+    // 1 on omstart, 0 on omstop
+    boolean mission_running;
+    boolean waiting_to_start;
+}

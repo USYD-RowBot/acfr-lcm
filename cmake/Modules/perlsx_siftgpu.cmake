@@ -1,0 +1,7 @@
+macro (perlsx_siftgpu)
+  perlsx_find_library (siftgpu "did you build siftgpu in third-party?" ${ARGN})
+  if (SIFTGPU_FOUND)
+    add_definitions (-DSIFTGPU_FOUND)
+    set (PERLSX_SIFTGPU ${SIFTGPU_LIBRARIES})
+  endif ()
+endmacro ()

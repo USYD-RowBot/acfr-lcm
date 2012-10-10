@@ -1,0 +1,6 @@
+macro (perlsx_pthread)
+  perlsx_find_library (pthread "on ubuntu `sudo apt-get install build-essential`" ${ARGN})
+  if (PTHREAD_FOUND)
+    set (PERLSX_PTHREAD ${PTHREAD_LIBRARIES})
+  endif ()
+endmacro ()

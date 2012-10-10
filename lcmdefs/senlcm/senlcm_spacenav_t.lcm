@@ -1,0 +1,14 @@
+package senlcm;
+
+struct spacenav_t
+{
+    // translational pos
+    int32_t x;
+    int32_t y;
+    int32_t z;
+
+    // rotation pos
+    int32_t rot_x;
+    int32_t rot_y;
+    int32_t rot_z;
+}

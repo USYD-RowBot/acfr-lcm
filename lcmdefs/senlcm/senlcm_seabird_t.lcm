@@ -1,0 +1,14 @@
+package senlcm;
+
+struct seabird_t
+{
+    int64_t utime;
+
+	double conductivity;
+	double temperature;
+	double pressure;
+	double salinity;
+	double speed_of_sound; 
+    int8_t pump; 
+}
+

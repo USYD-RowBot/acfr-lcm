@@ -1,0 +1,42 @@
+package senlcm;
+
+struct ms_gx3_t
+{
+    int64_t utime;
+
+    int64_t bitmask;
+    const int16_t 
+	INST_MAGFIELD=1,
+	INST_ACCEL=2,
+	INST_ANGRATE=4,
+	STAB_MAGFIELD=8,
+	STAB_ACCEL=16,
+	STAB_ANGRATE=32,
+	STAB_EULER=64,
+	STAB_M=128,
+	STAB_Q=256,
+	TEMPERATURE=512;
+
+
+    // stabilized
+    double sMagField[3];   // [Gauss] magnetic field vector
+    double sAccel[3];      // [m/s^2] linear acceleration
+    double sAngRate[3];    // [rad/s] angular rate
+    double sEuler[3];      // [rad]   Euler angles
+    double sM[3][3];       // 3x3 rotation matrix
+    double sQ[4];          // quaternion
+
+    // instantaneous
+    double iMagField[3];   // [Gauss] magnetic field vector
+    double iAccel[3];      // [m/s^2] linear acceleration
+    double iAngRate[3];    // [rad/s] angular rate
+    // there is no instantaneous Q on the gx3...
+
+
+    double Temperature;    // [C]
+    int32_t TimerTicks;    // seconds (should be interpreted as uint32_t)
+
+    int16_t MagGainScale;    // scale factor (should be interpreted as uint16_t)
+    int16_t AccelGainScale;  // scale factor (should be interpreted as uint16_t)
+    int16_t GyroGainScale;   // scale factor (should be interpreted as uint16_t)
+}

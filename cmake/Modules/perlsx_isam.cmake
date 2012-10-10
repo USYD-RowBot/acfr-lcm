@@ -1,0 +1,6 @@
+macro (perlsx_isam)
+  perlsx_find_library (isam "did you build isam in third-party?" ${ARGN})
+  if (ISAM_FOUND)
+    set (PERLSX_ISAM ${ISAM_LIBRARIES})
+  endif ()
+endmacro ()

@@ -1,0 +1,10 @@
+package acfrlcm;
+
+struct auv_sirius_motor_command_t
+{
+    int64_t utime;
+	
+	double vertical;
+	double port;
+	double starboard;	
+}

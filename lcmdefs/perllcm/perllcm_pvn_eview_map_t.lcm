@@ -1,0 +1,18 @@
+package perllcm;
+
+struct pvn_eview_map_t
+{
+    double orglat;
+    double orglon;
+    double orgalt;  
+    
+    // actual neighborhoods stored seperatly
+    int32_t nn;
+    int64_t neighborhood_ids[nn];
+    pose3d_t neighborhood_poses[nn];
+    
+    // map use data storage
+    int32_t nr;
+    pvn_eview_map_match_data_t match_data[nr];
+    pvn_eview_map_predict_data_collection_t predict_data_colls[nr];    
+}

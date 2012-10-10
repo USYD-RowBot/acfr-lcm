@@ -1,0 +1,19 @@
+package senlcm;
+
+struct novatel_t
+{
+    int64_t utime;
+
+    double latitude;
+    double longitude;
+    double roll;
+    double pitch;
+    double heading;
+    double height;
+    double north_velocity;
+    double east_velocity;
+    double up_velocity;
+    double time;
+    
+    string status;
+}

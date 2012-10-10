@@ -1,0 +1,11 @@
+package perllcm;
+
+struct van_timer_t
+{
+    int64_t event_id;   // utime
+    int32_t type;       // what it is measuring
+
+    // either current time or dt provided
+    int64_t t_now;
+    int64_t dt;
+}

@@ -1,0 +1,9 @@
+package senlcm;
+
+struct acomms_two_osp_t
+{
+    int64_t utime;
+
+    acomms_osp_t current;
+    acomms_osp_t last;
+}

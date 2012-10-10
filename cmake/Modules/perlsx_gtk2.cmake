@@ -1,0 +1,7 @@
+macro (perlsx_gtk2)
+  perlsx_find_package (GTK2 "on ubuntu `sudo apt-get install libgtk2.0-dev`" 2.8 ${ARGN})
+  if (GTK2_FOUND)
+    include_directories (${GTK2_INCLUDE_DIRS})
+    set (PERLSX_GTK2 ${GTK2_LIBRARIES})
+  endif ()
+endmacro ()

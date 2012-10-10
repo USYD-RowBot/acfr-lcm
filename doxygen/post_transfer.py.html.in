@@ -1,0 +1,595 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- Created by htmlize-1.34 in css mode. -->
+<html>
+  <head>
+    <title>post_transfer.py</title>
+    <style type="text/css">
+    <!--
+      body {
+        color: #ffffff;
+        background-color: #000000;
+      }
+      .builtin {
+        /* font-lock-builtin-face */
+        color: #00D2D5;
+      }
+      .comment {
+        /* font-lock-comment-face */
+        color: #BD4BC4;
+      }
+      .constant {
+        /* font-lock-constant-face */
+        color: #0FAA4C;
+      }
+      .function-name {
+        /* font-lock-function-name-face */
+        color: #9B703F;
+      }
+      .keyword {
+        /* font-lock-keyword-face */
+        color: #D56758;
+      }
+      .string {
+        /* font-lock-string-face */
+        color: #A2AB64;
+      }
+      .type {
+        /* font-lock-type-face */
+        color: #9B703F;
+      }
+      .variable-name {
+        /* font-lock-variable-name-face */
+        color: #7587A6;
+      }
+
+      a {
+        color: inherit;
+        background-color: inherit;
+        font: inherit;
+        text-decoration: inherit;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    -->
+    </style>
+  </head>
+  <body>
+    <pre>
+<span class="comment">#!/usr/bin/env python
+</span>
+<span class="comment">## @package post_transfer
+#
+# @author Paul Ozog - paulozog@umich.edu 
+#
+# @details Run this after every mission - even if there's an abort or
+# other failure
+#
+# @brief Post-mission file transfer and checking
+#
+</span><span class="keyword">import</span> sys, os, shutil
+<span class="keyword">import</span> re
+<span class="keyword">import</span> getopt
+<span class="keyword">import</span> commands
+<span class="keyword">import</span> socket
+<span class="keyword">import</span> glob
+<span class="keyword">import</span> operator
+
+<span class="comment">## 
+# if true, don't execute any system calls
+</span><span class="variable-name">DEBUG</span> = 0
+
+<span class="variable-name">SCRIPT_NAME</span>        = <span class="string">'post-transfer.py'</span>
+
+<span class="comment">##
+# The location of topside dive directories. Must exist
+</span><span class="variable-name">BASE_DIR</span>           = os.path.join(os.getenv(<span class="string">'HOME'</span>), <span class="string">'mission-data'</span>)
+
+<span class="comment">##
+# The location of dive directories on the AUV.  Must exist
+</span><span class="variable-name">AUV_BASE_DIR</span>       = <span class="string">'/home/auv/mission-data'</span>
+
+<span class="comment">##
+# Since topside will be calling this script in auvMode, we need to
+# know the path to the script on the vehicle
+</span><span class="variable-name">PATH_TO_AUV_SCRIPT</span> = os.path.join(<span class="string">'/home/auv'</span>, <span class="string">'perls'</span>, <span class="string">'bin'</span>, SCRIPT_NAME)
+
+<span class="comment">##
+# Path to topside lcm defs
+</span><span class="variable-name">PATH_TO_LCMDEFS</span>    = os.path.join(os.getenv(<span class="string">'HOME'</span>), <span class="string">'perls'</span>, <span class="string">'lcmdefs'</span>)
+
+<span class="variable-name">RSYNC_DIVE_DATA</span>    = <span class="string">' '</span>.join([<span class="string">'rsync'</span>,
+                               <span class="string">'-avk'</span>,
+                               <span class="string">'--progress'</span>,
+                               <span class="string">'--exclude=".svn"'</span>,
+                               <span class="string">'--exclude="lcmlog*"'</span>,
+                               <span class="string">'--exclude="PROSILICA*"'</span>,
+                               <span class="string">'--exclude="cam-tmp"'</span>])
+<span class="variable-name">RSYNC_LCMDEFS</span>      = <span class="string">' '</span>.join([<span class="string">'rsync'</span>,
+                               <span class="string">'-avk'</span>,
+                               <span class="string">'--exclude=".svn"'</span>])
+<span class="comment">##
+# This editor will execute on the vehicle so the operator can write a
+# short README
+</span><span class="variable-name">AUV_EDITOR_COMMAND</span> = <span class="string">'gvim'</span>
+
+<span class="comment">##
+# This should be in mission-data on the vehicle.  lcm-logger will
+# place a log here
+</span><span class="variable-name">LCMLOG_TMP</span>         = <span class="string">'lcmlog-tmp'</span>
+
+<span class="comment">##
+# This should be in mission-data on the vehicle.  cam-logger will
+# place a log here
+</span><span class="variable-name">CAMLOG_TMP</span>         = <span class="string">'cam-tmp'</span>
+
+<span class="comment">##
+# Path to topside master.cfg
+</span><span class="variable-name">LOCAL_MASTER_CFG</span>   = os.path.join(os.getenv(<span class="string">'HOME'</span>), <span class="string">'perls'</span>, <span class="string">'config'</span>, <span class="string">'master.cfg'</span>)
+
+<span class="comment">##
+# If someFile does not exist, raise a CheckFailed
+#
+# @param someFile
+# @param userArgs : Not used
+# @throws CheckFailed
+</span><span class="keyword">def</span> <span class="function-name">checkExists</span>(someFile, userArgs):
+    <span class="keyword">if</span> <span class="keyword">not</span> os.path.exists(someFile):
+        <span class="keyword">raise</span> CheckFailed(<span class="string">'%s does not exist'</span> % someFile)
+
+<span class="comment">#    print '%s passed %s' % (someFile, checkExists.__name__)
+</span>
+<span class="comment">##
+# If someDir does not have any files matching userArgs, raise a
+# CheckFailed
+#
+# @param someDir
+# @param userArgs : Regex patterns
+# @throws CheckFailed
+</span><span class="keyword">def</span> <span class="function-name">checkDirHasFiles</span>(someDir, userArgs):
+    matchPatterns = [re.compile(pattern) <span class="keyword">for</span> pattern <span class="keyword">in</span> userArgs]
+
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="builtin">range</span>(0, <span class="builtin">len</span>(matchPatterns)):
+        pattern = matchPatterns[i]
+        <span class="keyword">if</span> <span class="keyword">not</span> <span class="builtin">any</span>(pattern.match(<span class="builtin">file</span>) <span class="keyword">for</span> <span class="builtin">file</span> <span class="keyword">in</span> os.listdir(someDir)):
+            <span class="keyword">raise</span> CheckFailed(<span class="string">"%s does not contain files matching '%s'"</span> % (someDir, userArgs[i]))
+
+<span class="comment">#    print '%s passed %s' % (someDir, checkDirHasFiles.__name__)
+</span>
+<span class="comment">##
+# Exception that should be raised if a check fails
+</span><span class="keyword">class</span> <span class="type">CheckFailed</span>(<span class="type">BaseException</span>):
+    <span class="keyword">pass</span>
+
+<span class="comment">##
+# Exception that should be raised to display some information about a
+# check
+</span><span class="keyword">class</span> <span class="type">CheckInfo</span>(<span class="type">BaseException</span>):
+    <span class="keyword">pass</span>
+
+<span class="comment">##
+# Raised if command line arguments are nonsensical
+</span><span class="keyword">class</span> <span class="type">UsageException</span>(<span class="type">BaseException</span>):
+    <span class="keyword">pass</span>
+
+<span class="comment">############################################################
+# Post-transfer functions and classes
+############################################################
+</span>
+<span class="comment">##
+# @param d : some directory
+#
+# @details os.listdir() only returns relative paths, but this is a
+# simple way around that
+#
+# @return Full path of the contents of d (non-recursive)
+</span><span class="keyword">def</span> <span class="function-name">listdirFullpath</span>(d):
+    <span class="keyword">return</span> [os.path.join(d, f) <span class="keyword">for</span> f <span class="keyword">in</span> os.listdir(d)]
+
+<span class="comment">##
+# @param command : argument to pass to func
+# @param func : function to call
+#
+# @details Used for debugging system calls, etc.
+</span><span class="keyword">def</span> <span class="function-name">commandWrapperOneArg</span>(func, command):
+    <span class="keyword">if</span> DEBUG:
+        <span class="keyword">print</span> func, command
+    <span class="keyword">else</span>:
+        func(command)
+
+<span class="comment">##
+# @param src : first argument to pass to func
+# @param dest : second argument to pass to func
+# @param func : function to call
+#
+# @details Used for debugging system calls, etc.
+</span><span class="keyword">def</span> <span class="function-name">commandWrapperTwoArgs</span>(func, src, dest):
+    <span class="keyword">if</span> DEBUG:
+        <span class="keyword">print</span> func, src, dest
+    <span class="keyword">else</span>:
+        func(src, dest)
+
+<span class="comment">##
+# @param dir : some directory
+#
+# @return The most recently modified file/directory in dir
+</span><span class="keyword">def</span> <span class="function-name">getMostRecentFile</span>(<span class="builtin">dir</span>):
+    flist = glob.glob(os.path.join(<span class="builtin">dir</span>, <span class="string">'*'</span>))
+
+    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="builtin">range</span>(<span class="builtin">len</span>(flist)):
+        statinfo = os.stat(flist[i])
+        flist[i] = flist[i],statinfo.st_ctime
+
+    flist.sort(key=operator.itemgetter(1))
+    
+    <span class="keyword">try</span>:
+        returnVal = flist[-1][0]
+    <span class="keyword">except</span> <span class="type">Exception</span>, err:
+        returnVal = <span class="constant">None</span>
+
+    <span class="keyword">return</span> returnVal
+
+<span class="comment">## The main post transfer class
+# @author Paul Ozog - paulozog@umich.edu
+#
+</span><span class="keyword">class</span> <span class="type">PostTransfer</span>(<span class="builtin">object</span>):
+    
+    <span class="comment">## The constructor
+</span>    <span class="comment"># @param interface : ie, iver28-wifi iver31, etc.
+</span>    <span class="comment">#
+</span>    <span class="comment"># @param baseDir : in case the user wants to change the path to
+</span>    <span class="comment"># mission-data/ on topside
+</span>    <span class="comment">#
+</span>    <span class="comment"># @param auvBaseDir : in case the user wants to change the path to
+</span>    <span class="comment"># mission-data/ on the vehicle
+</span>    <span class="comment">#
+</span>    <span class="comment"># @param multiMode : should be 1 during multi-auv post transfer
+</span>    <span class="comment">#
+</span>    <span class="keyword">def</span> <span class="function-name">__init__</span>(<span class="keyword">self</span>, interface,
+                 baseDir=BASE_DIR, auvBaseDir=AUV_BASE_DIR,
+                 multiMode=<span class="keyword">False</span>):
+        <span class="keyword">self</span>.baseDir    = baseDir
+        <span class="keyword">self</span>.auvBaseDir = auvBaseDir
+        <span class="keyword">self</span>.interface  = interface
+        <span class="keyword">self</span>.multiMode  = multiMode
+        <span class="keyword">try</span>:
+            (<span class="keyword">self</span>.auv, <span class="keyword">self</span>.mode) = interface.split(<span class="string">'-'</span>)
+        <span class="keyword">except</span> <span class="type">ValueError</span>, err:
+            (<span class="keyword">self</span>.auv, <span class="keyword">self</span>.mode) = (interface, <span class="constant">None</span>)
+
+    <span class="comment">##
+</span>    <span class="comment"># Returns a 2-tuple: (most recent dive number, most recent dive directory)
+</span>    <span class="comment">#
+</span>    <span class="comment"># @param dir : some directory
+</span>    <span class="comment">#
+</span>    <span class="comment"># @return (0, None) if there was no dive found
+</span>    <span class="comment">#
+</span>    <span class="keyword">def</span> <span class="function-name">getDiveNumber</span>(<span class="keyword">self</span>, <span class="builtin">dir</span>):
+
+        diveNumber    = 0
+        recentDiveDir = <span class="constant">None</span>
+
+        <span class="keyword">for</span> fullpath <span class="keyword">in</span> listdirFullpath(<span class="builtin">dir</span>):
+            <span class="keyword">if</span> os.path.isdir(fullpath):
+                basename = os.path.basename(fullpath)
+                <span class="keyword">if</span> re.match(<span class="string">'.*dive\.[0-9]+'</span>, basename):
+                    number = <span class="builtin">int</span>(basename.split(<span class="string">'dive.'</span>)[-1])
+                    <span class="keyword">if</span> number &gt; diveNumber:
+                        diveNumber = number
+                        recentDiveDir  = fullpath
+
+        <span class="keyword">return</span> (diveNumber, recentDiveDir)
+
+    <span class="comment">##
+</span>    <span class="comment"># Sends an ssh-command to run post_transfer.py in multiMode for
+</span>    <span class="comment"># multi-auv dives
+</span>    <span class="comment"># 
+</span>    <span class="comment"># @param None
+</span>    <span class="keyword">def</span> <span class="function-name">kickoffAuv</span>(<span class="keyword">self</span>):
+
+        <span class="keyword">try</span>:
+            (localDiveNumber, localRecentDir) = <span class="keyword">self</span>.getDiveNumber(<span class="builtin">dir</span>=<span class="keyword">self</span>.baseDir)
+        <span class="keyword">except</span> <span class="type">OSError</span>, err:
+            <span class="keyword">print</span> (<span class="string">'Error: Cannot continue unless your home directory has a mission-data/ dir'</span>)
+            sys.exit(1)
+            
+        <span class="comment">#send the command: ssh auv@iver28 post-transfer.py -a localDiveNumber
+</span>        <span class="keyword">if</span> <span class="keyword">self</span>.multiMode:
+            command = <span class="string">' '</span>.join([<span class="string">'ssh'</span>, 
+                                <span class="string">'auv@%s'</span> % <span class="keyword">self</span>.interface,
+                                <span class="string">'nohup'</span>,
+                                PATH_TO_AUV_SCRIPT,
+                                <span class="string">'-a'</span>,
+                                <span class="string">'-m'</span>, <span class="comment">#use multi mode for multi-auv dives
+</span>                                <span class="builtin">str</span>(localDiveNumber)])
+        <span class="keyword">else</span>:
+            command = <span class="string">' '</span>.join([<span class="string">'ssh'</span>, 
+                                <span class="string">'auv@%s'</span> % <span class="keyword">self</span>.interface,
+                                <span class="string">'nohup'</span>,
+                                PATH_TO_AUV_SCRIPT,
+                                <span class="string">'-a'</span>,
+                                <span class="builtin">str</span>(localDiveNumber)])
+        commandWrapperOneArg(os.system, command)
+
+    <span class="comment">##
+</span>    <span class="comment"># After being kicked off, the auv will call this routine to move
+</span>    <span class="comment"># cam/lcm logs to the appropriate dive directory
+</span>    <span class="comment">#
+</span>    <span class="comment"># @param localDiveNumber : The most recent dive number on topside.
+</span>    <span class="comment"># Automatically passed via command line argument
+</span>    <span class="keyword">def</span> <span class="function-name">prepAuv</span>(<span class="keyword">self</span>, localDiveNumber):
+
+        (auvDiveNumber, auvRecentDir) = <span class="keyword">self</span>.getDiveNumber(<span class="builtin">dir</span>=<span class="keyword">self</span>.auvBaseDir)
+
+        <span class="comment">#if multiple auv post transfer, don't increment to a new dive once the first
+</span>        <span class="comment"># vehicle has been post transfered.
+</span>        <span class="keyword">if</span> (<span class="keyword">self</span>.multiMode):
+            newDive = localDiveNumber
+        <span class="keyword">else</span>:
+            newDive = localDiveNumber + 1
+
+        <span class="keyword">if</span> (localDiveNumber &gt;= auvDiveNumber <span class="keyword">and</span>
+            os.path.isdir(auvRecentDir)):
+
+            newName = auvRecentDir.split(<span class="string">'.'</span>)[0] + <span class="string">'.%03d'</span> % newDive
+            commandWrapperTwoArgs(shutil.move, auvRecentDir, newName)
+            auvRecentDir = newName
+
+        <span class="keyword">else</span>:
+            newDive = auvDiveNumber
+
+        commandWrapperOneArg(os.system, <span class="string">'killall lcm-logger'</span>)
+
+        lcmlog = getMostRecentFile(os.path.join(<span class="keyword">self</span>.auvBaseDir, LCMLOG_TMP))
+        <span class="keyword">if</span> lcmlog <span class="keyword">is</span> <span class="keyword">not</span> <span class="constant">None</span>: 
+
+            lcmlogNoDive = lcmlog.split(<span class="string">'.'</span>)[0] <span class="comment">#take out the dive number
+</span>            
+            commandWrapperTwoArgs(shutil.move, os.path.join(<span class="keyword">self</span>.auvBaseDir, LCMLOG_TMP, lcmlog),
+                                  os.path.join(auvRecentDir, <span class="keyword">self</span>.auv, 
+                                               <span class="string">'%s.%03d'</span> % (os.path.basename(lcmlogNoDive), newDive)))
+
+        <span class="keyword">else</span>:
+            <span class="keyword">print</span> <span class="string">'Warning : There is no lcmlog file in %s...'</span> % os.path.join(<span class="keyword">self</span>.auvBaseDir, LCMLOG_TMP)
+
+        camlog = getMostRecentFile(os.path.join(<span class="keyword">self</span>.auvBaseDir, CAMLOG_TMP))
+        <span class="keyword">if</span> camlog <span class="keyword">is</span> <span class="keyword">not</span> <span class="constant">None</span>:
+
+            commandWrapperOneArg(os.mkdir, os.path.join(auvRecentDir, <span class="keyword">self</span>.auv, <span class="string">'images'</span>))
+
+            command = <span class="string">' '</span>.join([<span class="string">'mv'</span>,
+                                os.path.join(<span class="keyword">self</span>.auvBaseDir, CAMLOG_TMP, <span class="string">'*'</span>),
+                                os.path.join(auvRecentDir, <span class="keyword">self</span>.auv, <span class="string">'images'</span>)])
+            commandWrapperOneArg(os.system, command)
+
+        <span class="keyword">else</span>:
+            <span class="keyword">print</span> <span class="string">'Warning : There are no images in %s...'</span> % os.path.join(<span class="keyword">self</span>.auvBaseDir, CAMLOG_TMP)
+
+        auvDir = os.path.join(auvRecentDir, <span class="keyword">self</span>.auv) <span class="comment"># ie: /data/UMBS/2011-blah-dive.123/iver28
+</span>        <span class="keyword">if</span> <span class="keyword">not</span> os.path.isdir(auvDir):
+            os.mkdir(auvDir)
+
+        <span class="comment">#only create a README when multiMode is off
+</span>        <span class="keyword">if</span> <span class="keyword">not</span> <span class="keyword">self</span>.multiMode:
+            readmeFile = os.path.join(auvRecentDir, <span class="string">'README.%03d'</span> % newDive)
+            command    = <span class="string">' '</span>.join([<span class="string">'echo'</span>,
+                                   <span class="string">'DIVE %03d'</span> % newDive,
+                                   <span class="string">'&gt;'</span>,
+                                   readmeFile])
+            commandWrapperOneArg(os.system, command)
+            <span class="keyword">print</span> <span class="string">'Starting editor... you might have to press Ctrl+C to continue with post transfer...'</span>
+            editCommand = <span class="string">'%s %s'</span> % (AUV_EDITOR_COMMAND, 
+                                 readmeFile)
+            commandWrapperOneArg(os.system, editCommand)
+
+
+    <span class="comment">##
+</span>    <span class="comment"># Call rsync to get the important auv data.  If --withlcmlog is
+</span>    <span class="comment"># present, also get the lcm log (will take a long time on wifi)
+</span>    <span class="comment"># @param None
+</span>    <span class="keyword">def</span> <span class="function-name">rsyncAuvData</span>(<span class="keyword">self</span>):
+        command = <span class="string">' '</span>.join([RSYNC_DIVE_DATA,
+                            <span class="string">'auv@%s:%s/'</span> % (<span class="keyword">self</span>.interface, <span class="keyword">self</span>.auvBaseDir),
+                            <span class="keyword">self</span>.baseDir + <span class="string">'/'</span>])
+        commandWrapperOneArg(os.system, command)
+
+    <span class="comment">##
+</span>    <span class="comment"># Move the relevant topside files to the dive folder under
+</span>    <span class="comment"># topside/.  Check the contents of the dive folder to make sure
+</span>    <span class="comment"># everything is there
+</span>    <span class="comment"># @param None
+</span>    <span class="keyword">def</span> <span class="function-name">moveTopsideData</span>(<span class="keyword">self</span>):
+        (localDiveNumber, recentDiveDir)  = <span class="keyword">self</span>.getDiveNumber(<span class="builtin">dir</span>=<span class="keyword">self</span>.baseDir)
+
+        topsideDir = os.path.join(recentDiveDir, <span class="string">'topside'</span>)
+
+        <span class="keyword">if</span> <span class="keyword">not</span> os.path.isdir(topsideDir): os.mkdir(topsideDir)
+
+        commandWrapperTwoArgs(shutil.copy, LOCAL_MASTER_CFG, topsideDir)
+
+        command = <span class="string">' '</span>.join([RSYNC_LCMDEFS,
+                            PATH_TO_LCMDEFS,
+                            topsideDir + <span class="string">'/'</span>])
+        commandWrapperOneArg(os.system, command)
+
+        command = <span class="string">' '</span>.join([<span class="string">'mv'</span>,
+                            <span class="keyword">self</span>.baseDir + <span class="string">'/lcmlog-tmp/lcmlog*'</span>,
+                            recentDiveDir + <span class="string">'/topside'</span>])
+        commandWrapperOneArg(os.system, command)
+
+    
+        <span class="comment">## 
+</span>        <span class="comment"># A weird dictionary datastructure that defines how to run
+</span>        <span class="comment"># the post transfer checks.
+</span>        <span class="comment">#
+</span>        <span class="comment"># @verbatim
+</span>        <span class="comment"># Format:
+</span>        <span class="comment"># file1:
+</span>        <span class="comment"># [ [func1, func2, ...], 
+</span>        <span class="comment"># [ [argsForF1], [argsForF2], ... ] ],
+</span>        <span class="comment"># file2: 
+</span>        <span class="comment"># [ [func1, func2, ...], 
+</span>        <span class="comment"># [ [argsForF1], [argsForF2], ... ] ],
+</span>        <span class="comment"># @endverbatim
+</span>        <span class="comment">#
+</span>        <span class="comment"># @details Each of func1, func2, etc. takes two arguments: the
+</span>        <span class="comment"># file to check and any extra args.  We will call each of the functions as follows:
+</span>        <span class="comment">#
+</span>        <span class="comment"># @code
+</span>        <span class="comment"># func1(file1, [argsForF1])
+</span>        <span class="comment"># func2(file1, [argsForF2])
+</span>        <span class="comment"># ...
+</span>        <span class="comment"># func1(file2, [argsForF1])
+</span>        <span class="comment"># func2(file2, [argsForF2])
+</span>        <span class="comment"># @endcode
+</span>        <span class="comment">#
+</span>        <span class="comment"># The idea is that if one of the functions throws an
+</span>        <span class="comment"># exception, the check fails and post_transfer screwed up
+</span>        <span class="comment"># somewhere
+</span>        <span class="comment">#
+</span>        <span class="keyword">self</span>.requiredChecks = {
+
+            recentDiveDir:
+                [ [checkExists, checkDirHasFiles],
+                  [ [<span class="constant">None</span>],     [<span class="string">'^iver.*'</span>, <span class="string">'^README.*'</span>, <span class="string">'^topside$'</span>] ] ],
+
+            os.path.join(recentDiveDir, <span class="keyword">self</span>.auv):
+                [ [checkExists, checkDirHasFiles],
+                  [ [<span class="constant">None</span>],     [<span class="string">'^lcmdefs$'</span>, <span class="string">'tdma\.cfg'</span>, <span class="string">'master\.cfg'</span>, 
+                                 <span class="string">'.*.log$'</span>, <span class="string">'.*.mis$'</span>] ] ],
+
+            topsideDir:
+            [ [checkExists, checkDirHasFiles],
+              [ [<span class="constant">None</span>],       [<span class="string">'master.cfg'</span>, <span class="string">'lcmdefs'</span>, <span class="string">'lcmlog-.*'</span>] ] ]
+
+            }
+        
+        <span class="keyword">self</span>.checkTransferedFiles()
+
+    <span class="comment">## 
+</span>    <span class="comment"># Runs all the functions in self.requiredChecks (see moveTopsideData)
+</span>    <span class="comment">#
+</span>    <span class="comment"># If an CheckFailed is raised, we failed the test and something
+</span>    <span class="comment"># wasn't transfered properly
+</span>    <span class="comment">#
+</span>    <span class="comment">#@param None
+</span>    <span class="keyword">def</span> <span class="function-name">checkTransferedFiles</span>(<span class="keyword">self</span>):
+
+        <span class="keyword">for</span> <span class="builtin">file</span>, checkList <span class="keyword">in</span> <span class="keyword">self</span>.requiredChecks.items():
+            errorEncounterd = 0
+            funcList        = checkList[0]
+            argList         = checkList[1]
+
+            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="builtin">range</span>(0, <span class="builtin">len</span>(funcList)):
+                func = funcList[i]
+                args = argList[i]
+                
+                <span class="keyword">try</span>:
+                    func(<span class="builtin">file</span>, args)
+                <span class="keyword">except</span> CheckFailed, err:
+                    errorEncounterd = 1
+                    <span class="keyword">print</span> <span class="string">'\n'</span>, <span class="builtin">file</span>, <span class="string">'***check FAILED:'</span>, err, <span class="string">'***\n'</span>
+                <span class="keyword">except</span> CheckInfo, err:
+                    errorEncounterd = 1
+                    <span class="keyword">print</span> <span class="builtin">file</span>, <span class="string">'check info:'</span>, err
+
+            <span class="keyword">if</span> <span class="keyword">not</span> errorEncounterd:
+                <span class="keyword">print</span> <span class="string">'%s passed all checks!'</span> % <span class="builtin">file</span>
+
+<span class="comment">##
+# Show the usage of post_transfer.py
+# @param None
+</span><span class="keyword">def</span> <span class="function-name">printUsage</span>():
+    <span class="keyword">print</span> <span class="string">' '</span>.join([sys.argv[0],
+                    <span class="string">'&lt;-i auv-interface...&gt;'</span>,
+                    <span class="string">'[-a]'</span>,
+                    <span class="string">'[-l, --withlcmlog]'</span>,
+                    <span class="string">'[-m, --multiauv]'</span>,
+                    <span class="string">'[-h]'</span>,
+                    <span class="string">'[dive number]'</span>])
+
+<span class="comment">##
+# Parse command line arguments
+# @param : array of arguments (like sys.argv)
+#
+# @return tuple of command line arguments:
+# (interface, auvMode, localDiveNumber, withLcmLog, multiMode)
+</span><span class="keyword">def</span> <span class="function-name">parseArgs</span>(args):
+
+    <span class="keyword">try</span>:
+        opts, args = getopt.getopt(sys.argv[1:], <span class="string">"hli:am"</span>, [<span class="string">"help"</span>, <span class="string">"withlcmlog"</span>, <span class="string">"multiauv"</span>, <span class="string">"interface="</span>])
+    <span class="keyword">except</span> getopt.GetoptError, err:
+        <span class="keyword">raise</span> UsageException(err)
+
+    interface       = <span class="constant">None</span>
+    auvMode         = 0
+    localDiveNumber = <span class="constant">None</span>
+    withLcmLog      = 0
+    multiMode       = 0
+
+    <span class="keyword">for</span> o, a <span class="keyword">in</span> opts:
+        <span class="keyword">if</span> o <span class="keyword">in</span> (<span class="string">"-h"</span>, <span class="string">"--help"</span>):
+            <span class="keyword">raise</span> UsageException(<span class="string">''</span>)
+        <span class="keyword">elif</span> o <span class="keyword">in</span> (<span class="string">"-i"</span>, <span class="string">"--interface"</span>):
+            interface = a
+        <span class="keyword">elif</span> o == <span class="string">'-a'</span>:
+            auvMode = 1
+        <span class="keyword">elif</span> o <span class="keyword">in</span> (<span class="string">'-l'</span>, <span class="string">'--withlcmlog'</span>):
+            withLcmLog = 1
+        <span class="keyword">elif</span> o <span class="keyword">in</span> (<span class="string">'-m'</span>, <span class="string">'--multiauv'</span>):
+            multiMode = 1
+    
+    <span class="keyword">if</span> interface <span class="keyword">is</span> <span class="constant">None</span> <span class="keyword">and</span> <span class="keyword">not</span> auvMode:
+        <span class="keyword">raise</span> UsageException(<span class="string">'You must provide an interface'</span>)
+
+    <span class="keyword">if</span> <span class="builtin">len</span>(args) == 1: 
+        <span class="keyword">try</span>:
+            localDiveNumber = <span class="builtin">int</span>(args[0])
+        <span class="keyword">except</span> <span class="type">Exception</span>, err:
+            <span class="keyword">raise</span> UsageException(<span class="string">"Given dive number isn't an int"</span>)
+            sys.exit(1)
+
+    <span class="keyword">if</span> auvMode <span class="keyword">and</span> localDiveNumber <span class="keyword">is</span> <span class="constant">None</span>:
+        <span class="keyword">raise</span> UsageException(<span class="string">'You must provide the topside dive number'</span>)
+
+    <span class="keyword">return</span> (interface, auvMode, localDiveNumber, withLcmLog, multiMode)
+
+<span class="comment">##
+# @param args: command line arguments
+#
+# @return
+# 0 for success, 1 for failure
+</span><span class="keyword">def</span> <span class="function-name">main</span>(args):
+
+    <span class="keyword">global</span> RSYNC_DIVE_DATA
+
+    <span class="keyword">try</span>:
+        (interface, auvMode, localDiveNumber, withLcmLog, multiMode) = parseArgs(args)
+    <span class="keyword">except</span> UsageException, err:
+        <span class="keyword">print</span> err
+        printUsage()
+        <span class="keyword">return</span> 1
+
+    <span class="keyword">if</span> withLcmLog:
+        RSYNC_DIVE_DATA = RSYNC_DIVE_DATA.replace(<span class="string">'--exclude="lcmlog*" '</span>, <span class="string">''</span>)
+
+    <span class="keyword">if</span> <span class="keyword">not</span> auvMode:
+        obj = PostTransfer(interface, multiMode=multiMode)
+        obj.kickoffAuv()
+        obj.rsyncAuvData()
+        obj.moveTopsideData()
+    <span class="keyword">else</span>:
+        <span class="comment">#Then stuff needs to happen on the iver.  We should only get
+</span>        <span class="comment">#here if a client calls kickoffAuv(), which sends a shell
+</span>        <span class="comment">#command via ssh...
+</span>        obj = PostTransfer(socket.gethostname(), multiMode=multiMode)
+        obj.prepAuv(localDiveNumber)
+
+    <span class="keyword">return</span> 0
+
+<span class="keyword">if</span> <span class="builtin">__name__</span> == <span class="string">'__main__'</span>:
+
+    sys.exit(main(sys.argv))
+</pre>
+  </body>
+</html>

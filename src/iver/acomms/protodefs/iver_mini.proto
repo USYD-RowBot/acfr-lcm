@@ -1,0 +1,57 @@
+import "goby/common/protobuf/option_extensions.proto";
+import "goby/acomms/protobuf/mm_driver.proto"; // for ClockMode
+import "iver_state.proto";
+
+package perls.protobuf;
+
+message MiniWaypoint
+{
+  option (goby.msg).dccl.id = 1;
+  option (goby.msg).dccl.max_bytes = 2;
+  
+  required uint32 waypoint = 1 [(goby.field).dccl.min=0, 
+                                (goby.field).dccl.max=1023, 
+                                (goby.field).dccl.in_head=true];
+}
+
+message MiniAbort
+{
+  option (goby.msg).dccl.id = 2;
+  option (goby.msg).dccl.max_bytes = 2;
+
+  required AbortCode abort_code = 1 [(goby.field).dccl.min=0, 
+                                     (goby.field).dccl.max=1023, 
+                                     (goby.field).dccl.in_head=true];
+}
+
+message MiniJump
+{
+  option (goby.msg).dccl.id = 3;
+  option (goby.msg).dccl.max_bytes = 2;
+  
+  required uint32 waypoint = 1 [(goby.field).dccl.min=0, 
+                                (goby.field).dccl.max=1023, 
+                                (goby.field).dccl.in_head=true];
+}
+
+message MiniError
+{
+  option (goby.msg).dccl.id = 4;
+  option (goby.msg).dccl.max_bytes = 2;
+  
+  required UVCError uvc_error_state = 2 [(goby.field).dccl.min=0, 
+                                         (goby.field).dccl.max=15, 
+                                         (goby.field).dccl.in_head=true];
+}
+
+message MiniOWTT
+{
+  option (goby.msg).dccl.id = 5;
+  option (goby.msg).dccl.max_bytes = 2;
+  
+  required micromodem.protobuf.ClockMode clock_mode = 1 [(goby.field).dccl.in_head=true];
+  required int32 time_of_depart = 2 [(goby.field).dccl.min=0, 
+                                     (goby.field).dccl.max=15, 
+                                     (goby.field).dccl.in_head=true];
+}
+

@@ -1,0 +1,6 @@
+package senlcm;
+
+struct uvc_ojw_t
+{
+    int32_t waypoint; // 0 -999
+}

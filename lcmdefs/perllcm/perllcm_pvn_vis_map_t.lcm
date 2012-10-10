@@ -1,0 +1,17 @@
+package perllcm;
+
+struct pvn_vis_map_t
+{
+    double orglat;
+    double orglon;
+    double orgalt;  
+    
+    int32_t nclusters;
+    pvn_vis_map_cluster_t clusters[nclusters];
+    
+    // stats
+    double xyz_min[3];      //!< min xyz coordinates
+    double xyz_max[3];      //!< max xyz coordinates
+    int64_t total_feats;       //!< total number of features
+    
+}

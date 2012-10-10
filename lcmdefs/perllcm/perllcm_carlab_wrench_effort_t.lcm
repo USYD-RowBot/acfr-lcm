@@ -1,0 +1,10 @@
+package perllcm;
+
+struct carlab_wrench_effort_t
+{
+    int64_t utime;
+
+    float throttle;         // in percent 0-100%
+    float steer_angle;      // in percent -100-100%
+    float brakes;           // in percent 0-100%
+}

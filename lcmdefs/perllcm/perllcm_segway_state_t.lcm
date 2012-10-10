@@ -1,0 +1,26 @@
+package perllcm;
+
+struct segway_state_t
+{
+
+	int64_t utime;
+	
+	//State
+	float pitch_angle;			// radians		
+	float pitch_rate;			// radians / sec
+	float roll_angle;			// radians
+	float roll_rate;			// radians / sec
+	float left_wheel_velocity; 		// meters / sec (based on nominal wheel size)
+	float right_wheel_velocity;		// meters / sec (based on nominal wheel size)
+	float yaw_rate;				// radians / sec
+	float servo_frames;			// sec
+	float left_wheel_displacement;		// meters (based on nominal wheel size)
+	float right_wheel_displacement;		// meters (based on nominal wheel size)
+	float forward_displacement;		// meters (based on nominal wheel size)
+	float yaw_displacement;			// IRI driver conversion does not match documentation -> unknown units may be error
+	float left_motor_torque; 		// 
+	float right_motor_torque;
+	float user_voltage;			// user battery voltage
+	float powerbase_voltage; 		//powerbase battery voltage
+
+}

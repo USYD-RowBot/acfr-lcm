@@ -1,0 +1,22 @@
+package senlcm;
+
+struct ppsboard_t
+{
+    int64_t utime;
+
+    string  ntp_time;       // hhmmss
+    boolean ntp_status;     // 0 - invalid, 1 - valid
+
+    string  src_type;       // {GARMIN, IVER, UNKNOWN}
+    boolean src_pps;        // 0 PPS not detected, 1 PPS detected
+
+    int16_t  sync_mode;      // 0 not active; > 0 attempting to synchronize
+    int16_t  sync_num;       // # of sync events
+    string   sync_date;      // ddmmyy
+    string   sync_time;      // hhmmss
+
+    int16_t offset_counts;  // counts
+    double  offset_usecs;   // usecs = 0.75*counts
+
+    double  temperature;    // Celsius
+}

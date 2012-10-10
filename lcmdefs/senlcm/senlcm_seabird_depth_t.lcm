@@ -1,0 +1,11 @@
+package senlcm;
+
+struct seabird_depth_t
+{
+    int64_t utime;
+    double depth;
+
+}
+
+
+

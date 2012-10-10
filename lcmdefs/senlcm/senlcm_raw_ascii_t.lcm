@@ -1,0 +1,10 @@
+package senlcm;
+
+// Utility type for handling generic data from sensors that speak ASCII.  
+// More convenient than raw type for subsequent string manipulations.
+
+struct raw_ascii_t
+{
+    int64_t utime;
+    string  msg;
+}

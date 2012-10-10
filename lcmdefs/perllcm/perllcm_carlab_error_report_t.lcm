@@ -1,0 +1,9 @@
+package perllcm;
+
+struct carlab_error_report_t
+{
+    int64_t         utime;
+
+    int32_t         error_count;
+    carlab_error_t  errors[error_count];
+}

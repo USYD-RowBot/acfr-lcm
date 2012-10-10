@@ -1,0 +1,7 @@
+macro (perlsx_devil)
+  perlsx_find_package (DevIL "on ubuntu `sudo apt-get install libdevil-dev`" ${ARGN})
+  if (IL_FOUND)
+    include_directories (${IL_INCLUDE_DIR})
+    set (PERLSX_DEVIL ${IL_LIBRARIES} ${ILU_LIBRARIES} ${ILUT_LIBRARIES})
+  endif ()
+endmacro ()

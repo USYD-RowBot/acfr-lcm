@@ -1,0 +1,7 @@
+package mrlcm;
+
+struct property_t {
+  string name;
+  string value;
+}
+

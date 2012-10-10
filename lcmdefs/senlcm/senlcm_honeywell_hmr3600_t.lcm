@@ -1,0 +1,10 @@
+package senlcm;
+
+struct honeywell_hmr3600_t
+{
+    int64_t utime;
+
+    double rph[3];	  	// Roll, pitch, heading in radians.
+    double Gxyz[3];		// Accelerations, in G's when I find out the scaling
+    double Mxyz[3];		// Magnetic field strength, Gauss
+}

@@ -1,0 +1,6 @@
+package senlcm;
+
+struct uvc_omstop_t
+{
+    int32_t msg_flag;   // 0:NULL
+}

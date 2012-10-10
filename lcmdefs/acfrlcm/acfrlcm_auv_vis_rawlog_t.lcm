@@ -1,0 +1,8 @@
+package acfrlcm;
+
+struct auv_vis_rawlog_t
+{
+    int64_t utime;
+    string image_name;
+    int32_t exp_time;
+}

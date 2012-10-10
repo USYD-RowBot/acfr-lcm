@@ -1,0 +1,6 @@
+function dy = mdeglat(lat)
+
+latrad = lat*pi/180;
+dy = 111132.09 - 566.05 * cos(2.0*latrad) ...
+                 + 1.20 * cos(4.0*latrad) ...
+                - 0.002 * cos(6.0*latrad) ;

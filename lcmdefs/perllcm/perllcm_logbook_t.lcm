@@ -1,0 +1,9 @@
+package perllcm;
+
+struct logbook_t
+{
+    int64_t utime;
+    string  username;
+    string  hostname;
+    string  message;
+}

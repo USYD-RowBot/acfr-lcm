@@ -1,0 +1,7 @@
+package senlcm;
+
+struct prosilica_attribute_t
+{
+    string label;
+    string value;
+}

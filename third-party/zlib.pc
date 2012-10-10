@@ -1,0 +1,12 @@
+prefix=/usr
+ exec_prefix=/usr
+ libdir=/usr/lib
+ includedir=/usr/include
+ sharedlibdir=/usr/lib
+ Name: zlib
+ Description: zlib compression library
+ Version: 1.2.3
+ Requires:
+ Libs: -L${libdir} -L${sharedlibdir} -lz
+ Cflags: -I${includedir}
+

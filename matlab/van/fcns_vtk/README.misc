@@ -1,0 +1,14 @@
+Place your mouse cursor in the image window and rotate the object by
+clicking the left mouse button while your cursor is in various
+positions on the screen. This is joystick mode and the image rotates
+based on how far the mouse cursor is from the center of the
+object. One can change to trackball mode by typing a "t" while the
+mouse cursor is in the rendering window. Now the image will rotate
+only when the left mouse button is pressed and the mouse moves. You
+can go back to joystick by pressing "j". You can move the object on
+the screen with the middle mouse button and zoom in and out with the
+right mouse button. Typing a "w" renders the scene in
+wireframe. Typing "s" returns to surface rendering. Typing a "3"
+toggles stereo viewing. Stereo works via red/blue imaging by
+default. VTK supports crystal eyes stereo if your hardware is so
+equipped.

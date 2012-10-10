@@ -1,0 +1,6 @@
+macro (perlsx_ann)
+  perlsx_find_library (ann "on ubuntu `sudo apt-get install libann-dev`" ${ARGN})
+  if (ANN_FOUND)
+    set (PERLSX_ANN ${ANN_LIBRARIES})
+  endif ()
+endmacro ()

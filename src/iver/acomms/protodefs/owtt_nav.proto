@@ -1,0 +1,155 @@
+import "goby/common/protobuf/option_extensions.proto";
+
+package perls.protobuf;
+
+message pose_server {
+    option (goby.msg).dccl.id = 91;
+    option (goby.msg).dccl.max_bytes = 32;
+
+    required double depth = 1 [(goby.field).dccl.max=100,
+                               (goby.field).dccl.min=0,
+                               (goby.field).dccl.precision=1];
+    
+    required double mu_x = 2 [(goby.field).dccl.max=1000,
+                              (goby.field).dccl.min=-1000,
+                              (goby.field).dccl.precision=2];
+    required double mu_y = 3 [(goby.field).dccl.max=1000,
+                              (goby.field).dccl.min=-1000,
+                              (goby.field).dccl.precision=2];
+
+    required double sig_xx = 4 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=-1000,
+                                (goby.field).dccl.precision=3];
+    required double sig_xy = 5 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=-1000,
+                                (goby.field).dccl.precision=3];
+    required double sig_yy = 6 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=-1000,
+                                (goby.field).dccl.precision=3];
+}
+
+message osm_server {
+    option (goby.msg).dccl.id = 92;
+    option (goby.msg).dccl.max_bytes = 64;
+
+    required double depth = 1 [(goby.field).dccl.max=300,
+                               (goby.field).dccl.min=0,
+                               (goby.field).dccl.precision=1];
+    
+    required double eta_x1 = 2 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_y1 = 3 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_x0 = 4 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_y0 = 5 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+
+    required double lam_x1x1 = 6 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1y1 = 7 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1x0 = 8 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1y0 = 9 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+
+    required double lam_y1y1 = 10 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_y1x0 = 11 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_y1y0 = 12 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required double lam_x0x0 = 13 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_x0y0 = 14 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required double lam_y0y0 = 15 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required int32 org_no = 16 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=0];
+    required int32 new_no = 17 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=0];
+}
+
+message osm_recovery_request {
+    option (goby.msg).dccl.id = 93;
+    option (goby.msg).dccl.max_bytes = 16;
+
+    required int32 last_no = 1 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=0];
+}
+
+message osm_recovery_reply {
+    option (goby.msg).dccl.id = 94;
+    option (goby.msg).dccl.max_bytes = 64;
+
+    required double eta_x1 = 1 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_y1 = 2 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_x0 = 3 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+    required double eta_y0 = 4 [(goby.field).dccl.max=10000,
+                                (goby.field).dccl.min=-10000,
+                                (goby.field).dccl.precision=5];
+
+    required double lam_x1x1 = 5 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1y1 = 6 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1x0 = 7 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+    required double lam_x1y0 = 8 [(goby.field).dccl.max=100,
+                                  (goby.field).dccl.min=-100,
+                                  (goby.field).dccl.precision=7];
+
+    required double lam_y1y1 = 9 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_y1x0 = 10 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_y1y0 = 11 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required double lam_x0x0 = 12 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+    required double lam_x0y0 = 13 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required double lam_y0y0 = 14 [(goby.field).dccl.max=100,
+                                   (goby.field).dccl.min=-100,
+                                   (goby.field).dccl.precision=7];
+
+    required int32 org_no = 15 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=0];
+    required int32 new_no = 16 [(goby.field).dccl.max=1000,
+                                (goby.field).dccl.min=0];
+}

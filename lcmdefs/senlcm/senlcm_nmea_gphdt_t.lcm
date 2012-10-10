@@ -1,0 +1,12 @@
+package senlcm;
+
+struct nmea_gphdt_t
+{
+    int64_t utime;
+
+    float h_true;    // derived magnetic heading true [rad]
+
+    float h_raw;     // reported magnetic sensor reading [rad]
+    float deviation; // reported magnetic deviation [rad]
+    float variation; // reported magnetic variation [rad]
+}

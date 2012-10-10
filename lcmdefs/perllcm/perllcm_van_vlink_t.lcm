@@ -1,0 +1,35 @@
+package perllcm;
+
+struct van_vlink_t
+{
+    int64_t utime_i;
+    int64_t utime_j;
+
+    // n-dof relative-pose measurement
+    int32_t type;       // ERROR, 5DOF_E or 5DOF_H
+    int32_t msg;        // when ERROR, show msg
+
+    double  z[6];
+    double  R[36];
+
+    int32_t n_inliers;
+    int32_t isel_i[n_inliers];
+    int32_t isel_j[n_inliers];
+
+    double S_L;
+    double Ig;
+
+    const int32_t TYPE_ERROR           = -1;
+    const int32_t TYPE_5DOF_EPIPOLAR   = 1;
+    const int32_t TYPE_5DOF_HOMOGRAPHY = 2;
+
+    const int32_t MSG_NO_ERROR         = 0;     // no error
+    const int32_t MSG_MIN_PCCS         = 1;     // pccs min corr test failed 
+    const int32_t MSG_MIN_INLIERS_E    = 2;     // gic choose 3D but failed in min pt test
+    const int32_t MSG_MIN_INLIERS_H    = 3;     // gic choose 2D but failed in min pt test
+    const int32_t MSG_SBA_E_ERROR      = 4;     // Bundle adjustment E failed
+    const int32_t MSG_SBA_H_ERROR      = 5;     // Bundle adjustment H failed
+    const int32_t MSG_NO_MODEL_FIT     = 6;     // could not fit a model
+    const int32_t MSG_MDIST_NAV        = 7;     // mahalanobis distance from nav prior too large
+    const int32_t MSG_TRI_CONST        = 8;     // triangulation constraint 
+}

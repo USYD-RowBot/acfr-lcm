@@ -1,0 +1,7 @@
+macro (perlsx_eigen3)
+  perlsx_find_package (Eigen3 "on ubuntu `sudo apt-get install libeigen3-dev`" ${ARGN})
+  if (EIGEN3_FOUND)
+    include_directories (${EIGEN3_INCLUDE_DIR})
+    set (PERLSX_EIGEN3)
+  endif ()
+endmacro ()

@@ -1,0 +1,79 @@
+import "goby/common/protobuf/option_extensions.proto";
+
+package perls.protobuf;
+
+enum UVCError {
+    NONE = 0; 
+    OVER_PITCH = 1; 
+    EXCEED_TIME = 2; 
+    LEAK = 3;
+    NO_FORWARD_PROG = 4; 
+    EXCEED_MAX_DEPTH = 5; 
+    NO_UPWARD_PROG = 6; 
+    TOW_FLOAT_ENGAGED = 7; 
+    SAFETY_RET_PATH = 8; 
+    DFS_UNCHANGED = 9; 
+    COMPASS_STOPPED = 10;
+    EXCEEDED_MIN_REQ_PWR = 11;
+    STOP_AND_TRANSMIT_IRIDIUM = 12;
+}
+
+message iver_state { 
+    option (goby.msg).dccl.id = 85;
+	option (goby.msg).dccl.max_bytes = 32;
+
+	optional double x = 1 [(goby.field).dccl.max=10000, 
+                           (goby.field).dccl.min=-10000, 
+                           (goby.field).dccl.precision=0];
+	optional double y = 2 [(goby.field).dccl.max=10000, 
+                           (goby.field).dccl.min=-10000, 
+                           (goby.field).dccl.precision=0];
+	optional double z = 3 [(goby.field).dccl.max=100, 
+                           (goby.field).dccl.min=0, 
+                           (goby.field).dccl.precision=1];
+	optional double r = 4 [(goby.field).dccl.max=6.28, 
+                           (goby.field).dccl.min=0, 
+                           (goby.field).dccl.precision=1];
+	optional double p = 5 [(goby.field).dccl.max=6.28, 
+                           (goby.field).dccl.min=0, 
+                           (goby.field).dccl.precision=1];
+	optional double h = 6 [(goby.field).dccl.max=6.28, 
+                           (goby.field).dccl.min=0, 
+                           (goby.field).dccl.precision=2];
+	optional double altitude = 7 [(goby.field).dccl.max=200, 
+                                  (goby.field).dccl.min=0, 
+                                  (goby.field).dccl.precision=1];
+
+	optional int32 uvc_next_waypoint = 8 [(goby.field).dccl.max=255, 
+                                          (goby.field).dccl.min=1, 
+                                          (goby.field).dccl.precision=0];
+	optional int32 uvc_dist_to_next_waypoint = 9 [(goby.field).dccl.max=1000, 
+                                                  (goby.field).dccl.min=0, 
+                                                  (goby.field).dccl.precision=0];
+	optional int32 uvc_battery_percent = 10 [(goby.field).dccl.max=100, 
+                                             (goby.field).dccl.min=0, 
+                                             (goby.field).dccl.precision=0];
+	optional UVCError uvc_error_state = 11 [(goby.field).dccl.max=25,
+                                            (goby.field).dccl.min=0,
+                                            (goby.field).dccl.precision=0];
+	optional bool abort_state = 12;
+
+	optional double x_est = 13 [(goby.field).dccl.max=1000, 
+                                (goby.field).dccl.min=-1000, 
+                                (goby.field).dccl.precision=0];
+	optional double y_est = 14 [(goby.field).dccl.max=1000, 
+                                (goby.field).dccl.min=-1000, 
+                                (goby.field).dccl.precision=0];
+    optional int32 last_no = 15 [(goby.field).dccl.max=1000,
+                                 (goby.field).dccl.min=0];
+} 
+
+enum AbortCode
+{
+  ABORT_FALSE = 0;
+  ABORT_HARD = 1;
+  ABORT_TO_SURFACE = 2;
+  ABORT_TO_WAYPOINT = 3;
+  ABORT_TO_POS = 4;
+}
+

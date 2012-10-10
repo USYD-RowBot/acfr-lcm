@@ -1,0 +1,14 @@
+package perllcm;
+
+struct carlab_discrete_devices_t
+{
+    int64_t  utime;
+
+    boolean  engine_on;
+    int32_t  gear;          // NOTE: user cannot shift to park          
+
+    const int32_t GEAR_LOW      = 1;
+    const int32_t GEAR_DRIVE    = 2;
+    const int32_t GEAR_NEUTRAL  = 128;
+    const int32_t GEAR_REVERSE  = 129;
+}

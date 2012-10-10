@@ -1,0 +1,6 @@
+macro (perlsx_m)
+  perlsx_find_library (m "on ubuntu `sudo apt-get install build-essential`" ${ARGN})
+  if (M_FOUND)
+    set (PERLSX_M ${M_LIBRARIES})
+  endif ()
+endmacro ()

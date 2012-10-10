@@ -1,0 +1,14 @@
+package senlcm;
+
+struct acomms_osp_t
+{
+    int64_t utime;
+
+    double depth;
+
+    int32_t new_tol_no;
+    int32_t org_tol_no;
+
+    double Lambda[16];
+    double eta[4];
+}

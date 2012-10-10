@@ -1,0 +1,18 @@
+package perllcm;
+
+struct van_rdi_bathy_collection_t
+{
+    int64_t id; // unique ID, can be timestamp
+
+    // 3D points
+    int32_t            npts;               // number of points
+    rdi_bathy_t        bathy_v[npts];      // 3D points in vehicle frame
+
+    pose3d_t           x_vc[npts];
+
+    // calibration can be varying
+    int32_t            calib_list[npts];
+
+    int32_t            ncalib;             // number of calibration
+    van_calib_t        calib[ncalib];
+}

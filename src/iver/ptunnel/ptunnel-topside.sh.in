@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+#This must be run from perls/bin
+SCRIPTNAME=$(basename $0)
+
+trap cleanup INT
+trap cleanup TERM
+
+function cleanup {    
+    echo -e "\n$SCRIPTNAME: Goodbye"
+    kill -9 ${sheriffPid} ${tunnelPid[*]} &> /dev/null
+    exit 0
+}
+
+function printUsage {
+    echo "Usage: ./${SCRIPTNAME}"
+    echo
+    echo "Launches bot-procman-sheriff and initiates persistent bot-lcm-tunnel connections"
+    echo "to the Ivers."
+    echo
+    echo "Options"
+    echo "  -h      Show this."
+    echo "  -i ARG  Interface (iver28-wifi, iver28-radio, iver31-wifi, iver31-radio)."
+    echo "          You can pass this flag multiple times."
+    echo "  -r ARG  Receive channel regex."
+    echo "  -R ARG  Same as -r option, but rather than overwrite default, it appends."
+    echo "  -s ARG  Send channel regex."
+    echo "  -S ARG  Same as -s option, but rather than overwrite default, it appends."
+    echo
+    echo "Examples"
+    echo "  Rather than connect over WiFi, use radio"
+    echo "  ./${SCRIPTNAME} -i iver28-radio -i iver31-radio"
+    echo
+    echo "  Grab OS_COMPASS in addition to default receive channels."
+    echo "  ./${SCRIPTNAME} -R \"^.*OS_COMPASS$\""
+    echo
+    echo "  Note, you can kill your instance of ${SCRIPTNAME} and restart it back up"
+    echo "  (with different options if you want) without harm to your currently"
+    echo "  running procman processes."
+    echo
+}
+
+CHANNELS_SEND_DEFAULT="^.*OS_REMOTEHELM_.*$|^PMD_.*$|^.*EASYDAQ$"
+CHANNELS_RECV_DEFAULT="^.*GPSD3$|^.*GPSD3\.PPSBOARD$|^.*OS_CONDUIT.*$|^.*OS_REMOTEHELM_.*$|^PMD_.*$|^.*EASYDAQ$"
+INTERFACES_DEFAULT=( iver28-wifi iver31-wifi )
+
+while getopts ':hi:r:R:s:S:' option; do
+    case "$option" in
+        h) printUsage
+            exit 0
+            ;;
+        \?) printUsage
+            exit 0
+            ;;
+        i)  interfaces[${#interfaces[@]}]=$OPTARG
+            ;;
+        r)  channels_recv=${OPTARG}
+            ;;
+        R)  channels_recv=${OPTARG}"|"$CHANNELS_RECV_DEFAULT
+            ;;
+        s)  channels_send=${OPTARG}
+            ;;
+        S)  channels_send=${OPTARG}"|"$CHANNELS_SEND_DEFAULT
+            ;;
+        :)  echo "Option $OPTARG requires an argument"
+            exit 1
+            ;;
+    esac
+done
+
+
+if [ ${#interfaces[*]} -eq 0 ]; then
+    interfaces=( ${INTERFACES_DEFAULT[@]} )
+    echo "Using default interfaces: ${interfaces[@]}"
+else
+    echo "Using user interfaces: ${interfaces[@]}"
+fi
+
+if [ ${#channels_recv[*]} -eq 0 ]; then
+    channels_recv=${CHANNELS_RECV_DEFAULT}
+    echo "Using default channels_recv: ${channels_recv}"
+else
+    echo "Using user channels_recv: ${channels_recv}"
+fi
+
+if [ ${#channels_send[*]} -eq 0 ]; then
+    channels_send=${CHANNELS_SEND_DEFAULT}
+    echo "Using default channels_send: ${channels_send}"
+else
+    echo "Using user channels_send: ${channels_send}"
+fi
+
+
+#Launch sheriff
+bot-procman-sheriff @CONFIG_SOURCE_PATH@/procman/procman-ivers.cfg &
+sheriffPid=$!
+
+#Keep running bot-lcm-tunnel until it connects to the server
+DELAY=5 #seconds
+tunnelPid=( -28 -31 )
+while [ 1 ]; do
+
+    for index in $(seq 0 $((${#interfaces[*]} - 1))); do
+        
+        interface=${interfaces[index]}
+        auv=${interface%-*}
+        mode=${interface#*-}
+        case ${auv} in
+            "iver28")
+                port=2828
+	        ;;
+            "iver31")
+                port=3131
+	        ;;
+            *)
+	        port=6141
+	        ;;
+        esac
+
+        ping -c 1 -W 1 ${interface} > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            if ! kill -0 ${tunnelPid[index]} &> /dev/null; then
+                echo -e "\nLaunching tunnel to ${interface} (`date`)" >&2
+	        bot-lcm-tunnel -p ${port} --channels_recv "${channels_recv}" --channels_send "${channels_send}" ${interface} &
+                pid=$!
+	        tunnelPid[index]=${pid}
+                sleep 1
+	    fi
+        fi
+        
+    done # for index
+
+    sleep ${DELAY}
+done

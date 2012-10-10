@@ -1,0 +1,4 @@
+1. parse from graph.isam to generate nodes_t meas_t and save them
+>> isam2mat('./graph.isam',1,1)
+
+2. 

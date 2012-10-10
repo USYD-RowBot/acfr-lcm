@@ -1,0 +1,6 @@
+macro (perlsx_gicp)
+  perlsx_find_library (gicp "you need to install gicp" ${ARGN})
+  if (GICP_FOUND)
+    set (PERLSX_GICP ${GICP_LIBRARIES})
+  endif ()
+endmacro ()

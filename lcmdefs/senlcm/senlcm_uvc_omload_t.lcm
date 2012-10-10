@@ -1,0 +1,7 @@
+package senlcm;
+
+struct uvc_omload_t 
+{
+    string directory_name;
+    int32_t msg_flag;       // 0:Null
+}

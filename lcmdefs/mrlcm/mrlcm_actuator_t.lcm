@@ -1,0 +1,14 @@
+// command/status for robot actuators
+
+package mrlcm;
+
+struct actuator_t {
+
+    int64_t utime;
+
+    // the following are desired inputs to the actuators.
+    // values should be normalized [-1,1].
+    double thrust;
+    double rudder;
+    double planes;
+}

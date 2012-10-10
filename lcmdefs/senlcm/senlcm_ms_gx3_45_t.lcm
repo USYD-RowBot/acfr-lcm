@@ -1,0 +1,55 @@
+package senlcm;
+
+struct ms_gx3_45_t
+{
+    int64_t utime;
+
+    // Filter status fields
+    int16_t	filter_state;		//!< filter state
+    const 	int16_t
+	FILTER_STATE_STARTUP = 0,	//!< filter startup
+	FILTER_STATE_INIT = 1,		//!< filter initalization
+	FILTER_STATE_RUN_VALID = 2,	//!< filter running w/ valid solution
+	FILTER_STATE_RUN_ERROR = 3;	//!< filter running w/ solution error
+	
+    int16_t	dynamics_mode;		//!< dynamics mode for filter
+    const	int16_t
+	FILTER_DYNM_PORTABLE = 1,	//!< portable dynamics
+	FILTER_DYNM_AUTOMOTIVE = 2,	//!< automotive dynamics
+	FILTER_DYNM_AIRBORNE = 3;	//!< airborne dynamics
+	
+    int16_t	status_flags;		//!< status flags
+    const	int16_t
+	FILTER_STAT_ATT_NOT_INIT = 4096,//!< attituded not inited
+	FILTER_STAT_PV_NOT_INIT = 8192,	//!< position and velocity not inited
+	FILTER_STAT_NO_IMU = 1,		//!< IMU unavailable
+	FILTER_STAT_NO_GPS = 2,		//!< GPS unavailable
+	FILTER_STAT_MAT_SING = 8,	//!< singular matrix in calculation
+	FILTER_STAT_P_HIGH_COV = 16,	//!< high covariance in position
+	FILTER_STAT_V_HIGH_COV = 32,	//!< high covariance in velocity
+	FILTER_STAT_A_HIGH_COV = 64,	//!< high covariance in attitude
+	FILTER_STAT_NAN_SOL = 128;	//!< nan in solution
+
+    int8_t	gps_timestamp_valid;	//!< flag if gps timestamp is valid
+    double	gps_timeofweek_seconds;	//!< time of the week
+    int16_t	gps_week_number;	//!< gps week number
+
+    int8_t	lat_lon_alt_valid;	//!< flag if lat lon and alt are valid
+    double 	lat_lon_alt[3];   	//!< estimated latitude, longitude, altitude
+    int8_t	lat_lon_alt_std_valid;	//!< flag if lat lon ald std is valid
+    float	lat_lon_alt_std[3];	//!< standard deivation of lat lon alt uncertianty
+        
+    int8_t	ned_vel_valid;		//!< flag if NED velocities are valid
+    float 	ned_vel[3];		//!< velocities in NED frame
+    int8_t	ned_vel_std_valid;	//!< flag if NED velocities std is valid
+    float	ned_vel_std[3];		//!< standard deivation of NED velocities uncertianty
+    
+    int8_t	euler_valid;		//!< flag if euler angles are valid
+    float 	euler[3];		//!< euler angles in NED frame
+    int8_t	euler_std_valid;	//!< flag if lat lon ald std is valid
+    float	euler_std[3];		//!< standard deivation of lat lon alt uncertianty
+
+    int8_t	ang_rate_valid;		//!< flag if angular rates are valid
+    float 	ang_rate[3];		//!< angular rates in sensor frame
+    
+}

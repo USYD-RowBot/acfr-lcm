@@ -1,0 +1,14 @@
+package senlcm;
+
+struct uvc_omstart_t
+{
+    const int32_t MSG_FLAG_IGNORE = 1, MSG_FLAG_DO_NOT_IGNORE = 0;
+    int32_t msg_flag_gps;
+    int32_t msg_flag_sounder;
+    int32_t msg_flag_cal_pressure;
+    
+    const int32_t MIS_TYPE_NORMAL = 0, MIS_TYPE_SRP = 1;
+    int32_t mission_type;
+
+    string mission_name;
+}

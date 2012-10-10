@@ -1,0 +1,16 @@
+package perllcm;
+
+struct mono_loc_map_t
+{
+    int64_t utime; 
+    
+    // a map is a collection of feature clusters
+    int64_t num_clusters;            
+    mono_loc_feat_cluster_t clusters[num_clusters];
+    
+    // gps coordinates of the origin of the map (ENU coord system at this location)
+    double orglat; 
+    double orglon;
+    double orgalt;
+
+}

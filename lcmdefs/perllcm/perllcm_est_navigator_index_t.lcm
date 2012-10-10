@@ -1,0 +1,41 @@
+package perllcm;
+
+// structure with indexing structure for navigator process model function states
+
+struct est_navigator_index_t
+{
+    // index structure, used so that observation models can work regardless of the
+    // current process model. Each process model must have a function which fills
+    // this strucutre
+
+    int32_t proc_state_len;     //length of state process model acts on
+    int32_t u_len;              //length of control vector
+    
+    // Translation
+    int32_t x;      
+    int32_t y;      
+    int32_t z;
+    // Euler angle rotation
+    int32_t r;
+    int32_t p;
+    int32_t h;
+    // body frame velocities
+    int32_t u;
+    int32_t v;
+    int32_t w;
+    // body frame angular velocities
+    int32_t a;
+    int32_t b;
+    int32_t c;
+    // world frame velocities
+    int32_t x_dot;
+    int32_t y_dot;
+    int32_t z_dot;
+    // world frame angular velocities
+    int32_t r_dot;
+    int32_t p_dot;
+    int32_t h_dot;
+    
+    // when adding remember to update init_index_t() in est_pmf.c
+
+}

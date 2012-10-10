@@ -1,0 +1,10 @@
+package perllcm;
+
+struct matrix_d_t
+{
+    int32_t nrows;
+    int32_t ncols;
+    int32_t n;
+    double data[n];
+    
+}

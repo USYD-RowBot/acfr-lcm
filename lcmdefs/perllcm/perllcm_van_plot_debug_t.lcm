@@ -1,0 +1,66 @@
+package perllcm;
+
+struct van_plot_debug_t
+{
+    int64_t utime_i;
+    int64_t utime_j;
+
+    // to color code each feat
+    int32_t n_feat_types;                   
+    int32_t npts_each_type[n_feat_types];
+
+    // inliers from pccs
+    int32_t n_in_pccs;
+    int32_t isel_pccs_i[n_in_pccs];
+    int32_t isel_pccs_j[n_in_pccs];
+
+    // inliers
+    int32_t n_in;
+    int32_t isel[n_in];
+
+    // model for summary motion
+    double model[9];                    // either F or H
+
+    // relative pose and 3D points
+    int32_t  dof;
+    double   nav21[6];                  // navigation prior
+    double   x21[6];                    // when dof is 5, x21[5] indicates scale
+    double   cov21[36];
+    int32_t  npts3d;
+    float    x[npts3d];
+    float    y[npts3d];
+    float    z[npts3d];
+
+
+    // search bound
+    boolean   plt_ellipses;             // we carry this option to be populated in pccs.c
+    int32_t   img_w;
+    int32_t   img_h;
+    double   chiSquare2dof;             // search bound
+    double   F21[9];                    // fundamental matrix
+    float   uv1_sample[16];             // sample uv in image 1
+    float   uv2p_sample[16];            // projected points of uv1_sample
+    float   cov2p_sample[32];           //  and the covariance related 
+    float   uv2_sample[16];             // sample uv in image 2
+    float   uv1p_sample[16];            // projected points of uv2_sample
+    float   cov1p_sample[32];           //  and the covariance related 
+
+    // selecte model
+    int32_t model_gic;      // selected model
+    const int32_t GIC_NONE  = 0;
+    const int32_t GIC_H     = 1;
+    const int32_t GIC_F     = 2;
+
+    // reg successful ?
+    int32_t reg_result;             // fail or succ?
+    int32_t errmsg;                 // if failed, why? 
+    const int32_t REG_FAIL  = 0;
+    const int32_t REG_SUCC  = 1;
+
+    // verification window
+    int32_t nlink_remaining;        // how many links remaining?
+    const int32_t MSG_INVALID = 0;
+    const int32_t MSG_VALID = 1;
+    const int32_t MSG_QUIT = 2; 
+    const int32_t MSG_BATCH = 3;
+}

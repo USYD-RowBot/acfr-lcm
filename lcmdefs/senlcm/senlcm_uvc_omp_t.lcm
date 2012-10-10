@@ -1,0 +1,12 @@
+package senlcm;
+
+struct uvc_omp_t
+{
+    int32_t yaw_top;      // 0-255
+    int32_t yaw_bot;      // 0-255
+    int32_t pitch_left;   // 0-255
+    int32_t pitch_right;  // 0-255
+    
+    int32_t motor;        // 0-255
+    int32_t timeout;      // 0-120 sec
+}

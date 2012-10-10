@@ -1,0 +1,12 @@
+package mrlcm;
+
+// Contains information about a single scan line from
+// a sensor
+struct scan_info_t
+{
+    int64_t utime;			// Timestamp of the associated measurement
+		int32_t line_id;		// Id for this line
+		string filename;		// Filename if being read from a log file
+		string channelname; // Channel name where the associated measurement is being sent
+}
+

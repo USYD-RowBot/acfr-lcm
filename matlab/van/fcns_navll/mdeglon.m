@@ -1,0 +1,6 @@
+function dx = mdeglon(lon)
+
+lonrad = lon*pi/180;
+dx = 111415.13 * cos(lonrad) ...
+       - 94.55 * cos(3.0*lonrad) ...
+        + 0.12 * cos(5.0*lonrad);

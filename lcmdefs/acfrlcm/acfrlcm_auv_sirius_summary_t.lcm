@@ -1,0 +1,24 @@
+package acfrlcm;
+		
+struct auv_sirius_summary_t
+{
+    int64_t utime;
+    
+    double time;
+
+    // estimator state
+    double x;
+    double y;
+    double altitude;
+    double depth;
+    double  heading;
+
+    // goal state
+    int32_t goal_id;
+    
+    // battery charge percentage
+    double percent_charge;
+
+    // number of images
+    int32_t num_images;
+}

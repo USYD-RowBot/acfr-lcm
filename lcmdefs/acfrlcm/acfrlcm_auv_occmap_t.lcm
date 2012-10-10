@@ -1,0 +1,9 @@
+package acfrlcm;
+
+struct auv_occmap_t
+{
+    int64_t utime;
+    
+    int32_t num_elements;
+    auv_occmap_element_t elements[num_elements];
+}

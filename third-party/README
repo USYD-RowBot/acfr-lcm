@@ -1,0 +1,37 @@
+When compiling perls for the first time, the cmake build environment
+will set the BUILD_THIRD_PARTY option to "ON". This will result in
+each of the third-party libraries residing in this directory to be
+built and installed.  For each library that is built, a
+.PERLS_CMAKE_BUILD_xxx hidden file is created; this allows cmake to
+keep track of which libraries have already been built so that it does
+not attempt to recompile them again.  If for some reason you do wish
+to force cmake to rebuild a library, simple delete the corresponding
+.PERLS_CMAKE_BUILD_xxx hidden file, set the BUILD_THIRD_PARTY option
+to "ON" in cmake, and recompile.
+
+--------------------------------------------------------------------
+SIFTGPU
+
+1) If you have a graphic card with GPU, and want to use it for
+feature extraction enable the BUILD_SIFTGPU option.
+
+2) If your graphic card is Nvidia, modify x server setting to have max
+performance to maximize the siftgpu speed
+
+e.g., ubuntu
+System > Administration > NVIDIA X Server settings
+
+In GPU setting > PowerMizer > Prefered mode = Maximum performace
+
+--------------------------------------------------------------------
+SBA
+
+Some features of SBA-1.6 has been modified to provide covariance matrix.
+See "sba-diff-file" for more detail.
+
+--------------------------------------------------------------------
+iSAM
+isam needs to be manually patched after checking out the public release
+
+$ svn export {MIT}/isam isam-mit
+$ diff -rupN isam-public isam-mit > isam.patch

@@ -1,0 +1,21 @@
+package perllcm;
+
+struct pvn_vis_map_cluster_t
+{
+    float mean_xyz[3];
+    float mean_view_aiz;       // radians
+    
+    int32_t npts;
+    float   x[npts];
+    float   y[npts];
+    float   z[npts];
+    float   view_aiz[npts];
+    int32_t keylen;
+    float   keys[npts][keylen];
+    float   key_scale[npts];
+    float   key_orientation[npts];
+    int32_t vocab_id[npts];
+    int32_t build_key_update_cnt[npts]; // number of keys merged for this point
+    int32_t build_xyz_update_cnt[npts]; // number of 3D locations merged for this point
+    
+}

@@ -1,0 +1,629 @@
+diff -rupN sba-1.6/demo/eucsbademo.c sba-1.6-perl/demo/eucsbademo.c
+--- sba-1.6/demo/eucsbademo.c	2009-08-25 07:16:33.000000000 -0400
++++ sba-1.6-perl/demo/eucsbademo.c	2011-01-28 14:02:57.866129576 -0500
+@@ -1563,7 +1563,7 @@ void sba_driver(char *camsfname, char *p
+         n=sba_motstr_levmar_x(numpts3D, 0, nframes, nconstframes, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
+                             fixedcal? img_projsRTS_x : (havedist? img_projsKDRTS_x : img_projsKRTS_x),
+                             analyticjac? (fixedcal? img_projsRTS_jac_x : (havedist? img_projsKDRTS_jac_x : img_projsKRTS_jac_x)) : NULL,
+-                            (void *)(&globs), MAXITER2, verbose, opts, info);
++                            (void *)(&globs), MAXITER2, verbose, opts, info, NULL, NULL);
+       else
+         n=sba_motstr_levmar(numpts3D, 0, nframes, nconstframes, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
+                             fixedcal? img_projRTS : (havedist? img_projKDRTS : img_projKRTS),
+@@ -1630,7 +1630,7 @@ void sba_driver(char *camsfname, char *p
+           n=sba_motstr_levmar_x(numpts3D, 0, nframes, nconstframes, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
+                                 fixedcal? img_projsRTS_x : (havedist? img_projsKDRTS_x : img_projsKRTS_x),
+                                 analyticjac? (fixedcal? img_projsRTS_jac_x : (havedist? img_projsKDRTS_jac_x : img_projsKRTS_jac_x)) : NULL,
+-                                (void *)(&globs), MAXITER2, verbose, opts, info);
++                                (void *)(&globs), MAXITER2, verbose, opts, info, NULL, NULL);
+         else
+           n=sba_motstr_levmar(numpts3D, 0, nframes, nconstframes, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
+                               fixedcal? img_projRTS : (havedist? img_projKDRTS : img_projKRTS),
+diff -rupN sba-1.6/demo/Makefile sba-1.6-perl/demo/Makefile
+--- sba-1.6/demo/Makefile	2009-05-07 09:36:00.000000000 -0400
++++ sba-1.6-perl/demo/Makefile	2011-01-28 14:02:57.866129576 -0500
+@@ -1,7 +1,7 @@
+ #
+ # Makefile for Sparse Bundle Adjustment demo program
+ #
+-CC=gcc
++CC=gcc -u MAIN__
+ CFLAGS=-I.. -O3 -Wall #-g -pg
+ OBJS=eucsbademo.o imgproj.o readparams.o
+ SRCS=eucsbademo.c imgproj.c readparams.c
+diff -rupN sba-1.6/Makefile sba-1.6-perl/Makefile
+--- sba-1.6/Makefile	2009-02-12 12:07:43.000000000 -0500
++++ sba-1.6-perl/Makefile	2011-01-28 13:38:40.016200000 -0500
+@@ -1,9 +1,9 @@
+ #
+ # Makefile for Sparse Bundle Adjustment library & demo program
+ #
+-CC=gcc
++CC=gcc -u MAIN__
+ #ARCHFLAGS=-march=pentium4 # YOU MIGHT WANT TO UNCOMMENT THIS FOR P4
+-CFLAGS=$(ARCHFLAGS) -O3 -funroll-loops -Wall #-Wstrict-aliasing #-g -pg
++CFLAGS=$(ARCHFLAGS) -O3 -funroll-loops -Wall -shared -fPIC #-Wstrict-aliasing #-g -pg
+ OBJS=sba_levmar.o sba_levmar_wrap.o sba_lapack.o sba_crsm.o sba_chkjac.o
+ SRCS=sba_levmar.c sba_levmar_wrap.c sba_lapack.c sba_crsm.c sba_chkjac.c
+ AR=ar
+@@ -15,6 +15,7 @@ all: libsba.a dem
+ libsba.a: $(OBJS)
+ 	$(AR) crv libsba.a $(OBJS)
+ 	$(RANLIB) libsba.a
++	$(CC) -o libsba.so $(OBJS) $(CFLAGS)
+ 
+ sba_levmar.o: sba.h sba_chkjac.h compiler.h
+ sba_levmar_wrap.o: sba.h
+diff -rupN sba-1.6/sba.h sba-1.6-perl/sba.h
+--- sba-1.6/sba.h	2009-08-20 08:22:43.000000000 -0400
++++ sba-1.6-perl/sba.h	2011-01-28 14:02:57.866129576 -0500
+@@ -108,7 +108,8 @@ sba_motstr_levmar_x(const int n, const i
+            const int cnp, const int pnp, double *x, double *covx, const int mnp,
+            void (*func)(double *p, struct sba_crsm *idxij, int *rcidxs, int *rcsubs, double *hx, void *adata),
+            void (*fjac)(double *p, struct sba_crsm *idxij, int *rcidxs, int *rcsubs, double *jac, void *adata),
+-           void *adata, const int itmax, const int verbose, const double opts[SBA_OPTSSZ], double info[SBA_INFOSZ]);
++           void *adata, const int itmax, const int verbose, const double opts[SBA_OPTSSZ], double info[SBA_INFOSZ],
++	   double *covA, void (*f_robust)(const double *const e, int n, double * const w));
+ 
+ extern int
+ sba_mot_levmar_x(const int n, const int m, const int mcon, char *vmask, double *p, const int cnp,
+diff -rupN sba-1.6/sba_levmar.c sba-1.6-perl/sba_levmar.c
+--- sba-1.6/sba_levmar.c	2009-08-07 08:09:41.000000000 -0400
++++ sba-1.6-perl/sba_levmar.c	2011-01-28 14:02:57.866129576 -0500
+@@ -198,6 +198,7 @@ register double sum0=0.0, sum1=0.0, sum2
+   return sum0+sum1+sum2+sum3;
+ }
+ 
++/*START NCB EDITS: 1/19/2011 (ADDED OPTION TO GENERATE WEIGHTS ON FLY WITH F_ROBUST) */
+ /* Compute e=W*(x-y) for two n-vectors x and y and return the squared L2 norm of e.
+  * This norm equals the squared C norm of x-y with C=W^T*W, W being block diagonal
+  * matrix with nvis mnp*mnp blocks: e^T*e=(x-y)^T*W^T*W*(x-y)=||x-y||_C.
+@@ -206,7 +207,8 @@ register double sum0=0.0, sum1=0.0, sum2
+  * Similarly to nrmL2xmy() above, uses loop unrolling and blocking
+  */
+ static double nrmCxmy(double *const e, const double *const x, const double *const y,
+-                      const double *const W, const int mnp, const int nvis)
++                      double *const W, const int mnp, const int nvis,
++                      void (*f_robust)(const double *const e, int n, double * const w))
+ {
+ const int n=nvis*mnp;
+ const int blocksize=8, bpwr=3; /* 8=2^3 */
+@@ -216,6 +218,7 @@ int blockn, mnpsq;
+ register double norm, sum;
+ register const double *Wptr, *auxptr;
+ register double *eptr;
++double * w_tmp;
+ 
+   /* n may not be divisible by blocksize, 
+    * go as near as we can first, then tidy up.
+@@ -256,6 +259,35 @@ register double *eptr;
+     }
+   }
+ 
++  /* START NCB EDIT 1/19/2011 */
++  /* If there is a robust cost function we need to calculate the weights,
++     that way the weights are avaliable for use after this call */
++  if (f_robust!=NULL) {
++    
++//printf("BE e[0]=%0.9lf e[1]=%0.9lf e[2]=%0.9lf e[3]=%0.9lf e[4]=%0.9lf\n",e[0],e[1],e[2],e[3],e[4]);    
++    
++    // allocate space to store the robust weights (same length as e for simplicty,
++    // will build up weight matrix W here)
++    w_tmp  = malloc (n * sizeof (double));
++    
++    (*f_robust) (e, n, w_tmp);
++    
++    // move the w_tmp into the weights matrix W
++    // NOTE THAT THIS ASSUMES mnp = 2 NEED TO CHANGE TO BE TOTALLY GENERAL
++    for (i=0; i<nvis; i++) {
++        W[4*i] = w_tmp[2*i];
++        W[4*i+1] = 0.0;
++        W[4*i+2] = 0.0;
++        W[4*i+3] = w_tmp[2*i+1];
++    }
++//printf("W_TMP w[0]=%0.9lf w[1]=%0.9lf w[2]=%0.9lf w[3]=%0.9lf w[4]=%0.9lf\n",w_tmp[0],w_tmp[1],w_tmp[2],w_tmp[3],w_tmp[4]);     
++ 
++    // free w_tmp
++    free (w_tmp);
++    
++  }
++  /* END NCB EDIT 1/19/2011 */
++
+   /* compute w_x_ij e_ij in e and its L2 norm.
+    * Since w_x_ij is upper triangular, the products can be safely saved
+    * directly in e_ij, without the need for intermediate storage
+@@ -271,8 +303,13 @@ register double *eptr;
+     }
+   }
+ 
++//printf("AE    e[0]=%0.9lf e[1]=%0.9lf e[2]=%0.9lf e[3]=%0.9lf e[4]=%0.9lf\n",e[0],e[1],e[2],e[3],e[4]);        
++//printf("W     w[0]=%0.9lf w[1]=%0.9lf w[2]=%0.9lf w[3]=%0.9lf w[4]=%0.9lf w[5]=%0.9lf w[6]=%0.9lf w[7]=%0.9lf w[8]=%0.9lf\n\n",
++//       W[0],W[1],W[2],W[3],W[4],W[5],W[6],W[7],W[8]);       
++
+   return norm;
+ }
++/* END NCB EDITS: 1/19/2011 */
+ 
+ /* search for & print image projection components that are infinite; useful for identifying errors */
+ static void sba_print_inf(double *hx, int nimgs, int mnp, struct sba_crsm *idxij, int *rcidxs, int *rcsubs)
+@@ -393,6 +430,8 @@ static void sba_fdjac_x(
+           phxx=hxx + idx*mnp; // set phxx to point to hxx_ij
+           pAB=jac + idx*ABsz; // set pAB to point to A_ij
+ 
++	  /* NCB MIGHT NEED TO WEIGHT FIRST DIFFERENCE BY ROBUST COST
++	   * Doesn't seem to be needed, delta too small */
+           for(ii=0; ii<mnp; ++ii)
+             pAB[ii*cnp+jj]=(phxx[ii]-phx[ii])*d;
+         }
+@@ -428,6 +467,8 @@ static void sba_fdjac_x(
+           phxx=hxx + idx*mnp; // set phxx to point to hxx_ij
+           pAB=jac + idx*ABsz + Asz; // set pAB to point to B_ij
+ 
++	  /* NCB MIGHT NEED TO WEIGHT FIRST DIFFERENCE BY ROBUST COST
++	   * Doesn't seem to be needed, delta too small */
+           for(ii=0; ii<mnp; ++ii)
+             pAB[ii*pnp+jj]=(phxx[ii]-phx[ii])*d;
+         }
+@@ -504,7 +545,7 @@ int sba_motstr_levmar_x(
+ 	                     /* I: minim. options [\mu, \epsilon1, \epsilon2, \epsilon3, \epsilon4]. Respectively the scale factor for initial \mu,
+                         * stopping thresholds for ||J^T e||_inf, ||dp||_2, ||e||_2 and (||e||_2-||e_new||_2)/||e||_2
+                         */
+-    double info[SBA_INFOSZ]
++    double info[SBA_INFOSZ],
+ 	                     /* O: information regarding the minimization. Set to NULL if don't care
+                         * info[0]=||e||_2 at initial p.
+                         * info[1-4]=[ ||e||_2, ||J^T e||_inf,  ||dp||_2, mu/max[J^T J]_ii ], all computed at estimated p.
+@@ -520,8 +561,26 @@ int sba_motstr_levmar_x(
+                         * info[8]= # jacobian evaluations
+ 			                  * info[9]= # number of linear systems solved, i.e. number of attempts	for reducing error
+                         */
++    double *invcovA,     /* covarinace of camera pose estimate to be retured (m-mcon)*cnp by (m-mcon)*cnp 
++                         * in twoview case, invcovA = cnp by cnp (5x5 for RAE and 8x8 H)
++                         * added by AK 2010 April
++                        */ 
++    void (*f_robust)(const double *const e, int n, double * const w)
++                        /* function gives access to e = x-hx before taking L2 norm
++                         * allows user to implement robust weighting scheme, huber, tukey, ect.
++                         * Function needs to fill w with the weights to be applied based on the errors in e
++                         * weighting should not be applied to e
++			 * added by NCB 12/30/2010
++                         */                                             
+ )
+ {
++  
++/* NCB EDIT 1/19/2010 dont allow the robust weighting and covariance weighting at the same time */
++if(covx!=NULL && f_robust!=NULL){
++  fprintf(stderr, "SBA: sba_motstr_levmar_x() covx and f_robust cannot be used simultaneously one must be NULL");
++  return SBA_ERROR;
++}
++  
+ register int i, j, ii, jj, k, l;
+ int nvis, nnz, retval;
+ 
+@@ -692,6 +751,8 @@ void *jac_adata;
+   if(covx!=NULL) wght=covx;
+ #endif /* SBA_DESTROY_COVS */
+ 
++  /* NCB EDIT 1/19/2010 allocate weight if there is a robust cost function */
++  if(covx==NULL && f_robust!=NULL) wght=(double *)emalloc(nvis*covsz*sizeof(double));
+ 
+   hx=(double *)emalloc(nobs*sizeof(double));
+   diagUV=(double *)emalloc(nvars*sizeof(double));
+@@ -780,10 +841,22 @@ void *jac_adata;
+   /* compute the error vectors e_ij in hx */
+   (*func)(p, &idxij, rcidxs, rcsubs, hx, adata); nfev=1;
+   /* ### compute e=x - f(p) [e=w*(x - f(p)] and its L2 norm */
+-  if(covx==NULL)
++  /* START NCB EDIT 12/30/2010 */
++  //if(covx==NULL)
++  //  p_eL2=nrmL2xmy(e, x, hx, nobs); /* e=x-hx, p_eL2=||e|| */
++  //else
++  //  p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */
++  if(covx != NULL){
++    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis, NULL); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */  
++  }else if(f_robust != NULL){
++    //p_eL2=nrm_robust(e, x, hx, nobs, f_robust); /* e=wght*(x-hx) */
++    // call weighted norm, but if f_robust is supplied weights are calculated on the fly
++    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis, f_robust);
++  }else{
+     p_eL2=nrmL2xmy(e, x, hx, nobs); /* e=x-hx, p_eL2=||e|| */
+-  else
+-    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */
++  }
++  /* END NCB EDIT 12/30/2010 */
++
+   if(verbose) printf("initial motstr-SBA error %g [%g]\n", p_eL2, p_eL2/nvis);
+   init_p_eL2=p_eL2;
+   if(!SBA_FINITE(p_eL2)) stop=7;
+@@ -794,7 +867,8 @@ void *jac_adata;
+     /* compute derivative submatrices A_ij, B_ij */
+     (*fjac)(p, &idxij, rcidxs, rcsubs, jac, jac_adata); ++njev;
+ 
+-    if(covx!=NULL){
++    //NCB EDIT 1/19/2010 also run this block if the robust function is generating weights
++    if(covx!=NULL || f_robust!=NULL){
+       /* compute w_x_ij A_ij and w_x_ij B_ij.
+        * Since w_x_ij is upper triangular, the products can be safely saved
+        * directly in A_ij, B_ij, without the need for intermediate storage
+@@ -1197,8 +1271,8 @@ if(!(itno%100)){
+        * Note that if MAT_STORAGE==1 S is modified in the following call;
+        * this is OK since S is recomputed for each iteration
+        */
+-	    //issolved=sba_Axb_LU(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_LU;
+-      issolved=sba_Axb_Chol(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_Chol;
++	    issolved=sba_Axb_LU(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_LU;
++      //issolved=sba_Axb_Chol(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_Chol;
+       //issolved=sba_Axb_BK(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_BK;
+       //issolved=sba_Axb_QRnoQ(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_QRnoQ;
+       //issolved=sba_Axb_QR(S, E+mcon*cnp, dpa+mcon*cnp, Sdim, MAT_STORAGE); linsolver=sba_Axb_QR;
+@@ -1282,10 +1356,23 @@ if(!(itno%100)){
+         if(verbose>1)
+           printf("mean reprojection error %g\n", sba_mean_repr_error(n, mnp, x, hx, &idxij, rcidxs, rcsubs));
+         /* ### compute ||e(pdp)||_2 */
+-        if(covx==NULL)
++	/* START NCB EDIT 12/30/2010 */
++        //if(covx==NULL)
++        //  pdp_eL2=nrmL2xmy(hx, x, hx, nobs); /* hx=x-hx, pdp_eL2=||hx|| */
++        //else
++        //  pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis); /* hx=wght*(x-hx), pdp_eL2=||hx|| */
++        if(covx != NULL){
++          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis, NULL); /* hx=wght*(x-hx), pdp_eL2=||hx|| */
++        }else if(f_robust != NULL){
++          //pdp_eL2=nrm_robust(hx, x, hx, nobs, f_robust);
++          // call weighted norm, but if f_robust is supplied weights are calculated on the fly
++          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis, f_robust);
++        }else{
+           pdp_eL2=nrmL2xmy(hx, x, hx, nobs); /* hx=x-hx, pdp_eL2=||hx|| */
+-        else
+-          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis); /* hx=wght*(x-hx), pdp_eL2=||hx|| */
++        }
++        /* END NCB EDIT 12/30/2010 */
++
++
+         if(!SBA_FINITE(pdp_eL2)){
+           if(verbose) /* identify the offending point projection */
+             sba_print_inf(hx, m, mnp, &idxij, rcidxs, rcsubs);
+@@ -1400,6 +1487,281 @@ moredamping:
+ 
+ freemem_and_return: /* NOTE: this point is also reached via a goto! */
+ 
++  if (retval != SBA_ERROR) {
++    // THIS IS THE START OF MODIFICATION, WE CALCULATE J'J NOT J'J + mu I
++    // ---------------------------------------------------------------------------------- //
++    /* compute derivative submatrices A_ij, B_ij */
++    (*fjac)(p, &idxij, rcidxs, rcsubs, jac, jac_adata); ++njev;
++
++    //NCB EDIT 1/19/2010 also run this block if the robust function is generating weights
++    if(covx!=NULL || f_robust!=NULL){
++      /* compute w_x_ij A_ij and w_x_ij B_ij.
++       * Since w_x_ij is upper triangular, the products can be safely saved
++       * directly in A_ij, B_ij, without the need for intermediate storage
++       */
++      for(i=0; i<nvis; ++i){
++        /* set ptr1, ptr2, ptr3 to point to w_x_ij, A_ij, B_ij, resp. */
++        ptr1=wght + i*covsz;
++        ptr2=jac  + i*ABsz;
++        ptr3=ptr2 + Asz; // ptr3=jac  + i*ABsz + Asz;
++
++        /* w_x_ij is mnp x mnp, A_ij is mnp x cnp, B_ij is mnp x pnp
++         * NOTE: Jamming the outter (i.e., ii) loops did not run faster!
++         */
++        /* A_ij */
++        for(ii=0; ii<mnp; ++ii)
++          for(jj=0; jj<cnp; ++jj){
++            for(k=ii, sum=0.0; k<mnp; ++k) // k>=ii since w_x_ij is upper triangular
++              sum+=ptr1[ii*mnp+k]*ptr2[k*cnp+jj];
++            ptr2[ii*cnp+jj]=sum;
++          }
++
++        /* B_ij */
++        for(ii=0; ii<mnp; ++ii)
++          for(jj=0; jj<pnp; ++jj){
++            for(k=ii, sum=0.0; k<mnp; ++k) // k>=ii since w_x_ij is upper triangular
++              sum+=ptr1[ii*mnp+k]*ptr3[k*pnp+jj];
++            ptr3[ii*pnp+jj]=sum;
++          }
++      }
++    }
++
++    /* compute U_j = \sum_i A_ij^T A_ij */ // \Sigma here!
++    _dblzero(U, m*Usz); /* clear all U_j */
++    for(j=mcon; j<m; ++j){
++      ptr1=U + j*Usz; // set ptr1 to point to U_j
++      nnz=sba_crsm_col_elmidxs(&idxij, j, rcidxs, rcsubs); /* find nonzero A_ij, i=0...n-1 */
++      for(i=0; i<nnz; ++i){
++        ptr3=jac + idxij.val[rcidxs[i]]*ABsz;
++
++        /* compute the UPPER TRIANGULAR PART of A_ij^T A_ij and add it to U_j */
++        for(ii=0; ii<cnp; ++ii){
++          for(jj=ii; jj<cnp; ++jj){
++            for(k=0, sum=0.0; k<mnp; ++k)
++              sum+=ptr3[k*cnp+ii]*ptr3[k*cnp+jj];
++            ptr1[ii*cnp+jj]+=sum;
++          }
++
++          /* copy the LOWER TRIANGULAR PART of U_j from the upper one */
++          for(jj=0; jj<ii; ++jj)
++            ptr1[ii*cnp+jj]=ptr1[jj*cnp+ii];
++        }
++      }
++    }
++
++    /* compute V_i = \sum_j B_ij^T B_ij */ // \Sigma here!
++    _dblzero(V, n*Vsz); /* clear all V_i */
++    for(i=ncon; i<n; ++i){
++      ptr1=V + i*Vsz; // set ptr1 to point to V_i
++      nnz=sba_crsm_row_elmidxs(&idxij, i, rcidxs, rcsubs); /* find nonzero B_ij, j=0...m-1 */
++      for(j=0; j<nnz; ++j){
++        /* set ptr3 to point to B_ij, actual column number in rcsubs[j] */
++        ptr3=jac + idxij.val[rcidxs[j]]*ABsz + Asz;
++      
++        /* compute the UPPER TRIANGULAR PART of B_ij^T B_ij and add it to V_i */
++        for(ii=0; ii<pnp; ++ii){
++          for(jj=ii; jj<pnp; ++jj){
++            for(k=0, sum=0.0; k<mnp; ++k)
++              sum+=ptr3[k*pnp+ii]*ptr3[k*pnp+jj];
++            ptr1[ii*pnp+jj]+=sum;
++          }
++        }
++      }
++    }
++
++    /* compute W_ij =  A_ij^T B_ij */ // \Sigma here!
++    for(i=ncon; i<n; ++i){
++      nnz=sba_crsm_row_elmidxs(&idxij, i, rcidxs, rcsubs); /* find nonzero W_ij, j=0...m-1 */
++      for(j=0; j<nnz; ++j){
++        /* set ptr1 to point to W_ij, actual column number in rcsubs[j] */
++        ptr1=W + idxij.val[rcidxs[j]]*Wsz;
++        if(rcsubs[j]<mcon){ /* A_ij is zero */
++          continue;
++        }
++
++        /* set ptr2 & ptr3 to point to A_ij & B_ij resp. */
++        ptr2=jac  + idxij.val[rcidxs[j]]*ABsz;
++        ptr3=ptr2 + Asz;
++        /* compute A_ij^T B_ij and store it in W_ij */
++        for(ii=0; ii<cnp; ++ii)
++          for(jj=0; jj<pnp; ++jj){
++            for(k=0, sum=0.0; k<mnp; ++k)
++              sum+=ptr2[k*cnp+ii]*ptr3[k*pnp+jj];
++            ptr1[ii*pnp+jj]=sum;
++          }
++      }
++    }
++
++    /* save diagonal entries so that augmentation can be later canceled.
++     * Diagonal entries are in U_j and V_i
++     */
++    for(j=mcon; j<m; ++j){
++      ptr1=U + j*Usz; // set ptr1 to point to U_j
++      ptr2=diagU + j*cnp; // set ptr2 to point to diagU_j
++      for(i=0; i<cnp; ++i)
++        ptr2[i]=ptr1[i*cnp+i];
++    }
++    for(i=ncon; i<n; ++i){
++      ptr1=V + i*Vsz; // set ptr1 to point to V_i
++      ptr2=diagV + i*pnp; // set ptr2 to point to diagV_i
++      for(j=0; j<pnp; ++j)
++        ptr2[j]=ptr1[j*pnp+j];
++    }
++
++    for(i=ncon; i<n; ++i){
++      ptr1=V + i*Vsz; // set ptr1 to point to V_i
++
++      /* compute V*_i^-1 */
++      //j=sba_symat_invert_LU(ptr1, pnp); matinv=sba_symat_invert_LU;
++      //j=sba_symat_invert_Chol(ptr1, pnp); matinv=sba_symat_invert_Chol;
++      j=sba_symat_invert_BK(ptr1, pnp); matinv=sba_symat_invert_BK;
++      if(!j){
++	      fprintf(stderr, "SBA: singular matrix V*_i (i=%d) in sba_motstr_levmar_x(), increasing damping\n", i);
++        //goto moredamping; // increasing damping will eventually make V*_i diagonally dominant, thus nonsingular
++        retval=SBA_ERROR;
++        goto freemem_and_return;
++      }
++    }
++
++    /* compute the mmcon x mmcon block matrix S */
++    for(j=mcon; j<m; ++j){
++      int mmconxUsz=mmcon*Usz;
++      nnz=sba_crsm_col_elmidxs(&idxij, j, rcidxs, rcsubs); /* find nonzero Y_ij, i=0...n-1 */
++
++      /* get rid of all Y_ij with i<ncon that are treated as zeros.
++       * In this way, all rcsubs[i] below are guaranteed to be >= ncon
++       */
++      if(ncon){
++        for(i=ii=0; i<nnz; ++i){
++          if(rcsubs[i]>=ncon){
++            rcidxs[ii]=rcidxs[i];
++            rcsubs[ii++]=rcsubs[i];
++          }
++        }
++        nnz=ii;
++      }
++
++      /* compute all Y_ij = W_ij (V*_i)^-1 for a *fixed* j.
++       * To save memory, the block matrix consisting of the Y_ij
++       * is not stored. Instead, only a block column of this matrix
++       * is computed & used at each time: For each j, all nonzero
++       * Y_ij are computed in Yj and then used in the calculations
++       * involving S_jk and e_j.
++       * Recall that W_ij is cnp x pnp and (V*_i) is pnp x pnp
++       */
++      for(i=0; i<nnz; ++i){
++        /* set ptr3 to point to (V*_i)^-1, actual row number in rcsubs[i] */
++        ptr3=V + rcsubs[i]*Vsz;
++
++        /* set ptr1 to point to Y_ij, actual row number in rcsubs[i] */
++        ptr1=Yj + i*Ysz;
++        /* set ptr2 to point to W_ij resp. */
++        ptr2=W + idxij.val[rcidxs[i]]*Wsz;
++        /* compute W_ij (V*_i)^-1 and store it in Y_ij.
++         * Recall that only the lower triangle of (V*_i)^-1 is stored
++         */
++        for(ii=0; ii<cnp; ++ii){
++          ptr4=ptr2+ii*pnp;
++          for(jj=0; jj<pnp; ++jj){
++            for(k=0, sum=0.0; k<=jj; ++k)
++              sum+=ptr4[k]*ptr3[jj*pnp+k]; //ptr2[ii*pnp+k]*ptr3[jj*pnp+k];
++            for( ; k<pnp; ++k)
++              sum+=ptr4[k]*ptr3[k*pnp+jj]; //ptr2[ii*pnp+k]*ptr3[k*pnp+jj];
++            ptr1[ii*pnp+jj]=sum;
++          }
++        }
++      }
++
++      /* compute the UPPER TRIANGULAR PART of S */
++      for(k=j; k<m; ++k){ // j>=mcon
++        _dblzero(YWt, YWtsz); /* clear YWt */
++        for(i=0; i<nnz; ++i){
++          register double *pYWt;
++
++          /* find the min and max column indices of the elements in row i (actually rcsubs[i])
++           * and make sure that k falls within them. This test handles W_ik's which are
++           * certain to be zero without bothering to call sba_crsm_elmidx()
++           */
++          ii=idxij.colidx[idxij.rowptr[rcsubs[i]]];
++          jj=idxij.colidx[idxij.rowptr[rcsubs[i]+1]-1];
++          if(k<ii || k>jj) continue; /* W_ik == 0 */
++
++          /* set ptr2 to point to W_ik */
++          l=sba_crsm_elmidxp(&idxij, rcsubs[i], k, j, rcidxs[i]);
++          //l=sba_crsm_elmidx(&idxij, rcsubs[i], k);
++          if(l==-1) continue; /* W_ik == 0 */
++
++          ptr2=W + idxij.val[l]*Wsz;
++          /* set ptr1 to point to Y_ij, actual row number in rcsubs[i] */
++          ptr1=Yj + i*Ysz;
++          for(ii=0; ii<cnp; ++ii){
++            ptr3=ptr1+ii*pnp;
++            pYWt=YWt+ii*cnp;
++
++            for(jj=0; jj<cnp; ++jj){
++              ptr4=ptr2+jj*pnp;
++              for(l=0, sum=0.0; l<pnp; ++l)
++                sum+=ptr3[l]*ptr4[l]; //ptr1[ii*pnp+l]*ptr2[jj*pnp+l];
++              pYWt[jj]+=sum; //YWt[ii*cnp+jj]+=sum;
++            }
++          }
++        }
++    
++        /* since the linear system involving S is solved with lapack,
++         * it is preferable to store S in column major (i.e. fortran)
++         * order, so as to avoid unecessary transposing/copying.
++         */
++#if MAT_STORAGE==COLUMN_MAJOR
++        ptr2=S + (k-mcon)*mmconxUsz + (j-mcon)*cnp; // set ptr2 to point to the beginning of block j,k in S
++#else
++        ptr2=S + (j-mcon)*mmconxUsz + (k-mcon)*cnp; // set ptr2 to point to the beginning of block j,k in S
++#endif
++    
++        if(j!=k){ /* Kronecker */
++          for(ii=0; ii<cnp; ++ii, ptr2+=Sdim)
++            for(jj=0; jj<cnp; ++jj)
++              ptr2[jj]=
++#if MAT_STORAGE==COLUMN_MAJOR
++		                  -YWt[jj*cnp+ii];
++#else
++		                  -YWt[ii*cnp+jj];
++#endif
++        }
++        else{
++          ptr1=U + j*Usz; // set ptr1 to point to U_j
++
++          for(ii=0; ii<cnp; ++ii, ptr2+=Sdim)
++            for(jj=0; jj<cnp; ++jj)
++              ptr2[jj]=
++#if MAT_STORAGE==COLUMN_MAJOR
++		                  ptr1[jj*cnp+ii] - YWt[jj*cnp+ii];
++#else
++		                  ptr1[ii*cnp+jj] - YWt[ii*cnp+jj];
++#endif
++        }
++      }
++
++      /* copy the LOWER TRIANGULAR PART of S from the upper one */
++      for(k=mcon; k<j; ++k){
++#if MAT_STORAGE==COLUMN_MAJOR
++        ptr1=S + (k-mcon)*mmconxUsz + (j-mcon)*cnp; // set ptr1 to point to the beginning of block j,k in S
++        ptr2=S + (j-mcon)*mmconxUsz + (k-mcon)*cnp; // set ptr2 to point to the beginning of block k,j in S
++#else
++        ptr1=S + (j-mcon)*mmconxUsz + (k-mcon)*cnp; // set ptr1 to point to the beginning of block j,k in S
++        ptr2=S + (k-mcon)*mmconxUsz + (j-mcon)*cnp; // set ptr2 to point to the beginning of block k,j in S
++#endif
++        for(ii=0; ii<cnp; ++ii, ptr1+=Sdim)
++          for(jj=0, ptr3=ptr2+ii; jj<cnp; ++jj, ptr3+=Sdim)
++            ptr1[jj]=*ptr3;
++      }
++    }
++
++    for(i=0; i<Sdim*Sdim; ++i)
++      invcovA[i]=S[i];
++    // THIS IS THE END OF MODIFICATION 2010 MAY 18 (ayoung)
++  }
++
++  // ---------------------------------------------------------------------------------- //
+    /* free whatever was allocated */
+   free(W);   free(U);  free(V);
+   free(e);   free(eab);
+@@ -1409,9 +1771,12 @@ freemem_and_return: /* NOTE: this point 
+ #ifndef SBA_DESTROY_COVS
+   if(wght) free(wght);
+ #else
+-  /* nothing to do */
++  // NCB EDIT 1/19/2010 free weight there is a robust cost function 
++  if(covx==NULL && f_robust!=NULL) free(wght);
+ #endif /* SBA_DESTROY_COVS */
+ 
++
++
+   free(hx); free(diagUV); free(pdp);
+   if(fdj_data.hxx){ // cleanup
+     free(fdj_data.hxx);
+@@ -1684,7 +2049,7 @@ void *jac_adata;
+   if(covx==NULL)
+     p_eL2=nrmL2xmy(e, x, hx, nobs); /* e=x-hx, p_eL2=||e|| */
+   else
+-    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */
++    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis, NULL); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */ //NCB ADD NULL
+   if(verbose) printf("initial mot-SBA error %g [%g]\n", p_eL2, p_eL2/nvis);
+   init_p_eL2=p_eL2;
+   if(!SBA_FINITE(p_eL2)) stop=7;
+@@ -1856,7 +2221,7 @@ if(!(itno%100)){
+         if(covx==NULL)
+           pdp_eL2=nrmL2xmy(hx, x, hx, nobs); /* hx=x-hx, pdp_eL2=||hx|| */
+         else
+-          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis); /* hx=wght*(x-hx), pdp_eL2=||hx|| */
++          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis, NULL); /* hx=wght*(x-hx), pdp_eL2=||hx|| */ //NCB ADD NULL
+         if(!SBA_FINITE(pdp_eL2)){
+           if(verbose) /* identify the offending point projection */
+             sba_print_inf(hx, m, mnp, &idxij, rcidxs, rcsubs);
+@@ -2234,7 +2599,7 @@ void *jac_adata;
+   if(covx==NULL)
+     p_eL2=nrmL2xmy(e, x, hx, nobs); /* e=x-hx, p_eL2=||e|| */
+   else
+-    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */
++    p_eL2=nrmCxmy(e, x, hx, wght, mnp, nvis, NULL); /* e=wght*(x-hx), p_eL2=||e||=||x-hx||_Sigma^-1 */ //NCB ADD NULL
+   if(verbose) printf("initial str-SBA error %g [%g]\n", p_eL2, p_eL2/nvis);
+   init_p_eL2=p_eL2;
+   if(!SBA_FINITE(p_eL2)) stop=7;
+@@ -2406,7 +2771,7 @@ if(!(itno%100)){
+         if(covx==NULL)
+           pdp_eL2=nrmL2xmy(hx, x, hx, nobs); /* hx=x-hx, pdp_eL2=||hx|| */
+         else
+-          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis); /* hx=wght*(x-hx), pdp_eL2=||hx|| */
++          pdp_eL2=nrmCxmy(hx, x, hx, wght, mnp, nvis, NULL); /* hx=wght*(x-hx), pdp_eL2=||hx|| */ //NCB ADD NULL
+         if(!SBA_FINITE(pdp_eL2)){
+           if(verbose) /* identify the offending point projection */
+             sba_print_inf(hx, m, mnp, &idxij, rcidxs, rcsubs);
+diff -rupN sba-1.6/sba_levmar_wrap.c sba-1.6-perl/sba_levmar_wrap.c
+--- sba-1.6/sba_levmar_wrap.c	2009-08-20 08:22:24.000000000 -0400
++++ sba-1.6-perl/sba_levmar_wrap.c	2011-01-28 14:02:57.866129576 -0500
+@@ -679,7 +679,7 @@ static void (*fjac)(double *p, struct sb
+   wdata.adata=adata;
+ 
+   fjac=(projac)? sba_motstr_Qs_jac : sba_motstr_Qs_fdjac;
+-  retval=sba_motstr_levmar_x(n, ncon, m, mcon, vmask, p, cnp, pnp, x, covx, mnp, sba_motstr_Qs, fjac, &wdata, itmax, verbose, opts, info);
++  retval=sba_motstr_levmar_x(n, ncon, m, mcon, vmask, p, cnp, pnp, x, covx, mnp, sba_motstr_Qs, fjac, &wdata, itmax, verbose, opts, info , NULL, NULL);
+ 
+   if(info){
+     register int i;

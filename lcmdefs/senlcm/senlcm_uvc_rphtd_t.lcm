@@ -1,0 +1,10 @@
+package senlcm;
+
+struct uvc_rphtd_t
+{
+    int64_t utime;
+
+    double rph[3];   // rad
+    double T;        // C
+    double depth;    // depth from surface, meters
+}

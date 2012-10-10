@@ -1,0 +1,18 @@
+package perllcm;
+
+struct isam_glc_factor_t
+{
+    int64_t utime;
+    
+    int32_t np;            // number of poses
+    int64_t ids[np];       // id could be node number or utime
+
+    int32_t n;
+    double  x[n];
+    int32_t m;             // number of elements in U = n*(np*6)  or  U = n*(np*(6-1))
+    double  U[m];
+
+    int8_t is_root_shifted; 
+}
+
+

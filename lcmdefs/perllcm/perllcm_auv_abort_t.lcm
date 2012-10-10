@@ -1,0 +1,16 @@
+package perllcm;
+
+struct auv_abort_t
+{
+    int64_t utime;
+
+    int32_t dest;
+
+    // abort code
+    const int32_t ABORT_FALSE = 0,
+        ABORT_HARD = 1,
+        ABORT_TO_SURFACE = 2,
+        ABORT_TO_WAYPOINT = 3,
+        ABORT_TO_POS = 4;
+    int32_t abort;
+}

@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+CLASSPATH=@CLASSPATH@
+
+# directory of this script
+DIR=$(dirname $0)
+
+# follow any symbolic links we might be in
+DIR=$(readlink -f "$DIR")
+
+# add perls' jars to classpath
+if [ $DIR == $(readlink -f "@EXECUTABLE_OUTPUT_PATH@") ]; then
+    for JAR in @JAVA_OUTPUT_PATH@/*.jar; do
+        if [ "$JAR" != "@JAVA_OUTPUT_PATH@/*.jar" ]; then
+            CLASSPATH=$JAR:$CLASSPATH
+        fi
+    done
+elif [ $DIR == $(readlink -f "@EXECUTABLE_INSTALL_PATH@") ]; then
+    for JAR in @JAVA_INSTALL_PATH@/*.jar; do
+        if [ "$JAR" != "@JAVA_INSTALL_PATH@/*.jar" ]; then
+            CLASSPATH=$JAR:$CLASSPATH
+        fi
+    done
+else
+    echo "ERROR: path=`pwd` does not match @EXECUTABLE_OUTPUT_PATH@ or @EXECUTABLE_INSTALL_PATH@"
+    echo ""
+fi
+
+# show help if called incorrectly
+if [ $# -ne 1 ]; then
+    echo "Usage $(basename $0) <class>"
+    echo " where class is one of:"
+    for f in $(jar tf "@JAVA_OUTPUT_PATH@/hauv_pilot.jar"); do
+        echo $f | grep '\$' > /dev/null
+        if [ $? -ne 0 ]; then
+
+            echo $f | grep 'META-INF' > /dev/null
+            if [ $? -eq 0 ]; then
+                continue
+            fi
+
+            echo $f | grep 'MANIFEST.MF' > /dev/null
+            if [ $? -eq 0 ]; then
+                continue
+            fi
+
+            echo -n "  "
+            echo $(basename $f) | sed 's/\.class//'
+
+        fi
+    done
+    exit 1
+fi
+
+
+export CLASSPATH
+java "pilot_gui.$1"

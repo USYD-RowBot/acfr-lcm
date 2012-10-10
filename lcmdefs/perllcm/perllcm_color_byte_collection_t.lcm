@@ -1,0 +1,9 @@
+package perllcm;
+
+struct color_byte_collection_t
+{
+    int32_t n;
+    byte r[n];
+    byte g[n];
+    byte b[n];
+}

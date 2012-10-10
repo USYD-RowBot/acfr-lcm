@@ -1,0 +1,9 @@
+package senlcm;
+
+struct deltat_t
+{
+    int64_t utime;
+
+	int32_t count;
+
+}

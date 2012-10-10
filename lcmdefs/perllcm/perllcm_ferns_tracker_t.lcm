@@ -1,0 +1,15 @@
+package perllcm;
+
+struct ferns_tracker_t
+{
+    int64_t utime;
+    boolean found;
+
+    double  pose[6]; //[x,y,z,r,p,h] meters & radians
+
+    int32_t number_of_inliers;
+    int32_t number_of_corr;
+    double  rms_error;
+
+    double H[9];
+}

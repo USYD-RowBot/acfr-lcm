@@ -1,0 +1,16 @@
+package senlcm;
+
+struct smartbattery_t {
+	double temperature; 			// command 0x08, uint
+	double voltage;				// command 0x09, uint
+	double current;				// command 0x0A, int
+	double avg_current;			// command 0x0B, int
+	double remaining_capacity;		// command 0x0F, uint
+	double full_capacity;			// command 0x10, uint
+	int32_t charge_state;			// command 0x0D, uint
+	int32_t avg_tte;				// command 0x12, uint
+	int32_t	avg_ttf;				// command 0x13, uint
+	int32_t	serial_num;			// command 0x1C, uint
+	int32_t cycles;				// command 0x17, uint
+	//string status;				// command 0x16
+}

@@ -1,0 +1,19 @@
+package perllcm;
+
+struct isam_plink_t
+{
+    int64_t utime_i;
+    int64_t utime_j;
+
+    // relative pose prior between i and j
+    boolean  prior;
+    pose3d_t x_ji;
+
+    int32_t link_id;
+    
+    int32_t sensor_id;  // same as perllcm_isam_vlink
+                        // const int32_t SENSOR_ODOMETRY = 1;
+                        // const int32_t SENSOR_CAMERA   = 2;
+                        // const int32_t SENSOR_LASER    = 3;
+                        // const int32_t SENSOR_SONAR    = 4;
+}

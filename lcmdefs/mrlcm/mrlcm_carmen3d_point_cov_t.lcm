@@ -1,0 +1,13 @@
+package mrlcm;
+
+struct carmen3d_point_cov_t
+{
+	double x;
+    double xy;
+    double y;
+    double z;
+    double yaw;
+    double pitch;
+    double roll;
+    
+}

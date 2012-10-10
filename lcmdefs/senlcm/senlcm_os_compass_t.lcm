@@ -1,0 +1,16 @@
+package senlcm;
+
+struct os_compass_t
+{
+    int64_t utime;
+
+    double rph[3];   // rad
+    double T;        // C
+    double depth;    // depth from surface, meters
+    double p_volts;  // raw gage pressure, volts
+    double p_meas;   // raw gage pressure, pascals
+    double p_gage;   // corrected gage pressure, pascals,  p_gage = p_meas - p_o
+    double p_o;      // reference gage pressure at surface, pascals
+    double Mxyz[3];  // Magnetic field strength, Gauss
+    double Gxyz[3];  // Acceleration field, G's
+}

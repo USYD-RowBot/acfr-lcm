@@ -1,0 +1,32 @@
+package perllcm;
+
+struct auv_acomms_iver_state_t
+{
+    int64_t utime;
+
+    // vehicle state
+    position_t position;
+    double altitude;
+
+    // abort state
+    boolean abort_state;
+
+    // uvc messages
+    int32_t uvc_next_waypoint;
+    double uvc_dist_to_next_waypoint;
+    int32_t uvc_battery_percent;
+    const int32_t ERR_NONE = 0, 
+                ERR_OVER_PITCH = 1, 
+                ERR_EXCEED_TIME = 2, 
+                ERR_LEAK = 3, 
+                ERR_NO_FORWARD_PROG = 4, 
+                ERR_EXCEED_MAX_DEPTH = 5, 
+                ERR_NO_UPWARD_PROG = 6, 
+                ERR_TOW_FLOAT_ENGAGED = 7, 
+                ERR_SAFETY_RET_PATH = 8, 
+                ERR_DFS_UNCHANGED = 9, 
+                ERR_COMPASS_STOPPED = 10,
+                ERR_EXCEEDED_MIN_REQ_PWR = 11,
+                ERR_STOP_AND_TRANSMIT_IRIDIUM = 12;
+    int32_t  uvc_error;
+}

@@ -1,0 +1,14 @@
+package senlcm;
+
+struct ecopuck_t
+{
+    int64_t utime;
+
+	double cdom;
+	double chlorophyll;
+	double turbidity;
+	double temperature;
+}
+
+
+

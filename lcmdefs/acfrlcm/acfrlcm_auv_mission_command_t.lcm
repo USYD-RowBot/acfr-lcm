@@ -1,0 +1,39 @@
+package acfrlcm;
+
+		
+struct auv_mission_command_t
+{
+    int64_t utime;
+    
+    const int8_t ABORT = 0;
+    const int8_t GOTO = 1;
+    const int8_t PAUSE = 2;
+    const int8_t RESUME = 3;
+    const int8_t RUN = 4;
+    const int8_t LOAD = 5;
+    const int8_t USBL_PING = 6;
+    const int8_t USBL_FIX = 7;
+    const int8_t STOP = 8;
+    
+    int8_t message;
+    
+    const int8_t NETWORK = 0;
+    const int8_t LQ_MODEM = 1;
+    
+    int8_t source;
+    
+    const int8_t DEPTH_NONE = 0;
+    const int8_t DEPTH_DEPTH = 1;
+    const int8_t DEPTH_ALT = 2;
+    
+    int8_t depth_mode;
+    
+    double x;
+    double y;
+    double z;
+    double xy_vel;
+    double z_vel;
+    double heading;
+    double timeout;
+    string str;
+}

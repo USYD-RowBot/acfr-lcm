@@ -1,0 +1,26 @@
+package perllcm;
+
+struct ardrone_pid_t
+{
+    int64_t utime;      //timestamp when published
+
+    float x_pTerm;      //Calculated x direction proportional term
+    float x_iTerm;      //Calculated x direction integral term
+    float x_dTerm;      //Calculated x direction differential term
+    float x_pid;        //Calculated x direction PID output
+
+    float y_pTerm;      //Calculated y direction proportional term
+    float y_iTerm;      //Calculated y direction integral term
+    float y_dTerm;      //Calculated y direction differential term
+    float y_pid;        //Calculated y direction PID output
+    
+    float z_pTerm;      //Calculated z direction proportional term
+    float z_iTerm;      //Calculated z direction integral term
+    float z_dTerm;      //Calculated z direction differential term
+    float z_pid;        //Calculated z direction PID output
+
+    float h_pTerm;      //Calculated heading proportional term
+    float h_iTerm;      //Calculated heading integral term
+    float h_dTerm;      //Calculated heading differential term
+    float h_pid;        //Calculated heading PID output
+}

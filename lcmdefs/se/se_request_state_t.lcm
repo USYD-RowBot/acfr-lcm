@@ -1,0 +1,15 @@
+package se;
+
+struct request_state_t
+{
+    int32_t n;                    // Number of variables
+    int64_t variables[n];         // (e.g., utimes)
+    int16_t state_type;      
+
+    const int16_t POSE=1;           // return pose
+    const int16_t COV_FULL=2;       // full covariance matrix
+    const int16_t COV_BLOCK=4;      // block diagonal 
+    const int16_t COV_RIGHTCOL=8;   // right block column
+}
+
+

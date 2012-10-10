@@ -1,0 +1,6 @@
+macro (perlsx_gps)
+  perlsx_find_library (gps "on ubuntu `sudo apt-get install libgps-dev`" ${ARGN})
+  if (GPS_FOUND)
+    set (PERLSX_GPS ${GPS_LIBRARIES})
+  endif ()
+endmacro ()

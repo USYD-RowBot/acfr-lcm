@@ -1,0 +1,12 @@
+package perllcm;
+
+struct pvn_eview_map_neighborhood_t
+{
+
+    int64_t id;
+    pose3d_t pose;
+    
+    int32_t ne;
+    pvn_eview_map_exemplar_t exemplars[ne];
+    
+}

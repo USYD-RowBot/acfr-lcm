@@ -1,0 +1,48 @@
+package senlcm;
+
+/**
+ * @class senlcm_xbox_controller_t 
+ * @brief State of xbox controller
+ * @author Nick Carlevaris-Bianco - carlevar@umich.edu
+ */
+struct xbox_controller_t
+{
+    int64_t utime; //!<  timestamp when published
+    
+    // sticks
+    int32_t     l_stick_x;      //!< Left stick x axis -32767 to +32767
+    int32_t     l_stick_y;      //!< Left stick y axis -32767 to +32767
+    boolean     l_stick_btn;    //!< Left stick push button on/off
+    int32_t     r_stick_x;      //!< Right stick x axis -32767 to +32767
+    int32_t     r_stick_y;      //!< Right stick y axis -32767 to +32767
+    boolean     r_stick_btn;    //!< Right stick push button on/off
+    
+    // triggers (NOTE TRIGGERS ARE NOT 0 WHEN UNUSED THEY ARE -32767)
+    int32_t     l_trig;         //!< Left trigger -32767 to +32767 
+    int32_t     r_trig;         //!< Right trigger -32767 to +32767
+    
+    // bumpers
+    boolean     l_bump;         //!< Left bumper on/off
+    boolean     r_bump;         //!< Right bumper on/off
+    
+    // buttons
+    boolean     xbox_btn;       //!< Xbox center button on/off
+    boolean     back_btn;       //!< Back button on/off
+    boolean     start_btn;      //!< Start button on/off
+    boolean     a_btn;          //!< a (green) button on/off
+    boolean     b_btn;          //!< b (red) button on/off
+    boolean     x_btn;          //!< x (blue) button on/off
+    boolean     y_btn;          //!< y (yellow) button on/off
+    
+    //  D-pad
+    boolean     dpad_u;         //!< D-pad up button on/off
+    boolean     dpad_d;         //!< D-pad down button on/off
+    boolean     dpad_l;         //!< D-pad left button on/off
+    boolean     dpad_r;         //!< D-pad right button on/off
+    
+    const int32_t   AXIS_MAX = 32767;       //!< Maximum value for an axis (sticks and triggers)
+    const int32_t   AXIS_MIN = -32767;      //!< Minimum value for an axis (sticks and triggers)
+    const int32_t   STICK_NEUTRAL = 0;      //!< Neutral value for sticks
+    const int32_t   TRIG_NEUTRAL = -32767;  //!< Neutral value for triggers
+    
+}

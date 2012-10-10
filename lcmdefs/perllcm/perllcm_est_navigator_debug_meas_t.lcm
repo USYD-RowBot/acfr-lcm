@@ -1,0 +1,16 @@
+package perllcm;
+
+// structure with debuging information for navigator, if debugging is turned on
+// this is sent after every measurement correction
+
+struct est_navigator_debug_meas_t
+{
+    int64_t utime;
+    
+    string id_str;
+    int32_t meas_len;
+    double nu[meas_len];                           
+    double z[meas_len];
+    double nis;
+    int8_t mahal_innov_passed;
+}

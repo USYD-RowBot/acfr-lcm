@@ -1,0 +1,8 @@
+package perllcm;
+
+struct color_24bit_t
+{
+  int32_t rgba; // [R G B Reserved] = [8bit 8bit 8bit 8bit] = 32bit
+}
+
+

@@ -1,0 +1,12 @@
+package acfrlcm;
+
+struct auv_sirius_motor_status_t
+{
+    int64_t utime;
+	
+	int32_t thruster_num;
+	double rpm;
+	double voltage;
+	double current;	
+	double temp;
+}

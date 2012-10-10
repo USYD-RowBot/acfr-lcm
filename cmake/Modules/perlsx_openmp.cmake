@@ -1,0 +1,8 @@
+macro (perlsx_openmp)
+  perlsx_find_package (OpenMP "on ubuntu `sudo apt-get install libgomp1`" ${ARGN})
+  if (OPENMP_FOUND)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set (PERLSX_OPENMP)
+  endif ()
+endmacro ()

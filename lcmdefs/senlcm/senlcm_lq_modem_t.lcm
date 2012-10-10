@@ -1,0 +1,28 @@
+package senlcm;
+
+		
+struct lq_modem_t
+{
+    int64_t utime;
+    
+    // Fix information
+	double time;
+	double lat; // also used as x in a goto
+	double lon; // also used as y in a goto
+	double heading;
+	double roll;
+	double pitch;
+	double bearing; // also used as depth in a goto
+	double slantRange;
+	
+	// Ping counter
+	int32_t ping;
+	
+	// Message types
+	const int8_t FIX = 0;
+	const int8_t PING = 1;
+	const int8_t ABORT = 2;
+	const int8_t GOTO = 3;
+	
+	int8_t messageType;
+}

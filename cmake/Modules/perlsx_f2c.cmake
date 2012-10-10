@@ -1,0 +1,6 @@
+macro (perlsx_f2c)
+  perlsx_find_library (f2c "on ubuntu `sudo apt-get install libf2c2-dev`" ${ARGN})
+  if (F2C_FOUND)
+    set (PERLSX_F2C ${F2C_LIBRARIES})
+  endif ()
+endmacro ()

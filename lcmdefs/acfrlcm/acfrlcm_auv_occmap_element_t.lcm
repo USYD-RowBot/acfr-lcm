@@ -1,0 +1,13 @@
+package acfrlcm;
+
+struct auv_occmap_element_t
+{
+    
+    double x;
+    double y;
+    double z;
+    
+    double timestamp;
+    double votes;
+    
+}

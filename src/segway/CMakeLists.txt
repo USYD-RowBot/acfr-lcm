@@ -1,0 +1,6 @@
+perls_add_folder (driver "Build Segway driver?" ON)
+perls_add_folder (graph-manager "Build Segway graph manager process?" ON)
+perls_add_folder (position "Build Segway position process?" ON)
+perls_add_folder (segnav "Build Segway navigator process?" ON)
+perls_add_folder (start "Build start tool?" ON)
+perls_add_folder (xbox "Build Segway xbox joystick process?" ON)

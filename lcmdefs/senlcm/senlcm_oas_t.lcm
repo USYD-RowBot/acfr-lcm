@@ -1,0 +1,16 @@
+package senlcm;
+
+struct oas_t
+{
+    int64_t utime;
+
+    int64_t id;
+    double profRange;
+    double fProfRange;
+    double pseudoAlt;
+    double fPseudoAlt;
+    double pseudoFwdDistance;
+    double fPseudoFwdDistance;
+    int32_t dataPoints;
+    int8_t trace[dataPoints];
+}

@@ -1,0 +1,7 @@
+macro (perlsx_tiff)
+  perlsx_find_package (TIFF "on ubuntu `sudo apt-get install libtiff-dev`" ${ARGN})
+  if (TIFF_FOUND)
+    include_directories (${TIFF_INCLUDE_DIR})
+    set (PERLSX_TIFF ${TIFF_LIBRARIES})
+  endif ()
+endmacro ()

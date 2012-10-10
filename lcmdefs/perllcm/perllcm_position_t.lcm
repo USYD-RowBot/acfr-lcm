@@ -1,0 +1,11 @@
+package perllcm;
+
+struct position_t
+{
+    int64_t  utime;
+
+    double   xyzrph[6];                 //!< world frame pose
+    double   xyzrph_cov[36];
+        
+    double   xyzrph_dot[6];             //!< world frame velocities and rates    
+}

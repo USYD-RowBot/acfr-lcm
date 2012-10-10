@@ -1,0 +1,29 @@
+package perllcm;
+
+struct van_options_t
+{
+    boolean self;
+
+    // the following control on/off display of plots
+    boolean  vis_plot_features;
+    boolean  vis_plot_scene_prior;
+    boolean  vis_plot_put_corr;
+    boolean  vis_plot_search_ellipses;
+    boolean  vis_plot_in_and_out;
+    boolean  vis_plot_inliers;
+    boolean  vis_plot_summary;
+    boolean  vis_plot_relpose;
+    boolean  vis_plot_3pts;
+    boolean  vis_plot_relpose_3pts;
+    boolean  vis_plot_waitkey;
+    boolean  vis_use_saliency;
+
+    // option to change # link hypothesis
+    int32_t  n_plinks;
+
+    // check corr manually?
+    boolean manual_corr;
+
+    // mahal. dist based link proposal
+    boolean mdist_plink;
+}

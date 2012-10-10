@@ -1,0 +1,9 @@
+package perllcm;
+
+struct pose3d_collection_t
+{
+    int64_t   utime;
+
+    int32_t   npose;
+    pose3d_t  pose[npose];
+}

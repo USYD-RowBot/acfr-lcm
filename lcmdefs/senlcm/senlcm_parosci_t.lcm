@@ -1,0 +1,9 @@
+package senlcm;
+
+struct parosci_t
+{
+    int64_t utime;
+	
+	double raw;
+	double depth;
+}

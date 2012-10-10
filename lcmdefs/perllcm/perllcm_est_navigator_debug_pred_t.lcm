@@ -1,0 +1,11 @@
+package perllcm;
+
+// structure with debuging information for navigator, if debugging is turned on
+// this is sent after every prediction
+
+struct est_navigator_debug_pred_t
+{
+    int64_t utime;
+    
+    double dt;                    
+}

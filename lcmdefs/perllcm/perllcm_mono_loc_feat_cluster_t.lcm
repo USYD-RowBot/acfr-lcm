@@ -1,0 +1,15 @@
+package perllcm;
+
+struct mono_loc_feat_cluster_t
+{
+    // each cluster is a collection of visual features
+    int64_t num_feats;            
+    mono_loc_feat_t feats[num_feats];
+    
+    // mean X Y Z position of cluster in the map coordinate frame
+    double mean_X[3];
+    
+    // mean azimuth angle between features in cluster and camera from which they were observed
+    double mean_view_aiz;
+   
+}

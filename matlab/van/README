@@ -1,0 +1,42 @@
+THE AUTHOR MAKES NO REPRESENTATIONS OR WARRANTIES OF ANY KIND
+CONCERNING THIS SOFTWARE.
+
+Third Party Credit:
+
+Functions not soley written by the author, but included in the
+distribution for completeness include:
+
+* fcns_navll - Dana Yoerger (orig)
+
+* fcns_vtk, fcns_headingBias - Oscar Pizarro
+
+* Some of the epipolar functions, see individual header files for
+  details - O. Pizarro / R. Eustice jointly developed
+
+* fcns_toolboxes - third party software from Matlab Central File Exchange
+
+
+To Run Code:
+
+0) you need the following Matlab Toolboxes installed:
+image_toolbox
+optimization_toolbox
+statistics_toolbox
+
+launch matlab w/o gui
+matlab -nodesktop
+
+1) add this ROOT LEVEL and all sub-directories to MATLAB's path
+>> addpath(genpath(pwd));
+
+2) run the appropriate configuration script found in config_files
+>> config_demo
+
+3) run the data initalization script
+>> processLoad
+
+4) initalize data arrays
+>> processInit
+
+5) run the process nav script
+>> processLoop

@@ -1,0 +1,7 @@
+macro (perlsx_opengl)
+  perlsx_find_package (OpenGL "on ubuntu `sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev`" ${ARGN})
+  if (OPENGL_FOUND)
+    include_directories (${OPENGL_INCLUDE_DIR})
+    set (PERLSX_OPENGL ${OPENGL_LIBRARIES})
+  endif ()
+endmacro ()

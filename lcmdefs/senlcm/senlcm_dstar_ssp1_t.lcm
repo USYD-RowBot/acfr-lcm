@@ -1,0 +1,11 @@
+package senlcm;
+
+struct dstar_ssp1_t
+{
+    int64_t utime;
+    double  p_abs;        // pascals
+    double  p_gage;       // pascals, p_gage = p_abs - p_atm
+    double  p_atm;        // pascals
+    double  depth;        // meters
+    double  temperature;  // celsius
+}

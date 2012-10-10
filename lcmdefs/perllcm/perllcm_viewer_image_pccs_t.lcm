@@ -1,0 +1,19 @@
+package perllcm;
+
+struct viewer_image_pccs_t {
+
+    int64_t utime;
+    
+    int32_t num_corrs;
+    float u[num_corrs];         // feature positions from this image
+    float v[num_corrs];         // feature positions from this image
+    float up[num_corrs];        // feature positions projected into this image 
+    float vp[num_corrs];        // feature positions projected into this image
+    
+    int32_t num_covp;           // should be same as num_corrs or 0;
+    float covp[num_covp][4];    // covariance ellipse of projected points
+    
+    int32_t type;
+    const int32_t TYPE_PUTATIVE         = 0;     // putative
+    const int32_t TYPE_INLIER           = 1;     // inlier
+}

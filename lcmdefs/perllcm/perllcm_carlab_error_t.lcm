@@ -1,0 +1,14 @@
+package perllcm;
+
+struct carlab_error_t
+{
+    int32_t error_type;
+    int64_t error_timestamp;
+    int32_t error_code;
+    string  error_description;
+
+    const int32_t TYPE_WARNING              = 0;
+    const int32_t TYPE_SERIOUS_LEVEL_1      = 1;
+    const int32_t TYPE_SERIOUS_LEVEL_2      = 2;
+    const int32_t TYPE_CATASTROPHIC         = 3;
+}

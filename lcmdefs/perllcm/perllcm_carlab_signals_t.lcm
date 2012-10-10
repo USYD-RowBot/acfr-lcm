@@ -1,0 +1,22 @@
+package perllcm;
+
+struct carlab_signals_t
+{
+    int64_t  utime;
+
+    int32_t  turn_signal;
+    boolean  horn_on;
+    int32_t  headlights;
+    boolean  highbeams_on;
+    boolean  foglights_on;
+
+
+    const int32_t TURN_SIGNAL_OFF       = 0;
+    const int32_t TURN_SIGNAL_LEFT      = 1;
+    const int32_t TURN_SIGNAL_RIGHT     = 2;
+    const int32_t TURN_SIGNAL_HAZARD    = 3;
+
+    const int32_t HEADLIGHTS_OFF        = 0;
+    const int32_t HEADLIGHTS_PARKING    = 1;
+    const int32_t HEADLIGHTS_ON         = 2;
+}

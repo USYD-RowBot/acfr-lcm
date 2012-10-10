@@ -1,0 +1,12 @@
+package perllcm;
+
+struct ardrone_drive_t
+{
+    int64_t utime;		//timestamp when published    
+
+    float vx;			//Translational x velocity (-1 to 1)
+    float vy;			//Translational y velocity (-1 to 1)
+    float vz;			//Translational z velocity (-1 to 1)
+    float vr;			//Rotational velocity (-1 to 1)
+    
+}

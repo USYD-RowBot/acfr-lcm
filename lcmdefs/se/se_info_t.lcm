@@ -1,0 +1,7 @@
+package se;
+
+struct info_t
+{
+    string key;
+    string data;
+}

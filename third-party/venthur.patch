@@ -1,0 +1,170 @@
+diff -b -crB venthur_drone/arnetwork.py ../../sandbox/third-party/venthur_drone/arnetwork.py
+*** venthur_drone/arnetwork.py	2011-04-20 11:01:27.000000000 -0400
+--- ../../sandbox/third-party/venthur_drone/arnetwork.py	2012-05-14 15:22:03.116421000 -0400
+***************
+*** 27,37 ****
+--- 27,51 ----
+  import socket
+  import threading
+  import multiprocessing
++ import time
++ import os
++ import sys
+  
+  import libardrone
+  import arvideo
+  
+  
++ # useful paths
++ SCRIPT_PATH             = os.path.dirname(__file__)
++ SCRIPT_NAME             = os.path.basename(sys.argv[0])
++ PATH_TO_PERLS           = os.path.join(SCRIPT_PATH, '..', '..')
++ PATH_TO_PYTHON_LCMTYPES = os.path.join(PATH_TO_PERLS, 'build','lib','python2.6','dist-packages','perls', 'lcmtypes')
++ 
++ sys.path.append (PATH_TO_PYTHON_LCMTYPES)
++ import lcm
++ import perllcm
++ import bot_core
++ 
+  class ARDroneNetworkProcess(multiprocessing.Process):
+      """ARDrone Network Process.
+  
+***************
+*** 39,49 ****
+      data and sends it to the IPCThread.
+      """
+  
+!     def __init__(self, nav_pipe, video_pipe, com_pipe):
+          multiprocessing.Process.__init__(self)
+          self.nav_pipe = nav_pipe
+          self.video_pipe = video_pipe
+          self.com_pipe = com_pipe
+  
+      def run(self):
+          video_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+--- 53,65 ----
+      data and sends it to the IPCThread.
+      """
+  
+!     def __init__(self, nav_pipe, video_pipe, com_pipe, utime_pipe):
+          multiprocessing.Process.__init__(self)
+          self.nav_pipe = nav_pipe
+          self.video_pipe = video_pipe
+          self.com_pipe = com_pipe
++ 	self.utime_pipe = utime_pipe
++         self.lc = lcm.LCM()
+  
+      def run(self):
+          video_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+***************
+*** 56,61 ****
+--- 72,79 ----
+          nav_socket.bind(('', libardrone.ARDRONE_NAVDATA_PORT))
+          nav_socket.sendto("\x01\x00\x00\x00", ('192.168.1.1', libardrone.ARDRONE_NAVDATA_PORT))
+  
++         sync = bot_core.image_sync_t ()
++ 
+          stopping = False
+          while not stopping:
+              inputready, outputready, exceptready = select.select([nav_socket, video_socket, self.com_pipe], [], [])
+***************
+*** 64,75 ****
+--- 82,97 ----
+                      while 1:
+                          try:
+                              data = video_socket.recv(65535)
++ 			    utime = int(time.time()*1e6)
++                             sync.utime = utime
++                             self.lc.publish ('ARDRONE_SYNC', sync.encode())
+                          except IOError:
+                              # we consumed every packet from the socket and
+                              # continue with the last one
+                              break
+                      w, h, image, t = arvideo.read_picture(data)
+                      self.video_pipe.send(image)
++ 		    self.utime_pipe.send(utime)
+                  elif i == nav_socket:
+                      while 1:
+                          try:
+***************
+*** 107,113 ****
+--- 129,138 ----
+                  if i == self.drone.video_pipe:
+                      while self.drone.video_pipe.poll():
+                          image = self.drone.video_pipe.recv()
++ 			utime = self.drone.utime_pipe.recv()
+                      self.drone.image = image
++ 		    self.drone.utime = utime
++ 
+                  elif i == self.drone.nav_pipe:
+                      while self.drone.nav_pipe.poll():
+                          navdata = self.drone.nav_pipe.recv()
+diff -b -crB venthur_drone/libardrone.py ../../sandbox/third-party/venthur_drone/libardrone.py
+*** venthur_drone/libardrone.py	2011-04-20 11:01:27.000000000 -0400
+--- ../../sandbox/third-party/venthur_drone/libardrone.py	2012-05-10 17:42:54.023883000 -0400
+***************
+*** 52,58 ****
+  
+      def __init__(self):
+          self.seq_nr = 1
+!         self.timer_t = 0.2
+          self.com_watchdog_timer = threading.Timer(self.timer_t, self.commwdg)
+          self.lock = threading.Lock()
+          self.speed = 0.2
+--- 52,58 ----
+  
+      def __init__(self):
+          self.seq_nr = 1
+!         self.timer_t = 0.05
+          self.com_watchdog_timer = threading.Timer(self.timer_t, self.commwdg)
+          self.lock = threading.Lock()
+          self.speed = 0.2
+***************
+*** 60,70 ****
+          self.video_pipe, video_pipe_other = multiprocessing.Pipe()
+          self.nav_pipe, nav_pipe_other = multiprocessing.Pipe()
+          self.com_pipe, com_pipe_other = multiprocessing.Pipe()
+!         self.network_process = arnetwork.ARDroneNetworkProcess(nav_pipe_other, video_pipe_other, com_pipe_other)
+          self.network_process.start()
+          self.ipc_thread = arnetwork.IPCThread(self)
+          self.ipc_thread.start()
+          self.image = ""
+          self.navdata = dict()
+          self.time = 0
+  
+--- 60,72 ----
+          self.video_pipe, video_pipe_other = multiprocessing.Pipe()
+          self.nav_pipe, nav_pipe_other = multiprocessing.Pipe()
+          self.com_pipe, com_pipe_other = multiprocessing.Pipe()
+!         self.utime_pipe, utime_pipe_other = multiprocessing.Pipe()
+!         self.network_process = arnetwork.ARDroneNetworkProcess(nav_pipe_other, video_pipe_other, com_pipe_other, utime_pipe_other)
+          self.network_process.start()
+          self.ipc_thread = arnetwork.IPCThread(self)
+          self.ipc_thread.start()
+          self.image = ""
++         self.utime = 0
+          self.navdata = dict()
+          self.time = 0
+  
+***************
+*** 82,87 ****
+--- 84,92 ----
+          """Make the drone hover."""
+          self.at(at_pcmd, False, 0, 0, 0, 0)
+  
++     def move(self,vy,vx,vz,vr):
++         self.at(at_pcmd, True, vy, vx, vz, vr)
++ 
+      def move_left(self):
+          """Make the drone move left."""
+          self.at(at_pcmd, True, -self.speed, 0, 0, 0)
+***************
+*** 305,310 ****
+--- 310,316 ----
+          elif type(p) == str:
+              param_str += ',"'+p+'"'
+      msg = "AT*%s=%i%s\r" % (command, seq, param_str)
++     print msg
+      sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+      sock.sendto(msg, ("192.168.1.1", ARDRONE_COMMAND_PORT))
+  

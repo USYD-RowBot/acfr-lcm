@@ -1,0 +1,21 @@
+package perllcm;
+
+struct ardrone_state_t
+{
+
+    int64_t utime;
+	
+    //State
+    float pitch;			// radians		
+    float yaw;				// radians
+    float roll;				// radians
+    float altitude;			// meters
+    float vx; 				// meters / sec 
+    float vy;				// meters / sec 
+    float vz;				// meters / sec
+    float battery;          // percent
+
+    boolean flying;    
+    boolean coms;           // true:coms OK false:coms lost    
+}
+

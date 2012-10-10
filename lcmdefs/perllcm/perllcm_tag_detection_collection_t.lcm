@@ -1,0 +1,9 @@
+package perllcm;
+
+struct tag_detection_collection_t
+{
+    int64_t utime;
+
+    int32_t ndetections;
+    tag_detection_t detections[ndetections];
+}

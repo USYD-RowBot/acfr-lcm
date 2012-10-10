@@ -1,0 +1,7 @@
+package perllcm;
+
+struct van_plink_collection_t
+{
+    int32_t nlinks;
+    van_plink_t plink[nlinks];
+}

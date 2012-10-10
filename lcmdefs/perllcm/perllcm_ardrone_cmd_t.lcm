@@ -1,0 +1,17 @@
+package perllcm;
+
+struct ardrone_cmd_t
+{
+
+    int64_t utime;            //timestamp when published
+
+    boolean takeoff;          //takeoff command
+    boolean hover;            //hover command
+    boolean camera;           //switch cameras
+    boolean emergency;        //emergency command (also reset)
+    
+    boolean controller;       //toggle controller (true = PID)
+    boolean auth_follow;
+    boolean auth_land;
+    int32_t change_speed;     //increase(1) or decrease(-1) max speed
+}

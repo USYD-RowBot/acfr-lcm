@@ -1,0 +1,89 @@
+diff -rupN gpsd-2.92/driver_nmea.c gpsd-2.92-patched/driver_nmea.c
+--- gpsd-2.92/driver_nmea.c	2010-01-06 12:46:07.000000000 -0500
++++ gpsd-2.92-patched/driver_nmea.c	2011-08-02 23:18:07.713859657 -0400
+@@ -200,6 +200,23 @@ static gps_mask_t processGPRMC(int count
+ 	    session->gpsdata.fix.mode = MODE_2D;
+ 	    mask |= MODE_SET;
+ 	}
++
++        /************** PeRL PATCH 25-MAY-2011 **************/
++        /****************************************************/
++        static int found_ppsboard = 0;
++        if (session->driver.nmea.date.tm_year == 100)
++            found_ppsboard = 1;
++
++        if (found_ppsboard) {
++            struct tm tm;
++            time_t unixtime = time(NULL);
++            gmtime_r(&unixtime, &tm);
++            session->driver.nmea.date.tm_year = tm.tm_year;
++            session->driver.nmea.date.tm_mon  = tm.tm_mon;
++            session->driver.nmea.date.tm_mday = tm.tm_mday;
++	    gpsd_report(LOG_WARN, "PPSBOARD GPRMC patch\n");
++        }
++        /****************************************************/
+     }
+ 
+     gpsd_report(LOG_DATA, 
+@@ -216,6 +233,7 @@ static gps_mask_t processGPRMC(int count
+     return mask;
+ }
+ 
++
+ static gps_mask_t processGPGLL(int count, char *field[], struct gps_device_t *session)
+ /* Geographic position - Latitude, Longitude */
+ {
+@@ -286,6 +304,23 @@ static gps_mask_t processGPGLL(int count
+ 	}
+ 	session->gpsdata.status = newstatus;
+ 	mask |= STATUS_SET;
++
++        /************** PeRL PATCH 02-AUG-2011 **************/
++        /****************************************************/
++        static int found_ppsboard = 0;
++        if (session->driver.nmea.date.tm_year == 0)
++            found_ppsboard = 1;
++
++        if (found_ppsboard) {
++            struct tm tm;
++            time_t unixtime = time(NULL);
++            gmtime_r(&unixtime, &tm);
++            session->driver.nmea.date.tm_year = tm.tm_year;
++            session->driver.nmea.date.tm_mon  = tm.tm_mon;
++            session->driver.nmea.date.tm_mday = tm.tm_mday;
++	    gpsd_report(LOG_WARN, "PPSBOARD GPGLL patch\n");
++        }
++        /****************************************************/
+     }
+ 
+     gpsd_report(LOG_DATA, 
+@@ -299,6 +334,7 @@ static gps_mask_t processGPGLL(int count
+     return mask;
+ }
+ 
++
+ static gps_mask_t processGPGGA(int c UNUSED, char *field[], struct gps_device_t *session)
+ /* Global Positioning System Fix Data */
+ {
+@@ -947,7 +983,7 @@ gps_mask_t nmea_parse(char *sentence, st
+     /* discard the checksum part */
+     for (p = (char *)session->driver.nmea.fieldcopy; (*p!='*') && (*p >=' '); ) 
+ 	++p;
+-    if (*p == '*')
++    if (*p == '*' || *p == '\r' || *p == '\n')
+ 	*p++ = ',';	/* otherwise we drop the last field */
+     *p = '\0';
+     e = p;
+diff -rupN gpsd-2.92/libgpsd_core.c gpsd-2.92-patched/libgpsd_core.c
+--- gpsd-2.92/libgpsd_core.c	2010-01-12 14:22:50.000000000 -0500
++++ gpsd-2.92-patched/libgpsd_core.c	2011-08-02 14:30:57.545754674 -0400
+@@ -201,7 +201,8 @@ static /*@null@*/void *gpsd_ppsmonitor(v
+ 	    (unsigned long)tv.tv_sec, (unsigned long)tv.tv_usec);
+ 
+ 	/*@ +boolint @*/
+-	if ( 3 < session->context->fixcnt ) {
++	if ( 3 < session->context->fixcnt &&
++         (session->gpsdata.fix.time + 10) > timestamp() ) {
+ 	    /* Garmin doc says PPS is valid after four good fixes. */
+ 	    /*
+ 	     * The PPS pulse is normally a short pulse with a frequency of

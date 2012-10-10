@@ -1,0 +1,25 @@
+package perllcm;
+
+struct isam_return_state_t
+{
+    int32_t requester;                // perllcm_isam_vlink_t sensor id
+
+    int64_t utime;
+    int32_t n;
+    int64_t timestamps[n];
+
+    int32_t k;
+    double mu[k][6];
+
+
+    int32_t m;
+    double covariance[m];
+    int16_t state_type;      
+
+    // Look at perllcm_isam_request_state_t
+    //const int16_t POSE=1;           // return pose
+    //const int16_t COV_FULL=2;       // full covariance matrix
+    //const int16_t COV_BLOCK=4;      // block diagonal 
+    //const int16_t COV_RIGHTCOL=8;   // right block column
+}
+

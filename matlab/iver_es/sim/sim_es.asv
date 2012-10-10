@@ -1,0 +1,425 @@
+function data = sim_es(botType, cont, dive)
+close all
+if ~exist('cont', 'var')
+    cont = 'on';
+end
+if ~exist('dive', 'var')
+    dive = 'off';
+end
+
+global iver map state horizon control
+map.res = 0.01;
+map.botType = botType;
+map.dive = dive;
+map.x = [];
+map.bottom = [];
+map.gridRes = 0.5;
+map.xPlot = [];
+map.bottomPlot = [];
+
+iver.res = map.res;
+iver.radius = 0.075; % m
+iver.noseLength = 0.41; % m
+iver.bodyLength = 1.22; % m
+iver.tailLength = 0.47; % m
+iver.dvl2es = 0.3; % m
+iver.dvlAngle = 30*cosd(45); % deg
+iver.esAngle = 6; % deg
+iver.esRangeMax = 50; % m
+iver.stabAngle = 2.5; % deg
+iver.maxRate = 10; % deg/s
+iver.maxAngle = 25; % deg
+iver.goalAlt = 3; % m
+iver.warnAlt = 2; % m
+iver.Kp = 50; 
+iver.Ki = 0.1; 
+iver.Kd = 1;
+iver.errProp = 0; 
+iver.errInt = 0;
+iver.esFreq = 1/3;
+
+state.x = [];
+state.depth = [];
+state.speed(3) = 1; % m/s
+state.alt = [];
+state.heading(3) = 0;
+state.altMod = [];
+state.altDiff = [];
+state.pitch(3) = 0;
+state.dPitch(3) = 0;
+state.goalPitch(3) = 0;
+state.range(3) = 0;
+state.predRange(3) = 0;
+state.slopeDvl(3) = 0;
+state.slopeEs(3) = 0;
+state.slopeControl(3) = 0;
+
+horizon.offset = 0.5;
+horizon.depth = zeros(1,50);
+horizon.good = -1*ones(1,50);
+horizon.slope.slope = 0;
+horizon.slope.index = 0;
+
+control.cont = cont;
+control.abort = 0;
+control.loopAround = 0;
+control.dangerCoords = [0 0];
+control.altModConst = 0;
+control.altModFloat = 0;
+
+[n start] = createBottom();
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%% Allocates Space %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+finish = 55;
+iStart = floor(start/map.res); iFinish = floor(n-(finish/map.res));
+elapsed = 0;
+counter = 4;
+state.x(3) = map.x(iStart-ceil(0.1/map.res));
+state.alt(3) = state.depth(3) + 100;
+state.altMod(3) = state.alt(3);
+state.altDiff(3)  = state.alt(3) - iver.goalAlt;
+rise = [0 0 0]; run = rise;
+
+dx = ceil((0.1/map.res)*cosd(state.pitch(1))*cosd(state.heading(1)));
+clear botType cont dive finish start n
+tic
+%% %%%%%%%%%%%%%%%%%%%%%%%%%% Runs Simulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+for i = iStart:dx:iFinish
+    state.x(counter) = map.x(i);
+    state.depth(counter) = state.depth(counter-1) + ...
+        0.1*sind(state.pitch(counter-1)+iver.stabAngle);
+    
+    dvlInd = findAlt(counter, i);
+    rri = mod(counter-1,3) + 1;
+    [rise(rri) run(rri)]  = simDvlBottom(counter, dvlInd);
+        
+    if mod(counter, floor(1/iver.esFreq))
+        predictRange(counter, rise, run);
+        findRange(counter, i);
+        simEsBottom(counter);
+        dist = state.x(counter) - state.x(counter- floor(1/iver.esFreq));
+        updateHorizon(dist);
+        if strcmp(cont, 'on')
+            control = altModulation(control, horizon, depth(i), alt(i));
+        end
+        useful3Hz(end+1) = i;
+        i3Hz = i;
+%     else
+%         predRange(i) = predRange(i3Hz);
+%         range(i) = range(i3Hz);
+%         slopeEs(i) = slopeEs(i3Hz);
+    end
+    altMod(i) = alt(i) - control.altModConst - control.altModFloat;
+    [pitch(i), dPitch(i), goalPitch(i), errProp, errInt] = ...
+        getpitch(pitch(i10Hz), errInt, errProp, altMod(i), goalAlt);
+    i10Hz = i;
+    if ~mod(i,3)
+        plotIver(alt(i), goalAlt, depth(i), pitch(i), range(i), dvlInd, ...
+            xScale, bottomY, i, res, slopeDvl(i), slopeEs(i), ...
+            predRange(i), horizon, elapsed);
+    end
+    elapsed = elapsed + 0.1;
+    dx = ceil((0.1/map.res)*cosd(state.pitch(counter))*...
+        cosd(state.heading(counter)));
+    if alt(i) <= 0 || control.abort == 1 || control.prevWaypoint ==1
+        break
+    end
+end
+realTime=toc;
+disp(['Sim Rate = ', num2str(elapsed/realTime)])
+%% %%%%%%%%%%%%%%%%%%% Parse useful data into struct %%%%%%%%%%%%%%%%%%%%%%
+data = parseData(useful10Hz, useful3Hz, xScale, bottomY, ...
+    alt, diffAlt, depth, pitch, dPitch, goalPitch, range, slopeDvl, ...
+    predRange, slopeEs, altMod);
+
+%% %%%%%%%%%%%%%% Plots of applicabale Data After Simulation %%%%%%%%%%%%%%
+plotResults(data)
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                            SUB-FUNCTIONS                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% %%%%%%%%%%%%%%%%%%%%%%%% Finds Alt Modulation Value %%%%%%%%%%%%%%%%%%%%
+function control = altModulation(control, horizon, depth, alt)
+maxPitch = 25;
+maxSlope = tand(maxPitch);
+    control.altModFloat = 0;
+if horizon.slope.slopeControl > maxSlope && ...
+        horizon.slope.indexControl < 10;
+    control.abort = 1;
+    disp('ABORT!')
+elseif horizon.slope.slopeControl > maxSlope
+    control.loopAround = 1;
+%     control.altModConst = control.altModConst + 2;
+    disp('Turn Around');
+elseif horizon.slope.indexControl == 0
+    return
+% elseif horizon.slope.indexControl < 15 && ...
+%         horizon.depth(horizon.slope.indexControl) > (depth - alt) + 2;
+%     control.altModFloat = alt - 2;
+elseif horizon.slope.indexControl < 25 && ...
+        horizon.depth(horizon.slope.indexControl) > (depth - alt) + 2;
+    dx = 10/horizon.slope.indexControl;
+    control.altModFloat = min((alt - 2)*dx, (alt - 2));
+%     disp([((alt-2)*dx) (alt -2) control.altModFloat])
+end
+end
+
+%% %%%%%%%%%%%%%%%%%%%%%%%% Finds the pitch %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [pitch dPitch, goalPitch, errProp, errInt] = ...
+    getpitch(lastPitch, lastErrInt, lastErrProp, alt, goalAlt)
+errProp = goalAlt - alt;
+errDir = errProp - lastErrProp;
+errInt = errProp + lastErrInt;
+
+if Ki*errInt < -15
+    errInt = -15/Ki;
+elseif Ki*errInt > 15
+    errInt = 15/Ki;
+end
+
+goalPitch = Kp*errProp + Ki*errInt + Kd*errDir;
+rate = goalPitch - lastPitch;
+
+if rate < -maxRate
+    rate = -maxRate;
+elseif rate > maxRate 
+    rate = maxRate;
+end
+
+dPitch = 0.1*rate;
+pitch = lastPitch + dPitch + 0.2*randn(1);
+
+if pitch < -maxAngle
+    pitch = -maxAngle - rand(1);
+elseif pitch > maxAngle
+    pitch = maxAngle + rand(1);
+end
+end
+
+%% %%%%%%%%%%%%%%%%%%%% Creates plot information %%%%%%%%%%%%%%%%%%%%%%%%%
+function plotIver(alt, goalAlt, depth, pitch, range, dvlInd, x, y, ii, ...
+    slopeDvl, slopeEs, predRange, horizon, elapsed)
+global map
+xIver = x(ii);  dvlAngle = 30*cosd(45);
+radius = 0.075; noseLength = 0.41; bodyLength = 1.22; tailLength = 0.47; 
+dvl2es = 0.3;
+iS = max([1, ;floor(ii-((5/map.res)))]);
+% iE = min([floor(ii+(25/map.res)), size(x,2)]);
+iE = min([floor(ii+(53/map.res)), size(x,2)]);
+% Creates bottom
+track = x(iS:iE); bottom = y(iS:iE);
+% Creates DVL Planar bottom
+dvlXAft = xIver-dvlInd(2)*map.res*sind(dvlAngle-pitch);
+dvlYAft = depth-dvlInd(2)*map.res*cosd(dvlAngle-pitch);
+bottomDvlX = [x(iS) x(iE)];
+bottomDvlY = dvlYAft + slopeDvl*[(x(iS)-dvlXAft) (x(iE)-dvlXAft)];
+% Creates ES Planar bottom
+if slopeEs < 0
+    bottomEsX = xIver;
+    bottomEsY = depth - alt;
+    esMarkerType = 'y*';
+else
+    bottomEsX = [x(iS) x(iE)];
+    bottomEsY = dvlYAft + slopeEs*[(x(iS)-xIver) (x(iE)-xIver)];
+    esMarkerType = 'y:';
+end
+if horizon.slope.slopePlanar < 0
+    horizonXP = xIver;
+   horizonYP = depth - alt;
+    horPMarkerType = 'b*';
+else
+    horizonXP = [x(iS) x(iE)];
+    horizonYP = dvlYAft + horizon.slope.slopePlanar*...
+        [(x(iS)-xIver) (x(iE)-xIver)];
+    horPMarkerType = 'b-.';
+end
+if horizon.slope.slopeControl < 0
+    horizonXC = xIver;
+   horizonYC = depth - 2;
+    horCMarkerType = 'm*';
+else
+    horizonXC = [x(iS) x(iE)];
+    horizonYC = (depth - 2) + horizon.slope.slopeControl*...
+        [(x(iS)-xIver) (x(iE)-xIver)];
+    horCMarkerType = 'm--';
+end
+% Creates nose
+nose(1,1) = xIver + dvl2es*cosd(pitch);
+nose(1,2) = xIver + dvl2es*cosd(pitch) - 2*radius*sind(pitch);
+nose(1,3) = nose(1,2) - noseLength*cosd(pitch);
+nose(1,4) = nose(1,1) - noseLength*cosd(pitch);
+nose(1,5) = nose(1,1);
+nose(2,1) = depth + dvl2es*sind(pitch);
+nose(2,2) = depth + dvl2es*sind(pitch) + 2*radius*cosd(pitch);
+nose(2,3) = depth + (dvl2es-noseLength)*sind(pitch) + ...
+    2*radius*cosd(pitch);
+nose(2,4) = depth + (dvl2es-noseLength)*sind(pitch);
+nose(2,5) = nose(2,1);
+% Creates body
+body(:,1) = nose(:,4); body(:,2) = nose(:,3); body(:,5) = body(:,1);
+body(1,3) = body(1,2) - bodyLength*cosd(pitch);
+body(1,4) = body(1,1) - bodyLength*cosd(pitch);
+body(2,3) = depth + (dvl2es-(noseLength+bodyLength))*sind(pitch) ...
+    + 2*radius*cosd(pitch);
+body(2,4) = depth + (dvl2es-(noseLength+bodyLength))*sind(pitch);
+% Creates Tail
+tail(:,1) = body(:,4); tail(:,2) = body(:,3); tail(:,5) = tail(:,1);
+tail(1,3) = tail(1,2) - tailLength*cosd(pitch);
+tail(1,4) = tail(1,1) - tailLength*cosd(pitch);
+tail(2,3) = depth + ...
+    (dvl2es-(noseLength+bodyLength+tailLength))*sind(pitch) + ...
+    2*radius*cosd(pitch);
+tail(2,4) = depth + ...
+    (dvl2es-(noseLength+bodyLength+tailLength))*sind(pitch);
+% Creates DVL lines
+dvl(1,:) = [xIver-dvlInd(2)*map.res*sind(dvlAngle-pitch) xIver ...
+    xIver+dvlInd(1)*map.res*sind(dvlAngle+pitch)];
+dvl(2,:) = [depth-dvlInd(2)*map.res*cosd(dvlAngle-pitch) depth ...
+    depth-dvlInd(1)*map.res*cosd(dvlAngle+pitch)];
+%Creates Range Cone
+xEs = xIver + dvl2es*cosd(pitch) - radius*sind(pitch);
+yEs = depth + dvl2es*sind(pitch) + radius*cosd(pitch);
+esAngle = (-3:1:3) + pitch;
+esTemp(1,:) =  xEs + range*cosd(esAngle);
+esTemp(2,:) =  yEs + range*sind(esAngle);
+es(1,:) = [xEs esTemp(1,:) xEs];
+es(2,:) = [yEs esTemp(2,:) yEs];
+%Creates Predicted Range Cone
+esPredTemp(1,:) =  xEs + predRange*cosd(esAngle);
+esPredTemp(2,:) =  yEs + predRange*sind(esAngle);
+esPred(1,:) = [xEs esPredTemp(1,:) xEs];
+esPred(2,:) = [yEs esPredTemp(2,:) yEs];
+%Creates Horizon Scatter data
+horizonScatterX = (xEs + horizon.offset) + (0:49);
+% Plots Everything
+figure(1)
+set(1,'Units','pixels','Position', [100 400 1000 400]);
+plot(track, bottom, 'k');
+hold on
+% h1 = plot(bottomDvlX, bottomDvlY, 'Color', [1 0.5 0], 'LineStyle', ':');
+% h2 = plot(bottomEsX, bottomEsY, esMarkerType);
+h3 = plot(horizonXP, horizonYP, horPMarkerType);
+h4 = plot(horizonXC, horizonYC, horCMarkerType);
+h5 = plot(nose(1,:), nose(2,:), 'Color', [0.5 0.5 0.5]);
+h6 = plot(body(1,:), body(2,:), 'y');
+h7 = plot(tail(1,:), tail(2,:), 'k');
+h8 = plot(dvl(1,:), dvl(2,:), 'c');
+h9 = plot(es(1,:), es(2,:), 'g');
+% h10 = plot(esPred(1,:), esPred(2,:), 'r-.');
+colormap([1 0 0; 1 1 0; 0 1 0]);
+caxis([-1 1])
+scatter(horizonScatterX, horizon.depth, 9, horizon.good)
+axis equal; grid off;
+title({['Goal Alititude = ',num2str(goalAlt), ' m || Alititude = ', ...
+    num2str(alt), 'm']; ['Predicited Range =', num2str(predRange), ... 
+    '|| Range = ' num2str(range), ' m']; ['Elapsed Time = ', ...
+    num2str(elapsed), 'sec']})
+xlabel('Distance along Track [m]')
+ylabel('Depth [m]')
+xlim([track(1) track(end)]);
+ylim([depth-10 depth+10])
+% legend([h1 h2 h3 h8 h10 h9], {'DVL Planar Bottom' 'ES Planar Bottom' ...
+%     'Horizon Planar Bottom' 'DVL' 'Predicted Range' 'Range'}, ...
+%     'Location', 'NorthWest')
+legend([h3 h4 h8 h9], {'Horizon Planar Bottom' 'Horizon Control Bottom' ...
+    'DVL' 'Range'}, 'Location', 'NorthWest')
+drawnow
+hold off
+end
+
+%% Parse useful data into struct
+function data = parseData(useful10Hz, useful3Hz, xScale, bottomY, ...
+    alt, diffAlt, depth, pitch, dPitch, goalPitch, range, slopeDvl, ...
+    predRange, slopeEs, altMod)
+nn = max(size(useful10Hz));
+for jj = 1:nn
+    data.bottom.X(jj) = xScale(useful10Hz(jj));
+    data.bottom.Y(jj) = bottomY(useful10Hz(jj));
+    
+    data.dvl.alt(jj) = alt(useful10Hz(jj));
+    data.dvl.altMod(jj) = altMod(useful10Hz(jj));
+    data.dvl.diffAlt(jj) = diffAlt(useful10Hz(jj));
+    data.dvl.depth(jj) = depth(useful10Hz(jj));
+    data.dvl.slopeDvl(jj) = slopeDvl(useful10Hz(jj));
+    
+    data.pitch.pitch(jj) = pitch(useful10Hz(jj));
+    data.pitch.dPitch(jj) = dPitch(useful10Hz(jj));
+    data.pitch.goalPitch(jj) = goalPitch(useful10Hz(jj));
+end
+data.dvl.X = data.bottom.X;
+data.pitch.X = data.bottom.X;
+
+mm = max(size(useful3Hz));
+for kk = 1:mm
+    data.es.X(kk) = xScale(useful3Hz(kk));
+    data.es.range(kk) = range(useful3Hz(kk));
+    data.es.predRange(kk) = predRange(useful3Hz(kk));
+    data.es.slopeEs(kk) = slopeEs(useful3Hz(kk));
+end
+end
+
+%% Plots of applicabale Data After Simulation 
+function plotresults(data)
+figure(2), clf(2)
+[AX2, dummy1, dummy2] = plotyy(data.bottom.X, data.bottom.Y, ...
+    data.dvl.X, data.dvl.alt);
+legend([dummy1 dummy2], 'Bottom', 'Altitude')
+set(get(AX2(1),'Ylabel'),'String','Bottom Depth [m]') 
+set(dummy1, 'LineStyle', 'none', 'Marker', '.', 'MarkerSize', 1, ...
+    'Color', [0.5 0.5 0.5])
+set(get(AX2(2),'Ylabel'),'String','Altitude [m]')
+set(dummy2, 'LineStyle', ':', 'Marker', '.', 'MarkerSize', 1, ...
+    'Color', 'r')
+xlabel('Distance along trackline [m]')
+
+% figure(3), clf(3)
+% dummy34 = plot(data.pitch.X, data.pitch.goalPitch, ...
+%     data.pitch.X, data.pitch.pitch);
+% set(dummy34(1), 'LineStyle', ':', 'Marker', '.', 'MarkerSize', 1, ...
+%     'Color', [0.5 0.5 0.5])
+% set(dummy34(2), 'LineStyle', ':', 'Marker', '.', 'MarkerSize', 1, ...
+%     'Color', 'r');
+% legend('Goal Pitch', 'Pitch')
+% ylabel('pitch [deg]');
+% xlabel('Distance along trackline [m]')
+% ylim([-35 35])
+% 
+% figure(4), clf(4)
+% [AX4, dummy5, dummy6] = plotyy(data.bottom.X, data.bottom.Y, ...
+%     data.es.X, data.es.range);
+% legend([dummy5 dummy6], 'Bottom', 'Range')
+% set(get(AX4(1),'Ylabel'),'String','Bottom Depth [m]')
+% set(dummy5, 'LineStyle', 'none', 'Marker', '.', 'MarkerSize', 1, ...
+%     'Color', [0.5 0.5 0.5])
+% set(get(AX4(2),'Ylabel'),'String','Range Returns [m]') 
+% set(dummy6, 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 2, ...
+%     'Color', 'r')
+% xlabel('Distance along trackline [m]')
+% 
+% figure(5), clf(5)
+% dummy78 = plot(data.es.X, data.es.predRange, ...
+%     data.es.X, data.es.range);
+% set(dummy78(1), 'LineStyle', 'none', 'Marker', 'x', 'MarkerSize', 2, ...
+%     'Color', [0.5 0.5 0.5])
+% set(dummy78(2), 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 2, ...
+%     'Color', 'r');
+% legend('Predicted Range', 'Range')
+% ylabel('Range [m]');
+% xlabel('Distance along trackline [m]')
+
+figure(6), clf(6)
+dummy910 = plot(data.dvl.X, data.dvl.altMod, ...
+    data.dvl.X, data.dvl.alt);
+set(dummy910(1), 'LineStyle', 'none', 'Marker', 'x', 'MarkerSize', 4, ...
+    'Color', [0.5 0.5 0.5])
+set(dummy910(2), 'LineStyle', 'none', 'Marker', 'o', 'MarkerSize', 2, ...
+    'Color', 'r');
+legend('Control Altitude', 'Actual Altitude')
+ylabel('Altitude [m]');
+xlabel('Distance along trackline [m]')
+end

@@ -1,0 +1,14 @@
+package perllcm;
+
+struct mono_loc_feat_t
+{
+   
+    // feature descriptor (currently setup for 128)
+    double desc[128];
+    
+    // X Y Z position of feature in the map coordinate frame
+    double X[3];
+    // azimuth angle between feature and camera from which it was observed
+    double view_aiz;
+    
+}

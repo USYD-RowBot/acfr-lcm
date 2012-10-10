@@ -1,0 +1,14 @@
+package senlcm;
+
+struct deltat_config_t
+{
+    int64_t utime;
+
+	int32_t range;
+	int32_t startGain;
+	int32_t pulseLength;
+	int32_t frequency;
+	int32_t dataPoints;
+	int32_t delay;  
+	int32_t autoRange;
+}

@@ -1,0 +1,37 @@
+package perllcm;
+
+struct van_scene_prior_t
+{
+    int64_t utime;
+
+    // local plane params [m]
+    boolean locally_planar;
+    float   lp_absdev;
+    double  lp_coeff[4];
+
+    // 3d structure statistics [m]
+    float Zmean;
+    float Zstd;
+    float Zabsdev;
+
+    float Zmin;
+    float Z10;
+    float Z20;
+    float Z30;
+    float Z40;
+    float Z50;
+    float Z60;
+    float Z70;
+    float Z80;
+    float Z90;
+    float Zmax;
+
+    // a priori structure points
+    int32_t npts;
+    int16_t id[npts];
+    float X[npts];  // [m]
+    float Y[npts];
+    float Z[npts];
+    float u[npts];  // [pixels]
+    float v[npts];
+}

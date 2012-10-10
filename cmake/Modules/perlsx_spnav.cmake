@@ -1,0 +1,6 @@
+macro (perlsx_spnav)
+  perlsx_find_library (spnav "on ubuntu `sudo apt-get install libspnav-dev" ${ARGN})
+  if (SPNAV_FOUND)
+    set (PERLSX_SPNAV ${SPNAV_LIBRARIES})
+  endif ()
+endmacro ()

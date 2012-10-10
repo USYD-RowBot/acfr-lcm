@@ -1,0 +1,65 @@
+package senlcm;
+
+struct rdi_pd5_t
+{
+    int64_t utime;
+
+    /* PD5 is a superset of PD4 mode */
+    rdi_pd4_t pd4;
+
+    /*-----------------Fields unique to PD5-------------------*/
+
+    /* Contains the salinity value of the water at the transducer head.  This
+       value may be a manual setting or a reading from a conductivity sensor
+
+       SI units = parts per thousand; Range = 0 to 40 ppt
+    */
+    double salinity;
+
+    /* Contains the depth of the transducer below the water surface
+       (ED - Depth of Transducer).  This value may be a manual setting or
+       a reading from a depth sensor
+
+       SI units = m; Range = 0.1 to 999.9 m
+    */
+    double depth;
+
+    /* Contains the ExplorerDVL pitch angle (EP - Pitch and Roll Angles).
+       This value may be a manual setting or a reading from a tilt sensor.
+       Positive values mean that Beam #3 is spatially higher than Beam #4.
+
+       SI units = radians; Range = (-20.00 to +20.00) * M_PI/180
+    */
+    double pitch;
+
+    /* Contains the ExplorerDVL roll angle (ER - Roll Angle).  This value 
+       may be a manual setting or a reading from a tilt sensor.  For up-facing
+       ExplorerDVLs, positive values mean that Beam #2 is spatially higher than
+       Beam #1.  For down-facing ExplorerDVLs, positive values mean that Beam #1
+       is spatially higher than Beam #2.
+
+       SI units = radians; Range = (-20.00 to +20.00) * M_PI/180
+    */
+    double roll;
+
+    /* Contains the ExplorerDVL heading angle (EH - Heading).  This value may
+       be a manual setting or a reading from a heading sensor.
+
+       SI units = radians; Range = (0.00 to +359.99) * M_PI/180
+    */
+    double heading;
+
+    /* Contains the Distance Made Good (DMG) over the bottom since the time
+       of the first ping after initalization or <BREAK>.
+
+       SI units = m; Range = -1000000.0 to 1000000.0 m
+    */
+    double dmg_btv[4]; /* [East, North, Up, Error] */
+
+    /* Contain the distance made good over the water-mass layer since the
+       time ofthe first ping after initialization or <BREAK>.
+       
+       SI units = m; Range = -1000000.0 to 1000000.0 m
+    */
+    double dmg_wtv[4]; /* [East, North, Up, Error] */
+}

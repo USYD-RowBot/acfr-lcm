@@ -1,0 +1,17 @@
+package mrlcm;
+
+// replacement for IPC robot laser
+// bundles laser scan, robot pose, and state covariance information
+
+struct carmen3d_robot_laser_t
+{
+	int64_t utime;
+	
+	bot_core.planar_lidar_t laser;
+	bot_core.pose_t pose;
+
+	// state covariances
+	carmen3d_point_cov_t cov;
+
+	
+}

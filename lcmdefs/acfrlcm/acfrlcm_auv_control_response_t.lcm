@@ -1,0 +1,38 @@
+package acfrlcm;
+
+struct auv_control_response_t
+{
+    int64_t utime;
+    
+    double x;
+    double y;
+    double depth;
+    double heading;
+    double pitch;
+    double roll;
+    double altitude;
+    int32_t goal_id;
+    double time_to_goal;
+    double dist_to_goal;
+    int32_t at_goal;
+    
+    const int8_t MODE_OFF = 0;
+    const int8_t MODE_ON = 1;
+    const int8_t MODE_1P = 2;
+    const int8_t MODE_2P = 3;
+    const int8_t MODE_2PH = 4;
+    const int8_t MODE_MAN = 5;
+    const int8_t MODE_ALT = 6;
+    const int8_t MODE_CLOOP = 7;
+    const int8_t MODE_OLOOP = 8;
+    const int8_t MODE_CLOOP_HOLD = 9;
+    const int8_t MODE_CLOOP_CRAB = 10;
+    
+    int8_t heading_mode;
+    int8_t transit_mode;
+    int8_t depth_mode;
+    
+}
+   
+    
+ 

@@ -1,0 +1,24 @@
+package se;
+
+struct propose_link_t
+{
+    int32_t sensor_id;
+    int32_t link_id;
+    int64_t utime1;
+    int64_t utime2;
+    double x12[6];
+    double sigma[36];
+
+    // vehicle to sensor xform
+    double x1s[6];
+    double x2s[6];
+
+    // maximun number of proposed link
+    int32_t plink_max;      
+
+    // Enumeration of different sensor id
+    const int16_t SENSOR_ID_ODO = 1;
+    const int16_t SENSOR_ID_SONAR = 2;
+    const int16_t SENSOR_ID_CAMERA = 4;
+
+}

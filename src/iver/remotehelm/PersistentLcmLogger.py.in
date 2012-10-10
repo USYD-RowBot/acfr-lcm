@@ -1,0 +1,158 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import subprocess
+import time
+import signal
+
+import lcm
+
+import perls
+
+#constants
+LCM_LOGGER           = 'lcm-logger'
+CAM_LOGGER           = '@EXECUTABLE_OUTPUT_PATH@/perls-vis-camlog-logger' 
+DEFAULT_UTIME_FORMAT = '%Y-%m-%d'
+
+#lcm-logger args
+LCM_LOGGER_ARGS = "--channel=^.*PROSILICA_.$ --invert-channels"
+CAM_LOGGER_ARGS = "-c ^.*PROSILICA_.$"
+
+# lcm types
+logger_cmd_t = perls.lcmtypes.perllcm.auv_logger_cmd_t
+
+def utimeToString (t, fmt=DEFAULT_UTIME_FORMAT):
+    timeStruct = time.localtime(t/1e6)
+    return time.strftime(fmt, timeStruct)
+
+def printInfo (s):
+    print '\n\n[%s]\t%s\n\n' % ('PERSISTENT_LOGGER', s)
+
+def timestamp_now():
+    return int(time.time() * 1e6)
+
+class PersistentLcmLogger():
+
+    def __init__ (self):
+        #We only allow one lcm subprocess to be running
+        self.lcmlogProcess = None
+        self.camlogProcess = None
+
+        utime = timestamp_now()
+
+    #--------------------------------------------------#
+    #-------------------- public ----------------------#
+    #--------------------------------------------------#
+
+    def is_logging_lcm (self):
+        return (self.lcmlogProcess is not None)
+
+    def is_logging_cam (self):
+        return (self.camlogProcess is not None)
+
+    def cleanup (self):
+        if (self.is_logging_lcm()) or (self.is_logging_cam()):
+            self._stopLcmLogger(timestamp_now())
+
+    #--------------------------------------------------#
+    #-------------------lcm callbacks------------------#
+    #--------------------------------------------------#
+
+    def logger_cmd_t_callback (self, channel, data):
+        msg = logger_cmd_t.decode (data)
+
+        if msg.type == logger_cmd_t.START_LOGGING:
+            if self.is_logging_lcm():
+                self._stopLcmLogger(msg.utime)
+            self._startLcmLogger(msg.lcmlog_name, msg.camlog_dir, msg.utime)
+
+        elif msg.type == logger_cmd_t.STOP_LOGGING:
+            if not self.is_logging_lcm():
+                printInfo ('Ignoring command to stop logging')
+                return
+            self._stopLcmLogger(msg.utime)
+
+        else:
+            raise Exception ('Unknown logging command type')
+
+
+    #--------------------------------------------------#
+    #-------------------- private ---------------------#
+    #--------------------------------------------------#
+
+    def _startLcmLogger (self, lcmlogPath, camDir, start_time):
+        printInfo ('Start logging at %d' % start_time)
+
+        if lcmlogPath:
+            inc = 0
+
+            #get a non-existent name for the lcmlogPath by appending a number to the end of the file
+            lcmlogPathNotExist = lcmlogPath
+            while os.path.exists(lcmlogPathNotExist):
+                lcmlogPathNotExist = lcmlogPath + str(inc)
+                inc += 1
+            # if os.path.exists(lcmlogPath):
+                # self.cleanup()
+                # raise Exception ('%s exists!  Will not continue...' % lcmlogPath)
+            lcmCommand = [LCM_LOGGER, lcmlogPathNotExist]
+            lcmCommand.extend (LCM_LOGGER_ARGS.split(' '))
+            self.lcmlogProcess = subprocess.Popen (lcmCommand)
+
+        if camDir:
+            if camDir[-1] != '/':
+                self.cleanup()
+                raise Exception ('%s does not end in "/"!  Will not continue...' % camDir)
+            camCommand = [CAM_LOGGER]
+            camCommand.extend (CAM_LOGGER_ARGS.split(' '))
+            camCommand.extend (['-o', camDir])
+            self.camlogProcess = subprocess.Popen (camCommand)
+
+    def _stopLcmLogger (self, end_time):
+        printInfo ('Stop logging at %d' % end_time)
+
+        if self.lcmlogProcess is not None:
+            self.lcmlogProcess.terminate ()
+            self.lcmlogProcess.wait ()
+            self.lcmlogProcess = None
+            
+        if self.camlogProcess is not None:
+            self.camlogProcess.terminate ()
+            self.camlogProcess.wait ()
+            self.camlogProcess = None
+
+if __name__ == '__main__':
+
+    lcm = lcm.LCM()
+    param = perls.BotParam.BotParam(sys.argv)
+
+    # if (len (sys.argv) != 1):
+    #     print 'Usage %s' % os.path.basename (sys.argv[0])
+    #     sys.exit (1)
+
+    logger = PersistentLcmLogger()
+
+    def onSIGINT (signal, frame):
+        print 'Caught SIGINT: ', 
+        logger.cleanup()
+        print 'Persistent Lcm Logger : Goodbye.'
+        sys.exit()
+
+    #SIGINT
+    signal.signal (signal.SIGINT, onSIGINT)
+
+    #config file entries
+    logger_cmd_t_channel = param.get_str ('persistent-lcm-logger.cmd_channel', default='PLCM_LOGGER_CMD')
+
+    #subscribe
+    logger_cmd_t_sub = lcm.subscribe (logger_cmd_t_channel, logger.logger_cmd_t_callback)
+
+    print ('Waiting for start command...')
+
+    try:
+        while True:
+            lcm.handle()
+    except KeyboardInterrupt:
+        pass
+
+    lcm.unsubscribe (logger_cmd_t_sub)

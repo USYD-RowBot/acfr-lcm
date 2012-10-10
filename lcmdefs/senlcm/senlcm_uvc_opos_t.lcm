@@ -1,0 +1,13 @@
+package senlcm;
+
+struct uvc_opos_t
+{
+    int64_t utime;
+
+    double latitude;
+    double longitude;
+    double speed;
+
+    double conductivity;
+    double temperature;
+}

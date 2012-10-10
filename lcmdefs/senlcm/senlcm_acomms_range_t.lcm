@@ -1,0 +1,27 @@
+package senlcm;
+
+struct acomms_range_t {
+  int64_t utime;
+    
+  const int8_t MODEM_TIME=0, GOBY_TIME=1;
+  int8_t time_source;
+
+  int8_t src;
+
+  int8_t nowtt;
+  double owtt[nowtt];
+
+  const int8_t ONE_WAY_SYNCHRONOUS=0,
+    TWO_WAY_PING=1,
+    REMUS_LBL=2,
+    NARROWBAND_LBL=3;
+  int8_t type;
+
+  const int8_t NO_SYNC_TO_PPS_AND_CCCLK_BAD = 0,
+    NO_SYNC_TO_PPS_AND_CCCLK_GOOD = 1,
+    SYNC_TO_PPS_AND_CCCLK_BAD = 2,
+    SYNC_TO_PPS_AND_CCCLK_GOOD = 3,
+    UNKNOWN = 4;
+  int8_t sender_clk_mode;
+  int8_t receiver_clk_mode;
+}

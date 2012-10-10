@@ -1,0 +1,65 @@
+package perllcm;
+
+struct isam_vlink_t
+{
+
+    int64_t utime;
+    
+    // NOTE! z and R are written [x,y,z,r,p,h] order
+
+    int64_t id1;            // id could be node number or utime
+    int64_t id2;
+    int32_t link_id;        // id for link
+    int32_t creator_of_id2; // use sensor id types
+
+    int32_t sensor_id;
+    const int32_t SENSOR_ODOMETRY = 1;
+    const int32_t SENSOR_CAMERA   = 2;
+    const int32_t SENSOR_LASER    = 3;
+    const int32_t SENSOR_SONAR    = 4;
+    const int32_t SENSOR_GLC      = 5;
+    const int32_t SENSOR_PLANE    = 6;
+    
+    // for camera only (because it is a bearing measurement)
+    boolean   dynamic_xvs;  // need static vehicle to sensor xform 
+    double    x_vs1[6];
+    double    x_vs2[6];
+
+    int32_t n;
+    double  z[n];
+    int32_t n2;             // this is n squared
+    double  R[n2];
+
+    int16_t link_type; 
+
+    // Enumeration of different link types 
+    const int32_t LINK_PRIOR       = 1;            // prior factor
+    const int32_t LINK_POSE2D      = 2;
+    const int32_t LINK_POSE3D      = 3;
+    const int32_t LINK_POSE2DB     = 4;            // bearing only
+    const int32_t LINK_POSE3DB     = 5;
+    const int32_t LINK_ZPR_PARTIAL = 6;            // partial factor
+    const int32_t LINK_XYZ_PARTIAL = 7;            // partial factor (xyz)
+    const int32_t LINK_H_PARTIAL   = 8;            // partial factor (heading)
+    const int32_t LINK_RP_PARTIAL  = 9;            // partial factor (roll pitch)
+    const int32_t LINK_Z_PARTIAL   = 10;           // partial factor (z)
+    const int32_t LINK_XY_PARTIAL  = 11;           // partial factor (xy)
+    const int32_t LINK_SONAR2D     = 12;           // a imaging sonar constraint
+    const int32_t LINK_PLANE3D     = 13;           // a 3D plane constraint
+    const int32_t LINK_PLANE3D_PRIOR = 14;
+    
+    boolean accept;
+    int32_t accept_code;
+
+    // Enumeration for accept code
+    const int16_t CODE_ACCEPTED      = 1;
+    const int16_t CODE_INVALID_MODEL = 2;     // could not fit a model (camera)
+    const int16_t CODE_LOW_THRESHOLD = 3; 
+    const int32_t CODE_MIN_CORR      = 4;     // not enough corr with your nav prior
+    const int32_t CODE_MIN_INLIERS   = 5;     // not enough inliers
+    const int32_t CODE_SBA           = 6;     // sparce bundle adjustment has failed
+    const int32_t CODE_MDIST_NAV     = 7;     // mahalanobis distance from nav prior too large (suspicious and rejected)
+
+}
+
+

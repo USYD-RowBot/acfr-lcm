@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import shutil
+import errno
+
+import merge_dives
+
+MKDIR_MAX_TRIES = 1000
+
+def printUsage (progName):
+    print 'Usage: %s <output dir> <hours to split>' % os.path.basename (progName)
+    sys.exit(0)
+
+def copyLcmdefsTo (destDir):
+    
+    pathToLcmDefs = '@PERLS_LCMDEFS_DIR@'
+    shutil.copytree (pathToLcmDefs, os.path.join(destDir, merge_dives.LCMDEFS))
+
+def makeDestDir (destDir):
+
+    done = False
+    num = 0
+
+    while not done and num < MKDIR_MAX_TRIES:
+        destDirToTry = '%s.%.3d' % (destDir, num)
+
+        try:
+            os.mkdir (destDirToTry)
+        except OSError as err:
+            if err.errno == errno.EEXIST:
+                num += 1
+                continue
+            else:
+                raise
+
+        done = True
+        return destDirToTry
+
+    raise Exception ('Exceeded maximum number of directories')
+
+if __name__ == '__main__':
+    
+    if len(sys.argv) != 3:
+        printUsage (sys.argv[0])
+
+    destDir = sys.argv[1]
+    autoSplitHours = sys.argv[2]
+
+    destDirWithCount = makeDestDir (destDir)
+
+    try:
+        # copy lcmdefs
+        copyLcmdefsTo (destDirWithCount)
+        # run lcmlog
+        os.system ('lcm-logger --auto-split-hours=%f %s/lcmlog &' % (float(autoSplitHours), destDirWithCount))
+        # run logbook (from EXECUTABLE_OUTPUT_PATH)
+        os.system ('%s/perls-core-logbook -Svf %s/%s' % ('@EXECUTABLE_OUTPUT_PATH@', destDirWithCount, merge_dives.TOPSIDE_LOGBOOK_NAME))
+    except Exception as err:
+        print err
+        printUsage (sys.argv[0])
+        exit(-1)

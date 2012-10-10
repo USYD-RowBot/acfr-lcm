@@ -1,0 +1,9 @@
+package perllcm;
+
+struct isam_plink_collection_t
+{
+    int64_t utime;
+    
+    int32_t nlinks;
+    isam_plink_t plink[nlinks];
+}

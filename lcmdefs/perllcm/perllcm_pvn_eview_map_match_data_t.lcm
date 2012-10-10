@@ -1,0 +1,15 @@
+package perllcm;
+
+struct pvn_eview_map_match_data_t
+{
+    int32_t n;
+    int64_t exemplar_utimes[n];     // utime id of exemplar built into map
+    int64_t obs_utimes[n];          // utime id of observation image (possible future exemplar)
+    int32_t obs_num_feats[n];       // number of features in the observation image
+    int32_t exemplar_num_feats[n];  // number of features in the exemplar image
+    int32_t num_inliers[n];         // number of inliers in this match
+    float   reproj_error[n];        // mean squared reprojection error of match
+    int8_t  match_success[n];       // 1 if num_inliers > threshold , 0 otherwise 
+}
+
+

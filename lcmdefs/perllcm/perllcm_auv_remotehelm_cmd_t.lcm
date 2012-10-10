@@ -1,0 +1,15 @@
+package perllcm;
+
+struct auv_remotehelm_cmd_t
+{
+    int64_t utime;
+
+    int32_t type;
+
+    string mission_name;
+    int32_t start_mission_sleep; // time to sleep before starting mission integer seconds
+
+    const int32_t START_RH  = 1;
+    const int32_t PAUSE_RH  = 2;
+
+}

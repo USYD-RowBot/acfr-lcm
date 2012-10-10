@@ -1,0 +1,36 @@
+package perllcm;
+
+struct carlab_state_t
+{
+    int64_t utime;
+
+    boolean    XGV_NM_alive;
+    boolean    XGV_PD_alive;
+    boolean    XGV_VSS_alive;
+    boolean    XGV_MPD_alive;
+    boolean    XGV_SigD_alive;
+    boolean    XGV_EM_alive;
+
+    int32_t    XGV_NM_status;
+    int32_t    XGV_PD_status;
+    int32_t    XGV_MPD_status;
+
+    float      fuel_level;         // percentage
+    float      RF_wheel_speed;     // m/s
+    float      LF_wheel_speed;     // m/s
+    float      RR_wheel_speed;     // m/s
+    float      LR_wheel_speed;     // m/s
+    float      curvature;          // arctangent of curvature (-pi/2 to pi/2)
+    float      velocity;           // m/s
+    int32_t    error_count;
+
+    string     PD_control;         // JAUS address of primitive driver owner
+    string     MPD_control;        // JAUS address of motion profile driver owner
+
+    const int32_t STATUS_INITIALIZE     = 0;
+    const int32_t STATUS_READY          = 1;
+    const int32_t STATUS_STANDBY        = 2;
+    const int32_t STATUS_SHUTDOWN       = 3;
+    const int32_t STATUS_FAILURE        = 4;
+    const int32_t STATUS_EMERGENCY      = 5;
+}

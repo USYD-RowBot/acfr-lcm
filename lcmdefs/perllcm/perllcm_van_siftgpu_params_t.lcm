@@ -1,0 +1,12 @@
+package perllcm;
+
+struct van_siftgpu_params_t
+{
+    int64_t utime;
+    double dogThreshold;
+    double edgeThreshold;
+    int32_t dogLevels;
+    double filterWidthFactor;
+    double orientWindowFactor;
+    double gridSizeFactor;
+}

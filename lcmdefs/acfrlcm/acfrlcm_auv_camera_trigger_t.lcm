@@ -1,0 +1,12 @@
+package acfrlcm;
+
+struct auv_camera_trigger_t
+{
+    int64_t utime;
+	
+	int32_t command;
+	double freq;
+	int32_t pulseWidthUs;
+	int32_t strobeDelayUs;
+	int32_t enabled;
+}

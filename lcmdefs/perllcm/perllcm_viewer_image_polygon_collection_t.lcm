@@ -1,0 +1,9 @@
+package perllcm;
+
+struct viewer_image_polygon_collection_t
+{
+    int64_t utime;
+
+    int32_t num_polygons;
+    viewer_image_polygon_t polygons[num_polygons];
+}

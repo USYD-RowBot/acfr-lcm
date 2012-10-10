@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+from ctypes import *
+import os
+import sys
+
+LEN2_ARRAYD_TYPE = c_double*2
+
+BOT2_SO = "libbot2-core.so"
+BOT2 = cdll.LoadLibrary (BOT2_SO)
+
+class BotGPSStruct (Structure):
+    _fields_ = [("lon0_deg", c_double), ("lat0_deg", c_double),
+            ("radius_ns", c_double), ("radius_ew", c_double)]
+
+class BotGPSLinearize (object):
+    def __init__ (self, orglat, orglon):
+        self._bot_llxy = pointer (BotGPSStruct ())
+        self._orglatlon = LEN2_ARRAYD_TYPE (orglat, orglon)
+        BOT2.bot_gps_linearize_init (self._bot_llxy, self._orglatlon)
+
+    def to_xy (self, lat, lon):
+        latlon = LEN2_ARRAYD_TYPE (lat, lon)
+        xy = LEN2_ARRAYD_TYPE ()
+        BOT2.bot_gps_linearize_to_xy (self._bot_llxy, latlon, xy)
+        return xy[0], xy[1]
+
+    def to_ll (self, x, y):
+        xy = LEN2_ARRAYD_TYPE (x, y)
+        latlon = LEN2_ARRAYD_TYPE ()
+        BOT2.bot_gps_linearize_to_lat_lon (self._bot_llxy, xy, latlon)
+        return latlon[0], latlon [1]
+
+
+if __name__ == '__main__':
+    print "interface module to libbot core functions"
+    sys.exit (0)
+

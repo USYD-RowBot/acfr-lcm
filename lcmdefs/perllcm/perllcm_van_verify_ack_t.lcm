@@ -1,0 +1,10 @@
+package perllcm;
+
+struct van_verify_ack_t
+{
+    int64_t utime1;
+    int64_t utime2;
+
+    boolean valid;
+    boolean stop_verifying;
+}

@@ -1,0 +1,26 @@
+package se;
+
+struct add_node_t
+{
+    int64_t utime;
+
+    // Node type
+    int16_t node_type;
+
+    // Enumeration for node types
+    const int16_t NODE_POSE2D=1;
+    const int16_t NODE_POSE3D=2; 
+
+	// The sensor that is propsing the node
+    // sensor_id = 0 can be used if the node is for no specific sensor
+    int16_t sensor_id;
+
+    // Enumeration of different sensor id
+    const int16_t NODE_NOSENSOR = 0;
+    const int16_t NODE_ODO = 1;
+    const int16_t NODE_SONAR = 2;
+    const int16_t NODE_CAMERA = 4;
+    const int16_t NODE_BATCH = 8;
+}
+
+

@@ -1,0 +1,104 @@
+IRRI Segway RMP 200 driver
+http://wikiri.upc.es/index.php/Segway_RMP_200_driver
+
+svn checkout https://haydn.upc.es/labrobotica/pub/drivers/segway_rmp_200
+svn checkout https://haydn.upc.es/labrobotica/pub/applications/utilities
+svn checkout https://haydn.upc.es/labrobotica/pub/applications/communications
+
+FTDI D2XX drivers
+http://www.ftdichip.com/Drivers/D2XX.htm
+
+-------------------------------------------------------------------------------------
+FAQ
+
+Q: How to install the libftd2xx.so library?
+
+A: The Instructions provided by the manufacturer are a good point to
+start, but they are incomplete. For completeness, all the necessary
+steps are listed below:
+
+* Download and extract the .tar.gz file into a temporal folder (for
+  example ~/temp/)
+
+* Copy the shared library file (libftd2xx.so.0.4.16) into the
+  /usr/local/lib folder. This action requires root privileges:
+
+> sudo cp libftd2xx.so.0.4.16 /usr/local/lib
+
+* It is necessary to create two soft links to this library in order to
+  work properly. From the /usr/local/lib folder and as root, execute
+  the following commands:
+
+> cd /usr/local/lib
+> sudo ln -s libftd2xx.so.0.4.16 libftd2xx.so.0
+> sudo ln -s libftd2xx.so.0 libftd2xx.so
+
+* It is also necessary to create a soft link to this library into the
+  /usr/lib folder. Again, as root, from the /usr/lib folder, execute
+  the following command:
+
+> cd /usr/lib
+> sudo ln -s /usr/local/lib/libftd2xx.so.0.4.16 libftd2xx.so
+
+* Next, copy all the header files from the temporal folder where the
+  library has been extracted into the /usr/local/include folder. The
+  files that need to be copied are ftd2xx.h and WinTypes.h. This
+  action also requires root privileges:
+
+> cd ~/temp
+> cp *.h /usr/local/include
+
+* In kernels previous to the 2.6.31 it is necessary to modify the
+  fstab file to complete the installation. For the instructions for
+  newer kernels, see the next answer in this section. As root, edit
+  the fstab file in the /etc folder and add the following line at the
+  end:
+
+none    /proc/bus/usb   usbfs   defaults,devmode=0666   0       0
+
+* Finally, remount all the devices in the ftsab file executing the
+  following command as root:
+
+> sudo mount -a
+
+If this last command returns an error, follow the instructions in the
+following answer.
+
+
+Q: How to use the FTDI driver without root privileges in kernels
+2.6.31 and newer?
+
+A: Ubuntu distributions with kernels starting from 2.6.31 no longer
+use mount the usb devices on /proc/bus/usb, and also, some
+distributions no longer support the usbfs file system. If so, the
+following error will appear when following the manufacturer's
+instructions:
+
+mount: mount point /proc/bus/usb does not exist
+
+In this case, follow the following steps:
+
+* Follow the manufacturer's instructions up to the point of modifying
+  the /etc/fstab file.
+
+* Instead of modifying the /etc/fstab file, it is necessary to include
+  a new rule in the udev server. To do that, as root, create a new
+  file in the /etc/udev/rules folder:
+
+ cd /etc/udev/rules.d 
+
+ sudo vim 99-ftdi.rules 
+
+(both the priority and the name can be changed)
+
+* Copy the following line into the previous file:
+
+SUBSYSTEM=="usb|usb_device", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", GROUP="dialout"
+
+* Re-start the udev service to take into account the changes:
+
+sudo /etc/init.d/udev restart
+
+* Other FTDI devices have different product id, so it will be
+  necessary to include a rule for each of them. The standard product
+  id's are: 6001, 6010 and 6006.

@@ -1,0 +1,9 @@
+package perllcm;
+
+struct pvn_vis_vocab_t
+{
+    int32_t nvocab;
+    int32_t keylen;
+    
+    float vocab[nvocab][keylen];
+}

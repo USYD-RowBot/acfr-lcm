@@ -1,0 +1,16 @@
+package perllcm;
+
+struct viewer_image_polygon_t
+{
+    int64_t utime;
+
+    // NOTE: only renders convex polygons
+    int32_t num_vertices;
+    float u[num_vertices];          // vertex position
+    float v[num_vertices];          // vertex position
+
+    boolean draw_border;
+    float border_color[4];          // RGBA values in [0,1]
+    boolean draw_fill;
+    float fill_color[4];            // RGBA values in [0,1]
+}

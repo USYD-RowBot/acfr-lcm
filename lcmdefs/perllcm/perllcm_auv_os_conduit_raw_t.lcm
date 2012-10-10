@@ -1,0 +1,8 @@
+package perllcm;
+
+struct auv_os_conduit_raw_t
+{
+    int64_t utime;
+    int32_t age;
+    string  value;
+}

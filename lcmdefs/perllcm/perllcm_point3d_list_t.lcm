@@ -1,0 +1,15 @@
+package perllcm;
+
+struct point3d_list_t
+{
+  int64_t id; // unique ID, can be timestamp
+
+  int32_t npoints; //number of points
+  point3d_float_t points[npoints]; //3d points
+
+  int32_t ncolors; //Number of points that have color 
+  color_float_t colors[ncolors]; // Color of the points
+
+  int64_t pointids[ncolors]; // Ids of points that have colors
+}
+

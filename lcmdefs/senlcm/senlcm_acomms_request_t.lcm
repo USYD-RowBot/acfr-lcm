@@ -1,0 +1,14 @@
+package senlcm;
+
+struct acomms_request_t
+{
+    int64_t utime;
+
+    const int8_t NONE = 0,
+        POSE = 1,
+        OSP  = 2,
+        OSP_RECOVERY = 3;
+    int8_t type;
+
+    int32_t last_tol_no;
+}

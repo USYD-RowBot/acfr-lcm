@@ -1,0 +1,27 @@
+Author: Andrew Richardson
+Date: 17-July-2008
+
+The matlab code is stored in a svn repository on robots.  So, do your standard checkout:
+	i.e.:     svn checkout svn+ssh://chardson@robots.engin.umich.edu/var/svn/software/iver2plot
+
+My directory layout contains
+	/home/chardson/iver2files
+	/home/chardson/iver2files/iver2-28/logs/        (location of all logs in yyyymmdd-location directories)
+	/home/chardson/iver2plot                        (svn checkout)
+
+So I boot matlab and do the following:
+	>> cd ../iver2files/iver2-28/logs/
+	>> addpath(genpath('../../../iver2plot'))
+	>> iver2plot
+	readSpeedTable:: using MATLABs 'unique()'
+	USING SPEED TABLE #5
+	note: speed table must be chosen manually
+
+	>>
+
+At which point the GUI pops up.  The "genpath" directory needs to point to your svn checkout and you need to run iver2plot from the directory containing the log files you want to parse.  When I want to change to a different day, I "cd" to that directory and run "iver2plot" again.  You could type the whole thing into the GUI "Data Directory" field, but I find "cd" to be faster.
+
+Files ending in .log show up in the mission review menu.  Just select the one you want and go.
+
+There are a few bugs.  Feel free to send them to me when you find them -- I don't know if they're all worth fixing, though.  Especially on our current timeframe.
+	`

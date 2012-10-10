@@ -1,0 +1,10 @@
+package hauv;
+
+struct wp_save_t
+{
+    // save waypoint
+
+    int64_t utime;
+    int32_t waypoint_id;
+}
+

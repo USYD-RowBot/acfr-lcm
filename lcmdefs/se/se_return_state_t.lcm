@@ -1,0 +1,21 @@
+package se;
+
+struct return_state_t
+{
+    int64_t utime;
+    int32_t n;
+    pose_t poses[n];
+
+    int32_t k;
+    int64_t timestamps[k];
+
+    int32_t m;
+    double covariance[m];
+    int16_t state_type;      
+
+    const int16_t POSE=1;           // return pose
+    const int16_t COV_FULL=2;       // full covariance matrix
+    const int16_t COV_BLOCK=4;      // block diagonal 
+    const int16_t COV_RIGHTCOL=8;   // right block column
+}
+

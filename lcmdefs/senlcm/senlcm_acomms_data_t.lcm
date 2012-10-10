@@ -1,0 +1,27 @@
+package senlcm;
+
+struct acomms_data_t {
+  int64_t utime;
+
+  const int8_t MODEM_TIME=0, GOBY_TIME=1;
+  int8_t time_source;
+
+  int8_t src;
+  int8_t dest;
+  int8_t rate;
+
+  const int8_t UNKNOWN=0, 
+    DATA=1, 
+    ACK=2, 
+    MINI_DATA=3, 
+    TWO_WAY_PING=4, 
+    REMUS_LBL_RANGING=5,
+    NARROWBAND_LBL_RANGING=6;
+  int8_t type;
+
+  int32_t max_num_frames;
+  int32_t max_frame_bytes;
+
+  int32_t frame_size;
+  string frame[frame_size];
+}

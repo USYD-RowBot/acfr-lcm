@@ -1,0 +1,4 @@
+xyz = [0, 0, 0];   # meters
+rph = [-90, 0, 0]; # degree
+default = 12;      # default model is 12m in length
+desired = 12;      # desired model length

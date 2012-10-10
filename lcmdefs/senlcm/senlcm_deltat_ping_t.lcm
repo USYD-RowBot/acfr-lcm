@@ -1,0 +1,10 @@
+package senlcm;
+
+struct deltat_ping_t
+{
+    int64_t utime;
+
+	int32_t count;
+    int16_t size;
+    byte ping[size];
+}

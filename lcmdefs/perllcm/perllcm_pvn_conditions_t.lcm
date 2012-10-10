@@ -1,0 +1,24 @@
+package perllcm;
+
+struct pvn_conditions_t
+{
+    int32_t sky;
+        const int32_t SKY_UNKNOWN       = 0;
+        const int32_t SKY_CLEAR         = 1;
+        const int32_t SKY_PARTLY_CLOUDY = 2;
+        const int32_t SKY_MOSTLY_CLOUDY = 3;      
+        const int32_t SKY_OVERCAST      = 4;
+        const int32_t SKY_FOG           = 5;  
+    int32_t  tod;
+        const int32_t TOD_UNKNOWN       = 0;
+        const int32_t TOD_DAWN          = 1; 
+        const int32_t TOD_MORNING       = 2;           
+        const int32_t TOD_MIDDAY        = 3;       
+        const int32_t TOD_AFTERNOON     = 4;
+        const int32_t TOD_DUSK          = 5;
+        const int32_t TOD_NIGHT         = 6;
+    int32_t  snow;    // 0 no, 1 yes, -1 unknown
+    int32_t  rain;    // 0 no, 1 yes, -1 unknown
+    int32_t  foliage; // 0 no, 1 yes, -1 unknown
+    
+}

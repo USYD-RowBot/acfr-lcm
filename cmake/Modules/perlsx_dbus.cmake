@@ -1,0 +1,8 @@
+macro (perlsx_dbus)
+  perlsx_find_package (DBus "on ubuntu `sudo apt-get install libdbus-1-dev dbus-x11`" ${ARGN})
+  if (DBUS_FOUND)
+    include_directories (${DBUS_INCLUDE_DIR})
+    include_directories (${DBUS_ARCH_INCLUDE_DIR})
+    set (PERLSX_DBUS ${DBUS_LIBRARIES})
+  endif ()
+endmacro ()

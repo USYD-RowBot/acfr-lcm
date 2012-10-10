@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Running LOG2MAT.py on parameters: $*"
+
+PERLS_MATLAB=$(pwd)
+PERLS_ROOT="$PERLS_MATLAB/.."
+
+export PYTHONPATH=$PERLS_ROOT/python/lcmtypes
+python $PERLS_ROOT/python/log_to_mat.py $*
+
+echo "done."

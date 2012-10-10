@@ -1,0 +1,26 @@
+package perllcm;
+
+/**
+ * @class auv_jump_t 
+ * @brief Defines a jump instruction
+ * @author Paul Ozog - paulozog@umich.edu
+ */
+struct auv_jump_t
+{
+    /**
+     * Typically filled with timestamp_now()
+     */
+    int64_t utime;
+
+    /**
+     * The modem ID of the destination (2 for iver28, 3 for iver31,
+     * etc...)
+     */
+    int32_t dest;
+
+    /**
+     * if less than 1, OJW to mission start.
+     * if greater than or equal to one 1 = OJW to next_wypnt
+     */
+    int32_t next_wypnt;
+}

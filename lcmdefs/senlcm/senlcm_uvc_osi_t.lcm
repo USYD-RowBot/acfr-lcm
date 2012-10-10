@@ -1,0 +1,47 @@
+package senlcm;
+
+struct uvc_osi_t
+{
+    int64_t utime;
+ 
+    int32_t yaw_top;      // 0-255
+    int32_t yaw_bot;      // 0-255
+    int32_t pitch_left;   // 0-255
+    int32_t pitch_right;  // 0-255
+    int32_t motor;        // 0-255
+ 
+    const int32_t MODE_NORMAL = 1, 
+                MODE_STOPPED = 2, 
+                MODE_PARK = 3, 
+                MODE_MANUAL_PARK = 4, 
+                MODE_MANUAL_OVERRIDE = 5,
+                MODE_SERVO = 6, 
+                MODE_MISSION = 7;
+    int32_t  mode;
+    
+    int32_t nextwp;
+    
+    double  latitude;       // lat-lon derived from gps and dr
+    double  longitude;
+    double  speed;          // meters/sec
+    double  dist_to_nextwp; // meters
+    
+    const int32_t ERR_NONE = 0, 
+                ERR_OVER_PITCH = 1, 
+                ERR_EXCEED_TIME = 2, 
+                ERR_LEAK = 3, 
+                ERR_NO_FORWARD_PROG = 4, 
+                ERR_EXCEED_MAX_DEPTH = 5, 
+                ERR_NO_UPWARD_PROG = 6, 
+                ERR_TOW_FLOAT_ENGAGED = 7, 
+                ERR_SAFETY_RET_PATH = 8, 
+                ERR_DFS_UNCHANGED = 9, 
+                ERR_COMPASS_STOPPED = 10,
+                ERR_EXCEEDED_MIN_REQ_PWR = 11,
+                ERR_STOP_AND_TRANSMIT_IRIDIUM = 12;
+    int32_t  error;
+    
+    double  altimeter;      // meters
+    int32_t  park_time;      // secs
+    double magnetic_dec;
+}

@@ -1,0 +1,37 @@
+package se;
+
+struct publish_link_t
+{
+  int64_t utime1;
+  int64_t utime2;
+  int32_t n;
+  double measurement[n];
+  int32_t n2;  // this is n squared
+  double sigma[n2];
+  int16_t link_type; 
+  int32_t publisher_id;
+  int32_t sensor_id;
+  int32_t link_id;
+  boolean accept;
+  int32_t accept_code;
+  string comment;
+
+  // Enumeration for accept code
+  const int16_t LINK_ACCEPTED      = 1;
+  const int16_t LINK_INVALID_MODEL = 2;     // could not fit a model (camera)
+  const int16_t LINK_LOW_THRESHOLD = 3; 
+  const int32_t LINK_MIN_CORR      = 4;     // not enough corr with your nav prior
+  const int32_t LINK_MIN_INLIERS   = 5;     // not enough inliers
+  const int32_t LINK_SBA           = 6;     // sparce bundle adjustment has failed
+  const int32_t LINK_MDIST_NAV     = 7;     // mahalanobis distance from nav prior too large (suspicious and rejected)
+
+  // Enumeration of different link types 
+  const int16_t LINK_POSE2D=1;
+  const int16_t LINK_POSE3D=2;
+  const int16_t LINK_POSE2DB=3;     // bearing only
+  const int16_t LINK_POSE3DB=4;
+  const int16_t LINK_SONAR2D=5;			// A imaging sonar constraint
+
+}
+
+

@@ -1,0 +1,13 @@
+package senlcm;
+
+/**
+ * @class velodyne_t 
+ * @brief Defines a raw velodyne data packet for ford sensor
+ */
+struct ford_velodyne_t
+{
+	int64_t utime;
+
+	int32_t datalen;
+	byte data[datalen];
+}

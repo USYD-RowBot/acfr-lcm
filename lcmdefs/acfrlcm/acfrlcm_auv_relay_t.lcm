@@ -1,0 +1,8 @@
+package acfrlcm;
+
+struct auv_relay_t
+{
+    int64_t utime;
+    string channel;
+    int8_t state;
+}

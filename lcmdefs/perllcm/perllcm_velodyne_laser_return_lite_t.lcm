@@ -1,0 +1,7 @@
+package perllcm;
+
+struct velodyne_laser_return_lite_t
+{
+    double  xyz[3];             //!< return in velodyne coordinate system
+    byte    intensity;          //!< intensity [0, 255]
+}

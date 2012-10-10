@@ -1,0 +1,8 @@
+package perllcm;
+
+struct point3d_float_t
+{
+    float x;
+    float y;
+    float z;
+}

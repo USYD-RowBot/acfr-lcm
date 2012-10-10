@@ -1,0 +1,18 @@
+package senlcm;
+
+struct uvc_omw_t
+{
+    int64_t utime;
+
+    double latitude;
+    double longitude;
+    
+    double depth1; // depth, (+) dfs, (-) hfb
+    double depth2; // depth for undualation, (+) dfs, (-) hfb
+
+    double max_pitch;
+    double speed;
+
+    double park_time;
+    // need sensors field, unclear in the manual    
+}

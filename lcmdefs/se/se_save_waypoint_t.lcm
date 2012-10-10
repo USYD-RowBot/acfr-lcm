@@ -1,0 +1,8 @@
+package se;
+
+struct save_waypoint_t
+{
+    int64_t utime;
+    int32_t waypoint_id;
+}
+

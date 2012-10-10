@@ -1,0 +1,28 @@
+package se;
+
+struct save_isam_t
+{
+    int64_t     timestamp;      // timestamp when msg sent
+
+    int64_t     id;             // utime for node (or factor)
+
+    int32_t     n;              // line counter
+    string      line;            // line of an isam graph
+
+    // type = node / factor
+    int16_t type;
+
+    const int16_t TYPE_DONE        = 0;     // reached end of isam file
+    const int16_t TYPE_NODE        = 1;     // type = node
+    const int16_t TYPE_FACTOR      = 2;     // type = factor
+
+    // sensor assigned for node / factor
+    int16_t sensor;
+
+    // Enumeration of different sensor id
+    const int16_t SENSOR_UNKNOWN = 0;
+    const int16_t SENSOR_ODO =     1;
+    const int16_t SENSOR_SONAR =   2;
+    const int16_t SENSOR_CAMERA =  3;
+    const int16_t SENSOR_RPZ =     4;
+}

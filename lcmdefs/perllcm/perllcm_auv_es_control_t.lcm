@@ -1,0 +1,24 @@
+package perllcm;
+
+struct auv_es_control_t
+{
+    int64_t   utime;
+
+    double    alt_mod;         // meters
+    double    alt_mod_flag;    // meters
+
+    int32_t   prev_wp_count;   // count
+    boolean   prev_wp;
+    boolean   danger_flag;
+    double    danger_lat;      // meter
+    double    danger_long;     // meter
+    double    danger_depth;    // meter
+    
+    int32_t   abort_count;      // count
+    boolean   abort;
+
+    int32_t   dx_up;            // count
+    int32_t   dx_down;          // count
+
+    boolean   timeout;         
+}

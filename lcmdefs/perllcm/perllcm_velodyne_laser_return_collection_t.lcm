@@ -1,0 +1,15 @@
+package perllcm;
+
+struct velodyne_laser_return_collection_t
+{
+    int32_t                         num_lr;                           //!< number of laser returns
+    velodyne_laser_return_t         laser_returns[num_lr];            //!< laser return data
+    int32_t                         num_lrl;                          //!< number of lite laser returns (saves space)
+    velodyne_laser_return_lite_t    laser_returns_lite[num_lrl];      //!< lite laser return data
+    int64_t                         utime;                            //!< base utime associated with this collection (FIRST LASER FIRING IN COLLECTION!)
+    double                          x_vs[6];                          //!< vehicle to sensor transform for this collection
+    double                          pose[6];                          //!< not used, supplied as convience for user (good place to cache your associated robot pose)
+    int8_t                          has_pose;                         //!< not used, supplied as convience for user (good place to cache your associated robot pose)
+    
+
+}

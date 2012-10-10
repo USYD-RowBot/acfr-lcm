@@ -1,0 +1,24 @@
+package perllcm;
+
+struct van_plink_t
+{
+    int64_t utime_i;
+    int64_t utime_j;
+
+    // relative pose prior between cameras i and j
+    boolean  prior;
+    pose3d_t x_ji;
+
+    // seserver interface
+    int32_t link_id;
+
+    // saliency & information gain
+    double Ig;          // geometric information gain
+    double S_L;         // local saliency
+
+    // for camera only (because it is a bearing measurement)
+    // pass this information via vlink from client
+    boolean   dynamic_xvs;  // need static vehicle to sensor xform 
+    double    x_vs1[6];
+    double    x_vs2[6];
+}

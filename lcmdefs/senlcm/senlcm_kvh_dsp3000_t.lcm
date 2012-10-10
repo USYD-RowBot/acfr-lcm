@@ -1,0 +1,14 @@
+package senlcm;
+
+struct kvh_dsp3000_t
+{
+    int64_t utime;
+
+    const int8_t RATE_MODE=1, DELTA_MODE=2, ANGLE_MODE=3;
+    int8_t mode;
+    double data; // either rad/s or rads depending on mode
+    /* Earth rate in degrees = -15.04107 x sin(latitude) where
+       Northern latitudes are positive and southern latitudes are
+       negative.
+    */
+}

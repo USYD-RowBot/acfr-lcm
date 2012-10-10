@@ -1,0 +1,9 @@
+package senlcm;
+
+struct mocap_t
+{
+    int64_t utime;
+    double  xyzrph[6];                 //!< world frame pose
+    double  residual;
+    int8_t  valid;
+}

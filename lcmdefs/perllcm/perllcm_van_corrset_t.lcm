@@ -1,0 +1,18 @@
+package perllcm;
+
+struct van_corrset_t
+{
+    int64_t utime_i;            // utime i
+    int64_t utime_j;            // utime j
+
+    // camera measurement
+    double z[5];                // mu
+    double R[25];               // covariance
+
+    // inliers
+    int32_t npts;
+    float   u1[npts];
+    float   v1[npts];
+    float   u2[npts];
+    float   v2[npts];
+}

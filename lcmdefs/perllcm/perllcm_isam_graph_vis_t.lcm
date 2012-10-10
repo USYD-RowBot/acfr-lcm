@@ -1,0 +1,17 @@
+package perllcm;
+
+struct isam_graph_vis_t
+{
+    int64_t utime;
+    int32_t nnodes;
+    double mu[nnodes][6];
+    int64_t node_id[nnodes];
+    //int16_t sensor_type[nnodes];
+    
+    int32_t nlinks;
+    int64_t links_i[nlinks];
+    int64_t links_j[nlinks];
+    int32_t link_sensor_id[nlinks];    // see perllcm_isam_vlink_t
+    
+    double covariance[36];             // first pose covariance
+}

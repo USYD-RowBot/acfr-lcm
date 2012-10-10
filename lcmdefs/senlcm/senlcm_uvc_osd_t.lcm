@@ -1,0 +1,10 @@
+package senlcm;
+
+struct uvc_osd_t
+{
+    int32_t gps;     // should always be null
+    int32_t compass;
+    int32_t state;
+    int32_t power;
+    int32_t ysi;
+}

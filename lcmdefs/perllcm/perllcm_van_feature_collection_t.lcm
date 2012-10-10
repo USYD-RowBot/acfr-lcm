@@ -1,0 +1,13 @@
+package perllcm;
+
+struct van_feature_collection_t
+{
+    int64_t utime;
+    string  channel;
+
+    int32_t  ntypes;
+    van_feature_t f[ntypes];
+
+    van_calib_t calib;
+    van_scene_prior_t scene_prior;
+}

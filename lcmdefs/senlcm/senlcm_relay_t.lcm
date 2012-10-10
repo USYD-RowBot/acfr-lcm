@@ -1,0 +1,9 @@
+package senlcm;
+
+struct relay_t
+{
+    string   label;
+    string   group;
+    boolean  state;
+    boolean  exclude_all;
+}

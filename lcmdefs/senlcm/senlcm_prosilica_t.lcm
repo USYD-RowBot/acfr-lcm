@@ -1,0 +1,9 @@
+package senlcm;
+
+struct prosilica_t
+{
+    int64_t utime;
+    boolean self;
+    int32_t n_attributes;
+    prosilica_attribute_t PvAttributes[n_attributes];
+}

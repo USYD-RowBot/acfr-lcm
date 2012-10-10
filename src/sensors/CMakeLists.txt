@@ -1,0 +1,32 @@
+# LIBRARIES
+perls_add_folder (perls-sensors "Build sensor utils library?" ON)
+
+# BINARIES
+perls_add_folder (dstar-ssp1 "Build Desert-Star SSP-1 pressure sensor driver?" OFF)
+perls_add_folder (easydaq-serdio8r "Build EasyDAQ SERDIO8R 8-port relay card driver?" OFF)
+perls_add_folder (gpsd-client "Build GPSD daemon client?" OFF)
+perls_add_folder (gps-logger "Build gps-logger process?" OFF)
+perls_add_folder (kvh-dsp3000 "Build KVH DSP-3000 FOG driver?" OFF)
+perls_add_folder (mocap "Build motion capture driver?" OFF)
+perls_add_folder (ms-gx1 "Build Microstrain 3DM-GX1 AHRS driver?" OFF)
+perls_add_folder (ms-gx3-25 "Build Microstrain 3DM-GX3-25 AHRS driver?" OFF)
+perls_add_folder (ms-gx3-45 "Build Microstrain 3DM-GX3-45 GPS-aided INS driver?" OFF)
+perls_add_folder (os-compass "Build Ocean-Server Compass driver?" ON)
+perls_add_folder (rdi-dvl "Build RD Instruments DVL driver?" OFF)
+perls_add_folder (spacenav "Build 3DConexion Space Navigator driver ?" OFF)
+perls_add_folder (tritech-es "Build Tritech Micron Echo Sounder DST driver?" OFF)
+perls_add_folder (velodyne "Build Velodyne HDL driver (supports 64 and 32)?" OFF)
+perls_add_folder (xbox-controller "Build Microsoft Xbox controller driver?" OFF)
+
+
+perls_add_folder (novatel "Build Novatel driver?" ON)
+perls_add_folder (deltaT "Build DeltaT driver?" ON)
+perls_add_folder (os-power-system "Build OS power system driver?" ON)
+perls_add_folder (ysi "Build YSI driver?" ON)
+perls_add_folder (seabird "Build Seabird CT driver?" ON)
+perls_add_folder (seabird_depth "Build Seabird depth driver?" ON)
+perls_add_folder (parosci "Build Parosci driver?" ON)
+perls_add_folder (hg1700 "Build HG1700 IMU driver?" ON)
+perls_add_folder (ecopuck "Build Ecopuck driver?" ON)
+perls_add_folder (oas "Build OAS driver?" ON)
+#perls_add_folder (rdi "Build RDI DVL (ACFR) driver?" ON)

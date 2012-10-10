@@ -1,0 +1,6 @@
+macro (perlsx_lcm)
+  perlsx_find_library (lcm "did you build lcm in third-party?" ${ARGN})
+  if (LCM_FOUND)
+    set (PERLSX_LCM ${LCM_LIBRARIES})
+  endif ()
+endmacro ()

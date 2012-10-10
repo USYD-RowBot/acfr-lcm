@@ -1,0 +1,7 @@
+macro (perlsx_glut)
+  perlsx_find_package (GLUT "on ubuntu `sudo apt-get install freeglut3-dev`" ${ARGN})
+  if (GLUT_FOUND)
+    include_directories (${GLUT_INCLUDE_DIR})
+    set (PERLSX_GLUT ${GLUT_LIBRARIES})
+  endif ()
+endmacro ()

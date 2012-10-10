@@ -1,0 +1,20 @@
+package perllcm;
+
+struct van_saliency_t
+{
+    int64_t utime;
+
+    int32_t feattype;       // see van_feature_t for attrtype
+    int32_t npts;           // feature number
+
+    // local saliency
+    double   S_L;           // = bowE / log2(vocal_len)
+    double   bowE;
+    int32_t  vocab_len;
+    boolean  is_S_L;        // is it locally salient? 
+
+    // global saliency
+    double   S_G;
+    double   S_G_max;
+    boolean  is_S_G;        // is it globally salient? 
+}

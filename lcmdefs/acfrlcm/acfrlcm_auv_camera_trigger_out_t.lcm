@@ -1,0 +1,8 @@
+package acfrlcm;
+
+struct auv_camera_trigger_out_t
+{
+    int64_t utime;
+	
+	int32_t enabled;
+}

@@ -1,0 +1,47 @@
+package perllcm;
+
+// output of navigator
+
+struct auv_navigator_t
+{
+    int64_t utime;
+    
+    // navigator setup information
+    const int16_t           // estimator engins matching perls-est/est.h
+        EST_EKF = 1,
+        EST_UKF = 2,
+        EST_PF  = 3;
+    int16_t est_method;     // current estimation method being used (EST_EKF, EST_UKF, ect.)
+    
+    // navigator <-> os_remotehelm interaction
+    // navigator waits till it has enough data to init then signals with
+    //      init_data_ready = 1;
+    // os-remote signals that it wants to start
+    //      waiting_to_start = 1;
+    // navigator then starts the filter and signals
+    //      filter_running = 1
+    // then os-remotehelm starts mission and signals with
+    //      mission_running = 1;
+    boolean init_data_ready;
+    boolean filter_running;
+    
+    int32_t state_len;          //length of state
+    
+    // current estimator state
+    int32_t mu_len;
+    int32_t Sigma_len;           // state_len^2
+    double mu[mu_len];
+    double Sigma[Sigma_len];     // row-major order 
+    
+    // index structure for state
+    est_navigator_index_t index;
+    
+    // TODO world frame pose for plotting and other stuff
+    
+    // conversion of curent mean [x y] to [lat lon]
+    double  mu_latitude;        // Latitude in radians 
+    double  mu_longitude;       // Longitude in radians
+    double  org_latitude;       // Origin Latitude in radians 
+    double  org_longitude;      // Origin Longitude in radians
+    
+}

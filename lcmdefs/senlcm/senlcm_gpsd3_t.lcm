@@ -1,0 +1,39 @@
+package senlcm;
+
+struct gpsd3_t
+{
+    int64_t utime;  /* microseconds since epoch */
+
+    int64_t online;    /* NZ if GPS is on line, 0 if not */
+
+    /* gps_fix_t data */
+    gpsd3_fix_t fix;
+
+    double geoidal_separation; /* Geoidal separation, MSL - WGS84 (meters) */
+    
+    /* GPS status -- always valid */
+    int16_t status;               /* Do we have fix? */
+    const int16_t STATUS_NO_FIX=0;   /* no */
+    const int16_t STATUS_FIX=1;      /* yes, without DGPS */
+    const int16_t STATUS_DGPS_FIX=2; /* yes, with DGPS */
+
+    /* precision of fix -- valid if satellites_used > 0 */
+    int16_t satellites_used;         /* Number of satellites used in solution */
+    int16_t used[satellites_used];   /* PRNs of satellites used in solution */
+    gpsd3_dop_t dop;
+
+    /* redundant with the estimated elements in the fix structure */
+    double epe; /* spherical position error, 95% confidence (meters) */
+
+    /* satellite status -- valid when satellites > 0 */
+    double skyview_utime;                  /* skyview timestamp in microseconds */
+    int16_t satellites_visible;            /* Number of satellites in view */
+    int16_t PRN[satellites_visible];       /* PRNs of satellites */
+    int16_t elevation[satellites_visible]; /* elevation of satellite */
+    int16_t azimuth[satellites_visible];   /* azimuth */
+    int16_t ss[satellites_visible];        /* signal-to-noise ration (dB) */
+
+    gpsd3_devconfig_t dev;                 /* device that shipped last update */
+
+    string tag;
+}

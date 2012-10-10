@@ -1,0 +1,19 @@
+package se;
+
+struct option_t
+{
+    int32_t mode;
+
+    string savepath;    // when mode save
+    string graphfile;   // when mode load
+
+    boolean load_done;        // was there any loading process?
+    int64_t utime_conn;       // utime (in loaded mission) to connect with
+    double cov_conn;          // odo uncertainty in meter when merging map
+
+    const int32_t MODE_WAIT   = 0;
+    const int32_t MODE_SAVE   = 1;
+    const int32_t MODE_LOAD   = 2;
+    const int32_t MODE_START  = 3;
+    const int32_t MODE_BATCH  = 4;
+}

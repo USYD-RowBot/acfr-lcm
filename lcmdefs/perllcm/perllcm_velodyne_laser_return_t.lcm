@@ -1,0 +1,16 @@
+package perllcm;
+
+struct velodyne_laser_return_t
+{
+    double  xyz[3];             //!< calibrated, projected into velodyne coordinate system
+    double  raw_range;          //!< raw return directly from sensor
+    double  range;              //!< corrected range
+    double  ctheta;             //!< yaw angle sensor head at time of sample, **always [0, 2*PI)**
+    double  theta;              //!< calibrated yaw angle **always [0, 2*PI)**
+    double  phi;                //!< calibrated phi (pitch angle of laser)
+    byte    intensity;          //!< normalized intensity [0, 255]
+    int32_t physical;           //!< physical laser number (for velodyne 64: 0-31 lower, 32-63 upper)
+    int32_t logical;            //!< logical laser number (in order of increasing pitch)
+    int8_t  motion_compensated; //!< 
+    int64_t utime;              //!< utime of this laser return
+}

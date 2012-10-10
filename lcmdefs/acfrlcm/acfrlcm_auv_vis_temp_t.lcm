@@ -1,0 +1,7 @@
+package acfrlcm;
+
+struct auv_vis_temp_t
+{
+    int64_t utime;
+    double temperature;
+}

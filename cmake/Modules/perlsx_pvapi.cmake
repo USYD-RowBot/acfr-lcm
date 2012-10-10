@@ -1,0 +1,6 @@
+macro (perlsx_pvapi)
+  perlsx_find_library (PvAPI "did you build AVT_PvAPI_SDK in third-party?" ${ARGN})
+  if (PVAPI_FOUND)
+    set (PERLSX_PVAPI ${PVAPI_LIBRARIES})
+  endif ()
+endmacro ()

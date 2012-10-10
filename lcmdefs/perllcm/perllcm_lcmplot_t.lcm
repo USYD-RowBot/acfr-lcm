@@ -1,0 +1,10 @@
+package perllcm;
+
+struct lcmplot_t
+{
+    int64_t utime;            //timestamp when published
+
+    int32_t npts;
+    double pts[npts];         // pts must match label name
+    string label[npts];
+}

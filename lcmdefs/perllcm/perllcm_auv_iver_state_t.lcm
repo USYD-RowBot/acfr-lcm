@@ -1,0 +1,17 @@
+package perllcm;
+
+struct auv_iver_state_t
+{
+    int64_t utime;
+
+    // vehicle state
+    position_t position;
+    double altitude;
+
+    // lat/lon origin
+    double orglat;
+    double orglon;
+
+    // abort state
+    boolean abort_state;
+}

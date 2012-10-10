@@ -1,0 +1,7 @@
+macro (perlsx_boost)
+  perlsx_find_package (Boost "on ubuntu `sudo apt-get install libboost-dev`" ${ARGN})
+  if (Boost_FOUND)
+    include_directories (${Boost_INCLUDE_DIRS})
+    set (PERLSX_BOOST ${Boost_LIBRARIES})
+  endif ()
+endmacro ()

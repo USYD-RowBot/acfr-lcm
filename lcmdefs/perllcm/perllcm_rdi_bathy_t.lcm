@@ -1,0 +1,10 @@
+package perllcm;
+
+struct rdi_bathy_t
+{
+    int64_t utime;
+    float  range[4];   /* raw slant range along beams 1, 2, 3, 4 */
+    float  xyz[4][3];  /* projected x,y,z for beams 1, 2, 3, 4 */
+
+    const float RANGE_SENTINAL = 0; /* This should be kept in sync with senlcm_rdi_pd4_t.lcm */
+}

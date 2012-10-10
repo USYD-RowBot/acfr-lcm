@@ -1,0 +1,8 @@
+package perllcm;
+
+struct pvn_eview_map_predict_data_collection_t
+{
+    int32_t n;
+    pvn_eview_map_predict_data_t predict_data[n];
+
+}

@@ -1,0 +1,6 @@
+package perllcm;
+
+struct heartbeat_t
+{
+    int64_t utime;
+}

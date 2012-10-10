@@ -1,0 +1,6 @@
+macro (perlsx_sba)
+  perlsx_find_library (sba "did you build sba in third-party?" ${ARGN})
+  if (SBA_FOUND)
+    set (PERLSX_SBA ${SBA_LIBRARIES})
+  endif ()
+endmacro ()

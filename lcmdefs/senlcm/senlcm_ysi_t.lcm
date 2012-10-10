@@ -1,0 +1,18 @@
+package senlcm;
+
+struct ysi_t
+{
+    int64_t utime;
+
+	double temperature;
+	double depth;
+	double turbidity;
+	double chlorophyl;
+	double conductivity;
+	double oxygen;
+	double battery;
+	double salinity;
+}
+
+
+

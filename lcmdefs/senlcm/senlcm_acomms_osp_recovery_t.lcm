@@ -1,0 +1,12 @@
+package senlcm;
+
+struct acomms_osp_recovery_t
+{
+    acomms_two_osp_t two_osp_msg;
+    
+    double eta[4];
+    double Lambda[16];
+
+    int32_t org_tol_no;
+    int32_t new_tol_no;
+}

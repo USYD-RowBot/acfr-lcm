@@ -1,0 +1,30 @@
+package perllcm;
+
+// NOTE: you must use XBOXDRV (as outlined in the
+// xbox-controller sensor driver)
+struct xbox_command_t
+{
+    int64_t utime;		//timestamp when published    
+
+    int32_t left_rumble;    // scaled 0-255
+    int32_t right_rumble;   // scaled 0-255
+
+    int32_t led_code;
+
+    const int32_t LED_OFF           = 0;
+    const int32_t LED_ALL_BLINK     = 1;
+    const int32_t LED_1_BLINK_ON    = 2;
+    const int32_t LED_2_BLINK_ON    = 3;
+    const int32_t LED_3_BLINK_ON    = 4;
+    const int32_t LED_4_BLINK_ON    = 5;
+    const int32_t LED_1_ON          = 6;
+    const int32_t LED_2_ON          = 7;
+    const int32_t LED_3_ON          = 8;
+    const int32_t LED_4_ON          = 9;
+    const int32_t LED_ROTATE        = 10;
+    const int32_t LED_BLINK         = 11;
+    const int32_t LED_BLINK_SLOWER  = 12;
+    const int32_t LED_ROTATE_TWO    = 13;
+    const int32_t LED_BLINK_ONCE    = 15;
+    
+}

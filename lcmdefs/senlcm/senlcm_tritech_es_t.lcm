@@ -1,0 +1,7 @@
+package senlcm;
+
+struct tritech_es_t
+{
+    int64_t utime;
+    double  range;        // meters
+}

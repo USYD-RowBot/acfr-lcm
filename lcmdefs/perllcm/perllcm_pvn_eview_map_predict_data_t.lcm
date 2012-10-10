@@ -1,0 +1,18 @@
+package perllcm;
+
+struct pvn_eview_map_predict_data_t
+{
+
+    int64_t obs_utime;               // utime id of observation image (possible future exemplar)
+    pvn_conditions_t obs_conds;      // conditions at time of observation
+    int32_t obs_num_feats;           // number of features in the observation image
+    int64_t neighborhood_id;         // id of neighborhood we are predicting in
+    int32_t ne;                      // number of exemplars in this observation
+    int64_t exemplar_utimes[ne];     // utimes of each exemplar
+    float   p_observations[ne];      // predicted probability of observations for each exemplar
+    int32_t inlier_cnts[ne];         // number of inliers for each exemplar
+    int32_t exemplar_num_feats[ne];  // number of features in the in each exemplar image
+    float   reproj_error[ne];        // mean squared  reprojection error of match
+    int8_t  match_success[ne];       // 1 if num_inliers > threshold , 0 otherwise 
+    
+}

@@ -1,0 +1,69 @@
+width/cols = 1616 
+height/rows = 1232
+Camera 0
+Focallength = 408.397136
+CameraCenter_X = 806.586960
+CameraCenter_Y = 631.070016 
+Rx = 172.292248
+Ry = 89.796352
+Rz = 172.153363 
+Tx = 0.042152 	
+Ty = -0.001818
+Tz = -0.000285
+Camera 1
+Focallength = 402.206240
+CameraCenter_X = 784.646528
+CameraCenter_Y = 624.348224 
+Rx = 29.509045
+Ry = 89.733556
+Rz = -42.675558 
+Tx = 0.011077
+Ty = -0.040167 	
+Tz = 0.000021
+Camera 2
+Focallength = 398.799712
+CameraCenter_X = 818.201152
+CameraCenter_Y = 629.331664 
+Rx = 1.344044 
+Ry = 89.791940 
+Rz = -142.573042 
+Tx = -0.034641 
+Ty = -0.023357 
+Tz = 0.000269
+Camera 3
+Focallength = 406.131504
+CameraCenter_X = 820.718880
+CameraCenter_Y = 623.043536 
+Rx = 152.430265 
+Ry = 89.517379
+Rz = -63.636589 
+Tx = -0.033133
+Ty = 0.025897 
+Tz = -0.000102
+Camera 4
+Focallength = 400.730832
+CameraCenter_X = 796.724512
+CameraCenter_Y = 618.614496 
+Rx = -151.239716
+Ry = 89.507811 
+Rz = -79.233073 
+Tx = 0.014544 	
+Ty = 0.039445 
+Tz = 0.000097
+Camera 5
+Focallength = 411.701856
+CameraCenter_X = 811.339616
+CameraCenter_Y = 639.530160 
+Rx = -0.027330
+Ry = 0.135275 	
+Rz = 0.138885 
+Tx = 0.000632 	
+Ty = -0.000774 
+Tz = 0.062475
+Laser2CH
+Rx = 0.0168
+Ry = -0.0323
+Rz = -90.2454
+Tx = 0.3406
+Ty = 0.0106
+Tz = -0.4163

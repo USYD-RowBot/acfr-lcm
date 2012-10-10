@@ -1,0 +1,31 @@
+import "goby/protobuf/modem_message.proto"; // for ClockMode
+import "goby/protobuf/dccl_option_extensions.proto";
+
+package perls.protobuf;
+
+message MiniUser
+{
+  option (dccl.id) = 5;
+  option (dccl.max_bytes) = 2;
+  
+  required uint32 user = 1 [(dccl.min)=0, (dccl.max)=1023, (dccl.in_head)=true];
+}
+
+message MiniOWTT
+{
+  option (dccl.id) = 6;
+  option (dccl.max_bytes) = 2;
+  
+  required goby.acomms.protobuf.ClockMode clock_mode = 1 [(dccl.in_head)=true];
+  required int32 time_of_depart = 2 [(dccl.min)=0, (dccl.max)=15, (dccl.in_head)=true];
+  required uint32 user = 3 [(dccl.min)=0, (dccl.max)=15, (dccl.in_head)=true];
+}
+
+message MiniAbort
+{
+  option (dccl.id) = 7;
+  option (dccl.max_bytes) = 2;
+  
+  required uint32 user = 1 [(dccl.min)=0, (dccl.max)=1023, (dccl.in_head)=true];
+}
+

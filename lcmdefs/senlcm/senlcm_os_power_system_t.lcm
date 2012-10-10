@@ -1,0 +1,15 @@
+package senlcm;
+
+struct os_power_system_t {
+	int64_t utime;
+	
+	double current;
+	double power;
+	int32_t avg_charge_p;
+	double capacity;
+	double capacity_full;
+    int32_t minutes_tef;
+	
+	int32_t num_controllers;
+	os_power_cont_t controller[num_controllers];
+}

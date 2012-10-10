@@ -1,0 +1,13 @@
+package perllcm;
+
+struct auv_es_horizon_t
+{
+    int64_t   utime;
+
+    double    offset;          // meters
+    int32_t   index;           // 0-49
+    double    slope;           // non-dim
+    double    flag_slope;      // non-dim
+    double    depth[50];       // meters
+    int8_t    health[50];      // 0-no data   1-unknown height  2-known height
+}

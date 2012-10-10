@@ -1,0 +1,18 @@
+package senlcm;
+
+struct uvc_opi_t
+{
+    int64_t utime;
+    double  percent;       // percent remaining battery capacity
+    double  remaining_cap; // remaining capacity in watt-hrs
+    double  pwr;           // power in watts charged or discharged
+    double  volts;         // voltage being used
+    double  current;       // current in amps (pos indicates charging)
+    double  time_til;      // time to full or empty in minutes
+
+    const int32_t BS_CHARGING = 1, BS_DISCHARGING = 2, BS_FAULT = 3;
+    int32_t  batt_state;   // battery state
+
+    const int32_t NOLEAK = 0, LEAK = 1;
+    int32_t  leak;         // leak indicator (0 = no leak, 1 = leak)
+}

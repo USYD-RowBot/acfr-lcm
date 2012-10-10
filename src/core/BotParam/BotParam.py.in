@@ -1,0 +1,261 @@
+#!/usr/bin/env python
+
+from ctypes import *
+import os
+import sys
+
+BOT2_SO      = 'libbot2-param-client.so'
+C_SO         = 'libc.so.6'
+PCOMMON_SO   = '@LIBRARY_OUTPUT_PATH@/libperls-common.so'
+LCM_SO       = 'liblcm.so'
+SCRIPT_DIR   = os.path.dirname(__file__)
+
+#Can't find these in python standard libraries...
+EXIT_SUCCESS = 0
+EXIT_FAILURE = -1
+NULL         = 0
+
+# see bot_util.h for these constants
+BOTU_PARAM_LONG_OPT_SERVER_NAME = "pserver-name"
+BOTU_PARAM_LONG_OPT_USE_SERVER = "use-pserver"
+BOTU_PARAM_LONG_OPT_MASTER_CFG = "master-cfg"
+
+def c_argc_argv(argv):
+    """ convert python argv into ctypes (int argc, char**argv) """
+
+    from ctypes import c_char_p, c_int
+
+    argc = len(argv)
+
+    # char*[] type
+    t_argv = c_char_p*argc
+
+    # construct argv for C
+    c_argv = t_argv(*tuple([c_char_p(arg) for arg in argv]))
+    c_argc = c_int(argc)
+
+    return (c_argc, c_argv)
+
+def bot_param_args_to_pyargv (cfg_file, use_pserver, pserver_name):
+
+    arg1 = '--%s=%s' % (BOTU_PARAM_LONG_OPT_MASTER_CFG, cfg_file)
+    arg2 = '--%s=%s' % (BOTU_PARAM_LONG_OPT_USE_SERVER, use_pserver)
+    arg3 = '--%s=%s' % (BOTU_PARAM_LONG_OPT_SERVER_NAME, pserver_name)
+
+    pyargv = []
+    pyargv.append(arg1)
+    pyargv.append(arg2)
+    pyargv.append(arg3)
+
+    return pyargv
+
+class BotParam(object):
+
+    ##
+    # Create a new BotParam with config file given by cfg_file
+    # (default: master.cfg)
+    # @throws Exception if encountered error
+    def __init__(self, pyargv=''):
+
+        if pyargv == '':
+            pyargv = '(placeholder to avoid segfault)'
+
+        # pyargv = BotParam_ags_to_pyargv(cfg_file, use_pserver, pserver_name)
+
+        (argc, argv) = c_argc_argv(pyargv)
+
+        #Load the .so file for libbot2-param-client
+        self.lcm = cdll.LoadLibrary(LCM_SO)
+        self.bot2 = cdll.LoadLibrary(BOT2_SO)
+        self.c    = cdll.LoadLibrary(C_SO)
+        self.pcommon = cdll.LoadLibrary(PCOMMON_SO)
+
+        self._lcm = self.lcm.lcm_create(NULL)
+        self._gopt = self.pcommon.getopt_create()
+        self.pcommon.getopt_add_help(self._gopt, NULL);
+        self.pcommon.botu_param_add_pserver_to_getopt (self._gopt);
+        
+        if (not self.pcommon.getopt_parse (self._gopt, argc, argv, 1)):
+            self.pcommon.getopt_do_usage (self._gopt, NULL);
+            exit (EXIT_FAILURE);
+        elif (self.pcommon.getopt_get_bool (self._gopt, "help")):
+            self.pcommon.getopt_do_usage (self._gopt, NULL);
+            exit (EXIT_SUCCESS);
+
+        #Create the struct
+        self._BotParam = self.pcommon.botu_param_new_from_getopt_or_fail(self._gopt, self._lcm)
+        
+        if self._BotParam == NULL:
+            raise Exception('Error creating bot param')
+
+    def cleanup(self):
+        self.lcm.lcm_destroy(self._lcm)
+
+    ##
+    # See param_client.h
+    def get_num_subkeys(self, containerKey):
+        
+        ret = self.bot2.bot_param_get_num_subkeys(self._BotParam, 
+                                                       containerKey)
+        if ret == EXIT_FAILURE:
+            raise ValueError('Key not found: %s' % containerKey)
+        
+        return ret
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_int(self, key, default=None):
+
+        i = c_int(0)
+        ret = self.bot2.bot_param_get_int(self._BotParam, key, pointer(i))
+
+        if ret == EXIT_SUCCESS:
+            return i.value
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get int from key %s' % key)            
+        
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_boolean(self, key, default=None):
+
+        i = c_int(-1)
+        ret = self.bot2.bot_param_get_boolean(self._BotParam, key, pointer(i))
+
+        if ret == EXIT_SUCCESS:
+            if i:
+                return True
+            else:
+                return False
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get bool from key %s' % key)            
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_double(self, key, default=None):
+        
+        d = c_double(0.)
+        ret = self.bot2.bot_param_get_double(self._BotParam, key, pointer(d))
+
+        if ret == EXIT_SUCCESS:
+            return d.value
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get double from key %s' % key)            
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_str(self, key, default=None):
+        
+        c = c_char_p()
+        ret = self.bot2.bot_param_get_str(self._BotParam, key, pointer(c))
+
+        s = c.value
+        self.c.free (c)
+
+        if ret == EXIT_SUCCESS:
+            return s
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get string from key %s' % key)
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_array_len(self, key):
+        
+        ret = self.bot2.bot_param_get_array_len(self._BotParam, key)
+        
+        if ret != EXIT_FAILURE:
+            return ret
+        else:
+            raise ValueError('Could not get array length from key %s' % key)
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_int_array(self, key, default=None):
+        
+        length = self.get_array_len(key)
+        #Create int array of length length
+        vals   = (c_int * length)() 
+        #Cast to *int
+        valsP  = cast(vals, POINTER(c_int))
+        ret    = self.bot2.bot_param_get_int_array(self._BotParam, key, valsP, length)
+
+        if ret != EXIT_FAILURE:
+            return [thing for thing in vals]
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get int array from key %s' % key)
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_double_array(self, key, default=None):
+
+        length = self.get_array_len(key)
+        #Create double array of length length
+        vals   = (c_double * length)()
+        #Cast to *double
+        valsP  = cast(vals, POINTER(c_double))
+        ret    = self.bot2.bot_param_get_double_array(self._BotParam, key, valsP, length)
+
+        if ret != EXIT_FAILURE:
+            return [thing for thing in vals]
+        elif default is not None:
+            return default
+        else:
+            raise ValueError('Could not get double array from key %s' % key)
+
+    ##
+    # See param_client.h
+    # @throws ValueError if error during parsing
+    def get_str_array(self, key):
+
+        ret      = self.bot2.bot_param_get_str_array_alloc(self._BotParam, key)
+        length   = self.get_array_len(key)
+        foo      = cast(ret, POINTER(c_char_p))
+        #Convert to a python list
+        strArray = [foo[i] for i in range(length)]
+
+        #Free what was allocated behind the scenes
+        self.bot2.bot_param_str_array_free(ret)
+
+        return strArray
+
+if __name__ == '__main__':
+
+    param = BotParam()
+
+    #Typical usage:
+    print param.get_num_subkeys('vehicle')
+    print param.get_int('capture.n_slots')
+    print param.get_boolean('capture.is_simulation')
+    print param.get_double('navigator.est.org_lat')
+    print param.get_str('os-remotehelm.mission_channel')
+    print param.get_array_len('capture.nodes')
+    print param.get_int_array('capture.nodes', param.get_array_len('capture.nodes'))
+    print param.get_double_array('navigator.omfs.OMF_MS_GX1_RPH.h_corr_coefs', 
+                                 param.get_array_len('navigator.omfs.OMF_MS_GX1_RPH.h_corr_coefs'))
+    print param.get_str_array('sensors.modem.nvram_cfg')
+
+    #If failures are desired...
+    try:
+        print param.get_int('capture.n_slots_THIS_WILL_FAIL')
+    except ValueError, err:
+        # (crash and burn here)
+        pass 
+    
+    #If default values are desired...
+    print param.get_double('navigator.est.org_lat_THIS_WILL_FAIL', default=123.456)

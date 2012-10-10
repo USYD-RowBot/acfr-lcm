@@ -1,0 +1,25 @@
+package perllcm;
+
+struct pvn_eview_map_exemplar_t
+{
+
+    int64_t utime;
+    int64_t utime_last_match; // utime of last successfull match of exemplar
+    pose3d_t x_n_e; // transform neighboorhood to exemplar
+    
+    int32_t npts;
+    float   x[npts];
+    float   y[npts];
+    float   z[npts];
+    int32_t npts_uv; // either 0 or the same as npts
+    float   u[npts_uv];
+    float   v[npts_uv];
+    int32_t keylen;
+    float   keys[npts][keylen];
+    int32_t vocab_id[npts];
+    
+    pvn_conditions_t conditions;
+    
+    float max_xyz[3];
+    float min_xyz[3];
+}

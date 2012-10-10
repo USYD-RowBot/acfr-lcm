@@ -1,0 +1,10 @@
+package perllcm;
+
+struct relative_pose_link_t
+{
+    int32_t idx0; //i
+    int32_t idx1; //j
+
+    pose3d_t pose;
+
+}

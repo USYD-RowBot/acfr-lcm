@@ -1,0 +1,12 @@
+package senlcm;
+
+struct IMU_t
+{
+    int64_t utime;
+
+    double angRate[3];	  		// Angular rates, X, Y, Z
+    double accel[3];			// Accelerations, X, Y, Y
+    double deltaAngle[3];		// Angle deltas
+    double deltaVelocity[3];	// Velocity deltas
+  
+}

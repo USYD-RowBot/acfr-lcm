@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+CLASSPATH=@CLASSPATH@
+
+# directory of this script
+DIR=$(dirname $0)
+if [ "$DIR" == "." ]; then
+    DIR=`pwd`
+else
+    DIR="`pwd`/$DIR"
+fi
+
+# follow any symbolic links we might be in
+DIR=$(readlink -f "$DIR")
+
+# add perls' jars to classpath
+if [ $DIR == $(readlink -f "@EXECUTABLE_OUTPUT_PATH@") ]; then
+    for JAR in @JAVA_OUTPUT_PATH@/*.jar; do
+        if [ "$JAR" != "@JAVA_OUTPUT_PATH@/*.jar" ]; then
+            CLASSPATH=$JAR:$CLASSPATH
+        fi
+    done
+elif [ $DIR == $(readlink -f "@EXECUTABLE_INSTALL_PATH@") ]; then
+    for JAR in @JAVA_INSTALL_PATH@/*.jar; do
+        if [ "$JAR" != "@JAVA_INSTALL_PATH@/*.jar" ]; then
+            CLASSPATH=$JAR:$CLASSPATH
+        fi
+    done
+else
+    echo "ERROR: path=`pwd` does not match @EXECUTABLE_OUTPUT_PATH@ or @EXECUTABLE_INSTALL_PATH@"
+    echo ""
+fi
+
+export CLASSPATH
+echo "CLASSPATH=$CLASSPATH"
+lcm-spy

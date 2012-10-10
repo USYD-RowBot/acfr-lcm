@@ -1,0 +1,170 @@
+package senlcm;
+
+struct rdi_pd4_t
+{
+    int64_t utime;
+
+    /* Defines the ExplorerDVL hardware/firmware configuration.  Convert to
+       binary and interpret as follows.
+
+       BIT 76543210
+           00xxxxxx  NO TRANSFORMATION (BEAM COORDINATES)
+           01xxxxxx  INSTRUMENT COORDINATES
+           10xxxxxx  SHIP COORDINATES
+           11xxxxxx  EARTH COORDINATES
+           xx0xxxxx  TILT INFORMATION NOT USED IN CALCULATIONS
+           xx1xxxxx  TILT INFORMATION USED IN CALCULATIONS
+           xxx0xxxx  3-BEAM SOLUTIONS NOT COMPUTED
+           xxx1xxxx  3-BEAM SOLUTIONS COMPUTED
+           xxxxx010  300-kHz  ExplorerDVL
+           xxxxx011  600-kHz  ExplorerDVL
+           xxxxx100  1200-kHz ExplorerDVL
+    */
+    byte system_config;
+    const int32_t SYSTEM_CONFIG_COORD_MASK  = 192;
+    const int32_t SYSTEM_CONFIG_COORD_BEAM  = 0;
+    const int32_t SYSTEM_CONFIG_COORD_INST  = 64;
+    const int32_t SYSTEM_CONFIG_COORD_SHIP  = 128;
+    const int32_t SYSTEM_CONFIG_COORD_EARTH = 192;
+
+    const int32_t SYSTEM_CONFIG_TILT_MASK   = 32;
+    const int32_t SYSTEM_CONFIG_TILT_USED   = 32;
+
+    const int32_t SYSTEM_CONFIG_3BEAM_MASK  = 16;
+    const int32_t SYSTEM_CONFIG_3BEAM_USED  = 16;
+
+    const int32_t SYSTEM_CONFIG_KHZ_MASK    = 7;
+    const int32_t SYSTEM_CONFIG_KHZ_300     = 2;
+    const int32_t SYSTEM_CONFIG_KHZ_600     = 3;
+    const int32_t SYSTEM_CONFIG_KHZ_1200    = 4;
+
+    /* These fields contain the velocity of the vessel in relation to the
+       bottom in m/s.  Positive values indicate vessel motion to the east (X),
+       north (Y), and up (Z).  When a velocity is bad, the value is set to
+       -32.768
+       
+       SI units = m/s
+    */
+    double btv[4]; /* [x,y,z,error] */
+    const double BTV_SENTINAL = -32.768;
+
+    /* This field shows the status of bottom-referenced correlation and
+       echo amplitude data.  Convert to binary and interpret as follows.
+       A zero code indicates status is ok.
+       
+       BIT 76543210
+       1xxxxxxx  BEAM 4 LOW ECHO AMPLITUDE
+       x1xxxxxx  BEAM 4 LOW CORRELATION
+       xx1xxxxx  BEAM 3 LOW ECHO AMPLITUDE
+       xxx1xxxx  BEAM 3 LOW CORRELATION
+       xxxx1xxx  BEAM 2 LOW ECHO AMPLITUDE
+       xxxxx1xx  BEAM 2 LOW CORRELATION
+       xxxxxx1x  BEAM 1 LOW ECHO AMPLITUDE
+       xxxxxxx1  BEAM 1 LOW CORRELATION
+    */
+    byte btv_status;
+    const int32_t BTV_STATUS_BEAM4_LOW_ECHO_AMPLITUDE = 128;
+    const int32_t BTV_STATUS_BEAM4_LOW_CORRELATION    = 64;
+    const int32_t BTV_STATUS_BEAM3_LOW_ECHO_AMPLITUDE = 32;
+    const int32_t BTV_STATUS_BEAM3_LOW_CORRELATION    = 16;
+    const int32_t BTV_STATUS_BEAM2_LOW_ECHO_AMPLITUDE = 8;
+    const int32_t BTV_STATUS_BEAM2_LOW_CORRELATION    = 4;
+    const int32_t BTV_STATUS_BEAM1_LOW_ECHO_AMPLITUDE = 2;
+    const int32_t BTV_STATUS_BEAM1_LOW_CORRELATION    = 1;
+    const int32_t BTV_STATUS_OK                       = 0;
+
+
+    /* These fields contain the velocity of the vessel in relation to the
+       water-mass reference layer in m/s.  Positive values indicate vessel
+       motion to east (X), north (Y), and up (Z). When a velocity is bad, 
+       the value is set to -32.768
+
+       SI units = m/s
+    */
+    double wtv[4]; /* [x,y,z,error] */
+    const double WTV_SENTINAL = -32.768;
+
+    /* This field shows the status of water mass depth and correlation
+       data.  Convert to binary and interpret as follows.  A zero code
+       indicates status is ok.
+
+       BIT 76543210
+           xxx1xxxx  ALTITUDE IS TOO SHALLOW
+           xxxx1xxx  BEAM 4 LOW CORRELATION
+           xxxxx1xx  BEAM 3 LOW CORRELATION
+           xxxxxx1x  BEAM 2 LOW CORRELATION
+           xxxxxxx1  BEAM 1 LOW CORRELATION
+    */
+    byte wtv_status;
+    const int32_t WTV_STATUS_ALTITUDE_TOO_SHALLOW  = 16;
+    const int32_t WTV_STATUS_BEAM4_LOW_CORRELATION = 8;
+    const int32_t WTV_STATUS_BEAM3_LOW_CORRELATION = 4;
+    const int32_t WTV_STATUS_BEAM2_LOW_CORRELATION = 2;
+    const int32_t WTV_STATUS_BEAM1_LOW_CORRELATION = 1;
+    const int32_t WTV_STATUS_OK                    = 0;
+
+    /* These fields contain the starting boundary (near surface) and
+       the ending boundary (near bottom) of the water-mass layer
+       (BL-command).  If the minimum size field is zero, the ExplorerDVL
+       does not calculate water mass data.
+
+       SI units = m; Range = 0-999.9 m
+    */
+    double wtv_layer_start;
+    double wtv_layer_end;
+
+    /* These fields contain the beam slant range from the ExplorerDVL to the
+       bottom as determined by each beam.  When the bottom detection is 
+       bad, the field is set to 0.
+
+       SI units = m; Range = 0 to 655.35 m
+    */
+    double range[4]; /* [b1,b2,b3,b4] */
+    const double RANGE_SENTINAL = 0.0;
+
+    /* These fields contain the average vertical range from the
+       ExplorerDVL to the bottom.  This vertical range does not
+       compensate for the effects of pitch and roll.  When a bottom
+       detection is bad, the field is set to 0.
+     
+       SI units = m; Range = 0 to 655.35 m
+     */
+    double altitude;
+    const double ALTITUDE_SENTINAL = 0.0;
+
+    /* These fields contain the time of the first ping (TOFP) of the
+       current ensemble.
+    */
+    int8_t tofp_hour;
+    int8_t tofp_minute;
+    int8_t tofp_second;
+    int8_t tofp_hundredth;
+
+    /* These fields contain the results of the ExplorerDVL's built-in
+       test function.  A zero code indicates a successful BIT result.
+
+       BYTE 40  BYTE 41 (BYTE 41 RESERVED FOR FUTURE USE)
+       1xxxxxxx xxxxxxxx = RESERVED
+       x1xxxxxx xxxxxxxx = RESERVED
+       xx1xxxxx xxxxxxxx = RESERVED
+       xxx1xxxx xxxxxxxx = DEMOD 1 ERROR
+       xxxx1xxx xxxxxxxx = DEMOD 0 ERROR
+       xxxxx1xx xxxxxxxx = RESERVED
+       xxxxxx1x xxxxxxxx = DSP ERROR
+       xxxxxxx1 xxxxxxxx = RESERVED
+    */
+    byte builtin_test[2];
+    const int32_t BUILTIN_TEST_OK = 0;
+
+    /* Contains either the manual or calculated speed of sound information.
+
+       SI units = m/s; Range = 1400-1600 m/s
+    */
+    double speed_of_sound;
+
+    /* Contains the temperature of the water at the transducer head.
+
+       SI units = C; Range = -5.00 to +40.00 C
+    */
+    double xducer_head_temp;
+}

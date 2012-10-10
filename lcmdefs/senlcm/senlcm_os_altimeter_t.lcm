@@ -1,0 +1,36 @@
+package senlcm;
+
+/* Data returned by Ocean Server Altimeter
+ *
+ * DPT – Depth:
+ *     $SDDPT,OFFSET_METRES,*hh<0D><0A>
+ *
+ * DBT – Depth Below Transducer:
+ *     $SDDBT,DATA_FEET,f,DATA_METRES,M,DATA_FATHOMS,F*hh<0D><0A>
+ *
+ * MTW – Mean Temperature of Water
+ *     $YXMTW,DATA_TEMPERATURE_C,C*hh<0D><0A>
+ *
+ */
+
+struct os_altimeter_t
+{
+    int64_t utime;
+
+    /* Data returned from DPT command
+     *
+     * The depth offset of the transducer. Positive offsets
+     * provide distance from the transducer to the water 
+     * line. Negative offsets provide distance from the 
+     * offset will always be zero, or not included
+     */
+    double offset;
+
+    /* Data returned from DBT command */
+    double feet;          // Depth in feet
+    double metres;        // Depth in metres
+    double fathoms;       // Depth in fathoms
+
+    /* Data returned from MTW command */
+    double temperature;   // Temperature in degrees centigrade
+}

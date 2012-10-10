@@ -1,0 +1,17 @@
+package senlcm;
+
+struct stats_t
+{
+    int64_t utime;
+
+    int32_t ntimeouts;
+    int32_t ngood;
+    int32_t nbad;
+
+    int32_t dt;
+    int32_t dtmin;
+    int32_t dtmax;
+
+    int32_t latency;
+    int32_t latencymax;
+}

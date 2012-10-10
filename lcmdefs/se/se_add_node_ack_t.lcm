@@ -1,0 +1,25 @@
+package se;
+
+struct add_node_ack_t
+{
+    int64_t utime;
+
+    // Node type
+    int16_t node_type;
+
+    // Enumeration for node types
+    const int16_t NODE_POSE2D=1;
+    const int16_t NODE_POSE3D=2; 
+
+    // mu and covariance of the new node
+    double mu[6];
+    double cov[36];
+
+    // The sensor that is proposing the node
+    // sensor_id = 0 can be used if the node is for no specific sensor
+    int32_t sensor_id;
+
+    // Enumeration of different sensor id
+    // Refer to se_add_node_t definition
+}
+

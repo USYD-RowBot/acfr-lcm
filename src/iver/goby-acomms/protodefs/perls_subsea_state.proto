@@ -1,0 +1,18 @@
+import "goby/protobuf/dccl_option_extensions.proto";
+
+package perls.protobuf;
+
+message subsea_state { 
+	option (dccl.id) = 85;
+	option (dccl.max_bytes) = 32;
+	optional double latitude = 4 [(dccl.max)=1.57079, (dccl.min)=-1.57079, (dccl.precision)=6];
+	optional double longitude = 5 [(dccl.max)=3.14159, (dccl.min)=-3.14159, (dccl.precision)=6];
+	optional double heading = 6 [(dccl.max)=6.28, (dccl.min)=0, (dccl.precision)=2];
+	optional double depth = 7 [(dccl.max)=100, (dccl.min)=0, (dccl.precision)=1];
+	optional double altitude = 8 [(dccl.max)=200, (dccl.min)=0, (dccl.precision)=1];
+	optional int32 next_waypoint = 9 [(dccl.max)=255, (dccl.min)=1, (dccl.precision)=0];
+	optional int32 dist_to_next_waypoint = 10 [(dccl.max)=1000, (dccl.min)=0, (dccl.precision)=0];
+	optional int32 battery_percent = 11 [(dccl.max)=100, (dccl.min)=0, (dccl.precision)=0];
+	optional int32 error_state = 12 [(dccl.max)=25, (dccl.min)=0, (dccl.precision)=0];
+	optional bool abort_state = 13;
+} 

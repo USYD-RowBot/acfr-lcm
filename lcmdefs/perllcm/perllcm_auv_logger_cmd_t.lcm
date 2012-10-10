@@ -1,0 +1,15 @@
+package perllcm;
+
+struct auv_logger_cmd_t
+{
+    int64_t utime;
+
+    int32_t type;
+
+    string lcmlog_name;
+    string camlog_dir;
+
+    const int32_t START_LOGGING = 1;
+    const int32_t STOP_LOGGING  = 2;
+
+}

@@ -1,0 +1,7 @@
+package senlcm;
+
+struct os_motors_t
+{
+    int64_t utime;
+	int8_t motor[5];
+}

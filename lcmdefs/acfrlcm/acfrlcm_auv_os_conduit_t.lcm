@@ -1,0 +1,14 @@
+package acfrlcm;
+
+struct auv_os_conduit_t
+{
+    int64_t utime;
+
+    auv_os_conduit_raw_t dvl;
+    auv_os_conduit_raw_t altimeter;
+    auv_os_conduit_raw_t gps;
+    auv_os_conduit_raw_t compass;
+    auv_os_conduit_raw_t command_passthru;
+    auv_os_conduit_raw_t vehicle_status_query;
+
+}

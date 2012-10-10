@@ -1,0 +1,13 @@
+package senlcm;
+
+struct gpsd3_dop_t
+{
+    /* Dilution of precision factors */
+    double xdop;
+    double ydop;
+    double pdop;
+    double hdop;
+    double vdop;
+    double tdop;
+    double gdop;
+}

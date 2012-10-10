@@ -1,0 +1,7 @@
+macro (perlsx_curl)
+  perlsx_find_package (CURL "on ubuntu `sudo apt-get install libcurl4-dev`" ${ARGN})
+  if (CURL_FOUND)
+    include_directories (${CURL_INCLUDE_DIR})
+    set (PERLSX_CURL ${CURL_LIBRARIES})
+  endif ()
+endmacro ()

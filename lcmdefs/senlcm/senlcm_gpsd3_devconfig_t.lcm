@@ -1,0 +1,19 @@
+package senlcm;
+
+struct gpsd3_devconfig_t
+{
+    string path;
+    int16_t flags;
+    const int16_t FLAGS_SEEN_GPS=1;
+    const int16_t FLAGS_SEEN_RTCM2=2;
+    const int16_t FLAGS_SEEN_RTCM3=4;
+    const int16_t FLAGS_SEEN_AIS=8;
+    string driver;
+    string subtype;
+    double activated;
+    int32_t baudrate;
+    int8_t  stopbits;
+    double cycle;
+    double mincycle;
+    int16_t driver_mode;
+}

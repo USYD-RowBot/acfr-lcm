@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<!-- Created by htmlize-1.34 in css mode. -->
+<html>
+  <head>
+    <title>pelican.h</title>
+    <style type="text/css">
+    <!--
+      body {
+        color: #ffffff;
+        background-color: #000000;
+      }
+      .comment {
+        /* font-lock-comment-face */
+        color: #BD4BC4;
+      }
+      .comment-delimiter {
+        /* font-lock-comment-delimiter-face */
+        color: #BD4BC4;
+      }
+      .constant {
+        /* font-lock-constant-face */
+        color: #0FAA4C;
+      }
+      .doc {
+        /* font-lock-doc-face */
+        color: #A2AB64;
+      }
+      .function-name {
+        /* font-lock-function-name-face */
+        color: #9B703F;
+      }
+      .keyword {
+        /* font-lock-keyword-face */
+        color: #D56758;
+      }
+      .negation-char {
+      }
+      .preprocessor {
+        /* font-lock-preprocessor-face */
+        color: #7fffd4;
+      }
+      .string {
+        /* font-lock-string-face */
+        color: #A2AB64;
+      }
+      .type {
+        /* font-lock-type-face */
+        color: #9B703F;
+      }
+      .variable-name {
+        /* font-lock-variable-name-face */
+        color: #7587A6;
+      }
+
+      a {
+        color: inherit;
+        background-color: inherit;
+        font: inherit;
+        text-decoration: inherit;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    -->
+    </style>
+  </head>
+  <body>
+    <pre>
+<span class="doc">/**
+ * </span><span class="doc"><span class="constant">@author</span></span><span class="doc"> Paul Ozog - paulozog</span><span class="doc"><span class="constant">@umich</span></span><span class="doc">.edu
+ *
+ * </span><span class="doc"><span class="constant">@file</span></span><span class="doc"> pelican.h
+ *
+ * </span><span class="doc"><span class="constant">@brief</span></span><span class="doc"> Defines helper functions/structs for pelican sensor driver
+ */</span>
+<span class="preprocessor">#if</span><span class="negation-char"><span class="preprocessor">n</span></span><span class="preprocessor">def</span> __PELICAN_H__
+<span class="preprocessor">#define</span> <span class="variable-name">__PELICAN_H__</span>
+
+<span class="preprocessor">#include</span> <span class="string">&lt;stdint.h&gt;</span>
+<span class="preprocessor">#include</span> <span class="string">&lt;stdio.h&gt;</span>
+<span class="preprocessor">#include</span> <span class="string">&lt;math.h&gt;</span>
+<span class="preprocessor">#include</span> <span class="string">&lt;arpa/inet.h&gt;</span>
+<span class="preprocessor">#include</span> <span class="string">&lt;time.h&gt;</span>
+
+<span class="preprocessor">#include</span> <span class="string">"perls-common/units.h"</span>
+
+<span class="preprocessor">#include</span> <span class="string">"perls-lcmtypes/senlcm_pelican_t.h"</span>
+
+<span class="preprocessor">#ifdef</span> __cplusplus
+<span class="keyword">extern</span> <span class="string">"C"</span> {
+<span class="preprocessor">#endif</span>
+
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_MAX_LEN</span> 128 <span class="comment-delimiter">//</span><span class="comment">128 is probably overkill
+</span>
+<span class="doc">/**
+ * From documentation : used to poll telemetry
+ */</span>
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_QUERY_STR</span> <span class="string">"&gt;*&gt;p"</span>
+
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_IMURAWDATA_ID</span> SENLCM_PELICAN_T_PD_IMURAWDATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_LLSTATUS_ID</span> SENLCM_PELICAN_T_PD_LLSTATUS
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_IMUCALCDATA_ID</span> SENLCM_PELICAN_T_PD_IMUCALCDATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_HLSTATUS_ID</span> SENLCM_PELICAN_T_PD_HLSTATUS
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_DEBUGDATA_ID</span> SENLCM_PELICAN_T_PD_DEBUGDATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLOUT_ID</span> SENLCM_PELICAN_T_PD_CTRLOUT
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_FLIGHTPARAMS_ID</span> SENLCM_PELICAN_T_PD_FLIGHTPARAMS
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLCOMMANDS_ID</span> SENLCM_PELICAN_T_PD_CTRLCOMMANDS
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLINTERNAL_ID</span> SENLCM_PELICAN_T_PD_CTRLINTERNAL
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_RCDATA_ID</span> SENLCM_PELICAN_T_PD_RCDATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLSTATUS_ID</span> SENLCM_PELICAN_T_PD_CTRLSTATUS
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLINPUT_ID</span> SENLCM_PELICAN_T_PD_CTRLINPUT
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRLFALCON_ID</span> SENLCM_PELICAN_T_PD_CTRLFALCON
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_WAYPOINT_ID</span> SENLCM_PELICAN_T_PD_WAYPOINT
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CURRENTWAY_ID</span> SENLCM_PELICAN_T_PD_CURRENTWAY
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_NMEADATA_ID</span> SENLCM_PELICAN_T_PD_NMEADATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_GPSDATA_ID</span> SENLCM_PELICAN_T_PD_GPSDATA
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_SINGLEWAYPOINT_ID</span> SENLCM_PELICAN_T_PD_SINGLEWAYPOINT
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_GOTOCOMMAND_ID</span> SENLCM_PELICAN_T_PD_GOTOCOMMAND
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_LAUNCHCOMMAND_ID</span> SENLCM_PELICAN_T_PD_LAUNCHCOMMAND
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_LANDCOMMAND_ID</span> SENLCM_PELICAN_T_PD_LANDCOMMAND
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_HOMECOMMAND_ID</span> SENLCM_PELICAN_T_PD_HOMECOMMAND
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_GPSDATAADVANCED_ID</span> SENLCM_PELICAN_T_PD_GPSDATAADVANCED
+
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_LLSTATUS_CMD</span> SENLCM_PELICAN_T_LL_STATUS_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_IMU_RAWDATA_CMD</span> SENLCM_PELICAN_T_IMU_RAWDATA_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_IMU_CALCDATA_CMD</span> SENLCM_PELICAN_T_IMU_CALCDATA_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_RC_DATA_CMD</span> SENLCM_PELICAN_T_RC_DATA_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CTRL_OUT_CMD</span> SENLCM_PELICAN_T_CTRL_OUT_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_GPS_DATA_CMD</span> SENLCM_PELICAN_T_GPS_DATA_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CURRENT_WAY_CMD</span> SENLCM_PELICAN_T_CURRENT_WAY_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_GPS_DATA_ADVANCED_CMD</span> SENLCM_PELICAN_T_GPS_DATA_ADVANCED_CMD
+<span class="preprocessor">#define</span> <span class="variable-name">PELIC_CAM_DATA_CMD</span> SENLCM_PELICAN_T_CAM_DATA_CMD
+
+<span class="doc">/**
+ * Holds the preamble "&gt;*&gt;p" and type of struct from Asc Tech
+ * documentation
+ */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="type">pelic_query_t</span> {
+  <span class="type">char</span> <span class="variable-name">preamble</span>[4];
+  <span class="type">uint16_t</span> <span class="variable-name">packetType</span>;
+} <span class="variable-name">pelic_query_t</span>;
+
+<span class="doc">/**
+ * LowLevel (LL) Status - Taken strait from documentation
+ */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="type">pelic_LlStatusStruct</span> {
+  <span class="doc">/**
+   * battery voltages in mV
+   */</span>
+  <span class="type">int16_t</span> <span class="variable-name">battery_voltage_1</span>;
+
+  <span class="doc">/**
+   * Not used for pelican
+   */</span>
+  <span class="type">int16_t</span> <span class="variable-name">battery_voltage_2</span>;
+
+  <span class="doc">/**
+   * "Don't care" according to Asc Tech documentation
+   */</span>
+  <span class="type">int16_t</span> <span class="variable-name">status</span>;
+
+  <span class="doc">/**
+   * Controller cycles per second (should be about 1000)
+   */</span>
+  <span class="type">int16_t</span> <span class="variable-name">cpu_load</span>;
+  
+  <span class="doc">/**
+   * is compass enabled?
+   */</span>
+  <span class="type">int8_t</span> <span class="variable-name">compass_enabled</span>;
+
+  <span class="doc">/**
+   * checksum error?
+   */</span>
+  <span class="type">int8_t</span> <span class="variable-name">chksum_error</span>;
+
+  <span class="doc">/**
+   * is the vehicle flying?
+   */</span>
+  <span class="type">int8_t</span> <span class="variable-name">flying</span>;
+
+  <span class="doc">/**
+   * are the motors on?
+   */</span>
+  <span class="type">int8_t</span> <span class="variable-name">motors_on</span>;
+
+  <span class="doc">/**
+   * Encoded flight mode.  This might be undocumented
+   */</span>
+
+  <span class="type">int16_t</span> <span class="variable-name">flightMode</span>;
+
+  <span class="doc">/**
+   * Time motors are running (units unknown)
+   */</span>
+  <span class="type">int16_t</span> <span class="variable-name">up_time</span>;
+
+} <span class="keyword">__attribute__</span>((packed)) <span class="type">pelic_LlStatusStruct</span>;
+
+<span class="doc">/**
+ * IMU Calculated data - Taken strait from documentation
+ */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="type">pelic_ImuCalcDataStruct</span> {
+
+  <span class="doc">/**
+   * angles derived by integration of gyro_outputs, drift compensated by data
+   * fusion; -90000..+90000 pitch(nick) and roll, 0..360000 yaw; 1000 = 1
+   * degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angle_nick</span>;
+  <span class="doc">/**
+   * angles derived by integration of gyro_outputs, drift compensated by data
+   * fusion; -90000..+90000 pitch(nick) and roll, 0..360000 yaw; 1000 = 1
+   * degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angle_roll</span>;
+  <span class="doc">/**
+   * angles derived by integration of gyro_outputs, drift compensated by data
+   * fusion; -90000..+90000 pitch(nick) and roll, 0..360000 yaw; 1000 = 1
+   * degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angle_yaw</span>;
+
+  <span class="doc">/**
+   * angular velocities, raw values [16 bit] but bias free
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angvel_nick</span>;
+
+  <span class="doc">/**
+   * angular velocities, raw values [16 bit] but bias free
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angvel_roll</span>;
+
+  <span class="doc">/**
+   * angular velocities, raw values [16 bit] but bias free
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">angvel_yaw</span>;
+
+  <span class="doc">/**
+   * acc-sensor outputs, calibrated: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_x_calib</span>;
+
+  <span class="doc">/**
+   * acc-sensor outputs, calibrated: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_y_calib</span>;
+
+  <span class="doc">/**
+   * acc-sensor outputs, calibrated: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_z_calib</span>;
+
+  <span class="doc">/**
+   * horizontal / vertical accelerations: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_x</span>;
+
+  <span class="doc">/**
+   * horizontal / vertical accelerations: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_y</span>;
+
+  <span class="doc">/**
+   * horizontal / vertical accelerations: -10000..+10000 = -1g..+1g
+   */</span>
+  <span class="type">short</span> <span class="variable-name">acc_z</span>;
+
+  <span class="doc">/**
+   * reference angles derived by accelerations only: -90000..+90000; 1000 = 1
+   * degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">acc_angle_nick</span>;
+
+  <span class="doc">/**
+   * reference angles derived by accelerations only: -90000..+90000; 1000 = 1
+   * degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">acc_angle_roll</span>;
+
+  <span class="doc">/**
+   * total acceleration measured (10000 = 1g)
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">acc_absolute_value</span>;
+  
+  <span class="doc">/**
+   * magnetic field sensors output, offset free and scaled; units not
+   * determined, as only the direction of the field vector is taken into
+   * account
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">Hx</span>;
+
+  <span class="doc">/**
+   * magnetic field sensors output, offset free and scaled; units not
+   * determined, as only the direction of the field vector is taken into
+   * account
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">Hy</span>;
+
+  <span class="doc">/**
+   * magnetic field sensors output, offset free and scaled; units not
+   * determined, as only the direction of the field vector is taken into
+   * account
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">Hz</span>;
+
+  <span class="doc">/**
+   * compass reading: angle reference for angle_yaw: 0..360000; 1000 = 1 degree
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">mag_heading</span>;
+
+  <span class="doc">/**
+   * pseudo speed measurements: integrated accelerations, pulled towards zero;
+   * units unknown; used for short-term position stabilization
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">speed_x</span>;
+
+  <span class="doc">/**
+   * pseudo speed measurements: integrated accelerations, pulled towards zero;
+   * units unknown; used for short-term position stabilization
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">speed_y</span>;
+
+  <span class="doc">/**
+   * pseudo speed measurements: integrated accelerations, pulled towards zero;
+   * units unknown; used for short-term position stabilization
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">speed_z</span>;
+
+  <span class="doc">/**
+   * height in mm (after data fusion)
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">height</span>;
+
+  <span class="doc">/**
+   * diff. height in mm/s (after data fusion)
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">dheight</span>;
+
+  <span class="doc">/**
+   * diff. height measured by the pressure sensor [mm/s]
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">dheight_reference</span>;
+
+  <span class="doc">/**
+   * height measured by the pressure sensor [mm]
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">height_reference</span>;
+
+} <span class="keyword">__attribute__</span>((packed)) <span class="type">pelic_ImuCalcDataStruct</span>;
+
+<span class="doc">/**
+ * Remote Control (RC) Data : Taken strait from Asc Tech Documentation
+ */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="type">pelic_RcDataStruct</span> {
+
+  <span class="doc">/**
+   * channels as read from R/C receiver
+   */</span>
+  <span class="type">uint16_t</span> <span class="variable-name">channels_in</span>[8];
+
+  <span class="doc">/**
+   * channels bias free, remapped and scaled to 0..4095
+   */</span>
+  <span class="type">uint16_t</span> <span class="variable-name">channels_out</span>[8];
+
+  <span class="doc">/**
+   * Indicator for valid R/C receiption
+   */</span>
+  <span class="type">uint8_t</span> <span class="variable-name">lock</span>;
+
+} <span class="keyword">__attribute__</span>((packed)) <span class="type">pelic_RcDataStruct</span>;
+
+<span class="doc">/**
+ * GPS Data : Taken strait from Asc Tech Documentation
+ */</span>
+<span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="type">pelic_GpsDataStruct</span> {
+
+  <span class="doc">/**
+   * latitude in deg * 10&#710;7
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">latitude</span>;
+
+  <span class="doc">/**
+   * longitude in deg * 10&#710;7
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">longitude</span>;
+
+  <span class="doc">/**
+   * GPS height in mm
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">height</span>;
+
+  <span class="doc">/**
+   * speed in x (E/W) in mm/s
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">speed_x</span>;
+
+  <span class="doc">/**
+   * speed in y(N/S) in mm/s
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">speed_y</span>;
+
+  <span class="doc">/**
+   * GPS heading in deg * 1000
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">heading</span>;
+
+  <span class="doc">/**
+   * horizontal estimate in mm
+   */</span>
+  <span class="type">uint32_t</span> <span class="variable-name">horizontal_accuracy</span>;
+
+  <span class="doc">/**
+   * vertical estimate in mm
+   */</span>
+  <span class="type">uint32_t</span> <span class="variable-name">vertical_accuracy</span>;
+
+  <span class="doc">/**
+   * speed estimate mm/s
+   */</span>
+  <span class="type">uint32_t</span> <span class="variable-name">speed_accuracy</span>;
+
+  <span class="doc">/**
+   * number of satellite vehicles used in NAV solution
+   */</span>
+  <span class="type">uint32_t</span> <span class="variable-name">numSV</span>;
+
+  <span class="doc">/**
+   * GPS status information; 0x03 = valid GPS fix
+   */</span>
+  <span class="type">int32_t</span> <span class="variable-name">status</span>;
+    
+} <span class="keyword">__attribute__</span>((packed)) <span class="type">pelic_GpsDataStruct</span>;
+
+<span class="doc">/**
+ * </span><span class="doc"><span class="constant">@brief</span></span><span class="doc"> Verify the checksum of received packet
+ *
+ * </span><span class="doc"><span class="constant">@param</span></span><span class="doc"> buf : packet
+ * </span><span class="doc"><span class="constant">@param</span></span><span class="doc"> len : length of buf (bytes)
+ *
+ * </span><span class="doc"><span class="constant">@return</span></span><span class="doc"> 1 if checksum matches, 0 otherwise
+ */</span>
+<span class="type">uint8_t</span> <span class="function-name">pelic_verifyChecksum</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>);
+
+<span class="doc">/**
+ * </span><span class="doc"><span class="constant">@brief</span></span><span class="doc"> Handler for all received packets
+ *
+ * </span><span class="doc"><span class="constant">@param</span></span><span class="doc">  buf : packet
+ * </span><span class="doc"><span class="constant">@param</span></span><span class="doc">  len : lenght of buf (bytes)
+ * </span><span class="doc"><span class="constant">@param</span></span><span class="doc">  pelic : pointer to senlcm_pelican_t
+ *
+ * </span><span class="doc"><span class="constant">@return</span></span><span class="doc"> None.  Calls the appropriate pelic_parseXXX function
+ * depending on the packet descriptor (buf[5] : see manual)
+ */</span>
+<span class="type">uint8_t</span> <span class="function-name">pelic_parsePacket</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>, <span class="type">senlcm_pelican_t</span> *<span class="variable-name">pelic</span>);
+
+<span class="doc">/**
+ * Called if packet type is LL Status
+ */</span>
+<span class="type">void</span> <span class="function-name">pelic_parseLlStatus</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>, <span class="type">senlcm_pelican_t</span> *<span class="variable-name">pelic</span>);
+
+<span class="doc">/**
+ * Called if packet type is IMU Calc Data
+ */</span>
+<span class="type">void</span> <span class="function-name">pelic_parseImuCalcData</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>, <span class="type">senlcm_pelican_t</span> *<span class="variable-name">pelic</span>);
+
+<span class="doc">/**
+ * Called if packet type is RC Data
+ */</span>
+<span class="type">void</span> <span class="function-name">pelic_parseRcData</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>, <span class="type">senlcm_pelican_t</span> *<span class="variable-name">pelic</span>);
+
+<span class="doc">/**
+ * Called if packet type is GPS Data
+ */</span>
+<span class="type">void</span> <span class="function-name">pelic_parseGpsData</span>(<span class="type">uint8_t</span> *<span class="variable-name">buf</span>, <span class="type">int</span> <span class="variable-name">bufLen</span>, <span class="type">senlcm_pelican_t</span> *<span class="variable-name">pelic</span>);
+
+<span class="doc">/**
+ * Taken from Asc Tech documentation : calculate the CRC
+ */</span>
+<span class="type">uint16_t</span> <span class="function-name">pelic_crcUpdate</span>(<span class="type">uint16_t</span> <span class="variable-name">crc</span>, <span class="type">uint8_t</span> <span class="variable-name">data</span>);
+  
+<span class="preprocessor">#ifdef</span> __cplusplus
+}
+<span class="preprocessor">#endif</span>
+
+<span class="preprocessor">#endif</span> <span class="comment-delimiter">//</span><span class="comment">__PELICAN_H__
+</span></pre>
+  </body>
+</html>
