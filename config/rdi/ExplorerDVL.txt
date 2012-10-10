@@ -92,7 +92,7 @@ WN030
 ; Select type of external sensor to use
 #EY 0 0 0 0 0 0 0 0
 ; Set output data format to #PD4
-#PD4
+#PD5
 ; **************************************
 ; ExplorerDVL Sensor Setup Commands
 ; **************************************
