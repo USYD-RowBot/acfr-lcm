@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 43
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes
+END
+bot_param_entry_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes/bot_param_entry_t.lcm
+END
+bot_param_update_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes/bot_param_update_t.lcm
+END
+bot_param_request_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes/bot_param_request_t.lcm
+END
+README.txt
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes/README.txt
+END
+bot_param_set_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svn/!svn/ver/414/trunk/bot2-param/lcmtypes/bot_param_set_t.lcm
+END

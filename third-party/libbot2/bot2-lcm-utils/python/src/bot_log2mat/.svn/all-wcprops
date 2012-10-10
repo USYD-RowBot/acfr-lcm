@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/python/src/bot_log2mat
+END
+scan_for_lcmtypes.py
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/python/src/bot_log2mat/scan_for_lcmtypes.py
+END
+__init__.py
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/python/src/bot_log2mat/__init__.py
+END
+log_to_mat.py
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/python/src/bot_log2mat/log_to_mat.py
+END

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 23
+/svn/!svn/ver/420/trunk
+END
+tobuild.txt
+K 25
+svn:wc:ra_dav:version-url
+V 35
+/svn/!svn/ver/414/trunk/tobuild.txt
+END
+LICENSE
+K 25
+svn:wc:ra_dav:version-url
+V 31
+/svn/!svn/ver/414/trunk/LICENSE
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 30
+/svn/!svn/ver/414/trunk/README
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 32
+/svn/!svn/ver/414/trunk/Makefile
+END
