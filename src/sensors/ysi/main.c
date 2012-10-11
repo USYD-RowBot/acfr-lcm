@@ -23,9 +23,9 @@ static int myopts(generic_sensor_driver_t *gsd) {
 // parse the nmea string from the YSI sensor
 static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi) {
 	int i=1;
-	char code[3], value[16];
+	char code[16], value[16];
 	int valid = 0;
-	
+
 	// set the YSI data structure to non values to start with
 	ysi->temperature = -1000.0;
 	ysi->depth = -1000.0;
@@ -33,12 +33,12 @@ static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi) {
 	ysi->chlorophyl = -1000.0;
 	ysi->conductivity = -1000.0;
 	
-	while(nmea_arg(buf, i++, code)) {
-//		printf("code = %s, ", code);
+	while(nmea_arg(buf, i++, code) != 0) {
+		//printf("code = %s, ", code);
 		// get the associated value
-		if(nmea_arg(buf, i++, value)) {
+		if(nmea_arg(buf, i++, value) == 1) {
 			valid = 1;		// have at least one good value
-//			printf("value = %s\n", value);
+			//printf("value = %s\n", value);
 			switch(atoi(code)) {
 				case 1:		// Temp in C
 					ysi->temperature = atof(value);
@@ -66,6 +66,8 @@ static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi) {
 					break;	
 			}
 		}
+		else
+		    break;
 	}
 	return valid;
 }
@@ -78,17 +80,19 @@ int main (int argc, char *argv[]) {
     
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
+    char buf[256];
+    senlcm_ysi_t ysi;
+    
     
     // loop to collect data, parse and send it on its way
     while(!gsd->done) {
-    	char buf[256];
         int64_t timestamp;
+	memset(buf, 0, sizeof(buf));
         int len = gsd_read (gsd, buf, 256, &timestamp);
         
-        senlcm_ysi_t ysi;
-   		ysi.utime = timestamp;
-		if(parseYsi(buf, len, &ysi)) {
-			senlcm_ysi_t_publish (gsd->lcm, gsd->channel, &ysi);
+   	ysi.utime = timestamp;
+	if(parseYsi(buf, len, &ysi)) {
+	    senlcm_ysi_t_publish (gsd->lcm, gsd->channel, &ysi);
             gsd_update_stats (gsd, 1);
         }
         else

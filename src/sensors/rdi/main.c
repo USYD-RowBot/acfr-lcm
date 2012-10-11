@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
-
+#include <pthread.h>
 #include <lcm/lcm.h>
 
 #include "perls-lcmtypes/senlcm_rdi_pd4_t.h"
@@ -32,7 +32,7 @@
 #define EXPECT_RESPONSE 1
 #define NO_RESPONSE 0
 
-enum {MODE_PD0, MODE_PD5};
+enum {MODE_PD0, MODE_PD5, MODE_PD4};
 
 typedef struct 
 {
@@ -44,8 +44,8 @@ typedef struct
     int programming;
 } state_t;
 
-static rdi_pd_mode_t rdi_pd_mode = RDI_PD5_MODE;
-static int rdi_pd_len = RDI_PD5_LEN;
+rdi_pd_mode_t rdi_pd_mode = RDI_PD5_MODE;
+int rdi_pd_len = RDI_PD5_LEN;
 
 static int64_t
 rdi_timestamp_sync (timestamp_sync_state_t *tss, int64_t tofp_hours, int64_t tofp_minute,
@@ -120,6 +120,15 @@ program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
         rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
         rdi_send_command(gsd, "CS\r", NO_RESPONSE);
     }
+    else if(mode == MODE_PD4)
+    {
+        printf("Programming PD4 mode\n");
+        rdi_send_command(gsd, "BP1\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "WP0\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "PD4\r", EXPECT_RESPONSE);   
+        rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "CS\r", NO_RESPONSE);
+    }
     else
     {
         printf("Programming PD0 mode\n");
@@ -153,18 +162,19 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
     {
         gsd_read(gsd, buf, 1, &timestamp);
     } while (buf[0] != 0x7F && buf[0] != 0x7D);
-     
-    gsd_read(gsd, &buf[1], 3, NULL);
+    
+    len = 0; 
+    while(len < 3)
+    	len += gsd_read(gsd, &buf[1+len], 3 - len, NULL);
     
     // find the length of the data to recv
     unsigned short data_len = *(unsigned short *)&buf[2];
-    
     // get the rest
     len = 4;
     while(len < (data_len + 2))
         len += gsd_read(gsd, &buf[len], data_len + 2 - len, NULL);
 
-    
+     
     if(buf[0] == RDI_PD0_HEADER)
     {   rdi_pd0_t pd0;
         // we have a PD0 message
@@ -197,7 +207,7 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
             else
             {
                 gsd_update_stats (gsd, false);
-                printf("parse error\n");
+                printf("parse error, PD4\n");
             }
             break;
         }
@@ -213,7 +223,7 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
             else
             {
                 gsd_update_stats (gsd, false);
-                printf("parse error\n");
+                printf("parse error, PD5\n");
             }
 
             break;
@@ -312,20 +322,30 @@ main (int argc, char *argv[])
     
     char key[256];
     sprintf(key, "%s.mode", state.gsd->rootkey);    
-    char *key_str = bot_param_get_str_or_fail(state.gsd->cfg, key);
+    char *key_str = bot_param_get_str_or_fail(state.gsd->params, key);
     if(!strcmp(key_str, "PD0"))
         state.mode = MODE_PD0;
-    else if(!strcmp(key_str, "PD5"))
+    else if(!strcmp(key_str, "PD5")) 
+    {
+        rdi_pd_mode = RDI_PD5_MODE;
         state.mode = MODE_PD5;
+	rdi_pd_len = RDI_PD5_LEN;
+    }
+    else if(!strcmp(key_str, "PD4"))
+    {
+        rdi_pd_mode = RDI_PD4_MODE;
+        state.mode = MODE_PD4;
+	rdi_pd_len = RDI_PD4_LEN;
+    }
     else
     {
         printf("Unknown mode %s in config file\n", key_str);
         return 0;
     }
     sprintf(key, "%s.pd5_count_max", state.gsd->rootkey);
-    state.pd5_count_max = bot_param_get_int_or_fail(state.gsd->cfg, key);
+    state.pd5_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
     sprintf(key, "%s.pd0_count_max", state.gsd->rootkey);
-    state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->cfg, key);
+    state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
     
 
     // initialize dvl
@@ -388,7 +408,7 @@ main (int argc, char *argv[])
             pthread_mutex_unlock(&state.count_lock);   
         }
         else
-            // we are in free running mode, just PD5
+            // we are in free running mode, just PD5 or PD4
             get_rdi_and_send(state.gsd, tss);
     } // while
 

@@ -18,6 +18,7 @@
 #define DTOR (UNITS_DEGREE_TO_RADIAN)
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
 
+
 int
 rdi_verify_checksum (const char *buf, int len)
 {
@@ -39,17 +40,17 @@ rdi_verify_checksum (const char *buf, int len)
     for (int i=0; i < nbytes; i++) {
         mychecksum += *((uint8_t *) mybuf++);
     }
+    
     if (mychecksum == checksum)
         return 0;
     else
         return -1;
 }
-
 int
 rdi_parse_pd4 (const char *buf, int len, rdi_pd4_t *pd4)
 {
     if (0!=rdi_verify_checksum (buf, len) || len!=RDI_PD4_LEN) {
-
+	printf("Vaild on checksum\n");
         return -1;
     }
 
@@ -298,7 +299,7 @@ rdi_bathy (double r1, double r2, double r3, double r4, const double x_ws[6])
         for (size_t i=0; i<4; i++) {
             GSLU_VECTOR_VIEW (X_s_h, 4, {bathy.xyz[i][0], bathy.xyz[i][1], bathy.xyz[i][2], 1.0});
             GSLU_VECTOR_VIEW (X_w_h, 4);
-            gslu_mv (&X_w_h.vector, &H_ws.matrix, &X_s_h.vector);
+            gslu_blas_mv (&X_w_h.vector, &H_ws.matrix, &X_s_h.vector);
         
             bathy.xyz[i][0] = X_w_h.data[0];
             bathy.xyz[i][1] = X_w_h.data[1];
