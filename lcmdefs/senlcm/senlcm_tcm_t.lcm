@@ -1,0 +1,11 @@
+package senlcm;
+
+struct tcm_t
+{
+    int64_t utime;
+    
+    double heading;
+    double roll;
+    double pitch;
+    double temperature;
+}
