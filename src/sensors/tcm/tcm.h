@@ -1,5 +1,10 @@
 // type declarations
 
+#define UInt8 unsigned char
+#define UInt16 unsigned short
+#define UInt32 unsigned int
+#define Float32 float
+
 typedef struct
 {
     UInt8 pollingMode, flushFilter;
@@ -86,7 +91,7 @@ enum
     kUserCalAutoSampling, // 13 - type boolean
     kBaudRate, // 14 - UInt8
     kMilOutPut = 15, // 15 - type Boolean
-    kDataCal    // 16 - type Boolean
+    kDataCal,    // 16 - type Boolean
     kCoeffCopySet = 18,     // 18 - type UInt32
     kAccelCoeffCopySet,     // 19 - type UInt32
 
@@ -97,16 +102,16 @@ enum
     kMountedStdPlus90,      // 4
     kMountedStdPlus180,     // 5
     kMountedStdPlus270,     // 6
-    kMountedZDown     // 7
-    kMountedXUpPlus90 // 8
-    kMountedXUpPlus180      // 9
-    kMountedXUpPlus270      // 10
-    kMountedYUpPlus90 // 11
-    kMountedYUpPlus180      // 12
-    kMountedYUpPlus270      // 13
-    kMountedZDownPlus90     // 14
-    kMountedZDownPlus180    // 15
-    kMountedZDownPlus270    // 16
+    kMountedZDown,     // 7
+    kMountedXUpPlus90, // 8
+    kMountedXUpPlus180,      // 9
+    kMountedXUpPlus270,      // 10
+    kMountedYUpPlus90, // 11
+    kMountedYUpPlus180,      // 12
+    kMountedYUpPlus270,      // 13
+    kMountedZDownPlus90,     // 14
+    kMountedZDownPlus180,    // 15
+    kMountedZDownPlus270,    // 16
     // Result IDs
     kErrNone = 0,     // 0
     kErrSave, // 1

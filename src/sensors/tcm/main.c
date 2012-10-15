@@ -12,7 +12,7 @@
 
 #include "tcm.h"
 
-#define update_rate 1.0
+#define update_rate 0.5
 
 
 static int
@@ -27,55 +27,66 @@ int parse_tcm(char *buf, senlcm_tcm_t *tcm)
 {
     // decode the tcm frame
     char frame_id = buf[2];
+    char *current_pos;
     
-    switch frame_id
+    
+    if(frame_id == kDataResp)
     {
-        case kDataResp:
             int count = (int)buf[3];
             current_pos = &buf[4];
-            index = 0;
+            int index = 0;
             while(1)
             {
-                int data_id = (int)buf[current_pos++];
+                int data_id = (int)*current_pos++;
          
-                switch data_id
+                switch(data_id)
                 {
                     case kHeading:
-                        tcm->heading = *(float *)buf[current_pos];
+                        tcm->heading = *(float *)current_pos;
                         current_pos += 4;
                         index++;
                         break;    
                     case kPAngle:
-                        tcm->pitch = *(float *)buf[current_pos];
+                        tcm->pitch = *(float *)current_pos;
                         current_pos += 4;
                         index++;
                         break;
                     case kRAngle:
-                        tcm->roll = *(float *)buf[current_pos];
+                        tcm->roll = *(float *)current_pos;
                         current_pos += 4;
                         index++;
-                        break
+                        break;
                     case kTemperature:
-                        tcm->temp = *(float *)buf[current_pos];
+                        tcm->temperature = *(float *)current_pos;
                         current_pos += 4;
                         index++;
-                        break
+                        break;
                 }
                 if(index == count)
                     break;
-    } 
+		
+	    }
+    }
+     
     return 1;            
              
 }
 
 int tcm_form_message(char *in, int data_len, char *out)
 {
-    unsigned short len = data_len + 2;
-    memcpy(out, len, 2);
-    memcpy(in, out, data_length);
-    unsigned short crc = tcm_crc(out, len);
-    memcpy(&out[data_len], crc, 2);
-    return len + 2;
+    unsigned short len = data_len + 4;
+    out[0] = ((char *)&len)[1];
+    out[1] = ((char *)&len)[0];
+
+    memcpy(&out[2], in, data_len);
+    unsigned short crc = tcm_crc(out, data_len + 2);
+    out[data_len+3] = crc & 0xff;
+    out[data_len+2] = crc >> 8;
+    
+    for(int i=0; i< len; i++)
+    	printf("%02X ", out[i] & 0xFF);
+    printf("\n");
+    return len;
 }
     
 
@@ -86,7 +97,7 @@ int program_tcm(generic_sensor_driver_t *gsd)
     int len;
     
     // set the return types
-    memset(data, 0, sizeof(buf));
+    memset(data, 0, sizeof(data));
     data[0] = kSetDataComponents;
     data[1] = 4;
     data[2] = kHeading;
@@ -94,18 +105,25 @@ int program_tcm(generic_sensor_driver_t *gsd)
     data[4] = kRAngle;
     data[5] = kTemperature;
     len = tcm_form_message(data, 6, out);    
-    gsd_write(gsd, out, len)
+    gsd_write(gsd, out, len);
     
     
     // set the acquisition mode
-    memset(data, 0, sizeof(buf));
+    memset(data, 0, sizeof(data));
     data[0] = kSetAcqParams;
     data[1] = 0;     // data push mode
     data[2] = 0;     // flush filter is false
     float interval = update_rate;
-    memcpy(&data[7], interval, sizeof(float));
+    memcpy(&data[7], &interval, sizeof(float));
     len = tcm_form_message(data, 11, out);    
     gsd_write(gsd, out, len);
+
+    // start
+    memset(data, 0, sizeof(data));
+    data[0] = kStartIntervalMode;
+    len = tcm_form_message(data, 1, out);    
+    gsd_write(gsd, out, len);
+
 
     return 1;
 }
@@ -115,6 +133,9 @@ main (int argc, char *argv[])
 {
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_launch (gsd);
+    gsd_noncanonical(gsd, 1024, 1);
+    gsd_flush(gsd);
+    gsd_reset_stats(gsd);
     
     int len;
     char buf[256];
@@ -123,31 +144,58 @@ main (int argc, char *argv[])
     
     program_tcm(gsd);
     
-    while(!gsd->done)
+    while(1)
     {
-        // get two bytes
-        len = 0; 
-        while(len < 2)
-    	    len += gsd_read(gsd, &buf[len], 2 - len, &timestamp);
-    	    
-    	int data_len = *(unsigned short *)buf;
     	
-    	// read the rest of the data
+    
+        // get two bytes
+    	gsd_read(gsd, &buf[0], 1, &timestamp);
+    	if(buf[0] != 0)
+    	    continue;
+    	gsd_read(gsd, &buf[1], 1, NULL);
+    	    
+   	    unsigned short data_len = (buf[0] << 8) + buf[1];
+
+   	    // read the rest of the data
+   	    if(data_len > 200)
+            continue;
+
         len = 0; 
-        while(len < data_len)
-    	    len += gsd_read(gsd, &buf[len + 2], data_len - len, NULL);
+        while(len < data_len - 2)
+            len += gsd_read(gsd, &buf[len + 2], data_len - 2 - len, NULL);
+
+/*
+	for(int i=0; i<data_len ; i++)
+    	    printf("%02X ", buf[i] & 0xFF);
+    unsigned short crc2 = tcm_crc(buf, data_len - 2);
+    printf(", crc = %02X %02X\n", (crc2 >> 8) & 0xff, crc2 & 0xff);
+    printf("\n");
+*/
+
     	    
     	// check the checksum
-    	unsigned short crc = *(unsigned short *)&buf[data_len];
-    	if(tcm_crc(buf, data_len) == crc)
+    	unsigned short crc = *(unsigned short *)&buf[data_len - 2];
+    	if(tcm_crc(buf, data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
     	{
-    	    memcpy(tcm, 0, sizeof(senlcm_tcm_t))
+    	    memset(&tcm, 0, sizeof(senlcm_tcm_t));
     	    tcm.utime = timestamp;
     	    // its good data, lets parse it
-    	    if(parse_tcm(buf, tcm))
+            printf("%02X\n", buf[2]);
+    	    if(parse_tcm(buf, &tcm))
+            {
         	    senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
+                gsd_update_stats (gsd, true);
+            }
+            else
+                gsd_update_stats (gsd, false);
     	}
+	    else
+        {
+	       printf("Bad CRC\n");
+           gsd_update_stats (gsd, false);
+        }
     }
     return 0;
-}
+    
     	
+}
