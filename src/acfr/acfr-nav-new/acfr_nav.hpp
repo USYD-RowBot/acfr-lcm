@@ -83,7 +83,7 @@ class acfr_nav
         // config parameters
         attitude_source_t attitude_source;
         depth_source_t depth_source;
-        string slam_config_filename;
+        char *slam_config_filename;
                 
 };
 

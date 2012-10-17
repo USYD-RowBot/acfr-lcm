@@ -25,7 +25,10 @@ int acfr_nav::initialise()
     // create the SLAM object
 	state->slam = new Seabed_Interface();
     state->slam->configure_interface_without_mag_variation(slam_config_filename);
-    calculate_mag();       
+    calculate_mag();   
+    
+    if(depth_source == YSI)
+        state->slam->set_tare_depth("/tmp/mission.cfg");    
     
     // subscribe to the relevant LCM channel based on our configuration
     
@@ -61,6 +64,9 @@ int acfr_nav::load_config(char *program_name)
     char key[128];
     sprintf (rootkey, "nav.%s", program_name);
 
+    sprintf(key, "%s.slam_config", rootkey);
+    slam_config_filename = bot_param_get_str_or_fail(param, key);
+
     // Attitude source
     sprintf(key, "%s.attitude_source", rootkey);
     char *att_source_str = bot_param_get_str_or_fail(param, key);
@@ -80,12 +86,74 @@ int acfr_nav::load_config(char *program_name)
         depth_source = PAROSCI;
     else if(!strcmp(depth_source_str, "SEABIRD"))
         depth_source = SEABIRD;
+        
+    
 
 }
 
+void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *heartbeat, state_c* state)
+{
+    if(state->slam->is_initialised() == true) {
+	    libflounder::Vehicle_Estimate estimate = state->slam->get_vehicle();
+
+		acfrlcm::auv_acfr_nav_t nav;
+		//printf("%f, %f, %f, %f, %f\n", estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], estimate.x[SB_VEHICLE_Z], fmod(estimate.x[SB_VEHICLE_PSI]*180/M_PI,360), estimate.x[SB_VEHICLE_X_VEL]);
+
+		state->slam->calc_geo_coords(estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], nav.latitude, nav.longitude);
+		nav.x = estimate.x[SB_VEHICLE_X];
+		nav.y = estimate.x[SB_VEHICLE_Y];
+		nav.depth = estimate.x[SB_VEHICLE_Z];
+		nav.roll = estimate.x[SB_VEHICLE_PHI];
+		nav.pitch = estimate.x[SB_VEHICLE_THETA];
+		nav.heading = estimate.x[SB_VEHICLE_PSI];
+		nav.vx = estimate.x[SB_VEHICLE_X_VEL];
+		nav.vy = estimate.x[SB_VEHICLE_Y_VEL];
+		nav.vz = estimate.x[SB_VEHICLE_Z_VEL];
+		nav.rollRate = estimate.x[SB_VEHICLE_PHI_RATE];
+		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
+		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
+		nav.utime = (int64_t)(estimate.timestamp*1e6);
+		nav.altitude = min(state->altitude, state->oas_altitude);
+		nav.fwd_obstacle_dist = state->fwd_obs_dist;
+		
+		
+		printf("%ld\r", (long int)nav.utime);
+
+        state->lcm.publish("ACFR_NAV", &nav);   
+/*        	if(lowRateCount == 9) {
+        		lowRateCount = 0;
+        		acfrlcm_auv_acfr_nav_t_publish(lcm, "ACFR_NAV.TOP", &nav);
+        	}
+        	else
+        		lowRateCount++;        
+        }
+
+		if((poseAugOptions->use_max_time_option) &&
+			((estimate.timestamp - lastPoseAugmentationTime) >= poseAugOptions->max_time)) {
+            Seabed_Pose_Data *pd = new Seabed_Pose_Data(estimate.timestamp, altitude);
+			slam->slam->augment_current_pose(pd);
+			lastPoseAugmentationTime = estimate.timestamp;
+		}
+
+		if(savePoses) {
+			Vehicle_Pose_Cov slamData;
+
+			slamData.pose_id = ++savedPoseId;
+			slamData.pose_time = estimate.timestamp;
+			estimate.x.resize(AUV_NUM_POSE_STATES,true);
+			estimate.P.resize(AUV_NUM_POSE_STATES, AUV_NUM_POSE_STATES, true);
+			slamData.pose_est.assign( estimate.x );
+			slamData.pose_cov.assign( estimate.P );
+			slamPoseCov.push_back(slamData);
+		}
+
+*/		
+    }
+}
 
 int acfr_nav::process()
 {
+    state->lcm.subscribeFunction("HEARTBEAT_10HZ", publish_nav, state);
     int fd = state->lcm.getFileno();
     fd_set rfds;
     while(!loop_exit)
@@ -156,65 +224,7 @@ void acfr_nav::calculate_mag()
 
 
 
-void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *heartbeat, state_c* state)
-{
-    if(state->slam->is_initialised() == true) {
-	    libflounder::Vehicle_Estimate estimate = state->slam->get_vehicle();
 
-		acfrlcm::auv_acfr_nav_t nav;
-		//printf("%f, %f, %f, %f, %f\n", estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], estimate.x[SB_VEHICLE_Z], fmod(estimate.x[SB_VEHICLE_PSI]*180/M_PI,360), estimate.x[SB_VEHICLE_X_VEL]);
-
-		state->slam->calc_geo_coords(estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], nav.latitude, nav.longitude);
-		nav.x = estimate.x[SB_VEHICLE_X];
-		nav.y = estimate.x[SB_VEHICLE_Y];
-		nav.depth = estimate.x[SB_VEHICLE_Z];
-		nav.roll = estimate.x[SB_VEHICLE_PHI];
-		nav.pitch = estimate.x[SB_VEHICLE_THETA];
-		nav.heading = estimate.x[SB_VEHICLE_PSI];
-		nav.vx = estimate.x[SB_VEHICLE_X_VEL];
-		nav.vy = estimate.x[SB_VEHICLE_Y_VEL];
-		nav.vz = estimate.x[SB_VEHICLE_Z_VEL];
-		nav.rollRate = estimate.x[SB_VEHICLE_PHI_RATE];
-		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
-		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
-		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		nav.altitude = min(state->altitude, state->oas_altitude);
-		nav.fwd_obstacle_dist = state->fwd_obs_dist;
-		
-		
-		printf("%ld\r", (long int)nav.utime);
-
-        state->lcm.publish("ACFR_NAV", &nav);   
-/*        	if(lowRateCount == 9) {
-        		lowRateCount = 0;
-        		acfrlcm_auv_acfr_nav_t_publish(lcm, "ACFR_NAV.TOP", &nav);
-        	}
-        	else
-        		lowRateCount++;        
-        }
-
-		if((poseAugOptions->use_max_time_option) &&
-			((estimate.timestamp - lastPoseAugmentationTime) >= poseAugOptions->max_time)) {
-            Seabed_Pose_Data *pd = new Seabed_Pose_Data(estimate.timestamp, altitude);
-			slam->slam->augment_current_pose(pd);
-			lastPoseAugmentationTime = estimate.timestamp;
-		}
-
-		if(savePoses) {
-			Vehicle_Pose_Cov slamData;
-
-			slamData.pose_id = ++savedPoseId;
-			slamData.pose_time = estimate.timestamp;
-			estimate.x.resize(AUV_NUM_POSE_STATES,true);
-			estimate.P.resize(AUV_NUM_POSE_STATES, AUV_NUM_POSE_STATES, true);
-			slamData.pose_est.assign( estimate.x );
-			slamData.pose_cov.assign( estimate.P );
-			slamPoseCov.push_back(slamData);
-		}
-
-*/		
-    }
-}
 
 void signal_handler(int sig)
 {
@@ -230,6 +240,7 @@ int main(int argc, char **argv)
     acfr_nav *nav = new acfr_nav;
     nav->load_config(basename((argv[0])));
     nav->initialise();
+    
     nav->process();
     
     
