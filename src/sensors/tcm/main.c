@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
 #include "perls-common/timestamp.h"
 #include "perls-common/error.h"
@@ -14,7 +15,7 @@
 
 #define update_rate 0.5
 
-
+#define DTOR 3.141592/180
 static int
 myopts (generic_sensor_driver_t *gsd)
 {
@@ -42,17 +43,17 @@ int parse_tcm(char *buf, senlcm_tcm_t *tcm)
                 switch(data_id)
                 {
                     case kHeading:
-                        tcm->heading = *(float *)current_pos;
+                        tcm->heading = (*(float *)current_pos) * DTOR;
                         current_pos += 4;
                         index++;
                         break;    
                     case kPAngle:
-                        tcm->pitch = *(float *)current_pos;
+                        tcm->pitch = (*(float *)current_pos) * DTOR;
                         current_pos += 4;
                         index++;
                         break;
                     case kRAngle:
-                        tcm->roll = *(float *)current_pos;
+                        tcm->roll = (*(float *)current_pos) * DTOR;
                         current_pos += 4;
                         index++;
                         break;
