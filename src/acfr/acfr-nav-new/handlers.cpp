@@ -1,5 +1,5 @@
 /*
-    ACFR navigation LCM handler routines
+    ACFR navigation LCM handler routines (C++)
     
     Christian Lees
     ACFR
@@ -223,4 +223,64 @@ void on_tcm_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
         state->raw_out << endl;
     }
 }
+
+void on_vis(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_vis_rawlog_t *vis, state_c* state) 
+{
+	// the only thing we do here at the moment is process the message for the raw log
+	auv_data_tools::Vision_Data vis_data;
+
+	vis_data.image_name = string(vis->image_name) + ".tif";
+	vis_data.set_raw_timestamp((double)vis->utime/1e6);
+	vis_data.set_vis_timestamp((double)vis->utime/1e6);
+	//fix to shift timestamps on RAW log file for 20110603 cam was 3.61 sec ahead
+	//visData.set_vis_timestamp((double)vis->utime/1e6-3.61);
+	vis_data.exposure = vis->exp_time;
+    if(state->mode == RAW)
+    {
+		vis_data.print(state->raw_out);
+	    state->raw_out << endl;
+	}
+}
+
+void on_ms_gx1(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ms_gx1_t *ms, state_c* state) 
+{
+	// handle ms gx1 messages
+	auv_data_tools::ThreeDM_Data ms_data;	
+
+    // check ms->bitmask
+	// static const int ValidMask = (SENLCM_MS_GX1_T_STAB_EULER | SENLCM_MS_GX1_T_INST_ACCEL | SENLCM_MS_GX1_T_STAB_ANGRATE);
+	//bool valid = ((ms->bitmask & ValidMask) == ValidMask);
+	bool valid=1;
+    if(valid) 
+    {
+	    // rpy
+	    ms_data.roll = ms->iEuler[0]*180/M_PI;
+	    ms_data.pitch = ms->iEuler[1]*180/M_PI;
+	    ms_data.yaw = ms->iEuler[2]*180/M_PI;
+
+        // coverted Accelerations X, Y, Z
+	    ms_data.accel_x = ms->iAccel[0];
+	    ms_data.accel_y = ms->iAccel[1];
+	    ms_data.accel_z = ms->iAccel[2];
+
+        // converted Rates X, Y, Z
+	    ms_data.rate_x = ms->iAngRate[0];
+	    ms_data.rate_y = ms->iAngRate[1];
+	    ms_data.rate_z = ms->iAngRate[2];
+
+        // todo: use the rest of info avail in senlcm_ms_gx1_t ()
+		
+	    ms_data.set_raw_timestamp((double)ms->utime/1e6);
+	    
+	    if(state->mode == NAV)
+           	state->slam->handle_ms_data(ms_data);
+        else if(state->mode == RAW)
+        {
+            ms_data.print(state->raw_out);
+            state->raw_out << endl;
+        }
+		    
+    }
+}
+
 
