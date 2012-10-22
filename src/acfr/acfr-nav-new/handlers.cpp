@@ -273,7 +273,7 @@ void on_ms_gx1(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 	    ms_data.set_raw_timestamp((double)ms->utime/1e6);
 	    
 	    if(state->mode == NAV)
-           	state->slam->handle_ms_data(ms_data);
+           	state->slam->handle_threedm_data(ms_data);
         else if(state->mode == RAW)
         {
             ms_data.print(state->raw_out);

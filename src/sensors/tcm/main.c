@@ -13,9 +13,10 @@
 
 #include "tcm.h"
 
-#define update_rate 0.5
+#define update_rate 0.2
 
 #define DTOR 3.141592/180
+
 static int
 myopts (generic_sensor_driver_t *gsd)
 {
@@ -150,52 +151,53 @@ main (int argc, char *argv[])
     	
     
         // get two bytes
-    	gsd_read(gsd, &buf[0], 1, &timestamp);
-    	if(buf[0] != 0)
-    	    continue;
-    	gsd_read(gsd, &buf[1], 1, NULL);
+        gsd_noncanonical(gsd, 1, 1);
+        do
+        {
+    	    gsd_read(gsd, &buf[0], 1, &timestamp);
+        } while (buf[0] != 0);
+
+
+   	    gsd_read(gsd, &buf[1], 1, NULL);
     	    
    	    unsigned short data_len = (buf[0] << 8) + buf[1];
 
-   	    // read the rest of the data
-   	    if(data_len > 200)
-            continue;
 
-        len = 0; 
-        while(len < data_len - 2)
-            len += gsd_read(gsd, &buf[len + 2], data_len - 2 - len, NULL);
-
-/*
-	for(int i=0; i<data_len ; i++)
-    	    printf("%02X ", buf[i] & 0xFF);
-    unsigned short crc2 = tcm_crc(buf, data_len - 2);
-    printf(", crc = %02X %02X\n", (crc2 >> 8) & 0xff, crc2 & 0xff);
-    printf("\n");
-*/
+        if(data_len == 26)
+        {
+        
+            gsd_noncanonical(gsd, data_len - 2, 1);
+            // read the rest of the data
+            len = 0; 
+            while(len < data_len - 2)
+                len += gsd_read(gsd, &buf[len + 2], data_len - 2 - len, NULL);
 
     	    
-    	// check the checksum
-    	unsigned short crc = *(unsigned short *)&buf[data_len - 2];
-    	if(tcm_crc(buf, data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
-    	{
-    	    memset(&tcm, 0, sizeof(senlcm_tcm_t));
-    	    tcm.utime = timestamp;
-    	    // its good data, lets parse it
-            printf("%02X\n", buf[2]);
-    	    if(parse_tcm(buf, &tcm))
+           	// check the checksum
+            unsigned short crc = *(unsigned short *)&buf[data_len - 2];
+            if(tcm_crc(buf, data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
             {
-        	    senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
-                gsd_update_stats (gsd, true);
+                memset(&tcm, 0, sizeof(senlcm_tcm_t));
+                tcm.utime = timestamp;
+                // its good data, lets parse it
+
+                if(parse_tcm(buf, &tcm))
+                {
+                    senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
+                    gsd_update_stats (gsd, true);
+                }
+                else
+                    gsd_update_stats (gsd, false);
             }
-            else
+	        else
+            {
+    	        printf("Bad CRC\n");
                 gsd_update_stats (gsd, false);
-    	}
-	    else
-        {
-	       printf("Bad CRC\n");
-           gsd_update_stats (gsd, false);
+            }
         }
+        
     }
+    
     return 0;
     
     	
