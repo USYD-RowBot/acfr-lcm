@@ -310,6 +310,7 @@ void *lcm_handler(void *u)
 
         lcmu_handle_timeout(lcm, &tv);
     }
+    printf("LCM thread exiting\n");
     return 0;
 }
 
@@ -487,12 +488,13 @@ main(int argc, char **argv)
                 {
                     memset(buf, 0, sizeof(buf));
                     data_len = recv(fins_sock.sockfd, buf, sizeof(buf), 0);
+                    printf("Iver: ");
                     for(int i=0; i<data_len; i++)
                         printf("%02X ", buf[i]&0xFF);
                     printf("\n");
                     pthread_mutex_lock(&motor_send_state.fins_port_lock);
                     write(finsfd, buf, data_len);
-                    pthread_mutex_lock(&motor_send_state.fins_port_lock);
+                    pthread_mutex_unlock(&motor_send_state.fins_port_lock);
                 }
             }
             
@@ -561,11 +563,13 @@ main(int argc, char **argv)
         if((timestamp_now() - remote_time) > 2e6)
             remote = 0;
 	}
-	
+    printf("Main exit\n");	
 	pthread_join(motor_sock_thread, NULL);
+    printf("Motor thread joined\n");
 	pthread_join(fins_sock_thread, NULL);
+    printf("Fins thread joined\n");
    	pthread_join(lcm_thread, NULL);
-	printf("threads joined\n");
+    printf("LCM thread joined\n");
 	close(control_sockfd);
 	
 	return 0;
