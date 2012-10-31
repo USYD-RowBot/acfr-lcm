@@ -21,11 +21,6 @@
 #include "perls-lcmtypes/acfrlcm_auv_camera_trigger_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_camera_trigger_out_t.h"
 
-#ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
-#else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
-#endif
 
 //packet structure
 // STX	| type | direction | data | ETX
@@ -289,18 +284,13 @@ int main(int argc, char **argv) {
 	progExit = 0;
     signal(SIGINT, signalHandler);
 
-    // this is needed by bot_param, for some reason it code that does this 
-    // doesn't work so we do it here, I'll fix this later
-    if (!g_thread_supported ())
-        g_thread_init (NULL);
 	
-	// read the config file
-	char * path = getenv ("BOT_CONF_PATH");
-    if (!path) path = DEFAULT_BOT_CONF_PATH;
-	
+	// start lcm
+	state.lcm = lcm_create(NULL);
+    
 	BotParam *cfg;
 	char rootkey[64];
-    cfg = bot_param_new_from_file(path);
+    cfg =  bot_param_new_from_server (state.lcm, 1);
     sprintf (rootkey, "acfr.%s", basename (argv[0]));
 	char key[128];
 	
@@ -362,8 +352,7 @@ int main(int argc, char **argv) {
 	triggerWrite(&state, triggerMsg);	
 	free(triggerMsg);
 	
-	// start lcm
-	state.lcm = lcm_create(NULL);
+	
 	
 	// subscribe to the relevant LCM messages
 	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartBeatHandler, &state);
