@@ -28,11 +28,6 @@
 #include "perls-lcmtypes/senlcm_os_power_system_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 
-#ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
-#else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
-#endif
 
 #define MAX_MESSAGE_SIZE 128
 
@@ -406,19 +401,12 @@ int main (int argc, char *argv[]) {
     
     
     // read the config file
-    BotParam *cfg;
+    BotParam *param;
 	char rootkey[64];
 	char key[64];
 	
-	char *path = getenv ("BOT_CONF_PATH");
-    if (!path) 
-        path = DEFAULT_BOT_CONF_PATH;
-    cfg = bot_param_new_from_file(path);
-    if(cfg == NULL) 
-    {
-        printf("could not open config file\n");
-        return 0;
-    }
+    state.lcm = lcm_create(NULL);
+    param = bot_param_new_from_server (state.lcm, 1);
     
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
     
@@ -426,7 +414,7 @@ int main (int argc, char *argv[]) {
     char *io_str;
     int io;
 	sprintf(key, "%s.io", rootkey);
-	io_str = bot_param_get_str_or_fail(cfg, key);
+	io_str = bot_param_get_str_or_fail(param, key);
     if(!strcmp(io_str, "serial"))
         io = io_serial;
     else if(!strcmp(io_str, "socket"))
@@ -439,31 +427,31 @@ int main (int argc, char *argv[]) {
     char *parity;
     
     sprintf(key, "%s.num_devs", rootkey);
-    state.num_devs = bot_param_get_int_or_fail(cfg, key);
+    state.num_devs = bot_param_get_int_or_fail(param, key);
     
     if(io == io_serial)
     {
         sprintf(key, "%s.serial_devs", rootkey);
-        serial_devs = bot_param_get_str_array_alloc(cfg, key);
+        serial_devs = bot_param_get_str_array_alloc(param, key);
 
     	sprintf(key, "%s.baud", rootkey);
-	    baud = bot_param_get_int_or_fail(cfg, key);
+	    baud = bot_param_get_int_or_fail(param, key);
 
 	    sprintf(key, "%s.parity", rootkey);
-	    parity = bot_param_get_str_or_fail(cfg, key);
+	    parity = bot_param_get_str_or_fail(param, key);
     }
     
     if(io == io_socket)
     {
         sprintf(key, "%s.ip", rootkey);
-        ip = bot_param_get_str_or_fail(cfg, key);
+        ip = bot_param_get_str_or_fail(param, key);
 
         sprintf(key, "%s.ports", rootkey);
-        inet_ports = bot_param_get_str_array_alloc(cfg, key);
+        inet_ports = bot_param_get_str_array_alloc(param, key);
     }
     
     
-    state.lcm = lcm_create(NULL);
+    
     int lcm_fd = lcm_get_fileno(state.lcm);    
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
     

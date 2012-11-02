@@ -5,6 +5,7 @@
 #include "perls-lcmtypes/acfrlcm_auv_acfr_nav_t.h"
 #include "perls-lcmtypes/senlcm_raw_ascii_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
+#include "perls-lcmtypes/senlcm_os_power_system_t.h"
 #include "perls-common/generic_sensor_driver.h"
 #include "perls-lcmtypes/senlcm_uvc_ack_t.h"
 #include "perls-lcmtypes/senlcm_uvc_opi_t.h"
@@ -122,6 +123,44 @@ os_vehicle_status_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     //publish (state, &state->os_conduit.vehicle_status_query, heartbeat->utime, msg);
 
 }
+
+
+// send a battery string to UVC
+static void
+battery_callback(const lcm_recv_buf_t *rbuf, const char *channel, 
+                     const senlcm_os_power_system_t *batt, void *user)
+{
+    state_t *state = (state_t *)user;
+    char msg[NMEA_MAXIMUM_MSG_LENGTH];
+    int leak = 1;
+    double voltage = 0.0;
+    double capacity = 0.0;
+    int batt_count = 0;
+    char mode;
+    
+    // find out the average voltage
+    for(int i=0; i<batt->num_controllers; i++)
+        for(int j=0; j<batt->controller[i].num_batteries; j++)
+        {
+            voltage += batt->controller[i].battery[j].voltage;
+            capacity += batt->controller[i].battery[j].remaining_capacity;
+            batt_count++;
+        }
+    voltage = voltage / batt_count;
+    
+    if(batt->controller[0].battery_state[0] == 'D')
+        mode = 'D';
+    else
+        mode = 'C';
+    
+    // Compose NMEA battery string
+    nmea_sprintf (msg, "$OCEANA,%d,%d,%d,%3.1f,%3.1f,%5.1f,%c,%d*", batt->avg_charge_p, (int)capacity*1000, abs((int)batt->power), voltage, batt->current, (double)batt->minutes_tef, mode, leak);
+    gsd_write (state->gsd, msg, strlen (msg));
+    
+    printf("%s\n", msg);
+}
+
+
 
 /* returns 1 for successfully classifying and publishing uvc to
  * backseat driver messages */
@@ -415,6 +454,7 @@ main(int argc, char **argv)
     perllcm_heartbeat_t_subscribe (state.gsd->lcm, "HEARTBEAT_1HZ", &os_vehicle_status_callback, &state);
     acfrlcm_auv_acfr_nav_t_subscribe (state.gsd->lcm, "ACFR_NAV", &acfr_nav_callback, &state);
     senlcm_raw_ascii_t_subscribe (state.gsd->lcm, "OS_COMMAND_PASSTHRU", &os_command_passthru_callback, &state);
+    senlcm_os_power_system_t_subscribe (state.gsd->lcm, "BATTERY", &battery_callback, &state);
         
     pthread_t tid;
     pthread_create (&tid, NULL, lcm_thread, state.gsd);

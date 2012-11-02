@@ -604,7 +604,7 @@ state_create (int argc, char *argv[])
 {
     // init state
     state_t *state = (state_t *) calloc (1, sizeof (state_t));
-    state->param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
+    
     state->gopt = getopt_create ();
     state->camera = (camera_t *) calloc (1, sizeof (camera_t));
     state->driver = (driver_t *) calloc (1, sizeof (driver_t));
@@ -1018,8 +1018,16 @@ int main (int argc, char *argv[])
         g_thread_init (NULL);
 
     state_t *state = state_create (argc, argv);
+    // fire up lcm
+    state->lcminfo->lcm = lcm_create (NULL);
+    if (!state->lcminfo->lcm) {
+        ERROR ("lcm_create() failed");
+        exit (EXIT_FAILURE);
+    }
+    state->param = bot_param_new_from_server (state->lcminfo->lcm, 1);
     parse_args (state, argc, argv);
-
+    
+    printf("Got param\n");
     // make sure logging directory exists
     if (state->driver->logtodisk && unix_mkpath (state->driver->logdir, 0775) < 0) {
         PERROR ("unix_mkpath()");
@@ -1045,12 +1053,7 @@ int main (int argc, char *argv[])
     PvLinkCallbackRegister (LinkEventCB, ePvLinkRemove, state);
 
 
-    // fire up lcm
-    state->lcminfo->lcm = lcm_create (NULL);
-    if (!state->lcminfo->lcm) {
-        ERROR ("lcm_create() failed");
-        exit (EXIT_FAILURE);
-    }
+    
     senlcm_prosilica_t_subscription_t *sub = 
         senlcm_prosilica_t_subscribe (state->lcminfo->lcm, state->lcminfo->channel_attributes,
                                       &pvattributes_callback, state);
