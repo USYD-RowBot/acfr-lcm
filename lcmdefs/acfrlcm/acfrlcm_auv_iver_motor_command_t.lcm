@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct auv_iver_motor_command_t
+{
+    int64_t utime;
+	
+    double top;         // degrees
+    double bottom;
+	double port;
+	double starboard;	
+	double main;        // RPM
+	
+	const int16_t AUTO=0;
+	const int16_t REMOTE=1;
+	int16_t source;         // either remote or auto
+}
