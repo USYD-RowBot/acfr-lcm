@@ -22,9 +22,11 @@
 
 // gears are servo 19T, intermediat 40T, fin shaft 36T
 // gear ratio is 0.5277
-// servo range is 90 degrees
-#define SERVO_GEAR_RATIO (1/0.5277)
-#define MAX_FIN_ANGLE 20
+// servo range is 90 degrees for input 0 - 255
+#define SERVO_GEAR_RATIO 0.5277
+#define SERVO_SCALE (256.0/90.0)
+#define MAX_FIN_ANGLE (90.0 * SERVO_GEAR_RATIO / 2.0)
+#define DEG_TO_SERVO (45.0 / MAX_FIN_ANGLE)
 
 #define REMOTE_TIMEOUT 2000000
 
@@ -40,6 +42,8 @@ typedef struct
     int64_t remote_time;
     int remote;
     
+    int64_t last_data_time;
+    
 } state_t;    
 
 void
@@ -50,6 +54,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     // scale the motor commands from actual fin angles to value to send to the motors
     char rudder_top, rudder_bottom;
     char plane_port, plane_starboard;
+    
     
     // we got a remote command, set the time and mode
     if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
@@ -63,65 +68,69 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         state->remote = 0;
     
     // if we got a auto cammand but we are still in remote mode the return
-    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO || state->remote)
+    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO && state->remote)
         return;
-    
     
     
     // limit check and scale
     if(mc->top > MAX_FIN_ANGLE)
-        rudder_top = (char)(MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        rudder_top = (char)255;
     else if(mc->top < -MAX_FIN_ANGLE)
-        rudder_top = (char)(-MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        rudder_top = (char)0;
     else
-        rudder_top = (char)(mc->top * SERVO_GEAR_RATIO);
+        rudder_top = (char)((mc->top * DEG_TO_SERVO + 45) * SERVO_SCALE);
         
     if(mc->bottom > MAX_FIN_ANGLE)
-        rudder_bottom = (char)(MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        rudder_bottom = (char)255;
     else if(mc->bottom < -MAX_FIN_ANGLE)
-        rudder_bottom = (char)(-MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        rudder_bottom = (char)0;
     else
-        rudder_bottom = (char)(mc->bottom * SERVO_GEAR_RATIO);
+        rudder_bottom = (char)((mc->bottom * DEG_TO_SERVO + 45) * SERVO_SCALE);
     
     if(mc->port > MAX_FIN_ANGLE)
-        plane_port = (char)(MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        plane_port = (char)255;
     else if(mc->port < -MAX_FIN_ANGLE)
-        plane_port = (char)(-MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        plane_port = (char)0;
     else
-        plane_port = (char)(mc->port * SERVO_GEAR_RATIO);
+        plane_port = (char)((mc->port * DEG_TO_SERVO + 45) * SERVO_SCALE);
     
     if(mc->starboard > MAX_FIN_ANGLE)
-        plane_starboard = (char)(MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        plane_starboard = (char)255;
     else if(mc->starboard < -MAX_FIN_ANGLE)
-        plane_starboard = (char)(-MAX_FIN_ANGLE * SERVO_GEAR_RATIO);
+        plane_starboard = (char)0;
     else
-        plane_starboard = (char)(mc->starboard * SERVO_GEAR_RATIO);
+        plane_starboard = (char)((mc->starboard * DEG_TO_SERVO + 45) * SERVO_SCALE);
     
     
     
-    char servo_command[3];
-    servo_command[0] = 0xFF;
-    
-    servo_command[1] = 0x00 + SERVO_RANGE;
-    servo_command[2] = rudder_top;
-    write(state->servo_fd, servo_command, 3);
-    
-    servo_command[1] = 0x01 + SERVO_RANGE;
-    servo_command[2] = rudder_bottom;
-    write(state->servo_fd, servo_command, 3);
-    
-    servo_command[1] = 0x02 + SERVO_RANGE;
-    servo_command[2] = plane_port;
-    write(state->servo_fd, servo_command, 3);
-    
-    servo_command[1] = 0x03 + SERVO_RANGE;
-    servo_command[2] = plane_starboard;
-    write(state->servo_fd, servo_command, 3);
-
-    // send the command to the thruster motor
+    char servo_command[12];
+    memset(servo_command, 0xFF, 12);
     char motor_string[64];
-    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(mc->main * 32212 / 60));
-    write(state->motor_fd, motor_string, strlen(motor_string));
+    
+    servo_command[1] = 0x04;
+    servo_command[2] = plane_starboard;
+
+    
+    servo_command[4] = 0x01 + SERVO_RANGE;
+    servo_command[5] = rudder_top;
+        
+    servo_command[7] = 0x02 + SERVO_RANGE;
+    servo_command[8] = rudder_bottom;
+
+    
+    servo_command[10] = 0x03 + SERVO_RANGE;
+    servo_command[11] = plane_port;
+
+    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(mc->main * 32212.0 / 60.0));
+    
+    // we don't want to send the data at to high a rate
+    if((timestamp_now() - state->last_data_time) > 100000)
+    {
+        state->last_data_time = timestamp_now();
+        write(state->servo_fd, servo_command, 12);
+        write(state->motor_fd, motor_string, strlen(motor_string));
+    }
+        
 }
 
 int program_exit;
@@ -188,6 +197,8 @@ main(int argc, char **argv)
 		return 1;
 	}
 	serial_set_ctsrts(state.motor_fd, 0);
+   
+    state.last_data_time = timestamp_now();
 	
 	acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, "IVER_MOTOR", &motor_handler, &state);
 	

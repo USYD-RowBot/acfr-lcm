@@ -6,6 +6,9 @@
 #include "perls-lcmtypes/senlcm_raw_ascii_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 #include "perls-lcmtypes/senlcm_os_power_system_t.h"
+#include "perls-lcmtypes/bot_core_raw_t.h"
+
+
 #include "perls-common/generic_sensor_driver.h"
 #include "perls-lcmtypes/senlcm_uvc_ack_t.h"
 #include "perls-lcmtypes/senlcm_uvc_opi_t.h"
@@ -51,6 +54,15 @@ os_command_passthru_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 //      publish (state, &state->os_conduit.command_passthru, raw->utime, msg);
     }
 }
+
+static void
+ysi_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
+                     const bot_core_raw_t *raw, void *user)
+{
+    state_t *state = (state_t *) user;
+    gsd_write (state->gsd, raw->data, raw->length);
+}
+
 
 
 static void
@@ -132,7 +144,7 @@ battery_callback(const lcm_recv_buf_t *rbuf, const char *channel,
 {
     state_t *state = (state_t *)user;
     char msg[NMEA_MAXIMUM_MSG_LENGTH];
-    int leak = 1;
+    int leak = 0;
     double voltage = 0.0;
     double capacity = 0.0;
     int batt_count = 0;
@@ -157,7 +169,6 @@ battery_callback(const lcm_recv_buf_t *rbuf, const char *channel,
     nmea_sprintf (msg, "$OCEANA,%d,%d,%d,%3.1f,%3.1f,%5.1f,%c,%d*", batt->avg_charge_p, (int)capacity*1000, abs((int)batt->power), voltage, batt->current, (double)batt->minutes_tef, mode, leak);
     gsd_write (state->gsd, msg, strlen (msg));
     
-    printf("%s\n", msg);
 }
 
 
@@ -455,6 +466,7 @@ main(int argc, char **argv)
     acfrlcm_auv_acfr_nav_t_subscribe (state.gsd->lcm, "ACFR_NAV", &acfr_nav_callback, &state);
     senlcm_raw_ascii_t_subscribe (state.gsd->lcm, "OS_COMMAND_PASSTHRU", &os_command_passthru_callback, &state);
     senlcm_os_power_system_t_subscribe (state.gsd->lcm, "BATTERY", &battery_callback, &state);
+    bot_core_raw_t_subscribe (state.gsd->lcm, "YSI.RAW", &ysi_callback, &state);
         
     pthread_t tid;
     pthread_create (&tid, NULL, lcm_thread, state.gsd);
