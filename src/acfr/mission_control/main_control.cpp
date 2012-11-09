@@ -204,7 +204,7 @@ int main_control::clock()
                     next_state = main_fsm_goto_hold;
 
             }
-*/            
+*/           else 
             next_state = main_fsm_goto_hold;
             break;
 
@@ -265,9 +265,9 @@ int main_control::clock()
     pthread_mutex_lock(&state_lock);
     if(next_state != current_state)      
     {  
-        cout << "Current state: " << (char *)get_current_state() << "  ";
+        cout << "Current state: " << get_current_state_string() << "  ";
         current_state = next_state;
-        cout << "New state: " << (char *)get_current_state() << endl;
+        cout << "New state: " << get_current_state_string() << endl;
     }
     pthread_mutex_unlock(&state_lock);
     
