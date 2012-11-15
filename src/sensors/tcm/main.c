@@ -13,7 +13,7 @@
 
 #include "tcm.h"
 
-#define update_rate 0.2
+#define update_rate 0.0
 
 #define DTOR 3.141592/180
 
@@ -135,7 +135,7 @@ main (int argc, char *argv[])
 {
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_launch (gsd);
-    gsd_noncanonical(gsd, 1024, 1);
+    gsd_noncanonical(gsd, 0, 0);
     gsd_flush(gsd);
     gsd_reset_stats(gsd);
     
@@ -148,30 +148,24 @@ main (int argc, char *argv[])
     
     while(1)
     {
-    	
-    
-        // get two bytes
-        gsd_noncanonical(gsd, 1, 1);
-        do
+    	do
         {
-    	    gsd_read(gsd, &buf[0], 1, &timestamp);
-        } while (buf[0] != 0);
-
+            len = gsd_read(gsd, buf, 1, &timestamp);
+        } while((buf[0] != 0) && (len != 1));
 
    	    gsd_read(gsd, &buf[1], 1, NULL);
     	    
-   	    unsigned short data_len = (buf[0] << 8) + buf[1];
-
+ 	    unsigned short data_len = (buf[0] << 8) + buf[1];
 
         if(data_len == 26)
         {
         
-            gsd_noncanonical(gsd, data_len - 2, 1);
             // read the rest of the data
             len = 0; 
             while(len < data_len - 2)
                 len += gsd_read(gsd, &buf[len + 2], data_len - 2 - len, NULL);
 
+            printf("Read %d bytes\n", len);
     	    
            	// check the checksum
             unsigned short crc = *(unsigned short *)&buf[data_len - 2];
@@ -186,8 +180,8 @@ main (int argc, char *argv[])
                     senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
                     gsd_update_stats (gsd, true);
                 }
-                else
-                    gsd_update_stats (gsd, false);
+                //else
+                //    gsd_update_stats (gsd, false);
             }
 	        else
             {

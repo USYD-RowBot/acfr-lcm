@@ -38,6 +38,8 @@ int acfr_nav::initialise()
     // Are we using the TCM compass
     if(attitude_source == TCM)
         state->lcm.subscribeFunction("TCM", on_tcm_compass, state);
+    else if(attitude_source == OS)
+        state->lcm.subscribeFunction("OS_COMPASS", on_os_compass, state);
         
     // Which depth sensor are we using
     if(depth_source == YSI)

@@ -22,6 +22,7 @@
 #include "perls-lcmtypes++/senlcm/oas_t.hpp"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ms_gx1_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_compass_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_vis_rawlog_t.hpp"
 
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
@@ -40,5 +41,5 @@ void on_oas(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const oa
 void on_tcm_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const tcm_t *tcm, state_c* state);
 void on_vis(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_vis_rawlog_t *vis, state_c* state);
 void on_ms_gx1(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ms_gx1_t *ms, state_c* state);
-
+void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const os_compass_t *osc, state_c* state);
 #endif

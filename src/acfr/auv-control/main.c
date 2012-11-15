@@ -192,7 +192,7 @@ int main(int argc, char **argv)
         // send the motor command
         acfrlcm_auv_iver_motor_command_t mc;
         mc.utime = timestamp_now();
-        mc.main = prop_rpm;
+        mc.main = 0; //prop_rpm;
         mc.top = 0 + roll_offset;
         mc.bottom = 0 - roll_offset;
         mc.port = 0 + roll_offset;

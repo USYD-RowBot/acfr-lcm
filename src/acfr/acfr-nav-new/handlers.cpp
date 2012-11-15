@@ -48,8 +48,8 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
         else if(state->mode == RAW)
         {
             gps_data.print(state->raw_out);
-		    state->raw_out << endl;
-		}
+	    state->raw_out << endl;
+	}
 }
 
 // Handle a Parosci depth sensor message
@@ -283,4 +283,19 @@ void on_ms_gx1(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     }
 }
 
+void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const os_compass_t *osc, state_c* state)
+{
+    auv_data_tools::OS_Compass_Data osc_data;
+    osc_data.roll = osc->rph[0];
+    osc_data.pitch = osc->rph[1];
+    osc_data.heading = osc->rph[2];
+    osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
+    if(state->mode == NAV)
+       	state->slam->handle_OS_compass_data(osc_data);
+    else if(state->mode == RAW)
+    {
+        osc_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+}
