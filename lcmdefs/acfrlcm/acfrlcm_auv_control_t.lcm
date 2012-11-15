@@ -1,0 +1,19 @@
+package acfrlcm;
+
+struct auv_control_t
+{
+    int64_t utime;
+
+    const int8_t DEPTH_MODE = 0;
+    const int8_t ALTITUDE_MODE = 1;
+    const int8_t PITCH_MODE = 2;
+
+    int8_t depth_mode;
+    
+    double heading;
+    double depth;
+    double altitude;
+    double pitch;
+    double vx;
+        
+}

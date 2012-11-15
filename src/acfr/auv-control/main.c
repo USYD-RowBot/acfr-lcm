@@ -11,6 +11,7 @@
 #include "perls-common/timestamp.h"
 #include "perls-common/lcm_util.h"
 #include "perls-lcmtypes/acfrlcm_auv_acfr_nav_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_control_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
 // set the delta T to 0.1s, 10Hz loop rate
@@ -18,7 +19,8 @@
 
 typedef enum
 {   DEPTH_MODE,
-    PITCH_MODE
+    PITCH_MODE,
+    ALTITUDE_MODE
 } depth_mode_t;
 
 typedef struct
@@ -26,6 +28,8 @@ typedef struct
     double vx;
     double depth;
     double pitch;
+    double heading;
+    double altitude;
     depth_mode_t depth_mode;
 } command_t;
 
@@ -37,7 +41,9 @@ typedef struct
     pid_gains_t gains_vel;
     pid_gains_t gains_roll;
     pid_gains_t gains_depth;
+    pid_gains_t gains_altitude;
     pid_gains_t gains_pitch;
+    pid_gains_t gains_heading;
     
     // Nav solution
     acfrlcm_auv_acfr_nav_t nav;
@@ -86,7 +92,93 @@ int load_config(state_t *state, char *rootkey)
 	state->gains_roll.sat = bot_param_get_double_or_fail(param, key);
 
 
+    // Pitch gains
+	memset(&state->gains_pitch, 0, sizeof(pid_gains_t));
+	sprintf(key, "%s.pitch.kp", rootkey);
+	state->gains_pitch.kp = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.pitch.ki", rootkey);
+	state->gains_pitch.ki = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.pitch.kd", rootkey);
+	state->gains_pitch.kd = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.pitch.sat", rootkey);
+	state->gains_pitch.sat = bot_param_get_double_or_fail(param, key);
+
+    // Depth gains
+	memset(&state->gains_depth, 0, sizeof(pid_gains_t));
+	sprintf(key, "%s.depth.kp", rootkey);
+	state->gains_depth.kp = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.depth.ki", rootkey);
+	state->gains_depth.ki = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.depth.kd", rootkey);
+	state->gains_depth.kd = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.depth.sat", rootkey);
+	state->gains_depth.sat = bot_param_get_double_or_fail(param, key);
+
+    // Altitude gains
+	memset(&state->gains_altitude, 0, sizeof(pid_gains_t));
+	sprintf(key, "%s.altitude.kp", rootkey);
+	state->gains_altitude.kp = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.altitude.ki", rootkey);
+	state->gains_altitude.ki = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.altitude.kd", rootkey);
+	state->gains_altitude.kd = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.altitude.sat", rootkey);
+	state->gains_altitude.sat = bot_param_get_double_or_fail(param, key);
+
+    // Heading gains
+	memset(&state->gains_heading, 0, sizeof(pid_gains_t));
+	sprintf(key, "%s.heading.kp", rootkey);
+	state->gains_heading.kp = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.heading.ki", rootkey);
+	state->gains_heading.ki = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.heading.kd", rootkey);
+	state->gains_heading.kd = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.heading.sat", rootkey);
+	state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
+
+
     return 1;
+}
+
+// Messages from the trajectory planner
+static void
+control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm_auv_control_t *control, void *user) 
+{
+    state_t *state = (state_t *)user;    
+    pthread_mutex_lock(&state->command_lock);
+    
+    state->command.vx = control->vx;
+    state->command.heading = control->heading;
+    state->command.depth = control->depth;
+    state->command.altitude = control->altitude;
+    state->command.pitch = control->pitch;
+    
+    switch(control->depth_mode)
+    {
+        case ACFRLCM_AUV_CONTROL_T_DEPTH_MODE:
+            state->command.depth_mode = DEPTH_MODE;
+            break;
+        case ACFRLCM_AUV_CONTROL_T_ALTITUDE_MODE:
+            state->command.depth_mode = ALTITUDE_MODE;
+            break;
+        case ACFRLCM_AUV_CONTROL_T_PITCH_MODE:
+            state->command.depth_mode = PITCH_MODE;
+            break;  
+     }
+     
+     pthread_mutex_unlock(&state->command_lock);
 }
 
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
@@ -153,15 +245,14 @@ int main(int argc, char **argv)
  
     // LCM callbacks
     acfrlcm_auv_acfr_nav_t_subscribe (state.lcm, "ACFR_NAV", &acfr_nav_callback, &state);      
-//    acfrlcm_auv_goal_setpoint_t_subscribe(state.lcm, "MP_CONTROL", &mp_message_callback, &state);
+    acfrlcm_auv_control_t_subscribe(state.lcm, "AUV_CONTROL", &control_callback, &state);
  
     periodic_info timer_info;
 	make_periodic (CONTROL_DT * 1000000, &timer_info);
 	
 	double prop_rpm;
-	double top_rudder_angle, bottom_rudder_angle, port_plane_angle, starboard_plane_angle;
 	double roll_offset;
-	double pitch, plane_angle;
+	double pitch, plane_angle, rudder_angle;
 	
 	// main loop
 	while(!main_exit)
@@ -178,12 +269,18 @@ int main(int argc, char **argv)
         roll_offset = pid(&state.gains_roll, state.nav.roll, 0, CONTROL_DT);
         
         // Depth to pitch
-        pitch = pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
+        if(state.command.depth_mode == ALTITUDE_MODE)
+            pitch = pid(&state.gains_altitude, state.nav.altitude, state.command.altitude, CONTROL_DT);
+        else
+            pitch = pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
         
         // Pitch to fins
-        if(state.command.depth_mode = PITCH_MODE)
+        if(state.command.depth_mode == PITCH_MODE)
             pitch = state.command.pitch;
         plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
+        
+        // Heading
+        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
         
         // unlock the nav and command data
         pthread_mutex_unlock(&state.nav_lock);
@@ -193,10 +290,10 @@ int main(int argc, char **argv)
         acfrlcm_auv_iver_motor_command_t mc;
         mc.utime = timestamp_now();
         mc.main = prop_rpm;
-        mc.top = 0 + roll_offset;
-        mc.bottom = 0 - roll_offset;
-        mc.port = 0 + roll_offset;
-        mc.starboard = 0 - roll_offset;
+        mc.top = rudder_angle + roll_offset;
+        mc.bottom = rudder_angle - roll_offset;
+        mc.port = plane_angle + roll_offset;
+        mc.starboard = plane_angle - roll_offset;
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
 
