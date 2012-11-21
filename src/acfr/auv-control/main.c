@@ -52,6 +52,7 @@ typedef struct
     
     // controller inputs
     command_t command;
+    int run_mode;
     pthread_mutex_t command_lock;
     
 } state_t;
@@ -159,11 +160,13 @@ control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm
     state_t *state = (state_t *)user;    
     pthread_mutex_lock(&state->command_lock);
     
+    
     state->command.vx = control->vx;
     state->command.heading = control->heading;
     state->command.depth = control->depth;
     state->command.altitude = control->altitude;
     state->command.pitch = control->pitch;
+    state->run_mode = control->run_mode;
     
     switch(control->depth_mode)
     {
@@ -288,12 +291,16 @@ int main(int argc, char **argv)
         
         // send the motor command
         acfrlcm_auv_iver_motor_command_t mc;
+        memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
         mc.utime = timestamp_now();
-        mc.main = prop_rpm;
-        mc.top = rudder_angle + roll_offset;
-        mc.bottom = rudder_angle - roll_offset;
-        mc.port = plane_angle + roll_offset;
-        mc.starboard = plane_angle - roll_offset;
+        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)
+        {
+            mc.main = prop_rpm;
+            mc.top = rudder_angle + roll_offset;
+            mc.bottom = rudder_angle - roll_offset;
+            mc.port = plane_angle + roll_offset;
+            mc.starboard = plane_angle - roll_offset;
+        }
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
 
