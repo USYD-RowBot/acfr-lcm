@@ -10,6 +10,11 @@ struct auv_control_t
 
     int8_t depth_mode;
     
+    const int8_t STOP = 0;
+    const int8_t RUN = 1;
+    
+    int8_t run_mode;
+    
     double heading;
     double depth;
     double altitude;
