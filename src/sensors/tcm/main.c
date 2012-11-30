@@ -13,7 +13,7 @@
 
 #include "tcm.h"
 
-#define update_rate 0.0
+#define update_rate 0.1
 
 #define DTOR 3.141592/180
 
@@ -85,9 +85,6 @@ int tcm_form_message(char *in, int data_len, char *out)
     out[data_len+3] = crc & 0xff;
     out[data_len+2] = crc >> 8;
     
-    for(int i=0; i< len; i++)
-    	printf("%02X ", out[i] & 0xFF);
-    printf("\n");
     return len;
 }
     
@@ -135,8 +132,8 @@ main (int argc, char *argv[])
 {
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_launch (gsd);
-    gsd_noncanonical(gsd, 0, 0);
-    gsd_flush(gsd);
+    gsd_noncanonical(gsd, 1, 1);
+    
     gsd_reset_stats(gsd);
     
     int len;
@@ -146,42 +143,54 @@ main (int argc, char *argv[])
     
     program_tcm(gsd);
     
+    gsd_flush(gsd);
+    
+    int start_pos;
+    
     while(1)
     {
+        memset(buf, 0, sizeof(buf));
     	do
         {
-            len = gsd_read(gsd, buf, 1, &timestamp);
-        } while((buf[0] != 0) && (len != 1));
+            len = gsd_read(gsd, buf, sizeof(buf), &timestamp);
+            //printf("len = %d\n", len);
+            for(int i=0; i<len; i++)
+                if(buf[i] == 0)
+                {
+                    start_pos = i;
+                    break;
+                }
+        } while(buf[start_pos] != 0);
 
-   	    gsd_read(gsd, &buf[1], 1, NULL);
+        if(len < 2)
+       	    len += gsd_read(gsd, &buf[start_pos + 1], 1, NULL);
     	    
- 	    unsigned short data_len = (buf[0] << 8) + buf[1];
+ 	    unsigned short data_len = (buf[start_pos] << 8) + buf[start_pos + 1];
 
         if(data_len == 26)
         {
         
             // read the rest of the data
-            len = 0; 
-            while(len < data_len - 2)
-                len += gsd_read(gsd, &buf[len + 2], data_len - 2 - len, NULL);
 
-            printf("Read %d bytes\n", len);
-    	    
+            while(len < data_len)
+                len += gsd_read(gsd, &buf[start_pos + len], data_len - len, NULL);
+
            	// check the checksum
-            unsigned short crc = *(unsigned short *)&buf[data_len - 2];
-            if(tcm_crc(buf, data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
+            unsigned short crc = *(unsigned short *)&buf[start_pos + len - 2];
+            
+            if(tcm_crc(&buf[start_pos], data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
             {
                 memset(&tcm, 0, sizeof(senlcm_tcm_t));
                 tcm.utime = timestamp;
                 // its good data, lets parse it
 
-                if(parse_tcm(buf, &tcm))
+                if(parse_tcm(&buf[start_pos], &tcm))
                 {
                     senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
                     gsd_update_stats (gsd, true);
                 }
-                //else
-                //    gsd_update_stats (gsd, false);
+                else
+                    gsd_update_stats (gsd, false);
             }
 	        else
             {
