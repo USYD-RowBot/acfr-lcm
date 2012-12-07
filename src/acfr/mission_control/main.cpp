@@ -9,7 +9,7 @@ using namespace acfrlcm;
 using namespace std;
 
 int main_exit;
-
+/*
 void on_mp_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::raw_ascii_t *mp, lcm::LCM* lcm)
 {
 
@@ -58,7 +58,7 @@ void on_mp_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
     }
     
 }
-
+*/
 
 void signal_handler(int sig)
 {
@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     signal(SIGINT, signal_handler);
     
     lcm::LCM lcm;
-    lcm.subscribeFunction("MP_COMMAND", on_mp_command, &lcm);
+    
     main_control mc(&lcm);
     
     

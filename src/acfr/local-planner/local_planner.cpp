@@ -187,7 +187,7 @@ local_planner::~local_planner()
 Vector local_planner::transform_to_earth(Vector point)
 {
     
-    Matrix rot(rot_mat_forward(nav.roll, nav.pitch, nav.heading));
+    Matrix rot(rot_mat_back(nav.roll, nav.pitch, nav.heading));
     Vector new_point(prod(rot, point));
     
     return new_point;
@@ -196,7 +196,7 @@ Vector local_planner::transform_to_earth(Vector point)
 Vector local_planner::transform_to_body(Vector point)
 {
     
-    Matrix rot(rot_mat_back(nav.roll, nav.pitch, nav.heading));
+    Matrix rot(rot_mat_forward(nav.roll, nav.pitch, nav.heading));
     Vector new_point(prod(rot, point));
     
     return new_point;

@@ -5,30 +5,15 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_mission_command_t.hpp"
 
+#include "waypoint.hpp"
+
 #ifndef MAIN_CONTROL_HPP
 #define MAIN_CONTROL_HPP
 
 using namespace std;
 using namespace acfrlcm;
 
-// location class
-class location
-{
-    public:
-        double x;
-        double y;
-        double z;
-        int64_t time;
-};
 
-// goal class, inherites waypoint and adds a time out and velocity
-class goal_point : public location
-{
-    public:
-        double timeout;
-        double xy_vel;
-        double z_vel;
-};
 
 // main FSM states
 typedef enum

@@ -52,9 +52,9 @@ main_control_state main_control::get_current_state()
 int main_control::update_nav(const auv_acfr_nav_t *nav)
 {
     pthread_mutex_lock(&current_location_lock);
-    current_location.x = nav->x;
-    current_location.y = nav->y;
-    current_location.z = nav->depth;
+    current_location.loc.setX(nav->x);
+    current_location.loc.setY(nav->y);
+    current_location.loc.setZ(nav->depth);
     current_location.time = nav->utime;    
     pthread_mutex_unlock(&current_location_lock);
     
@@ -74,11 +74,12 @@ int main_control::message(const auv_mission_command_t *mc)
             new_message = main_abort;
             break;
         case auv_mission_command_t::GOTO:
-            gp.x = mc->x;
-            gp.y = mc->y;
-            gp.z = mc->z;
-            gp.xy_vel = mc->xy_vel;
-            gp.z_vel = mc->z_vel;
+            gp.loc.setX(mc->x);
+            gp.loc.setZ(mc->y);
+            gp.loc.setY(mc->z);
+            gp.vel[0] = mc->velocity[0];
+            gp.vel[1] = mc->velocity[1];
+            gp.vel[2] = mc->velocity[2];
 	        gp.timeout = (int64_t)(mc->timeout * 1e6);
             new_message = main_goto;
             break;
