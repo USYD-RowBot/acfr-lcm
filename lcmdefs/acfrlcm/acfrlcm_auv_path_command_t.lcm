@@ -4,18 +4,13 @@ struct auv_path_command_t
 {
     int64_t utime;
     
-    const int8_t STOP = 0;
-    const int8_t SINGLE = 1;
-    const int8_t DOUBLE = 2;
-    
-    int8_t command_type;
-    
+    int32_t goal_id;
+        
     const int8_t DEPTH = 0;
     const int8_t ALTITUDE = 1;
         
     int8_t depth_mode;
     
-    double wpt_one[7];
-    double wpt_two[7];
-    
+    double waypoint[7];
+     
 }

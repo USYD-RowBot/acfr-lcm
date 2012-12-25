@@ -16,7 +16,11 @@ class mission_primative
         int id;
         depth_mode_t depth_mode;
         list<mission_command> commands;
-
+        enum
+        {
+            direction_cw = 1,
+            direction_ccw = -1
+        };
 };
 
 class mission_com : public mission_primative
@@ -72,5 +76,16 @@ class mission_hold : public mission_primative
         int to_points(list<goal_point>&);
 };
 
-
+class mission_zambonie : public mission_primative
+{
+    public:
+        SMALL::Pose3D center;
+        double length;
+        double width;
+        double spacing;
+        double rotation;
+        double velocity;
+        int direction;
+        int to_points(list<goal_point>&);
+};
 #endif

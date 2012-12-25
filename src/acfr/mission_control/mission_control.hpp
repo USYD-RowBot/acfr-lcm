@@ -35,14 +35,14 @@ class mission_control
         lcm::LCM *lcm;
         bool are_we_there_yet;
         double distance_to_goal;
+        void message(mission_message_t message);
+        void set_filename(string filename);
 
     private:
         int clock();
 
-        pthread_mutex_t mission_message_lock;        
         mission_message_t mission_message;
         
-        pthread_mutex_t state_lock;
         mission_control_state current_state;
         mission_control_state next_state;
         
@@ -52,7 +52,7 @@ class mission_control
         list<goal_point>::iterator point_one, point_two;
         int send_leg();
         int send_commands(list<mission_command> &commands);
-        double leg_start_time;
+        int64_t leg_start_time;
         
         
         

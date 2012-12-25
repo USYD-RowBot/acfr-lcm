@@ -70,9 +70,9 @@ class goal_point : public location
                 p.loc.getX() << " " << p.loc.getY() << " " << p.loc.getZ() << " " << 
                 p.loc.getRollRad() / M_PI * 180 << " " << p.loc.getPitchRad() / M_PI * 180 << " " << p.loc.getYawRad() / M_PI * 180 << " " <<
                 p.vel[0] << " " << p.vel[1] << " " << p.vel[2] << " " <<
-                p.timeout << " " <<
-                ((p.depth_mode == DEPTH_MODE_ALTITUDE) ? "A" : "D") << " " <<
-                ((p.type == GOAL) ? "G" : "C");
+                p.timeout << " "; // <<
+                //((p.depth_mode == DEPTH_MODE_ALTITUDE) ? "A" : "D") << " " <<
+                //((p.type == GOAL) ? "G" : "C");
          }   
 };
 

@@ -4,6 +4,7 @@ struct auv_path_response_t
 {
     int64_t utime;
     
+    int32_t goal_id;
     int8_t are_we_there_yet;    
     double distance;
 }

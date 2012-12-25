@@ -107,23 +107,38 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     theta = x[4];
     psi = x[5];
     
+    // Where we are at, ie the auv pose
+    SMALL::Pose3D auvPose;
+    auvPose.setPosition(Z, Y, Z);
+    auvPose.setRotationRad(phi, theta, psi);
+    
     // Hydro static and gravitational forces
     
-    Vector fG(3);
-    fG(0) = 0;
-    fG(1) = 0;
-    fG(2) = W;
+    SMALL::Pose3D fG;
+    fG.setPosition(0, 0, W);
     
+//    Vector fG(3);
+//    fG(0) = 0;
+//    fG(1) = 0;
+//    fG(2) = W;
+    
+     
+    SMALL::Pose3D fG_body = 
     Vector fG_body = transform_to_body(fG, phi, theta, psi);
     
-    Vector fB(3);
-    fB(0) = 0;
-    fB(1) = 0;
+    
+//    Vector fB(3);
+//    fB(0) = 0;
+//    fB(1) = 0;
     
     if(Z > 0)
         fB(2) = B;
     else
         fB(2) = 0;
+
+    SMALL::Pose3D fB;
+    fG.setPosition(0, 0, B);
+    
         
     Vector fB_body = transform_to_body(fB, phi, theta, psi);
     
@@ -177,6 +192,11 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     // converting desired rpm to rps
     double n = in(0)/60;
     
+    // limit the max rpm to 1500 = 25 rps
+    if(fabs(n) > 25)
+        n = n / fabs(n) * 25;
+    
+    
     // advance velocity as per Fossen eq 4.6
     double omega = 0.1;
     double Va = (1 - omega) * u;
@@ -191,6 +211,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double alpha1 = 0.4;
     double alpha2 = -4.0/11.0;
     Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+   
         
     double prop_force;
     //if(fabs(Va) < 0.1)
@@ -199,7 +220,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 //        prop_force = rho * pow((prop_alpha * in(0)),2) * pow(prop_diameter,4) * Kt;
           // As per Fossen eq 4.2
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;
-          
+              
 
     
     if(prop_force !=  prop_force)
@@ -207,7 +228,9 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
         cerr << "Prop force error" << endl;
         prop_force = 0;
     }
-    
+    if(fabs(prop_force) > 10.0)
+        prop_force = prop_force / fabs(prop_force) * 10;
+    cout << "Prop force " << prop_force << " Kt " << Kt << " N " << n << endl;
 //    cout << in(0) << ", " << prop_force << "  ,  " << Kt << " , " << J << endl;
     
     // set the fins to zero is we aren't moving as the model doesn't behave

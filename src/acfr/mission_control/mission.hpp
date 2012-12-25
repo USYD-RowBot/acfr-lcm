@@ -46,12 +46,15 @@ class mission
         int get_command(const xmlpp::Element* element, list<mission_command> &commands);
         int get_single_value(const xmlpp::Element* element, string tag, double &val);
         int get_depth_mode(const xmlpp::Element* element, depth_mode_t &dm);
+        int get_single_value(const xmlpp::Element* element, string tag, Glib::ustring &val);
+        
         // parsers
         int parse_line(xmlpp::Node *node);
         int parse_grid(xmlpp::Node *node);
         int parse_goto(xmlpp::Node *node);
         int parse_hold(xmlpp::Node *node);
         int parse_command(xmlpp::Node *node);
+        int parse_zambonie(xmlpp::Node *node);
         
         // Conversion
         int primatives_to_points();

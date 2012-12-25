@@ -4,13 +4,24 @@ void on_leg_response(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 {
     mc->are_we_there_yet = pr->are_we_there_yet;
     mc->distance_to_goal = pr->distance;
+    
+    // clock the FSM
+    clock();
+}
+
+// Process an external message
+void mission_control::message(mission_message_t message)
+{
+    mission_message = message;
+
+    // clock the FSM
+    clock();
 }
 
 
 mission_control::mission_control(lcm::LCM *_lcm)
 {
     lcm = _lcm;
-    pthread_mutex_init(&state_lock, NULL);
     
     // subscribe to the relevant LCM messages
     lcm->subscribeFunction("LEG_RESPONSE", on_leg_response, this);
@@ -18,18 +29,22 @@ mission_control::mission_control(lcm::LCM *_lcm)
 
 mission_control::~mission_control()
 {
-    pthread_mutex_destroy(&state_lock);
 }
 
 string mission_control::get_current_state_string()
 {
-    char *mission_control_state_str[] = {"idle", "travel", "abort", "done", "fault"};
+    string mission_control_state_str[] = {"idle", "travel", "abort", "done", "fault"};
     return mission_control_state_str[current_state];
 }
 
 mission_control_state mission_control::get_current_state()
 {
     return current_state;
+}
+
+void mission_control::set_filename(string _filename)
+{
+    filename = _filename;
 }
 
 int mission_control::clock()
@@ -45,6 +60,7 @@ int mission_control::clock()
             {
                 // load a mission
                 if(!mis.load(filename))
+
                 {
                     cerr << "Could not load mission file " << filename << endl;
                     next_state = mission_fsm_idle;    
@@ -104,14 +120,12 @@ int mission_control::clock()
             break;
     }
     
-    pthread_mutex_lock(&state_lock);
     if(next_state != current_state)      
     {  
         cout << "Current state: " << get_current_state_string() << "  ";
         current_state = next_state;
         cout << "New state: " << get_current_state_string() << endl;
     }
-    pthread_mutex_unlock(&state_lock);
     
     return 0;
 }    
@@ -144,6 +158,7 @@ int mission_control::send_leg()
 
     // Put together the LEG message for the path planner
     acfrlcm::auv_path_command_t pc;
+    pc.utime = timestamp_now();
     pc.wpt_one[0] = (*point_one).loc.getX();
     pc.wpt_one[1] = (*point_one).loc.getY();
     pc.wpt_one[2] = (*point_one).loc.getZ();
@@ -166,6 +181,7 @@ int mission_control::send_leg()
 
     // Send the message
     lcm->publish("LEG_COMMAND", &pc);
+    leg_start_time = timestamp_now();
 
     return 1;
 }

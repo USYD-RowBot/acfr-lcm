@@ -84,6 +84,8 @@
                     parse_command(*i);
                 else if((*i)->get_name().lowercase() == "hold")
                     parse_hold(*i);
+                else if((*i)->get_name().lowercase() == "zambonie")
+                    parse_zambonie(*i);
                 else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primative " << (*i)->get_name() << endl;
             }      
@@ -203,6 +205,28 @@ int mission::get_single_value(const xmlpp::Element* element, string tag, double 
     else
         return 1;
 }
+
+// read a single string value
+int mission::get_single_value(const xmlpp::Element* element, string tag, Glib::ustring &val)
+{
+
+    const xmlpp::Element::AttributeList& attributes = element->get_attributes();
+    for(xmlpp::Element::AttributeList::const_iterator i = attributes.begin(); i != attributes.end(); ++i)
+    {
+        if((*i)->get_name().lowercase() == tag)
+        {
+        
+            val = (*i)->get_value();
+            return 1;
+        }
+        else
+            return 0;
+    }
+    // if we end up here then the tag wasn't there
+    return 0;
+}
+    
+
 
 // Read the depth mode variable, if its not set then we are in depth mode
 int mission::get_depth_mode(const xmlpp::Element* element, depth_mode_t &dm)
@@ -469,7 +493,80 @@ int mission::parse_grid(xmlpp::Node *node)
 
 
 }
-        
+
+int mission::parse_zambonie(xmlpp::Node *node)
+{
+    // generate a grid pattern
+    
+    mission_zambonie mz;
+    double x, y, z, r, p, h;
+    double l, w, rot, s;
+    
+    xmlpp::Node::NodeList list = node->get_children();     
+    for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)   
+    {
+        const xmlpp::Element* element = dynamic_cast<const xmlpp::Element*>(*iter);
+        if(element)
+        {
+            if(element->get_name().lowercase() == "center")
+            {
+                if(!get_xyzrph(element, x, y, z, r, p, h))
+                    return 0;
+                mz.center.setPosition(x, y, z);
+                mz.center.setRollPitchYawRad(r, p, h);
+            }
+            if(element->get_name().lowercase() == "width")
+            {
+                if(!get_single_value(element, "w", w))
+                    return 0;
+                
+                mz.width = w;
+            }
+            if(element->get_name().lowercase() == "length")
+            {
+                if(!get_single_value(element, "l", l))
+                    return 0;
+                mz.length = l;
+            }
+            if(element->get_name().lowercase() == "spacing")
+            {
+                if(!get_single_value(element, "s", s))
+                    return 0;
+                mz.spacing = s;
+            }
+            if(element->get_name().lowercase() == "rotation")
+            {
+                if(!get_single_value(element, "r", rot))
+                    return 0;
+                mz.rotation = rot / 180 * M_PI;
+            }
+            if(element->get_name().lowercase() == "velocity")
+            {
+                if(!get_velocity(element, mz.velocity, w, l)) 
+                    return 0;
+            }
+            // the default direction in cw
+            mz.direction = mission_primative::direction_cw;
+            if(element->get_name().lowercase() == "direction")
+            {
+                Glib::ustring str;
+                if(get_single_value(element, "d", str)) 
+                {
+                    if(str.lowercase() == "cw")
+                        mz.direction = mission_primative::direction_cw;
+                    else if(str.lowercase() == "ccw")
+                        mz.direction = mission_primative::direction_ccw;
+                }
+                
+            }
+        }
+    }
+    get_common(node, mz);
+    mz.to_points(goal_points);
+    
+    return 1;
+}
+   
 int mission::parse_hold(xmlpp::Node *node)
 {
     // this is a special case of a goto with a time that we will stay there
@@ -533,7 +630,7 @@ int mission::dump()
 {
     for(list<goal_point>::iterator i=goal_points.begin(); i != goal_points.end(); ++i)
     {
-        //if((*i).type == GOAL)
+        if((*i).type == GOAL)
             cout << (*i) << endl;
 
     }

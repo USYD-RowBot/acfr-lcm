@@ -74,6 +74,7 @@ int main(int argc, char **argv)
     lcm::LCM lcm;
     
     main_control mc(&lcm);
+   
     
     
     int fd = lcm.getFileno();

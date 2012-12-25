@@ -60,7 +60,9 @@ class state_c
         // persistant variables
         double altitude;
         double oas_altitude;
-        double fwd_obs_dist;        
+        double fwd_obs_dist;
+        int lowRateCount;
+               
 };
 
 class acfr_nav
@@ -75,7 +77,7 @@ class acfr_nav
         
         // the main loop function
         int process();
-
+ 
     private:
         void calculate_mag();
 

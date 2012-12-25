@@ -326,6 +326,25 @@ int main(int argc, char **argv)
         
         
         // Heading
+        while(state.nav.heading < -M_PI)
+            state.nav.heading += 2*M_PI;
+        while(state.nav.heading > M_PI)
+            state.nav.heading -= 2*M_PI;
+        
+        while(state.command.heading < -M_PI)
+            state.command.heading += 2*M_PI;
+        while(state.command.heading > M_PI)
+            state.command.heading -= 2*M_PI;
+        
+        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+        {
+            if(state.command.heading < (-M_PI / 2))
+                state.command.heading += 2*M_PI;
+            else if(state.nav.heading < (-M_PI / 2))
+                state.nav.heading += 2*M_PI;
+        }        
+        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+            
         rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
         
         // Rudder limit

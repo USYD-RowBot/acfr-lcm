@@ -195,5 +195,78 @@ int mission_com::to_points(list<goal_point> &points)
     return 1;
 }
 
-
-
+int mission_zambonie::to_points(list<goal_point> &points)
+{
+    // Work out the centre overlap required for a compass error of 1 degree
+    // this is the worst case.
+    double gap = tan(1.0 / 180.0 * M_PI) * length;
+    double half_width = width / 2.0 - gap;
+    
+    // The number of boxes required to fill the space
+    int num_boxes = ceil(width / 2 + gap / spacing);
+    
+    // Given the centre work out the bottom left corner       
+    double start_x = -width / 2.0 * direction;
+    double start_y = -length / 2.0 * direction;
+    double depth = center.getZ();
+      
+    goal_point p1, p2, p3, p4;
+    list<goal_point> grid_points;
+        
+    // lets make some boxes
+    for(int i=0; i<num_boxes; i++)
+    {
+        p1.loc.setRollPitchYawRad(0.0, 0.0, 0.0);
+        p1.loc.setPosition(start_x + i * spacing * direction, start_y, depth);
+        p1.vel[0] = velocity;
+        p1.vel[1] = 0;
+        p1.vel[2] = 0;
+        p1.type = GOAL;
+        p1.depth_mode = depth_mode;
+        grid_points.push_back(p1);
+       
+        p2.loc.setRollPitchYawRad(0.0, 0.0, M_PI / 2.0 * direction);
+        p2.loc.setPosition(start_x + i * spacing * direction, -start_y, depth);
+        p2.vel[0] = velocity;
+        p2.vel[1] = 0;
+        p2.vel[2] = 0;
+        p2.type = GOAL;
+        p2.depth_mode = depth_mode;
+        grid_points.push_back(p2);
+ 
+        p3.loc.setRollPitchYawRad(0.0, 0.0, M_PI / 2.0 * direction);
+        p3.loc.setPosition(start_x + i * spacing * direction + half_width * direction, -start_y, depth);
+        p3.vel[0] = velocity;
+        p3.vel[1] = 0;
+        p3.vel[2] = 0;
+        p3.type = GOAL;
+        p3.depth_mode = depth_mode;
+        grid_points.push_back(p3);
+ 
+        p4.loc.setRollPitchYawRad(0.0, 0.0, -M_PI / 2.0 * direction);
+        p4.loc.setPosition(start_x + i * spacing * direction + half_width * direction, start_y, depth);
+        p4.vel[0] = velocity;
+        p4.vel[1] = 0;
+        p4.vel[2] = 0;
+        p4.type = GOAL;
+        p4.depth_mode = depth_mode;
+        grid_points.push_back(p4);
+    }
+    
+    // now rotate the grid points about the center and move then so the
+    // grid center is in the correct place
+    SMALL::Pose3D grid_center;
+    grid_center.setPosition(0.0, 0.0, 0.0);
+    grid_center.setRollPitchYawRad(0.0, 0.0, rotation);
+    for(list<goal_point>::iterator i = grid_points.begin(); i != grid_points.end(); ++i)
+    {
+        (*i).loc = grid_center.transformTo((*i).loc.getPosition());
+        (*i).loc.setX((*i).loc.getX() + center.getX());
+        (*i).loc.setY((*i).loc.getY() + center.getY());
+    }
+    
+    // now put the points on the end of the list
+    points.splice(points.end(), grid_points);
+    
+    return 1;                     
+}

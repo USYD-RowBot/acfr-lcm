@@ -7,6 +7,7 @@ set (SRC
   perllcm.c        perllcm.h
   senlcm.c         senlcm.h
   se.c             se.h
+  acfrlcm.c        acfrlcm.h
 )
 
 # EXTERNAL DEPS
