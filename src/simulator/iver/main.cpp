@@ -11,6 +11,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
 #include "perls-common/timestamp.h"
+#include <small/Pose3D.hh>
 
 using namespace libplankton;
 using namespace std;

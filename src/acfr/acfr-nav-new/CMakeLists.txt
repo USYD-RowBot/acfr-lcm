@@ -1,5 +1,5 @@
 perls_add_executable (acfr-nav-new acfr_nav.cpp handlers.cpp magfield.c)
-perls_target_link_libraries (acfr-nav-new perls-lcmtypes++ perls-common seabedcommon seabedslam)
+perls_target_link_libraries (acfr-nav-new perls-lcmtypes++ perls-common seabedcommon seabedslam adt plankton)
 
 include_directories ( 
 	/usr/local/include/libseabedcommon

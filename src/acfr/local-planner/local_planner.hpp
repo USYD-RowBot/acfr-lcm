@@ -4,6 +4,7 @@
 #include <libgen.h>
 #include <pthread.h>
 #include <error.h>
+#include <unistd.h>
 #include <bot_param/param_client.h>
 #include "DubinsPath.h"
 #include "perls-common/timestamp.h"

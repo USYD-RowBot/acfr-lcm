@@ -1,0 +1,20 @@
+package senlcm;
+
+struct micron_ping_t
+{
+    int64_t utime;
+
+	int32_t count;
+	
+	double range;
+	double gain;
+	double slope;
+	double AD_interval;
+	double left_limit;
+	double right_limit;
+	double angle;
+	
+	
+    int16_t num_bins;
+    byte bins[num_bins];
+}
