@@ -135,23 +135,25 @@ void incMap( state_t * state, vector<Vector4D> pVec ) {
 /**
  * GET SONAR CONE points from the range and cone angle
  */
-vector<Vector4D> getSonarPoints( double range, double coneAngle, double voxelSize ) {
+vector<Vector4D> getSonarPoints( double range, double coneAngleH, double coneAngleV, double voxelSize ) {
 
 	vector<Vector4D> pVec;
 	Vector4D p;
 
-	double coneWidth = sin( coneAngle / 2.0 ) * range;
-	if( coneWidth < voxelSize ) {
+	double coneWidthH = sin( coneAngleH / 2.0 ) * range;
+	double coneWidthV = sin( coneAngleV / 2.0 ) * range;
+	
+	if( coneWidthH < voxelSize && coneWidthV < voxelSize ) {
 		p = range, 0, 0, 1;
 		pVec.push_back( p );
 		return pVec;
 	}
 
-	for( double j = -coneWidth; j <= coneWidth; j += voxelSize ) {
-		for( double i = -coneWidth; i <= coneWidth; i += voxelSize ) {
+	for( double j = -coneWidthV; j <= coneWidthV; j += voxelSize ) {
+		for( double i = -coneWidthH; i <= coneWidthH; i += voxelSize ) {
 			double dp = hypot( i, j );
 			double l = sqrt( range * range - dp * dp );
-			if( l > 1e-6 && dp - coneWidth < 1e-6 ) {
+			if( l > 1e-6 && dp - coneWidthH < 1e-6 ) {
 				p = l, i, j, 1;
 				pVec.push_back( p );
 			}
@@ -184,7 +186,7 @@ void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& chan
 	    R2 = 1, 0, 0, 0, 0, cos( a ), -sin( a ), 0, 0, sin( a ), cos( a ), 0, 0, 0, 0, 1;
 
     	vector<Vector4D> pVecTemp = getSonarPoints(
-	    			range + offset, state->RDI_CONEANGLE, state->voxelSize );
+	    			range + offset, state->RDI_CONEANGLE, state->RDI_CONEANGLE, state->voxelSize );
 	    for( unsigned int i = 0; i < pVecTemp.size(); i++ ) {
 		    p4 = R2 * R1 * pVecTemp[i];
 
@@ -200,6 +202,55 @@ void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& chan
     
 }
 
+void senlcm_micron_ping_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::micron_ping_t *msg, state_t* state) {
+
+    // TODO: Put this somewhere sensible
+    uint8_t minReturnThresh = 0;
+    
+    Vector4D p4;
+    vector<Vector4D> pVec;
+    
+    // Find the largest return
+    uint8_t maxReturn = 0;
+    int maxReturnIdx = 0;
+    for( unsigned int i = 0; i < msg->bins.size(); i++ ) {
+        if( msg->bins[i] > maxReturn ) {
+            maxReturn = msg->bins[i];
+            maxReturnIdx = i;
+        }
+    }
+    
+    // If below threshold skip
+    if( maxReturn < minReturnThresh ) 
+        return;
+    
+    // Calculate range
+    double range = 1.0; //maxReturnIdx*msg->range_resolution;
+    // Get sonar head angle
+    double a = msg->angle-M_PI; // TODO: what is up and what is down?
+
+    // Sonar angle rotation matrix    
+    Matrix44 Rsonar; Rsonar = cos(a), 0, sin(a), 0, 
+               0, 1, 0, 0,
+               -sin(a), 0, cos(a), 0,
+               0, 0, 0, 1;
+
+    // Current vehicle pose
+    Matrix44 Tpose; state->pose.get4x4TransformationMatrix();
+    
+    // Convert to world frame
+    vector<Vector4D> pVecTemp = getSonarPoints( range, 30./180.*M_PI, 3./180.*M_PI, state->voxelSize );
+	for( unsigned int i = 0; i < pVecTemp.size(); i++ ) {
+        p4 = Tpose * state->MICRON_T * Rsonar * pVecTemp[i];
+        cout << range << ", " << a/M_PI*180 << "," << p4[0] << "," << p4[1] << "," << p4[2] << ";" << endl;
+    	
+        pVec.push_back( p4 );	    	
+	}// For every point in this beam
+    
+    // Update map
+    incMap( state, pVec );
+    
+}
 
 /**
  * READ OAS SENSOR and transform the range to 3D point relative to the vehicle centre-of-motion
@@ -242,8 +293,6 @@ static void senlcm_oas_t_handle( const lcm_recv_buf_t *rbuf, const char * channe
 }
 */
 
-void senlcm_micron_ping_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::micron_ping_t *msg, state_t* state) {
-}
 
 /**
  * Get VEHICLE POSE
@@ -312,30 +361,71 @@ int main( int argc, char ** argv ) {
     signal(SIGINT, signalHandler);
 
 	state_t state;
+	
+	// Read the config variables from the param server
+	BotParam *param = NULL;
+    param = bot_param_new_from_server (state.lcm.getUnderlyingLCM(), 1);
+    if(param == NULL)
+        return 0;
+    
+    char rootkey[64];        
+    char key[128];
+    sprintf (rootkey, "nav.%s", basename(argv[0]));
 
-    // TODO: change to read from config files
 	// Map variables
-	state.MAP_HALF_TIME = 10;
-	state.MAP_HIT_VAL = 1;
-	state.MAP_MAX_VAL = 10;
-	state.MAP_MIN_VAL = 0.3;
-	state.mapSize[0] = 10;
-	state.mapSize[1] = 10;
-	state.mapSize[2] = 10;
-	state.voxelSize = 0.1;
-	// OAS variables
-	state.OAS_MIN_RANGE = 0.6;
-	state.OAS_MAX_RANGE = 20;
-	state.OAS_CONEANGLE = 45.0 / 180.0 * M_PI;
-	state.OAS_T = cos( M_PI / 4 ), 0, -sin( M_PI / 4 ), 1.0, 0, 1, 0, 0, sin( M_PI / 4 ), 0, cos(
-				M_PI / 4 ), -0.6, 0, 0, 0, 1;
-	// RDI variables
-	state.RDI_MIN_RANGE = 0.7;
-	state.RDI_MAX_RANGE = 90.0;
-	state.RDI_CONEANGLE = 10.0 / 180 * M_PI;
-	state.RDI_T = cos( M_PI / 2 ), 0, -sin( M_PI / 2 ), 0, 0, 1, 0, 0, sin( M_PI / 2 ), 0, cos(
-				M_PI / 2 ), 0, 0, 0, 0, 1;
+	sprintf(key, "%s.map_half_time", rootkey);
+    state.MAP_HALF_TIME = bot_param_get_double_or_fail(param, key);
+	
+	sprintf(key, "%s.map_hit_val", rootkey);
+    state.MAP_HIT_VAL = bot_param_get_double_or_fail(param, key);
+	
+	sprintf(key, "%s.map_max_val", rootkey);
+    state.MAP_MAX_VAL = bot_param_get_double_or_fail(param, key);
+    
+	sprintf(key, "%s.map_min_val", rootkey);
+    state.MAP_MIN_VAL = bot_param_get_double_or_fail(param, key);
+    
+	sprintf(key, "%s.map_size", rootkey);
+    bot_param_get_double_array_or_fail(param, key, state.mapSize, 3);
+	
+	sprintf(key, "%s.voxel_size", rootkey);
+    state.voxelSize = bot_param_get_double_or_fail(param, key);
 
+    // Sensor positions relative to vehicle nav center
+    double pos[6];
+    
+    sprintf(key, "sensors.micron.position");
+    bot_param_get_double_array_or_fail(param, key, pos, 6);	
+	state.MICRON_T = Pose3D(makeVector(pos[0], pos[1], pos[2]), Rotation3D(pos[3]*DTOR, pos[4]*DTOR, pos[5]*DTOR)).get4x4TransformationMatrix();
+	
+    sprintf(key, "sensors.rdi.position");
+    bot_param_get_double_array_or_fail(param, key, pos, 6);	
+	state.RDI_T = Pose3D(makeVector(pos[0], pos[1], pos[2]), Rotation3D(pos[3]*DTOR, pos[4]*DTOR, pos[5]*DTOR)).get4x4TransformationMatrix();
+	
+//	sprintf(key, "sensors.oas.position");
+//    bot_param_get_double_array_or_fail(param, key, pos, 6);	
+//	state.OAS_T = Pose3D(makeVector(pos[0], pos[1], pos[2]), Rotation3D(pos[3]*DTOR, pos[4]*DTOR, pos[5]*DTOR)).get4x4TransformationMatrix();
+	
+	// RDI specific variables
+	sprintf(key, "%s.rdi_min_range", rootkey);
+    state.RDI_MIN_RANGE = bot_param_get_double_or_fail(param, key);
+    
+    sprintf(key, "%s.rdi_max_range", rootkey);
+    state.RDI_MAX_RANGE = bot_param_get_double_or_fail(param, key);
+    
+    sprintf(key, "%s.rdi_cone_angle", rootkey);
+    state.RDI_CONEANGLE = bot_param_get_double_or_fail(param, key) * DTOR;
+	
+/*	// Imagenex OAS specific variables
+	sprintf(key, "%s.oas_min_range", rootkey);
+    state.OAS_MIN_RANGE = bot_param_get_double_or_fail(param, key);
+    
+    sprintf(key, "%s.oas_max_range", rootkey);
+    state.OAS_MAX_RANGE = bot_param_get_double_or_fail(param, key);
+    
+    sprintf(key, "%s.oas_cone_angle", rootkey);
+    state.OAS_CONEANGLE = bot_param_get_double_or_fail(param, key) * DTOR;
+*/
 	
 	//senlcm_oas_t_subscribe( state.lcm, "OAS", &senlcm_oas_t_handle, &state );
 	state.lcm.subscribeFunction("RDI", senlcm_rdi_t_handle, &state);

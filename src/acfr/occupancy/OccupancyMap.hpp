@@ -14,6 +14,7 @@
 #include <vector>
 #include <sys/time.h>
 #include <signal.h>
+#include <libgen.h>
 
 #include <small/linalg.hh>
 #include <small/Pose3D.hh>
@@ -30,6 +31,9 @@
 
 using namespace std;
 using namespace SMALL;
+
+#define DTOR M_PI / 180
+#define RTOD 180 / M_PI
 
 class OccMapCell {
 public:
@@ -79,6 +83,8 @@ typedef struct STATE {
 	double RDI_MIN_RANGE; // [m]
 	double RDI_MAX_RANGE; // [m]
 	double RDI_CONEANGLE;
+	
+	Matrix44 MICRON_T; // sensor-robot-com transformation
 
 	OccMap map;
 	OccMapIterator iter;

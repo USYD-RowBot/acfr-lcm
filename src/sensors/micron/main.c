@@ -27,6 +27,8 @@ typedef struct
     angle_size_t angle_resolution;
     double range;
     double range_resolution;
+    double ad_span;
+    double ad_low;
     int64_t timestamp;
 } state_t;
     
@@ -85,9 +87,9 @@ int compose_head_command(unsigned char *d, state_t *state)
     
     printf("angles %u, %u\n", left_limit_grad16, right_limit_grad16);
     
-    // As far as I can tell these are only used in 4 bit mode
-    c[41] = 81;
-    c[42] = 8;
+    // AD span and lower limit, input values are in dB
+    c[41] = (unsigned char)(state->ad_span / 80.0 * 255.0);
+    c[42] = (unsigned char)(state->ad_low / 80.0 * 255.0);
     
     
     // the initial gain is 0 - 80dB, translates to 0 - 210
@@ -203,6 +205,7 @@ int decode_seanet(unsigned char *d, int len, state_t *state)
             senlcm_micron_ping_t p;
             p.utime = state->timestamp;
             p.range = (double)(*(unsigned short *)&d[20]) / 10.0;
+            p.range_resolution = state->range_resolution;
             p.gain = (double)d[26] / 210.0;
             p.slope = (double)(*(unsigned short *)&d[27]) / 255.0;
             p.AD_interval = (double)(*(unsigned short *)&d[33]);
@@ -299,6 +302,12 @@ int main(int argc, char **argv)
         printf("angle resolution must be one of the following: low, medium, high, ultimate\n");
         return 1;
     }
+    
+    sprintf(key, "%s.ad_span", rootkey);
+    state.ad_span = bot_param_get_double_or_fail(params, key);
+
+    sprintf(key, "%s.ad_low", rootkey);
+    state.ad_low = bot_param_get_double_or_fail(params, key);
     
     // Open the serial port
     int serial_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
