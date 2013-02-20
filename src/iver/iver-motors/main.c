@@ -121,7 +121,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     servo_command[10] = 0x03 + SERVO_RANGE;
     servo_command[11] = plane_port;
 
-    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(mc->main * 32212.0 / 60.0));
+    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(-mc->main * 32212.0 / 60.0));
     
     // we don't want to send the data at to high a rate
     if((timestamp_now() - state->last_data_time) > 100000)
