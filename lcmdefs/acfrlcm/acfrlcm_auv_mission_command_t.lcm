@@ -31,8 +31,7 @@ struct auv_mission_command_t
     double x;
     double y;
     double z;
-    double xy_vel;
-    double z_vel;
+    double velocity[3];
     double heading;
     double timeout;
     string str;

@@ -16,10 +16,6 @@ void on_mission_command(const lcm::ReceiveBuffer* rbuf, const std::string& chann
 
 main_control::main_control(lcm::LCM *_lcm)
 {
-    pthread_mutex_init(&state_lock, NULL);
-    pthread_mutex_init(&current_location_lock, NULL);
-    pthread_mutex_init(&main_message_lock, NULL);
-    pthread_mutex_init(&goto_location_lock, NULL);
     
     current_state = main_fsm_idle;
     next_state = main_fsm_idle;
@@ -28,14 +24,14 @@ main_control::main_control(lcm::LCM *_lcm)
     // install the LCM handlers we need
     lcm->subscribeFunction("ACFR_NAV", on_acfr_nav, this);
     lcm->subscribeFunction("MISSION_COMMAND", on_mission_command, this);
+    
+    // Create the mission control object
+    mc = new mission_control(lcm);
 }
 
 main_control::~main_control()
 {
-    pthread_mutex_destroy(&state_lock);
-    pthread_mutex_destroy(&current_location_lock);
-    pthread_mutex_destroy(&main_message_lock);
-    pthread_mutex_destroy(&goto_location_lock);
+    delete mc;
 }
 
 string main_control::get_current_state_string()
@@ -51,12 +47,10 @@ main_control_state main_control::get_current_state()
 
 int main_control::update_nav(const auv_acfr_nav_t *nav)
 {
-    pthread_mutex_lock(&current_location_lock);
-    current_location.x = nav->x;
-    current_location.y = nav->y;
-    current_location.z = nav->depth;
+    current_location.loc.setX(nav->x);
+    current_location.loc.setY(nav->y);
+    current_location.loc.setZ(nav->depth);
     current_location.time = nav->utime;    
-    pthread_mutex_unlock(&current_location_lock);
     
     clock();
     
@@ -66,21 +60,21 @@ int main_control::update_nav(const auv_acfr_nav_t *nav)
 int main_control::message(const auv_mission_command_t *mc)
 {
     goal_point gp;
-    main_msg_t new_message;
 
     switch(mc->message)
     {
         case auv_mission_command_t::ABORT:
-            new_message = main_abort;
+            main_message = main_abort;
             break;
         case auv_mission_command_t::GOTO:
-            gp.x = mc->x;
-            gp.y = mc->y;
-            gp.z = mc->z;
-            gp.xy_vel = mc->xy_vel;
-            gp.z_vel = mc->z_vel;
+            gp.loc.setX(mc->x);
+            gp.loc.setZ(mc->y);
+            gp.loc.setY(mc->z);
+            gp.vel[0] = mc->velocity[0];
+            gp.vel[1] = mc->velocity[1];
+            gp.vel[2] = mc->velocity[2];
 	        gp.timeout = (int64_t)(mc->timeout * 1e6);
-            new_message = main_goto;
+            main_message = main_goto;
             break;
         //case ACFRLCM_AUV_MISSION_COMMAND_T_PAUSE:
         //    state->main_msg = main_pause;
@@ -89,13 +83,14 @@ int main_control::message(const auv_mission_command_t *mc)
         //    state->main_msg = main_goto;
         //    break;
         case auv_mission_command_t::RUN:
-            new_message = main_run;
+            main_message = main_run;
             break;
         case auv_mission_command_t::LOAD:
-            // to be implemented later
+            // All this does is set the filename of the mission
+            filename = mc->str;
             break;
         case auv_mission_command_t::STOP:
-            new_message = main_stop;
+            main_message = main_stop;
             break;
     }    
     
@@ -110,10 +105,6 @@ int main_control::message(const auv_mission_command_t *mc)
     mr.str = &str;
 //    acfrlcm_auv_mission_command_t_publish(state->lcm, "MISSION_ACK", &mr);
 
-
-    pthread_mutex_lock(&main_message_lock);
-    main_message = new_message;        
-    pthread_mutex_unlock(&main_message_lock);
     
     if(main_message == main_goto)
         set_goto_location(&gp);
@@ -124,11 +115,14 @@ int main_control::message(const auv_mission_command_t *mc)
     return 1;
 }
 
+int main_control::message(main_msg_t _message)
+{
+    main_message = _message;
+}
+
 int main_control::set_goto_location(goal_point *gp)
 {
-    pthread_mutex_lock(&goto_location_lock);
     memcpy(&goto_location, gp, sizeof(goto_location));
-    pthread_mutex_unlock(&goto_location_lock);
     
     return 1;
 }
@@ -155,8 +149,12 @@ int main_control::clock()
             
             // If the start script is issued by a RUN command
             else if( main_run == main_message )
+            {
+                // set and load the mission file
+                mc->set_filename(filename);
+                mc->message(mission_run);
                 next_state = main_fsm_run;            
-                
+            }    
             // Stay here
             else 
                 next_state = main_fsm_idle;
@@ -262,14 +260,12 @@ int main_control::clock()
     /***********************************************************************************
      *      Change state
      **********************************************************************************/
-    pthread_mutex_lock(&state_lock);
     if(next_state != current_state)      
     {  
         cout << "Current state: " << get_current_state_string() << "  ";
         current_state = next_state;
         cout << "New state: " << get_current_state_string() << endl;
     }
-    pthread_mutex_unlock(&state_lock);
     
     return 0;
 }

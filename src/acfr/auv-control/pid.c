@@ -18,7 +18,16 @@ pid(pid_gains_t *gains, double value, double goal, double dt)
     double error = goal - value;
     double derivative = (error - gains->prev_error) / dt;
     gains->integral += error * dt;
-    
+    gains->prev_error = error;
+
+
+/*    // rail the integral    
+    if(gains->integral > gains->int_sat)
+        gains->integral = gains->sat;
+    else if(gains->integral < -gains->sat)
+	    gains->integral = -gains->sat;
+*/
+
     u = gains->kp * error + gains->ki * gains->integral + gains->kd * derivative;
     
     // rail the output
@@ -26,15 +35,7 @@ pid(pid_gains_t *gains, double value, double goal, double dt)
         u = gains->sat;
     else if(u < -gains->sat)
 	    u = -gains->sat;
-	
-    // rail the integral    
-    if(gains->integral > gains->sat)
-        gains->integral = gains->sat;
-    else if(gains->integral < -gains->sat)
-	    gains->integral = -gains->sat;
-	
-    gains->prev_error = error;
-    
+	    
     return u;
 }
 

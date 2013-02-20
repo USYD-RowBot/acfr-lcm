@@ -1,0 +1,31 @@
+package acfrlcm;
+
+struct auv_global_planner_t
+{
+    int64_t utime;
+
+    int32_t id;
+    
+    const int8_t GOTO = 0;
+    const int8_t LEG = 1;
+    const int8_t GRID = 2;
+    const int8_t SPIRAL = 3;
+    const int8_t ZAMBONIE = 4;
+    
+    const int8_t LOAD = 5;
+    
+    const int8_t RESUME = 6;
+    const int8_t PAUSE = 7;
+    const int8_t ABORT = 8;
+    const int8_t STOP = 9;
+    
+    
+    int8_t command;
+    
+    double point[6];
+    double velocity[3];
+    
+    double var_d[6];
+    int32_t var_i[6];
+    string str;
+}

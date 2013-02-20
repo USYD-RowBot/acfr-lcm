@@ -61,4 +61,47 @@ void
 senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
        const senlcm_uvc_osi_t *msg, void *user);
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Additional handlers added by ACFR
+////////////////////////////////////////////////////////////////////////////////
+
+void
+senlcm_seabird_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_seabird_t *msg, void *user);
+
+// FIXME: What else do we need to extract for the processing scripts
+void
+senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_rdi_pd0_t *msg, void *user);
+
+void
+senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_os_power_system_t *msg, void *user);
+
+void
+senlcm_ecopuck_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_ecopuck_t *msg, void *user);
+
+void
+senlcm_oas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_oas_t *msg, void *user);
+
+void
+senlcm_parosci_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_parosci_t *msg, void *user);
+
+void
+senlcm_lq_modem_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_lq_modem_t *msg, void *user);
+
+void
+senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_ysi_t *msg, void *user);
+
+
+
 #endif //__HANDLERS_SENLCM_H__

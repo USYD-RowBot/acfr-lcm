@@ -15,14 +15,16 @@
 /** **************************************************
  *  Constructor
  */
-DubinsPath::DubinsPath(double _circRad, double _dropDist, double _dropAngle) :
-		minSide1(0), minSide2(0), minDist(0), minDistI(0), circleRad(_circRad), dropDist(
+DubinsPath::DubinsPath(double _circRad, double _maxPitch, double _dropDist, double _dropAngle) :
+		minSide1(0), minSide2(0), minDist(0), minDistI(0), circleRad(_circRad), maxPitch(_maxPitch), dropDist(
 				_dropDist), dropAngle(_dropAngle) {
 
-	this->side[0] = right;
-	this->side[1] = left;
-	this->sideStr[0] = "right";
-	this->sideStr[1] = "left";
+	side[0] = right;
+	side[1] = left;
+	sideStr.push_back("right");
+	sideStr.push_back("left");
+
+	dropAngle = dropDist / this->circleRad / 2;
 
 }
 
@@ -33,70 +35,59 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 
 	int circleSide1;
 	int circleSide2;
-	Pose2D c1;
-	Pose2D c2;
-	Pose2D p1;
-	Pose2D q1;
-	Pose2D p2;
-	Pose2D q2;
+	Pose3D cSrc;
+	Pose3D cDest;
+	Pose3D circRelPose;
+	Pose3D p1;
+	Pose3D q1;
+	Pose3D p2;
+	Pose3D q2;
 	bool useP1 = false;
 	bool useQ1 = false;
 	bool useP2 = false;
 	bool useQ2 = false;
 
-	Pose2D pose1[4];
-	Pose2D pose2[4];
-	//Line2D connectionLine;
-
+	Pose3D pose1[4];
+	Pose3D pose2[4];
 	double dists[4];
-
-	// Reset for this run
 	this->minDist = numeric_limits<double>::max();
 	this->minDistI = -1;
 
-	Pose2D targRel = currPose.transformFrom(destPose.getPosition());
-
 	int run = 0;
 	bool tooClose = false;
+
 	//
 	//  1) Source Circle
 	//
-	for (int i = 0; i < 2; i++) {
-//		cout << "\n\ni = " << i << endl;
+	for( int i = 0; i < 2; i++ ) {
+//		cout << "Source circle on " << sideStr[i] << endl;
 
-		circleSide1 = this->side[i];
-		double deltaX = this->circleRad * cos(M_PI / 2 - currPose.getYawRad())
-				* -circleSide1;
-		double deltaY = this->circleRad * sin(M_PI / 2 - currPose.getYawRad())
-				* +circleSide1;
-		c1.set(currPose.getX() + deltaX, currPose.getY() + deltaY,
-				currPose.getYawRad());
+		// Center of source circle
+		circleSide1 = this->side[i]; // defines left or right side
 
-//		cout << "c1: " << c1.toString() << endl;
+		circRelPose.setY(this->circleRad * this->side[i]);
+		cSrc = currPose.compose(circRelPose);
+		cSrc.setRollPitchYawRad(0, 0, currPose.getYawRad() - M_PI / 2);
 
 		//
-		// 2) Target Circle
+		// 2) Dest Circle
 		//
-		for (int j = 0; j < 2; j++) {
+		for( int j = 0; j < 2; j++ ) {
+//			cout << "Dest circle on " << sideStr[j] << endl;
 			run = 2 * (i) + j;
-//			cout << "\tRun" << run + 1 << " " << sideStr[i] << "-" << sideStr[j]
-//					<< endl;
 
 			tooClose = false;
 
+			// Center of destination circle
 			circleSide2 = side[j];
-			double deltaX = this->circleRad
-					* cos(M_PI / 2 - destPose.getYawRad()) * -circleSide2;
-			double deltaY = this->circleRad
-					* sin(M_PI / 2 - destPose.getYawRad()) * +circleSide2;
-			c2.set(destPose.getX() + deltaX, destPose.getY() + deltaY,
-					destPose.getYawRad());
 
-//			cout << "\tc2: " << c2.toString() << endl;
+			circRelPose.setY(this->circleRad * this->side[j]);
+			cDest = destPose.compose(circRelPose);
+			cDest.setRollPitchYawRad(0, 0, destPose.getYawRad() - M_PI / 2);
 
-			// Check for overlap
-			double dist = c1.positionDistance(c2);
-			if (dist < 2 * this->circleRad) {
+			// Check for overlap between the circles
+			double dist = cSrc.positionDistance(cDest);
+			if( dist < 2 * this->circleRad ) {
 //				cout << "Circles overlap! No X-tangent solution possible."
 //						<< endl;
 				tooClose = true;
@@ -105,10 +96,8 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			//
 			// 3) Angle of line between circle centers
 			//
-			double lineC2CTheta = atan2(c2.getY() - c1.getY(),
-					c2.getX() - c1.getX());
-			double lineC2CLen = hypot(c2.getX() - c1.getX(),
-					c2.getY() - c1.getY());
+			double lineC2CTheta = atan2(cDest.getY() - cSrc.getY(), cDest.getX() - cSrc.getX());
+			double lineC2CLen = hypot(cDest.getX() - cSrc.getX(), cDest.getY() - cSrc.getY());
 //			cout << "lineC2CTheta " << lineC2CTheta / M_PI * 180
 //					<< ", lineC2CLen " << lineC2CLen << endl;
 
@@ -119,10 +108,14 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			// The perpendicular points
 			double dX = this->circleRad * sin(lineC2CTheta);
 			double dY = this->circleRad * cos(lineC2CTheta);
-			p1.set(c1.getX() + dX, c1.getY() - dY, lineC2CTheta + M_PI / 2);
-			q1.set(c1.getX() - dX, c1.getY() + dY, lineC2CTheta + M_PI / 2);
-			p2.set(c2.getX() + dX, c2.getY() - dY, lineC2CTheta + M_PI / 2);
-			q2.set(c2.getX() - dX, c2.getY() + dY, lineC2CTheta + M_PI / 2);
+			p1.setPosition(cSrc.getX() + dX, cSrc.getY() - dY, 0);
+			p1.setRollPitchYawRad(0, 0, lineC2CTheta + M_PI / 2);
+			q1.setPosition(cSrc.getX() - dX, cSrc.getY() + dY, 0);
+			q1.setRollPitchYawRad(0, 0, lineC2CTheta + M_PI / 2);
+			p2.setPosition(cDest.getX() + dX, cDest.getY() - dY, 0);
+			p2.setRollPitchYawRad(0, 0, lineC2CTheta + M_PI / 2);
+			q2.setPosition(cDest.getX() - dX, cDest.getY() + dY, 0);
+			q2.setRollPitchYawRad(0, 0, lineC2CTheta + M_PI / 2);
 //			cout << "p1 " << p1.toString() << endl;
 //			cout << "q1 " << q1.toString() << endl;
 //			cout << "p2 " << p2.toString() << endl;
@@ -138,55 +131,53 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			Vector2D q1q2;
 			q1q2 = (q2.getX() - q1.getX()), (q2.getY() - q1.getY());
 			Vector2D c1p1;
-			c1p1 = (p1.getX() - c1.getX()), (p1.getY() - c1.getY());
+			c1p1 = (p1.getX() - cSrc.getX()), (p1.getY() - cSrc.getY());
 			Vector2D c1q1;
-			c1q1 = (q1.getX() - c1.getX()), (q1.getY() - c1.getY());
+			c1q1 = (q1.getX() - cSrc.getX()), (q1.getY() - cSrc.getY());
 			double detc1p1p2 = c1p1[0] * p1p2[1] - c1p1[1] * p1p2[0];
 			double detc1p1q2 = c1p1[0] * p1q2[1] - c1p1[1] * p1q2[0];
 			double detc1q1p2 = c1q1[0] * q1p2[1] - c1q1[1] * q1p2[0];
 			double detc1q1q2 = c1q1[0] * q1q2[1] - c1q1[1] * q1q2[0];
 			// Determinants for target circle
 			Vector2D p2p1;
-			p2p1 = (p1 - p2).getX(), (p1 - p2).getY();
+			p2p1 = p1.getX() - p2.getX(), p1.getY() - p2.getY();
 			Vector2D q2p1;
-			q2p1 = (p1 - q2).getX(), (p1 - q2).getY();
+			q2p1 = p1.getX() - q2.getX(), p1.getY() - q2.getY();
 			Vector2D p2q1;
-			p2q1 = (q1 - p2).getX(), (q1 - p2).getY();
+			p2q1 = q1.getX() - p2.getX(), q1.getY() - p2.getY();
 			Vector2D q2q1;
-			q2q1 = (q1 - q2).getX(), (q1 - q2).getY();
+			q2q1 = q1.getX() - q2.getX(), q1.getY() - q2.getY();
 			Vector2D p2c2;
-			p2c2 = (c2.getX() - p2.getX()), (c2.getY() - p2.getY());
+			p2c2 = cDest.getX() - p2.getX(), cDest.getY() - p2.getY();
 			Vector2D q2c2;
-			q2c2 = (c2.getX() - q2.getX()), (c2.getY() - q2.getY());
+			q2c2 = cDest.getX() - q2.getX(), cDest.getY() - q2.getY();
 			double detp1p2c2 = p1p2[0] * p2c2[1] - p1p2[1] * p2c2[0];
 			double detq1p2c2 = q1p2[0] * p2c2[1] - q1p2[1] * p2c2[0];
 			double detp1q2c2 = p1q2[0] * q2c2[1] - p1q2[1] * q2c2[0];
 			double detq1q2c2 = q1q2[0] * q2c2[1] - q1q2[1] * q2c2[0];
 			// source point is p1
-			if (detc1p1p2 * circleSide1 > 0 && detc1p1q2 * circleSide1 > 0) {
+			if( detc1p1p2 * circleSide1 > 0 && detc1p1q2 * circleSide1 > 0 ) {
 				pose1[run] = p1;
 				useP1 = true;
 				useQ1 = false;
 //				cout << "useP1" << endl;
 			}
 			// source point is q1
-			else if (detc1q1p2 * circleSide1 > 0
-					&& detc1q1q2 * circleSide1 > 0) {
+			else if( detc1q1p2 * circleSide1 > 0 && detc1q1q2 * circleSide1 > 0 ) {
 				pose1[run] = q1;
 				useQ1 = true;
 				useP1 = false;
 //				cout << "useQ1" << endl;
 			}
 			// target point is p2
-			if (detp1p2c2 * circleSide2 > 0 && detq1p2c2 * circleSide2 > 0) {
+			if( detp1p2c2 * circleSide2 > 0 && detq1p2c2 * circleSide2 > 0 ) {
 				pose2[run] = p2;
 				useP2 = true;
 				useQ2 = false;
 //				cout << "useP2" << endl;
 			}
 			// target point is q2
-			else if (detp1q2c2 * circleSide2 > 0
-					&& detq1q2c2 * circleSide2 > 0) {
+			else if( detp1q2c2 * circleSide2 > 0 && detq1q2c2 * circleSide2 > 0 ) {
 				pose2[run] = q2;
 				useQ2 = true;
 				useP2 = false;
@@ -196,9 +187,10 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			//
 			// 4b) Find the X-tangent if necessary
 			//
-			if ((useP1 && useP2) || (useQ1 && useQ2)) {
+			if( (useP1 && useP2) || (useQ1 && useQ2) ) {
 //				cout << "NO need to calculate the X-tangent" << endl;
-			} else if ((useP1 && useQ2) && !tooClose) {
+			}
+			else if( (useP1 && useQ2) && !tooClose ) {
 //				cout << "Calculating the X-tangent: P1Q2" << endl;
 				double a = lineC2CLen / 2;
 				double alpha = acos(this->circleRad / a);
@@ -210,9 +202,10 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 				double dY = this->circleRad * sin(theta);
 //				cout << "dX " << dX << endl;
 //				cout << "dY " << dY << endl;
-				pose1[run] = Pose2D(c1.getX() + dX, c1.getY() + dY, 0.0);
-				pose2[run] = Pose2D(c2.getX() - dX, c2.getY() - dY, 0.0);
-			} else if ((useQ1 && useP2) && !tooClose) {
+				pose1[run] = Pose2D(cSrc.getX() + dX, cSrc.getY() + dY, 0.0);
+				pose2[run] = Pose2D(cDest.getX() - dX, cDest.getY() - dY, 0.0);
+			}
+			else if( (useQ1 && useP2) && !tooClose ) {
 //				cout << "Calculating the X-tangent: Q1P2" << endl;
 				double a = lineC2CLen / 2;
 				double alpha = acos(this->circleRad / a);
@@ -224,9 +217,10 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 				double dY = this->circleRad * sin(theta);
 //				cout << "dX " << dX << endl;
 //				cout << "dY " << dY << endl;
-				pose1[run] = Pose2D(c1.getX() + dY, c1.getY() + dX, 0.0);
-				pose2[run] = Pose2D(c2.getX() - dY, c2.getY() - dX, 0.0);
-			} else {
+				pose1[run] = Pose2D(cSrc.getX() + dY, cSrc.getY() + dX, 0.0);
+				pose2[run] = Pose2D(cDest.getX() - dY, cDest.getY() - dX, 0.0);
+			}
+			else {
 //				cout << "No solution possible!!\n" << endl;
 				dists[run] = numeric_limits<double>::max();
 				continue;
@@ -235,28 +229,25 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			//
 			// 4c) Set connection Line
 			//
-			double connectionLineTheta = atan2(
-					pose2[run].getY() - pose1[run].getY(),
+			double connectionLineTheta = atan2(pose2[run].getY() - pose1[run].getY(),
 					pose2[run].getX() - pose1[run].getX());
-			double connectionLineLen = hypot(
-					pose2[run].getX() - pose1[run].getX(),
+			double connectionLineLen = hypot(pose2[run].getX() - pose1[run].getX(),
 					pose2[run].getY() - pose1[run].getY());
-			pose1[run].setThetaRad(connectionLineTheta);
-			pose2[run].setThetaRad(connectionLineTheta);
+			pose1[run].setRollPitchYawRad(0, 0, connectionLineTheta);
+			pose2[run].setRollPitchYawRad(0, 0, connectionLineTheta);
 //			cout << "source " << pose1[run].toString() << endl;
 //			cout << "target " << pose2[run].toString() << endl;
 
-			////
+			//
 			// 5) Calc Dist travelled
 			//
 			dist = 0;
 			// First Turn
-			double angleDiff1 = (connectionLineTheta - currPose.getYawRad())
-					* side[i];
-			while (angleDiff1 < 0) {
+			double angleDiff1 = (connectionLineTheta - currPose.getYawRad()) * side[i];
+			while( angleDiff1 < 0 ) {
 				angleDiff1 = angleDiff1 + 2 * M_PI;
 			}
-			while (angleDiff1 > 2 * M_PI) {
+			while( angleDiff1 > 2 * M_PI ) {
 				angleDiff1 = angleDiff1 - 2 * M_PI;
 			}
 			double d = this->circleRad * angleDiff1;
@@ -271,12 +262,11 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 			dist += d;
 			//print.info(  "Straight part : " + d + "m "  );
 			// Second Turn
-			double angleDiff2 = (destPose.getYawRad() - connectionLineTheta)
-					* side[j];
-			while (angleDiff2 < 0) {
+			double angleDiff2 = (destPose.getYawRad() - connectionLineTheta) * side[j];
+			while( angleDiff2 < 0 ) {
 				angleDiff2 = angleDiff2 + 2 * M_PI;
 			}
-			while (angleDiff2 > 2 * M_PI) {
+			while( angleDiff2 > 2 * M_PI ) {
 				angleDiff2 = angleDiff2 - 2 * M_PI;
 			}
 			d = this->circleRad * angleDiff2;
@@ -288,23 +278,33 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 
 //			cout << "-------------------------" << endl;
 //			cout << "Total         : " << dist << "m" << endl;
-			if (dist < minDist) {
+
+			//
+			// 6) Calculate if the dist travelled is sufficient to adjust the altitude as well
+			//
+			double pitchRequired = sin((destPose.getZ() - currPose.getZ()) / dist);
+
+
+			if( pitchRequired > this->maxPitch ) {
+				cout << "The required pitch to change the altitude is " << pitchRequired/M_PI*180 << "deg" << endl;
+				cout << "Distance to travel not sufficient to change the altitude" << endl;
+				continue;
+			}
+
+			if( dist < minDist ) {
 				minDist = dist;
 				minDistI = run;
 				minPose1 = pose1[minDistI];
 				minPose2 = pose2[minDistI];
-				minC1 = c1;
-				minC2 = c2;
+				minC1 = cSrc;
+				minC2 = cDest;
 				minSide1 = side[i];
 				minSide2 = side[j];
+				minPitch = pitchRequired;
 			}
 
 		}
 	}
-
-
-
-
 
 	/* ************************************************************************
 	 *
@@ -317,8 +317,8 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 		return this->path;
 	}
 
-//	cout << "Shortest path was at run " << minDistI << endl;
-//	cout << "pathLength " << minDist << endl;
+	// Add current pose for heading calculation. This way point is removed at the end
+	path.push_back(currPose);
 
 	double dx;
 	double dy;
@@ -329,89 +329,101 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 
 	// Calc the limits
 	double angle1 = (minPose1.getYawRad() - currPose.getYawRad()) * minSide1;
-	while (angle1 < 0) {
+	while( angle1 < 0 ) {
 		angle1 += 2 * M_PI;
 	}
-//	while (angle1 > M_PI) {
-//		angle1 -= 2 * M_PI;
-//	}
+	double dist1 = angle1 * this->circleRad;
 	double straightDist = minPose1.positionDistance(minPose2);
 	double angle2 = (destPose.getYawRad() - minPose2.getYawRad()) * minSide2;
-	while (angle2 < 0) {
+	while( angle2 < 0 ) {
 		angle2 += 2 * M_PI;
 	}
-//	while (angle2 > M_PI) {
-//		angle2 -= 2 * M_PI;
-//	}
+	double dist2 = angle2 * this->circleRad;
+
+	cout << endl << "Shortest path was at run " << minDistI << endl;
+	cout << "First circle on " << (minSide1 == this->right ? "right" : "left") << endl;
+	cout << "Second circle on " << (minSide2 == this->right ? "right" : "left") << endl;
+	cout << "pathLength " << minDist << endl;
+	cout << fixed << setprecision(2) << "First circle distance (angle) : " << dist1 << "m (" << angle1 / M_PI * 180
+			<< "deg)" << endl << "Straight path distance        : " << straightDist << "m" << endl
+			<< "Second circle distance (angle): " << dist2 << "m (" << angle2 / M_PI * 180 << ")deg" << endl;
+
+	Pose3D pRel;
+
+	double heading = currPose.getYawRad();
+	double distance = 0;
 
 	// Circle 1 path
-	dx = minC1.getX();
-	dy = minC1.getY();
-	dt = currPose.getYawRad() - M_PI / 2;
-	double T1[4][4] = { { cos(dt), -sin(dt), 0, dx },
-			{ sin(dt), cos(dt), 0, dy }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-	for (double tT = 0; tT < angle1; tT += dropAngle) {
-		x = this->circleRad * cos(tT) * minSide1;
-		y = this->circleRad * sin(tT);
-		t = tT;
-		double p[] = { x, y, t, 1 };
-		Pose2D pRel;
-		pRel.setX(
-				T1[0][0] * p[0] + T1[0][1] * p[1] + T1[0][2] * p[2]
-						+ T1[0][3] * p[3]);
-		pRel.setY(
-				T1[1][0] * p[0] + T1[1][1] * p[1] + T1[1][2] * p[2]
-						+ T1[1][3] * p[3]);
-		pRel.setThetaRad(dt + M_PI / 2 + tT * minSide1); //pRel.setTheta( T1[2][0]*p[0]+T1[2][1]*p[1]+T1[2][2]*p[2]+T1[2][3]*p[3] );
-		path.push_back(pRel); //path.insert( pathIter++, pRel );
+	minC1.setRollPitchYawRad(0, 0, atan2(currPose.getY() - minC1.getY(), currPose.getX() - minC1.getX()));
+	for( double tT = dropAngle; tT < angle1; tT += dropAngle ) {
+		heading += dropAngle * minSide1;
+		while( heading > M_PI )
+			heading -= 2 * M_PI;
+		while( heading < -M_PI )
+			heading += 2 * M_PI;
+
+		distance += dropAngle * this->circleRad;
+		double Z = atan(minPitch) * distance;
+
+		pRel.setPosition(this->circleRad * cos(tT * minSide1), this->circleRad * sin(tT * minSide1), Z);
+		pRel.setRollPitchYawRad(0, 0, heading);
+		pRel = minC1.compose(pRel);
+
+		pRel.setZ( Z );
+		pRel.setRollPitchYawRad(0, 0, heading);
+		path.push_back(pRel);
 	}
 
 	// Straight line path
-	dx = minPose1.getX();
-	dy = minPose1.getY();
-	dt = minPose1.getYawRad();
-	double T2[4][4] = { { cos(dt), -sin(dt), 0, dx },
-			{ sin(dt), cos(dt), 0, dy }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-	for (double i = 0; i < straightDist; i += dropDist) {
-		x = i;
-		y = 0;
-		t = dt;
-		double p[] = { x, y, t, 1 };
-		Pose2D pRel;
-		pRel.setX(
-				T2[0][0] * p[0] + T2[0][1] * p[1] + T2[0][2] * p[2]
-						+ T2[0][3] * p[3]);
-		pRel.setY(
-				T2[1][0] * p[0] + T2[1][1] * p[1] + T2[1][2] * p[2]
-						+ T2[1][3] * p[3]);
-		//pRel.setTheta( T2[2][0]*p[0]+T2[2][1]*p[1]+T2[2][2]*p[2]+T2[2][3]*p[3] );
-		pRel.setThetaRad(dt);
-		path.push_back(pRel); //path.insert( pathIter++, pRel );
-	}
+	for( double i = 0; i < straightDist; i += dropDist ) {
+		distance += dropDist;
+		double Z = atan(minPitch) * distance;
 
+		pRel.setPosition(i, 0, 0);
+		pRel.setRollPitchYawRad(0, 0, 0);
+		pRel = minPose1.compose(pRel);
+
+		pRel.setZ( Z );
+		pRel.setRollPitchYawRad(0, 0, heading);
+		path.push_back(pRel);
+	}
 
 	// Circle 2 path
-	dx = minC2.getX();
-	dy = minC2.getY();
-	dt = minPose2.getYawRad() - M_PI / 2;
-	double T3[4][4] = { { cos(dt), -sin(dt), 0, dx },
-			{ sin(dt), cos(dt), 0, dy }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-	for (double tT = 0; tT < angle2; tT += dropAngle) {
-		x = this->circleRad * cos(tT) * minSide2;
-		y = this->circleRad * sin(tT);
-		t = tT;
-		double p[] = { x, y, t, 1 };
-		Pose2D pRel;
-		pRel.setX(
-				T3[0][0] * p[0] + T3[0][1] * p[1] + T3[0][2] * p[2]
-						+ T3[0][3] * p[3]);
-		pRel.setY(
-				T3[1][0] * p[0] + T3[1][1] * p[1] + T3[1][2] * p[2]
-						+ T3[1][3] * p[3]);
-		pRel.setThetaRad(dt + M_PI / 2 + tT * minSide2); //pRel.setTheta( T3[2][0]*p[0]+T3[2][1]*p[1]+T3[2][2]*p[2]+T3[2][3]*p[3] );
-		path.push_back(pRel); //path.insert( pathIter, pRel );
+	cout << "c2 @ " << minC2.getX() << ", " << minC2.getY() << endl;
+	cout << "dest-c2 angle = " << atan2((*(path.end()-1)).getY() - minC2.getY(), (*(path.end()-1)).getX() - minC2.getX())/M_PI*180 << endl;
+
+
+	minC2.setRollPitchYawRad(0, 0, atan2((*(path.end()-1)).getY() - minC2.getY(), (*(path.end()-1)).getX() - minC2.getX()) );
+	for( double tT = dropAngle; tT < angle2; tT += dropAngle ) {
+		heading += dropAngle * minSide2;
+		while( heading > M_PI )
+			heading -= 2 * M_PI;
+		while( heading < -M_PI )
+			heading += 2 * M_PI;
+
+		distance += dropAngle * this->circleRad;
+		double Z = atan(minPitch) * distance;
+
+		pRel.setPosition(this->circleRad * cos(tT * minSide2), this->circleRad * sin(tT * minSide2), 0);
+		pRel.setRollPitchYawRad(0, 0, 0);
+		pRel = minC2.compose(pRel);
+
+		pRel.setZ( Z );
+		pRel.setRollPitchYawRad(0, 0, heading);
+		path.push_back(pRel);
 	}
 
+	// Add the destination pose for heading calculation. This will be removed at the end
+	path.push_back(destPose);
+
+	// Set pitch and heading
+	for( int i = 1; i < path.size() - 1; i++ ) {
+		path.at(i).setRollPitchYawRad(0, minPitch,
+				atan2(path.at(i + 1).getY() - path.at(i - 1).getY(), path.at(i + 1).getX() - path.at(i - 1).getX()));
+	}
+
+//	path.erase(path.begin());
+//	path.erase(path.end());
 
 	return this->path;
 }

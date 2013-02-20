@@ -45,6 +45,12 @@ typedef struct
     pid_gains_t gains_pitch;
     pid_gains_t gains_heading;
     
+    // Maximum values
+    double pitch_max;
+    double plane_rudder_max;
+    double main_rpm_max;
+    double roll_offset_max;
+        
     // Nav solution
     acfrlcm_auv_acfr_nav_t nav;
     pthread_mutex_t nav_lock;
@@ -91,7 +97,7 @@ int load_config(state_t *state, char *rootkey)
 
 	sprintf(key, "%s.roll.sat", rootkey);
 	state->gains_roll.sat = bot_param_get_double_or_fail(param, key);
-
+	
 
     // Pitch gains
 	memset(&state->gains_pitch, 0, sizeof(pid_gains_t));
@@ -148,6 +154,19 @@ int load_config(state_t *state, char *rootkey)
 
 	sprintf(key, "%s.heading.sat", rootkey);
 	state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
+
+    // Limit values
+	sprintf(key, "%s.pitch_max", rootkey);
+	state->pitch_max = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.plane_rudder_max", rootkey);
+	state->plane_rudder_max = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.main_rpm_max", rootkey);
+	state->main_rpm_max = bot_param_get_double_or_fail(param, key);
+	
+	sprintf(key, "%s.roll_offset_max", rootkey);
+	state->roll_offset_max = bot_param_get_double_or_fail(param, key);
 
 
     return 1;
@@ -270,6 +289,12 @@ int main(int argc, char **argv)
         // Roll compenstation
         // We try to keep the AUV level, ie roll = 0
         roll_offset = pid(&state.gains_roll, state.nav.roll, 0, CONTROL_DT);
+        // Pitch limit
+        if( roll_offset > state.roll_offset_max ) 
+            roll_offset = state.roll_offset_max;
+        else if( pitch < -state.roll_offset_max )
+            roll_offset = -state.roll_offset_max;
+                
         
         // Depth to pitch
         if(state.command.depth_mode == ALTITUDE_MODE)
@@ -279,11 +304,55 @@ int main(int argc, char **argv)
         
         // Pitch to fins
         if(state.command.depth_mode == PITCH_MODE)
+        {
             pitch = state.command.pitch;
+            
+        }
+        
+        // Pitch limit
+        if( pitch > state.pitch_max ) 
+            pitch = state.pitch_max;
+        else if( pitch < -state.pitch_max )
+            pitch = -state.pitch_max;
+        
+        
         plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
         
+        // Pitch limit
+        if( plane_angle > state.plane_rudder_max ) 
+            plane_angle = state.plane_rudder_max;
+        else if( plane_angle < -state.plane_rudder_max )
+            plane_angle = -state.plane_rudder_max;
+        
+        
         // Heading
+        while(state.nav.heading < -M_PI)
+            state.nav.heading += 2*M_PI;
+        while(state.nav.heading > M_PI)
+            state.nav.heading -= 2*M_PI;
+        
+        while(state.command.heading < -M_PI)
+            state.command.heading += 2*M_PI;
+        while(state.command.heading > M_PI)
+            state.command.heading -= 2*M_PI;
+        
+        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+        {
+            if(state.command.heading < (-M_PI / 2))
+                state.command.heading += 2*M_PI;
+            else if(state.nav.heading < (-M_PI / 2))
+                state.nav.heading += 2*M_PI;
+        }        
+        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+            
         rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+        
+        // Rudder limit
+        if( rudder_angle > state.plane_rudder_max ) 
+            rudder_angle = state.plane_rudder_max;
+        else if( rudder_angle < -state.plane_rudder_max )
+            rudder_angle = -state.plane_rudder_max;
+
         
         // unlock the nav and command data
         pthread_mutex_unlock(&state.nav_lock);
@@ -296,10 +365,10 @@ int main(int argc, char **argv)
         if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)
         {
             mc.main = prop_rpm;
-            mc.top = rudder_angle + roll_offset;
-            mc.bottom = rudder_angle - roll_offset;
-            mc.port = plane_angle + roll_offset;
-            mc.starboard = plane_angle - roll_offset;
+            mc.top = rudder_angle - roll_offset;
+            mc.bottom = rudder_angle + roll_offset;
+            mc.port = plane_angle - roll_offset;
+            mc.starboard = plane_angle + roll_offset;
         }
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);

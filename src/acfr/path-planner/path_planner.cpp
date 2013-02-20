@@ -17,6 +17,7 @@ void on_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const au
 // Path command callback
 void on_path_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_path_command_t *pc, path_planner *pp) 
 {
+
     // we just got a leg command so we need to recalculate the path
     Pose3D currPose, destPose;
 	currPose.setPosition(pc->wpt_one[0], pc->wpt_one[1], pc->wpt_one[2]);
@@ -39,6 +40,7 @@ void on_path_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	
 	// fixed velocity for now
 	pp->velocity  = pc->wpt_one[6];
+	
 }
 
 
@@ -99,7 +101,7 @@ path_planner::path_planner()
 {
     lcm.subscribeFunction("ACFR_NAV", on_nav, this);
     lcm.subscribeFunction("HEARTBEAT_1HZ", calculate, this);                                
-    lcm.subscribeFunction("LEG_COMMAND", calculate, this);
+    lcm.subscribeFunction("LEG_COMMAND", on_path_command, this);
 }
 
 path_planner::~path_planner()

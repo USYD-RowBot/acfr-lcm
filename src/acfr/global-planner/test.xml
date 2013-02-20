@@ -1,0 +1,130 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    <location lat="0.000" lon="0.000" />
+    <desc>
+        This is a test mission
+    </desc>
+    <global>
+        <drop_distance m="2" />
+        <drop_angle deg="23" /> 
+        <!-- To have the same drop distance in the corners use drop_angle = drop_distance / turn_radius --> 
+    </global>
+<!--
+    <primative>
+        <goto>
+            <end x="10" y="10" z="1" h="180"/>
+            <depth mode = "alititude" />
+            <velocity x="1" />
+            <timeout t="60" />
+            <command device="camera" onoff="on" freq="4"/>
+            <command/>
+            <tag>Goto some place</tag>
+        </goto>
+    </primative>
+    <primative>
+        <goto>
+            <end x="100" y="100" z="1"/>
+            <velocity x="1" />
+            <timeout t="60" />
+        </goto>
+    </primative>
+    <primative>
+        <line>
+            <start x="100" y="100" z="1"/>
+            <end x="200" y="100" z="1" />
+            <start_velocity x = "1" />
+            <end_velocity x = "1" />
+            <command device="camera" onoff="on" freq="1.5" time="10000" />
+            <timeout t="60" />
+        </line>
+    </primative>
+    <primative>
+        <command>
+            <command device="camera" onoff="off"/>
+        </command>
+    </primative>    
+    <primative>
+        <grid>
+            <center x="200" y="150" z="2"/>
+            <length l="25" />
+            <width w="25" />
+            <lines lines = "10" />
+            <rotation r = "45" />
+            <command device="camera" onoff="on"/>
+            <timeout t="60" />
+            <depth mode = "altitude" />
+            <velocity x="1" />
+        </grid>
+    </primative>
+    
+    <primative>
+        <spiral_inward>
+            <position x="300" y="300" z="2"/>
+            <length l="50" />
+            <width w="50" />
+            <spacing s = "0.707" />
+            <rotation r = "0" />
+            <timeout t="3600" />
+            <velocity x="1" />
+            <direction d="ccw" />
+            <min_width_length m="25" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="on"/>
+        </spiral_inward>
+    </primative>
+    
+    <primative>
+        <zambonie>
+            <position x="300" y="300" z="2"/>
+            <length l="25" />
+            <width w="25" />
+            <spacing s = "0.707" />
+            <rotation r = "0" />
+            <timeout t="3600" />
+            <velocity x="1" />
+            <direction d="ccw" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="on"/>
+        </zambonie>
+    </primative>
+    -->
+    <primative>
+        <goto>
+            <position x="7" y="0" z="2"/>
+            <rotation r = "0" />
+            <timeout t="60" />
+            <velocity x="1" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="on"/>
+        </goto>
+    </primative>
+    
+    <primative>
+        <leg>
+            <position x="7" y="0" z="2"/>
+            <length m="10" />
+            <rotation r = "0" />
+            <timeout t="60" />
+            <velocity x="1" />
+            <altitude_change m="0"/>
+            <pitch deg="0" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="on"/>
+        </spiral>
+    </primative>
+
+    <primative>
+        <spiral>
+            <position x="7" y="0" z="2"/>
+            <rotation r = "0" />
+            <timeout t="3600" />
+            <velocity x="1" />
+            <direction d="ccw" />
+            <altitude_change m="10"/>
+            <pitch deg="20" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="on"/>
+        </spiral>
+    </primative>
+    
+</mission>

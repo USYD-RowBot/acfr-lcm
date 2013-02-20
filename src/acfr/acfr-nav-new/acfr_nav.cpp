@@ -52,6 +52,8 @@ int acfr_nav::initialise()
     // We always subscribe to this as our velocity source
     state->lcm.subscribeFunction("RDI", on_rdi, state);
     
+    state->lowRateCount = 0;
+    
     return 1;
 }    
 
@@ -122,13 +124,13 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		printf("%ld\r", (long int)nav.utime);
 
         state->lcm.publish("ACFR_NAV", &nav);   
-/*        	if(lowRateCount == 9) {
-        		lowRateCount = 0;
-        		acfrlcm_auv_acfr_nav_t_publish(lcm, "ACFR_NAV.TOP", &nav);
-        	}
-        	else
-        		lowRateCount++;        
-        }
+
+    	if(state->lowRateCount++ == 9) {
+    		state->lowRateCount = 0;
+            state->lcm.publish("ACFR_NAV.TOP", &nav);   
+
+    	}
+/*        }
 
 		if((poseAugOptions->use_max_time_option) &&
 			((estimate.timestamp - lastPoseAugmentationTime) >= poseAugOptions->max_time)) {

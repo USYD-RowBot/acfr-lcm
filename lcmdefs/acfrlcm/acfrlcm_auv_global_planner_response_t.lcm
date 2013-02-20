@@ -1,0 +1,9 @@
+package acfrlcm;
+
+struct auv_global_planner_response_t
+{
+    int64_t utime;
+
+    int8_t done;
+    
+}

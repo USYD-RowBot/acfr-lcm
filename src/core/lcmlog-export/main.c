@@ -15,6 +15,7 @@
 #include "perllcm.h"
 #include "senlcm.h"
 #include "se.h"
+#include "acfrlcm.h"
 #include "lcmlog_export.h"
 
 static void
@@ -38,6 +39,15 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_rdi_pd4_t_subscribe (lcm, "^.*RDI$", &senlcm_rdi_pd4_t_handler, lle);
     senlcm_tritech_es_t_subscribe (lcm, "^.*TRITECH_ES$", &senlcm_tritech_es_t_handler, lle);
     senlcm_uvc_osi_t_subscribe (lcm, "^.*OS_CONDUIT_OSI$", &senlcm_uvc_osi_t_handler, lle);
+    // senlcm added by ACFR
+    senlcm_ecopuck_t_subscribe (lcm, "ECOPUCK", &senlcm_ecopuck_t_handler, lle);
+	senlcm_oas_t_subscribe (lcm, "OAS", &senlcm_oas_t_handler, lle);
+	senlcm_parosci_t_subscribe (lcm, "PAROSCI", &senlcm_parosci_t_handler, lle);
+	senlcm_lq_modem_t_subscribe (lcm, "LQ_MODEM", &senlcm_lq_modem_t_handler, lle);
+	senlcm_ysi_t_subscribe (lcm, "YSI", &senlcm_ysi_t_handler, lle);
+    senlcm_rdi_pd0_t_subscribe (lcm, "RDI_PD0", &senlcm_rdi_pd0_t_handler, lle);
+    senlcm_os_power_system_t_subscribe (lcm, "BATTERY", &senlcm_os_power_system_t_handler, lle);
+    
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);
@@ -77,6 +87,10 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     se_return_state_t_subscribe (lcm, "^SE_RETURN_STATE_SERVER$", &se_return_state_t_handler, lle);
     se_goto_t_subscribe         (lcm, "^SE_GOTO$",                &se_goto_t_handler, lle);
 
+    // acfr channels
+    acfrlcm_auv_acfr_nav_t_subscribe(lcm, "ACFR_NAV", &acfrlcm_auv_acfr_nav_t_handler, lle);
+    acfrlcm_auv_path_command_t_subscribe(lcm, "LEG_COMMAND", &acfrlcm_auv_path_response_t_handler, lle);
+    acfrlcm_auv_path_response_t_subscribe(lcm, "LEG_RESPONSE", &acfrlcm_auv_path_command_t_handler, lle);
 }
 
 int

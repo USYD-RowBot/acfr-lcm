@@ -78,6 +78,7 @@ perls_add_group (vision vis "Build vision group?" OFF)
 perls_add_group (utilities util "Build utilities group?" OFF)
 perls_add_group (sirius sirius "Build Sirius group?" OFF)
 perls_add_group (acfr acfr "Build ACFR group?" OFF)
+perls_add_group (simulator simulator "Build Simulator group?" ON)
 
 # ROOT-LEVEL TARGETS
 #========================================================================

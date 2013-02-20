@@ -668,3 +668,185 @@ senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Additional handlers added by ACFR
+////////////////////////////////////////////////////////////////////////////////
+
+void
+senlcm_seabird_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_seabird_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "conductivity",    "%f", msg->conductivity);
+    TEXTREAD_ADD_FIELD (tr, "temperature",    "%f", msg->temperature);
+    TEXTREAD_ADD_FIELD (tr, "pressure",    "%f", msg->pressure);
+    TEXTREAD_ADD_FIELD (tr, "salinity",    "%f", msg->salinity);
+    TEXTREAD_ADD_FIELD (tr, "speed_of_sound",    "%f", msg->speed_of_sound);
+    TEXTREAD_ADD_FIELD (tr, "pump",    "%d", msg->pump);
+    
+    textread_stop (tr);
+}
+
+// FIXME: What else do we need to extract for the processing scripts
+void
+senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_rdi_pd0_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "num_velocities",    "%d", msg->num_velocities);
+    
+    for (int num_vels = 0; num_vels < msg->num_velocities; num_vels++) 
+    {
+        char buf[64];
+        snprintf (buf, sizeof buf, "velocity(:,%d)", num_vels+1);
+        TEXTREAD_ADD_FIELD (tr, buf,    "%f",        msg->velocity[num_vels]);
+    }
+
+    textread_stop (tr);
+}
+
+void
+senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_os_power_system_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+
+    TEXTREAD_ADD_FIELD (tr, "power",    "%f", msg->power);
+    TEXTREAD_ADD_FIELD (tr, "avg_charge_p",    "%d", msg->avg_charge_p);
+    TEXTREAD_ADD_FIELD (tr, "capacity",    "%f", msg->capacity);
+    TEXTREAD_ADD_FIELD (tr, "capacity_full",    "%f", msg->capacity_full);
+    TEXTREAD_ADD_FIELD (tr, "minutes_tef",    "%d", msg->minutes_tef);
+    
+    TEXTREAD_ADD_FIELD (tr, "num_controllers",    "%d", msg->num_controllers);
+    
+    char buf[64];
+    for(int i=0; i<msg->num_controllers; i++)
+    {
+        snprintf (buf, sizeof buf, "num_batteries(:,%d)", i+1);
+        TEXTREAD_ADD_FIELD (tr, buf,    "%d", msg->controller[i].num_batteries);
+    }
+    
+    int battery_number = 1;
+    for(int i=0; i<msg->num_controllers; i++)
+    {
+        for(int j=0; j<msg->controller[i].num_batteries; j++)
+        {
+            // for each battery read the temp, voltage and current
+            snprintf (buf, sizeof buf, "voltage(:,%d)", battery_number);
+            TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].voltage);
+            
+            snprintf (buf, sizeof buf, "current(:,%d)", battery_number);
+            TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].current);
+            
+            snprintf (buf, sizeof buf, "temperature(:,%d)", battery_number);
+            TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].temperature);
+            
+            battery_number++;
+        }
+    }
+    textread_stop (tr);
+}
+
+void
+senlcm_ecopuck_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_ecopuck_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "chlorophyll","%f",      msg->chlorophyll);
+    TEXTREAD_ADD_FIELD (tr, "turbidity","%f",      msg->turbidity);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+    textread_stop (tr);
+}
+
+void
+senlcm_oas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_oas_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "profRange","%f",      msg->profRange);
+    TEXTREAD_ADD_FIELD (tr, "pseudoAlt","%f",      msg->pseudoAlt);
+    TEXTREAD_ADD_FIELD (tr, "pseudoFwdDistance","%f",      msg->pseudoFwdDistance);
+    textread_stop (tr);
+}
+
+void
+senlcm_parosci_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_parosci_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "raw","%f",      msg->raw);
+    TEXTREAD_ADD_FIELD (tr, "depth","%f",      msg->depth);
+    textread_stop (tr);
+}
+
+void
+senlcm_lq_modem_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_lq_modem_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "time","%f",      msg->time);
+    TEXTREAD_ADD_FIELD (tr, "lat","%f",      msg->lat);
+    TEXTREAD_ADD_FIELD (tr, "lon","%f",      msg->lon);
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
+    TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
+    TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "bearing","%f",      msg->bearing);
+    TEXTREAD_ADD_FIELD (tr, "slantRange","%f",      msg->slantRange);
+    TEXTREAD_ADD_FIELD (tr, "ping","%"PRId32,      msg->ping);
+    TEXTREAD_ADD_FIELD (tr, "messageType","%"PRId8,      msg->messageType);
+
+    textread_stop (tr);
+}
+
+
+void
+senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_ysi_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+    TEXTREAD_ADD_FIELD (tr, "depth","%f",      msg->depth);
+    TEXTREAD_ADD_FIELD (tr, "turbidity","%f",      msg->turbidity);
+    TEXTREAD_ADD_FIELD (tr, "chlorophyl","%f",      msg->chlorophyl);
+    TEXTREAD_ADD_FIELD (tr, "conductivity","%f",      msg->conductivity);
+    TEXTREAD_ADD_FIELD (tr, "oxygen","%f",      msg->oxygen);
+    TEXTREAD_ADD_FIELD (tr, "battery","%f",      msg->battery);
+    TEXTREAD_ADD_FIELD (tr, "salinity","%f",      msg->salinity);
+    
+    textread_stop (tr);
+}
+
+
+
