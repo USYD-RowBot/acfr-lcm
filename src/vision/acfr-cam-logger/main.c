@@ -409,13 +409,26 @@ main (int argc, char *argv[])
         exit (EXIT_SUCCESS);
     }
 
-    BotParam *param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-
     // initialize GLib threading
     if (!g_thread_supported ()) 
         g_thread_init (NULL);
 
     cam_logger_t *logger = g_malloc0 (sizeof (*logger));
+    
+
+    // fire up LCM
+    const char *lcmurl = NULL;
+    if (getopt_has_flag (gopt, "lcm-url"))
+        lcmurl = getopt_get_string (gopt, "lcm-url");
+    logger->lcm = lcm_create (lcmurl);
+    if (!logger->lcm) {
+        ERROR ("lcm_create() failed");
+        exit (EXIT_FAILURE);
+    }
+
+
+    BotParam *param = bot_param_new_from_server (logger->lcm, 1);
+
     logger->utime0 = timestamp_now ();
     char filename[PATH_MAX];
     const char *outdir = getopt_get_string (gopt, "outdir");
@@ -459,15 +472,6 @@ main (int argc, char *argv[])
     logger->write_queue = g_async_queue_new ();
     logger->write_thread = g_thread_create (&write_thread, logger, TRUE, NULL);
 
-    // fire up LCM
-    const char *lcmurl = NULL;
-    if (getopt_has_flag (gopt, "lcm-url"))
-        lcmurl = getopt_get_string (gopt, "lcm-url");
-    logger->lcm = lcm_create (lcmurl);
-    if (!logger->lcm) {
-        ERROR ("lcm_create() failed");
-        exit (EXIT_FAILURE);
-    }
     const char *description = getopt_get_string (gopt, "description");
     if (0==strcasecmp (description, "none")) {
         logger->image_description = IMAGE_DESCRIPTION_NONE;
