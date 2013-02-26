@@ -96,7 +96,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state_t *state = (state_t *)u;
     
     // send out a beat msg once a second
-    send_log_message(state, "\0");
+    //send_log_message(state, "\0");
 }
 
 
