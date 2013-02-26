@@ -17,6 +17,7 @@ typedef struct
 {
     lcm_t *lcm;
     int leak_fd;
+    int leak;
 } state_t;
 
 int main_exit;
@@ -35,10 +36,9 @@ leak_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat
     {
         leak.utime = timestamp_now();
         if(!(pins & LEAK_PIN))
-            leak.leak = 1;
-        else
-            leak.leak = 0;
+            state->leak = 1;
         
+	leak.leak = state->leak;
         senlcm_leak_t_publish(state->lcm, "LEAK", &leak);
     }
 }    
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
 	signal(SIGINT, signal_handler);
     
     state_t state;
-    
+    state.leak = 0;
     // open the leak device file
     state.leak_fd = open(LEAK_DEVICE, O_RDONLY);
     if(state.leak_fd == -1)

@@ -29,7 +29,7 @@ enum
 #define RC_OFFSET 505
 #define RC_THROTTLE_OFFSET 415
 #define RC_TO_DEGREES 0.071875
-#define RC_TO_RPM 1.2
+#define RC_TO_RPM 2.8
 
 
 int
@@ -101,12 +101,12 @@ parse_rc(char *buf, lcm_t *lcm)
     {
         acfrlcm_auv_iver_motor_command_t rc;
         rc.utime = timestamp_now();
-        rc.top = (channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_DEGREES;
+        rc.top = -(channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_DEGREES;
         rc.bottom = rc.top;
-        rc.port = (channel_values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_DEGREES;
+        rc.port = -(channel_values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_DEGREES;
         rc.starboard = rc.port;
         rc.main = (channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET) * RC_TO_RPM;
-        if(abs(rc.main) < 20)
+        if(abs(rc.main) < 40)
             rc.main = 0;
         rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
         acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
