@@ -134,7 +134,7 @@ int parse_message(char *data, state_t *state)
         sprintf(command, "mkdir -p %s\n", state->dir);
         system(command);
         system("killall acfr-cam-logger");
-        sprintf(command, "/home/auv/perls/bin/acfr-cam-logger -e PROSILICA_..16 -o %s &\n", state->dir);
+        sprintf(command, "/home/auv/git/acfr_lcm/build/bin/acfr-cam-logger -c PROSILICA_..16 -o %s &\n", state->dir);
         printf("Command: %s", command);
         system(command);
     
