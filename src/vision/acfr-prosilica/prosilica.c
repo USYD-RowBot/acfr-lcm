@@ -226,7 +226,7 @@ prosilica_set_attribute (tPvHandle handle, const char* label, const char* value)
         if (err == ePvErrSuccess)
             return 0;
         else {
-            PROSILICA_ERROR (err, "PvAttrEnumSet(%s)", label);
+            PROSILICA_ERROR (err, "PvAttrEnumSet(%s) = %s", label, value);
             return -1;
         }
     }

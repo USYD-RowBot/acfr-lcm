@@ -217,7 +217,6 @@ write_thread (void *user)
             char channeldir[PATH_MAX];
             //snprintf (channeldir, sizeof channeldir, "%s/%s", logger->logpath, ce->channel);
             snprintf (channeldir, sizeof channeldir, "%s", logger->logpath);
-            //FIXME what happens if there are two cameras?
             if (0 != unix_mkpath (channeldir, 0775)) {
                 fprintf (stderr, "error, unable to create directory: %s\n", channeldir);
                 cam_event_free (ce);
@@ -247,40 +246,35 @@ write_thread (void *user)
 
         if (logger->bayerfilt) {
             bot_core_image_t *bayer;
-            //botu_image_bayerfilt (&bayer, ce->image);
             vis_botimage_bayerfilt (&bayer, ce->image);
             bot_core_image_t_destroy (ce->image);
             ce->image = bayer;
         }
-        // FIXME change to be compatible with ACFR image convention
+
         // write image to disk
         char filename[PATH_MAX];
         char pathfilename[PATH_MAX];
         char acfr_format[24] = "PR_%Y%m%d_%H%M%S_%i_";
 
-        //len = 29;
         //pick char from channel name
         // convention: last four characters of string indicate camera side and mode
         int channel_name_length = strlen(ce->channel);
-        //printf("**channel name %s, length %i and tail %s \n",ce->channel,channel_name_length,ce->channel+channel_name_length-4);
         strcat(acfr_format,ce->channel+channel_name_length-4);
         acfr_strftime_filename (filename, sizeof filename, acfr_format, ce->image->utime);
-        //printf("***filename %s\n",filename);
-        //snprintf (filename, sizeof filename, "%s/%s/%"PRId64".tif",
-        //          logger->logpath, ce->channel, ce->image->utime);
 
-        // get exposure time and publish message
+        // get exposure time and publish LCM message
         vis_raw.utime = ce->image->utime;
         vis_raw.exp_time = *(int32_t *)(ce->image->metadata[0].value);
         vis_raw.image_name = malloc(strlen(filename)+5);
         strcpy(vis_raw.image_name,filename);
         strcat(vis_raw.image_name, ".tif\0");
-        printf("***filename vis_raw %s\n",vis_raw.image_name);
+        printf("***filename vis_raw %s, exp_time: %.2fms\n",vis_raw.image_name, vis_raw.exp_time/1000.);
         acfrlcm_auv_vis_rawlog_t_publish(logger->lcm,"ACFR_AUV_VIS_RAWLOG",&vis_raw);
         //add path to filename for logging
         snprintf(pathfilename,sizeof pathfilename, "%s/%s.tif",logger->logpath,filename);
-        if (0 != vis_botimage_write_tiff (ce->image, filename, ce->channel, description, logger->compression | logger->quality)) {
-//        if (0 != botu_write_tiff (ce->image, pathfilename, ce->channel, description, logger->compression | logger->quality)) {
+
+
+        if (0 != vis_botimage_write_tiff (ce->image, pathfilename, ce->channel, description, logger->compression | logger->quality)) {
             static int64_t last_spew_utime = 0;
             if (now - last_spew_utime > 500000) {
                 fprintf (stderr, "error writing: %s\n", filename);
