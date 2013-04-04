@@ -285,14 +285,26 @@ int main()
                 FD_SET(new_fd, &read_fds);
 
                 tv.tv_sec = 2;
-                if(select(new_fd+1, &read_fds, NULL, NULL, NULL) > 0)
+                int selectReturn = select(new_fd+1, &read_fds, NULL, NULL, &tv);
+                if(selectReturn > 0)
                 {
                     // we have data to read
                     memset(buffer, 0, sizeof(buffer));
                     bytes_read = read(new_fd, buffer, sizeof(buffer));
-                    parse_message(buffer, &state);
+                    if (bytes_read > 0)
+                    {
+                       parse_message(buffer, &state);
+                    } else {
+                       printf("cam server: broken read. Closing connection\n");
+                       close(new_fd);
+                       connected = 0;
+                    }
                     FD_SET(new_fd, &read_fds);
-                }
+                } else if (selectReturn < 0) {
+                    printf("cam server: Error returned from select.  Closing connection\n"); 
+                    close(new_fd);
+                    connected = 0;
+                } 
             }
             printf("cam server: Connection closed\n");
         }
