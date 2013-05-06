@@ -206,6 +206,7 @@ serial_translate_speed (int rate)
     case 57600:  return B57600;
     case 115200: return B115200;
     case 230400: return B230400;
+    case 921600: return B921600;
     //case 460800: return B460800; /* not support on Mac OSX */
     default:     return -1;
     }
