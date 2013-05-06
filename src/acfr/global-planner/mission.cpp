@@ -129,6 +129,14 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                 }
             }
             
+            if(element->get_name().lowercase() == "location")
+            {
+                if(!getSingleValue(element, "lat", originLat) || !getSingleValue(element, "lon", originLon)) {
+                    cerr << "Origin not set, set the location variable." << endl;
+                    return 0;            
+                }
+            }
+            
         } 
         if(missionTimeout != missionTimeout) {   
             cerr << "Not mission_timeout variable set in global section." << endl;
@@ -539,4 +547,4 @@ void Mission::dumpMatlab(string filename) {
 	fout << "view(0,90)" << endl;
 
 	//system("matlab matlab_plot.m");
-}    
+}

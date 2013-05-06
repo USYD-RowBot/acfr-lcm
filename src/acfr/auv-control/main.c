@@ -172,6 +172,7 @@ int load_config(state_t *state, char *rootkey)
     return 1;
 }
 
+
 // Messages from the trajectory planner
 static void
 control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm_auv_control_t *control, void *user) 
@@ -216,6 +217,15 @@ acfr_nav_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlc
     state->nav_alive = 1;
     pthread_mutex_unlock(&state->nav_lock);
 }
+
+
+void limit_value(double *val, double limit)
+{
+    if( *val > limit ) 
+        *val = limit;
+    else if( *val < -limit )
+        *val = -limit;
+}    
 
 // Exit handler
 int main_exit;
@@ -272,9 +282,9 @@ int main(int argc, char **argv)
     periodic_info timer_info;
 	make_periodic (CONTROL_DT * 1000000, &timer_info);
 	
-	double prop_rpm;
-	double roll_offset;
-	double pitch, plane_angle, rudder_angle;
+	double prop_rpm = 0.0;
+	double roll_offset = 0.0;
+	double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 	
 	// main loop
 	while(!main_exit)
@@ -288,11 +298,11 @@ int main(int argc, char **argv)
         
         // Roll compenstation
         // We try to keep the AUV level, ie roll = 0
-        roll_offset = pid(&state.gains_roll, state.nav.roll, 0, CONTROL_DT);
+        roll_offset = pid(&state.gains_roll, state.nav.roll, 0.0, CONTROL_DT);
         // Pitch limit
         if( roll_offset > state.roll_offset_max ) 
             roll_offset = state.roll_offset_max;
-        else if( pitch < -state.roll_offset_max )
+        else if( roll_offset < -state.roll_offset_max )
             roll_offset = -state.roll_offset_max;
                 
         
@@ -315,14 +325,7 @@ int main(int argc, char **argv)
         else if( pitch < -state.pitch_max )
             pitch = -state.pitch_max;
         
-        
         plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
-        
-        // Pitch limit
-        if( plane_angle > state.plane_rudder_max ) 
-            plane_angle = state.plane_rudder_max;
-        else if( plane_angle < -state.plane_rudder_max )
-            plane_angle = -state.plane_rudder_max;
         
         
         // Heading
@@ -343,16 +346,21 @@ int main(int argc, char **argv)
             else if(state.nav.heading < (-M_PI / 2))
                 state.nav.heading += 2*M_PI;
         }        
-        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
-            
+//        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+        printf("%f\n", roll_offset);          
         rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
         
-        // Rudder limit
-        if( rudder_angle > state.plane_rudder_max ) 
-            rudder_angle = state.plane_rudder_max;
-        else if( rudder_angle < -state.plane_rudder_max )
-            rudder_angle = -state.plane_rudder_max;
+        
+        // Add in the roll offset
+        double top = rudder_angle - roll_offset;
+        double bottom = rudder_angle + roll_offset;
+        double port = plane_angle - roll_offset;
+        double starboard = plane_angle - roll_offset;
 
+        limit_value(&top, state.plane_rudder_max); 
+        limit_value(&bottom, state.plane_rudder_max);
+        limit_value(&port, state.plane_rudder_max);
+        limit_value(&starboard, state.plane_rudder_max);
         
         // unlock the nav and command data
         pthread_mutex_unlock(&state.nav_lock);
@@ -365,10 +373,10 @@ int main(int argc, char **argv)
         if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)
         {
             mc.main = prop_rpm;
-            mc.top = rudder_angle - roll_offset;
-            mc.bottom = rudder_angle + roll_offset;
-            mc.port = plane_angle - roll_offset;
-            mc.starboard = plane_angle + roll_offset;
+            mc.top = top;
+            mc.bottom = bottom;
+            mc.port = port;
+            mc.starboard = starboard;
         }
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
