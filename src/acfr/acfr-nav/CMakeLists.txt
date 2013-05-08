@@ -1,11 +1,11 @@
 add_executable (acfr-nav acfrNav.cpp main.cpp magfield.c)
-target_link_libraries (acfr-nav perls-lcmtypes perls-common seabedcommon seabedslam)
+target_link_libraries (acfr-nav perls-lcmtypes perls-common seabedcommon seabedslam adt plankton flounder)
 
 #add_executable (acfr-nav-post acfrNav.cpp main-post.cpp magfield.c)
 #target_link_libraries (acfr-nav-post perls-lcmtypes perls-common seabedcommon seabedslam)
 
 add_executable (lcm2raw acfrNav.cpp main_l2r.cpp magfield.c)
-target_link_libraries (lcm2raw perls-lcmtypes perls-common seabedcommon seabedslam)
+target_link_libraries (lcm2raw perls-lcmtypes perls-common seabedcommon seabedslam adt plankton flounder)
 
 include_directories ( 
 	/usr/local/include/libseabedcommon
