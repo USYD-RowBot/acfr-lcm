@@ -848,5 +848,35 @@ senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_micron_ping_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "count","%d",      msg->count);
+    TEXTREAD_ADD_FIELD (tr, "range","%f",      msg->range);
+    TEXTREAD_ADD_FIELD (tr, "gain","%f",      msg->gain);
+    TEXTREAD_ADD_FIELD (tr, "slope","%f",      msg->slope);
+    TEXTREAD_ADD_FIELD (tr, "AD_interval","%f",      msg->AD_interval);
+    TEXTREAD_ADD_FIELD (tr, "left_limit","%f",      msg->left_limit);
+    TEXTREAD_ADD_FIELD (tr, "right_limit","%f",      msg->right_limit);    
+    TEXTREAD_ADD_FIELD (tr, "angle","%f",      msg->angle);
+    TEXTREAD_ADD_FIELD (tr, "range_resolution","%f",      msg->range_resolution);    
+
+    TEXTREAD_ADD_FIELD (tr, "num_bins","%d",      msg->num_bins);    
+    
+    char buf[64];
+    for(int i=0; i<msg->num_bins; i++)
+    {
+        snprintf (buf, sizeof buf, "bins(:,%d)", i+1);
+        TEXTREAD_ADD_FIELD (tr, buf,    "%d", msg->bins[i]);
+    }
+        
+    textread_stop (tr);
+}
 
 
