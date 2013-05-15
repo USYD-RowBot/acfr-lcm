@@ -102,6 +102,9 @@ void
 senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
                              const senlcm_ysi_t *msg, void *user);
 
+void
+senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_micron_ping_t *msg, void *user);
 
 
 #endif //__HANDLERS_SENLCM_H__
