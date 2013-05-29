@@ -264,9 +264,9 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     latDot = (latF - latGn - latCv * latV - latDv * latV) / latM;
 
     // Rotate the velocites to the world frame        
-    SMALL::Vector3D etaDotLin, etaDotRot;
+    SMALL::Vector3D etaDotLin;//, etaDotRot;
     etaDotLin = (auvPose.get3x4TransformationMatrix() * nuLinear);
-    etaDotRot = (auvPose.get3x4TransformationMatrix() * nuRotational);
+    //etaDotRot = (auvPose.get3x4TransformationMatrix() * nuRotational); // will be unused, as the Euler rates transform is used below
     
     SMALL::Vector6D nu_dot;
     nu_dot = longDot[0], latDot[0], longDot[1], latDot[1], longDot[2], latDot[2];
@@ -275,7 +275,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     dxdt[0] = etaDotLin[0];
     dxdt[1] = etaDotLin[1];
     dxdt[2] = etaDotLin[2];
-    dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
+    dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0]; 
     dxdt[4] = q*cos(phi) - r*sin(phi); //etaDotRot[1];
     dxdt[5] = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta); //etaDotRot[2];
     dxdt[6] = nu_dot[0];
