@@ -109,7 +109,16 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 
     double alpha1 = 0.5;
     double alpha2 = -4.0/11.0;
-    Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+	double alpha3 = (0.45 - alpha1)/(-0.2);
+	double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
+	double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
+
+    if (J0 > 0) 
+    	Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+	else if (J0 > -0.2)
+		Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
+	else
+		Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
         
     double prop_force;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
@@ -189,8 +198,20 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     longV = u, w, q;
     latV = v, p, r;
     
-    // Damping matrices
+    // Damping matrices modified to match the above equations
     SMALL::Matrix33 longDv, latDv;
+    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q), 
+    		 -Zuq * q - Zuw * w, 					-Zww * fabs(w), 			-Zqq * fabs(q),
+    		 - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
+    
+    latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
+    		0, 							-Kpp * fabs(p), 						0,
+//			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+    		-Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
+    
+    // Damping matrices
+    /*
+	SMALL::Matrix33 longDv, latDv;
     longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q) - Xwq * w, 
     		 -Zuq * q - Zuw * w, 					-Zww * fabs(w) - Zuw * u, 	-Zqq * fabs(q),
     		 -Muu * fabs(u) - Muq * q - Muw * w, 	-Mww * fabs(w), 			-Mqq * fabs(q);
@@ -198,7 +219,8 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     latDv = -Yvv * fabs(v), 			-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * r,
     		-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
     		-Nvv * fabs(v) - Nuv * u, 	-Npp * fabs(p) - Nwp * w - Npq * q, 	-Nrr * fabs(r) - Nur * u;
-    
+    */
+
     // Coriolis matrices
     SMALL::Matrix33 longCv, latCv;
     longCv = 	0.0, 		0.0, 					0.0, 
@@ -253,9 +275,9 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     dxdt[0] = etaDotLin[0];
     dxdt[1] = etaDotLin[1];
     dxdt[2] = etaDotLin[2];
-    dxdt[3] = etaDotRot[0];
-    dxdt[4] = etaDotRot[1];
-    dxdt[5] = etaDotRot[2];
+    dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
+    dxdt[4] = q*cos(phi) - r*sin(phi); //etaDotRot[1];
+    dxdt[5] = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta); //etaDotRot[2];
     dxdt[6] = nu_dot[0];
     dxdt[7] = nu_dot[1];
     dxdt[8] = nu_dot[2];
@@ -281,9 +303,18 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 {
     // call the solver
 //    integrate_n_steps(stepper, auv, state , 0.0 , 0.001 , 100 );
-    integrate_const(stepper, auv, state , 0.0 , 0.1 , 0.001 );
-    for(int i=0; i<12; i++)
+//    integrate_const(stepper, auv, state , 0.0 , 0.1 , 0.001 ); // 1x speed simulation
+    integrate_const(stepper, auv, state , 0.0 , 0.1 , 0.001 ); // 5x speed simulation
+    for(int i=0; i<12; i++) {
         printf("%2.3f ", state(i));
+		fp << state(i) << " ";
+	}
+	for(int i=0; i<6; i++) {
+		printf("%2.3f ", in(i));
+		fp << in(i) << " ";
+	}
+
+	fp << "\n";
     printf("\n");
     fflush(NULL);
     
@@ -334,7 +365,7 @@ int main(int argc, char **argv)
     		m * zG - Xqdot, 	-m * xG - Zqdot, 	Iy - Mqdot;
     
     latM = 	m - Yvdot,			-m * zG - Ypdot,	m * xG - Yrdot,
-    		-m * xG - Ypdot,	Ix - Kpdot,			-Izx - Krdot,
+    		-m * zG - Ypdot,	Ix - Kpdot,			-Izx - Krdot,
     		m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
     
     // initial conditions

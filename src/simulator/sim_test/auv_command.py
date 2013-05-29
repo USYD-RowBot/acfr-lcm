@@ -5,7 +5,7 @@ import lcm
 import sys
 import math
 
-sys.path.append('/home/clees/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+sys.path.append('/home/lash/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
 from acfrlcm.auv_control_t import auv_control_t
 

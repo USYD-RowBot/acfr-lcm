@@ -1,7 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 59
-/svn/!svn/ver/420/trunk/bot2-procman/python/src/bot_procman
+/svn/!svn/ver/440/trunk/bot2-procman/python/src/bot_procman
+END
+discovery_t.py
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/433/trunk/bot2-procman/python/src/bot_procman/discovery_t.py
 END
 sheriff_script.py
 K 25
@@ -19,41 +25,41 @@ sheriff_cmd_t.py
 K 25
 svn:wc:ra_dav:version-url
 V 76
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/sheriff_cmd_t.py
+/svn/!svn/ver/428/trunk/bot2-procman/python/src/bot_procman/sheriff_cmd_t.py
 END
 info_t.py
 K 25
 svn:wc:ra_dav:version-url
 V 69
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/info_t.py
+/svn/!svn/ver/428/trunk/bot2-procman/python/src/bot_procman/info_t.py
 END
 __init__.py
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/__init__.py
+/svn/!svn/ver/433/trunk/bot2-procman/python/src/bot_procman/__init__.py
 END
 deputy_cmd_t.py
 K 25
 svn:wc:ra_dav:version-url
 V 75
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/deputy_cmd_t.py
+/svn/!svn/ver/428/trunk/bot2-procman/python/src/bot_procman/deputy_cmd_t.py
 END
 orders_t.py
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/orders_t.py
+/svn/!svn/ver/428/trunk/bot2-procman/python/src/bot_procman/orders_t.py
 END
 printf_t.py
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/svn/!svn/ver/414/trunk/bot2-procman/python/src/bot_procman/printf_t.py
+/svn/!svn/ver/428/trunk/bot2-procman/python/src/bot_procman/printf_t.py
 END
 sheriff.py
 K 25
 svn:wc:ra_dav:version-url
 V 70
-/svn/!svn/ver/419/trunk/bot2-procman/python/src/bot_procman/sheriff.py
+/svn/!svn/ver/440/trunk/bot2-procman/python/src/bot_procman/sheriff.py
 END

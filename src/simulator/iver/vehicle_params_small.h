@@ -1,6 +1,6 @@
 double xG = 0;
 double yG = 0;
-double zG = 0; //5.000000e-02;
+double zG = 5.000000e-02;
 double m = 30;
 double tt_horiz_fore = 7.000000e-01;
 double tt_horiz_aft = -6.000000e-01;
@@ -13,7 +13,7 @@ double Iyy = 1.264225e+01;
 double Iz = 1.264225e+01;
 double Izz = 1.264225e+01;
 double W = 2.943000e+02;
-double B = W * 1.0; //2.943000e+02;
+double B = W * 1.02; //2.943000e+02;
 double Xuu = -3.906355e+00;
 double Yvv = -2.013647e+02;
 double Mww = 1.971290e+01;

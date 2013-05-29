@@ -33,8 +33,8 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 
 LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReached(false), 
-    destID(0), wpDropDist(2.0), turningRadius(0), maxPitch(0), 
-    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0) {
+    destID(0), wpDropDist(4.0), turningRadius(0), maxPitch(0), 
+    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointCounter(0) {
     
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
@@ -187,6 +187,8 @@ int LocalPlanner::loadConfig(char *program_name)
     sprintf(key, "%s.max_angle_from_line", rootkey);
     maxAngleFromLine = bot_param_get_double_or_fail(param, key);
 
+	sprintf(key, "%s.waypoint_timeout", rootkey);
+    waypointTimeout	 = bot_param_get_double_or_fail(param, key);
 
     return 1;
 }
@@ -233,15 +235,19 @@ static void *processWaypoints(void *u) {
         pthread_mutex_lock(&lp->waypointsLock);
         unsigned int numWaypoints = lp->waypoints.size();
         if( numWaypoints == 0 ) {
+			
             pthread_mutex_unlock(&lp->waypointsLock);
             // SLEEP 0.1s
+			lp->resetWaypointCounter();
             usleep( 100000 );
             continue;
         }
         
         // Get the first waypoint
         Pose3D waypoint = lp->waypoints.at(0);
-        pthread_mutex_unlock(&lp->waypointsLock);
+		pthread_mutex_unlock(&lp->waypointsLock);
+
+		
 
         // Get current pose
         pthread_mutex_lock(&lp->currPoseLock);
@@ -271,19 +277,25 @@ static void *processWaypoints(void *u) {
         cout << "Next way point is : " << waypoint.getX() << ", " << waypoint.getY() << ", " << waypoint.getZ() << " < " << waypoint.getYawRad()/M_PI*180. << "deg" << endl;
         cout << "Relative pose is  : " << wpRel.getX() << ", " << wpRel.getY() << ", " << wpRel.getZ() << " < " << wpRel.getYawRad()/M_PI*180. << "deg" << endl;
         cout << "Dist to DEST is   : " << distToDest << endl;
-                
-        if( wpRel.getX() < 0.1 && fabs(wpRel.getY()) < 1.0 ) {
+        
+       
+		lp->incrementWaypointCounter();
+
+		cout << "Time for waypoint (Timeout): " << lp->getWaypointCounter()*0.1 << " (" << lp->getWaypointTimeout() << ")" << endl;
+
+        if(( wpRel.getX() < 0.2 && fabs(wpRel.getY()) < 2.0 )||(lp->getWaypointCounter() > lp->getWaypointTimeout()/0.1)) {
             // delete it from the list
             pthread_mutex_lock(&lp->waypointsLock);
             lp->waypoints.erase( lp->waypoints.begin() );
             numWaypoints = lp->waypoints.size();
-            pthread_mutex_unlock(&lp->waypointsLock);
+			pthread_mutex_unlock(&lp->waypointsLock);
+			lp->resetWaypointCounter();
             cout << "Ignored as it is behind us" << endl;
             
             if( numWaypoints == 0 ) {
                 cout << "No more waypoints!" << endl;
                 
-                if( distToDest < 0.5 ) {
+                if( distToDest < 1.0 ) {
                     lp->setDestReached( true );
                     lp->setNewDest( false );
                     cout << "We have reached DEST :) " << endl;
@@ -292,11 +304,15 @@ static void *processWaypoints(void *u) {
             continue;
         }
         
+
         
         // Calculate desired heading to way point
         //  This is not our bearing to the point but a global angle
-        double desHeading = atan2( waypoint.getY()-currPose.getY(), waypoint.getX()-currPose.getX() );
         
+		double desHeading = atan2( waypoint.getY()-currPose.getY(), waypoint.getX()-currPose.getX() ); 
+		
+        
+
         // Calculate desired velocity. If within 5m from dest pose, start adjusting the velocity
         double desVel = 0;
         double distToDestWp = numWaypoints * lp->getWpDropDist();
@@ -323,6 +339,8 @@ static void *processWaypoints(void *u) {
         // for a message to send
         acfrlcm::auv_control_t cc;
         cc.utime = timestamp_now();
+		
+		
         if( desVel < 1e-3 ) {
             // stop the motors
             cc.run_mode = acfrlcm::auv_control_t::STOP;

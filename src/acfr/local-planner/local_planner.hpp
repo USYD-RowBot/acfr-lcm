@@ -17,7 +17,6 @@
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
 
-
 class LocalPlanner {
     public:
         LocalPlanner();
@@ -40,7 +39,7 @@ class LocalPlanner {
         
         int getDepthMode(void) const { return depthMode; }
         double getDefaultLegVel(void) const { return defaultLegVel; }
-        double getVelChangeDist(void) const { return velChangeDist; }
+		double getVelChangeDist(void) const { return velChangeDist; }
       
         bool getDestReached( void ) const { return destReached; }
         void setDestReached( bool b ) { destReached = b; }
@@ -49,7 +48,12 @@ class LocalPlanner {
         void setNewDest( bool b ) { newDest = b; }
         
         double getWpDropDist( void ) const { return wpDropDist; }
-        
+
+		double getWaypointTimeout(void) const { return waypointTimeout; }
+		void resetWaypointCounter( void ) { waypointCounter = 0; }
+		void incrementWaypointCounter( void ) { waypointCounter++; }
+		int getWaypointCounter( void ) { return waypointCounter; }
+		
         pthread_mutex_t currPoseLock;
         pthread_mutex_t destPoseLock;
         pthread_mutex_t waypointsLock;
@@ -82,7 +86,9 @@ class LocalPlanner {
         double maxAngleFromLine;
         double velChangeDist;
         double defaultLegVel;
-
+		double waypointTimeout;	
+	
+		int waypointCounter;
         
         
         

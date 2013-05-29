@@ -3,6 +3,12 @@ svn:wc:ra_dav:version-url
 V 39
 /svn/!svn/ver/414/trunk/bot2-frames/src
 END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/!svn/ver/414/trunk/bot2-frames/src/CMakeLists.txt
+END
 bot_frames.c
 K 25
 svn:wc:ra_dav:version-url
@@ -14,10 +20,4 @@ K 25
 svn:wc:ra_dav:version-url
 V 52
 /svn/!svn/ver/414/trunk/bot2-frames/src/bot_frames.h
-END
-CMakeLists.txt
-K 25
-svn:wc:ra_dav:version-url
-V 54
-/svn/!svn/ver/414/trunk/bot2-frames/src/CMakeLists.txt
 END
