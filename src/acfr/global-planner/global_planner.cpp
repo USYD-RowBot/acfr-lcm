@@ -181,6 +181,41 @@ int GlobalPlanner::sendLeg()
     // reset the flag
     areWeThereYet = 0;
 
+	// Account for next waypoint yaw for this waypoint (take average between the desired yaw and the following leg angle)
+	list<waypoint>::iterator ii = currPoint;
+   	ii++;
+	double waypoint_yaw, yaw1, yaw2;
+    if(ii == mis.waypoints.end()) {
+		waypoint_yaw = (*currPoint).pose.getYawRad();
+		cout << "Compare yaw commands (final)" << (*currPoint).pose.getYawRad()*180/M_PI << endl;
+	}
+	else {
+		yaw1 = (*currPoint).pose.getYawRad();
+		if (yaw1 > 2*M_PI)
+			yaw1 = yaw1 - 2*M_PI;
+		else if (yaw1 < 0)
+			yaw1 = yaw1 + 2*M_PI;
+
+		yaw2 = atan2( (*ii).pose.getY()-(*currPoint).pose.getY(), (*ii).pose.getX()-(*currPoint).pose.getX() ) + 2*M_PI; 
+		if (yaw2 > 2*M_PI)
+			yaw2 = yaw2 - 2*M_PI;
+		else if (yaw2 < 0)
+			yaw2 = yaw2 + 2*M_PI;
+		
+		if (yaw2 - yaw1 > M_PI)
+            yaw2 = yaw2 - 2*M_PI;
+        else if (yaw1 - yaw2 > M_PI)
+            yaw1 = yaw1 - 2*M_PI;
+        
+        waypoint_yaw = (yaw1 + yaw2)/2;
+		if (waypoint_yaw > 2*M_PI)
+			waypoint_yaw = waypoint_yaw - 2*M_PI;
+		else if (waypoint_yaw < 0)
+			waypoint_yaw = waypoint_yaw + 2*M_PI;
+
+		cout << "Compare yaw commands (lookahead)" << (*currPoint).pose.getYawRad()*180/M_PI << " " << yaw2*180/M_PI << " " << waypoint_yaw*180/M_PI << endl;
+		
+	}
     // Put together the LEG message for the path planner
     acfrlcm::auv_path_command_t pc;
     pc.utime = timestamp_now();
@@ -189,7 +224,7 @@ int GlobalPlanner::sendLeg()
     pc.waypoint[2] = (*currPoint).pose.getZ();
     pc.waypoint[3] = (*currPoint).pose.getRollRad();
     pc.waypoint[4] = (*currPoint).pose.getPitchRad();
-    pc.waypoint[5] = (*currPoint).pose.getYawRad();
+    pc.waypoint[5] = waypoint_yaw;
     pc.waypoint[6] = (*currPoint).velocity[0];
 
 

@@ -39,7 +39,8 @@ LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReac
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
     lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
-    lcm.subscribeFunction("HEARTBEAT_1HZ", calculateLCM, this);  
+    lcm.subscribeFunction("HEARTBEAT_1HZ", calculateLCM, this);
+	
     
     pthread_mutex_init(&currPoseLock, NULL);
     pthread_mutex_init(&destPoseLock, NULL);
