@@ -51,9 +51,8 @@ class LocalPlanner {
         double getWpDropDist( void ) const { return wpDropDist; }
 
 		double getWaypointTimeout(void) const { return waypointTimeout; }
-		void resetWaypointCounter( void ) { waypointCounter = 0; }
-		void incrementWaypointCounter( void ) { waypointCounter++; }
-		int getWaypointCounter( void ) { return waypointCounter; }
+		void resetWaypointTime( int64_t t ) { waypointTime = t; }
+		int64_t getWaypointTime( void ) { return waypointTime; }
 		
 //        pthread_mutex_t currPoseLock;
 //        pthread_mutex_t destPoseLock;
@@ -89,7 +88,7 @@ class LocalPlanner {
         double defaultLegVel;
 		double waypointTimeout;	
 	
-		int waypointCounter;
+		int64_t waypointTime;
         
         
         

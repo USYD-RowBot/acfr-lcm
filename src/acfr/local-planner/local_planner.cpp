@@ -34,7 +34,7 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReached(false), 
     destID(0), wpDropDist(4.0), turningRadius(0), maxPitch(0), 
-    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointCounter(0) {
+    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointTime(timestamp_now()) {
     
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
@@ -138,7 +138,7 @@ int LocalPlanner::calculateWaypoints() {
     this->waypoints = waypoints;    
 //    pthread_mutex_unlock(&waypointsLock);
 
-    // Save the start pose and lashstart velocity
+    // Save the start pose and start velocity
     startPose = currPose;
     startVel  = currVel[0];
     
@@ -241,7 +241,7 @@ int LocalPlanner::processWaypoints() {
 			
 //            pthread_mutex_unlock(&lp->waypointsLock);
             // SLEEP 0.1s
-			lp->resetWaypointCounter();
+			lp->resetWaypointTime(timestamp_now());
 //            usleep( 100000 );
             return 1;
         }
@@ -282,17 +282,15 @@ int LocalPlanner::processWaypoints() {
         cout << "Dist to DEST is   : " << distToDest << endl;
         
        
-		lp->incrementWaypointCounter();
+		cout << "Time for waypoint (Timeout): " << ( timestamp_now() - lp->getWaypointTime() )/1000000 << " (" << lp->getWaypointTimeout() << ")" << endl;
 
-		cout << "Time for waypoint (Timeout): " << lp->getWaypointCounter()*0.1 << " (" << lp->getWaypointTimeout() << ")" << endl;
-
-        if(( wpRel.getX() < 0.2 && fabs(wpRel.getY()) < 2.0 )||(lp->getWaypointCounter() > lp->getWaypointTimeout()/0.1)) {
+        if( ( wpRel.getX() < 0.2 && fabs(wpRel.getY()) < 2.0 )||( ( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) ) {
             // delete it from the list
 //            pthread_mutex_lock(&lp->waypointsLock);
             lp->waypoints.erase( lp->waypoints.begin() );
             numWaypoints = lp->waypoints.size();
 //			pthread_mutex_unlock(&lp->waypointsLock);
-			lp->resetWaypointCounter();
+			lp->resetWaypointTime(timestamp_now());
             cout << "Ignored as it is behind us" << endl;
             
             if( numWaypoints == 0 ) {

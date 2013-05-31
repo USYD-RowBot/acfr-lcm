@@ -15,8 +15,6 @@
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
 // set the delta T to 0.1s, 10Hz loop rate
-//#define CONTROL_DT 0.1
-// set to 0.01 for 10x speed simulation
 #define CONTROL_DT 0.1
 
 typedef enum
