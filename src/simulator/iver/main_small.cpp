@@ -14,6 +14,8 @@
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
+#include "perls-lcmtypes++/senlcm/ysi_t.hpp"
+#include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -353,6 +355,20 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
  	tcm.roll= state(3);
  	tcm.pitch= state(4);
  	tcm.temperature = 20;
+ 	
+	ysi_t ysi;
+	ysi.utime = timeStamp;
+    ysi.depth = state(2);
+    
+    gpsd3_t gpsd3;
+    gpsd3.utime = timeStamp;
+    senlcm::gpsd3_fix_t gps_fix;
+    gps_fix.latitude = 0;
+    gps_fix.longitude = 0;
+    gps_fix.utime = timeStamp;
+    gpsd3.fix = gps_fix;	
+	
+
 	
 }
 
