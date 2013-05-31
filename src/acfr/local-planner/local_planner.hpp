@@ -25,6 +25,7 @@ class LocalPlanner {
         int onNav(const acfrlcm::auv_acfr_nav_t *nav);
         int onPathCommand(const acfrlcm::auv_path_command_t *pc);
         int calculateWaypoints();
+	int processWaypoints();
         lcm::LCM lcm;
         int process();
         int sendResponse();
@@ -54,9 +55,9 @@ class LocalPlanner {
 		void incrementWaypointCounter( void ) { waypointCounter++; }
 		int getWaypointCounter( void ) { return waypointCounter; }
 		
-        pthread_mutex_t currPoseLock;
-        pthread_mutex_t destPoseLock;
-        pthread_mutex_t waypointsLock;
+//        pthread_mutex_t currPoseLock;
+//        pthread_mutex_t destPoseLock;
+//        pthread_mutex_t waypointsLock;
         
         vector<Pose3D> waypoints;
         

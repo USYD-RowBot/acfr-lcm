@@ -42,28 +42,28 @@ LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReac
     lcm.subscribeFunction("HEARTBEAT_1HZ", calculateLCM, this);
 	
     
-    pthread_mutex_init(&currPoseLock, NULL);
-    pthread_mutex_init(&destPoseLock, NULL);
-    pthread_mutex_init(&waypointsLock, NULL);                      
+//    pthread_mutex_init(&currPoseLock, NULL);
+//    pthread_mutex_init(&destPoseLock, NULL);
+//    pthread_mutex_init(&waypointsLock, NULL);                      
 
 }
 
 LocalPlanner::~LocalPlanner() {
-    pthread_mutex_destroy(&currPoseLock);
-    pthread_mutex_destroy(&destPoseLock);
-    pthread_mutex_destroy(&waypointsLock);                      
+//    pthread_mutex_destroy(&currPoseLock);
+//    pthread_mutex_destroy(&destPoseLock);
+//    pthread_mutex_destroy(&waypointsLock);                      
 }
 /**
  * Copy current navigation status
  */
 int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 
-    pthread_mutex_lock(&currPoseLock);
+//    pthread_mutex_lock(&currPoseLock);
     currPose.setPosition( nav->x, nav->y, nav->depth );
     currPose.setRollPitchYawRad( nav->roll, nav->pitch, nav->heading );
     currVel = nav->vx, nav->vy, nav->vz;
-    pthread_mutex_unlock(&currPoseLock);
-    
+//    pthread_mutex_unlock(&currPoseLock);
+    processWaypoints();
     return 1;
 }
 
@@ -71,7 +71,7 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
  * Copy new destination pose and calculate a new path to this point
  */
 int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
-    pthread_mutex_lock(&destPoseLock);
+//    pthread_mutex_lock(&destPoseLock);
     // Reset destination pose
     destPose.setIdentity();
     
@@ -81,13 +81,14 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
     destVel = pc->waypoint[6];
     depthMode = pc->depth_mode;
     destID = pc->goal_id;
-    pthread_mutex_unlock(&destPoseLock);    
+//    pthread_mutex_unlock(&destPoseLock);    
     
     cout << "\nGot a new DEST point " << endl;
     destReached = false;
     newDest = true;
-    
-    return calculateWaypoints();
+    calculateWaypoints();
+    processWaypoints();
+    return 1;
 }
 
 /**
@@ -102,12 +103,12 @@ int LocalPlanner::calculateWaypoints() {
     dp.setWaypointDropDist( wpDropDist );
     
     // Get a copy of curr and dest pose
-    pthread_mutex_lock(&currPoseLock);
-    pthread_mutex_lock(&destPoseLock);
+//    pthread_mutex_lock(&currPoseLock);
+//    pthread_mutex_lock(&destPoseLock);
     Pose3D currPose = this->currPose;
     Pose3D destPose = this->destPose;
-    pthread_mutex_unlock(&currPoseLock);
-    pthread_mutex_unlock(&destPoseLock);
+//    pthread_mutex_unlock(&currPoseLock);
+//    pthread_mutex_unlock(&destPoseLock);
             
     cout << "CurrPose=" << currPose << endl;
     cout << "DestPose=" << destPose << endl;
@@ -133,11 +134,11 @@ int LocalPlanner::calculateWaypoints() {
 
     
     // Managed to calculate a path to destination
-    pthread_mutex_lock(&waypointsLock);
+//    pthread_mutex_lock(&waypointsLock);
     this->waypoints = waypoints;    
-    pthread_mutex_unlock(&waypointsLock);
+//    pthread_mutex_unlock(&waypointsLock);
 
-    // Save the start pose and start velocity
+    // Save the start pose and lashstart velocity
     startPose = currPose;
     startVel  = currVel[0];
     
@@ -228,40 +229,41 @@ int LocalPlanner::process() {
 }
 
 
-static void *processWaypoints(void *u) {
-    LocalPlanner *lp = (LocalPlanner *)u;
+//static void *processWaypoints(void *u) {
+int LocalPlanner::processWaypoints() {
+    LocalPlanner *lp = this; //(LocalPlanner *)u;
         
-    while(!mainExit) {
+//    while(!mainExit) {
     
-        pthread_mutex_lock(&lp->waypointsLock);
+//        pthread_mutex_lock(&lp->waypointsLock);
         unsigned int numWaypoints = lp->waypoints.size();
         if( numWaypoints == 0 ) {
 			
-            pthread_mutex_unlock(&lp->waypointsLock);
+//            pthread_mutex_unlock(&lp->waypointsLock);
             // SLEEP 0.1s
 			lp->resetWaypointCounter();
-            usleep( 100000 );
-            continue;
+//            usleep( 100000 );
+            return 1;
         }
         
         // Get the first waypoint
         Pose3D waypoint = lp->waypoints.at(0);
-		pthread_mutex_unlock(&lp->waypointsLock);
+//		pthread_mutex_unlock(&lp->waypointsLock);
 
 		
 
         // Get current pose
-        pthread_mutex_lock(&lp->currPoseLock);
+//        pthread_mutex_lock(&lp->currPoseLock);
         Pose3D currPose = lp->getCurrPose();
         Vector3D currVel3D = lp->getCurrVel();
         double currVel = currVel3D[0];
-        pthread_mutex_unlock(&lp->currPoseLock);
+//        pthread_mutex_unlock(&lp->currPoseLock);
         
         // Get destination pose
-        pthread_mutex_lock(&lp->destPoseLock);
+//        pthread_mutex_lock(&lp->destPoseLock);
         Pose3D destPose = lp->getDestPose();
         double destVel = lp->getDestVel();
-        pthread_mutex_unlock(&lp->destPoseLock);
+//        pthread_mutex_unlock(&lp->destPoseLock);
 
         double distToDest = currPose.positionDistance( destPose );
                 
@@ -286,10 +288,10 @@ static void *processWaypoints(void *u) {
 
         if(( wpRel.getX() < 0.2 && fabs(wpRel.getY()) < 2.0 )||(lp->getWaypointCounter() > lp->getWaypointTimeout()/0.1)) {
             // delete it from the list
-            pthread_mutex_lock(&lp->waypointsLock);
+//            pthread_mutex_lock(&lp->waypointsLock);
             lp->waypoints.erase( lp->waypoints.begin() );
             numWaypoints = lp->waypoints.size();
-			pthread_mutex_unlock(&lp->waypointsLock);
+//			pthread_mutex_unlock(&lp->waypointsLock);
 			lp->resetWaypointCounter();
             cout << "Ignored as it is behind us" << endl;
             
@@ -302,7 +304,7 @@ static void *processWaypoints(void *u) {
                     cout << "We have reached DEST :) " << endl;
                 }
             }                
-            continue;
+            return 1;
         }
         
 
@@ -365,14 +367,14 @@ static void *processWaypoints(void *u) {
         lp->lcm.publish("AUV_CONTROL", &cc);
         
         
-        usleep( 100000 );
+//        usleep( 100000 );
         
         
         
-    }
+//    }
     
     
-    return NULL;
+    return 1;
 }
 
 
@@ -389,14 +391,14 @@ int main(int argc, char **argv)
         return 0;
     }
     
-    pthread_t tidProcessWaypoints;
-    pthread_create(&tidProcessWaypoints, NULL, processWaypoints, lp);
-    pthread_detach(tidProcessWaypoints);
+//    pthread_t tidProcessWaypoints;
+//    pthread_create(&tidProcessWaypoints, NULL, processWaypoints, lp);
+//    pthread_detach(tidProcessWaypoints);
     
     while(!mainExit)
         lp->process();
     
-    pthread_join(tidProcessWaypoints, NULL);
+//    pthread_join(tidProcessWaypoints, NULL);
     
     delete lp;
     
