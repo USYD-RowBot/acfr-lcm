@@ -332,17 +332,17 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 	}
 	double dist2 = angle2 * this->circleRad;
 
-	cout << endl << "Shortest Dubins path: " << endl;
-	cout << "\tFirst circle on " << (minSide1 == this->right ? "right" : "left") << endl;
-	cout << "\tSecond circle on " << (minSide2 == this->right ? "right" : "left") << endl;
-	cout << "\tPath length " << minDist << endl;
-	cout << fixed << setprecision(2) << "First circle distance (angle) : " << dist1 << "m (" << angle1 / M_PI * 180
-			<< "deg)" << endl;
-	cout << "Straight path distance        : " << straightDist << "m" << endl;
-	cout << "Second circle distance (angle): " << dist2 << "m (" << angle2 / M_PI * 180 << ")deg" << endl;
+    //cout << endl << "Shortest Dubins path: " << endl;
+    //cout << "\tFirst circle on " << (minSide1 == this->right ? "right" : "left") << endl;
+    //cout << "\tSecond circle on " << (minSide2 == this->right ? "right" : "left") << endl;
+    //cout << "\tPath length " << minDist << endl;
+    //cout << fixed << setprecision(2) << "First circle distance (angle) : " << dist1 << "m (" << angle1 / M_PI * 180
+    //		<< "deg)" << endl;
+    //cout << "Straight path distance        : " << straightDist << "m" << endl;
+    //cout << "Second circle distance (angle): " << dist2 << "m (" << angle2 / M_PI * 180 << ")deg" << endl;
 
-	cout << "An altitude change of " << destPose.getZ() - currPose.getZ()
-			<< "m is required. This is achieved with a pitch of " << minPitch / M_PI * 180. << "deg" << endl;
+    //cout << "An altitude change of " << destPose.getZ() - currPose.getZ()
+    //		<< "m is required. This is achieved with a pitch of " << minPitch / M_PI * 180. << "deg" << endl;
 
 	Pose3D pRel;
 

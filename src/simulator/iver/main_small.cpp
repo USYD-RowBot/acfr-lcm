@@ -16,6 +16,9 @@
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
+#include "auv_map_projection.hpp"
+#include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
+
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -31,6 +34,9 @@ using namespace libplankton;
 
 #define WATER_DEPTH 30
 
+#define GPS_CHANNELS 4
+#define MAG_VAR 12.67*M_PI/180
+
 typedef boost::numeric::ublas::vector< double > state_type;
 
 // Inertial Matrix
@@ -40,8 +46,11 @@ SMALL::Matrix33 longM, latM;
 state_type state(12);
 runge_kutta_cash_karp54<state_type> stepper;
 
-ofstream fp;
-double latitude, longitude;
+ofstream fp, fp_nav;
+Local_WGS84_TM_Projection *map_projection_sim;
+
+int64_t last_dvl_time = 4.611686e+18, last_gps_time = 4.611686e+18, last_ysi_time = 4.611686e+18, last_tcm_time = 4.611686e+18; // 2^62
+
 
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
@@ -75,16 +84,12 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     while(psi > (2 * M_PI))
         psi -= 2 * M_PI;
 
-            
     // Where we are at, ie the auv pose
     SMALL::Pose3D auvPose;
     auvPose.setPosition(Xa, Ya, Za);
     auvPose.setRollPitchYawRad(phi, theta, psi);
 
-
-
-
-    // Prop force calculations       
+    // Prop force calculations
     double prop_alpha = 0.02290; //0.01;
     double prop_diameter = 0.085;
     double rho = 1030;              // Water density
@@ -106,7 +111,6 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     if(fabs(n) > 25)
         n = n / fabs(n) * 25;
     
-    
     // advance velocity as per Fossen eq 4.6
     double omega = 0.1;
     double Va = (1 - omega) * u;
@@ -116,20 +120,20 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 
     double alpha1 = 0.5;
     double alpha2 = -4.0/11.0;
-	double alpha3 = (0.45 - alpha1)/(-0.2);
-	double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
-	double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
+    double alpha3 = (0.45 - alpha1)/(-0.2);
+    double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
+    double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
 
-    if (J0 > 0) 
-    	Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
-	else if (J0 > -0.2)
-		Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
-	else
-		Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
-        
+    if (J0 > 0)
+        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+    else if (J0 > -0.2)
+        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
+    else
+        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+
     double prop_force;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
-//    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
+    //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
     if(prop_force !=  prop_force)
     {
         cerr << "Prop force error" << endl;
@@ -137,8 +141,6 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     }
     if(fabs(prop_force) > 10.0)
         prop_force = prop_force / fabs(prop_force) * 10;
-    
-    
     
     // set the fins to zero is we aren't moving as the model doesn't behave
     double top, bottom, port, starboard;
@@ -163,10 +165,10 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 
     
     // Hydrodynamic Forces and Moments
-/*    
-    X = Xuu * u * fabs(u) + (Xwq - m) * w * q 
-        + (Xqq + m * xG) * pow(q, 2) + (Xvr + m) * v * r 
-        + (Xrr + m * xG) * pow(r, 2) - m * yG * p * q 	
+    /*
+    X = Xuu * u * fabs(u) + (Xwq - m) * w * q
+        + (Xqq + m * xG) * pow(q, 2) + (Xvr + m) * v * r
+        + (Xrr + m * xG) * pow(r, 2) - m * yG * p * q
         - m * zG * p * r + prop_force;
         
     Y = Yvv * v * fabs(v) + Yrr * r * fabs(r)
@@ -175,10 +177,10 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
         + Yuv * u * v + m * yG * pow(p, 2) - m * zG * q * r
         + Ydr * pow(u, 2) * rudder;
         
-    Z = Zww * w * fabs(w) + Zqq * q * fabs(q) 
-        + (Zuq + m) * u * q + (Zvp - m) * v * p 
-        + (Zrp - m * xG) * r * p + Zuw * u * w 
-        + m * zG * (pow(p, 2) + pow(q, 2)) - m * yG * r * q 
+    Z = Zww * w * fabs(w) + Zqq * q * fabs(q)
+        + (Zuq + m) * u * q + (Zvp - m) * v * p
+        + (Zrp - m * xG) * r * p + Zuw * u * w
+        + m * zG * (pow(p, 2) + pow(q, 2)) - m * yG * r * q
         + Zdp * pow(u, 2) * plane;
         
     K = Kpp * p * fabs(p) - (Izz - Iyy) * q * r
@@ -187,18 +189,18 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
         
     M = Mww * w * fabs(w) + Mqq * q * fabs(q)
         + (Muq - m * xG) * u * q + (Mvp + m * xG) * v * p
-        + (Mrp - (Ixx - Izz)) * r * p 
-        + m * zG * (v * r - w * q) + Muw * u * w 
+        + (Mrp - (Ixx - Izz)) * r * p
+        + m * zG * (v * r - w * q) + Muw * u * w
         + Mdp * pow(u, 2) * plane;
         
-    N = Nvv * v * fabs(v) + Nrr * r * fabs(r) 
-        + (Nur - m * xG) * u * r + (Nwp + m * xG) * w * p 
-        + (Npq - (Iyy - Ixx)) * p * q 
-        - m * yG * (v * r - w * q) + Nuv * u * v 
+    N = Nvv * v * fabs(v) + Nrr * r * fabs(r)
+        + (Nur - m * xG) * u * r + (Nwp + m * xG) * w * p
+        + (Npq - (Iyy - Ixx)) * p * q
+        - m * yG * (v * r - w * q) + Nuv * u * v
         + Ndr * pow(u, 2) * rudder;
 */
 
-    // For decoupled lateral and longitudinal forces as per Fossen 7.5.6    
+    // For decoupled lateral and longitudinal forces as per Fossen 7.5.6
 
     // Velocity vectors, current state
     SMALL::Vector3D longV, latV;
@@ -207,55 +209,55 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     
     // Damping matrices modified to match the above equations
     SMALL::Matrix33 longDv, latDv;
-    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q), 
-    		 -Zuq * q - Zuw * w, 					-Zww * fabs(w), 			-Zqq * fabs(q),
-    		 - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
+    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q),
+            -Zuq * q - Zuw * w, 					-Zww * fabs(w), 			-Zqq * fabs(q),
+            - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
     
     latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-    		0, 							-Kpp * fabs(p), 						0,
-//			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
-    		-Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
+            0, 							-Kpp * fabs(p), 						0,
+            //			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
     
     // Damping matrices
     /*
-	SMALL::Matrix33 longDv, latDv;
-    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q) - Xwq * w, 
-    		 -Zuq * q - Zuw * w, 					-Zww * fabs(w) - Zuw * u, 	-Zqq * fabs(q),
-    		 -Muu * fabs(u) - Muq * q - Muw * w, 	-Mww * fabs(w), 			-Mqq * fabs(q);
-    
+    SMALL::Matrix33 longDv, latDv;
+    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q) - Xwq * w,
+             -Zuq * q - Zuw * w, 					-Zww * fabs(w) - Zuw * u, 	-Zqq * fabs(q),
+             -Muu * fabs(u) - Muq * q - Muw * w, 	-Mww * fabs(w), 			-Mqq * fabs(q);
+
     latDv = -Yvv * fabs(v), 			-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * r,
-    		-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
-    		-Nvv * fabs(v) - Nuv * u, 	-Npp * fabs(p) - Nwp * w - Npq * q, 	-Nrr * fabs(r) - Nur * u;
+            -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            -Nvv * fabs(v) - Nuv * u, 	-Npp * fabs(p) - Nwp * w - Npq * q, 	-Nrr * fabs(r) - Nur * u;
     */
 
     // Coriolis matrices
     SMALL::Matrix33 longCv, latCv;
-    longCv = 	0.0, 		0.0, 					0.0, 
-				0.0, 		0.0, 					-(m - Xudot) * u, 
-				0.0, 		(Zwdot - Xudot) * u, 	m * xG * u;
+    longCv = 	0.0, 		0.0, 					0.0,
+            0.0, 		0.0, 					-(m - Xudot) * u,
+            0.0, 		(Zwdot - Xudot) * u, 	m * xG * u;
     
-    latCv = 	0.0, 		0.0, 					(m- Xudot) * u, 
-				0.0, 		0.0, 					0.0, 
-				(Xudot - Yvdot) * u, 	0.0, 		m * xG * u;
+    latCv = 	0.0, 		0.0, 					(m- Xudot) * u,
+            0.0, 		0.0, 					0.0,
+            (Xudot - Yvdot) * u, 	0.0, 		m * xG * u;
     
     // Gravity and buoyancy
     SMALL::Vector3D longGn, latGn;
     longGn = 0.0, 0.0, W * zG  * sin(theta);
     latGn = 0.0, W * zG * sin(phi), 0.0;
     
-/*    cout << "X = ";
+    /*    cout << "X = ";
         for(int j=0; j<12; j++)
                 cout << x[j] << " ";
         cout << endl;
 */    
     SMALL::Vector3D t1, t2;
-//    t1 = (longF - longGn - longCv * longV  - longDv * longV);
+    //    t1 = (longF - longGn - longCv * longV  - longDv * longV);
     t1 = longDv * longV;
     t2 = latDv * latV;
-//    t2 = (latF - latGn - latCv * latV - latDv * latV);
-//    cout << "F = " << t1(1) << " " << t2(1) << " " << t1(2) << " " << t2(2) << " " << t1(3) << " " << t2(3) << " "<< endl;
+    //    t2 = (latF - latGn - latCv * latV - latDv * latV);
+    //    cout << "F = " << t1(1) << " " << t2(1) << " " << t1(2) << " " << t2(2) << " " << t1(3) << " " << t2(3) << " "<< endl;
     
-/*
+    /*
     cout << "longF = " << longF.toString() << endl;
     cout << "longGn = " << longGn.toString() << endl;
     cout << "longDv = " << t1.toString() << endl;
@@ -270,7 +272,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     longDot = (longF - longGn - longCv * longV - longDv * longV) / longM;
     latDot = (latF - latGn - latCv * latV - latDv * latV) / latM;
 
-    // Rotate the velocites to the world frame        
+    // Rotate the velocites to the world frame
     SMALL::Vector3D etaDotLin;//, etaDotRot;
     etaDotLin = (auvPose.get3x4TransformationMatrix() * nuLinear);
     //etaDotRot = (auvPose.get3x4TransformationMatrix() * nuRotational); // will be unused, as the Euler rates transform is used below
@@ -282,7 +284,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     dxdt[0] = etaDotLin[0];
     dxdt[1] = etaDotLin[1];
     dxdt[2] = etaDotLin[2];
-    dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0]; 
+    dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
     dxdt[4] = q*cos(phi) - r*sin(phi); //etaDotRot[1];
     dxdt[5] = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta); //etaDotRot[2];
     dxdt[6] = nu_dot[0];
@@ -305,27 +307,38 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
     in(5) = mc->starboard;
 }
 
+double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
+{
+    double u,v;
+    u = (double)rand()/(double)RAND_MAX;
+    v = (double)rand()/(double)RAND_MAX;
+
+    return pow(-2*log(u),0.5)*sin(2*M_PI*v);
+}
+
 // Calculate the path, this is where the magic happens
 void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *heartbeat, lcm::LCM *lcm) 
 {
     // call the solver
-//    integrate_n_steps(stepper, auv, state , 0.0 , 0.001 , 100 );
+    //    integrate_n_steps(stepper, auv, state , 0.0 , 0.001 , 100 );
     integrate_const(stepper, auv, state , 0.0 , 0.1 , 0.001 ); // 1x speed simulation
+
+    cout << "Truth: ";
 
     for(int i=0; i<12; i++) {
         printf("%2.3f ", state(i));
-		fp << state(i) << " ";
-	}
-	for(int i=0; i<6; i++) {
-		printf("%2.3f ", in(i));
-		fp << in(i) << " ";
-	}
+        fp << state(i) << " ";
+    }
+    for(int i=0; i<6; i++) {
+        printf("%2.3f ", in(i));
+        fp << in(i) << " ";
+    }
 
-	fp << "\n";
+    fp << "\n";
     printf("\n");
     fflush(NULL);
-	
-	int64_t timeStamp = timestamp_now();    
+
+    int64_t timeStamp = timestamp_now();
 
     // publish the nav message
     auv_acfr_nav_t nav;
@@ -345,31 +358,184 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     
     nav.altitude = WATER_DEPTH - nav.depth;
 
-//    lcm->publish("ACFR_NAV.SIM", &nav);
-	lcm->publish("ACFR_NAV", &nav);
-	// for simulating the sensors, acfr_new should be publishing the ACFR_NAV
+    lcm->publish("ACFR_NAV.SIM", &nav);
+    //	lcm->publish("ACFR_NAV", &nav);
+    // for simulating the sensors, acfr_nav_new should be publishing the ACFR_NAV
 
-    tcm_t tcm;
-	tcm.utime = timeStamp;
-    tcm.heading = state(5);
- 	tcm.roll= state(3);
- 	tcm.pitch= state(4);
- 	tcm.temperature = 20;
- 	
-	ysi_t ysi;
-	ysi.utime = timeStamp;
-    ysi.depth = state(2);
+    //TCM compass
+    if (timeStamp - last_tcm_time > 0.1*1e6) // 10 Hz
+    {
+        last_tcm_time = timeStamp;
+        senlcm::tcm_t tcm;
+        tcm.utime = timeStamp;
+        tcm.heading = state(5) - MAG_VAR + rand_n()*0.25*M_PI/180;
+        tcm.roll= state(3) + rand_n()*0.25*M_PI/180;
+        tcm.pitch= state(4) + rand_n()*0.25*M_PI/180;
+        tcm.temperature = 20;
+        lcm->publish("TCM", &tcm);
+    }
+
+    // YSI depth
+    if (timeStamp - last_ysi_time > 0.1*1e6) // 10 Hz
+        //if(0)
+    {
+        last_ysi_time = timeStamp;
+        senlcm::ysi_t ysi;
+        ysi.utime = timeStamp;
+        ysi.salinity = 35; // ppt
+        ysi.temperature = 20;
+        ysi.depth = state(2) + rand_n()*0.1;
+        ysi.turbidity = 0;
+        ysi.chlorophyl = 0;
+        ysi.conductivity = 0;
+        ysi.oxygen = 0;
+        ysi.battery = 0;
+        lcm->publish("YSI", &ysi);
+    }
     
-    gpsd3_t gpsd3;
-    gpsd3.utime = timeStamp;
-    senlcm::gpsd3_fix_t gps_fix;
-    gps_fix.latitude = 0;
-    gps_fix.longitude = 0;
-    gps_fix.utime = timeStamp;
-    gpsd3.fix = gps_fix;	
-	
+    // GPS
+    if (timeStamp - last_gps_time > 1*1e6) // 1 Hz
+    {
+        last_gps_time = timeStamp;
+        if (nav.depth < 2) // 1m depth is where GPS cuts out, but simulation starts at 1m depth, so make it 2
+        {
+            SMALL::Vector4D nuLinear;
+            nuLinear = nav.vx, nav.vy, nav.vz, 0.0;
+            SMALL::Pose3D auvPose;
+            auvPose.setPosition(nav.x, nav.y, nav.depth);
+            auvPose.setRollPitchYawRad(nav.roll, nav.pitch, nav.heading);
+            SMALL::Vector3D etaDotLin;
+            etaDotLin = (auvPose.get3x4TransformationMatrix() * nuLinear);
 
-	
+            senlcm::gpsd3_t * gpsd3;
+            gpsd3 = new senlcm::gpsd3_t;
+            std::vector< int16_t > gused;
+            std::vector< int16_t > gPRN;
+            std::vector< int16_t > gelevation;
+            std::vector< int16_t > gazimuth;
+            std::vector< int16_t > gss;
+
+            gpsd3->online = 0;
+            gpsd3->fix.ept = 0;
+            gpsd3->fix.epy = 0;
+            gpsd3->fix.epx = 0;
+            gpsd3->fix.epv = 0;
+            gpsd3->fix.epd = 0;
+            gpsd3->fix.eps = 0;
+            gpsd3->fix.climb = 0;
+            gpsd3->fix.epc = 0;
+            gpsd3->geoidal_separation = 0;
+            gpsd3->satellites_used = GPS_CHANNELS;
+            for (int i=0; i<gpsd3->satellites_used; i++)
+                gused.push_back(0);
+
+            gpsd3->used = gused;
+            gpsd3->dop.pdop = 0;
+            gpsd3->dop.hdop = 0;
+            gpsd3->dop.tdop = 0;
+            gpsd3->dop.gdop = 0;
+            gpsd3->dop.xdop = 0;
+            gpsd3->dop.ydop = 0;
+            gpsd3->epe    = 0;
+            gpsd3->skyview_utime = 0;
+            gpsd3->satellites_visible = GPS_CHANNELS;
+            for (int i=0; i<gpsd3->satellites_visible; i++) {
+                gPRN.push_back(0);
+                gelevation.push_back(0);
+                gazimuth.push_back(0);
+                gss.push_back(0);
+            }
+            gpsd3->PRN = gPRN;
+            gpsd3->elevation = gelevation;
+            gpsd3->azimuth = gazimuth;
+            gpsd3->ss = gss;
+            gpsd3->dev.path = strdup("");
+            gpsd3->dev.flags = 0;
+            gpsd3->dev.driver = strdup("");
+            gpsd3->dev.subtype = strdup("");
+            gpsd3->dev.activated = 0;
+            gpsd3->dev.baudrate = 0;
+            gpsd3->dev.stopbits = 0;
+            gpsd3->dev.cycle = 0;
+            gpsd3->dev.mincycle = 0;
+            gpsd3->dev.driver_mode = 0;
+            gpsd3->fix.track = atan2( etaDotLin[1], etaDotLin[0] ) * 180/M_PI;
+            gpsd3->fix.speed = pow(pow(etaDotLin[0],2) + pow(etaDotLin[1],2),0.5);
+            double latitude_fix, longitude_fix;
+            map_projection_sim->calc_geo_coords( nav.x + rand_n()*2, nav.y + rand_n()*2, latitude_fix, longitude_fix );
+            gpsd3->fix.latitude = latitude_fix * M_PI/180;
+            gpsd3->fix.longitude = longitude_fix * M_PI/180;
+            gpsd3->fix.altitude = -nav.depth;
+            gpsd3->fix.utime = timeStamp;
+            gpsd3->utime = timeStamp;
+            gpsd3->fix.mode = 3;
+            gpsd3->status = 1;
+            gpsd3->tag = strdup("");
+            lcm->publish("GPSD_CLIENT", gpsd3);
+            delete gpsd3;
+        }
+    }
+    
+    // DVL
+    if (timeStamp - last_dvl_time > 0.3*1e6) // once every 0.3 seconds
+    {
+        last_dvl_time = timeStamp;
+        senlcm::rdi_pd5_t rdi;
+
+        rdi.utime = timeStamp;
+        rdi.pd4.xducer_head_temp = 20;
+        rdi.pd4.altitude = nav.altitude;
+        rdi.pd4.range[0] = nav.altitude;
+        rdi.pd4.range[1] = nav.altitude;
+        rdi.pd4.range[2] = nav.altitude;
+        rdi.pd4.range[3] = nav.altitude;
+        rdi.pd4.btv[0] = nav.vx + rand_n()*0.003;
+        rdi.pd4.btv[1] = nav.vy + rand_n()*0.003;
+        rdi.pd4.btv[2] = nav.vz + rand_n()*0.003;
+        rdi.pitch = nav.pitch + rand_n()*0.25*M_PI/180;
+        rdi.roll = nav.roll + rand_n()*0.25*M_PI/180;
+        rdi.heading = nav.heading  - MAG_VAR + rand_n()*2*M_PI/180;
+
+        if (nav.altitude < 50)
+            rdi.pd4.btv_status = 0;
+        else
+            rdi.pd4.btv_status = 1; // beyond dvl bl range
+
+        rdi.pd4.speed_of_sound = 1521.495;
+        lcm->publish("RDI", &rdi);
+    }
+
+}
+
+void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_acfr_nav_t *nav, lcm::LCM *lcm) {
+    cout << "Nav: ";
+
+    double nav_state[13];
+
+    nav_state[0] = nav->x;
+    nav_state[1] = nav->y;
+    nav_state[2] = nav->depth;
+    nav_state[3] = nav->roll;
+    nav_state[4] = nav->pitch;
+    nav_state[5] = nav->heading;
+    nav_state[6] = nav->vx;
+    nav_state[7] = nav->vy;
+    nav_state[8] = nav->vz;
+    nav_state[9] = nav->rollRate;
+    nav_state[10] = nav->pitchRate;
+    nav_state[11] = nav->headingRate;
+
+    nav_state[12] = nav->altitude;
+
+    for(int i=0; i<13; i++) {
+        printf("%2.3f ", nav_state[i]);
+        fp_nav << nav_state[i] << " ";
+    }
+
+    fp_nav << "\n";
+    printf("\n");
+    fflush(NULL);
+
 }
 
 int main_exit;
@@ -385,16 +551,16 @@ int main(int argc, char **argv)
     main_exit = 0;
     signal(SIGINT, signal_handler);
 
-    lcm::LCM lcm;  
-    lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
-    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
+    lcm::LCM lcm;
+
+    srand(time(NULL));
     
     BotParam *param = NULL;
     param = bot_param_new_from_server (lcm.getUnderlyingLCM(), 1);
     if(param == NULL)
         return 0;
-        
-    char rootkey[64];        
+
+    char rootkey[64];
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
@@ -403,21 +569,34 @@ int main(int argc, char **argv)
     Config_File *slamConfigFile;
     slamConfigFile = new Config_File(slamConfigFileName);
 
-    slamConfigFile->get_value( "LATITUDE", latitude);
-    slamConfigFile->get_value( "LONGITUDE", longitude);
+    double latitude_sim, longitude_sim;
 
-cout << latitude << "," << longitude << endl;
+    slamConfigFile->get_value( "LATITUDE", latitude_sim);
+    slamConfigFile->get_value( "LONGITUDE", longitude_sim);
+
+    map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
+
+    int64_t timeStamp = timestamp_now();
+    last_dvl_time = timeStamp;
+    last_gps_time = timeStamp;
+    last_ysi_time = timeStamp;
+    last_tcm_time = timeStamp;
+    
+    
+    lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
+    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
+    lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
     
     // Interial matrices
     longM = m - Xudot, 			-Xwdot, 			m * zG - Xqdot,
-    		-Xwdot, 			m - Zwdot, 			-m * xG - Zqdot,
-    		m * zG - Xqdot, 	-m * xG - Zqdot, 	Iy - Mqdot;
+            -Xwdot, 			m - Zwdot, 			-m * xG - Zqdot,
+            m * zG - Xqdot, 	-m * xG - Zqdot, 	Iy - Mqdot;
     
     latM = 	m - Yvdot,			-m * zG - Ypdot,	m * xG - Yrdot,
-    		-m * zG - Ypdot,	Ix - Kpdot,			-Izx - Krdot,
-    		m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
+            -m * zG - Ypdot,	Ix - Kpdot,			-Izx - Krdot,
+            m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
     
     // initial conditions
     state(0) = 0;
@@ -437,7 +616,9 @@ cout << latitude << "," << longitude << endl;
     in(1) = 0;
     in(2) = 0;
     in(3) = 0;
-    fp.open("/tmp/log.txt", ios::out);    
+    fp.open("/tmp/log.txt", ios::out);
+    fp_nav.open("/tmp/log_nav.txt", ios::out);
+
 
     int fd = lcm.getFileno();
     fd_set rfds;
@@ -452,7 +633,11 @@ cout << latitude << "," << longitude << endl;
         if(ret > 0)
             lcm.handle();
     }
+    delete slamConfigFile;
+    delete map_projection_sim;
     fp.close();
+    fp_nav.close();
     return 0;
 }
+
 

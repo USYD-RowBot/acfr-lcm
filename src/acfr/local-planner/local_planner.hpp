@@ -17,6 +17,10 @@
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
 
+#define DOUBLE_MAX std::numeric_limits< double >::max()
+
+int getMin(double array[],int size);
+
 class LocalPlanner {
     public:
         LocalPlanner();
@@ -87,6 +91,9 @@ class LocalPlanner {
         double velChangeDist;
         double defaultLegVel;
 		double waypointTimeout;	
+        double forwardBound;
+        double sideBound;
+        double distToDestBound;
 	
 		int64_t waypointTime;
         

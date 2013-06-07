@@ -213,7 +213,7 @@ int GlobalPlanner::sendLeg()
 		else if (waypoint_yaw < 0)
 			waypoint_yaw = waypoint_yaw + 2*M_PI;
 
-		cout << "Compare yaw commands (lookahead)" << (*currPoint).pose.getYawRad()*180/M_PI << " " << yaw2*180/M_PI << " " << waypoint_yaw*180/M_PI << endl;
+        //cout << "Compare yaw commands (lookahead)" << (*currPoint).pose.getYawRad()*180/M_PI << " " << yaw2*180/M_PI << " " << waypoint_yaw*180/M_PI << endl;
 		
 	}
     // Put together the LEG message for the path planner
