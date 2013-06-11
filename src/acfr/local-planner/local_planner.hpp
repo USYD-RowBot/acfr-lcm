@@ -18,6 +18,7 @@
 #define LOCAL_PLANNER_HPP
 
 #define DOUBLE_MAX std::numeric_limits< double >::max()
+#define ITERATION_NUM 3
 
 int getMin(double array[],int size);
 
@@ -94,7 +95,10 @@ class LocalPlanner {
         double forwardBound;
         double sideBound;
         double distToDestBound;
-	
+        double maxAngleWaypointChange;
+        double radiusIncrease;
+        double maxAngle;
+
 		int64_t waypointTime;
         
         

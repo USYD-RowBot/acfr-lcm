@@ -34,7 +34,8 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReached(false), 
     destID(0), turningRadius(0), maxPitch(0), wpDropDist(4.0), forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
-    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointTime(timestamp_now()) {
+    lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointTime(timestamp_now()),
+    maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300) {
     
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
@@ -132,8 +133,10 @@ int LocalPlanner::calculateWaypoints() {
         }
     }*/
 
-    double pathLengths[40];
-    double testTurningRadius[40];
+    // First try to change the turning radius
+
+    double pathLengths[ITERATION_NUM];
+    double testTurningRadius[ITERATION_NUM];
     testTurningRadius[0] = turningRadius;
     bool feasibleFound = false;
 
@@ -147,9 +150,9 @@ int LocalPlanner::calculateWaypoints() {
         pathLengths[0] = DOUBLE_MAX; // max this out
     }
 
-    for (int i=0;i<39;i++)
+    for (int i=0;i<ITERATION_NUM-1;i++)
     {
-        testTurningRadius[i+1] = testTurningRadius[i] + 1;
+        testTurningRadius[i+1] = testTurningRadius[i] + radiusIncrease;
         dp.setCircleRadius( testTurningRadius[i+1]);
         waypoints = dp.calcPath( currPose, destPose );
 
@@ -165,27 +168,115 @@ int LocalPlanner::calculateWaypoints() {
 
     }
 
-    double bestRadius;
+    //Check if we are going in a loop, if we are and we are trying to essentially go straight, and it looks like shifting the waypoint might help, try it to avoid the loop
 
-    if (feasibleFound == true)
+    destPose.getYawRad();
+    currPose.getYawRad();
+    double desHeading = atan2(destPose.getY()-currPose.getY(),destPose.getX()-currPose.getX());
+
+    if ( (dp.getMaxAngle() > maxAngle)&&( fabs(currPose.getYawRad()-desHeading)<maxAngleFromLine*M_PI/180 )&&( fabs(destPose.getYawRad()-desHeading)<maxAngleFromLine*M_PI/180 ) ) // if we are doing a loop, so that it only does this when way points are near aligned given the entry and exit headings, and poses
     {
-        bestRadius = testTurningRadius[getMin(pathLengths,40)]; // get the minimum path length
-        cout << "bestRadius: " << bestRadius << endl;
-        dp.setCircleRadius( bestRadius);
-        waypoints = dp.calcPath( currPose, destPose );
+        Pose3D destPoseNew = destPose;
+        double rOld,pOld,hOld;
+
+        destPoseNew.getRollPitchYawRad(rOld, pOld, hOld);
+
+        double xOld = destPoseNew.getX();
+        double yOld = destPoseNew.getY();
+        double zOld = destPoseNew.getZ();
+
+        double pathLengthsNew[ITERATION_NUM*ITERATION_NUM*ITERATION_NUM*ITERATION_NUM];
+        double paramsNew[ITERATION_NUM*ITERATION_NUM*ITERATION_NUM*ITERATION_NUM][4];
+        double turningRadiusNew;// = turningRadius
+        double headingNew;// = destPose[6]
+        double xNew;// = destPose[0]
+        double yNew;// = destPose[1]
+        int path_index = 0;
+        bool feasibleFoundNew = false;
+
+        for (int i=0;i<ITERATION_NUM;i++) // go through turning radius
+        {
+            for (int j = 0;j<ITERATION_NUM;j++) // go through heading angles
+            {
+                for (int k = 0;k<ITERATION_NUM;k++) // go through waypoint shifts X
+                {
+                    for (int l = 0;l<ITERATION_NUM;l++) // go through waypoint shifts Y
+                    {
+
+                        turningRadiusNew = turningRadius + i*radiusIncrease;
+                        headingNew = hOld - maxAngleWaypointChange*(M_PI/180) + j*2*maxAngleWaypointChange/(ITERATION_NUM-1)*(M_PI/180);
+                        xNew = xOld - maxDistFromLine + k*2*maxDistFromLine/(ITERATION_NUM-1);
+                        yNew = yOld - maxDistFromLine + l*2*maxDistFromLine/(ITERATION_NUM-1);
+
+                        destPoseNew.setPosition(xNew,yNew,zOld);
+                        destPoseNew.setRollPitchYawRad(rOld, pOld, headingNew);
+
+                        dp.setCircleRadius( turningRadiusNew);
+                        waypoints = dp.calcPath( currPose, destPoseNew );
+
+                        if (waypoints.size() != 0)
+                        {
+                            feasibleFoundNew = true;
+                            pathLengthsNew[path_index] = dp.getPathLength();
+                            paramsNew[path_index][0] = turningRadiusNew;
+                            paramsNew[path_index][1] = headingNew;
+                            paramsNew[path_index][2] = xNew;
+                            paramsNew[path_index][3] = yNew;
+                        }
+                        else
+                        {
+                            pathLengthsNew[path_index] = DOUBLE_MAX; // max this out
+                        }
+                        path_index++;
+                    }
+                }
+            }
+        }
+
+        if (feasibleFoundNew == true)
+        {
+            int bestIndex = getMin(pathLengthsNew,ITERATION_NUM*ITERATION_NUM*ITERATION_NUM*ITERATION_NUM);
+            dp.setCircleRadius(paramsNew[bestIndex][0]);
+            destPoseNew.setPosition(paramsNew[bestIndex][2],paramsNew[bestIndex][3],zOld);
+            destPoseNew.setRollPitchYawRad(rOld, pOld, paramsNew[bestIndex][1]);
+
+            cout << "best offsets: " << (paramsNew[bestIndex][0] - turningRadius) << " "<< (destPoseNew.getX() - destPose.getX()) << " "<< (destPoseNew.getY() - destPose.getY()) <<" "<<((destPoseNew.getYawRad()  - destPose.getYawRad())*180/M_PI)  << endl;
+            cout << "old:"<< (turningRadius) << " "<< (destPose.getX()) << " "<< (destPose.getY()) <<" "<<((destPose.getYawRad())*180/M_PI)  << endl;
+            cout << "new:"<< (paramsNew[bestIndex][0]) << " "<< (destPoseNew.getX()) << " "<< (destPoseNew.getY()) <<" "<<((destPoseNew.getYawRad())*180/M_PI)  << endl;
+            waypoints = dp.calcPath( currPose, destPoseNew );
+        }
+        else
+        {
+            cerr << "LocalPlanner failed to generate a feasible path" << endl;
+            cerr << "\tfrom currPose: " << currPose.toString() << endl;
+            cerr << "\tto destPose: " << destPose.toString() << endl;
+
+            return 0;
+        }
+
     }
     else
     {
-        cerr << "LocalPlanner failed to generate a feasible path" << endl;
-        cerr << "\tfrom currPose: " << currPose.toString() << endl;
-        cerr << "\tto destPose: " << destPose.toString() << endl;
+        double bestRadius;
 
-        return 0;
+        if (feasibleFound == true)
+        {
+            bestRadius = testTurningRadius[getMin(pathLengths,ITERATION_NUM)]; // get the minimum path length
+            cout << "bestRadius: " << bestRadius << endl;
+            dp.setCircleRadius( bestRadius);
+            waypoints = dp.calcPath( currPose, destPose );
+        }
+        else
+        {
+            cerr << "LocalPlanner failed to generate a feasible path" << endl;
+            cerr << "\tfrom currPose: " << currPose.toString() << endl;
+            cerr << "\tto destPose: " << destPose.toString() << endl;
+
+            return 0;
+        }
     }
 
 
-
-    
     // Managed to calculate a path to destination
     //    pthread_mutex_lock(&waypointsLock);
     this->waypoints = waypoints;
@@ -257,6 +348,14 @@ int LocalPlanner::loadConfig(char *program_name)
     sprintf(key, "%s.dist_to_dest_bound", rootkey);
     distToDestBound	 = bot_param_get_double_or_fail(param, key);
 
+    sprintf(key, "%s.max_angle_waypoint_change", rootkey);
+    maxAngleWaypointChange = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.radius_increase", rootkey);
+    radiusIncrease = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.max_angle", rootkey);
+    maxAngle = bot_param_get_double_or_fail(param, key);
 
     return 1;
 }

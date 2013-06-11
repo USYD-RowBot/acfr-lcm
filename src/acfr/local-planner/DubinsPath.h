@@ -48,6 +48,8 @@ private:
 	double maxPitch;
 	double dropDist;
 	double dropAngle;
+    double angle1_report;
+    double angle2_report;
 
 	vector<Pose3D> path;
 	double pathLength;
@@ -94,6 +96,10 @@ public:
 
 		return false;
 	}
+
+    double getMaxAngle() {
+    return (fabs(angle1_report) > fabs(angle2_report) ? fabs(angle1_report) / M_PI * 180: fabs(angle2_report)/ M_PI * 180);
+    }
 };
 
 #endif // DUBINSPATH_H
