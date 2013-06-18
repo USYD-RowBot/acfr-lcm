@@ -186,7 +186,7 @@
 
 
 -->
-
+<!--
         <primative>
         <goto>
             <position x="10" y="10" z="1"/>
@@ -198,14 +198,14 @@
         </goto>
     </primative>
 
+-->
 
-<!--
 	<primative>
         <goto>
             <position x="-5" y="10" z="1"/>
             <rotation deg = "0" />
             <timeout t="200" />
-			<velocity x="1" />
+            <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
@@ -216,7 +216,7 @@
             <position x="5" y="10" z="1"/>
             <rotation deg = "0" />
             <timeout t="200" />
-			<velocity x="1" />
+            <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
@@ -227,7 +227,7 @@
             <position x="5" y="-10" z="1"/>
             <rotation deg = "0" />
             <timeout t="200" />
-			<velocity x="1" />
+            <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
@@ -240,6 +240,7 @@
             <width m="40" />
             <spacing m = "0.707" />
             <rotation deg = "0" />
+            <velocity x="1" />
             <timeout t="3600" />
             <direction d="ccw" />
             <depth mode = "depth" />
@@ -258,5 +259,5 @@
         </goto>
     </primative>
 
--->
+
 </mission>

@@ -486,13 +486,20 @@ int LocalPlanner::processWaypoints() {
     double velChDist = lp->getVelChangeDist();
     //cout << "velChDist=" << velChDist << endl;
     // Linear ramp of speed on last meter to the final way point
-    if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)){ //( distToDestWp < velChDist  ) {
+
+    //only do the linear ramp if we want to stop, otherwise don't change velocity (keep it at default)
+
+
+    cout << "Dest velocity:" << destVel << endl;
+    if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)&&(destVel==0)){ //( distToDestWp < velChDist  ) {
         desVel =  currVel - (distToDest-velChDist-distToDestBound) / velChDist * (destVel-currVel);
-        cout << "Desired velocity:" << desVel << endl;
         cout << "Dest velocity:" << destVel << endl;
+        cout << "Desired velocity:" << desVel << endl;
     }
-    else if (distToDest < velChDist + distToDestBound){
+    else if ((distToDest < distToDestBound)&&(destVel==0)){
         desVel = 0;
+        cout << "Dest velocity:" << destVel << endl;
+        cout << "Desired velocity:" << desVel << endl;
     }
 
     // Linear ramp up
@@ -517,24 +524,24 @@ int LocalPlanner::processWaypoints() {
 
 
     //if( desVel < 1e-3 ) {
-        // stop the motors
-        //cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
+    // stop the motors
+    //cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
 
     //}
     //else {
-        cc.run_mode = acfrlcm::auv_control_t::RUN;
-        cc.heading = desHeading;
-        if(lp->getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
-        {
-            cc.depth = waypoint.getZ();
-            cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
-        }
-        else
-        {
-            cc.altitude = waypoint.getZ();
-            cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
-        }
-        cc.vx = desVel;
+    cc.run_mode = acfrlcm::auv_control_t::RUN;
+    cc.heading = desHeading;
+    if(lp->getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
+    {
+        cc.depth = waypoint.getZ();
+        cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
+    }
+    else
+    {
+        cc.altitude = waypoint.getZ();
+        cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
+    }
+    cc.vx = desVel;
     //}
     // publish
     lp->lcm.publish("AUV_CONTROL", &cc);
