@@ -1,5 +1,5 @@
 
-%  matlab_plot
+ matlab_plot
 hold on
 
 ff = 0;
@@ -41,9 +41,9 @@ while 1
     
     hold on
     f = plot3(x(1:t),y(1:t),z(1:t),'k');
-%     f2 = plot3(x2(1:t2),y2(1:t2),z2(1:t2),'b');
+    f2 = plot3(x2(1:t2),y2(1:t2),z2(1:t2),'b');
     g = plot3(x(t),y(t),z(t),'ko');
-%     g2 = plot3(x2(t2),y2(t2),z2(t2),'bo');
+    g2 = plot3(x2(t2),y2(t2),z2(t2),'bo');
     axis equal;
     %view(90,90);
     hold off

@@ -444,7 +444,7 @@ int LocalPlanner::processWaypoints() {
     //cout << "Current pose is   : " << currPose.getX() << ", " << currPose.getY() << ", " << currPose.getZ() << " < " << currPose.getYawRad()/M_PI*180. << "deg" << endl;
     //cout << "Next way point is : " << waypoint.getX() << ", " << waypoint.getY() << ", " << waypoint.getZ() << " < " << waypoint.getYawRad()/M_PI*180. << "deg" << endl;
     //cout << "Relative pose is  : " << wpRel.getX() << ", " << wpRel.getY() << ", " << wpRel.getZ() << " < " << wpRel.getYawRad()/M_PI*180. << "deg" << endl;
-    //cout << "Dist to DEST is   : " << distToDest << endl;
+    cout << "Dist to DEST is   : " << distToDest << endl;
 
 
     //cout << "Time for waypoint (Timeout): " << ( timestamp_now() - lp->getWaypointTime() )/1000000 << " (" << lp->getWaypointTimeout() << ")" << endl;
@@ -481,13 +481,20 @@ int LocalPlanner::processWaypoints() {
 
     // Calculate desired velocity. If within 5m from dest pose, start adjusting the velocity
     double desVel = 0;
-    double distToDestWp = numWaypoints * lp->getWpDropDist();
-    //cout << "\ndistToDestWp=" << distToDestWp << endl;
+    //double distToDestWp = numWaypoints * lp->getWpDropDist();
+    //cout << "distToDestWp=" << distToDestWp << endl;
     double velChDist = lp->getVelChangeDist();
+    //cout << "velChDist=" << velChDist << endl;
     // Linear ramp of speed on last meter to the final way point
-    if( distToDestWp < velChDist  ) { //( distToDest < velChDist ) {
-        desVel =  currVel - (distToDest-velChDist) / velChDist * (destVel-currVel);
+    if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)){ //( distToDestWp < velChDist  ) {
+        desVel =  currVel - (distToDest-velChDist-distToDestBound) / velChDist * (destVel-currVel);
+        cout << "Desired velocity:" << desVel << endl;
+        cout << "Dest velocity:" << destVel << endl;
     }
+    else if (distToDest < velChDist + distToDestBound){
+        desVel = 0;
+    }
+
     // Linear ramp up
     //        else if( distFromStart < velChDist  && lp->startVel < 1e-3 ) {
     //            desVel = lp->getDefaultLegVel();// * distFromStart / velChDist;
@@ -495,6 +502,8 @@ int LocalPlanner::processWaypoints() {
     else {
         desVel = lp->getDefaultLegVel();
     }
+
+
 
 
     //cout << "DESIRED" << endl;
@@ -507,11 +516,12 @@ int LocalPlanner::processWaypoints() {
     cc.utime = timestamp_now();
 
 
-    if( desVel < 1e-3 ) {
+    //if( desVel < 1e-3 ) {
         // stop the motors
-        cc.run_mode = acfrlcm::auv_control_t::STOP;
-    }
-    else {
+        //cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
+
+    //}
+    //else {
         cc.run_mode = acfrlcm::auv_control_t::RUN;
         cc.heading = desHeading;
         if(lp->getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
@@ -525,7 +535,7 @@ int LocalPlanner::processWaypoints() {
             cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
         }
         cc.vx = desVel;
-    }
+    //}
     // publish
     lp->lcm.publish("AUV_CONTROL", &cc);
 

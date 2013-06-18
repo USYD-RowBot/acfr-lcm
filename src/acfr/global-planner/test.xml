@@ -187,6 +187,19 @@
 
 -->
 
+        <primative>
+        <goto>
+            <position x="10" y="10" z="1"/>
+            <rotation deg = "0" />
+            <timeout t="200" />
+            <velocity x="0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="on"/>
+        </goto>
+    </primative>
+
+
+<!--
 	<primative>
         <goto>
             <position x="-5" y="10" z="1"/>
@@ -245,6 +258,5 @@
         </goto>
     </primative>
 
-
-    
+-->
 </mission>

@@ -368,7 +368,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         last_tcm_time = timeStamp;
         senlcm::tcm_t tcm;
         tcm.utime = timeStamp;
-        tcm.heading = state(5) - MAG_VAR + rand_n()*0.25*M_PI/180;
+        tcm.heading = state(5) - MAG_VAR + rand_n()*0.5*M_PI/180;
         tcm.roll= state(3) + rand_n()*0.25*M_PI/180;
         tcm.pitch= state(4) + rand_n()*0.25*M_PI/180;
         tcm.temperature = 20;
