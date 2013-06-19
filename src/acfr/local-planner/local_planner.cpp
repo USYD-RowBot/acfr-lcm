@@ -487,18 +487,15 @@ int LocalPlanner::processWaypoints() {
     //cout << "velChDist=" << velChDist << endl;
     // Linear ramp of speed on last meter to the final way point
 
-    //only do the linear ramp if we want to stop, otherwise don't change velocity (keep it at default)
-
-
     cout << "Dest velocity:" << destVel << endl;
-    if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)&&(destVel==0)){ //( distToDestWp < velChDist  ) {
+    if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)){ //( distToDestWp < velChDist  ) {
         desVel =  currVel - (distToDest-velChDist-distToDestBound) / velChDist * (destVel-currVel);
-        cout << "Dest velocity:" << destVel << endl;
+        cout << "Destination velocity:" << destVel << endl;
         cout << "Desired velocity:" << desVel << endl;
     }
-    else if ((distToDest < distToDestBound)&&(destVel==0)){
+    else if (distToDest < distToDestBound){
         desVel = 0;
-        cout << "Dest velocity:" << destVel << endl;
+        cout << "Destination velocity:" << destVel << endl;
         cout << "Desired velocity:" << desVel << endl;
     }
 
