@@ -17,7 +17,7 @@
  */
 DubinsPath::DubinsPath(double _circRad, double _maxPitch, double _dropDist, double _dropAngle) :
 		minDistI(0), minDist(0), minPitch(0), minSide1(0), minSide2(0), circleRad(_circRad), maxPitch(_maxPitch), dropDist(
-				_dropDist), dropAngle(_dropAngle) {
+        _dropDist), dropAngle(_dropAngle), angle1_report(0), angle2_report(0)  {
 
 	side[0] = right;
 	side[1] = left;
@@ -332,17 +332,19 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 	}
 	double dist2 = angle2 * this->circleRad;
 
-	cout << endl << "Shortest Dubins path: " << endl;
-	cout << "\tFirst circle on " << (minSide1 == this->right ? "right" : "left") << endl;
-	cout << "\tSecond circle on " << (minSide2 == this->right ? "right" : "left") << endl;
-	cout << "\tPath length " << minDist << endl;
-	cout << fixed << setprecision(2) << "First circle distance (angle) : " << dist1 << "m (" << angle1 / M_PI * 180
-			<< "deg)" << endl;
-	cout << "Straight path distance        : " << straightDist << "m" << endl;
-	cout << "Second circle distance (angle): " << dist2 << "m (" << angle2 / M_PI * 180 << ")deg" << endl;
+    angle1_report = angle1 / M_PI * 180;
+    angle2_report = angle2 / M_PI * 180;
+    //cout << endl << "Shortest Dubins path: " << endl;
+    //cout << "\tFirst circle on " << (minSide1 == this->right ? "right" : "left") << endl;
+    //cout << "\tSecond circle on " << (minSide2 == this->right ? "right" : "left") << endl;
+    //cout << "\tPath length " << minDist << endl;
+    //cout << fixed << setprecision(2) << "First circle distance (angle) : " << dist1 << "m (" << angle1 / M_PI * 180
+    //		<< "deg)" << endl;
+    //cout << "Straight path distance        : " << straightDist << "m" << endl;
+    //cout << "Second circle distance (angle): " << dist2 << "m (" << angle2 / M_PI * 180 << ")deg" << endl;
 
-	cout << "An altitude change of " << destPose.getZ() - currPose.getZ()
-			<< "m is required. This is achieved with a pitch of " << minPitch / M_PI * 180. << "deg" << endl;
+    //cout << "An altitude change of " << destPose.getZ() - currPose.getZ()
+    //		<< "m is required. This is achieved with a pitch of " << minPitch / M_PI * 180. << "deg" << endl;
 
 	Pose3D pRel;
 

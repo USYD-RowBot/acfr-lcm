@@ -1,14 +1,14 @@
 10
 
 dir
-420
+440
 http://libbot.googlecode.com/svn/trunk/bot2-lcm-utils
 http://libbot.googlecode.com/svn
 
 
 
-2012-09-27T04:45:35.038451Z
-414
+2013-01-18T21:50:56.908199Z
+429
 ashuang
 has-props
 
@@ -26,12 +26,6 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
-cmake
-dir
-
-python
-dir
-
 src
 dir
 
@@ -41,7 +35,7 @@ file
 
 
 
-2012-10-10T21:08:24.000000Z
+2013-05-06T23:52:51.000000Z
 85b6882af9b9e8459479bff96d21dcdc
 2011-10-24T20:30:51.688155Z
 288
@@ -75,7 +69,7 @@ file
 
 
 
-2012-10-10T21:08:24.000000Z
+2013-05-06T23:52:51.000000Z
 f60c19e4df327270cfe0533c071ad8ed
 2011-01-14T15:46:54.668161Z
 135
@@ -109,7 +103,7 @@ file
 
 
 
-2012-10-10T21:08:24.000000Z
+2013-05-06T23:52:51.000000Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -136,4 +130,10 @@ abachrach@gmail.com
 
 
 1598
+
+cmake
+dir
+
+python
+dir
 

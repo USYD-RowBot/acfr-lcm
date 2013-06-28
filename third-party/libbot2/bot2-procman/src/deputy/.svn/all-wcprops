@@ -1,25 +1,25 @@
 K 25
 svn:wc:ra_dav:version-url
 V 47
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy
 END
 signal_pipe.h
 K 25
 svn:wc:ra_dav:version-url
 V 61
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/signal_pipe.h
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/signal_pipe.h
 END
 procman.c
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/procman.c
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/procman.c
 END
 procinfo.c
 K 25
 svn:wc:ra_dav:version-url
 V 58
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/procinfo.c
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/procinfo.c
 END
 procman.h
 K 25
@@ -37,29 +37,29 @@ lcm_util.c
 K 25
 svn:wc:ra_dav:version-url
 V 58
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/lcm_util.c
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/lcm_util.c
 END
 procman_deputy.c
 K 25
 svn:wc:ra_dav:version-url
 V 64
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/procman_deputy.c
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/procman_deputy.c
 END
 signal_pipe.c
 K 25
 svn:wc:ra_dav:version-url
 V 61
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/signal_pipe.c
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/signal_pipe.c
 END
 CMakeLists.txt
 K 25
 svn:wc:ra_dav:version-url
 V 62
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/CMakeLists.txt
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/CMakeLists.txt
 END
 lcm_util.h
 K 25
 svn:wc:ra_dav:version-url
 V 58
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/lcm_util.h
+/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/lcm_util.h
 END

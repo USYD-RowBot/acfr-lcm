@@ -3,12 +3,6 @@ svn:wc:ra_dav:version-url
 V 55
 /svn/!svn/ver/414/trunk/bot2-lcmgl/src/bot_lcmgl_render
 END
-lcmgl_decode.c
-K 25
-svn:wc:ra_dav:version-url
-V 70
-/svn/!svn/ver/414/trunk/bot2-lcmgl/src/bot_lcmgl_render/lcmgl_decode.c
-END
 lcmgl_decode.h
 K 25
 svn:wc:ra_dav:version-url
@@ -32,4 +26,10 @@ K 25
 svn:wc:ra_dav:version-url
 V 76
 /svn/!svn/ver/414/trunk/bot2-lcmgl/src/bot_lcmgl_render/lcmgl_bot_renderer.h
+END
+lcmgl_decode.c
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/414/trunk/bot2-lcmgl/src/bot_lcmgl_render/lcmgl_decode.c
 END

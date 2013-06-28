@@ -6,7 +6,6 @@
  *  28/11/12
  */
  
- 
  #include "mission.hpp"
  
  Mission::Mission()
@@ -126,6 +125,14 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                 if(!getSingleValue(element, "t", missionTimeout)) {
                     cerr << "Not mission_timeout variable set in global section." << endl;
                     return 0;
+                }
+            }
+            
+            if(element->get_name().lowercase() == "location")
+            {
+                if(!getSingleValue(element, "lat", originLat) || !getSingleValue(element, "lon", originLon)) {
+                    cerr << "Origin not set, set the location variable." << endl;
+                    return 0;            
                 }
             }
             
@@ -375,20 +382,20 @@ int Mission::parsePrimitive(xmlpp::Node *node)
             }
             if(element->get_name().lowercase() == "width")
             {
-                if(!getSingleValue(element, "w", w))
+                if(!getSingleValue(element, "m", w))
                     return 0;
                 
                 mp->setWidth(w);
             }
             if(element->get_name().lowercase() == "length")
             {
-                if(!getSingleValue(element, "l", l))
+                if(!getSingleValue(element, "m", l))
                     return 0;
                 mp->setLength(l);
             }
             if(element->get_name().lowercase() == "spacing")
             {
-                if(!getSingleValue(element, "s", s))
+                if(!getSingleValue(element, "m", s))
                     return 0;
                 mp->setPathOffset(s);
             }
@@ -398,8 +405,11 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     mp->setHeadingDeg(rot);
                 else if(getSingleValue(element, "rad", rot))
                     mp->setHeadingRad(rot);
-                else  
+                else
+				{
+					cout << "Could not set heading" << endl;  
                     return 0;
+				}
             }
             if(element->get_name().lowercase() == "velocity")
             {
@@ -539,4 +549,4 @@ void Mission::dumpMatlab(string filename) {
 	fout << "view(0,90)" << endl;
 
 	//system("matlab matlab_plot.m");
-}    
+}

@@ -17,6 +17,10 @@
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
 
+#define DOUBLE_MAX std::numeric_limits< double >::max()
+#define ITERATION_NUM 3
+
+int getMin(double array[],int size);
 
 class LocalPlanner {
     public:
@@ -26,6 +30,7 @@ class LocalPlanner {
         int onNav(const acfrlcm::auv_acfr_nav_t *nav);
         int onPathCommand(const acfrlcm::auv_path_command_t *pc);
         int calculateWaypoints();
+	int processWaypoints();
         lcm::LCM lcm;
         int process();
         int sendResponse();
@@ -40,7 +45,7 @@ class LocalPlanner {
         
         int getDepthMode(void) const { return depthMode; }
         double getDefaultLegVel(void) const { return defaultLegVel; }
-        double getVelChangeDist(void) const { return velChangeDist; }
+		double getVelChangeDist(void) const { return velChangeDist; }
       
         bool getDestReached( void ) const { return destReached; }
         void setDestReached( bool b ) { destReached = b; }
@@ -49,10 +54,14 @@ class LocalPlanner {
         void setNewDest( bool b ) { newDest = b; }
         
         double getWpDropDist( void ) const { return wpDropDist; }
-        
-        pthread_mutex_t currPoseLock;
-        pthread_mutex_t destPoseLock;
-        pthread_mutex_t waypointsLock;
+
+		double getWaypointTimeout(void) const { return waypointTimeout; }
+		void resetWaypointTime( int64_t t ) { waypointTime = t; }
+		int64_t getWaypointTime( void ) { return waypointTime; }
+		
+//        pthread_mutex_t currPoseLock;
+//        pthread_mutex_t destPoseLock;
+//        pthread_mutex_t waypointsLock;
         
         vector<Pose3D> waypoints;
         
@@ -82,7 +91,15 @@ class LocalPlanner {
         double maxAngleFromLine;
         double velChangeDist;
         double defaultLegVel;
+		double waypointTimeout;	
+        double forwardBound;
+        double sideBound;
+        double distToDestBound;
+        double maxAngleWaypointChange;
+        double radiusIncrease;
+        double maxAngle;
 
+		int64_t waypointTime;
         
         
         

@@ -63,6 +63,7 @@ class Mission
         double dropDistance;
         double dropAngleRad;
         double missionTimeout;
+        double originLat, originLon;
         
 };
 

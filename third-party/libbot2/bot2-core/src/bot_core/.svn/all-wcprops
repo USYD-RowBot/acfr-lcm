@@ -1,133 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 46
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core
+/svn/!svn/ver/430/trunk/bot2-core/src/bot_core
 END
-small_linalg.c
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/small_linalg.c
-END
-ptr_circular.h
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ptr_circular.h
-END
-signal_pipe.h
-K 25
-svn:wc:ra_dav:version-url
-V 60
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/signal_pipe.h
-END
-ctrans.h
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ctrans.h
-END
-set.h
-K 25
-svn:wc:ra_dav:version-url
-V 52
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/set.h
-END
-bot_core.h
+fasttrig.c
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/bot_core.h
-END
-small_linalg.h
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/small_linalg.h
-END
-timestamp.c
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timestamp.c
-END
-circular.c
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/circular.c
-END
-timestamp.h
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timestamp.h
-END
-lcm_util.c
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/lcm_util.c
-END
-circular.h
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/circular.h
-END
-timespec.c
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timespec.c
-END
-glib_util.c
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/glib_util.c
-END
-lcm_util.h
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/lcm_util.h
-END
-timespec.h
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timespec.h
-END
-glib_util.h
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/glib_util.h
-END
-serial.c
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/serial.c
-END
-rotations.c
-K 25
-svn:wc:ra_dav:version-url
-V 58
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/rotations.c
-END
-serial.h
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/serial.h
-END
-tictoc.c
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/tictoc.c
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/fasttrig.c
 END
 rotations.h
 K 25
@@ -135,11 +15,23 @@ svn:wc:ra_dav:version-url
 V 58
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/rotations.h
 END
-tictoc.h
+fasttrig.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/fasttrig.h
+END
+ptr_circular.c
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ptr_circular.c
+END
+ctrans.c
 K 25
 svn:wc:ra_dav:version-url
 V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/tictoc.h
+/svn/!svn/ver/430/trunk/bot2-core/src/bot_core/ctrans.c
 END
 gps_linearize.c
 K 25
@@ -153,17 +45,29 @@ svn:wc:ra_dav:version-url
 V 52
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ppm.c
 END
-CMakeLists.txt
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/CMakeLists.txt
-END
 ringbuf.c
 K 25
 svn:wc:ra_dav:version-url
 V 56
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ringbuf.c
+END
+small_linalg.c
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/small_linalg.c
+END
+ptr_circular.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ptr_circular.h
+END
+ctrans.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ctrans.h
 END
 gps_linearize.h
 K 25
@@ -189,23 +93,47 @@ svn:wc:ra_dav:version-url
 V 52
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ppm.h
 END
+bot_core.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/bot_core.h
+END
+small_linalg.h
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/small_linalg.h
+END
+circular.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/circular.c
+END
 fileutils.h
 K 25
 svn:wc:ra_dav:version-url
 V 58
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/fileutils.h
 END
-camtrans.c
+lcm_util.c
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/camtrans.c
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/lcm_util.c
 END
-color_util.c
+circular.h
 K 25
 svn:wc:ra_dav:version-url
-V 59
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/color_util.c
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/circular.h
+END
+timespec.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timespec.c
 END
 ssocket.c
 K 25
@@ -213,17 +141,23 @@ svn:wc:ra_dav:version-url
 V 56
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ssocket.c
 END
-camtrans.h
+lcm_util.h
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/camtrans.h
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/lcm_util.h
 END
-color_util.h
+timespec.h
 K 25
 svn:wc:ra_dav:version-url
-V 59
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/color_util.h
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timespec.h
+END
+serial.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/serial.c
 END
 ssocket.h
 K 25
@@ -243,11 +177,17 @@ svn:wc:ra_dav:version-url
 V 56
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/minheap.c
 END
-fasttrig.c
+serial.h
 K 25
 svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/fasttrig.c
+V 55
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/serial.h
+END
+tictoc.c
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/tictoc.c
 END
 rand_util.h
 K 25
@@ -267,29 +207,17 @@ svn:wc:ra_dav:version-url
 V 54
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/trans.c
 END
-fasttrig.h
+tictoc.h
 K 25
 svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/fasttrig.h
-END
-ptr_circular.c
-K 25
-svn:wc:ra_dav:version-url
-V 61
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ptr_circular.c
+V 55
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/tictoc.h
 END
 signal_pipe.c
 K 25
 svn:wc:ra_dav:version-url
 V 60
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/signal_pipe.c
-END
-ctrans.c
-K 25
-svn:wc:ra_dav:version-url
-V 55
-/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/ctrans.c
 END
 math_util.h
 K 25
@@ -303,9 +231,81 @@ svn:wc:ra_dav:version-url
 V 52
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/set.c
 END
+CMakeLists.txt
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/423/trunk/bot2-core/src/bot_core/CMakeLists.txt
+END
 trans.h
 K 25
 svn:wc:ra_dav:version-url
 V 54
 /svn/!svn/ver/414/trunk/bot2-core/src/bot_core/trans.h
+END
+signal_pipe.h
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/signal_pipe.h
+END
+set.h
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/set.h
+END
+timestamp.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timestamp.c
+END
+timestamp.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/timestamp.h
+END
+camtrans.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/camtrans.c
+END
+glib_util.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/glib_util.c
+END
+color_util.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/color_util.c
+END
+camtrans.h
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/camtrans.h
+END
+glib_util.h
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/glib_util.h
+END
+color_util.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/color_util.h
+END
+rotations.c
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/!svn/ver/414/trunk/bot2-core/src/bot_core/rotations.c
 END

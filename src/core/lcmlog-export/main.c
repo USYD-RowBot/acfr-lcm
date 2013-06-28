@@ -47,7 +47,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
 	senlcm_ysi_t_subscribe (lcm, "YSI", &senlcm_ysi_t_handler, lle);
     senlcm_rdi_pd0_t_subscribe (lcm, "RDI_PD0", &senlcm_rdi_pd0_t_handler, lle);
     senlcm_os_power_system_t_subscribe (lcm, "BATTERY", &senlcm_os_power_system_t_handler, lle);
-    
+	senlcm_micron_ping_t_subscribe (lcm, "MICRON", &senlcm_micron_ping_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);

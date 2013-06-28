@@ -96,7 +96,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state_t *state = (state_t *)u;
     
     // send out a beat msg once a second
-    send_log_message(state, "\0");
+    //send_log_message(state, "\0");
 }
 
 
@@ -134,7 +134,7 @@ int parse_message(char *data, state_t *state)
         sprintf(command, "mkdir -p %s\n", state->dir);
         system(command);
         system("killall acfr-cam-logger");
-        sprintf(command, "/home/auv/perls/bin/acfr-cam-logger -e PROSILICA_..16 -o %s &\n", state->dir);
+        sprintf(command, "/home/auv/git/acfr_lcm/build/bin/acfr-cam-logger -c PROSILICA_..16 -o %s &\n", state->dir);
         printf("Command: %s", command);
         system(command);
     
@@ -285,14 +285,26 @@ int main()
                 FD_SET(new_fd, &read_fds);
 
                 tv.tv_sec = 2;
-                if(select(new_fd+1, &read_fds, NULL, NULL, NULL) > 0)
+                int selectReturn = select(new_fd+1, &read_fds, NULL, NULL, &tv);
+                if(selectReturn > 0)
                 {
                     // we have data to read
                     memset(buffer, 0, sizeof(buffer));
                     bytes_read = read(new_fd, buffer, sizeof(buffer));
-                    parse_message(buffer, &state);
+                    if (bytes_read > 0)
+                    {
+                       parse_message(buffer, &state);
+                    } else {
+                       printf("cam server: broken read. Closing connection\n");
+                       close(new_fd);
+                       connected = 0;
+                    }
                     FD_SET(new_fd, &read_fds);
-                }
+                } else if (selectReturn < 0) {
+                    printf("cam server: Error returned from select.  Closing connection\n"); 
+                    close(new_fd);
+                    connected = 0;
+                } 
             }
             printf("cam server: Connection closed\n");
         }

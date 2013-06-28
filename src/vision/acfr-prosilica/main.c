@@ -11,7 +11,7 @@
 #include <limits.h>
 #include <glib.h>
 #include <ctype.h> // isdigit()
-#include <PvApi.h>
+#include <prosilica/PvApi.h>
 
 #include "perls-common/bot_util.h"
 #include "perls-common/daemon.h"

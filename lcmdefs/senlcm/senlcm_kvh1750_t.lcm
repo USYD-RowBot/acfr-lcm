@@ -1,0 +1,13 @@
+package senlcm;
+
+struct kvh1750_t
+{
+    int64_t utime;
+	
+	double angular[3];
+	double linear[3];
+	double temperature;
+    int8_t status;
+    int8_t sequence;
+	
+}

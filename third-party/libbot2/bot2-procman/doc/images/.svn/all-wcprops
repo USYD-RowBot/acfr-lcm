@@ -3,6 +3,18 @@ svn:wc:ra_dav:version-url
 V 47
 /svn/!svn/ver/414/trunk/bot2-procman/doc/images
 END
+sheriff-gui-add-command.png
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/414/trunk/bot2-procman/doc/images/sheriff-gui-add-command.png
+END
+sheriff-gui-with-xterm-stopped.png
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/414/trunk/bot2-procman/doc/images/sheriff-gui-with-xterm-stopped.png
+END
 sheriff-gui-add-command-menu.png
 K 25
 svn:wc:ra_dav:version-url
@@ -32,16 +44,4 @@ K 25
 svn:wc:ra_dav:version-url
 V 69
 /svn/!svn/ver/414/trunk/bot2-procman/doc/images/sheriff-gui-empty.png
-END
-sheriff-gui-add-command.png
-K 25
-svn:wc:ra_dav:version-url
-V 75
-/svn/!svn/ver/414/trunk/bot2-procman/doc/images/sheriff-gui-add-command.png
-END
-sheriff-gui-with-xterm-stopped.png
-K 25
-svn:wc:ra_dav:version-url
-V 82
-/svn/!svn/ver/414/trunk/bot2-procman/doc/images/sheriff-gui-with-xterm-stopped.png
 END

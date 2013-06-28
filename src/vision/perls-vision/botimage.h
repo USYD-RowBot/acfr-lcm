@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <tiffio.h> // required for COMPRESSION_XXX #defines
 #include <opencv/cv.h>
-#include <PvApi.h>
+#include <prosilica/PvApi.h>
 
 #include "perls-lcmtypes/bot_core_image_t.h"
 

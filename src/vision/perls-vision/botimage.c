@@ -8,7 +8,7 @@
 #include <inttypes.h> // needed for PRId64 macros
 
 #include <glib.h>
-#include <PvApi.h>
+#include <prosilica/PvApi.h>
 
 #include "perls-common/error.h"
 #include "perls-common/timestamp.h"

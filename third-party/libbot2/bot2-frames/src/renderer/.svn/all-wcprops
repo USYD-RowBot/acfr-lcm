@@ -3,12 +3,6 @@ svn:wc:ra_dav:version-url
 V 48
 /svn/!svn/ver/414/trunk/bot2-frames/src/renderer
 END
-frame_modifier_renderer.c
-K 25
-svn:wc:ra_dav:version-url
-V 74
-/svn/!svn/ver/414/trunk/bot2-frames/src/renderer/frame_modifier_renderer.c
-END
 bot_frames_renderers.h
 K 25
 svn:wc:ra_dav:version-url
@@ -38,4 +32,10 @@ K 25
 svn:wc:ra_dav:version-url
 V 63
 /svn/!svn/ver/414/trunk/bot2-frames/src/renderer/CMakeLists.txt
+END
+frame_modifier_renderer.c
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/414/trunk/bot2-frames/src/renderer/frame_modifier_renderer.c
 END

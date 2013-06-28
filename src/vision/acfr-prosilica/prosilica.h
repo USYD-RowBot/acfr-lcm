@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <tiffio.h>
-#include <PvApi.h>
+#include <prosilica/PvApi.h>
 
 #include "perls-common/error.h"
 #include "perls-lcmtypes/senlcm_prosilica_t.h"
