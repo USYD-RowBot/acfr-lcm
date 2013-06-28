@@ -279,8 +279,9 @@ write_thread (void *user)
         acfrlcm_auv_vis_rawlog_t_publish(logger->lcm,"ACFR_AUV_VIS_RAWLOG",&vis_raw);
         //add path to filename for logging
         snprintf(pathfilename,sizeof pathfilename, "%s/%s.tif",logger->logpath,filename);
-        if (0 != vis_botimage_write_tiff (ce->image, filename, ce->channel, description, logger->compression | logger->quality)) {
-//        if (0 != botu_write_tiff (ce->image, pathfilename, ce->channel, description, logger->compression | logger->quality)) {
+        
+//        if (0 != vis_botimage_write_tiff (ce->image, filename, ce->channel, description, logger->compression | logger->quality)) {
+        if (0 != vis_botimage_write_tiff (ce->image, pathfilename, ce->channel, description, logger->compression | logger->quality)) {
             static int64_t last_spew_utime = 0;
             if (now - last_spew_utime > 500000) {
                 fprintf (stderr, "error writing: %s\n", filename);
