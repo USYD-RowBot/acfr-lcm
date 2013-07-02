@@ -53,11 +53,10 @@ Local_WGS84_TM_Projection *map_projection_sim;
 int64_t last_dvl_time = 4.611686e+18, last_gps_time = 4.611686e+18, last_ysi_time = 4.611686e+18, last_tcm_time = 4.611686e+18, last_print_time = 4.611686e+18; // 2^62
 
 // earth rotation in the navigation frame
-SMALL::Vector3D earth_rot;
+SMALL::Vector4D earth_rot;
 
 //gravity
-SMALL::Vector3D grav;
-grav = 0.0,0.0,-9.81;
+SMALL::Vector4D grav;
 
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
@@ -520,9 +519,29 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     //    integrate_n_steps(stepper, auv, state , 0.0 , 0.001 , 100 );
     integrate_const(stepper, auv, state , 0.0 , 0.01 , 0.001 ); // 1x speed simulation
 
+    int64_t timeStamp = timestamp_now();
+
+    //construct the nav message
+    auv_acfr_nav_t nav;
+    nav.utime = timeStamp;
+    nav.x = state(0);
+    nav.y = state(1);
+    nav.depth = state(2);
+    nav.roll = state(3);
+    nav.pitch = state(4);
+    nav.heading = state(5);
+    nav.vx = state(6);
+    nav.vy = state(7);
+    nav.vz = state(8);
+    nav.rollRate = state(9);
+    nav.pitchRate = state(10);
+    nav.headingRate = state(11);
+
+    nav.altitude = WATER_DEPTH - nav.depth;
+
     if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     {
-        last_print_time = timeStamp;
+        //last_print_time = timeStamp;
 
         cout << "Truth: ";
 
@@ -539,26 +558,9 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         printf("\n");
         fflush(NULL);
 
-        int64_t timeStamp = timestamp_now();
+
 
         // publish the nav message
-        auv_acfr_nav_t nav;
-        nav.utime = timeStamp;
-        nav.x = state(0);
-        nav.y = state(1);
-        nav.depth = state(2);
-        nav.roll = state(3);
-        nav.pitch = state(4);
-        nav.heading = state(5);
-        nav.vx = state(6);
-        nav.vy = state(7);
-        nav.vz = state(8);
-        nav.rollRate = state(9);
-        nav.pitchRate = state(10);
-        nav.headingRate = state(11);
-
-        nav.altitude = WATER_DEPTH - nav.depth;
-
         lcm->publish("ACFR_NAV.SIM", &nav);
 
     }
@@ -573,11 +575,11 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     auvPose.setPosition(state(0), state(1), state(2));
     auvPose.setRollPitchYawRad(state(3), state(4), state(5));
 
-    grav_b = (auvPose.inverse() * grav); // look to local_planner.cpp implementation if this doesn't work
+    grav_b = (auvPose.i().get3x4TransformationMatrix() * grav); // look to local_planner.cpp implementation if this doesn't work
 
     //rotate earth rotation into the local frame
     SMALL::Vector3D earth_rot_b;
-    earth_rot_b = (auvPose.inverse() * earth_rot);
+    earth_rot_b = (auvPose.i().get3x4TransformationMatrix() * earth_rot);
 
     //compute acceleration at current time step
     SMALL::Vector3D accel;
@@ -593,7 +595,14 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     imu.accel[2] = accel[2] - grav_b[2];
     lcm->publish("IMU", &imu);
 
-    cout << "IMU: " << imu.angRate[0] << " " << imu.angRate[1] << " "<< imu.angRate[2] << " "<< imu.accel[0] << " "<< imu.accel[1] << " "<< imu.accel[2] << endl;
+    if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
+    {
+        last_print_time = timeStamp;
+        cout << "IMU: " << imu.angRate[0] << " " << imu.angRate[1] << " "<< imu.angRate[2] << " "<< imu.accel[0] << " "<< imu.accel[1] << " "<< imu.accel[2] << endl;
+        cout << "accel: " << accel[0] << " " << accel[1] << " "<< accel[2] << endl;
+
+    }
+
 
     //TCM compass
     if (timeStamp - last_tcm_time > 0.1*1e6) // 10 Hz
@@ -810,7 +819,10 @@ int main(int argc, char **argv)
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
     //Earth rotation vector in the navigation frame
-    earth_rot = cos(latitude_sim*M_PI/180)*7.292115e-5,0,-sin(latitude_sim*M_PI/180)*7.292115e-5;
+    earth_rot = cos(latitude_sim*M_PI/180)*7.292115e-5,0,-sin(latitude_sim*M_PI/180)*7.292115e-5,0.0;
+
+    //Set gravity
+    grav = 0.0, 0.0, -9.81, 0.0;
 
     int64_t timeStamp = timestamp_now();
     last_dvl_time = timeStamp;
