@@ -350,6 +350,12 @@ int main(int argc, char **argv)
         printf("%f\n", roll_offset);          
         rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
         
+        // Special dive case, no heading control
+        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+        {
+            rudder_angle = 0;
+            roll_offset = 0;
+        }
         
         // Add in the roll offset
         double top = rudder_angle - roll_offset;
@@ -370,7 +376,7 @@ int main(int argc, char **argv)
         acfrlcm_auv_iver_motor_command_t mc;
         memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
         mc.utime = timestamp_now();
-        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)
+        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN || state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
         {
             mc.main = prop_rpm;
             mc.top = top;

@@ -12,6 +12,7 @@ struct auv_control_t
     
     const int8_t STOP = 0;
     const int8_t RUN = 1;
+    const int8_t DIVE = 3;
     
     int8_t run_mode;
     

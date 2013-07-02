@@ -30,10 +30,11 @@ class LocalPlanner {
         int onNav(const acfrlcm::auv_acfr_nav_t *nav);
         int onPathCommand(const acfrlcm::auv_path_command_t *pc);
         int calculateWaypoints();
-	int processWaypoints();
+	    int processWaypoints();
         lcm::LCM lcm;
         int process();
         int sendResponse();
+        int dive();
       
         Pose3D getCurrPose( void ) const { return currPose; }
         Pose3D getDestPose( void ) const { return destPose; }
@@ -80,6 +81,9 @@ class LocalPlanner {
         bool destReached;
         
         int depthMode;
+        
+        int diveMode;
+        int diveStage;
         
         int destID;
         

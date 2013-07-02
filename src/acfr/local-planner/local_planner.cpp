@@ -35,36 +35,42 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReached(false), 
     destID(0), turningRadius(0), maxPitch(0), wpDropDist(4.0), forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
     lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointTime(timestamp_now()),
-    maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300) {
+    maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300), diveMode(0) {
     
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
     lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
     lcm.subscribeFunction("HEARTBEAT_1HZ", calculateLCM, this);
 
-    
-    //    pthread_mutex_init(&currPoseLock, NULL);
-    //    pthread_mutex_init(&destPoseLock, NULL);
-    //    pthread_mutex_init(&waypointsLock, NULL);
+//    pthread_mutex_init(&currPoseLock, NULL);
+//    pthread_mutex_init(&destPoseLock, NULL);
+//    pthread_mutex_init(&waypointsLock, NULL);
 
 }
 
 LocalPlanner::~LocalPlanner() {
-    //    pthread_mutex_destroy(&currPoseLock);
-    //    pthread_mutex_destroy(&destPoseLock);
-    //    pthread_mutex_destroy(&waypointsLock);
+    
+//    pthread_mutex_destroy(&currPoseLock);
+//    pthread_mutex_destroy(&destPoseLock);
+//    pthread_mutex_destroy(&waypointsLock);
 }
 /**
  * Copy current navigation status
  */
 int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 
-    //    pthread_mutex_lock(&currPoseLock);
+//    pthread_mutex_lock(&currPoseLock);
     currPose.setPosition( nav->x, nav->y, nav->depth );
     currPose.setRollPitchYawRad( nav->roll, nav->pitch, nav->heading );
     currVel = nav->vx, nav->vy, nav->vz;
-    //    pthread_mutex_unlock(&currPoseLock);
-    processWaypoints();
+//    pthread_mutex_unlock(&currPoseLock);
+    
+    // if required process the special dive mode
+    if(diveMode)
+        dive();
+    else
+        processWaypoints();
+        
     return 1;
 }
 
@@ -72,7 +78,7 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
  * Copy new destination pose and calculate a new path to this point
  */
 int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
-    //    pthread_mutex_lock(&destPoseLock);
+//    pthread_mutex_lock(&destPoseLock);
     // Reset destination pose
     destPose.setIdentity();
     
@@ -82,13 +88,80 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
     destVel = pc->waypoint[6];
     depthMode = pc->depth_mode;
     destID = pc->goal_id;
-    //    pthread_mutex_unlock(&destPoseLock);
+//    pthread_mutex_unlock(&destPoseLock);
     
     cout << "\nGot a new DEST point " << endl;
+    
+    // special dive case, first we need to get off the surface
+    if((currPose.getZ() < 0.2) && (depthMode == acfrlcm::auv_control_t::DEPTH_MODE) && (pc->waypoint[2] > 0)) {
+        diveStage = 0;
+        diveMode = 1;
+        return 1;
+    }
+        
     destReached = false;
     newDest = true;
     calculateWaypoints();
     processWaypoints();
+    return 1;
+}
+
+#define DIVE_REV_VEL -0.5
+#define DIVE_PICTH (-10.0 / 180.0 * M_PI)
+#define DIVE_DEPTH 0.5
+
+int LocalPlanner::dive() {
+    // we have a list of things we need to achieve to get off the surface
+    acfrlcm::auv_control_t cc;
+    cc.utime = timestamp_now();
+    cc.run_mode = acfrlcm::auv_control_t::DIVE;
+    cc.depth_mode = acfrlcm::auv_control_t::PITCH_MODE;
+    cout << "Dive stage : " << diveStage << " vx: " << currVel[0] << " depth: " << currPose.getZ() << " pitch: " << currPose.getRotation().getPitchRad() / M_PI * 180 << endl;
+    switch(diveStage) {
+        case 0:
+            // get upto reverse speed            
+            cc.vx = DIVE_REV_VEL;
+            cc.pitch = 0;
+            lcm.publish("AUV_CONTROL", &cc);
+            
+            if(currVel[0] < (DIVE_REV_VEL + 0.1))
+                diveStage = 1;
+            break;
+        
+        case 1:
+            // pitch the tail down
+            cc.vx = DIVE_REV_VEL;
+            cc.pitch = DIVE_PICTH;
+            lcm.publish("AUV_CONTROL", &cc);
+
+            // go until we are under, keeping in mind out pressure sensor is at the front
+            if(currPose.getZ() > DIVE_DEPTH)
+                diveStage = 2;
+            break;
+        
+        case 2:
+            // level out
+            cc.vx = DIVE_REV_VEL;
+            cc.pitch = 0;
+            lcm.publish("AUV_CONTROL", &cc);
+
+            if(fabs(currPose.getRotation().getPitchRad()) < (5.0 / 180.0 * M_PI))
+                diveStage = 3;
+            break;
+    
+        case 3:
+            // go back to zero velocity and hope we stay down log enough to start
+            cc.vx = 0;
+            cc.pitch = 0;
+            lcm.publish("AUV_CONTROL", &cc);
+            
+            // have we finished
+            if(fabs(currVel[0]) < 0.1) {
+                diveMode = 0;
+                diveStage = 4;
+            }
+            break;        
+    }
     return 1;
 }
 
@@ -375,7 +448,7 @@ int LocalPlanner::sendResponse() {
 }
 
 int LocalPlanner::process() {
-    
+//static void *processLCM(void *u) {
     int fd = lcm.getFileno();
     fd_set rfds;
     while(!mainExit)
@@ -568,14 +641,14 @@ int main(int argc, char **argv)
         return 0;
     }
     
-    //    pthread_t tidProcessWaypoints;
-    //    pthread_create(&tidProcessWaypoints, NULL, processWaypoints, lp);
-    //    pthread_detach(tidProcessWaypoints);
+//    pthread_t tidProcessWaypoints;
+//    pthread_create(&tidProcessWaypoints, NULL, processWaypoints, lp);
+//    pthread_detach(tidProcessWaypoints);
     
     while(!mainExit)
         lp->process();
     
-    //    pthread_join(tidProcessWaypoints, NULL);
+//    pthread_join(tidProcessWaypoints, NULL);
     
     delete lp;
     
