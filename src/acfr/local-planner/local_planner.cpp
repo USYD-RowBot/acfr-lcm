@@ -102,12 +102,16 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
     destReached = false;
     newDest = true;
     calculateWaypoints();
-    processWaypoints();
+    if(diveMode)
+        dive();
+    else
+        processWaypoints();
+
     return 1;
 }
 
 #define DIVE_REV_VEL -0.5
-#define DIVE_PICTH (-10.0 / 180.0 * M_PI)
+#define DIVE_PICTH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
 int LocalPlanner::dive() {

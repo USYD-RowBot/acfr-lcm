@@ -53,10 +53,10 @@ Local_WGS84_TM_Projection *map_projection_sim;
 int64_t last_dvl_time = 4.611686e+18, last_gps_time = 4.611686e+18, last_ysi_time = 4.611686e+18, last_tcm_time = 4.611686e+18, last_print_time = 4.611686e+18; // 2^62
 
 // earth rotation in the navigation frame
-SMALL::Vector4D earth_rot;
+SMALL::Vector3D earth_rot;
 
 //gravity
-SMALL::Vector4D grav;
+SMALL::Vector3D grav;
 
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
@@ -571,15 +571,14 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     //rotate gravity into local frame
     SMALL::Vector3D grav_b;
 
-    SMALL::Pose3D auvPose;
-    auvPose.setPosition(state(0), state(1), state(2));
-    auvPose.setRollPitchYawRad(state(3), state(4), state(5));
+    SMALL::Rotation3D Cbn;
+    Cbn.setRollPitchYawRad(state(3), state(4), state(5));
 
-    grav_b = (auvPose.i().get3x4TransformationMatrix() * grav); // look to local_planner.cpp implementation if this doesn't work
+    grav_b = (Cbn.i() * grav); // look to local_planner.cpp implementation if this doesn't work
 
     //rotate earth rotation into the local frame
     SMALL::Vector3D earth_rot_b;
-    earth_rot_b = (auvPose.i().get3x4TransformationMatrix() * earth_rot);
+    earth_rot_b = (Cbn.i() * earth_rot);
 
     //compute acceleration at current time step
     SMALL::Vector3D accel;
@@ -819,10 +818,10 @@ int main(int argc, char **argv)
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
     //Earth rotation vector in the navigation frame
-    earth_rot = cos(latitude_sim*M_PI/180)*7.292115e-5,0,-sin(latitude_sim*M_PI/180)*7.292115e-5,0.0;
+    earth_rot = cos(latitude_sim*M_PI/180)*7.292115e-5,0,-sin(latitude_sim*M_PI/180)*7.292115e-5;
 
     //Set gravity
-    grav = 0.0, 0.0, -9.81, 0.0;
+    grav = 0.0, 0.0, -9.81;
 
     int64_t timeStamp = timestamp_now();
     last_dvl_time = timeStamp;

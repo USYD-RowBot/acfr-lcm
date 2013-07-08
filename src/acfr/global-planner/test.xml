@@ -7,7 +7,7 @@
     <global>
         <drop_distance m="4" />
         <drop_angle deg="40" /> 
-		<mission_timeout t = "7200"/>
+                <mission_timeout t = "10"/>
         <!-- To have the same drop distance in the corners use drop_angle = drop_distance / turn_radius --> 
     </global>
 <!--
@@ -204,7 +204,7 @@
         <goto>
             <position x="-5" y="10" z="1"/>
             <rotation deg = "0" />
-            <timeout t="200" />
+            <timeout t="10" />
             <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
@@ -215,7 +215,7 @@
         <goto>
             <position x="5" y="10" z="1"/>
             <rotation deg = "0" />
-            <timeout t="200" />
+            <timeout t="10" />
             <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
@@ -226,13 +226,13 @@
         <goto>
             <position x="5" y="-10" z="1"/>
             <rotation deg = "0" />
-            <timeout t="200" />
+            <timeout t="10" />
             <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
     </primative>
-    
+    <!--
 	    <primative>
         <zambonie>
             <position x="40" y="10" z="3"/>
@@ -247,12 +247,12 @@
             <command device="camera" onoff="on"/>
         </zambonie>
     </primative>
-
+-->
 <primative>
         <goto>
-            <position x="0" y="0" z="2"/>
+            <position x="100" y="100" z="2"/>
             <rotation deg = "0" />
-            <timeout t="200" />
+            <timeout t="10" />
 			<velocity x="0" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>

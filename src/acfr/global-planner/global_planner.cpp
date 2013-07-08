@@ -105,7 +105,7 @@ int GlobalPlanner::clock() {
             {
                 // check to see if we have reached our destination or we have hit the timeout, 
                 // if so we can feed the next leg to the path planner
-                if(areWeThereYet || distanceToGoal < 1.0)// || ((timestamp_now() - legStartTime) > (*currPoint).timeout))
+                if ((areWeThereYet || distanceToGoal < 1.0) || ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6))
                 {
                     // load the next point and send it along, that is if we are not
                     // at the end of the list

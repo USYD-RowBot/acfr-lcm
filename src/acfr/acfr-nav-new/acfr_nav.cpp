@@ -51,6 +51,9 @@ int acfr_nav::initialise()
     
     // We always subscribe to this as our velocity source
     state->lcm.subscribeFunction("RDI", on_rdi, state);
+
+    // Always subscribe to the IMU
+    state->lcm.subscribeFunction("IMU", on_imu, state);
     
     state->lowRateCount = 0;
     
