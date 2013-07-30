@@ -50,7 +50,7 @@ typedef struct
     double plane_rudder_max;
     double main_rpm_max;
     double roll_offset_max;
-        
+
     // Nav solution
     acfrlcm_auv_acfr_nav_t nav;
     pthread_mutex_t nav_lock;
@@ -67,106 +67,106 @@ typedef struct
 int load_config(state_t *state, char *rootkey)
 {
     BotParam *param;
-	char key[64];
-	param = bot_param_new_from_server(state->lcm, 1);
+    char key[64];
+    param = bot_param_new_from_server(state->lcm, 1);
 
-	// velocity gains
-	memset(&state->gains_vel, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.velocity.kp", rootkey);
-	state->gains_vel.kp = bot_param_get_double_or_fail(param, key);
+    // velocity gains
+    memset(&state->gains_vel, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.velocity.kp", rootkey);
+    state->gains_vel.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.velocity.ki", rootkey);
-	state->gains_vel.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.velocity.ki", rootkey);
+    state->gains_vel.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.velocity.kd", rootkey);
-	state->gains_vel.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.velocity.kd", rootkey);
+    state->gains_vel.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.velocity.sat", rootkey);
-	state->gains_vel.sat = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.velocity.sat", rootkey);
+    state->gains_vel.sat = bot_param_get_double_or_fail(param, key);
 
     // Roll gains
-	memset(&state->gains_roll, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.roll.kp", rootkey);
-	state->gains_roll.kp = bot_param_get_double_or_fail(param, key);
+    memset(&state->gains_roll, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.roll.kp", rootkey);
+    state->gains_roll.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.roll.ki", rootkey);
-	state->gains_roll.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.roll.ki", rootkey);
+    state->gains_roll.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.roll.kd", rootkey);
-	state->gains_roll.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.roll.kd", rootkey);
+    state->gains_roll.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.roll.sat", rootkey);
-	state->gains_roll.sat = bot_param_get_double_or_fail(param, key);
-	
+    sprintf(key, "%s.roll.sat", rootkey);
+    state->gains_roll.sat = bot_param_get_double_or_fail(param, key);
+
 
     // Pitch gains
-	memset(&state->gains_pitch, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.pitch.kp", rootkey);
-	state->gains_pitch.kp = bot_param_get_double_or_fail(param, key);
+    memset(&state->gains_pitch, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.pitch.kp", rootkey);
+    state->gains_pitch.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.pitch.ki", rootkey);
-	state->gains_pitch.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.pitch.ki", rootkey);
+    state->gains_pitch.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.pitch.kd", rootkey);
-	state->gains_pitch.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.pitch.kd", rootkey);
+    state->gains_pitch.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.pitch.sat", rootkey);
-	state->gains_pitch.sat = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.pitch.sat", rootkey);
+    state->gains_pitch.sat = bot_param_get_double_or_fail(param, key);
 
     // Depth gains
-	memset(&state->gains_depth, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.depth.kp", rootkey);
-	state->gains_depth.kp = bot_param_get_double_or_fail(param, key);
+    memset(&state->gains_depth, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.depth.kp", rootkey);
+    state->gains_depth.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.depth.ki", rootkey);
-	state->gains_depth.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.depth.ki", rootkey);
+    state->gains_depth.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.depth.kd", rootkey);
-	state->gains_depth.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.depth.kd", rootkey);
+    state->gains_depth.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.depth.sat", rootkey);
-	state->gains_depth.sat = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.depth.sat", rootkey);
+    state->gains_depth.sat = bot_param_get_double_or_fail(param, key);
 
     // Altitude gains
-	memset(&state->gains_altitude, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.altitude.kp", rootkey);
-	state->gains_altitude.kp = bot_param_get_double_or_fail(param, key);
+    memset(&state->gains_altitude, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.altitude.kp", rootkey);
+    state->gains_altitude.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.altitude.ki", rootkey);
-	state->gains_altitude.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.altitude.ki", rootkey);
+    state->gains_altitude.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.altitude.kd", rootkey);
-	state->gains_altitude.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.altitude.kd", rootkey);
+    state->gains_altitude.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.altitude.sat", rootkey);
-	state->gains_altitude.sat = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.altitude.sat", rootkey);
+    state->gains_altitude.sat = bot_param_get_double_or_fail(param, key);
 
     // Heading gains
-	memset(&state->gains_heading, 0, sizeof(pid_gains_t));
-	sprintf(key, "%s.heading.kp", rootkey);
-	state->gains_heading.kp = bot_param_get_double_or_fail(param, key);
+    memset(&state->gains_heading, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.heading.kp", rootkey);
+    state->gains_heading.kp = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.heading.ki", rootkey);
-	state->gains_heading.ki = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.heading.ki", rootkey);
+    state->gains_heading.ki = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.heading.kd", rootkey);
-	state->gains_heading.kd = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.heading.kd", rootkey);
+    state->gains_heading.kd = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.heading.sat", rootkey);
-	state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.heading.sat", rootkey);
+    state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
 
     // Limit values
-	sprintf(key, "%s.pitch_max", rootkey);
-	state->pitch_max = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.pitch_max", rootkey);
+    state->pitch_max = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.plane_rudder_max", rootkey);
-	state->plane_rudder_max = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.plane_rudder_max", rootkey);
+    state->plane_rudder_max = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.main_rpm_max", rootkey);
-	state->main_rpm_max = bot_param_get_double_or_fail(param, key);
-	
-	sprintf(key, "%s.roll_offset_max", rootkey);
-	state->roll_offset_max = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.main_rpm_max", rootkey);
+    state->main_rpm_max = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.roll_offset_max", rootkey);
+    state->roll_offset_max = bot_param_get_double_or_fail(param, key);
 
 
     return 1;
@@ -177,7 +177,7 @@ int load_config(state_t *state, char *rootkey)
 static void
 control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm_auv_control_t *control, void *user) 
 {
-    state_t *state = (state_t *)user;    
+    state_t *state = (state_t *)user;
     pthread_mutex_lock(&state->command_lock);
     
     
@@ -198,9 +198,9 @@ control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm
             break;
         case ACFRLCM_AUV_CONTROL_T_PITCH_MODE:
             state->command.depth_mode = PITCH_MODE;
-            break;  
+            break;
      }
-     
+
      pthread_mutex_unlock(&state->command_lock);
 }
 
@@ -221,7 +221,7 @@ acfr_nav_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlc
 
 void limit_value(double *val, double limit)
 {
-    if( *val > limit ) 
+    if( *val > limit )
         *val = limit;
     else if( *val < -limit )
         *val = -limit;
@@ -241,8 +241,8 @@ static void *lcm_thread (void *context) {
 
     while (!main_exit) {
         struct timeval tv;
-	    tv.tv_sec = 1;
-	    tv.tv_usec = 0;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
         lcmu_handle_timeout(state->lcm, &tv);
     }
@@ -259,7 +259,7 @@ int main(int argc, char **argv)
     state.lcm = lcm_create(NULL);
     
     char root_key[64];
-    sprintf(root_key, "acfr.%s", basename(argv[0]));  
+    sprintf(root_key, "acfr.%s", basename(argv[0]));
     load_config(&state, root_key);
     
     // LCM thread
@@ -268,31 +268,31 @@ int main(int argc, char **argv)
     pthread_detach(lcm_tid);
     
     // locks etc
-    pthread_mutex_init(&state.nav_lock, NULL);	
+    pthread_mutex_init(&state.nav_lock, NULL);
     state.nav_alive = 0;
     memset(&state.nav, 0, sizeof(acfrlcm_auv_acfr_nav_t));
     
-    pthread_mutex_init(&state.command_lock, NULL);	
+    pthread_mutex_init(&state.command_lock, NULL);
     memset(&state.command, 0, sizeof(command_t));
- 
+
     // LCM callbacks
-    acfrlcm_auv_acfr_nav_t_subscribe (state.lcm, "ACFR_NAV", &acfr_nav_callback, &state);      
+    acfrlcm_auv_acfr_nav_t_subscribe (state.lcm, "ACFR_NAV", &acfr_nav_callback, &state);
     acfrlcm_auv_control_t_subscribe(state.lcm, "AUV_CONTROL", &control_callback, &state);
- 
+
     periodic_info timer_info;
-	make_periodic (CONTROL_DT * 1000000, &timer_info);
-	
-	double prop_rpm = 0.0;
-	double roll_offset = 0.0;
-	double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
-	
-	// main loop
-	while(!main_exit)
-	{
-	    // lock the nav and command data
-	    pthread_mutex_lock(&state.nav_lock);
-	    pthread_mutex_lock(&state.command_lock);
-	
+    make_periodic (CONTROL_DT * 1000000, &timer_info);
+
+    double prop_rpm = 0.0;
+    double roll_offset = 0.0;
+    double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
+
+    // main loop
+    while(!main_exit)
+    {
+        // lock the nav and command data
+        pthread_mutex_lock(&state.nav_lock);
+        pthread_mutex_lock(&state.command_lock);
+
         // X Velocity
         prop_rpm = pid(&state.gains_vel, state.nav.vx, state.command.vx, CONTROL_DT);
         
@@ -300,11 +300,11 @@ int main(int argc, char **argv)
         // We try to keep the AUV level, ie roll = 0
         roll_offset = pid(&state.gains_roll, state.nav.roll, 0.0, CONTROL_DT);
         // Pitch limit
-        if( roll_offset > state.roll_offset_max ) 
+        if( roll_offset > state.roll_offset_max )
             roll_offset = state.roll_offset_max;
         else if( roll_offset < -state.roll_offset_max )
             roll_offset = -state.roll_offset_max;
-                
+
         
         // Depth to pitch
         if(state.command.depth_mode == ALTITUDE_MODE)
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
         }
         
         // Pitch limit
-        if( pitch > state.pitch_max ) 
+        if( pitch > state.pitch_max )
             pitch = state.pitch_max;
         else if( pitch < -state.pitch_max )
             pitch = -state.pitch_max;
@@ -345,9 +345,9 @@ int main(int argc, char **argv)
                 state.command.heading += 2*M_PI;
             else if(state.nav.heading < (-M_PI / 2))
                 state.nav.heading += 2*M_PI;
-        }        
+        }
 //        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
-        printf("%f\n", roll_offset);          
+        printf("%f\n", roll_offset);
         rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
         
         // Special dive case, no heading control
@@ -363,7 +363,17 @@ int main(int argc, char **argv)
         double port = plane_angle - roll_offset;
         double starboard = plane_angle - roll_offset;
 
-        limit_value(&top, state.plane_rudder_max); 
+        if (state.nav.vx < 0)  // reverse all the fin angles for reverse direction. May not be enough due to completely different dynamics in reverse.
+        {
+            //printf("reversing, flipping fin control\n");
+            top  = -top;
+            bottom  = -bottom;
+            port = -port;
+            starboard = -starboard;
+        }
+
+
+        limit_value(&top, state.plane_rudder_max);
         limit_value(&bottom, state.plane_rudder_max);
         limit_value(&port, state.plane_rudder_max);
         limit_value(&starboard, state.plane_rudder_max);
@@ -388,12 +398,12 @@ int main(int argc, char **argv)
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
 
         // wait for a timer event
-        wait_period(&timer_info);	
-	}
+        wait_period(&timer_info);
+    }
 
     pthread_join(lcm_tid, NULL);
     pthread_mutex_destroy(&state.nav_lock);
     pthread_mutex_destroy(&state.command_lock);
-	
-	return 1;
+
+    return 1;
 }

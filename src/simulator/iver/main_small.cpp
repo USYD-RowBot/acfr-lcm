@@ -586,12 +586,13 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
     //construct IMU message (biases to come later)
     senlcm::IMU_t imu;
+    imu.utime = timeStamp;
     imu.angRate[0] = state(9) + earth_rot_b[0];
     imu.angRate[1] = state(10) + earth_rot_b[1];
     imu.angRate[2] = state(11) + earth_rot_b[2];
-    imu.accel[0] = accel[0] - grav_b[0];
-    imu.accel[1] = accel[1] - grav_b[1];
-    imu.accel[2] = accel[2] - grav_b[2];
+    imu.accel[0] = accel[0] + grav_b[0];
+    imu.accel[1] = accel[1] + grav_b[1];
+    imu.accel[2] = accel[2] + grav_b[2];
     lcm->publish("IMU", &imu);
 
     if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz

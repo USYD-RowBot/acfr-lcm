@@ -304,14 +304,18 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
 
 void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IMU_t *imu, state_c* state)
 {
-//    auv_data_tools::IMU_Data imu_data;
+    auv_data_tools::IMU_Data imu_data;
 
-//    double angXrate_rad_persec;    // Rotation rate (radians/s)
-//    double angYrate_rad_persec;
-//    double angZrate_rad_persec;
-//    double linXacc_m_persec_sqr;   // Linear acceleration (m/s^2)
-//    double linYacc_m_persec_sqr;
-//    double linZacc_m_persec_sqr;
+    //cout << "IMU reading recieved" << endl;
 
-//    state->slam->handle_imu_data(imu_data);
+    imu_data.set_raw_timestamp((double)imu->utime/1e6);
+
+    imu_data.angXrate_rad_persec = imu->angRate[0];    // Rotation rate (radians/s)
+    imu_data.angYrate_rad_persec = imu->angRate[1];
+    imu_data.angZrate_rad_persec = imu->angRate[2];
+    imu_data.linXacc_m_persec_sqr = imu->accel[0];   // Linear acceleration (m/s^2)
+    imu_data.linYacc_m_persec_sqr = imu->accel[1];
+    imu_data.linZacc_m_persec_sqr = imu->accel[2];
+
+    state->slam->handle_imu_data(imu_data);
 }
