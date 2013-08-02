@@ -37,6 +37,12 @@ using namespace libplankton;
 
 #define GPS_CHANNELS 4
 #define MAG_VAR 12.67*M_PI/180
+#define TAU_A 500
+#define TAU_G 500
+#define STD_A 0.0372
+#define STD_G 0.00010732
+#define BIAS_A 0.0196
+#define BIAS_G 9.6963e-06
 
 typedef boost::numeric::ublas::vector< double > state_type;
 
@@ -51,6 +57,7 @@ ofstream fp, fp_nav;
 Local_WGS84_TM_Projection *map_projection_sim;
 
 int64_t last_dvl_time = 4.611686e+18, last_gps_time = 4.611686e+18, last_ysi_time = 4.611686e+18, last_tcm_time = 4.611686e+18, last_print_time = 4.611686e+18; // 2^62
+int64_t last_obs_time = 4.611686e+18;
 
 // earth rotation in the navigation frame
 SMALL::Vector3D earth_rot;
@@ -61,6 +68,8 @@ SMALL::Vector3D grav;
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
 SMALL::Vector6D in;
+
+double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
 void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 {
@@ -541,7 +550,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
     if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     {
-        //last_print_time = timeStamp;
+        last_print_time = timeStamp;
 
         cout << "Truth: ";
 
@@ -587,21 +596,34 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     //construct IMU message (biases to come later)
     senlcm::IMU_t imu;
     imu.utime = timeStamp;
-    imu.angRate[0] = state(9) + earth_rot_b[0];
-    imu.angRate[1] = state(10) + earth_rot_b[1];
-    imu.angRate[2] = state(11) + earth_rot_b[2];
-    imu.accel[0] = accel[0] + grav_b[0];
-    imu.accel[1] = accel[1] + grav_b[1];
-    imu.accel[2] = accel[2] + grav_b[2];
+
+    double dt = (timeStamp - last_obs_time)/1e6;
+
+    if (dt > 0)
+    {
+        ba_x = ba_x + ( -1/TAU_A * ba_x + pow( (2*pow(BIAS_A,2)) / (TAU_A*dt) , 0.5 )*rand_n())*dt;
+        ba_y = ba_y + ( -1/TAU_A * ba_y + pow( (2*pow(BIAS_A,2)) / (TAU_A*dt) , 0.5 )*rand_n())*dt;
+        ba_z = ba_z + ( -1/TAU_A * ba_z + pow( (2*pow(BIAS_A,2)) / (TAU_A*dt) , 0.5 )*rand_n())*dt;
+        bg_x = bg_x + ( -1/TAU_G * bg_x + pow( (2*pow(BIAS_G,2)) / (TAU_G*dt) , 0.5 )*rand_n())*dt;
+        bg_y = bg_y + ( -1/TAU_G * bg_y + pow( (2*pow(BIAS_G,2)) / (TAU_G*dt) , 0.5 )*rand_n())*dt;
+        bg_z = bg_z + ( -1/TAU_G * bg_z + pow( (2*pow(BIAS_G,2)) / (TAU_G*dt) , 0.5 )*rand_n())*dt;
+    }
+
+    imu.angRate[0] = state(9) + earth_rot_b[0] + bg_x + STD_G*rand_n();
+    imu.angRate[1] = state(10) + earth_rot_b[1] + bg_y + STD_G*rand_n();
+    imu.angRate[2] = state(11) + earth_rot_b[2] + bg_z + STD_G*rand_n();
+    imu.accel[0] = accel[0] + grav_b[0] + ba_x + STD_A*rand_n();
+    imu.accel[1] = accel[1] + grav_b[1] + ba_y + STD_A*rand_n();
+    imu.accel[2] = accel[2] + grav_b[2] + ba_z + STD_A*rand_n();
     lcm->publish("IMU", &imu);
 
-    if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
-    {
-        last_print_time = timeStamp;
-        cout << "IMU: " << imu.angRate[0] << " " << imu.angRate[1] << " "<< imu.angRate[2] << " "<< imu.accel[0] << " "<< imu.accel[1] << " "<< imu.accel[2] << endl;
-        cout << "accel: " << accel[0] << " " << accel[1] << " "<< accel[2] << endl;
+    //    if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
+    //    {
+    //        last_print_time = timeStamp;
+    //        cout << "IMU: " << imu.angRate[0] << " " << imu.angRate[1] << " "<< imu.angRate[2] << " "<< imu.accel[0] << " "<< imu.accel[1] << " "<< imu.accel[2] << endl;
+    //        cout << "accel: " << accel[0] << " " << accel[1] << " "<< accel[2] << endl;
 
-    }
+    //    }
 
 
     //TCM compass
@@ -747,6 +769,8 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         lcm->publish("RDI", &rdi);
     }
 
+    last_obs_time = timeStamp;
+
 }
 
 void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_acfr_nav_t *nav, lcm::LCM *lcm) {
@@ -795,7 +819,8 @@ int main(int argc, char **argv)
 
     lcm::LCM lcm;
 
-    srand(time(NULL));
+    //srand(time(NULL));
+    srand(1234); // seeding the same way every time to allow filter comparisons
 
     BotParam *param = NULL;
     param = bot_param_new_from_server (lcm.getUnderlyingLCM(), 1);
@@ -830,6 +855,15 @@ int main(int argc, char **argv)
     last_ysi_time = timeStamp;
     last_tcm_time = timeStamp;
     last_print_time = timeStamp;
+    last_obs_time = timeStamp;
+
+    //initialise drifting biases
+    ba_x = BIAS_A*rand_n();
+    ba_y = BIAS_A*rand_n();
+    ba_z = BIAS_A*rand_n();
+    bg_x = BIAS_G*rand_n();
+    bg_y = BIAS_G*rand_n();
+    bg_z = BIAS_G*rand_n();
 
 
     lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
