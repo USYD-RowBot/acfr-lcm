@@ -32,6 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
+#define CURRENT 0.2
 
 #define WATER_DEPTH 30
 
@@ -92,6 +93,25 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     SMALL::Vector4D nuLinear, nuRotational;
     nuLinear = u, v, w, 0.0;
     nuRotational = p, q, r, 0.0;
+
+    // adjustments for a constant water current (or wind)
+
+    SMALL::Rotation3D Cbn;
+    Cbn.setRollPitchYawRad(phi, theta, psi);
+
+    SMALL::Vector3D vc_n;
+    vc_n = CURRENT,0,0;
+    SMALL::Vector3D vc_b;
+    vc_b = (Cbn.i() * vc_n);
+
+    nuLinear(1) = nuLinear(1) - vc_b(1);
+    nuLinear(2) = nuLinear(2) - vc_b(2);
+    nuLinear(3) = nuLinear(3) - vc_b(3);
+
+    u = u - vc_b(1);
+    v = v - vc_b(2);
+    w = w - vc_b(3);
+
 
     // make heading 0 to 2pi
     while(psi < 0)
@@ -295,8 +315,9 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     SMALL::Vector6D nu_dot;
     nu_dot = longDot[0], latDot[0], longDot[1], latDot[1], longDot[2], latDot[2];
     
-    
-    dxdt[0] = etaDotLin[0];
+
+
+    dxdt[0] = etaDotLin[0] + CURRENT;
     dxdt[1] = etaDotLin[1];
     dxdt[2] = etaDotLin[2];
     dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
@@ -923,5 +944,6 @@ int main(int argc, char **argv)
     fp_nav.close();
     return 0;
 }
+
 
 
