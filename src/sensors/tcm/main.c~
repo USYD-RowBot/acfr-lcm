@@ -187,7 +187,7 @@ main (int argc, char *argv[])
     	    
  	    unsigned short data_len = (buf[start_pos] << 8) + buf[start_pos + 1];
 
-        //if(data_len == 26)
+        if(data_len == 26)
         {
         
             // read the rest of the data
