@@ -981,6 +981,33 @@ senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
     TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+    TEXTREAD_ADD_FIELD (tr, "mag_x","%f",      msg->mag_x);
+    TEXTREAD_ADD_FIELD (tr, "mag_y","%f",      msg->mag_y);
+    TEXTREAD_ADD_FIELD (tr, "mag_z","%f",      msg->mag_z);
     
     textread_stop (tr);
 }
+
+void
+senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_kvh1750_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,1)","%f",      msg->angular[0]);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,2)","%f",      msg->angular[1]);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,3)","%f",      msg->angular[2]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,1)","%f",      msg->linear[0]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,2)","%f",      msg->linear[1]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,3)","%f",      msg->linear[2]);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+    TEXTREAD_ADD_FIELD (tr, "status", "%"PRIu8,      msg->status);
+    TEXTREAD_ADD_FIELD (tr, "sequence", "%"PRIu8,      msg->sequence);
+
+    textread_stop (tr);
+}
+
+

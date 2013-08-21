@@ -50,6 +50,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_os_power_system_t_subscribe (lcm, "BATTERY", &senlcm_os_power_system_t_handler, lle);
 	senlcm_micron_ping_t_subscribe (lcm, "MICRON", &senlcm_micron_ping_t_handler, lle);
 	senlcm_tcm_t_subscribe (lcm, "TCM", &senlcm_tcm_t_handler, lle);
+	senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);
