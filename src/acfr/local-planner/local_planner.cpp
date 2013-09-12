@@ -509,6 +509,7 @@ int LocalPlanner::processWaypoints() {
 
     double distToDest = currPose.positionDistance( destPose );
 
+
     // Check if the way point is ahead of us.
     // Convert the pose of waypoint relative to curr pose
     //  if the x is negative it is behind us and we will
@@ -516,17 +517,19 @@ int LocalPlanner::processWaypoints() {
     Pose3D rot; rot.setRollPitchYawRad( M_PI, 0, 0 ); // Local coord has Z down where as global has Z up
     Pose3D wpRel = currPose.compose(rot).inverse().compose( waypoint );
 
+    double wpDist = pow(pow(wpRel.getX(),2) + pow(wpRel.getY(),2),0.5);
+
     //cout << endl << "====================" << endl;
     //cout << "\nWe have " << numWaypoints << " waypoints " << endl;
     //cout << "Current pose is   : " << currPose.getX() << ", " << currPose.getY() << ", " << currPose.getZ() << " < " << currPose.getYawRad()/M_PI*180. << "deg" << endl;
     //cout << "Next way point is : " << waypoint.getX() << ", " << waypoint.getY() << ", " << waypoint.getZ() << " < " << waypoint.getYawRad()/M_PI*180. << "deg" << endl;
-    //cout << "Relative pose is  : " << wpRel.getX() << ", " << wpRel.getY() << ", " << wpRel.getZ() << " < " << wpRel.getYawRad()/M_PI*180. << "deg" << endl;
-    cout << "Dist to DEST is   : " << distToDest << endl;
+    cout << "Relative pose is  : " << wpRel.getX() << ", " << wpRel.getY() << ", " << wpRel.getZ() << " < " << wpRel.getYawRad()/M_PI*180 << "deg" << endl;
+    cout << "Dist to DEST is  : " << distToDest << endl;
 
 
     //cout << "Time for waypoint (Timeout): " << ( timestamp_now() - lp->getWaypointTime() )/1000000 << " (" << lp->getWaypointTimeout() << ")" << endl;
 
-    if( ( wpRel.getX() < forwardBound && fabs(wpRel.getY()) < sideBound )||( ( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) ) {
+    if( ( distToDest < distToDestBound )||( (wpRel.getX() < forwardBound) && (fabs(wpRel.getY()) < sideBound) )||( ( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) ) {
         // delete it from the list
         //            pthread_mutex_lock(&lp->waypointsLock);
         lp->waypoints.erase( lp->waypoints.begin() );
@@ -566,11 +569,14 @@ int LocalPlanner::processWaypoints() {
 
     cout << "Dest velocity:" << destVel << endl;
     if (( distToDest < velChDist + distToDestBound)&&(distToDest>=distToDestBound)){ //( distToDestWp < velChDist  ) {
+//    if (( wpDist < velChDist + distToDestBound)&&(wpDist>=distToDestBound)){ //( distToDestWp < velChDist  ) {
         desVel =  currVel - (distToDest-velChDist-distToDestBound) / velChDist * (destVel-currVel);
+//        desVel =  currVel - (wpDist-velChDist-distToDestBound) / velChDist * (destVel-currVel);
         cout << "Destination velocity:" << destVel << endl;
         cout << "Desired velocity:" << desVel << endl;
     }
     else if (distToDest < distToDestBound){
+//    else if (wpDist < distToDestBound){
         desVel = 0;
         cout << "Destination velocity:" << destVel << endl;
         cout << "Desired velocity:" << desVel << endl;
