@@ -16,7 +16,7 @@
 
 // set the delta T to 0.1s, 10Hz loop rate
 #define CONTROL_DT 0.1
-#define W_BEARING 0.95 //amount to weight the velocity bearing in the heading controller, to account for water currents
+#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 #define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
 typedef enum
