@@ -16,6 +16,8 @@
 
 // set the delta T to 0.1s, 10Hz loop rate
 #define CONTROL_DT 0.1
+#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
+#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
 typedef enum
 {   DEPTH_MODE,
@@ -333,22 +335,80 @@ int main(int argc, char **argv)
             state.nav.heading += 2*M_PI;
         while(state.nav.heading > M_PI)
             state.nav.heading -= 2*M_PI;
-        
+
         while(state.command.heading < -M_PI)
             state.command.heading += 2*M_PI;
         while(state.command.heading > M_PI)
             state.command.heading -= 2*M_PI;
-        
-        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+
+        double bearing = atan2(state.nav.vy*cos(state.nav.heading)+state.nav.vx*sin(state.nav.heading),-state.nav.vy*sin(state.nav.heading)+state.nav.vx*cos(state.nav.heading));
+
+        while(bearing < -M_PI)
+            bearing += 2*M_PI;
+        while(bearing > M_PI)
+            bearing -= 2*M_PI;
+
+//        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+//        {
+//            if(state.command.heading < (-M_PI / 2))
+//                state.command.heading += 2*M_PI;
+//            else if(state.nav.heading < (-M_PI / 2))
+//                state.nav.heading += 2*M_PI;
+//        }
+
+//        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
+//        {
+//            if(state.command.heading < (-M_PI / 2))
+//                state.command.heading += 2*M_PI;
+//            else if(bearing < (-M_PI / 2))
+//                bearing += 2*M_PI;
+//        }
+
+
+//        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+        printf("%f\n", roll_offset);
+
+//        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+
+//        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
+
+        // correctly compute the weighted bearing
+
+        double yaw1 = bearing;
+        if (yaw1 > 2*M_PI)
+            yaw1 = yaw1 - 2*M_PI;
+        else if (yaw1 < 0)
+            yaw1 = yaw1 + 2*M_PI;
+
+        double yaw2 = state.nav.heading;
+        if (yaw2 > 2*M_PI)
+            yaw2 = yaw2 - 2*M_PI;
+        else if (yaw2 < 0)
+            yaw2 = yaw2 + 2*M_PI;
+
+        if (yaw2 - yaw1 > M_PI)
+            yaw2 = yaw2 - 2*M_PI;
+        else if (yaw1 - yaw2 > M_PI)
+            yaw1 = yaw1 - 2*M_PI;
+
+        double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;
+
+        while(bearing_weighted < -M_PI)
+            bearing_weighted += 2*M_PI;
+        while(bearing_weighted > M_PI)
+            bearing_weighted -= 2*M_PI;
+
+        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing_weighted) / bearing_weighted))
         {
             if(state.command.heading < (-M_PI / 2))
                 state.command.heading += 2*M_PI;
-            else if(state.nav.heading < (-M_PI / 2))
-                state.nav.heading += 2*M_PI;
+            else if(bearing_weighted < (-M_PI / 2))
+                bearing_weighted += 2*M_PI;
         }
-//        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
-        printf("%f\n", roll_offset);
-        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+
+        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
+
+        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
         
         // Special dive case, no heading control
         if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)

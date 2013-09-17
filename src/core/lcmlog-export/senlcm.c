@@ -981,9 +981,9 @@ senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
     TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
-    TEXTREAD_ADD_FIELD (tr, "mag_x","%f",      msg->mag_x);
-    TEXTREAD_ADD_FIELD (tr, "mag_y","%f",      msg->mag_y);
-    TEXTREAD_ADD_FIELD (tr, "mag_z","%f",      msg->mag_z);
+//    TEXTREAD_ADD_FIELD (tr, "mag_x","%f",      msg->mag_x);
+//    TEXTREAD_ADD_FIELD (tr, "mag_y","%f",      msg->mag_y);
+//    TEXTREAD_ADD_FIELD (tr, "mag_z","%f",      msg->mag_z);
     
     textread_stop (tr);
 }

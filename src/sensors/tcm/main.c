@@ -64,21 +64,21 @@ int parse_tcm(char *buf, senlcm_tcm_t *tcm)
                         index++;
                         break;
                         
-                    case kXAligned	:
-                        tcm->mag_x = (*(float *)current_pos);
-                        current_pos += 4;
-                        index++;
-                        break;
-                    case kYAligned:
-                        tcm->mag_y = (*(float *)current_pos);
-                        current_pos += 4;
-                        index++;
-                        break;
-					case kZAligned:
-                        tcm->mag_z = (*(float *)current_pos);
-                        current_pos += 4;
-                        index++;
-                        break;
+//                    case kXAligned	:
+//                        tcm->mag_x = (*(float *)current_pos);
+//                        current_pos += 4;
+//                        index++;
+//                        break;
+//                    case kYAligned:
+//                        tcm->mag_y = (*(float *)current_pos);
+//                        current_pos += 4;
+//                        index++;
+//                        break;
+//                    case kZAligned:
+//                        tcm->mag_z = (*(float *)current_pos);
+//                        current_pos += 4;
+//                        index++;
+//                        break;
 
                 }
                 if(index == count)
@@ -120,10 +120,11 @@ int program_tcm(generic_sensor_driver_t *gsd)
     data[3] = kPAngle;
     data[4] = kRAngle;
     data[5] = kTemperature;
-    data[6] = kXAligned;
-    data[7] = kYAligned;
-    data[8] = kZAligned;
-    len = tcm_form_message(data, 9, out);    
+//    data[6] = kXAligned;
+//    data[7] = kYAligned;
+//    data[8] = kZAligned;
+    len = tcm_form_message(data, 6, out);
+//    len = tcm_form_message(data, 9, out);
     gsd_write(gsd, out, len);
     
     
