@@ -1,0 +1,12 @@
+package exlcm;
+
+struct usb2000Spec_t
+{
+    int64_t timestamp;
+    int16_t numSamples;
+    string  id;
+    int32_t specData[numSamples];
+    boolean sixteenBitData;
+    int16_t startEndIdx[2];
+    int16_t intTime;
+}

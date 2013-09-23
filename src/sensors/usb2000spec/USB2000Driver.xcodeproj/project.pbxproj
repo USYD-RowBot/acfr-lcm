@@ -1,0 +1,272 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		65246DBC17E2A81800D27AA5 /* exlcm_usb2000Spec_t.c in Sources */ = {isa = PBXBuildFile; fileRef = 65246DBA17E2A81800D27AA5 /* exlcm_usb2000Spec_t.c */; };
+		65246DC317E2CBDF00D27AA5 /* liblcm.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 65246DBF17E2C82900D27AA5 /* liblcm.1.dylib */; };
+		65B89D5317E2E3A400B8F60B /* timestamp.c in Sources */ = {isa = PBXBuildFile; fileRef = 65B89D5117E2E3A400B8F60B /* timestamp.c */; };
+		65DD5BC217D84A72008EBFF7 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 65DD5BC117D84A72008EBFF7 /* main.c */; };
+		65DD5BC417D84A72008EBFF7 /* USB2000Driver.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = 65DD5BC317D84A72008EBFF7 /* USB2000Driver.1 */; };
+		65DD5BCC17D84A89008EBFF7 /* USB2000Lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 65DD5BCA17D84A89008EBFF7 /* USB2000Lib.c */; };
+		65DD5BCF17D84A95008EBFF7 /* arduino-serial-lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 65DD5BCD17D84A95008EBFF7 /* arduino-serial-lib.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		65DD5BBC17D84A72008EBFF7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				65DD5BC417D84A72008EBFF7 /* USB2000Driver.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		65246DB917E29AB500D27AA5 /* usb2000Spec_t.lcm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = usb2000Spec_t.lcm; sourceTree = "<group>"; };
+		65246DBA17E2A81800D27AA5 /* exlcm_usb2000Spec_t.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = exlcm_usb2000Spec_t.c; path = ../exlcm_usb2000Spec_t.c; sourceTree = "<group>"; };
+		65246DBB17E2A81800D27AA5 /* exlcm_usb2000Spec_t.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = exlcm_usb2000Spec_t.h; path = ../exlcm_usb2000Spec_t.h; sourceTree = "<group>"; };
+		65246DBF17E2C82900D27AA5 /* liblcm.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = liblcm.1.dylib; path = ../../../../../../../usr/local/lib/liblcm.1.dylib; sourceTree = "<group>"; };
+		65246DC117E2C9F100D27AA5 /* liblcm.la */ = {isa = PBXFileReference; lastKnownFileType = text; name = liblcm.la; path = ../../../../../../../usr/local/lib/liblcm.la; sourceTree = "<group>"; };
+		65B89D5117E2E3A400B8F60B /* timestamp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = timestamp.c; sourceTree = "<group>"; };
+		65B89D5217E2E3A400B8F60B /* timestamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timestamp.h; sourceTree = "<group>"; };
+		65DD5BBE17D84A72008EBFF7 /* USB2000Driver */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = USB2000Driver; sourceTree = BUILT_PRODUCTS_DIR; };
+		65DD5BC117D84A72008EBFF7 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		65DD5BC317D84A72008EBFF7 /* USB2000Driver.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = USB2000Driver.1; sourceTree = "<group>"; };
+		65DD5BCA17D84A89008EBFF7 /* USB2000Lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = USB2000Lib.c; sourceTree = "<group>"; };
+		65DD5BCB17D84A89008EBFF7 /* USB2000Lib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USB2000Lib.h; sourceTree = "<group>"; };
+		65DD5BCD17D84A95008EBFF7 /* arduino-serial-lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "arduino-serial-lib.c"; sourceTree = "<group>"; };
+		65DD5BCE17D84A95008EBFF7 /* arduino-serial-lib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "arduino-serial-lib.h"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		65DD5BBB17D84A72008EBFF7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				65246DC317E2CBDF00D27AA5 /* liblcm.1.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		65DD5BB517D84A72008EBFF7 = {
+			isa = PBXGroup;
+			children = (
+				65246DC117E2C9F100D27AA5 /* liblcm.la */,
+				65246DBF17E2C82900D27AA5 /* liblcm.1.dylib */,
+				65DD5BC017D84A72008EBFF7 /* USB2000Driver */,
+				65DD5BBF17D84A72008EBFF7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		65DD5BBF17D84A72008EBFF7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				65DD5BBE17D84A72008EBFF7 /* USB2000Driver */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		65DD5BC017D84A72008EBFF7 /* USB2000Driver */ = {
+			isa = PBXGroup;
+			children = (
+				65246DBA17E2A81800D27AA5 /* exlcm_usb2000Spec_t.c */,
+				65246DBB17E2A81800D27AA5 /* exlcm_usb2000Spec_t.h */,
+				65246DB917E29AB500D27AA5 /* usb2000Spec_t.lcm */,
+				65DD5BCD17D84A95008EBFF7 /* arduino-serial-lib.c */,
+				65DD5BCE17D84A95008EBFF7 /* arduino-serial-lib.h */,
+				65DD5BCA17D84A89008EBFF7 /* USB2000Lib.c */,
+				65DD5BCB17D84A89008EBFF7 /* USB2000Lib.h */,
+				65DD5BC117D84A72008EBFF7 /* main.c */,
+				65B89D5117E2E3A400B8F60B /* timestamp.c */,
+				65B89D5217E2E3A400B8F60B /* timestamp.h */,
+				65DD5BC317D84A72008EBFF7 /* USB2000Driver.1 */,
+			);
+			path = USB2000Driver;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		65DD5BBD17D84A72008EBFF7 /* USB2000Driver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 65DD5BC717D84A72008EBFF7 /* Build configuration list for PBXNativeTarget "USB2000Driver" */;
+			buildPhases = (
+				65DD5BBA17D84A72008EBFF7 /* Sources */,
+				65DD5BBB17D84A72008EBFF7 /* Frameworks */,
+				65DD5BBC17D84A72008EBFF7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = USB2000Driver;
+			productName = USB2000Driver;
+			productReference = 65DD5BBE17D84A72008EBFF7 /* USB2000Driver */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		65DD5BB617D84A72008EBFF7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = "Daniel Bongiorno";
+			};
+			buildConfigurationList = 65DD5BB917D84A72008EBFF7 /* Build configuration list for PBXProject "USB2000Driver" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 65DD5BB517D84A72008EBFF7;
+			productRefGroup = 65DD5BBF17D84A72008EBFF7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				65DD5BBD17D84A72008EBFF7 /* USB2000Driver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		65DD5BBA17D84A72008EBFF7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				65DD5BC217D84A72008EBFF7 /* main.c in Sources */,
+				65DD5BCC17D84A89008EBFF7 /* USB2000Lib.c in Sources */,
+				65DD5BCF17D84A95008EBFF7 /* arduino-serial-lib.c in Sources */,
+				65246DBC17E2A81800D27AA5 /* exlcm_usb2000Spec_t.c in Sources */,
+				65B89D5317E2E3A400B8F60B /* timestamp.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		65DD5BC517D84A72008EBFF7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		65DD5BC617D84A72008EBFF7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = YES;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				FRAMEWORK_SEARCH_PATHS = "";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		65DD5BC817D84A72008EBFF7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/include/**",
+					"/opt/local/include/glib-2.0/**",
+					"/opt/local/lib/glib-2.0/include/",
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib/;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		65DD5BC917D84A72008EBFF7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				HEADER_SEARCH_PATHS = (
+					"/usr/local/include/**",
+					"/opt/local/include/glib-2.0/**",
+					"/opt/local/lib/glib-2.0/include/",
+				);
+				LIBRARY_SEARCH_PATHS = /usr/local/lib/;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		65DD5BB917D84A72008EBFF7 /* Build configuration list for PBXProject "USB2000Driver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65DD5BC517D84A72008EBFF7 /* Debug */,
+				65DD5BC617D84A72008EBFF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		65DD5BC717D84A72008EBFF7 /* Build configuration list for PBXNativeTarget "USB2000Driver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				65DD5BC817D84A72008EBFF7 /* Debug */,
+				65DD5BC917D84A72008EBFF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 65DD5BB617D84A72008EBFF7 /* Project object */;
+}
