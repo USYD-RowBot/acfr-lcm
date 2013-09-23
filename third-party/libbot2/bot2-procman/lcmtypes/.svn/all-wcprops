@@ -1,19 +1,25 @@
 K 25
 svn:wc:ra_dav:version-url
 V 45
-/svn/!svn/ver/433/trunk/bot2-procman/lcmtypes
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes
 END
-bot_procman_deputy_cmd_t.lcm
+bot_procman_deputy_cmd2_t.lcm
 K 25
 svn:wc:ra_dav:version-url
-V 74
-/svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_deputy_cmd_t.lcm
+V 75
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes/bot_procman_deputy_cmd2_t.lcm
 END
-bot_procman_orders_t.lcm
+bot_procman_orders2_t.lcm
 K 25
 svn:wc:ra_dav:version-url
-V 70
-/svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_orders_t.lcm
+V 71
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes/bot_procman_orders2_t.lcm
+END
+bot_procman_command2_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes/bot_procman_command2_t.lcm
 END
 bot_procman_printf_t.lcm
 K 25
@@ -33,9 +39,33 @@ svn:wc:ra_dav:version-url
 V 75
 /svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_sheriff_cmd_t.lcm
 END
+bot_procman_sheriff_cmd2_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes/bot_procman_sheriff_cmd2_t.lcm
+END
 bot_procman_info_t.lcm
 K 25
 svn:wc:ra_dav:version-url
 V 68
 /svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_info_t.lcm
+END
+bot_procman_deputy_cmd_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_deputy_cmd_t.lcm
+END
+bot_procman_info2_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/453/trunk/bot2-procman/lcmtypes/bot_procman_info2_t.lcm
+END
+bot_procman_orders_t.lcm
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/414/trunk/bot2-procman/lcmtypes/bot_procman_orders_t.lcm
 END

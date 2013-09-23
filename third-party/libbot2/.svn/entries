@@ -1,16 +1,16 @@
 10
 
 dir
-440
+464
 http://libbot.googlecode.com/svn/trunk
 http://libbot.googlecode.com/svn
 
 
 
-2013-04-23T03:32:29.954605Z
-440
-ashuang
-
+2013-08-27T19:18:15.360680Z
+464
+rtedrake@gmail.com
+has-props
 
 
 
@@ -26,87 +26,13 @@ ashuang
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
-bot2-core
-dir
-
-bot2-lcm-utils
-dir
-
-README
-file
-
-
-
-
-2013-05-06T23:52:51.000000Z
-4084dda1aabdf706d90d55a350f6d818
-2013-03-08T22:46:03.543139Z
-432
-ashuang
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-3357
-
-Makefile
-file
-
-
-
-
-2013-05-06T23:52:51.000000Z
-7ed861d943f54ce913b7e0a405da9f1f
-2012-09-27T04:45:35.038451Z
-414
-ashuang
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-1197
-
 tobuild.txt
 file
 
 
 
 
-2013-05-06T23:52:51.000000Z
+2013-08-28T00:17:06.000000Z
 c7bb7d090549d81dbb5135ba6552cb8c
 2012-09-27T04:45:35.038451Z
 414
@@ -146,7 +72,7 @@ file
 
 
 
-2013-05-06T23:52:51.000000Z
+2013-08-28T00:17:06.000000Z
 6a6a8e020838b23406c81b19c1d46df6
 2012-09-27T04:45:35.038451Z
 414
@@ -185,4 +111,78 @@ dir
 
 bot2-vis
 dir
+
+bot2-core
+dir
+
+bot2-lcm-utils
+dir
+
+README
+file
+
+
+
+
+2013-08-28T00:17:06.000000Z
+4084dda1aabdf706d90d55a350f6d818
+2013-03-08T22:46:03.543139Z
+432
+ashuang
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3357
+
+Makefile
+file
+
+
+
+
+2013-08-28T00:17:06.000000Z
+7ed861d943f54ce913b7e0a405da9f1f
+2012-09-27T04:45:35.038451Z
+414
+ashuang
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1197
 

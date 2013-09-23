@@ -1,7 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 33
-/svn/!svn/ver/430/trunk/bot2-core
+/svn/!svn/ver/464/trunk/bot2-core
+END
+Doxyfile
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/!svn/ver/414/trunk/bot2-core/Doxyfile
 END
 CMakeLists.txt
 K 25
@@ -20,10 +26,4 @@ K 25
 svn:wc:ra_dav:version-url
 V 42
 /svn/!svn/ver/414/trunk/bot2-core/Makefile
-END
-Doxyfile
-K 25
-svn:wc:ra_dav:version-url
-V 42
-/svn/!svn/ver/414/trunk/bot2-core/Doxyfile
 END

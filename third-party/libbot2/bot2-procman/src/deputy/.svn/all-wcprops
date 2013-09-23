@@ -1,7 +1,7 @@
 K 25
 svn:wc:ra_dav:version-url
 V 47
-/svn/!svn/ver/439/trunk/bot2-procman/src/deputy
+/svn/!svn/ver/457/trunk/bot2-procman/src/deputy
 END
 signal_pipe.h
 K 25
@@ -13,7 +13,7 @@ procman.c
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/procman.c
+/svn/!svn/ver/456/trunk/bot2-procman/src/deputy/procman.c
 END
 procinfo.c
 K 25
@@ -25,7 +25,7 @@ procman.h
 K 25
 svn:wc:ra_dav:version-url
 V 57
-/svn/!svn/ver/414/trunk/bot2-procman/src/deputy/procman.h
+/svn/!svn/ver/456/trunk/bot2-procman/src/deputy/procman.h
 END
 procinfo.h
 K 25
@@ -43,7 +43,7 @@ procman_deputy.c
 K 25
 svn:wc:ra_dav:version-url
 V 64
-/svn/!svn/ver/439/trunk/bot2-procman/src/deputy/procman_deputy.c
+/svn/!svn/ver/457/trunk/bot2-procman/src/deputy/procman_deputy.c
 END
 signal_pipe.c
 K 25

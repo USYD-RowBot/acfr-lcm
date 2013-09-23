@@ -11,15 +11,16 @@
 #include <string.h>
 #include <math.h>
 #include <unistd.h>   // UNIX standard function definitions
-#include "arduino-serial-lib.h"
+//#include "arduino-serial-lib.h"
+#include <time.h>
 #include "USB2000Lib.h"
 
-#define DEBUGGING
+//#define DEBUGGING
 #define TIMEOUTS_ENABLED
 
 _Bool rxTxInProgress = false;
 int baudRateGlobal = 9600;
-long intTimeGlobal = 6000;
+long intTimeGlobal = 1000;
 
 
 
@@ -81,7 +82,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
         }
         
     }
-    
+    /*
     for (int i = 0; i < numSpec; i++) {
         convertBytesToLong(&rawSpec[i*numSbytes], numSbytes, &spectra[i]);
         //printf("%u %u %u %lu\n",i, rawSpec[i*2], rawSpec[i*2 + 1], spectra[i]);
@@ -89,74 +90,12 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     }
     
     //flushBuffer(serialPort);
-    
+    */
     
     return error;
 }
 
 
-
-int setBaud(int serialPort, char portAddress[], int baudChoice) {
-    /* Set Baud Rate
-     0  =   2400
-     1  =   4800
-     2  =   9600
-     3  =   19200
-     4  =   38400
-     5  =   Not supported
-     6  =   115200
-     */
-    int error = 0;
-    char packet[3] = {'K',0x00,0x00};
-    packet[2] = (char)baudChoice;
-    int timeout = 1;
-    char returnChar[5];
-    
-    error = sendReceiveChar(serialPort, packet,3, returnChar, timeout);
-    if (returnChar[0] == 'K') {
-        //sucess in talking to spectrometer
-        //        check for ACK now 0x06 or NAK 0x15
-    }
-    
-    //    wait at least 50ms
-    usleep(50000);
-    int baud;
-    switch (baudChoice) {
-        case 0:
-            baud = 2400;
-            break;
-        case 1:
-            baud = 4800;
-            break;
-        case 2:
-            baud = 9600;
-            break;
-        case 3:
-            baud = 19200;
-            break;
-        case 4:
-            baud = 38400;
-            break;
-        case 6:
-            baud = 115200;
-            break;
-            
-        default:
-            baud = 9600;
-            break;
-    }
-    error = initSerial(portAddress, baud);
-    usleep(50000);
-    
-    
-    char incomingPacket[6];
-    error = sendReceivePacket(serialPort, packet,3, incomingPacket, timeout);
-    if (incomingPacket[0] == 'K' && incomingPacket[1] == (char)baudChoice) {
-        //sucess in talking to spectrometer
-        //        check for ACK now 0x06 or NAK 0x15
-    }
-    return error;
-}
 
 int setIntTime(int serialPort, long intTime) {
     char intChar[4];
@@ -201,15 +140,16 @@ int setDataMode(int serialPort, _Bool binaryMode) {
 //CHECK RXTX ROUTINES, WITH HARDWARE TRIGGER COULD BE SITTING THERE FOR A WHILE WAITING FOR RX SO EXTEND TIMEOUT TO SOMETHING LONG
 
 // ----Serial Routines---
+/*
 int initSerial(char portAddress[],int baud){
     
-    /* Initialise serial port to portAddress eg: '/dev/tty.PL2303000' and baud, STS will take upto 115200 */
+    // Initialise serial port to portAddress eg: '/dev/tty.PL2303000' and baud, STS will take upto 115200 
     int error;
     error = serialport_init(portAddress, baud);
     baudRateGlobal = baud;
     return error;
 }
-
+*/
 
 int sendReceivePacket(int serialPort, char packetToSend[], int outPacketSize, unsigned long returnData[], int timeout) {
     int error, txError;
@@ -317,10 +257,11 @@ int sendReceiveChar(int serialPort, char packetToSend[], int outPacketSize, char
     
     
     rxTxInProgress = true;
-    for (i = 0; i < outPacketSize; i++) {
-        serialport_writebyte(serialPort, packetToSend[i]);
-        usleep(5);
-    }
+    write(serialPort, packetToSend, outPacketSize);
+//    for (i = 0; i < outPacketSize; i++) {
+//        serialport_writebyte(serialPort, packetToSend[i]);
+//        usleep(5);
+//    }
     rxTxInProgress = false;
     
     
@@ -359,13 +300,15 @@ int sendPacket(int serialPort, char packetToSend[], int outPacketSize) {
         }
     }
     
-    
+    unsigned char buf[1];
     
     rxTxInProgress = true;
-    for (i = 0; i < outPacketSize; i++) {
-        serialport_writebyte(serialPort, packetToSend[i]);
-        usleep(5);
-    }
+    write(serialPort, packetToSend, outPacketSize);
+//    for (i = 0; i < outPacketSize; i++) {        
+//        serialport_writebyte(serialPort, packetToSend[i]);
+//        usleep(5);
+//    }
+    receiveData(buf, 1, serialPort, timeout);
     rxTxInProgress = false;
     
     

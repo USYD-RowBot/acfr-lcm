@@ -3,6 +3,12 @@ svn:wc:ra_dav:version-url
 V 44
 /svn/!svn/ver/414/trunk/bot2-vis/src/testers
 END
+gl_image_area_tester.c
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/414/trunk/bot2-vis/src/testers/gl_image_area_tester.c
+END
 param_widget_tester.c
 K 25
 svn:wc:ra_dav:version-url
@@ -20,10 +26,4 @@ K 25
 svn:wc:ra_dav:version-url
 V 59
 /svn/!svn/ver/414/trunk/bot2-vis/src/testers/CMakeLists.txt
-END
-gl_image_area_tester.c
-K 25
-svn:wc:ra_dav:version-url
-V 67
-/svn/!svn/ver/414/trunk/bot2-vis/src/testers/gl_image_area_tester.c
 END

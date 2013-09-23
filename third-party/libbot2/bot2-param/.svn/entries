@@ -1,15 +1,15 @@
 10
 
 dir
-440
+464
 http://libbot.googlecode.com/svn/trunk/bot2-param
 http://libbot.googlecode.com/svn
 
 
 
-2013-03-06T21:19:51.624638Z
-431
-mauricefallon@gmail.com
+2013-08-27T19:18:15.360680Z
+464
+rtedrake@gmail.com
 has-props
 
 
@@ -26,13 +26,22 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
+cmake
+dir
+
+lcmtypes
+dir
+
+src
+dir
+
 CMakeLists.txt
 file
 
 
 
 
-2013-05-06T23:52:49.000000Z
+2013-08-28T00:17:04.000000Z
 03b79c08ea56b1f0e1f80ddf42bfc31a
 2010-11-07T02:27:32.990243Z
 88
@@ -66,7 +75,7 @@ file
 
 
 
-2013-05-06T23:52:49.000000Z
+2013-08-28T00:17:04.000000Z
 cdc8a60a65cec7c78ed81466586d8bdd
 2011-01-14T15:46:54.668161Z
 135
@@ -100,7 +109,7 @@ file
 
 
 
-2013-05-06T23:52:49.000000Z
+2013-08-28T00:17:04.000000Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -127,13 +136,4 @@ abachrach@gmail.com
 
 
 1598
-
-cmake
-dir
-
-lcmtypes
-dir
-
-src
-dir
 

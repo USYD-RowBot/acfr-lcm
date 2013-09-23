@@ -1,22 +1,26 @@
 import cStringIO as StringIO
 import traceback
+import signal
 
 import gobject
 import gtk
 
 from bot_procman.sheriff_config import Parser, ScriptNode
 from bot_procman.sheriff_script import SheriffScript
+from bot_procman.sheriff import SheriffCommandSpec, DEFAULT_STOP_SIGNAL, DEFAULT_STOP_TIME_ALLOWED
 
 class AddModifyCommandDialog (gtk.Dialog):
     def __init__ (self, parent, deputies, groups,
-            initial_cmd="", initial_nickname="", initial_deputy="",
-            initial_group="", initial_auto_respawn=False):
+            initial_cmd="", initial_cmd_id="", initial_deputy="",
+            initial_group="", initial_auto_respawn=False,
+            initial_stop_signal=DEFAULT_STOP_SIGNAL,
+            initial_stop_time_allowed=DEFAULT_STOP_TIME_ALLOWED):
         # add command dialog
         gtk.Dialog.__init__ (self, "Add/Modify Command", parent,
                 gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
                 (gtk.STOCK_OK, gtk.RESPONSE_ACCEPT,
                  gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT))
-        table = gtk.Table(5, 2)
+        table = gtk.Table(7, 2)
 
         # deputy
         table.attach (gtk.Label ("Deputy"), 0, 1, 0, 1, 0, 0)
@@ -45,13 +49,13 @@ class AddModifyCommandDialog (gtk.Dialog):
                 lambda e: self.response (gtk.RESPONSE_ACCEPT))
         self.name_te.grab_focus ()
 
-        # command nickname
-        table.attach (gtk.Label ("Name"), 0, 1, 2, 3, 0, 0)
-        self.nickname_te = gtk.Entry ()
-        self.nickname_te.set_text (initial_nickname)
-        self.nickname_te.set_width_chars (60)
-        table.attach (self.nickname_te, 1, 2, 2, 3)
-        self.nickname_te.connect ("activate",
+        # command id
+        table.attach (gtk.Label ("Id"), 0, 1, 2, 3, 0, 0)
+        self.cmd_id_te = gtk.Entry ()
+        self.cmd_id_te.set_text (initial_cmd_id)
+        self.cmd_id_te.set_width_chars (60)
+        table.attach (self.cmd_id_te, 1, 2, 2, 3)
+        self.cmd_id_te.connect ("activate",
                 lambda e: self.response (gtk.RESPONSE_ACCEPT))
 
         # group
@@ -67,13 +71,50 @@ class AddModifyCommandDialog (gtk.Dialog):
                 lambda e: self.response (gtk.RESPONSE_ACCEPT))
 
         # auto respawn
-        table.attach (gtk.Label ("Auto-restart"), 0, 1, 4, 5, 0, 0)
+        auto_restart_tt = "If the command terminates while running, should the deputy automatically restart it?"
+        auto_restart_label = gtk.Label ("Auto-restart")
+        auto_restart_label.set_tooltip_text(auto_restart_tt)
+        table.attach(auto_restart_label, 0, 1, 4, 5, 0, 0)
         self.auto_respawn_cb = gtk.CheckButton ()
         self.auto_respawn_cb.set_active (initial_auto_respawn)
         if (initial_auto_respawn<0):
             self.auto_respawn_cb.set_inconsistent(True);
         self.auto_respawn_cb.connect("toggled", self.auto_respawn_cb_callback)
+        self.auto_respawn_cb.set_tooltip_text(auto_restart_tt)
         table.attach (self.auto_respawn_cb, 1, 2, 4, 5)
+
+        # stop signal
+        stop_signal_tt = "When stopping a signal, what OS signal to initially send to request a clean exit"
+        stop_signal_label = gtk.Label("Stop signal")
+        stop_signal_label.set_tooltip_text(stop_signal_tt)
+        table.attach(stop_signal_label, 0, 1, 5, 6, 0, 0)
+        try:
+            self.stop_signal_c = gtk.ComboBoxText()
+        except AttributeError:
+            self.stop_signal_c = gtk.combo_box_new_text()
+        self.stop_signal_entries = [ \
+                (signal.SIGINT, "SIGINT"),
+                (signal.SIGTERM, "SIGTERM"),
+                (signal.SIGKILL, "SIGKILL") ]
+        for i, entry in enumerate(self.stop_signal_entries):
+            signum, signame = entry
+            self.stop_signal_c.append_text(signame)
+            if signum == initial_stop_signal:
+                self.stop_signal_c.set_active(i)
+        self.stop_signal_c.set_tooltip_text(stop_signal_tt)
+        table.attach(self.stop_signal_c, 1, 2, 5, 6)
+
+        # stop time allowed
+        stop_time_allowed_tt = "When stopping a running command, how long to wait between sending the stop signal and a SIGKILL if the command doesn't stop."
+        stop_time_allowed_label = gtk.Label("Time allowed when stopping")
+        stop_time_allowed_label.set_tooltip_text(stop_time_allowed_tt)
+        table.attach(stop_time_allowed_label, 0, 1, 6, 7, 0, 0)
+        self.stop_time_allowed_sb = gtk.SpinButton()
+        self.stop_time_allowed_sb.set_increments(1, 5)
+        self.stop_time_allowed_sb.set_range(1, 999999)
+        self.stop_time_allowed_sb.set_value(int(initial_stop_time_allowed))
+        self.stop_time_allowed_sb.set_tooltip_text(stop_time_allowed_tt)
+        table.attach(self.stop_time_allowed_sb, 1, 2, 6, 7)
 
         self.vbox.pack_start (table, False, False, 0)
         table.show_all ()
@@ -87,14 +128,26 @@ class AddModifyCommandDialog (gtk.Dialog):
         if active < 0: return None
         return model[active][0]
 
-    def get_command (self): return self.name_te.get_text ()
-    def get_nickname (self): return self.nickname_te.get_text ()
-    def get_group (self): return self.group_cbe.child.get_text ()
-    def get_auto_respawn (self):
+    def get_command(self):
+        return self.name_te.get_text ()
+
+    def get_command_id (self):
+        return self.cmd_id_te.get_text().strip()
+
+    def get_group(self):
+        return self.group_cbe.child.get_text().strip()
+
+    def get_auto_respawn(self):
         if self.auto_respawn_cb.get_inconsistent():
             return -1
         else:
-             return self.auto_respawn_cb.get_active ()
+             return self.auto_respawn_cb.get_active()
+
+    def get_stop_signal(self):
+        return self.stop_signal_entries[self.stop_signal_c.get_active()][0]
+
+    def get_stop_time_allowed(self):
+        return self.stop_time_allowed_sb.get_value()
 
 class PreferencesDialog(gtk.Dialog):
     def __init__ (self, sheriff_gtk, parent):
@@ -144,30 +197,39 @@ def do_add_command_dialog(sheriff, cmds_ts, window):
         msgdlg.destroy ()
         return
     deputy_names = [deputy.name for deputy in deputies ]
-    dlg = AddModifyCommandDialog (window, deputy_names,
-            cmds_ts.get_known_group_names ())
-    while dlg.run () == gtk.RESPONSE_ACCEPT:
-        cmd = dlg.get_command ()
-        cmd_nickname = dlg.get_nickname()
-        deputy_name = dlg.get_deputy ()
-        group = dlg.get_group ().strip ()
-        auto_respawn = dlg.get_auto_respawn ()
-        if not cmd.strip ():
-            msgdlg = gtk.MessageDialog (window,
-                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, "Invalid command")
-            msgdlg.run ()
-            msgdlg.destroy ()
-        elif not deputy:
-            msgdlg = gtk.MessageDialog (window,
-                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
-                    gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, "Invalid deputy")
-            msgdlg.run ()
-            msgdlg.destroy ()
-        else:
-            sheriff.add_command (deputy_name, cmd, cmd_nickname, group, auto_respawn)
+
+    # pick an initial command id
+    existing_ids = set([ cmd.command_id for cmd in sheriff.get_all_commands() ])
+    initial_cmd_id = ""
+    for i in range(len(existing_ids) + 1):
+        initial_cmd_id = "command_%d" % i
+        if initial_cmd_id not in existing_ids:
             break
-    dlg.destroy ()
+    assert initial_cmd_id and initial_cmd_id not in existing_ids
+
+    dlg = AddModifyCommandDialog (window, deputy_names,
+            cmds_ts.get_known_group_names(), initial_cmd_id = initial_cmd_id)
+
+    while dlg.run () == gtk.RESPONSE_ACCEPT:
+        spec = SheriffCommandSpec()
+        spec.exec_str = dlg.get_command()
+        spec.command_id = dlg.get_command_id()
+        spec.deputy_name = dlg.get_deputy()
+        spec.group_name = dlg.get_group().strip()
+        spec.auto_respawn = dlg.get_auto_respawn ()
+        spec.stop_signal = dlg.get_stop_signal()
+        spec.stop_time_allowed = dlg.get_stop_time_allowed()
+
+        try:
+            sheriff.add_command(spec)
+            break
+        except ValueError, xcp:
+            msgdlg = gtk.MessageDialog(window,
+                    gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                    gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE, str(xcp))
+            msgdlg.run()
+            msgdlg.destroy()
+    dlg.destroy()
 
 class AddModifyScriptDialog (gtk.Dialog):
     def __init__ (self, parent, script):
@@ -219,7 +281,7 @@ class AddModifyScriptDialog (gtk.Dialog):
 
 #    Refer to commands and groups by what appears in the Name column.
 #    Valid actions are:
-#        start|stop|restart cmd|group "nickname" [wait "running"|"stopped"];
+#        start|stop|restart cmd|group "cmd_id" [wait "running"|"stopped"];
 #        wait ms ###;
 #        run_script "other-script-name";
 

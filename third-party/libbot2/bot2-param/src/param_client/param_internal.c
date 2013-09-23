@@ -109,6 +109,10 @@ typedef struct {
   void * user;
 } update_handler_t;
 
+
+static BotParamElement *
+find_key(BotParamElement * el, const char * key, int inherit);
+
 /* Prints an error message, preceeded by useful context information from the
  * parser (i.e. line number). */
 static int print_msg(Parser * p, char * format, ...)
@@ -520,7 +524,11 @@ static int parse_container(Parser * p, BotParamElement * cont, BotParamToken end
   while (get_token(p, &tok, str, sizeof(str)) == 0) {
     //printf ("t %d: %s\n", tok, str);
     if (!child && tok == TokIdentifier) {
-      child = new_element(str);
+      BotParamElement* existing_el = find_key(cont, str, 1);
+      if (NULL == existing_el)
+        child = new_element(str);
+      else
+        child = existing_el;
     }
     else if (child && tok == TokAssign) {
       child->type = BotParamArray;
@@ -785,7 +793,7 @@ BotParam * bot_param_new_from_named_server (lcm_t * lcm, const char * server_nam
   //TODO: is there a way to be sure nothing else is subscribed???
   int64_t utime_start = _timestamp_now();
   int64_t last_print_utime = -1;
-  while ((_timestamp_now() - utime_start) < 1.5e6) {
+  while ((_timestamp_now() - utime_start) < 3e6) {
     bot_param_request_t req;
     req.utime = _timestamp_now();
     bot_param_request_t_publish(lcm, request_channel, &req);

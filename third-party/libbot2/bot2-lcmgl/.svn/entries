@@ -1,15 +1,15 @@
 10
 
 dir
-440
+464
 http://libbot.googlecode.com/svn/trunk/bot2-lcmgl
 http://libbot.googlecode.com/svn
 
 
 
-2012-09-27T04:45:35.038451Z
-414
-ashuang
+2013-08-27T19:18:15.360680Z
+464
+rtedrake@gmail.com
 has-props
 
 
@@ -26,6 +26,18 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
+cmake
+dir
+
+lcmtypes
+dir
+
+java
+dir
+
+python
+dir
+
 src
 dir
 
@@ -35,7 +47,7 @@ file
 
 
 
-2013-05-06T23:52:48.000000Z
+2013-08-28T00:17:02.000000Z
 e99bbc078aba3a99396eedecbd6ef4a7
 2012-02-27T22:28:35.154019Z
 375
@@ -69,7 +81,7 @@ file
 
 
 
-2013-05-06T23:52:48.000000Z
+2013-08-28T00:17:02.000000Z
 e4f3ef63f249ddcb35bc9cedee6260b6
 2011-01-14T15:46:54.668161Z
 135
@@ -103,7 +115,7 @@ file
 
 
 
-2013-05-06T23:52:48.000000Z
+2013-08-28T00:17:02.000000Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -130,16 +142,4 @@ abachrach@gmail.com
 
 
 1598
-
-cmake
-dir
-
-lcmtypes
-dir
-
-java
-dir
-
-python
-dir
 

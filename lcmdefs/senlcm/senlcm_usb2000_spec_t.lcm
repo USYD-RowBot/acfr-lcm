@@ -1,6 +1,6 @@
-package exlcm;
+package senlcm;
 
-struct usb2000Spec_t
+struct usb2000_spec_t
 {
     int64_t timestamp;
     int16_t numSamples;
