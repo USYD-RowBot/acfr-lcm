@@ -34,53 +34,22 @@ signal_handler(int sigNum)
 
 int main(int argc, const char * argv[])
 {
-    printf("Spectrometer Starting");
+    printf("Spectrometer Starting\n");
     
+
     // install the signal handler
 	program_exit = 0;
     signal(SIGINT, signal_handler);   
     
 
-    /*
-    int serialPort = initSerial(PORT_ADDR,9600);
-    
-    write(serialPort, "S", 1);
-    usleep(1000);
-    
-    struct specHeader head;
-    
-    readHeaderPacket(head, serialPort);
-    
-    
-    unsigned char buf[128];
-    while(1) {
-        ssize_t n = read(serialPort, buf, 128);
-        if(n < 0) {
-            break;
-        } else if (n == 0) {
-            printf(".");
-            usleep(1000);
-        } else {
-            printf("%d\n", n);
-            for(int i = 0; i < n; i++) {
-                printf("%d ", buf[i]);
-            }
-            printf("\n");
-        }
-    
-    }
-    
-    return 0;
-}
-*/
+
     int error = 0;
-    long INTTIME = 1000;
+    long INTTIME = 2000;
     unsigned long specData[2048];
     
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
-    
-    
+       
     
     senlcm_usb2000_spec_t specReading = {
         .timestamp = timestamp_now(),
@@ -100,7 +69,7 @@ int main(int argc, const char * argv[])
     param = bot_param_new_from_server (lcm, 1);
     
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
-    
+
     // read the config file
     int io;
 	sprintf(key, "%s.io", rootkey);
@@ -163,49 +132,55 @@ int main(int argc, const char * argv[])
     
     }
 
-    
+
     //Setup serial
     //int serialPort = initSerial(PORT_ADDR,115200);
     
-    //flushBuffer(serialPort);
-    //error = getSpectra(serialPort, specData);
-
     
+    //flushBuffer(spec_fd);
+    //error = getSpectra(spec_fd, specData);
+    //error = getSpectra(spec_fd, specData);
+
     
     //Initalise spectrometer with correct Baud rate
     //error = setBaud(serialPort, PORT_ADDR, 6);
     //Set to Binary Data mode
-    error = setDataMode(spec_fd, TRUE);
-    printf("Data mode set");
+    //error = setDataMode(spec_fd, TRUE);
+    //printf("Data mode set- error = %u\n",error);
     //init int time
     //serialPort = initSerial(PORT_ADDR,115200);
     error = setIntTime(spec_fd, INTTIME);
-    printf("Int time set");
+    printf("Int time set - error = %u\n",error);
   
     //Set trigger mode
     error = setTriggerMode(spec_fd, 4);
-     printf("Trigger mode set");
-    //error = setTriggerMode(serialPort, 0); //free running mode
-    flushBuffer(spec_fd);
+    //error = setTriggerMode(spec_fd, 0); //free running mode
+    printf("Trigger mode set - error = %u\n",error);
+    //flushBuffer(spec_fd);
     //Need to tune these parameters for Auto Gain
     unsigned long thresholds[3] = {25000, 1000, 10000};
-    
     //flushBuffer(serialPort);
     //long rubbish[3000];
     //receivePacket(rubbish, 3000, serialPort, 2);
     //Acquisition Loop
+    //unsigned long zz[2048];
+    //memset(zz,0x00,2048);
+    //zz[3] = 5;
+    //zz[5] = 10;
+    
     while (!program_exit) {
         for (int i = 0; i < 3; i++) {
             //fp = fopen("/Users/daniel/Desktop/logFile.txt", "a");
             error = getSpectra(spec_fd, specData);
-
-            for (int j = 0; j < 50; j++){
-                printf("%lu\n", specData[j]);
-            }
+            specReading.startEndIdx[0] = error;
+            //for (int j = 0; j < 10; j++){
+            //    printf("%lu\n", specData[j]);
+            //}
             specReading.timestamp = timestamp_now();
             specReading.specData = specData;
+            
             specReading.numSamples = 2048;
-            specReading.intTime = 1000;
+            specReading.intTime = INTTIME;
             senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
             
             //fprintf(fp, "%llu\t%u\t", specReading.timestamp, specReading.intTime);
@@ -218,14 +193,14 @@ int main(int argc, const char * argv[])
             //fclose(fp);
         }
         //check for correct gain every 3 samples
-        /*
-        long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
-        if (newIntTime != INTTIME) {
+        
+        //long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
+        //if (newIntTime != INTTIME) {
             //we have a new Int time
-            setIntTime(spec_fd, newIntTime);
-            INTTIME = newIntTime;
-        }
-        */
+        //    setIntTime(spec_fd, newIntTime);
+        //    INTTIME = newIntTime;
+        //}
+        
     }
     
     close(spec_fd);

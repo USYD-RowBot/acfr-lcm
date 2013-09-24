@@ -12,7 +12,7 @@
 typedef struct {
     int dataSize;
     int numScans;
-    int intTime;
+    long intTime;
     int baselineMSW;
     int baselineLSW;
     int pixelMode;

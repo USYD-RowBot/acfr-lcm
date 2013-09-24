@@ -13,6 +13,7 @@
 #include <unistd.h>   // UNIX standard function definitions
 //#include "arduino-serial-lib.h"
 #include <time.h>
+#include <sys/select.h>
 #include "USB2000Lib.h"
 
 //#define DEBUGGING
@@ -39,58 +40,70 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     error = sendPacket(serialPort, packet, 1);
     specHeader header;
     usleep((useconds_t)intTimeGlobal);
-    sleep(1);
+    //sleep(1);
     error = readHeaderPacket(&header, serialPort);
-    switch (header.pixelMode) {
-        case 0:
-            //read all 2048
-            numSpec = 2048;
-            break;
-        case 3:
-            //read from x to y every n
-            receiveData(bufp, 6, serialPort, timeout);
-            convertBytesToLong(&bufp[0], 2, &x);
-            convertBytesToLong(&bufp[2], 2, &y);
-            convertBytesToLong(&bufp[4], 2, &n);
-            numSpec = floorl((y-x)/n);
-            
-            
-        default:
-            break;
-    }
-    if (header.dataSize == 0) {
-        numBytes = numSpec * 2 + 2;
-        numSbytes = 2;
+    #ifdef DEBUGGING
+    printf("read header: error %u\n",error);
+    #endif
+    
+    if (error == 0) {
+        
+    
+        switch (header.pixelMode) {
+            case 0:
+                //read all 2048
+                numSpec = 2048;
+                break;
+            case 3:
+                //read from x to y every n
+                receiveData(bufp, 6, serialPort, timeout);
+                convertBytesToLong(&bufp[0], 2, &x);
+                convertBytesToLong(&bufp[2], 2, &y);
+                convertBytesToLong(&bufp[4], 2, &n);
+                numSpec = floorl((y-x)/n);
+                
+                
+            default:
+                break;
+        }
+        if (header.dataSize == 0) {
+            numBytes = numSpec * 2 + 2;
+            numSbytes = 2;
+        }
+        else {
+            numBytes = numSpec * 4 + 2;
+            numSbytes = 4;
+        }
+    
+        int offset = 0;
+        while (1) {
+        
+            int n = receiveData(rawSpecBuf, 512, serialPort, timeout);
+
+        
+            memcpy(&rawSpec[offset], rawSpecBuf, n);
+            offset += n;
+            if (offset >= numBytes) {
+                break;
+            }
+        
+        }
     }
     else {
-        numBytes = numSpec * 4 + 2;
-        numSbytes = 4;
+    #ifdef DEBUGGING
+        printf("Flushing serial buffer\n");
+    #endif
+        flushBuffer(serialPort);
     }
     
-    int offset = 0;
-    while (1) {
-        
-        int n = receiveData(rawSpecBuf, 512, serialPort, timeout);
-//        for (int i = 0; i < 512; i++) {
-//            rawSpec[offset + i] = rawSpecBuf[i];
-//        }
-        
-        memcpy(&rawSpec[offset], rawSpecBuf, n);
-        offset += n;
-        if (offset >= numBytes) {
-            break;
-        }
-        
-    }
-    /*
     for (int i = 0; i < numSpec; i++) {
         convertBytesToLong(&rawSpec[i*numSbytes], numSbytes, &spectra[i]);
         //printf("%u %u %u %lu\n",i, rawSpec[i*2], rawSpec[i*2 + 1], spectra[i]);
-        printf("%lu\n", spectra[i]);
+        //printf("%lu\n", spectra[i]);
     }
     
     //flushBuffer(serialPort);
-    */
+    
     
     return error;
 }
@@ -98,17 +111,55 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
 
 
 int setIntTime(int serialPort, long intTime) {
-    char intChar[4];
+    unsigned char intChar[4];
     int error = 0;
     split4Byte(intChar, intTime);
+    //printf("split 0x%x 0x%x 0x%x 0x%x\n", intChar[0], intChar[1], intChar[2], intChar[3]);
+
     
-    char outPacket[] = {'i',0x00,0x00,0x00,0x00};
+    unsigned char outPacket[] = {'i',0x00,0x00,0x00,0x00};
     for (int i = 1; i < 5; i++) {
         outPacket[i] = intChar[i-1];
     }
-    error = sendPacket(serialPort, outPacket,5);
+    error = sendPacket(serialPort, outPacket,5); 
+    //printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
+   
     
-    intTimeGlobal = intTime;
+    
+    
+    unsigned char buf[1];
+    error = receiveData(buf,1,serialPort,100);
+    
+    if (buf[0] == 0x06){
+    
+        intTimeGlobal = intTime;
+        error = 0;
+    }
+    else {
+    error = 1;
+    }
+    
+    //send a query request to check intTime
+    unsigned char out[] = {'?', 'i'};
+    error = sendPacket(serialPort, out,2);
+    
+    unsigned char buf2[5];
+    error = receiveData(buf2,5,serialPort,100);
+    //printf("0x%x 0x%x 0x%x 0x%x 0x%x\n", buf2[0], buf2[1], buf2[2], buf2[3], buf2[4]);
+    
+    long intTimeCheck;
+    convertBytesToLong(&buf2[1], 4, &intTimeCheck);
+    
+    //printf("int check %lu\n", intTimeCheck);
+    
+    if (intTimeCheck == intTime) {
+        error = 0;
+        }
+    else {
+        error = 2;
+    }     
+    
+    
     return error;
 }
 
@@ -120,6 +171,14 @@ int setTriggerMode(int serialPort, int triggerMode){
         error = sendPacket(serialPort, packet,3);
     } else {
         error = 1;
+    }
+    unsigned char buf[1];
+    error = receiveData(buf, 1, serialPort, 500);
+    if (buf[0] == 0x06) {
+        return 0;
+        }
+    else { 
+        return error;
     }
     return error;
 }
@@ -133,6 +192,16 @@ int setDataMode(int serialPort, _Bool binaryMode) {
     } else {
         error = sendPacket(serialPort, ascii,2);
     }
+    unsigned char buf[1];
+    error = receiveData(buf,1,serialPort,100);
+    
+    if (buf[0] == 0x06){
+        error = 0;
+    }
+    else {
+        error = 1;
+    }
+    
     return error;
 }
 
@@ -303,21 +372,52 @@ int sendPacket(int serialPort, char packetToSend[], int outPacketSize) {
     unsigned char buf[1];
     
     rxTxInProgress = true;
-    write(serialPort, packetToSend, outPacketSize);
+    error = write(serialPort, packetToSend, outPacketSize);
 //    for (i = 0; i < outPacketSize; i++) {        
 //        serialport_writebyte(serialPort, packetToSend[i]);
 //        usleep(5);
 //    }
-    receiveData(buf, 1, serialPort, timeout);
+    //receiveData(buf, 1, serialPort, timeout);
     rxTxInProgress = false;
     
+    //#ifdef DEBUGGING
+    //printf("send error: %u\n", error);
+    //#endif
     
     return error;
 }
 
 int readHeaderPacket(specHeader* head, int serialPort) {
     unsigned char buf[15];
-    receiveData(buf, 15, serialPort, 2000);
+    unsigned char rawbuf[15];
+    int offset = 0;
+    long timeout = 2000;
+    long tmo = 2;
+    time_t startTime, curTime;
+    time(&startTime);
+    double timeDiff = 0;
+    
+    while(1) {
+        //printf(".");
+        int n = receiveData(rawbuf, 15-offset, serialPort, timeout);
+        #ifdef DEBUGGING
+        printf("n=%u offset=%u\n",n,offset);
+        #endif
+        memcpy(&buf[offset], rawbuf, n);
+        offset += n;
+        if (offset >= 15) {
+           break;
+        }
+        time(&curTime);
+        timeDiff = difftime(curTime, startTime);
+        if (timeDiff > tmo) {
+            return 1;
+        } 
+       
+   
+    }        
+            
+    //receiveData(buf, 15, serialPort, 2000);
     
     if (buf[0] == 0x02) {
         head->acqSuccess = true;
@@ -335,36 +435,76 @@ int readHeaderPacket(specHeader* head, int serialPort) {
         convertBytesToLong(&buf[11], 2, &baseLineLSW);
         convertBytesToLong(&buf[13], 2, &pixMode);
         
+        //for (int i = 0; i < 15; i ++) {
+        //     printf("%u 0x%X\n", i,buf[i]);
+        //}
+        
         head->dataSize = (int)flag;
         head->numScans = (int)numScans;
-        head->intTime = (int)intTime;
+        head->intTime = (long)intTime;
         head->baselineMSW = (int)baseLineMSW;
         head->baselineLSW = (int)baseLineLSW;
         head->pixelMode = (int)pixMode;
+    }
+    else {
+        return 1;
     }
     return 0;
 }
 
 int receiveData(unsigned char buf[], int bufferSize, int serialPort, long timeout){
-    ssize_t n;
+    ssize_t n = 0;
+    fd_set rfds;
+    
+    struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+    
     
     memset(buf,0x00,bufferSize);
     while(1) {
-        n = read(serialPort, buf, bufferSize);
-        if(n < 0) {
-            return -1;
-        } else if (n == 0) {
-            usleep(1000);
-            timeout--;
-        } else {
-            return (int)n;
-        }
+    
+        FD_ZERO(&rfds);
+        FD_SET(serialPort, &rfds);
         
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+
+        if(ret != 0 && FD_ISSET(serialPort, &rfds))
+        {
+            n = read(serialPort, buf, bufferSize);
+        
+        
+            if(n < 0) {
+                return -1;
+            } else if (n == 0) {
+
+                #ifdef DEBUGGING
+                printf(".");
+                #endif
+            } else {
+                #ifdef DEBUGGING
+                printf("%u char fnd\n",n);
+                for (int i = 0; i < 10; i++) {
+                    printf("%u\t0x%X\n",i, buf[i]);
+                }
+                #endif
+            
+                return (int)n;
+            }
+            
+
+        }
+        usleep(1000);
+        timeout--;
         if (timeout < 0){
             break;
         }
-        
+
     }
+     #ifdef DEBUGGING
+
+    printf("read error: %u\n", n);
+    #endif
     return n;
 }
 
@@ -405,7 +545,9 @@ int receivePacket(unsigned char buffer[], int bufferSize, int serialPort, long t
             break;
         } else if (n == 0) {
             usleep(1000);
+            
         } else {
+        
             printf("%d\n", n);
             for(int i = 0; i < n; i++) {
                 printf("%d ", buf[i]);
@@ -423,7 +565,7 @@ int flushBuffer(int serialPort){
     unsigned char c[512];
     
     while (1) {
-        reads = receiveData(c, 512, serialPort, 2000);
+        reads = receiveData(c, 512, serialPort, 2);
         if (reads == 0) {
             break;
         }
@@ -506,13 +648,13 @@ int convertBytesToLong(unsigned char inPacket[], int numBytes, unsigned long *re
 int split4Byte(char packet[], long number){
     //want to take the number and split it into a 4 byte packet with LSB first
     packet[0] = (char)(floorl(number/(pow(256,3))));
-    number = number - packet[3] * (pow(256,3));
+    number = number - packet[0] * (pow(256,3));
     
     packet[1] = (char)(floorl(number/(pow(256,2))));
-    number = number - packet[2] * (pow(256,2));
+    number = number - packet[1] * (pow(256,2));
     
     packet[2] = (char)(floorl(number/(256)));
-    number = number - packet[1] * (256);
+    number = number - packet[2] * (256);
     
     packet[3] = (char)(floorl(number));
     
