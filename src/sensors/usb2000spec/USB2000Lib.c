@@ -185,17 +185,17 @@ int setTriggerMode(int serialPort, int triggerMode){
 
 int setDataMode(int serialPort, _Bool binaryMode) {
     int error = 0;
-    char ascii[2] = "Aa";
-    char binary[2] ="Bb";
+    char ascii[2] = "aA";
+    char binary[2] ="bB";
     if (binaryMode == true) {
         error = sendPacket(serialPort, binary,2);
     } else {
         error = sendPacket(serialPort, ascii,2);
     }
-    unsigned char buf[1];
-    error = receiveData(buf,1,serialPort,100);
-    
-    if (buf[0] == 0x06){
+    unsigned char buf[2];
+    error = receiveData(buf,2,serialPort,100);
+    //printf("data mode: 0x%x 0x%x\n",buf[0], buf[1]);
+    if (buf[0] == 0x06 || buf[1] == 0x06){
         error = 0;
     }
     else {
@@ -688,8 +688,9 @@ long findMax(unsigned long result[], unsigned long array[], int arraySize){
 
 float findMean(unsigned long array[], int arraySize, int startIdx) {
     float mean = 0;
+    float n = (float) arraySize;
     for (int i = startIdx; i < (startIdx + arraySize); i++) {
-        mean += (array[i] / arraySize);
+        mean += (array[i] / n);
     }
     return mean;
 }
@@ -699,33 +700,39 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     //This routine searches through a spectra array and determines if it has maxed out or the signal is too small, it then does a calculation to determine a better int time.
     //Thresholds: [0] = Max threshold, [1] = Min Threshold, [2] = desired mean.
     unsigned long max[2];
-    unsigned long newIntTime = intTime;
+    long newIntTime = intTime;
+    float fnewIntTime;
+    
     findMax(max, specData, arraySize);
     _Bool saturated = false;
     _Bool tooLow = false;
     
+            //For 400-700nm on the USB2000+ index = 172 -> 1063
+    float mean = findMean(specData, 891, 172);
+    float gain = thresholds[2] / mean;
+    
     //Check for over the max threshold
     if (max[1] >= thresholds[0]) {
         saturated = true;
-        
-        //For 400-700nm on the USB2000+ index = 172 -> 1063
-        float mean = findMean(specData, 891, 172);
-        float gain = thresholds[2] / mean;
-        newIntTime = intTime * gain;
+        fnewIntTime = (float) intTime * gain;
         
     }
     //check for less than min threshold
     if (max[1] <= thresholds[1]) {
         tooLow = true;
-        //For 400-700nm on the USB2000+ index = 172 -> 1063
-        float mean = findMean(specData, 891, 172);
-        float gain = thresholds[2] / mean;
-        if (gain > 20) {
+        if (gain > 20.0) {
             //it is going to ramp the gain up too much and it will bounce around, so put a threshold on it.
-            gain = 5;
+            gain = 5.0;
         }
-        newIntTime = intTime * gain;
+        fnewIntTime = (float) intTime * gain;
     }
     
+    //if (fnewIntTime < 1000) {
+    //    fnewIntTime = 1000;
+    //}
+    
+    printf("intTime %u, mean: %.1f gain: %.1f newInt~ %.1f\n", intTime, mean, gain, fnewIntTime);
+    
+    newIntTime = (long) fnewIntTime;
     return newIntTime;
 }

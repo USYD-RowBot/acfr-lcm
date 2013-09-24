@@ -145,8 +145,8 @@ int main(int argc, const char * argv[])
     //Initalise spectrometer with correct Baud rate
     //error = setBaud(serialPort, PORT_ADDR, 6);
     //Set to Binary Data mode
-    //error = setDataMode(spec_fd, TRUE);
-    //printf("Data mode set- error = %u\n",error);
+    error = setDataMode(spec_fd, TRUE);
+    printf("Data mode set- error = %u\n",error);
     //init int time
     //serialPort = initSerial(PORT_ADDR,115200);
     error = setIntTime(spec_fd, INTTIME);
@@ -194,12 +194,13 @@ int main(int argc, const char * argv[])
         }
         //check for correct gain every 3 samples
         
-        //long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
-        //if (newIntTime != INTTIME) {
+        long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
+        printf("Old Int: %uus, New Int: %uus\n", INTTIME, newIntTime);
+        if (newIntTime != INTTIME) {
             //we have a new Int time
-        //    setIntTime(spec_fd, newIntTime);
-        //    INTTIME = newIntTime;
-        //}
+            setIntTime(spec_fd, newIntTime);
+            INTTIME = newIntTime;
+        }
         
     }
     
