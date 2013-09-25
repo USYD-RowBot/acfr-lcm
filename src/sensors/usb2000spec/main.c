@@ -158,7 +158,7 @@ int main(int argc, const char * argv[])
     printf("Trigger mode set - error = %u\n",error);
     //flushBuffer(spec_fd);
     //Need to tune these parameters for Auto Gain
-    unsigned long thresholds[3] = {25000, 1000, 10000};
+    unsigned long thresholds[3] = {25900, 1000, 2000};
     //flushBuffer(serialPort);
     //long rubbish[3000];
     //receivePacket(rubbish, 3000, serialPort, 2);
@@ -167,42 +167,39 @@ int main(int argc, const char * argv[])
     //memset(zz,0x00,2048);
     //zz[3] = 5;
     //zz[5] = 10;
-    
+    int i = 0;
     while (!program_exit) {
-        for (int i = 0; i < 3; i++) {
-            //fp = fopen("/Users/daniel/Desktop/logFile.txt", "a");
-            error = getSpectra(spec_fd, specData);
-            specReading.startEndIdx[0] = error;
-            //for (int j = 0; j < 10; j++){
-            //    printf("%lu\n", specData[j]);
-            //}
-            specReading.timestamp = timestamp_now();
-            specReading.specData = specData;
-            
-            specReading.numSamples = 2048;
-            specReading.intTime = INTTIME;
-            senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
-            
-            //fprintf(fp, "%llu\t%u\t", specReading.timestamp, specReading.intTime);
 
-            //for (int j = 0; j < 2048; j++) {
-            //    fprintf(fp, "%lu\t",specData[j]);
-            //}
             
-            //fprintf(fp, "\n");
-            //fclose(fp);
-        }
+        error = getSpectra(spec_fd, specData);
+        specReading.startEndIdx[0] = error;
+        specReading.timestamp = timestamp_now();
+        specReading.specData = specData;
+        
+        specReading.numSamples = 2048;
+        specReading.intTime = INTTIME / 1000;
+        senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
+            
+        i++;
+        if (i > 3) {
         //check for correct gain every 3 samples
         
-        long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
-        printf("Old Int: %uus, New Int: %uus\n", INTTIME, newIntTime);
-        if (newIntTime != INTTIME) {
-            //we have a new Int time
-            setIntTime(spec_fd, newIntTime);
-            INTTIME = newIntTime;
+            long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
+            newIntTime = (newIntTime /1000) * 1000;
+            
+            printf("Old Int: %uus, New Int: %uus\n", INTTIME, newIntTime);
+            if (newIntTime != INTTIME) {
+                //we have a new Int time
+                setIntTime(spec_fd, newIntTime);
+                INTTIME = newIntTime;
+            }
+            
+            i = 0;
         }
         
     }
+    //error = setTriggerMode(spec_fd, 0);
+    //printf("Trigger mode set - error = %u\n",error);
     
     close(spec_fd);
     lcm_destroy(lcm);

@@ -117,5 +117,9 @@ senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 void
 senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
                          const senlcm_kvh1750_t *msg, void *user);
+                         
+void 
+senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_usb2000_spec_t *msg, void *user);
 
 #endif //__HANDLERS_SENLCM_H__
