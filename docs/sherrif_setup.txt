@@ -1,0 +1,35 @@
+To use the process manager form the Bot library you need to run the deputy on the node
+that is to run the LCM processes as well as a sherrif to start the processes.
+
+A system can have only one running sherrif (unless the sherrif is in observer mode) but can
+have multiple deputies.
+
+To start a deputy
+# bot-procman-deputy 2> /dev/null &
+
+The deputy can execute programs in path.  
+
+The sherrif on the slave node should be started with a script and told to exit once
+the script has completed
+# bot-procman-sheriff -n --on-script-complete exit /home/auv/git/acfr_lcm/config/procman/procman-serpent.cfg serpent
+
+where procman-serpent.cfg is the serpent specific process scripts and serpent is the name of the script to execute.
+
+An example starting script is in 
+git/acfr_lcm/scripts/start_lcm_serpent.sh
+
+
+To monitor the processes from another node you need to have an LCM tunnel and be running the 
+sherrif.  The LCM tunnel needs to pass the PMD.* messages.  You should not pass any messages that are not needed
+so as to not use excessive bandwidth as depending on the setup may be very limited.
+
+# bot-lcm-tunnel -r PMD.* -s PMD.* -u <node> &
+# bot-procman-sherriff
+
+Where <node> is the name of the target running the deputy.  Multiple LCM tunnels can be started if there
+are multiple targets.  An example start script is in 
+git/acfr_lcm/scripts/start_lcm_serpent.sh
+
+
+
+
