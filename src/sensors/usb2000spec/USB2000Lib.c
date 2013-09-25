@@ -714,8 +714,6 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     //Check for over the max threshold
     if (max[1] >= thresholds[0]) {
         saturated = true;
-        fnewIntTime = (float) intTime * gain;
-        
     }
     //check for less than min threshold
     if (max[1] <= thresholds[1]) {
@@ -724,9 +722,8 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
             //it is going to ramp the gain up too much and it will bounce around, so put a threshold on it.
             gain = 5.0;
         }
-        fnewIntTime = (float) intTime * gain;
-    }
-    
+            }
+    fnewIntTime = intTime * gain;
     //if (fnewIntTime < 1000) {
     //    fnewIntTime = 1000;
     //}
