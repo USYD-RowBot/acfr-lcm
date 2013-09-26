@@ -75,21 +75,27 @@ long intTimeGlobal = 0;
 
 
 
-int getSpectra(int serialPort, long spectra[]){
+int getSpectra(int serialPort, unsigned long spectra[]){
     int error;
     char outputPacket[64];
     float sitin[2];
-    double timeout = 2000;
+    double timeout = 10000;
+    
+    char buffer[2112];
+    char foundPacket[1024];
     
     makePacket(10, 0, outputPacket);
-    int s = sizeof(outputPacket);
-    error = sendReceivePacket(serialPort, outputPacket, spectra, sitin, timeout);
+    //int s = sizeof(outputPacket);
+    //error = sendReceivePacket(serialPort, outputPacket, spectra, sitin, timeout);
+    error = sendPacket(serialPort, outputPacket);
+    
+    error = receivePacket(buffer, 2112, serialPort, timeout, foundPacket);
     return error;
 }
 
-int getWaveCoeff(int serialPort, long coeff[]){
+int getWaveCoeff(int serialPort, float coeff[]){
     char outputPacket[64];
-    long numC[1];
+    unsigned long numC[1];
     int error;
     double timeout = 2;
     makePacket(11, 0, outputPacket);
@@ -104,7 +110,7 @@ int getWaveCoeff(int serialPort, long coeff[]){
 
 int getNonlinCoeff(int serialPort, float coeff[]){
     char outputPacket[64];
-    long numC[1];
+    unsigned long numC[1];
     float coeffTemp[1];
     int error;
     double timeout = 2;
@@ -121,7 +127,7 @@ int getNonlinCoeff(int serialPort, float coeff[]){
 
 int getTemp(int serialPort, float temps[]){
     char outputPacket[64];
-    long sitin[1];
+    unsigned long sitin[1];
     int error;
     double timeout = 2;
     makePacket(14, 0, outputPacket);
@@ -132,12 +138,32 @@ int getTemp(int serialPort, float temps[]){
 int getSerialNum(int serialPort, char serialNum[]){
     char outputPacket[64];
     int error;
-    double timeout = 2;
+    double timeout = 2000;
+    char buffer[64], foundPacket[64];
+    memset(buffer, 0x00, 2112);
     
-    long serialNumLong[16];
+    unsigned long serialNumLong[16];
     
     makePacket(13, 0, outputPacket);
-    error = sendReceivePacket(serialPort, outputPacket, serialNumLong, NULL, timeout);
+    error = sendPacket(serialPort, outputPacket);
+    printf("\t%u.",error);
+    sleep(1);
+    printf(".");
+    int n = read(serialPort, buffer, 64);
+ 
+
+    
+    //error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+    
+#ifdef DEBUGGING      
+    printf("In: ");
+    for (int i = 0; i < 256; i++) {
+        printf("0x%02x ", buffer[i]&0xff);
+    }
+    printf("\n");
+#endif
+    
+    //error = sendReceivePacket(serialPort, outputPacket, serialNumLong, NULL, timeout);
     for (int i = 0; i < 16 ; i++) {
         serialNum[i] = (char)(serialNumLong[i]);
     }
@@ -145,14 +171,6 @@ int getSerialNum(int serialPort, char serialNum[]){
     return error;
 }
 
-int setBaud(int serialPort, int baud){
-    char outputPacket[64];
-    int error;
-    baudRateGlobal = baud;
-    makePacket(0, baud, outputPacket);
-    error = sendPacket(serialPort, outputPacket);
-    return error;
-}
 
 int setIntTime(int serialPort, long intTime){
     char outputPacket[64];
@@ -202,6 +220,7 @@ int collectSpectra(int serialPort ) {
      
      }
      */
+     return 0;
 }
 
 
@@ -209,14 +228,14 @@ int collectSpectra(int serialPort ) {
 
 // -------Serial Routines------
 
-int initSerial(char portAddress[],int baud){
-    int error;
-    error = serialport_init(portAddress, baud);
-    baudRateGlobal = baud;
-    return error;
-}
+//int initSerial(char portAddress[],int baud){
+//    int error;
+//    error = serialport_init(portAddress, baud);
+//    baudRateGlobal = baud;
+//    return error;
+//}
 
-int sendReceivePacket(int serialPort, char packetToSend[],long returnData[], float returnFloat[], double timeout){
+int sendReceivePacket(int serialPort, char packetToSend[],unsigned long returnData[], float returnFloat[], double timeout){
     int error, txError;
     char inPacket[3000];
     int numRxAttempts = 2;
@@ -259,7 +278,7 @@ int sendReceivePacket(int serialPort, char packetToSend[],long returnData[], flo
                 }
             }
             
-            error = receivePacket(inPacket, 3000, serialPort, timeout, foundPacket);
+            error = receivePacket(inPacket, 2112, serialPort, timeout, foundPacket);
             if (error == 0) {
                 // it has collected a full packet
                 error = processPacket(foundPacket, returnData, returnFloat);
@@ -277,7 +296,7 @@ int sendReceivePacket(int serialPort, char packetToSend[],long returnData[], flo
             break;
         }
         
-        flushBuffer(serialPort);
+        //flushBuffer(serialPort);
     }
     
     if (error == 0) {
@@ -293,7 +312,7 @@ int sendReceivePacket(int serialPort, char packetToSend[],long returnData[], flo
 
 int sendPacket(int serialPort, char packetToSend[]) {
     int n = 64; //number of elements in the packet, hardcoded to 64 because sizeof wasn't working correctly
-    int i = 0;
+    //int i = 0;
     time_t startTime, curTime;
     time(&startTime);
     double timeDiff = 0;
@@ -324,14 +343,26 @@ int sendPacket(int serialPort, char packetToSend[]) {
     rxTxInProgress = true;
     error = write(serialPort, packetToSend, n);
     rxTxInProgress = false;
+    
+#ifdef DEBUGGING   
+    printf("Out E: %u ",error);
+    for (int i = 0; i < n; i++) {
+        printf("0x%02x ", packetToSend[i]&0xff);
+    }
+    printf("\n");
+#endif
+
+
     return error;
 }
 
 
-int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
+int receivePacket(char buf[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
     
     ssize_t n = 0;
     fd_set rfds;
+    int error = 0;
+    
     
     struct timeval tv;
 	tv.tv_sec = 1;
@@ -362,7 +393,7 @@ int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout,
 #ifdef DEBUGGING
                 printf("%u char fnd\n",n);
                 for (int i = 0; i < 10; i++) {
-                    printf("%u\t0x%X\n",i, buf[i]);
+                    printf("%u\t0x%02X\n",i, buf[i]&&0xFF);
                 }
 #endif
                 
@@ -374,15 +405,21 @@ int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout,
         usleep(1000);
         timeout--;
         if (timeout < 0){
+        printf("Timed out\n");
             break;
         }
         
     }
 #ifdef DEBUGGING
+    printf("%u char fnd\n",n);
+    for (int i = 0; i < 10; i++) {
+        printf("%u\t0x%02X\n",i, buf[i]&&0xFF);
+    }
+
     printf("read error: %u\n", n);
 #endif
     
-    error = findPacket(buffer, bufferSize, foundPacket);
+    //error = findPacket(buf, bufferSize, foundPacket);
     return error;
     
 }
@@ -453,7 +490,7 @@ int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout,
 int flushBuffer(int serialPort) {
     int error;
     char c[3000];
-    error = serialport_flush(serialPort);
+    //error = serialport_flush(serialPort);
 //    for (int i = 0; i < 3000; i++) {
     error = read(serialPort, c, 3000);
 //    }
@@ -584,7 +621,7 @@ int findPacket(char buffer[], int bufferSize, char foundPacket[]) {
  index = 2;
  headerMarker = 0;
  int error = serialport_readNbytes(serialPort, buffer, 2112, timeout);
- /*
+ 
  //so we have the beginning we now need to write this out to buffer
  if (foundBegin == true) {
  while (foundEnd == false) {
@@ -802,7 +839,7 @@ int makePacket(int packetType, long variables, char outputPacket[]) {
     return 0;
 }
 
-int processPacket(char inPacket[], long returnData[], float floatData[]) {
+int processPacket(char inPacket[], unsigned long returnData[], float floatData[]) {
     //do some checks for errors on the packet
     long msb = (long)(inPacket[6]);
     long lsb = (long)(inPacket[7]);
@@ -820,8 +857,8 @@ int processPacket(char inPacket[], long returnData[], float floatData[]) {
         //bytes 44 - 2091 will be the 2048 byte payload
         //should be LSB first
         for (int i = 0; i < 1024; i++) {
-            uint16_t msb = (inPacket[2*i + 45]);
-            uint8_t lsb = (inPacket[2*i + 44]);
+            unsigned int msb = (inPacket[2*i + 45]);
+            unsigned char lsb = (inPacket[2*i + 44]);
             unsigned long d = (msb << 8) + lsb;
             returnData[i] = d;
         }
@@ -912,21 +949,6 @@ int split4Byte(char packet[], long number){
     return 0;
 }
 
-long findMax(long result[], long array[]){
-    int n = sizeof(array);
-    //result[0] is the index of the max result
-    //result[1] is the value of that max result.
-    result[1] = array[0];
-    result[0] = 0;
-    for (int i = 0; i < n; i++) {
-        if (array[i] > result[1]) {
-            //we have found a larger value
-            result[0] = i;
-            result[1] = array[i];
-        }
-    }
-    return result[0];
-}
 
 int timeDelayCalc(int baud, int numbytes) {
     //This calculates how long a delay should be for RX TX of a packet

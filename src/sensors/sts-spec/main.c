@@ -24,6 +24,8 @@
 #include "perls-common/serial.h"
 
 
+
+
 enum {io_socket, io_serial};
 int program_exit;
 void
@@ -36,7 +38,7 @@ signal_handler(int sigNum)
 
 int main(int argc, const char * argv[])
 {
-    printf("Spectrometer Starting\n");
+    printf("STS Spectrometer Starting\n");
     
     
     // install the signal handler
@@ -60,7 +62,7 @@ int main(int argc, const char * argv[])
     int32_t dd[10] = {0,1,2,3,4};
     specReading.specData = dd;
     
-    
+
     
     // Read the LCM config file
     BotParam *param;
@@ -106,18 +108,23 @@ int main(int argc, const char * argv[])
         inet_port = bot_param_get_str_or_fail(param, key);
     }
     
+    printf("Serial Device: %s, IO: %u, (serial: %u), baud: %u\n",serial_dev,io, io_serial, baud);
+
     // Open either the serial port or the socket
     struct addrinfo hints, *spec_addr;
     int spec_fd;
     if(io == io_serial)
     {
-        spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 1);
+        spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 0);
+        
         if(spec_fd < 0)
         {
             printf("Error opening port %s\n", serial_dev);
             return 0;
         }
     }
+    
+
     else if(io == io_socket)
     {
         memset(&hints, 0, sizeof hints);
@@ -134,14 +141,17 @@ int main(int argc, const char * argv[])
     }
     
     
+    
+
     //----------------
     
-    long specData[1024];
+    unsigned long specData[1024];
     long INTTIME = 500000;
     int CHECKRATE = 3;
     unsigned long thresholds[3] = {15500, 1500, 2000};
     float temps[2];
-    setIntTime(spec_fd, INTTIME);
+    
+    //setIntTime(spec_fd, INTTIME);
     
 //    flushBuffer(spec_fd);
 //
@@ -161,6 +171,23 @@ int main(int argc, const char * argv[])
 //        }
 //
 //    }
+    //flushBuffer(spec_fd);
+
+    printf("Serial Number :");
+    char serialNum[16];
+    getSerialNum(spec_fd, serialNum);
+    printf("%s\n",serialNum);
+    
+    //usleep(500000);
+    //getSpectra(spec_fd, specData);
+    close(spec_fd);
+    lcm_destroy(lcm);
+
+    return 0;
+}
+/*
+
+
     int i = 0;
     while (!program_exit) {
         getSpectra(spec_fd, specData);
@@ -177,7 +204,7 @@ int main(int argc, const char * argv[])
             long newIntTime = checkIntTime(specData, 1024, INTTIME, thresholds);
             newIntTime = (newIntTime /1000) * 1000;
             
-            printf("Old Int: %uus, New Int: %uus\n", INTTIME, newIntTime);
+            printf("Old Int: %luus, New Int: %luus\n", INTTIME, newIntTime);
             if (newIntTime != INTTIME) {
                 //we have a new Int time
                 setIntTime(spec_fd, newIntTime);
@@ -201,4 +228,4 @@ int main(int argc, const char * argv[])
 
     return 0;
 }
-
+*/
