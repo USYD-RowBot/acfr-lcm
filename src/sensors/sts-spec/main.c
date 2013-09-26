@@ -23,6 +23,9 @@
 #include <bot_param/param_client.h>
 #include "perls-common/serial.h"
 
+//Extra Serial headers
+#include <fcntl.h>      // File control definitions
+#include <termios.h>    // POSIX terminal control definitions
 
 
 
@@ -34,6 +37,20 @@ signal_handler(int sigNum)
     // do a safe exit
     program_exit = 1;
 }
+//Source: http://stackoverflow.com/questions/15890903/how-to-properly-set-up-serial-communication-on-linux
+int open_port(void){
+    
+    int fd;    // File descriptor for the port
+    fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
+    
+    if (fd == -1){
+        fprintf(stderr, "open_port: Unable to open /dev/ttyUSB0 %s\n",strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    
+    return fd;
+}
+
 
 
 int main(int argc, const char * argv[])
@@ -115,7 +132,46 @@ int main(int argc, const char * argv[])
     int spec_fd;
     if(io == io_serial)
     {
-        spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 0);
+        //spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 0);
+        //modified from: http://stackoverflow.com/questions/15890903/how-to-properly-set-up-serial-communication-on-linux
+        int              spec_fd = 0;     // File descriptor
+        struct termios   options;    // Terminal options
+        int              rc;         // Return value
+        
+        spec_fd = open_port();            // Open tty device for RD and WR
+        
+        // Get the current options for the port
+        if((rc = tcgetattr(spec_fd, &options)) < 0){
+            fprintf(stderr, "failed to get attr: %d, %s\n", spec_fd, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        
+        // Set the baud rates to 230400
+        cfsetispeed(&options, B115200);
+        
+        // Set the baud rates to 230400
+        cfsetospeed(&options, B115200);
+        
+        cfmakeraw(&options);
+        options.c_cflag |= (CLOCAL | CREAD);   // Enable the receiver and set local mode
+        options.c_cflag &= ~CSTOPB;            // 1 stop bit
+        options.c_cflag &= ~CRTSCTS;           // Disable hardware flow control
+        options.c_cc[VMIN]  = 1;
+        options.c_cc[VTIME] = 3;
+        
+        options->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+                              | INLCR | IGNCR | ICRNL | IXON);
+        options->c_oflag &= ~OPOST;
+        
+        //RAW mode: http://www.cmrr.umn.edu/~strupp/serial.html#configasc
+        options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+        
+        // Set the new attributes
+        if((rc = tcsetattr(spec_fd, TCSANOW, &options)) < 0){
+            fprintf(stderr, "failed to set attr: %d, %s\n", spec_fd, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        
         
         if(spec_fd < 0)
         {
