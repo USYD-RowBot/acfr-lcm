@@ -46,6 +46,9 @@ int main(int argc, const char * argv[])
     int error = 0;
     long INTTIME = 2000;
     unsigned long specData[2048];
+    int CHECKRATE = 3;
+    
+    
     
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
@@ -181,7 +184,7 @@ int main(int argc, const char * argv[])
         senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
             
         i++;
-        if (i > 3) {
+        if (i > CHECKRATE) {
         //check for correct gain every 3 samples
         
             long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);

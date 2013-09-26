@@ -58,7 +58,8 @@
 //#include "perls-common/serial.h"
 
 #include <unistd.h>   // UNIX standard function definitions
-#include "arduino-serial-lib.h"
+#include "STSspecLibC.h"
+#include <sys/select.h>
 
 #define DEBUGGING
 #define TIMEOUTS_ENABLED
@@ -297,6 +298,7 @@ int sendPacket(int serialPort, char packetToSend[]) {
     time(&startTime);
     double timeDiff = 0;
     int timeout = 2;
+    int error = 0;
     
 #ifdef DEBUGGING
     if (rxTxInProgress == true) {
@@ -320,76 +322,132 @@ int sendPacket(int serialPort, char packetToSend[]) {
     
     
     rxTxInProgress = true;
-    for (i = 0; i < n; i++) {
-        serialport_writebyte(serialPort, packetToSend[i]);
-        usleep(5);
-    }
+    error = write(serialPort, packetToSend, n);
     rxTxInProgress = false;
-    return i;
-}
-
-int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
-    //time_t startTime, curTime;
-    int error = 1;
-    //double timeDiff = 0;
-    int numBytesToRead = 3000;
-    int headCount = 0;
-    
-    memset(buffer, 0, bufferSize);
-    
-    //error = serialport_readNbytes(serialPort, buffer, numBytesToRead, timeout);
-    //New section
-    char b[1];  // read expects an array, so we give it a 1-byte array
-    int i=0;
-    rxTxInProgress = true;
-    do {
-        int n = read(serialPort, b, 1);  // read a char at a time
-        if( n==-1) return -1;    // couldn't read
-        if( n==0 ) {
-            usleep( 2 * 1000 );  // wait 1 msec try again
-            timeout--;
-            buffer[i] = b[0];
-            i++;
-            continue;
-        }
-        
-        
-        
-        //lets try to find the end of a packet and cut Rx at that pt
-        //find the end
-        /*
-        if (buffer[i] == '\xc5') {
-            headCount = 3;
-        }
-        else if (headCount == 3 && buffer[i] == '\xc4') {
-            headCount = 4;
-        }
-        else if (headCount == 4 && buffer[i] == '\xc3') {
-            headCount = 5;
-        }
-        else if (headCount == 5 && buffer[i] == '\xc2') {
-            headCount = 6;
-            
-#ifdef DEBUGGING
-            printf("Rx: found 0xc2, end of packet\n");
-#endif
-            //we have found the end of the packet
-            flushBuffer(serialPort);
-            break;
-        }
-        */
-        
-    } while(i < bufferSize && timeout>0 );
-    
-    if (timeout <= 0) {
-        printf("Timeout while receiving bytes\n");
-    }
-    
-    
-    rxTxInProgress = false;
-    error = findPacket(buffer, bufferSize, foundPacket);
     return error;
 }
+
+
+int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
+    
+    ssize_t n = 0;
+    fd_set rfds;
+    
+    struct timeval tv;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
+    
+    
+    memset(buf,0x00,bufferSize);
+    while(1) {
+        
+        FD_ZERO(&rfds);
+        FD_SET(serialPort, &rfds);
+        
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        
+        if(ret != 0 && FD_ISSET(serialPort, &rfds))
+        {
+            n = read(serialPort, buf, bufferSize);
+            
+            
+            if(n < 0) {
+                return -1;
+            } else if (n == 0) {
+                
+#ifdef DEBUGGING
+                printf(".");
+#endif
+            } else {
+#ifdef DEBUGGING
+                printf("%u char fnd\n",n);
+                for (int i = 0; i < 10; i++) {
+                    printf("%u\t0x%X\n",i, buf[i]);
+                }
+#endif
+                
+                return (int)n;
+            }
+            
+            
+        }
+        usleep(1000);
+        timeout--;
+        if (timeout < 0){
+            break;
+        }
+        
+    }
+#ifdef DEBUGGING
+    printf("read error: %u\n", n);
+#endif
+    
+    error = findPacket(buffer, bufferSize, foundPacket);
+    return error;
+    
+}
+
+//    //time_t startTime, curTime;
+//    int error = 1;
+//    //double timeDiff = 0;
+//    int numBytesToRead = 3000;
+//    int headCount = 0;
+//    
+//    memset(buffer, 0, bufferSize);
+//    
+//    //error = serialport_readNbytes(serialPort, buffer, numBytesToRead, timeout);
+//    //New section
+//    char b[1];  // read expects an array, so we give it a 1-byte array
+//    int i=0;
+//    rxTxInProgress = true;
+//    do {
+//        int n = read(serialPort, b, 1);  // read a char at a time
+//        if( n==-1) return -1;    // couldn't read
+//        if( n==0 ) {
+//            usleep( 2 * 1000 );  // wait 1 msec try again
+//            timeout--;
+//            buffer[i] = b[0];
+//            i++;
+//            continue;
+//        }
+//        
+//        
+//        
+//        //lets try to find the end of a packet and cut Rx at that pt
+//        //find the end
+//        /*
+//        if (buffer[i] == '\xc5') {
+//            headCount = 3;
+//        }
+//        else if (headCount == 3 && buffer[i] == '\xc4') {
+//            headCount = 4;
+//        }
+//        else if (headCount == 4 && buffer[i] == '\xc3') {
+//            headCount = 5;
+//        }
+//        else if (headCount == 5 && buffer[i] == '\xc2') {
+//            headCount = 6;
+//            
+//#ifdef DEBUGGING
+//            printf("Rx: found 0xc2, end of packet\n");
+//#endif
+//            //we have found the end of the packet
+//            flushBuffer(serialPort);
+//            break;
+//        }
+//        */
+//        
+//    } while(i < bufferSize && timeout>0 );
+//    
+//    if (timeout <= 0) {
+//        printf("Timeout while receiving bytes\n");
+//    }
+//    
+//    
+//    rxTxInProgress = false;
+//    error = findPacket(buffer, bufferSize, foundPacket);
+//    return error;
+
 
 
 int flushBuffer(int serialPort) {
@@ -880,6 +938,74 @@ int timeDelayCalc(int baud, int numbytes) {
     
 }
 
+
+long findMax(unsigned long result[], unsigned long array[], int arraySize){
+    //result[0] is the index of the max result
+    //result[1] is the value of that max result.
+    result[1] = array[0];
+    result[0] = 0;
+    for (int i = 0; i < arraySize; i++) {
+        if (array[i] > result[1]) {
+            //we have found a larger value
+            result[0] = i;
+            result[1] = array[i];
+        }
+    }
+    return result[0];
+}
+
+float findMean(unsigned long array[], int arraySize, int startIdx) {
+    float mean = 0;
+    float n = (float) arraySize;
+    for (int i = startIdx; i < (startIdx + arraySize); i++) {
+        mean += (array[i] / n);
+    }
+    return mean;
+}
+
+long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] ){
+    //This routine searches through a spectra array and determines if it has maxed out or the signal is too small, it then does a calculation to determine a better int time.
+    //Thresholds: [0] = Max threshold, [1] = Min Threshold, [2] = desired mean.
+    unsigned long max[2];
+    long newIntTime = intTime;
+    float fnewIntTime;
+    
+    findMax(max, specData, arraySize);
+    _Bool saturated = false;
+    _Bool tooLow = false;
+    
+    //For 400-700nm on the USB2000+ index = 172 -> 1063
+    float mean = findMean(specData, 891, 172);
+    float gain = thresholds[2] / mean;
+    
+    //Check for over the max threshold
+    if (max[1] >= thresholds[0]) {
+        saturated = true;
+        gain = gain * 0.95;
+    }
+    //check for less than min threshold
+    if (max[1] <= thresholds[1]) {
+        tooLow = true;
+        if (gain > 20.0) {
+            //it is going to ramp the gain up too much and it will bounce around, so put a threshold on it.
+            gain = 5.0;
+        }
+    }
+    
+    fnewIntTime = intTime * gain;
+    if (fnewIntTime < 1000) {
+        fnewIntTime = 1000;
+    }
+    
+    if (fnewIntTime > 500000) {
+        fnewIntTime = 500000;
+    }
+    
+    //printf("intTime %u, mean: %.1f gain: %.1f newInt~ %.1f\n", intTime, mean, gain, fnewIntTime);
+    
+    newIntTime = (long) fnewIntTime;
+    return newIntTime;
+}
 
 
 

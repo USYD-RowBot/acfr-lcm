@@ -47,4 +47,6 @@ int zeroFiller(int startIndex, int numZeros, char packet[]);
 int split4Byte(char packet[], long number);
 long findMax(long result[], long array[]);
 int timeDelayCalc(int baud, int numbytes);
-
+long findMax(unsigned long result[], unsigned long array[], int arraySize);
+float findMean(unsigned long array[], int arraySize, int startIdx);
+long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] );
