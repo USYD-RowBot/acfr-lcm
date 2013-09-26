@@ -46,7 +46,7 @@ int main(int argc, const char * argv[])
     int error = 0;
     long INTTIME = 2000;
     unsigned long specData[2048];
-    int CHECKRATE = 3;
+    int CHECKRATE = 500;
     
     
     
@@ -136,40 +136,22 @@ int main(int argc, const char * argv[])
     }
 
 
-    //Setup serial
-    //int serialPort = initSerial(PORT_ADDR,115200);
-    
-    
-    //flushBuffer(spec_fd);
-    //error = getSpectra(spec_fd, specData);
-    //error = getSpectra(spec_fd, specData);
-
-    
-    //Initalise spectrometer with correct Baud rate
-    //error = setBaud(serialPort, PORT_ADDR, 6);
     //Set to Binary Data mode
     error = setDataMode(spec_fd, TRUE);
     printf("Data mode set- error = %u\n",error);
+
     //init int time
-    //serialPort = initSerial(PORT_ADDR,115200);
     error = setIntTime(spec_fd, INTTIME);
     printf("Int time set - error = %u\n",error);
   
     //Set trigger mode
     error = setTriggerMode(spec_fd, 4);
-    //error = setTriggerMode(spec_fd, 0); //free running mode
     printf("Trigger mode set - error = %u\n",error);
-    //flushBuffer(spec_fd);
+
     //Need to tune these parameters for Auto Gain
     unsigned long thresholds[3] = {25900, 1000, 2000};
-    //flushBuffer(serialPort);
-    //long rubbish[3000];
-    //receivePacket(rubbish, 3000, serialPort, 2);
+    
     //Acquisition Loop
-    //unsigned long zz[2048];
-    //memset(zz,0x00,2048);
-    //zz[3] = 5;
-    //zz[5] = 10;
     int i = 0;
     while (!program_exit) {
 
@@ -201,8 +183,9 @@ int main(int argc, const char * argv[])
         }
         
     }
-    //error = setTriggerMode(spec_fd, 0);
-    //printf("Trigger mode set - error = %u\n",error);
+    
+    error = setTriggerMode(spec_fd, 0);
+    printf("Trigger mode set - error = %u\n",error);
     
     close(spec_fd);
     lcm_destroy(lcm);
