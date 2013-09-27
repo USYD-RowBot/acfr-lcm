@@ -18,7 +18,7 @@ _Bool rxTxInProgress;
 
 // ----Get/Set From Spectrometer---
 
-int getSpectra(int serialPort, unsigned long spectra[]);
+int getSpectra(int serialPort, unsigned short spectra[]);
 /* will return a 1024 long array of spectral readings, needs to be nonlinearity corrected */
 int getWaveCoeff(int serialPort, float coeff[]);
 int getNonlinCoeff(int serialPort, float coeff[]);
@@ -35,13 +35,13 @@ int collectSpectra(int serialPort );
 
 int sendReceivePacket(int serialPort, char packetToSend[],unsigned long returnData[], float returnFloat[], double timeout);
 int sendPacket(int serialPort, char packetToSend[]);
-int receivePacket(char buffer[], int bufferSize, int serialPort, double timeout, char foundPacket[]);
+int receivePacket(unsigned char buffer[], int bufferSize, int serialPort, double timeout, char foundPacket[]);
 int flushBuffer(int serialPort);
 
 // ---Processing Routines---
 int findPacket(char buffer[], int bufferSize, char foundPacket[]);
 int makePacket(int packetType, long variables, char outputPacket[]);
-int processPacket(char inPacket[], unsigned long returnData[], float floatData[]);
+int processPacket(char inPacket[], unsigned short returnData[], float floatData[]);
 int zeroFiller(int startIndex, int numZeros, char packet[]);
 int split4Byte(char packet[], long number);
 int timeDelayCalc(int baud, int numbytes);

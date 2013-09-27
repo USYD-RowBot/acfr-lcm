@@ -67,7 +67,7 @@
 
 _Bool rxTxInProgress = false;
 int baudRateGlobal = 9600;
-long intTimeGlobal = 0;
+long intTimeGlobal = 500000;
 
 
 // ----Get/Set From Spectrometer---
@@ -75,21 +75,20 @@ long intTimeGlobal = 0;
 
 
 
-int getSpectra(int serialPort, unsigned long spectra[]){
+int getSpectra(int serialPort, unsigned short spectra[]){
     int error;
     char outputPacket[64];
-    float sitin[2];
+    //float sitin[2];
     double timeout = 10000;
     
     char buffer[2112];
-    char foundPacket[1024];
+    char foundPacket[2112];
     
     makePacket(10, 0, outputPacket);
-    //int s = sizeof(outputPacket);
-    //error = sendReceivePacket(serialPort, outputPacket, spectra, sitin, timeout);
     error = sendPacket(serialPort, outputPacket);
-    
+    usleep(intTimeGlobal);
     error = receivePacket(buffer, 2112, serialPort, timeout, foundPacket);
+    error = processPacket(foundPacket, spectra, NULL);
     return error;
 }
 
@@ -129,9 +128,12 @@ int getTemp(int serialPort, float temps[]){
     char outputPacket[64];
     unsigned long sitin[1];
     int error;
-    double timeout = 2;
+    double timeout = 2000;
+    unsigned char buffer[64], foundPacket[64];
     makePacket(14, 0, outputPacket);
-    error = sendReceivePacket(serialPort, outputPacket, sitin, temps,timeout);
+    error = sendPacket(serialPort, outputPacket);
+    error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+    error = processPacket(foundPacket, NULL, temps);
     return error;
 }
 
@@ -139,31 +141,13 @@ int getSerialNum(int serialPort, char serialNum[]){
     char outputPacket[64];
     int error;
     double timeout = 2000;
-    char buffer[64], foundPacket[64];
-    memset(buffer, 0x00, 2112);
-    
-    unsigned long serialNumLong[16];
+    unsigned char buffer[256], foundPacket[64];
+    unsigned short serialNumLong[16];
     
     makePacket(13, 0, outputPacket);
-    error = sendPacket(serialPort, outputPacket);
-    printf("\t%u.",error);
-    sleep(1);
-    printf(".");
-    int n = read(serialPort, buffer, 64);
- 
-
-    
-    //error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
-    
-#ifdef DEBUGGING      
-    printf("In: ");
-    for (int i = 0; i < 256; i++) {
-        printf("0x%02x ", buffer[i]&0xff);
-    }
-    printf("\n");
-#endif
-    
-    //error = sendReceivePacket(serialPort, outputPacket, serialNumLong, NULL, timeout);
+    error = sendPacket(serialPort, outputPacket);    
+    error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+    error = processPacket(foundPacket, serialNumLong, NULL);
     for (int i = 0; i < 16 ; i++) {
         serialNum[i] = (char)(serialNumLong[i]);
     }
@@ -181,8 +165,6 @@ int setIntTime(int serialPort, long intTime){
     error = sendPacket(serialPort, outputPacket);
     //    error = sendReceivePacket(serialPort, outputPacket, returnData, NULL, 1);
     
-    //usleep(500);
-    //flushBuffer(serialPort);
     return error;
     
 }
@@ -343,26 +325,17 @@ int sendPacket(int serialPort, char packetToSend[]) {
     rxTxInProgress = true;
     error = write(serialPort, packetToSend, n);
     rxTxInProgress = false;
-    
-#ifdef DEBUGGING   
-    printf("Out E: %u ",error);
-    for (int i = 0; i < n; i++) {
-        printf("0x%02x ", packetToSend[i]&0xff);
-    }
-    printf("\n");
-#endif
-
-
     return error;
 }
 
 
-int receivePacket(char buf[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
+int receivePacket(unsigned char buf[], int bufferSize, int serialPort, double timeout, char foundPacket[]) {
     
     ssize_t n = 0;
     fd_set rfds;
     int error = 0;
-    
+    int offset = 0;
+    unsigned char rawbuf[3000];
     
     struct timeval tv;
 	tv.tv_sec = 1;
@@ -379,25 +352,14 @@ int receivePacket(char buf[], int bufferSize, int serialPort, double timeout, ch
         
         if(ret != 0 && FD_ISSET(serialPort, &rfds))
         {
-            n = read(serialPort, buf, bufferSize);
-            
-            
+            n = read(serialPort, rawbuf, bufferSize-offset);
             if(n < 0) {
                 return -1;
             } else if (n == 0) {
                 
-#ifdef DEBUGGING
-                printf(".");
-#endif
             } else {
-#ifdef DEBUGGING
-                printf("%u char fnd\n",n);
-                for (int i = 0; i < 10; i++) {
-                    printf("%u\t0x%02X\n",i, buf[i]&&0xFF);
-                }
-#endif
-                
-                return (int)n;
+                memcpy(&buf[offset], rawbuf, n);
+                offset += n;
             }
             
             
@@ -408,18 +370,13 @@ int receivePacket(char buf[], int bufferSize, int serialPort, double timeout, ch
         printf("Timed out\n");
             break;
         }
+        if (offset >= bufferSize) {
+            break;
+        }
         
     }
-#ifdef DEBUGGING
-    printf("%u char fnd\n",n);
-    for (int i = 0; i < 10; i++) {
-        printf("%u\t0x%02X\n",i, buf[i]&&0xFF);
-    }
-
-    printf("read error: %u\n", n);
-#endif
     
-    //error = findPacket(buf, bufferSize, foundPacket);
+    error = findPacket(buf, bufferSize, foundPacket);
     return error;
     
 }
@@ -839,11 +796,11 @@ int makePacket(int packetType, long variables, char outputPacket[]) {
     return 0;
 }
 
-int processPacket(char inPacket[], unsigned long returnData[], float floatData[]) {
+int processPacket(char inPacket[], unsigned short returnData[], float floatData[]) {
     //do some checks for errors on the packet
-    long msb = (long)(inPacket[6]);
-    long lsb = (long)(inPacket[7]);
-    long error = (msb << 8) + lsb;
+    short msb = (short)(inPacket[6]);
+    short lsb = (short)(inPacket[7]);
+    short error = (msb << 8) + lsb;
     if (error > 0) {
         return (int)(error);
     }
@@ -859,7 +816,7 @@ int processPacket(char inPacket[], unsigned long returnData[], float floatData[]
         for (int i = 0; i < 1024; i++) {
             unsigned int msb = (inPacket[2*i + 45]);
             unsigned char lsb = (inPacket[2*i + 44]);
-            unsigned long d = (msb << 8) + lsb;
+            unsigned short d = (msb << 8) + lsb;
             returnData[i] = d;
         }
         return 0;

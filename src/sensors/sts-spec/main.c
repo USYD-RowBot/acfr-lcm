@@ -26,7 +26,7 @@
 //Extra Serial headers
 #include <fcntl.h>      // File control definitions
 #include <termios.h>    // POSIX terminal control definitions
-
+#include <errno.h>
 
 
 enum {io_socket, io_serial};
@@ -37,6 +37,7 @@ signal_handler(int sigNum)
     // do a safe exit
     program_exit = 1;
 }
+/*
 //Source: http://stackoverflow.com/questions/15890903/how-to-properly-set-up-serial-communication-on-linux
 int open_port(void){
     
@@ -50,7 +51,7 @@ int open_port(void){
     
     return fd;
 }
-
+*/
 
 
 int main(int argc, const char * argv[])
@@ -132,52 +133,15 @@ int main(int argc, const char * argv[])
     int spec_fd;
     if(io == io_serial)
     {
-        //spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 0);
-        //modified from: http://stackoverflow.com/questions/15890903/how-to-properly-set-up-serial-communication-on-linux
-        int              spec_fd = 0;     // File descriptor
-        struct termios   options;    // Terminal options
-        int              rc;         // Return value
-        
-        spec_fd = open_port();            // Open tty device for RD and WR
-        
-        // Get the current options for the port
-        if((rc = tcgetattr(spec_fd, &options)) < 0){
-            fprintf(stderr, "failed to get attr: %d, %s\n", spec_fd, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-        
-        // Set the baud rates to 230400
-        cfsetispeed(&options, B115200);
-        
-        // Set the baud rates to 230400
-        cfsetospeed(&options, B115200);
-        
-        cfmakeraw(&options);
-        options.c_cflag |= (CLOCAL | CREAD);   // Enable the receiver and set local mode
-        options.c_cflag &= ~CSTOPB;            // 1 stop bit
-        options.c_cflag &= ~CRTSCTS;           // Disable hardware flow control
-        options.c_cc[VMIN]  = 1;
-        options.c_cc[VTIME] = 3;
-        
-        options->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-                              | INLCR | IGNCR | ICRNL | IXON);
-        options->c_oflag &= ~OPOST;
-        
-        //RAW mode: http://www.cmrr.umn.edu/~strupp/serial.html#configasc
-        options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
-        
-        // Set the new attributes
-        if((rc = tcsetattr(spec_fd, TCSANOW, &options)) < 0){
-            fprintf(stderr, "failed to set attr: %d, %s\n", spec_fd, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-        
+        spec_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 0);
+        serial_set_noncanonical (spec_fd, 1, 0);
         
         if(spec_fd < 0)
         {
             printf("Error opening port %s\n", serial_dev);
             return 0;
         }
+        
     }
     
 
@@ -201,81 +165,74 @@ int main(int argc, const char * argv[])
 
     //----------------
     
-    unsigned long specData[1024];
+    unsigned short specData[1024];
     long INTTIME = 500000;
-    int CHECKRATE = 3;
-    unsigned long thresholds[3] = {15500, 1500, 2000};
+    int CHECKRATE = 10;
+    double SAMPLE_INTERVAL = 0.5; //time in seconds
+    unsigned long thresholds[3] = {15500, 1500, 5000};
     float temps[2];
-    
-    //setIntTime(spec_fd, INTTIME);
-    
-//    flushBuffer(spec_fd);
-//
-//    setIntTime(spec_fd, 500000);
-//    usleep(100000);
-//    
-//    float temps[2];
-//    
-//    for (int i = 0; i < 15; i++) {
-//
-//        
-//        getTemp(spec_fd, temps);
-//        
-//        getSpectra(spec_fd, specData);
-//        for (int j = 490; j < 510; j++) {
-//            fprintf(fp, "%lu\t",specData[j]);
-//        }
-//
-//    }
-    //flushBuffer(spec_fd);
 
-    printf("Serial Number :");
     char serialNum[16];
     getSerialNum(spec_fd, serialNum);
-    printf("%s\n",serialNum);
+    printf("Serial Number :%s\n",serialNum);
+    specReading.id = serialNum;
     
     //usleep(500000);
-    //getSpectra(spec_fd, specData);
-    close(spec_fd);
-    lcm_destroy(lcm);
+    getSpectra(spec_fd, specData);
 
-    return 0;
-}
-/*
-
+    //timer stuff
+    time_t lastT,curT;
+    double diffT;
+    time(&lastT);
+    time(&curT);
+    
 
     int i = 0;
     while (!program_exit) {
-        getSpectra(spec_fd, specData);
-        specReading.timestamp = timestamp_now();
-        specReading.specData = specData;
-        specReading.numSamples = 1024;
-        specReading.intTime = INTTIME / 1000;
-        senlcm_sts_spec_t_publish(lcm, "SPEC_UP", &specReading);
+    
+        time(&curT);
+        diffT = difftime(curT, lastT);
+    
         
-        i++;
-        if (i > CHECKRATE) {
-            //check for correct gain every 3 samples
+        if (diffT > SAMPLE_INTERVAL) {
+            time(&lastT);
+        
+            getSpectra(spec_fd, specData);
+            specReading.timestamp = timestamp_now();
+            //for (int i = 0; i < 10; i++) {
+            //    printf("%lu\t",specData[i]);
+            //    specReading.specData[i] = specData[i];
+            //    printf("\n");
+            //}
+            specReading.specData = &specData;
+            specReading.numSamples = 1024;
+            specReading.intTime = INTTIME / 1000;
+            senlcm_sts_spec_t_publish(lcm, "SPEC_UP", &specReading);
             
-            long newIntTime = checkIntTime(specData, 1024, INTTIME, thresholds);
-            newIntTime = (newIntTime /1000) * 1000;
-            
-            printf("Old Int: %luus, New Int: %luus\n", INTTIME, newIntTime);
-            if (newIntTime != INTTIME) {
-                //we have a new Int time
-                setIntTime(spec_fd, newIntTime);
-                INTTIME = newIntTime;
+            i++;
+            if (i > CHECKRATE) {
+                //check for correct gain every 3 samples
+                
+                long newIntTime = checkIntTime(specData, 1024, INTTIME, thresholds);
+                newIntTime = (newIntTime /1000) * 1000;
+                
+                printf("Old Int: %luus, New Int: %luus\n", INTTIME, newIntTime);
+                if (newIntTime != INTTIME) {
+                    //we have a new Int time
+                    setIntTime(spec_fd, newIntTime);
+                    INTTIME = newIntTime;
+                }
+                
+                getTemp(spec_fd, temps);
+                specReading.detectTemp = temps[0];
+                specReading.boardTemp = temps[1];
+                specReading.newTemps = 1;
+                           
+                i = 0;
             }
-            
-            getTemp(spec_fd, temps);
-            specReading.detectTemp = temps[0];
-            specReading.boardTemp = temps[1];
-            specReading.newTemps = 1;
-                       
-            i = 0;
-        }
-        else {
-            specReading.newTemps = 0;
+            else {
+                specReading.newTemps = 0;
+            }
         }
     }
     
@@ -284,4 +241,4 @@ int main(int argc, const char * argv[])
 
     return 0;
 }
-*/
+
