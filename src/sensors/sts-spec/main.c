@@ -58,6 +58,9 @@ int main(int argc, const char * argv[])
 {
     printf("STS Spectrometer Starting\n");
     
+    int CHECKRATE = 10;
+    double SAMPLE_INTERVAL = 1; //time in seconds
+    int meanThres_autoGain = 3000;
     
     // install the signal handler
 	program_exit = 0;
@@ -126,6 +129,15 @@ int main(int argc, const char * argv[])
         inet_port = bot_param_get_str_or_fail(param, key);
     }
     
+    sprintf(key, "%s.checkRate", rootkey);
+    CHECKRATE = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.sampleInterval", rootkey);
+    SAMPLE_INTERVAL = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.meanThres_autoGain", rootkey);
+    meanThres_autoGain = bot_param_get_int_or_fail(param, key);
+    
     printf("Serial Device: %s, IO: %u, (serial: %u), baud: %u\n",serial_dev,io, io_serial, baud);
 
     // Open either the serial port or the socket
@@ -167,9 +179,9 @@ int main(int argc, const char * argv[])
     
     unsigned short specData[1024];
     long INTTIME = 500000;
-    int CHECKRATE = 10;
-    double SAMPLE_INTERVAL = 0.5; //time in seconds
+
     unsigned long thresholds[3] = {15500, 1500, 5000};
+    thresholds[2] = meanThres_autoGain;
     float temps[2];
 
     char serialNum[16];
@@ -177,7 +189,24 @@ int main(int argc, const char * argv[])
     printf("Serial Number :%s\n",serialNum);
     specReading.id = serialNum;
     
+    flushBuffer(spec_fd);
+    
+    //get wavelength coeff
+    float waveCoeff[5];
+    getWaveCoeff(spec_fd, waveCoeff);
+    for (int i = 0; i < 4; i++) {
+        printf("Wcoeff: %u = %.50f\n", i, waveCoeff[i]);
+    }
+    
+    float nonLinCoeff[8];
+    getNonlinCoeff(spec_fd, nonLinCoeff);
+    for (int i = 0; i < 8; i++) {
+        printf("NonLinCoeff: %u = %.50f\n", i, nonLinCoeff[i]);
+    }
+    
+    
     //usleep(500000);
+    setIntTime(spec_fd, INTTIME);
     getSpectra(spec_fd, specData);
 
     //timer stuff
@@ -194,9 +223,9 @@ int main(int argc, const char * argv[])
         diffT = difftime(curT, lastT);
     
         
-        if (diffT > SAMPLE_INTERVAL) {
+        if (diffT > (double) SAMPLE_INTERVAL) {
             time(&lastT);
-        
+            //printf(".");
             getSpectra(spec_fd, specData);
             specReading.timestamp = timestamp_now();
             //for (int i = 0; i < 10; i++) {

@@ -671,7 +671,7 @@ int timeDelayCalc(int baud, int numbytes) {
     
 }
 
-long findMax(unsigned long result[], unsigned long array[], int arraySize){
+unsigned long findMax(unsigned long result[], unsigned long array[], int arraySize){
     //result[0] is the index of the max result
     //result[1] is the value of that max result.
     result[1] = array[0];
@@ -691,6 +691,7 @@ float findMean(unsigned long array[], int arraySize, int startIdx) {
     float n = (float) arraySize;
     for (int i = startIdx; i < (startIdx + arraySize); i++) {
         mean += (array[i] / n);
+        //printf("%u\n", array[i]);
     }
     return mean;
 }
@@ -715,10 +716,12 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     if (max[1] >= thresholds[0]) {
         saturated = true;
         gain = gain * 0.95;
+        printf("Signal has saturated: value = %u\n",max[1]);
     }
     //check for less than min threshold
     if (max[1] <= thresholds[1]) {
         tooLow = true;
+        printf("Signal is too low: value = %u\n",max[1]);
         if (gain > 20.0) {
             //it is going to ramp the gain up too much and it will bounce around, so put a threshold on it.
             gain = 5.0;
@@ -734,7 +737,7 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
         fnewIntTime = 500000;
     }
     
-    //printf("intTime %u, mean: %.1f gain: %.1f newInt~ %.1f\n", intTime, mean, gain, fnewIntTime);
+    printf("intTime %u, mean: %.1f gain: %.1f fnewInt %.1f max: %lu\n", intTime, mean, gain, fnewIntTime, max[1]);
     
     newIntTime = (long) fnewIntTime;
     return newIntTime;

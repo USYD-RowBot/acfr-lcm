@@ -45,6 +45,6 @@ int processPacket(char inPacket[], unsigned short returnData[], float floatData[
 int zeroFiller(int startIndex, int numZeros, char packet[]);
 int split4Byte(char packet[], long number);
 int timeDelayCalc(int baud, int numbytes);
-long findMax(unsigned long result[], unsigned long array[], int arraySize);
-float findMean(unsigned long array[], int arraySize, int startIdx);
+short findMax(unsigned short result[], unsigned short array[], int arraySize);
+float findMean(unsigned short array[], int arraySize, int startIdx);
 long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] );

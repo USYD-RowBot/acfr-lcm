@@ -58,6 +58,6 @@ int processPacket(char inPacket[], unsigned long specData[]);
 int convertBytesToLong(unsigned char inPacket[], int numBytes, unsigned long *returnValue);
 int split4Byte(char packet[], long number);
 int timeDelayCalc(int baud, int numbytes);
-long findMax(unsigned long result[], unsigned long array[], int arraySize);
+unsigned long findMax(unsigned long result[], unsigned long array[], int arraySize);
 float findMean(unsigned long array[], int arraySize, int startIdx);
 long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] );

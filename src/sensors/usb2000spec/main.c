@@ -47,6 +47,7 @@ int main(int argc, const char * argv[])
     long INTTIME = 2000;
     unsigned long specData[2048];
     int CHECKRATE = 500;
+    int meanThres_autoGain = 2000;
     
     
     
@@ -108,6 +109,13 @@ int main(int argc, const char * argv[])
         inet_port = bot_param_get_str_or_fail(param, key);
     }
     
+    
+    sprintf(key, "%s.checkRate", rootkey);
+    CHECKRATE = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.meanThres_autoGain", rootkey);
+    meanThres_autoGain = bot_param_get_int_or_fail(param, key);
+    
     // Open either the serial port or the socket
     struct addrinfo hints, *spec_addr;
     int spec_fd;
@@ -149,7 +157,8 @@ int main(int argc, const char * argv[])
     printf("Trigger mode set - error = %u\n",error);
 
     //Need to tune these parameters for Auto Gain
-    unsigned long thresholds[3] = {25900, 1000, 2000};
+    unsigned long thresholds[3] = {25950, 1000, 2000};
+    thresholds[2] = meanThres_autoGain;
     
     //Acquisition Loop
     int i = 0;

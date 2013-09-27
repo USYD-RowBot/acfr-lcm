@@ -94,32 +94,70 @@ int getSpectra(int serialPort, unsigned short spectra[]){
 
 int getWaveCoeff(int serialPort, float coeff[]){
     char outputPacket[64];
-    unsigned long numC[1];
+    unsigned short numC[1], standin[1];
     int error;
     double timeout = 2;
+    char buffer[256];
+    char foundPacket[64];
+    float tempCoeff[1];
+    
     makePacket(11, 0, outputPacket);
-    error = sendReceivePacket(serialPort, outputPacket, numC,NULL, timeout);
+    //error = sendReceivePacket(serialPort, outputPacket, numC,NULL, timeout);
+    error = sendPacket(serialPort, outputPacket);
+    usleep(20000);
+    error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+    //for (int i = 0; i < 64; i++) {
+    //    printf("0x%02x\t",buffer[i] & 0xFF);
+    //}
+    error = processPacket(foundPacket, numC, NULL);
+    printf("numC: %lu\n",numC[0]);
+    
     for (int i = 0; i < numC[0]; i++) {
         
         makePacket(2, i, outputPacket);
-        error = sendReceivePacket(serialPort, outputPacket, NULL, &coeff[i],timeout);
+        error = sendPacket(serialPort, outputPacket);
+        usleep(20000);
+        error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+        //for (int j = 0; j < 64; j++) {
+        //    printf("0x%02x\t",buffer[j] & 0xFF);
+        //}
+        //printf("\n\n");
+        error = processPacket(foundPacket, standin, tempCoeff);
+        //printf("Coef2 %.9f\n", tempCoeff[0]);
+        coeff[i] = tempCoeff[0];
     }
     return error;
 }
 
 int getNonlinCoeff(int serialPort, float coeff[]){
     char outputPacket[64];
-    unsigned long numC[1];
+    unsigned short numC[1];
     float coeffTemp[1];
     int error;
     double timeout = 2;
+    float tempCoeff[1];
+    char buffer[256];
+    char foundPacket[64];
+    
     makePacket(12, 0, outputPacket);
-    error = sendReceivePacket(serialPort, outputPacket, numC, NULL, timeout);
+    error = sendPacket(serialPort, outputPacket);
+    usleep(20000);
+    error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+    error = processPacket(foundPacket, numC, NULL);
+    printf("numC: %lu\n",numC[0]);
     for (int i = 0; i < numC[0]; i++) {
         
         makePacket(3, i, outputPacket);
-        error = sendReceivePacket(serialPort, outputPacket, NULL, coeffTemp, timeout);
-        coeff[i] = coeffTemp[0];
+        error = sendPacket(serialPort, outputPacket);
+        usleep(40000);
+        error = receivePacket(buffer, 64, serialPort, timeout, foundPacket);
+        //for (int j = 0; j < 64; j++) {
+        //    printf("0x%02x\t",buffer[j] & 0xFF);
+        //}
+        //printf("\n\n");
+        error = processPacket(foundPacket, NULL, tempCoeff);
+        //printf("Coef2 %.9f\n", tempCoeff[0]);
+        coeff[i] = tempCoeff[0];
     }
     return error;
 }
@@ -856,25 +894,37 @@ int processPacket(char inPacket[], unsigned short returnData[], float floatData[
     }
     else if (msgType == 0x00180100) {
         //wavelength Coeff count
-        returnData[0] = inPacket[24];
+        returnData[0] = (unsigned short) inPacket[24];
         return 0;
     }
     else if (msgType == 0x00180101) {
         //wavelength Coeff number x
-        float coeff = (float)(inPacket[24]) + (float)(inPacket[25] << 8) + (float)(inPacket[26] << 16) + (float)(inPacket[27] << 24);
-        returnData[0] = coeff;
+        //float coeff = (float)(inPacket[24]) + (float)(inPacket[25] << 8) + (float)(inPacket[26] << 16) + (float)(inPacket[27] << 24);
+        float * f = (float *)(inPacket + 24);
+        float coeff = *f;
+        
+        //printf("Coef %.9f\n", coeff);
+        
+        floatData[0] = coeff;
         return 0;
     }
     
     else if (msgType == 0x00181100) {
         //nonlin Coeff count
-        returnData[0] = inPacket[24];
+        returnData[0] = (unsigned short) inPacket[24];
         return 0;
     }
     else if (msgType == 0x00181101) {
         //nonlin Coeff number x
-        float coeff = (float)(inPacket[24]) + (float)(inPacket[25] << 8) + (float)(inPacket[26] << 16) + (float)(inPacket[27] << 24);
-        returnData[0] = coeff;
+        //float coeff = (float)(inPacket[24]) + (float)(inPacket[25] << 8) + (float)(inPacket[26] << 16) + (float)(inPacket[27] << 24);
+
+        
+        float * f = (float *)(inPacket + 24);
+        float coeff = *f;
+        
+        //printf("Coef %.9f\n", coeff);
+        
+        floatData[0] = coeff;
         return 0;
     }
     
@@ -918,7 +968,7 @@ int timeDelayCalc(int baud, int numbytes) {
 }
 
 
-long findMax(unsigned long result[], unsigned long array[], int arraySize){
+short findMax(unsigned short result[], unsigned short array[], int arraySize){
     //result[0] is the index of the max result
     //result[1] is the value of that max result.
     result[1] = array[0];
@@ -926,6 +976,7 @@ long findMax(unsigned long result[], unsigned long array[], int arraySize){
     for (int i = 0; i < arraySize; i++) {
         if (array[i] > result[1]) {
             //we have found a larger value
+            //printf("found %lu, at %u\n",array[i], i);
             result[0] = i;
             result[1] = array[i];
         }
@@ -933,10 +984,11 @@ long findMax(unsigned long result[], unsigned long array[], int arraySize){
     return result[0];
 }
 
-float findMean(unsigned long array[], int arraySize, int startIdx) {
+float findMean(unsigned short array[], int arraySize, int startIdx) {
     float mean = 0;
     float n = (float) arraySize;
     for (int i = startIdx; i < (startIdx + arraySize); i++) {
+        //printf("%u\n", array[i]);
         mean += (array[i] / n);
     }
     return mean;
@@ -945,7 +997,7 @@ float findMean(unsigned long array[], int arraySize, int startIdx) {
 long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] ){
     //This routine searches through a spectra array and determines if it has maxed out or the signal is too small, it then does a calculation to determine a better int time.
     //Thresholds: [0] = Max threshold, [1] = Min Threshold, [2] = desired mean.
-    unsigned long max[2];
+    unsigned short max[2];
     long newIntTime = intTime;
     float fnewIntTime;
     
@@ -954,17 +1006,19 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     _Bool tooLow = false;
     
     //For 400-700nm on the USB2000+ index = 172 -> 1063
-    float mean = findMean(specData, 891, 172);
+    float mean = findMean(specData, 350, 300);
     float gain = thresholds[2] / mean;
     
     //Check for over the max threshold
     if (max[1] >= thresholds[0]) {
         saturated = true;
         gain = gain * 0.95;
+        printf("Signal has saturated: value = %u\n",max[1]);
     }
     //check for less than min threshold
     if (max[1] <= thresholds[1]) {
         tooLow = true;
+        printf("Signal is too low: value = %u\n",max[1]);
         if (gain > 20.0) {
             //it is going to ramp the gain up too much and it will bounce around, so put a threshold on it.
             gain = 5.0;
@@ -976,11 +1030,11 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
         fnewIntTime = 1000;
     }
     
-    if (fnewIntTime > 500000) {
-        fnewIntTime = 500000;
+    if (fnewIntTime > 8000000) {
+        fnewIntTime = 8000000;
     }
     
-    //printf("intTime %u, mean: %.1f gain: %.1f newInt~ %.1f\n", intTime, mean, gain, fnewIntTime);
+    printf("intTime %u, mean: %.1f gain: %.1f newIntf %.1f max %u\n ", intTime, mean, gain, fnewIntTime,max[1]);
     
     newIntTime = (long) fnewIntTime;
     return newIntTime;
