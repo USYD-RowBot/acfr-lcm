@@ -37,21 +37,7 @@ signal_handler(int sigNum)
     // do a safe exit
     program_exit = 1;
 }
-/*
-//Source: http://stackoverflow.com/questions/15890903/how-to-properly-set-up-serial-communication-on-linux
-int open_port(void){
-    
-    int fd;    // File descriptor for the port
-    fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);
-    
-    if (fd == -1){
-        fprintf(stderr, "open_port: Unable to open /dev/ttyUSB0 %s\n",strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    
-    return fd;
-}
-*/
+
 
 
 int main(int argc, const char * argv[])
@@ -61,6 +47,11 @@ int main(int argc, const char * argv[])
     int CHECKRATE = 10;
     double SAMPLE_INTERVAL = 1; //time in seconds
     int meanThres_autoGain = 3000;
+    int meanStartIdx = 350;
+    int meanWidth = 300;
+    int autoGainOn = 0;
+    long INTTIME = 500000;
+    
     
     // install the signal handler
 	program_exit = 0;
@@ -138,6 +129,18 @@ int main(int argc, const char * argv[])
     sprintf(key, "%s.meanThres_autoGain", rootkey);
     meanThres_autoGain = bot_param_get_int_or_fail(param, key);
     
+    sprintf(key, "%s.meanStartIdx", rootkey);
+    meanStartIdx = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.meanWidth", rootkey);
+    meanWidth = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.autoGainOn", rootkey);
+    autoGainOn = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.intTimeIntial", rootkey);
+    INTTIME = (long) bot_param_get_int_or_fail(param, key) * 1000;
+    
     printf("Serial Device: %s, IO: %u, (serial: %u), baud: %u\n",serial_dev,io, io_serial, baud);
 
     // Open either the serial port or the socket
@@ -178,10 +181,14 @@ int main(int argc, const char * argv[])
     //----------------
     
     unsigned short specData[1024];
-    long INTTIME = 500000;
+    
 
-    unsigned long thresholds[3] = {15500, 1500, 5000};
+    unsigned long thresholds[5] = {15500, 1500, 5000, 350, 300};
     thresholds[2] = meanThres_autoGain;
+    thresholds[3] = meanStartIdx;
+    thresholds[4] = meanWidth;
+    
+    
     float temps[2];
 
     char serialNum[16];
@@ -204,8 +211,6 @@ int main(int argc, const char * argv[])
         printf("NonLinCoeff: %u = %.50f\n", i, nonLinCoeff[i]);
     }
     
-    
-    //usleep(500000);
     setIntTime(spec_fd, INTTIME);
     getSpectra(spec_fd, specData);
 
@@ -239,7 +244,7 @@ int main(int argc, const char * argv[])
             senlcm_sts_spec_t_publish(lcm, "SPEC_UP", &specReading);
             
             i++;
-            if (i > CHECKRATE) {
+            if (i > CHECKRATE && autoGain == 1) {
                 //check for correct gain every 3 samples
                 
                 long newIntTime = checkIntTime(specData, 1024, INTTIME, thresholds);

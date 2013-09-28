@@ -709,7 +709,8 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     _Bool tooLow = false;
     
             //For 400-700nm on the USB2000+ index = 172 -> 1063
-    float mean = findMean(specData, 891, 172);
+//    float mean = findMean(specData, 891, 172);
+    float mean = findMean(specData, thresholds[4], thresholds[3]
     float gain = thresholds[2] / mean;
     
     //Check for over the max threshold

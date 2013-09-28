@@ -48,7 +48,9 @@ int main(int argc, const char * argv[])
     unsigned long specData[2048];
     int CHECKRATE = 500;
     int meanThres_autoGain = 2000;
-    
+    int meanStartIdx = 172;
+    int meanWidth = 891;
+    int autoGainOn = 0;
     
     
     //Initalise LCM object - specReading
@@ -116,6 +118,18 @@ int main(int argc, const char * argv[])
     sprintf(key, "%s.meanThres_autoGain", rootkey);
     meanThres_autoGain = bot_param_get_int_or_fail(param, key);
     
+    sprintf(key, "%s.meanStartIdx", rootkey);
+    meanStartIdx = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.meanWidth", rootkey);
+    meanWidth = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.autoGainOn", rootkey);
+    autoGainOn = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.intTimeIntial", rootkey);
+    INTTIME = (long) bot_param_get_int_or_fail(param, key) * 1000;
+    
     // Open either the serial port or the socket
     struct addrinfo hints, *spec_addr;
     int spec_fd;
@@ -159,6 +173,8 @@ int main(int argc, const char * argv[])
     //Need to tune these parameters for Auto Gain
     unsigned long thresholds[3] = {25950, 1000, 2000};
     thresholds[2] = meanThres_autoGain;
+    thresholds[3] = meanStartIdx;
+    thresholds[4] = meanWidth;
     
     //Acquisition Loop
     int i = 0;
@@ -175,8 +191,8 @@ int main(int argc, const char * argv[])
         senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
             
         i++;
-        if (i > CHECKRATE) {
-        //check for correct gain every 3 samples
+        if (i > CHECKRATE && autoGain == 1) {
+        //check for correct gain every CHECKRATE samples
         
             long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
             newIntTime = (newIntTime /1000) * 1000;
