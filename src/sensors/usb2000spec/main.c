@@ -157,6 +157,11 @@ int main(int argc, const char * argv[])
     
     }
 
+//    error = getSpectra(spec_fd, specData);
+
+//    return 0;
+//}
+
 
     //Set to Binary Data mode
     error = setDataMode(spec_fd, TRUE);
