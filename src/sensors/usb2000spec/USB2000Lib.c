@@ -21,7 +21,7 @@
 
 _Bool rxTxInProgress = false;
 int baudRateGlobal = 9600;
-long intTimeGlobal = 1000;
+long intTimeGlobal = 5000;
 
 
 
@@ -98,7 +98,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     
     for (int i = 0; i < numSpec; i++) {
         convertBytesToLong(&rawSpec[i*numSbytes], numSbytes, &spectra[i]);
-        printf("%u 0x%02x 0x%02x %lu\n",i, rawSpec[i*2]&0xff, rawSpec[i*2 + 1]&0xff, spectra[i]);
+        //printf("%u 0x%02x 0x%02x %lu\n",i, rawSpec[i*2]&0xff, rawSpec[i*2 + 1]&0xff, spectra[i]);
         //printf("%lu\n", spectra[i]);
     }
     
@@ -392,7 +392,7 @@ int readHeaderPacket(specHeader* head, int serialPort) {
     unsigned char rawbuf[15];
     int offset = 0;
     long timeout = 2000;
-    long tmo = 2;
+    long tmo = 3;
     time_t startTime, curTime;
     time(&startTime);
     double timeDiff = 0;
@@ -411,7 +411,10 @@ int readHeaderPacket(specHeader* head, int serialPort) {
         time(&curTime);
         timeDiff = difftime(curTime, startTime);
         if (timeDiff > tmo) {
-            return 1;
+        #ifdef DEBUGGING
+	    printf("Timed out of header Receive\n");
+	#endif
+	    return 1;
         } 
        
    
@@ -434,10 +437,12 @@ int readHeaderPacket(specHeader* head, int serialPort) {
         convertBytesToLong(&buf[9], 2, &baseLineMSW);
         convertBytesToLong(&buf[11], 2, &baseLineLSW);
         convertBytesToLong(&buf[13], 2, &pixMode);
-        
-        //for (int i = 0; i < 15; i ++) {
-        //     printf("%u 0x%X\n", i,buf[i]);
-        //}
+
+	#ifdef DEBUGGING        
+        for (int i = 0; i < 15; i ++) {
+             printf("%u 0x%X\n", i,buf[i]);
+        }
+	#endif
         
         head->dataSize = (int)flag;
         head->numScans = (int)numScans;
@@ -455,7 +460,8 @@ int readHeaderPacket(specHeader* head, int serialPort) {
 int receiveData(unsigned char buf[], int bufferSize, int serialPort, long timeout){
     ssize_t n = 0;
     fd_set rfds;
-    
+    int t = 0;    
+
     struct timeval tv;
 	tv.tv_sec = 1;
 	tv.tv_usec = 0;
@@ -484,7 +490,11 @@ int receiveData(unsigned char buf[], int bufferSize, int serialPort, long timeou
             } else {
                 #ifdef DEBUGGING
                 printf("%u char fnd\n",n);
-                for (int i = 0; i < 10; i++) {
+		t = n;
+		if (t > 10){
+		    t = 10;
+		}
+                for (int i = 0; i < t; i++) {
                     printf("%u\t0x%X\n",i, buf[i]);
                 }
                 #endif
