@@ -244,7 +244,7 @@ int main(int argc, const char * argv[])
             senlcm_sts_spec_t_publish(lcm, "SPEC_UP", &specReading);
             
             i++;
-            if (i > CHECKRATE && autoGain == 1) {
+            if (i > CHECKRATE && autoGainOn == 1) {
                 //check for correct gain every 3 samples
                 
                 long newIntTime = checkIntTime(specData, 1024, INTTIME, thresholds);

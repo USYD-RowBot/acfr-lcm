@@ -191,7 +191,7 @@ int main(int argc, const char * argv[])
         senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
             
         i++;
-        if (i > CHECKRATE && autoGain == 1) {
+        if (i > CHECKRATE && autoGainOn == 1) {
         //check for correct gain every CHECKRATE samples
         
             long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
