@@ -98,7 +98,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     
     for (int i = 0; i < numSpec; i++) {
         convertBytesToLong(&rawSpec[i*numSbytes], numSbytes, &spectra[i]);
-        //printf("%u %u %u %lu\n",i, rawSpec[i*2], rawSpec[i*2 + 1], spectra[i]);
+        printf("%u 0x%02x 0x%02x %lu\n",i, rawSpec[i*2]&0xff, rawSpec[i*2 + 1]&0xff, spectra[i]);
         //printf("%lu\n", spectra[i]);
     }
     
