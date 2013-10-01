@@ -156,7 +156,7 @@ int main(int argc, const char * argv[])
         
     }
     
-    FILE *fp;
+    FILE *fp, *ffp;
     
     //Set to Binary Data mode
     error = setDataMode(spec_fd, TRUE);
@@ -178,22 +178,24 @@ int main(int argc, const char * argv[])
     
     //Acquisition Loop
     int i = 0;
-    int c = 0;
+    int c = 0,cc = 0;
     while (!program_exit) {
         
-        fp = fopen("~/acqNow","r");
+        fp = fopen("/home/auv/acqNow","r");
         if (fp != 0) {
-            int c = fgetc(fp);
+            c = fgetc(fp);
             fclose(fp);
         }
-        
-        ffp = fopen("~/exitFile","r");
+	
+	//printf("fp:%u c:%u\n",fp,c);        
+
+        ffp = fopen("/home/auv/exitFile","r");
         if (fp != 0) {
-            int c = fgetc(ffp);
+            cc = fgetc(ffp);
             fclose(ffp);
-            if (c == 'y') {
+            if (cc == 121) {
                 //time to quit
-                fp = fopen("~/exitFile","w");
+                fp = fopen("/home/auv/exitFile","w");
                 fputc('n',fp);
                 fclose(fp);
                 
@@ -202,8 +204,8 @@ int main(int argc, const char * argv[])
         }
 
         
-        if (c == 'y') { //Start Acquiring a single sample
-            printf("Acquiring new Spectra");
+        if (c == 121) { //Start Acquiring a single sample
+            printf("Acquiring new spectra\n");
             
             error = getSpectra(spec_fd, specData);
             specReading.startEndIdx[0] = error;
@@ -215,7 +217,7 @@ int main(int argc, const char * argv[])
             senlcm_usb2000_spec_t_publish(lcm, "SPEC_FOV_CALIB", &specReading);
             
             //reopen file and write a 'n' to the file
-            fp = fopen("~/acqNow","w");
+            fp = fopen("/home/auv/acqNow","w");
             fputc('n',fp);
             fclose(fp);
         }
