@@ -192,7 +192,7 @@ int main(int argc, const char * argv[])
     
     //Start a new log file
     logfp = fopen(argv[1], "w");
-    fprintf(logfp, "Start time %s\n",timeString)
+    fprintf(logfp, "Start time %s\n",timeString);
     for (int i = 0; i < 13; i++) {
         fprintf(logfp, "\n");
     }
@@ -227,7 +227,7 @@ int main(int argc, const char * argv[])
         if (c == 121) { //Start Acquiring a single sample
     	time(&current_time);
     	time_info = localtime(&current_time);
-    	strftime(timeString, sizeof(timeString), "%H:%M:%S.%f", time_info);
+    	strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
             printf("Acquiring new spectra - %s\n",timeString);
             
             error = getSpectra(spec_fd, specData);
@@ -245,8 +245,8 @@ int main(int argc, const char * argv[])
             fclose(fp);
             
             //write out to the log file
-            char tt[] = "01/01/01";
-            fprintf(logfp, "Spectra\t%s\t%s\t%u\t", tt, timeString, INTTIME);
+            char tt[] = "01/01/2001";
+            fprintf(logfp, "Spectra\t%s\t%s.000\t%u\t", tt, timeString, INTTIME);
             for (int k = 0; k < 2048; k++) {
                 fprintf(logfp, "%lu\t", specData[k]);
             }
