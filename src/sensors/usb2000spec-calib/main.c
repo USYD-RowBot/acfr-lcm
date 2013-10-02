@@ -179,6 +179,17 @@ int main(int argc, const char * argv[])
     //Acquisition Loop
     int i = 0;
     int c = 0,cc = 0;
+
+    time_t current_time;
+    struct tm * time_info;
+    char timeString[9];
+
+    time(&current_time);
+    time_info = localtime(&current_time);
+    strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+
+    printf("Start time %s\n",timeString);
+
     while (!program_exit) {
         
         fp = fopen("/home/auv/acqNow","r");
@@ -205,7 +216,10 @@ int main(int argc, const char * argv[])
 
         
         if (c == 121) { //Start Acquiring a single sample
-            printf("Acquiring new spectra\n");
+    	time(&current_time);
+    	time_info = localtime(&current_time);
+    	strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+            printf("Acquiring new spectra - %s\n",timeString);
             
             error = getSpectra(spec_fd, specData);
             specReading.startEndIdx[0] = error;
