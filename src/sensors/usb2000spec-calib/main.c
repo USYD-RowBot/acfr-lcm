@@ -156,7 +156,7 @@ int main(int argc, const char * argv[])
         
     }
     
-    FILE *fp, *ffp;
+    FILE *fp, *ffp, *logfp;
     
     //Set to Binary Data mode
     error = setDataMode(spec_fd, TRUE);
@@ -182,13 +182,22 @@ int main(int argc, const char * argv[])
 
     time_t current_time;
     struct tm * time_info;
-    char timeString[9];
+    char timeString[14];
 
     time(&current_time);
     time_info = localtime(&current_time);
     strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
 
     printf("Start time %s\n",timeString);
+    
+    //Start a new log file
+    logfp = fopen(argv[1], "w");
+    fprintf(logfp, "Start time %s\n",timeString)
+    for (int i = 0; i < 13; i++) {
+        fprintf(logfp, "\n");
+    }
+    
+    
 
     while (!program_exit) {
         
@@ -218,7 +227,7 @@ int main(int argc, const char * argv[])
         if (c == 121) { //Start Acquiring a single sample
     	time(&current_time);
     	time_info = localtime(&current_time);
-    	strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+    	strftime(timeString, sizeof(timeString), "%H:%M:%S.%f", time_info);
             printf("Acquiring new spectra - %s\n",timeString);
             
             error = getSpectra(spec_fd, specData);
@@ -234,10 +243,19 @@ int main(int argc, const char * argv[])
             fp = fopen("/home/auv/acqNow","w");
             fputc('n',fp);
             fclose(fp);
+            
+            //write out to the log file
+            char tt[] = "01/01/01";
+            fprintf(logfp, "Spectra\t%s\t%s\t%u\t", tt, timeString, INTTIME);
+            for (int k = 0; k < 2048; k++) {
+                fprintf(logfp, "%lu\t", specData[k]);
+            }
+            fprintf(logfp, "\n");
         }
         
     }
     
+    fclose(logfp);
     
     close(spec_fd);
     lcm_destroy(lcm);
