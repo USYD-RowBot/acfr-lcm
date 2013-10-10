@@ -193,8 +193,12 @@ int main(int argc, const char * argv[])
         
         specReading.numSamples = 2048;
         specReading.intTime = INTTIME / 1000;
-        senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
-            
+        if (error == 0) {
+            senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
+        }
+        else {
+            printf("Error = %u, cameras triggering?", error);
+        }
         i++;
         if (i > CHECKRATE && autoGainOn == 1) {
         //check for correct gain every CHECKRATE samples

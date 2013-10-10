@@ -102,6 +102,9 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
         //printf("%lu\n", spectra[i]);
     }
     
+        
+    spectra[numSpec - 2] = header.baselineMSW;
+    spectra[numSpec - 1] = header.baselineLSW;
     //flushBuffer(serialPort);
     
     
@@ -636,7 +639,7 @@ int processPacket(char inPacket[], unsigned long specData[]) {
             convertBytesToLong(&inPacket[i * numBytes + 14], numBytes, &specData[i]);
         }
     }
-    
+
     
     
     return error;
