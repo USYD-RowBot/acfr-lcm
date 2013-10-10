@@ -998,7 +998,7 @@ float findMean(unsigned short array[], int arraySize, int startIdx) {
 
 long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigned long thresholds[] ){
     //This routine searches through a spectra array and determines if it has maxed out or the signal is too small, it then does a calculation to determine a better int time.
-    //Thresholds: [0] = Max threshold, [1] = Min Threshold, [2] = desired mean.
+    //Thresholds: [0] = Max threshold, [1] = Min Threshold, [2] = desired mean, [3] = start index, [4] = width 
     unsigned short max[2];
     long newIntTime = intTime;
     float fnewIntTime;
@@ -1009,7 +1009,7 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     
     //For 400-700nm on the USB2000+ index = 172 -> 1063
     float mean = findMean(specData, thresholds[4], thresholds[3]);
-    float gain = thresholds[2] / mean;
+    float gain = (thresholds[2] - thresholds[1]) / (mean - thresholds[1]);
     
     //Check for over the max threshold
     if (max[1] >= thresholds[0]) {

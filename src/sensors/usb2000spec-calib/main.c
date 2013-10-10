@@ -228,9 +228,15 @@ int main(int argc, const char * argv[])
     	time(&current_time);
     	time_info = localtime(&current_time);
     	strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
-            printf("Acquiring new spectra - %s\n",timeString);
+            printf("Acquiring new spectra - %s - ",timeString);
             
             error = getSpectra(spec_fd, specData);
+            
+            float mean = findMean(specData, thresholds[4], thresholds[3]);
+            unsigned long max[2];
+            findMax(max, specData, 2048);
+            printf("Mean: %.1f, Max: %lu at Index: %u\n", mean, max[1],max[0]);
+            
             specReading.startEndIdx[0] = error;
             specReading.timestamp = timestamp_now();
             specReading.specData = specData;
