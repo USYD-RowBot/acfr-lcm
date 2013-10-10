@@ -226,7 +226,7 @@ int main(int argc, const char * argv[])
     
         time(&curT);
         diffT = difftime(curT, lastT);
-    
+        usleep(250000);
         
         if (diffT > (double) SAMPLE_INTERVAL) {
             time(&lastT);
