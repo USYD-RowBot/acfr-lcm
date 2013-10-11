@@ -376,21 +376,22 @@ int receivePacket(unsigned char buf[], int bufferSize, int serialPort, double ti
     unsigned char rawbuf[3000];
     
     struct timeval tv;
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
-    
+	
     
     memset(buf,0x00,bufferSize);
     while(1) {
         
         FD_ZERO(&rfds);
         FD_SET(serialPort, &rfds);
-        
+        tv.tv_sec = 1;
+	    tv.tv_usec = 0;
+    
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         
         if(ret != 0 && FD_ISSET(serialPort, &rfds))
         {
             n = read(serialPort, rawbuf, bufferSize-offset);
+            
             if(n < 0) {
                 return -1;
             } else if (n == 0) {
@@ -398,6 +399,7 @@ int receivePacket(unsigned char buf[], int bufferSize, int serialPort, double ti
             } else {
                 memcpy(&buf[offset], rawbuf, n);
                 offset += n;
+                //printf("bytes read %d, offset %d\n", n, offset);
             }
             
             
