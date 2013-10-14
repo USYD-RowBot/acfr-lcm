@@ -102,7 +102,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
         //printf("%lu\n", spectra[i]);
     }
     
-        
+    spectra[numSpec - 3] = header.intTime;
     spectra[numSpec - 2] = header.baselineMSW;
     spectra[numSpec - 1] = header.baselineLSW;
     //flushBuffer(serialPort);
