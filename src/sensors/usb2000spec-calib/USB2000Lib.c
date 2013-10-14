@@ -103,7 +103,9 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     }
     
     //flushBuffer(serialPort);
-    
+    spectra[numSpec - 3] = header.intTime;
+    spectra[numSpec - 2] = header.baselineMSW;
+    spectra[numSpec - 1] = header.baselineLSW;
     
     return error;
 }
