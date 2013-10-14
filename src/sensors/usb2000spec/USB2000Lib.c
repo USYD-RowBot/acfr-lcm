@@ -117,7 +117,7 @@ int setIntTime(int serialPort, long intTime) {
     unsigned char intChar[4];
     int error = 0;
     split4Byte(intChar, intTime);
-    //printf("split 0x%x 0x%x 0x%x 0x%x\n", intChar[0], intChar[1], intChar[2], intChar[3]);
+    printf("intTime: %u split 0x%x 0x%x 0x%x 0x%x\n", intTime, intChar[0], intChar[1], intChar[2], intChar[3]);
 
     
     unsigned char outPacket[] = {'i',0x00,0x00,0x00,0x00};
@@ -125,7 +125,7 @@ int setIntTime(int serialPort, long intTime) {
         outPacket[i] = intChar[i-1];
     }
     error = sendPacket(serialPort, outPacket,5); 
-    //printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
+    printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
    
     
     
@@ -660,7 +660,13 @@ int convertBytesToLong(unsigned char inPacket[], int numBytes, unsigned long *re
 
 int split4Byte(char packet[], long number){
     //want to take the number and split it into a 4 byte packet with LSB first
-    packet[0] = (char)(floorl(number/(pow(256,3))));
+    packet[0] = (number & 0xFF000000) >> 24;
+    packet[1] = (number & 0x00FF0000) >> 16;
+    packet[2] = (number & 0x0000FF00) >> 8;
+    packet[3] = (number & 0x000000FF);
+
+
+/*    packet[0] = (char)(floorl(number/(pow(256,3))));
     number = number - packet[0] * (pow(256,3));
     
     packet[1] = (char)(floorl(number/(pow(256,2))));
@@ -670,7 +676,7 @@ int split4Byte(char packet[], long number){
     number = number - packet[2] * (256);
     
     packet[3] = (char)(floorl(number));
-    
+*/    
     return 0;
 }
 
@@ -717,7 +723,7 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     long newIntTime = intTime;
     float fnewIntTime;
     
-    findMax(max, specData, arraySize);
+    findMax(max, specData, arraySize - 3);
     _Bool saturated = false;
     _Bool tooLow = false;
     
