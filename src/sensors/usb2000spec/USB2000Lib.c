@@ -21,7 +21,7 @@
 
 _Bool rxTxInProgress = false;
 int baudRateGlobal = 9600;
-long intTimeGlobal = 5000;
+long intTimeGlobal = 5;
 
 
 
@@ -39,7 +39,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     
     error = sendPacket(serialPort, packet, 1);
     specHeader header;
-    usleep((useconds_t)intTimeGlobal);
+    usleep((useconds_t)intTimeGlobal * 1000);
     //sleep(1);
     error = readHeaderPacket(&header, serialPort);
     #ifdef DEBUGGING
@@ -117,15 +117,16 @@ int setIntTime(int serialPort, long intTime) {
     unsigned char intChar[4];
     int error = 0;
     split4Byte(intChar, intTime);
-    printf("intTime: %u split 0x%x 0x%x 0x%x 0x%x\n", intTime, intChar[0], intChar[1], intChar[2], intChar[3]);
+//    printf("intTime: %u split 0x%x 0x%x 0x%x 0x%x\n", intTime, intChar[0], intChar[1], intChar[2], intChar[3]);
 
     
-    unsigned char outPacket[] = {'i',0x00,0x00,0x00,0x00};
-    for (int i = 1; i < 5; i++) {
-        outPacket[i] = intChar[i-1];
-    }
-    error = sendPacket(serialPort, outPacket,5); 
-    printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
+    unsigned char outPacket[] = {'I',0x00,0x00};
+    //for (int i = 1; i < 3; i++) {
+    outPacket[1] = intChar[2];
+    outPacket[2] = intChar[3];
+    //}
+    error = sendPacket(serialPort, outPacket,3); 
+//    printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
    
     
     
@@ -134,7 +135,7 @@ int setIntTime(int serialPort, long intTime) {
     error = receiveData(buf,1,serialPort,100);
     
     if (buf[0] == 0x06){
-    
+//        printf("Rx 0x06 back\n");
         intTimeGlobal = intTime;
         error = 0;
     }
@@ -143,17 +144,17 @@ int setIntTime(int serialPort, long intTime) {
     }
     
     //send a query request to check intTime
-    unsigned char out[] = {'?', 'i'};
+    unsigned char out[] = {'?', 'I'};
     error = sendPacket(serialPort, out,2);
     
-    unsigned char buf2[5];
-    error = receiveData(buf2,5,serialPort,100);
-    //printf("0x%x 0x%x 0x%x 0x%x 0x%x\n", buf2[0], buf2[1], buf2[2], buf2[3], buf2[4]);
+    unsigned char buf2[3];
+    error = receiveData(buf2,3,serialPort,100);
+//    printf("Inttime check Rx: 0x%x 0x%x 0x%x\n", buf2[0], buf2[1], buf2[2]);
     
     long intTimeCheck;
-    convertBytesToLong(&buf2[1], 4, &intTimeCheck);
+    convertBytesToLong(&buf2[1], 2, &intTimeCheck);
     
-    //printf("int check %lu\n", intTimeCheck);
+//    printf("int check %lu\n", intTimeCheck);
     
     if (intTimeCheck == intTime) {
         error = 0;
@@ -749,15 +750,15 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     }
             
     fnewIntTime = intTime * gain;
-    if (fnewIntTime < 1000) {
-        fnewIntTime = 1000;
+    if (fnewIntTime < 1) {
+        fnewIntTime = 1;
     }
     
-    if (fnewIntTime > 500000) {
-        fnewIntTime = 500000;
+    if (fnewIntTime > 500) {
+        fnewIntTime = 500;
     }
     
-    printf("intTime %u, mean: %.1f gain: %.1f fnewInt %.1f max: %lu\n", intTime, mean, gain, fnewIntTime, max[1]);
+    printf("intTime %u, mean: %.1f gain: %.1f fnewInt %.1f max: %lu index: %lu\n", intTime, mean, gain, fnewIntTime, max[1],max[0]);
     
     newIntTime = (long) fnewIntTime;
     return newIntTime;

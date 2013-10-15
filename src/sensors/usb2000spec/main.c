@@ -44,7 +44,7 @@ int main(int argc, const char * argv[])
 
 
     int error = 0;
-    long INTTIME = 2000;
+    long INTTIME = 2;
     unsigned long specData[2048];
     int CHECKRATE = 500;
     int meanThres_autoGain = 2000;
@@ -128,7 +128,7 @@ int main(int argc, const char * argv[])
     autoGainOn = bot_param_get_int_or_fail(param, key);
     
     sprintf(key, "%s.intTimeIntial", rootkey);
-    INTTIME = (long) bot_param_get_int_or_fail(param, key) * 1000;
+    INTTIME = (long) bot_param_get_int_or_fail(param, key);
     
     // Open either the serial port or the socket
     struct addrinfo hints, *spec_addr;
@@ -192,7 +192,7 @@ int main(int argc, const char * argv[])
         specReading.specData = specData;
         
         specReading.numSamples = 2048;
-        specReading.intTime = INTTIME / 1000;
+        specReading.intTime = INTTIME;
         
 	if (error == 0) {
             senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
@@ -205,9 +205,8 @@ int main(int argc, const char * argv[])
         //check for correct gain every CHECKRATE samples
         
             long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
-            newIntTime = (newIntTime /1000) * 1000;
-            
-            printf("Old Int: %uus, New Int: %uus\n", INTTIME, newIntTime);
+                        
+            printf("Old Int: %ums, New Int: %ums\n", INTTIME, newIntTime);
             if (newIntTime != INTTIME) {
                 //we have a new Int time
                 setIntTime(spec_fd, newIntTime);
