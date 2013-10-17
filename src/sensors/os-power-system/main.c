@@ -379,6 +379,7 @@ int readline(int fd, char *buf, int max_len)
     {
         read(fd, &buf[i++], 1);
     } while(buf[i-1] != '\n');
+    return i;
 }
 				
 
@@ -468,6 +469,7 @@ int main (int argc, char *argv[]) {
                 printf("Error opening port %s\n", serial_devs[i]);
                 return 0;
             }
+            serial_set_canonical(batt_fd[i], '\r', '\n');
         }        
         else if(io == io_socket)
         {
@@ -487,7 +489,6 @@ int main (int argc, char *argv[]) {
         state.initialised[i] = 0;
     }
     
-    
     // now we are open we can put all the controllers in the right mode
     for(int i=0; i<state.num_devs; i++)
         init_controller(batt_fd[i]);        
@@ -504,6 +505,7 @@ int main (int argc, char *argv[]) {
     fd_set rfds;
     char buf[MAX_BUF_LEN];
     int64_t timestamp;
+    int j;
        
     // loop to collect data, parse and send it on its way
     while(!program_exit) 
@@ -528,9 +530,14 @@ int main (int argc, char *argv[]) {
             {
                 for(int i=0; i<state.num_devs; i++)
                     if(FD_ISSET(batt_fd[i], &rfds))
-                    {                    
-                        readline(batt_fd[i], buf, MAX_BUF_LEN);
+                    {
+                        memset(buf, 0, MAX_BUF_LEN);
+                        if(io == io_socket)                    
+                            j = readline(batt_fd[i], buf, MAX_BUF_LEN);
+                        else
+                            j = read(batt_fd[i], buf, MAX_BUF_LEN);   
                         timestamp = timestamp_now();
+                        //printf("%d:       %s\n", j, buf);
                         if(parse_os_controller(buf, &state, i)) 
                         {   
                             state.ps.controller[i].utime = timestamp;        
