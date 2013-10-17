@@ -437,14 +437,14 @@ main (int argc, char *argv[])
 
 
     // open gpsd client
-    state->gpsdata = gps_open (getopt_get_string (state->gsd->gopt, "server"), 
-                               getopt_get_string (state->gsd->gopt, "port"));
+    gps_open (getopt_get_string (state->gsd->gopt, "server"), 
+                               getopt_get_string (state->gsd->gopt, "port"), state->gpsdata);
     if (!state->gpsdata) {
       ERROR ("gps_open() failed.");
       exit (EXIT_FAILURE);
     }
 
-    gps_set_raw_hook (state->gpsdata, on_data);
+    //gps_set_raw_hook (state->gpsdata, on_data);
     gps_stream (state->gpsdata, WATCH_ENABLE | WATCH_RAW | WATCH_JSON, NULL);
     
     //this should let you selectivly attach to a gps device based on its device address
@@ -458,7 +458,7 @@ main (int argc, char *argv[])
     // handle lcm
     gsd_reset_stats (state->gsd);
     while (!state->gsd->done) {
-        if (0!=gps_poll (state->gpsdata))
+        if (0!=gps_read (state->gpsdata))
             ERROR ("trouble polling gpsd!\n");
     }
 
