@@ -1056,7 +1056,7 @@ senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     }
     TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
     TEXTREAD_ADD_FIELD (tr, "boardTemp", "%f", msg->boardTemp);
-    TEXTREAD_ADD_FIELD (tr, "detectTemp", "%f", msg->boardTemp);
+    TEXTREAD_ADD_FIELD (tr, "detectTemp", "%f", msg->detectTemp);
     TEXTREAD_ADD_FIELD (tr, "newTemps", "%"PRId8, msg->newTemps);
     
     
