@@ -1010,4 +1010,55 @@ senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void 
+senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_usb2000_spec_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
 
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
+    TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
+    TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
+    
+    for (int i_spec=0;i_spec<2048;i_spec++) {
+        char buf[20];
+        snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
+        TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
+    }
+    TEXTREAD_ADD_FIELD (tr, "sixteenBitData",     "%"PRId8,   msg->sixteenBitData);
+    TEXTREAD_ADD_FIELD (tr, "startEndIdx1",     "%"PRId8,   msg->startEndIdx);
+    TEXTREAD_ADD_FIELD (tr, "startEndIdx2",     "%"PRId8,   msg->startEndIdx);
+    TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
+    
+    textread_stop (tr);
+}
+
+
+
+void 
+senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_sts_spec_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
+    TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
+    TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
+    
+    for (int i_spec=0;i_spec<1024;i_spec++) {
+        char buf[20];
+        snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
+        TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
+    }
+    TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
+    TEXTREAD_ADD_FIELD (tr, "boardTemp", "%f", msg->boardTemp);
+    TEXTREAD_ADD_FIELD (tr, "detectTemp", "%f", msg->detectTemp);
+    TEXTREAD_ADD_FIELD (tr, "newTemps", "%"PRId8, msg->newTemps);
+    
+    
+    textread_stop (tr);
+}

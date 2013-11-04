@@ -21,7 +21,7 @@
 
 _Bool rxTxInProgress = false;
 int baudRateGlobal = 9600;
-long intTimeGlobal = 5;
+long intTimeGlobal = 5000;
 
 
 
@@ -39,7 +39,7 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
     
     error = sendPacket(serialPort, packet, 1);
     specHeader header;
-    usleep((useconds_t)intTimeGlobal * 1000);
+    usleep((useconds_t)intTimeGlobal);
     //sleep(1);
     error = readHeaderPacket(&header, serialPort);
     #ifdef DEBUGGING
@@ -102,11 +102,10 @@ int getSpectra(int serialPort, unsigned long spectra[]) {
         //printf("%lu\n", spectra[i]);
     }
     
+    //flushBuffer(serialPort);
     spectra[numSpec - 3] = header.intTime;
     spectra[numSpec - 2] = header.baselineMSW;
     spectra[numSpec - 1] = header.baselineLSW;
-    //flushBuffer(serialPort);
-    
     
     return error;
 }
@@ -117,16 +116,15 @@ int setIntTime(int serialPort, long intTime) {
     unsigned char intChar[4];
     int error = 0;
     split4Byte(intChar, intTime);
-//    printf("intTime: %u split 0x%x 0x%x 0x%x 0x%x\n", intTime, intChar[0], intChar[1], intChar[2], intChar[3]);
+    //printf("split 0x%x 0x%x 0x%x 0x%x\n", intChar[0], intChar[1], intChar[2], intChar[3]);
 
     
-    unsigned char outPacket[] = {'I',0x00,0x00};
-    //for (int i = 1; i < 3; i++) {
-    outPacket[1] = intChar[2];
-    outPacket[2] = intChar[3];
-    //}
-    error = sendPacket(serialPort, outPacket,3); 
-//    printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
+    unsigned char outPacket[] = {'i',0x00,0x00,0x00,0x00};
+    for (int i = 1; i < 5; i++) {
+        outPacket[i] = intChar[i-1];
+    }
+    error = sendPacket(serialPort, outPacket,5); 
+    //printf("sending 0x%x 0x%x 0x%x 0x%x 0x%x\n", outPacket[0], outPacket[1], outPacket[2], outPacket[3], outPacket[4]);
    
     
     
@@ -135,7 +133,7 @@ int setIntTime(int serialPort, long intTime) {
     error = receiveData(buf,1,serialPort,100);
     
     if (buf[0] == 0x06){
-//        printf("Rx 0x06 back\n");
+    
         intTimeGlobal = intTime;
         error = 0;
     }
@@ -144,17 +142,17 @@ int setIntTime(int serialPort, long intTime) {
     }
     
     //send a query request to check intTime
-    unsigned char out[] = {'?', 'I'};
+    unsigned char out[] = {'?', 'i'};
     error = sendPacket(serialPort, out,2);
     
-    unsigned char buf2[3];
-    error = receiveData(buf2,3,serialPort,100);
-//    printf("Inttime check Rx: 0x%x 0x%x 0x%x\n", buf2[0], buf2[1], buf2[2]);
+    unsigned char buf2[5];
+    error = receiveData(buf2,5,serialPort,100);
+    //printf("0x%x 0x%x 0x%x 0x%x 0x%x\n", buf2[0], buf2[1], buf2[2], buf2[3], buf2[4]);
     
     long intTimeCheck;
-    convertBytesToLong(&buf2[1], 2, &intTimeCheck);
+    convertBytesToLong(&buf2[1], 4, &intTimeCheck);
     
-//    printf("int check %lu\n", intTimeCheck);
+    //printf("int check %lu\n", intTimeCheck);
     
     if (intTimeCheck == intTime) {
         error = 0;
@@ -640,7 +638,7 @@ int processPacket(char inPacket[], unsigned long specData[]) {
             convertBytesToLong(&inPacket[i * numBytes + 14], numBytes, &specData[i]);
         }
     }
-
+    
     
     
     return error;
@@ -661,13 +659,7 @@ int convertBytesToLong(unsigned char inPacket[], int numBytes, unsigned long *re
 
 int split4Byte(char packet[], long number){
     //want to take the number and split it into a 4 byte packet with LSB first
-    packet[0] = (number & 0xFF000000) >> 24;
-    packet[1] = (number & 0x00FF0000) >> 16;
-    packet[2] = (number & 0x0000FF00) >> 8;
-    packet[3] = (number & 0x000000FF);
-
-
-/*    packet[0] = (char)(floorl(number/(pow(256,3))));
+    packet[0] = (char)(floorl(number/(pow(256,3))));
     number = number - packet[0] * (pow(256,3));
     
     packet[1] = (char)(floorl(number/(pow(256,2))));
@@ -677,7 +669,7 @@ int split4Byte(char packet[], long number){
     number = number - packet[2] * (256);
     
     packet[3] = (char)(floorl(number));
-*/    
+    
     return 0;
 }
 
@@ -724,7 +716,7 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     long newIntTime = intTime;
     float fnewIntTime;
     
-    findMax(max, specData, arraySize - 3);
+    findMax(max, specData, arraySize);
     _Bool saturated = false;
     _Bool tooLow = false;
     
@@ -750,15 +742,15 @@ long checkIntTime(unsigned long specData[], int arraySize, long intTime, unsigne
     }
             
     fnewIntTime = intTime * gain;
-    if (fnewIntTime < 1) {
-        fnewIntTime = 1;
+    if (fnewIntTime < 1000) {
+        fnewIntTime = 1000;
     }
     
-    if (fnewIntTime > 500) {
-        fnewIntTime = 500;
+    if (fnewIntTime > 500000) {
+        fnewIntTime = 500000;
     }
     
-    printf("intTime %u, mean: %.1f gain: %.1f fnewInt %.1f max: %lu index: %lu\n", intTime, mean, gain, fnewIntTime, max[1],max[0]);
+    printf("intTime %u, mean: %.1f gain: %.1f fnewInt %.1f max: %lu\n", intTime, mean, gain, fnewIntTime, max[1]);
     
     newIntTime = (long) fnewIntTime;
     return newIntTime;

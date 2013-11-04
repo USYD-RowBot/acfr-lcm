@@ -1,0 +1,13 @@
+package senlcm;
+
+struct sts_spec_t
+{
+    int64_t timestamp;
+    int16_t numSamples;
+    string  id;
+    int16_t specData[numSamples];
+    int16_t intTime;
+    float   boardTemp;
+    float   detectTemp;
+    boolean newTemps;
+}
