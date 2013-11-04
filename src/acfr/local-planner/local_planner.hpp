@@ -13,6 +13,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
+#include <fstream>
 
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
@@ -35,6 +36,8 @@ class LocalPlanner {
         int process();
         int sendResponse();
         int dive();
+
+        ofstream fp;
       
         Pose3D getCurrPose( void ) const { return currPose; }
         Pose3D getDestPose( void ) const { return destPose; }
@@ -59,6 +62,10 @@ class LocalPlanner {
 		double getWaypointTimeout(void) const { return waypointTimeout; }
 		void resetWaypointTime( int64_t t ) { waypointTime = t; }
 		int64_t getWaypointTime( void ) { return waypointTime; }
+
+        void resetReplanTime( int64_t t ) { replanTime = t; }
+        int64_t getReplanTime( void ) { return replanTime; }
+
 		
 //        pthread_mutex_t currPoseLock;
 //        pthread_mutex_t destPoseLock;
@@ -104,6 +111,7 @@ class LocalPlanner {
         double maxAngle;
 
 		int64_t waypointTime;
+        int64_t replanTime;
         
         
         

@@ -259,7 +259,7 @@ This is a test mission
             <spacing m = "0.707" />
             <rotation deg = "0" />
             <velocity x="1" />
-            <timeout t="7200" />
+            <timeout t="72000" />
             <direction d="ccw" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>

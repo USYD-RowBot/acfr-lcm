@@ -87,6 +87,7 @@ int GlobalPlanner::clock() {
                 // set the start point
                 currPoint = mis.waypoints.begin();
                 nextState = globalPlannerFsmRun;
+                cout << "globalplannerfsmidle" << endl;
                 sendLeg();
             }
             else
@@ -107,6 +108,11 @@ int GlobalPlanner::clock() {
                 // if so we can feed the next leg to the path planner
                 if ((areWeThereYet || distanceToGoal < 1.0) || ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6))
                 {
+                    if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6)
+                    {
+                        cout << "currPoint timed out" << endl;
+                    }
+
                     // load the next point and send it along, that is if we are not
                     // at the end of the list
                     list<waypoint>::iterator i = currPoint;
@@ -117,6 +123,7 @@ int GlobalPlanner::clock() {
                     {
                         currPoint++;
                         sendLeg();
+                        cout << "globalplannerfsmrun" << endl;
                         nextState = globalPlannerFsmRun;
                     }
                 }
