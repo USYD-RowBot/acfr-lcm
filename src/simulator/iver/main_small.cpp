@@ -32,7 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
-#define CURRENT 0.5
+#define CURRENT 0.0
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4
@@ -941,8 +941,8 @@ int main(int argc, char **argv)
             m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
 
     // initial conditions
-    state(0) = 0;
-    state(1) = 0;
+    state(0) = -10;
+    state(1) = -10;
     state(2) = 1.9;  //Z = 1;
     state(3) = 0;
     state(4) = 0;

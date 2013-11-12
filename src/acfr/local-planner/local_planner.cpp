@@ -25,16 +25,18 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     // We haven't reached our goal but don't have any more waypoints. Let's recalculate a feasible path
     // Addition: Make the replanning stage occur at a set period
 //        if( (lp->waypoints.size() == 0) && (lp->getDestReached() == false) && (lp->getNewDest() == true))// ||  (( timestamp_now() - lp->getReplanTime() )/1000000 > 5) ) // if we want faster replanning, or a different number than the heartbeat, this callback needs to be made faster and this variable can be used
-    if ((lp->getDestReached() == false) && (lp->getNewDest() == true))
+
+    cout << endl <<"Timestamp for replanning pre:" << (timestamp_now() - lp->getReplanTime()) <<endl<< endl;
+    if ((lp->waypoints.size() == 0) || (( timestamp_now() - lp->getReplanTime() )/1000000 > 3500))
     {
 
 
         cout << endl << endl << "RECALCULATING a feasible path" << endl << endl;
         lp->calculateWaypoints();
 
-        //     lp->resetReplanTime(timestamp_now());
+             lp->resetReplanTime(timestamp_now());
     }
-    
+    cout << endl <<"Timestamp for replanning:" << (timestamp_now() - lp->getReplanTime())/1000000 <<endl<< endl;
     lp->sendResponse();
 }
 
@@ -42,7 +44,7 @@ void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReached(false), 
     destID(0), turningRadius(0), maxPitch(0), wpDropDist(4.0), forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
     lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0), velChangeDist(0), waypointTime(timestamp_now()),
-    maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300), diveMode(0), replanTime(timestamp_now()) {
+    maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300), diveMode(0), replanTime(timestamp_now()), wpDropAngle(M_PI/18.) {
     
     // sunscribe to the required LCM messages
     lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
@@ -50,6 +52,7 @@ LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReac
     lcm.subscribeFunction("HEARTBEAT_1HZ", calculateLCM, this);
 
     fp.open("/tmp/log_waypoint.txt", ios::out);
+    fp_wp.open("/tmp/log_waypoint_now.txt",ios::out);
 
     //    pthread_mutex_init(&currPoseLock, NULL);
     //    pthread_mutex_init(&destPoseLock, NULL);
@@ -60,6 +63,7 @@ LocalPlanner::LocalPlanner() : startVel(0), destVel(0), newDest(false), destReac
 LocalPlanner::~LocalPlanner() {
     
     fp.close();
+    fp_wp.close();
     //    pthread_mutex_destroy(&currPoseLock);
     //    pthread_mutex_destroy(&destPoseLock);
     //    pthread_mutex_destroy(&waypointsLock);
@@ -201,6 +205,7 @@ int LocalPlanner::calculateWaypoints() {
     dp.setCircleRadius( turningRadius );
     dp.setMaxPitch( maxPitch );
     dp.setWaypointDropDist( wpDropDist );
+    dp.setWaypointDropAngle( wpDropAngle * M_PI/180.);
     
     // Get a copy of curr and dest pose
     //    pthread_mutex_lock(&currPoseLock);
@@ -461,6 +466,10 @@ int LocalPlanner::loadConfig(char *program_name)
     sprintf(key, "%s.max_angle", rootkey);
     maxAngle = bot_param_get_double_or_fail(param, key);
 
+    sprintf(key, "%s.drop_angle", rootkey);
+    wpDropAngle = bot_param_get_double_or_fail(param, key);
+
+
     return 1;
 }
 
@@ -556,14 +565,25 @@ int LocalPlanner::processWaypoints() {
 
     //cout << "Time for waypoint (Timeout): " << ( timestamp_now() - lp->getWaypointTime() )/1000000 << " (" << lp->getWaypointTimeout() << ")" << endl;
 
-    if( ( distToDest < distToDestBound )||( (wpRel.getX() < forwardBound) && (fabs(wpRel.getY()) < sideBound) )) // the waypoint timeout may be redundant if the waypoints are being continually recalculated //||( ( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) )
+    if( ( distToDest < distToDestBound ) ||
+        ( (wpRel.getX() < forwardBound) && (wpRel.getX() > -2*forwardBound) && (fabs(wpRel.getY()) < sideBound) ) ||
+        (( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) )  // the waypoint timeout may be redundant if the waypoints are being continually recalculated //||( ( timestamp_now() - lp->getWaypointTime() )/1000000 > lp->getWaypointTimeout() ) )
     {
         // delete it from the list
         //            pthread_mutex_lock(&lp->waypointsLock);
         lp->waypoints.erase( lp->waypoints.begin() );
         numWaypoints = lp->waypoints.size();
+
+
+        for( unsigned int i = 0; i < waypoints.size(); i++ ) {
+            fp_wp << waypoints.at(i).getX() << " " << waypoints.at(i).getY() << " " << waypoints.at(i).getZ() << endl;
+
+        }
+        fp_wp << 0 << " " << 0 << " " << 0 << endl;
+
+
         //			pthread_mutex_unlock(&lp->waypointsLock);
-        //        lp->resetWaypointTime(timestamp_now());
+                lp->resetWaypointTime(timestamp_now());
         cout << "Ignored as it is behind us" << endl;
 
         if( numWaypoints == 0 ) {

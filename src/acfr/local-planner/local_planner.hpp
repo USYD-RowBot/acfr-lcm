@@ -37,7 +37,7 @@ class LocalPlanner {
         int sendResponse();
         int dive();
 
-        ofstream fp;
+        ofstream fp, fp_wp;
       
         Pose3D getCurrPose( void ) const { return currPose; }
         Pose3D getDestPose( void ) const { return destPose; }
@@ -109,6 +109,7 @@ class LocalPlanner {
         double maxAngleWaypointChange;
         double radiusIncrease;
         double maxAngle;
+        double wpDropAngle;
 
 		int64_t waypointTime;
         int64_t replanTime;
