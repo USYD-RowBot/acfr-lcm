@@ -617,6 +617,7 @@ other pieces of information relevant to the data.'''
         label = 'No Label'
     
     timeNow = datetime.datetime.now()
+    timezone = time.strftime('%z', time.gmtime())
 
 #    Check for the existance of the log file directory
 
@@ -627,7 +628,7 @@ other pieces of information relevant to the data.'''
     fnm = '%s/%s-SpectraLog.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
     fid = open(fnm, 'w')
     fid.write('RS232 STS MicroSpectrometer Spectra Log - Daniel Bongiorno, 2013\n')
-    fid.write('Date:\t%s\tTime:\t%s\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S')) )
+    fid.write('Date:\t%s\tTime:\t%s %s\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S'), timezone ))
     fid.write('Label: \t%s\n' % label)
     fid.write('Serial Number:\t%s\n' % (specData['serialNum']))  
     fid.write('Initial Integration Time: (microsec)\t%u\n' % (specData['intTime']))
