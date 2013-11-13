@@ -626,7 +626,7 @@ other pieces of information relevant to the data.'''
         os.mkdir(logDir)
 
 
-    fnm = '%s/%s-SpectraLog.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
+    fnm = '%s/%s-SPEC_UP_SURF.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
     fid = open(fnm, 'w')
     fid.write('RS232 STS MicroSpectrometer Spectra Log - Daniel Bongiorno, 2013\n')
     fid.write('Date:\t%s\tTime:\t%s %s\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S'), timezone ))
