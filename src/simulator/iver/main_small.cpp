@@ -32,7 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
-#define CURRENT 0.3
+#define CURRENT 0.0
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4
@@ -158,12 +158,12 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
     double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
 
-//    if (J0 > 0)
+    if (J0 > 0)
         Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
-//    else if (J0 > -0.2)
-//        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
-//    else
-//        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+    else if (J0 > -0.2)
+        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
+    else
+        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
 
     double prop_force;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
@@ -257,8 +257,8 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
             - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
     
     latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0,
-            //			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            0, 							-Kpp * fabs(p), 						0, // new addition based on above equations
+//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
             -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
     
     // Damping matrices
@@ -366,6 +366,25 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
     nuLinear = u, v, w, 0.0;
     nuRotational = p, q, r, 0.0;
 
+    // adjustments for a constant water current (or wind)
+
+    SMALL::Rotation3D Cbn;
+    Cbn.setRollPitchYawRad(phi, theta, psi);
+
+    SMALL::Vector3D vc_n;
+    vc_n = CURRENT,0,0;
+    SMALL::Vector3D vc_b;
+    vc_b = (Cbn.i() * vc_n);
+
+    nuLinear(1) = nuLinear(1) - vc_b(1);
+    nuLinear(2) = nuLinear(2) - vc_b(2);
+    nuLinear(3) = nuLinear(3) - vc_b(3);
+
+    u = u - vc_b(1);
+    v = v - vc_b(2);
+    w = w - vc_b(3);
+
+
     // make heading 0 to 2pi
     while(psi < 0)
         psi += 2 * M_PI;
@@ -439,11 +458,18 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
     // external applied forces
     double X, Y, Z, K, M, N;
     X = prop_force;
-    Y = Ydr * pow(u, 2) * (top + bottom);
-    Z = Zdp * pow(u, 2) * (port + starboard);
-    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
-    M = Mdp * pow(u, 2) * (port + starboard);
-    N = Ndr * pow(u, 2) * (top + bottom);
+    //    Y = Ydr * pow(u, 2) * (top + bottom);
+    //    Z = Zdp * pow(u, 2) * (port + starboard);
+    //    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
+    //    M = Mdp * pow(u, 2) * (port + starboard);
+    //    N = Ndr * pow(u, 2) * (top + bottom);
+
+        Y = Ydr * fabs(u) * u * (top + bottom);
+        Z = Zdp * fabs(u) * u * (port + starboard);
+        K = Kdp * fabs(u) * u * ((top - bottom) + (port - starboard));
+        M = Mdp * fabs(u) * u * (port + starboard);
+        N = Ndr * fabs(u) * u * (top + bottom);
+
 
     // Force vectors, props and control surfaces
     SMALL::Vector3D longF, latF;
@@ -501,8 +527,8 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
             - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
 
     latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0,
-            //			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            0, 							-Kpp * fabs(p), 						0,// new addition based on above equations
+//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
             -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
 
     // Coriolis matrices
@@ -915,8 +941,8 @@ int main(int argc, char **argv)
             m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
 
     // initial conditions
-    state(0) = 0;
-    state(1) = 0;
+    state(0) = -10;
+    state(1) = -10;
     state(2) = 1.9;  //Z = 1;
     state(3) = 0;
     state(4) = 0;

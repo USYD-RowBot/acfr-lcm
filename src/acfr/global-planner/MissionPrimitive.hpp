@@ -44,7 +44,7 @@ class MissionPrimitive {
 		static const int DIRECTION_CCW = 1;
 
 		MissionPrimitive() :
-				timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(0), width(0), turnRadius(5),
+                timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(0), width(0), turnRadius(7),
 				pitch(0), pathOffset(0), velocity(0), centerOverlap(0), minWidthLength(0), altitudeChange(0), direction(0), numLoops(0), dropDist(1), dropAngle(M_PI / 18) {
 
 		}

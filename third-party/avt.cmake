@@ -1,8 +1,8 @@
 option (BUILD_PROSILICA "Build and install third-party Allied Vision GigE PvAPI Prosilica SDK?" ON)
 
 if (BUILD_PROSILICA)
-  set (PROSILICA_SRC "${THIRD_PARTY_DIR}/AVT_GigE_SDK_1.24_Linux.tgz")
-  set (PROSILICA_DIR "AVT_GigE_SDK_1.24_Linux")
+  set (PROSILICA_SRC "${THIRD_PARTY_DIR}/AVT_GigE_SDK_Linux.tgz")
+  set (PROSILICA_DIR "AVT_GigE_SDK_Linux")
 
   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set (PROSILICA_BIN ${PROSILICA_DIR}/bin-pc/x64)
