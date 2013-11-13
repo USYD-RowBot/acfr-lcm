@@ -18,6 +18,7 @@ import socket
 import datetime
 import time
 import struct
+import os
 from collections import namedtuple
 #import matplotlib.pyplot as plt
 #from construct import *
@@ -614,13 +615,18 @@ other pieces of information relevant to the data.'''
 
     if label == None:
         label = 'No Label'
-        
-
+    
     timeNow = datetime.datetime.now()
 
-    fnm = './Logs/SpectraLogs/%s-SpectraLog.txt' % (timeNow.strftime('%Y%m%d-%H%M%S'))
+#    Check for the existance of the log file directory
+
+    logDir = os.path.expanduser('~/spectralLogs/')
+    if os.path.exists(logDir) == False:
+        os.mkdir(logDir)
+
+    fnm = '%s/%s-SPEC_UP_SURF.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
     fid = open(fnm, 'w')
-    fid.write('RS232 STS MicroSpectrometer Spectra Log - Daniel Bongiorno, 2012\n')
+    fid.write('RS232 STS MicroSpectrometer Spectra Log - Daniel Bongiorno, 2013\n')
     fid.write('Date:\t%s\tTime:\t%s\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S')) )
     fid.write('Label: \t%s\n' % label)
     fid.write('Serial Number:\t%s\n' % (specData['serialNum']))  
