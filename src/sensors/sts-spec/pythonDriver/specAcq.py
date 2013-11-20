@@ -38,11 +38,9 @@ if len(sys.argv) != 5 or sys.argv[1] == '--help':
 method = sys.argv[1]
 label = sys.argv[2]
 numPerFile = int(sys.argv[3])
-<<<<<<< HEAD
+
 thresholds = [16000, 1490, 6000, 250,400]
-=======
-thresholds = [16000, 1490, 2500, 250,400]
->>>>>>> bc6627f584015264269182ca03fe82743cf17ffd
+
 checkRate = int(sys.argv[4])
 
 if method == '-n':
