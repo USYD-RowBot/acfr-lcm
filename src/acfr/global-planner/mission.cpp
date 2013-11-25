@@ -110,7 +110,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                     return 0;
             }
             
-            if(element->get_name().lowercase() == "drop_angle")
+            else if(element->get_name().lowercase() == "drop_angle")
             {
                 if(getSingleValue(element, "deg", x))
                     dropAngleRad = x / 180 * M_PI;
@@ -120,7 +120,13 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                     return 0;
             }
             
-            if(element->get_name().lowercase() == "mission_timeout")
+            else if(element->get_name().lowercase() == "turn_radius")
+            {
+            	if(!getSingleValue(element, "m", turnRadius))
+            		return 0;
+            }
+
+            else if(element->get_name().lowercase() == "mission_timeout")
             {
                 if(!getSingleValue(element, "t", missionTimeout)) {
                     cerr << "Not mission_timeout variable set in global section." << endl;
@@ -128,7 +134,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                 }
             }
             
-            if(element->get_name().lowercase() == "location")
+            else if(element->get_name().lowercase() == "location")
             {
                 if(!getSingleValue(element, "lat", originLat) || !getSingleValue(element, "lon", originLon)) {
                     cerr << "Origin not set, set the location variable." << endl;
@@ -529,6 +535,7 @@ int Mission::dump()
 
 void Mission::dumpMatlab(string filename) {
     ofstream fout(filename.c_str(), ios::out);
+    cout << "dumping matlab file at " << filename << endl;
 	fout << "path = [" << endl;
 	list<waypoint>::iterator it;
 	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
