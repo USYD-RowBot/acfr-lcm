@@ -38,7 +38,9 @@ if len(sys.argv) != 5 or sys.argv[1] == '--help':
 method = sys.argv[1]
 label = sys.argv[2]
 numPerFile = int(sys.argv[3])
-thresholds = [16000, 1490, 2500, 250,400]
+
+thresholds = [16000, 1490, 6000, 250,400]
+
 checkRate = int(sys.argv[4])
 
 if method == '-n':
@@ -80,7 +82,7 @@ while (exitting == 'n'):
         time.sleep(0.5)
         sp.appendSpectraToLog(fnm)
         nn += 1
-        print 'Spectra %u: %s, Elapsed:%.3f min, Mean:%.1f, Max:%u, IntT:%ums' % (i, sp.specData['spectraTimeStamp'].isoformat(),delta, sp.specData['latestSpecMean'], sp.specData['latestSpecMax'], int(sp.specData['intTime'])/1000)
+        print 'Spec %u: %s, Elap:%.3f min, Mean:%.1f, Max:%u, IntT:%ums, BTemp:%.1f, DTemp:%.1f' % (nn, sp.specData['spectraTimeStamp'].isoformat(),delta, sp.specData['latestSpecMean'], sp.specData['latestSpecMax'], int(sp.specData['intTime'])/1000, sp.specData['boardTemp'], sp.specData['detectTemp'])
 
        
         now = datetime.datetime.now()
@@ -97,10 +99,10 @@ while (exitting == 'n'):
         break
     
     # test to see if intTime is optimal
-
+    sp.getTemp()
     oldIntTime = int(sp.specData['intTime'])
     newIntTime = sp.checkIntTime(sp.specData['latestSpectra'], thresholds)
-    if abs(newIntTime - oldIntTime) > 50000:
+    if abs(newIntTime - oldIntTime) > 10000:
         sp.setIntTime(newIntTime)
     else:
         newIntTime = oldIntTime
