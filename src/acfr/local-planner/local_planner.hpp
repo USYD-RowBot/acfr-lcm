@@ -59,6 +59,8 @@ class LocalPlanner {
         
         double getWpDropDist( void ) const { return wpDropDist; }
 
+        double getReplanInterval( void ) const { return replanInterval; }
+
 		double getWaypointTimeout(void) const { return waypointTimeout; }
 		void resetWaypointTime( int64_t t ) { waypointTime = t; }
 		int64_t getWaypointTime( void ) const { return waypointTime; }
@@ -114,6 +116,7 @@ class LocalPlanner {
         double maxAngle;
         double wpDropDist;
         double wpDropAngle;
+        double replanInterval;
 
 		int64_t waypointTime;
         int64_t replanTime;

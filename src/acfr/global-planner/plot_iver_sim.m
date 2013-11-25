@@ -25,6 +25,10 @@ while 1
     s2 = textscan(fid2, '%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f');
     s3 = textscan(fid3, '%f %f %f');
     
+    fclose(fid);
+%     fclose(fid2);
+    fclose(fid3);
+    
     x = s{1};
     y = s{2};
     z = s{3};
@@ -104,9 +108,7 @@ while 1
     axis equal;
     %view(90,90);
     hold off
-    fclose(fid);
-%     fclose(fid2);
-    fclose(fid3);
+    
     %set(gca,'XDir','reverse');
     drawnow
 end
