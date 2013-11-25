@@ -54,7 +54,7 @@ while 1
     
     hold on
 %     f = plot3(x(1:t),y(1:t),z(1:t),'k');
-    f2 = plot3(x2(1:t2),y2(1:t2),z2(1:t2),'b.-');
+    f2 = plot3(x2(1:t2),y2(1:t2),z2(1:t2),'b');
     %     f3 = plot3(x2(1:t2),y2(1:t2),z2(1:t2),'r.','MarkerSize',4);
     
     paths_shown = 0;
