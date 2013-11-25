@@ -1,0 +1,9 @@
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-spy
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-lcm-logfilter
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-lcm-logsplice
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-lcm-who
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-lcm-tunnel
+/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/log_to_mat.py
+/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/scan_for_lcmtypes.py
+/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/__init__.py
+/home/navid/proj/acfr/acfr_lcm/third-party/build/bin/bot-log2mat

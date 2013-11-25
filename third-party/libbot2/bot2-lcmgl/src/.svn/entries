@@ -1,7 +1,7 @@
 10
 
 dir
-464
+479
 http://libbot.googlecode.com/svn/trunk/bot2-lcmgl/src
 http://libbot.googlecode.com/svn
 
@@ -26,12 +26,12 @@ abry
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
+lcmgl-viewer
+dir
+
 bot_lcmgl_client
 dir
 
 bot_lcmgl_render
-dir
-
-lcmgl-viewer
 dir
 

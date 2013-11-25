@@ -1,0 +1,11 @@
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/CMakeFiles/bot2-frames.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer/CMakeFiles/bot2-frames-renderers.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/test/CMakeFiles/coord-frames-test.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmgen_c.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmgen_cpp.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmgen_java.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmgen_python.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmtypes_bot2-frames.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmtypes_bot2-frames_jar.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer/CMakeFiles/test-viewer.dir

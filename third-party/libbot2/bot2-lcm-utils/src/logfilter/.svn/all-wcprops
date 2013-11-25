@@ -3,15 +3,15 @@ svn:wc:ra_dav:version-url
 V 52
 /svn/!svn/ver/414/trunk/bot2-lcm-utils/src/logfilter
 END
-lcm-logfilter.c
-K 25
-svn:wc:ra_dav:version-url
-V 68
-/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/logfilter/lcm-logfilter.c
-END
 CMakeLists.txt
 K 25
 svn:wc:ra_dav:version-url
 V 67
 /svn/!svn/ver/414/trunk/bot2-lcm-utils/src/logfilter/CMakeLists.txt
+END
+lcm-logfilter.c
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/logfilter/lcm-logfilter.c
 END

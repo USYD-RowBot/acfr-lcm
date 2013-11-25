@@ -1,0 +1,7 @@
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles/Kv885NRKsSsezwTicwo9HVLyyRfShTW6.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/wavefront-viewer/CMakeFiles/bot-wavefront-viewer.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/bot_vis/CMakeFiles/bot2-vis.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/testers/CMakeFiles/gl_drawing_area_tester.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/testers/CMakeFiles/gl_image_area_tester.dir
+/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/testers/CMakeFiles/param_widget_tester.dir

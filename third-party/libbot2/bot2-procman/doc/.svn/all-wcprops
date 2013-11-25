@@ -1,7 +1,7 @@
 K 25
 svn:wc:ra_dav:version-url
 V 40
-/svn/!svn/ver/461/trunk/bot2-procman/doc
+/svn/!svn/ver/479/trunk/bot2-procman/doc
 END
 footer.html
 K 25
@@ -13,7 +13,7 @@ Doxyfile
 K 25
 svn:wc:ra_dav:version-url
 V 49
-/svn/!svn/ver/461/trunk/bot2-procman/doc/Doxyfile
+/svn/!svn/ver/472/trunk/bot2-procman/doc/Doxyfile
 END
 DoxygenLayout.xml
 K 25

@@ -1,7 +1,7 @@
 10
 
 dir
-464
+479
 http://libbot.googlecode.com/svn/trunk/bot2-frames
 http://libbot.googlecode.com/svn
 
@@ -26,22 +26,13 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
-cmake
-dir
-
-lcmtypes
-dir
-
-src
-dir
-
 CMakeLists.txt
 file
 
 
 
 
-2013-08-28T00:17:02.000000Z
+2013-10-25T22:32:03.920903Z
 d1a5a40dd14ceb3c4923d24209a584b3
 2011-06-27T20:06:07.918435Z
 231
@@ -75,7 +66,7 @@ file
 
 
 
-2013-08-28T00:17:02.000000Z
+2013-10-25T22:32:03.920903Z
 8a3e0b5d0334356e900fa36ce0514df0
 2011-01-23T20:12:25.116945Z
 156
@@ -109,7 +100,7 @@ file
 
 
 
-2013-08-28T00:17:02.000000Z
+2013-10-25T22:32:03.920903Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -136,4 +127,13 @@ abachrach@gmail.com
 
 
 1598
+
+cmake
+dir
+
+lcmtypes
+dir
+
+src
+dir
 
