@@ -61,7 +61,10 @@ class LocalPlanner {
 
 		double getWaypointTimeout(void) const { return waypointTimeout; }
 		void resetWaypointTime( int64_t t ) { waypointTime = t; }
-		int64_t getWaypointTime( void ) { return waypointTime; }
+		int64_t getWaypointTime( void ) const { return waypointTime; }
+		double getWaypointTimePassedSec(void) const {
+			return (double)(timestamp_now() - getWaypointTime()) / 1000000.;
+		}
 
         void resetReplanTime( int64_t t ) { replanTime = t; }
         int64_t getReplanTime( void ) { return replanTime; }
@@ -94,7 +97,7 @@ class LocalPlanner {
         
         int destID;
         
-        double wpDropDist;
+
         double turningRadius;
         double maxPitch;
         double lookaheadVelScale;
@@ -109,6 +112,7 @@ class LocalPlanner {
         double maxAngleWaypointChange;
         double radiusIncrease;
         double maxAngle;
+        double wpDropDist;
         double wpDropAngle;
 
 		int64_t waypointTime;
