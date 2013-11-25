@@ -5,7 +5,7 @@
 This is a test mission
 </desc>
 <global>
-<drop_distance m="8" />
+<drop_distance m="9" />
 <drop_angle deg="90" />
 <mission_timeout t = "7200"/>
 <!-- To have the same drop distance in the corners use drop_angle = drop_distance / turn_radius -->
@@ -200,20 +200,22 @@ This is a test mission
 
 -->
 
-	<primative>
-        <goto>
-        <position x="-5" y="10" z="3"/>
-        <rotation deg = "0" />
-        <timeout t="1000" />
-        <velocity x="1" />
-        <depth mode = "depth" />
-        <command device="camera" onoff="on"/>
-        </goto>
-        </primative>
+<!--Test waypoints-->
+
+<primative>
+<goto>
+<position x="-5" y="10" z="1.9"/>
+<rotation deg = "0" />
+<timeout t="1000" />
+<velocity x="1" />
+<depth mode = "depth" />
+<command device="camera" onoff="on"/>
+</goto>
+</primative>
 
     <primative>
     <goto>
-    <position x="5" y="10" z="3"/>
+    <position x="5" y="10" z="1.9"/>
     <rotation deg = "0" />
     <timeout t="1000" />
     <velocity x="1" />
@@ -224,7 +226,7 @@ This is a test mission
     
     <primative>
     <goto>
-    <position x="5" y="-10" z="3"/>
+    <position x="5" y="-10" z="1.9"/>
     <rotation deg = "0" />
     <timeout t="1000" />
     <velocity x="1" />
@@ -233,14 +235,17 @@ This is a test mission
     </goto>
     </primative>
 
+
+
+<!--Test zambonie-->
 <!--
 <primative>
 <zambonie>
-<position x="100" y="100" z="3"/>
+<position x="40" y="10" z="3"/>
 <rotation deg = "0" />
 <spacing m = "5" />
 <length m = "25" />
-<width m = "30" />
+<width m = "40" />
 <timeout t="5000" />
 <velocity x="1" />
 <direction d="ccw" />
@@ -251,31 +256,45 @@ This is a test mission
 </primative>
 -->
 
-	    <primative>
-            <zambonie>
-            <position x="40" y="10" z="3"/>
-            <length m="40" />
-            <width m="40" />
-            <spacing m = "0.707" />
-            <rotation deg = "0" />
-            <velocity x="1" />
-            <timeout t="72000" />
-            <direction d="ccw" />
-            <depth mode = "depth" />
-            <command device="camera" onoff="on"/>
-            </zambonie>
-            </primative>
+<!--
+<primative>
+<zambonie>
+<position x="40" y="10" z="3"/>
+<length m="40" />
+<width m="40" />
+<spacing m = "0.707" />
+<rotation deg = "0" />
+<velocity x="1" />
+<timeout t="72000" />
+<direction d="ccw" />
+<depth mode = "depth" />
+<command device="camera" onoff="on"/>
+</zambonie>
+</primative>
+-->
+
+        <!--<primative>
+        <goto>
+        <position x="-5" y="10" z="3"/>
+        <rotation deg = "0" />
+        <timeout t="1000" />
+        <velocity x="1" />
+        <depth mode = "depth" />
+        <command device="camera" onoff="on"/>
+        </goto>
+        </primative>-->
 
 <primative>
 <goto>
-<position x="0" y="0" z="3"/>
-<rotation deg = "0" />
-<timeout t="1000" />
+<position x="0" y="0" z="0"/>
+<rotation deg = "0" /> <!--Try to set this into the water current?-->
+<timeout t="10000000" />
 <velocity x="0" />
 <depth mode = "depth" />
 <command device="camera" onoff="on"/>
 </goto>
 </primative>
+
 
 
 </mission>
