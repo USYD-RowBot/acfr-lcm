@@ -958,8 +958,8 @@ int main(int argc, char **argv)
     in(1) = 0;
     in(2) = 0;
     in(3) = 0;
-    fp.open("/tmp/log.txt", ios::out);
-    fp_nav.open("/tmp/log_nav.txt", ios::out);
+    fp.open("/media/water/misc/personal_folders/navid/iver/log.txt", ios::out);
+    fp_nav.open("/media/water/misc/personal_folders/navid/iver/log_nav.txt", ios::out);
 
 
     int fd = lcm.getFileno();
