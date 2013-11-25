@@ -62,6 +62,7 @@ class Mission
         // Mission globals
         double dropDistance;
         double dropAngleRad;
+        double turnRadius;
         double missionTimeout;
         double originLat, originLon;
         
