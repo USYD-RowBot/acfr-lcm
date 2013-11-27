@@ -1,4 +1,4 @@
 # ignore svn files
-.svn
+*.svn*
 # ignore temporary files
 *~

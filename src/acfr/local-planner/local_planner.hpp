@@ -1,6 +1,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include <signal.h>
 #include <string>
+#include <iomanip>
 #include <libgen.h>
 #include <pthread.h>
 #include <error.h>
@@ -89,7 +90,9 @@ class LocalPlanner {
         Pose3D destPose;
         double destVel;
         
+        // New destination from GLOBAL
         bool newDest;
+        // Global destination
         bool destReached;
         
         int depthMode;

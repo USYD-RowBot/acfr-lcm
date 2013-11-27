@@ -32,7 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
-#define CURRENT 0.1
+#define CURRENT 0.5
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4
@@ -612,6 +612,9 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
         cout << "Truth: ";
 
+        if(! fp.is_open() )
+        	fp.open("/media/water/misc/personal_folders/navid/iver/log.txt",
+        			ios::out|ios::app);
         for(int i=0; i<12; i++) {
             printf("%2.3f ", state(i));
             fp << state(i) << " ";
@@ -620,8 +623,8 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             printf("%2.3f ", in(i));
             fp << in(i) << " ";
         }
-
         fp << "\n";
+        fp.close();
         printf("\n");
         fflush(NULL);
 
@@ -851,12 +854,15 @@ void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
     nav_state[12] = nav->altitude;
 
+    if( !fp_nav.is_open() )
+    	fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt",
+    			ios::out | ios::app);
     for(int i=0; i<13; i++) {
         printf("%2.3f ", nav_state[i]);
         fp_nav << nav_state[i] << " ";
     }
-
     fp_nav << "\n";
+    fp_nav.close();
     printf("\n");
     fflush(NULL);
 
@@ -958,9 +964,9 @@ int main(int argc, char **argv)
     in(1) = 0;
     in(2) = 0;
     in(3) = 0;
-    fp.open("/media/water/misc/personal_folders/navid/iver/log.txt", ios::out);
-    fp_nav.open("/media/water/misc/personal_folders/navid/iver/log_nav.txt", ios::out);
 
+    fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt", ios::out);
+    fp.open("/media/water/misc/personal_folders/navid/iver/log.txt", ios::out);
 
     int fd = lcm.getFileno();
     fd_set rfds;
@@ -977,8 +983,10 @@ int main(int argc, char **argv)
     }
     delete slamConfigFile;
     delete map_projection_sim;
-    fp.close();
-    fp_nav.close();
+    if( fp.is_open())
+    	fp.close();
+    if( fp_nav.is_open() )
+    	fp_nav.close();
     return 0;
 }
 

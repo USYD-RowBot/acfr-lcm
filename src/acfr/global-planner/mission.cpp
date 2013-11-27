@@ -129,7 +129,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
             else if(element->get_name().lowercase() == "mission_timeout")
             {
                 if(!getSingleValue(element, "t", missionTimeout)) {
-                    cerr << "Not mission_timeout variable set in global section." << endl;
+                    cerr << "No mission_timeout variable set in global section." << endl;
                     return 0;
                 }
             }
@@ -144,7 +144,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
             
         } 
         if(missionTimeout != missionTimeout) {   
-            cerr << "Not mission_timeout variable set in global section." << endl;
+            cerr << "No mission_timeout variable set in global section." << endl;
             return 0;
         }
     }
@@ -405,7 +405,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     return 0;
                 mp->setPathOffset(s);
             }
-            if(element->get_name().lowercase() == "heading")
+            if (element->get_name().lowercase() == "heading"
+					|| element->get_name().lowercase() == "rotation")
             {
                 if(getSingleValue(element, "deg", rot))
                     mp->setHeadingDeg(rot);
@@ -413,7 +414,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     mp->setHeadingRad(rot);
                 else
 				{
-					cout << "Could not set heading" << endl;  
+					cout << "Could not set heading/rotation" << endl;
                     return 0;
 				}
             }
@@ -516,6 +517,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     }
 
     mp->generatePath(missionTimeout, depthMode, commands, waypoints.size());
+
     waypoints.splice(waypoints.end(), mp->getPath());   
     
     return 1;
@@ -535,15 +537,14 @@ int Mission::dump()
 
 void Mission::dumpMatlab(string filename) {
     ofstream fout(filename.c_str(), ios::out);
-    cout << "dumping matlab file at " << filename << endl;
-	fout << "path = [" << endl;
+    fout << "path = [" << endl;
 	list<waypoint>::iterator it;
 	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
 		fout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", " << (*it).pose.getZ() << "; " << endl;
 	}
 	fout << "];" << "\n";
-	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
-	fout << "plot3d( path', 'c' )" << endl;
+//	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
+//	fout << "plot3d( path', 'c' )" << endl;
 //	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
 //		fout << "pose = [" << (*it).pose.getX() << " " << (*it).pose.getX() + 0.2 * cos((*it).pose.getYawRad()) << "; "
 //				<< (*it).pose.getY() << " " << (*it).pose.getY() + 0.2 * sin((*it).pose.getYawRad()) << "; "
@@ -551,9 +552,9 @@ void Mission::dumpMatlab(string filename) {
 //		//fout << "plot3d( path(" << i + 1 << ",:)', 'b-o' ); " << "\n";
 //		fout << "plot3d( pose, 'm-' );" << endl;
 //	}
-	fout << "scatter3( path(:,1), path(:,2), path(:,3), 20, 1:size(path,1) )" << endl;
-	fout << "xlabel( 'x [m]' ); ylabel( 'y [m]' );" << "\n";
-	fout << "view(0,90)" << endl;
+//	fout << "scatter3( path(:,1), path(:,2), path(:,3), 20 )" << endl;
+//	fout << "xlabel( 'x [m]' ); ylabel( 'y [m]' );" << "\n";
+//	fout << "view(0,90)" << endl;
 
 	//system("matlab matlab_plot.m");
 }
