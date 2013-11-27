@@ -9,6 +9,7 @@
 #include "SpiralInwardPath.h"
 #include "SpiralPath.h"
 #include "GotoPath.h"
+#include "GotoAndCirclePath.h"
 #include "LegPath.h"
 
 

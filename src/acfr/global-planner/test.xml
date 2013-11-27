@@ -90,14 +90,16 @@
 -->
 
     <primative>
-        <goto>
+        <gotoandcircle>
             <position x="30" y="05" z="3"/>
             <rotation deg = "0" />
+            <loops n="1"/>
+            <direction d="-1" />
             <timeout t="1000" />
-            <velocity x="0" />
+            <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
-        </goto>
+        </gotoandcircle>
     </primative>
 
 </mission>

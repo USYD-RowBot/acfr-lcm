@@ -77,9 +77,11 @@
             for(xmlpp::Node::NodeList::iterator i = primative_list.begin(); i != primative_list.end(); ++i)
             {
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
-                if( tag == "goto" || tag == "leg" || tag == "zambonie" || tag == "spiral" || tag == "spiral_inward")
-                    parsePrimitive(*i);
-                else if((*i)->get_name().lowercase() != "text")
+                if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
+						|| tag == "zambonie" || tag == "spiral"
+						|| tag == "spiral_inward")
+					parsePrimitive(*i);
+				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primative " << (*i)->get_name() << endl;
             }      
                 
@@ -369,6 +371,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         mp = new GotoPath();
     else if(primitiveType == "leg")
         mp = new LegPath();
+    else if(primitiveType == "gotoandcircle")
+    	mp = new GotoAndCirclePath();
     else 
         return 0;    
         
