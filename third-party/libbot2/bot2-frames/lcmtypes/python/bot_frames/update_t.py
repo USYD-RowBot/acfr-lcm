@@ -49,9 +49,9 @@ class update_t(object):
         self = update_t()
         self.utime = struct.unpack(">q", buf.read(8))[0]
         __frame_len = struct.unpack('>I', buf.read(4))[0]
-        self.frame = buf.read(__frame_len)[:-1].decode('utf-8', 'replace')
+        self.frame = buf.read(__frame_len)[:-1].decode('utf-8')
         __relative_to_len = struct.unpack('>I', buf.read(4))[0]
-        self.relative_to = buf.read(__relative_to_len)[:-1].decode('utf-8', 'replace')
+        self.relative_to = buf.read(__relative_to_len)[:-1].decode('utf-8')
         self.trans = struct.unpack('>3d', buf.read(24))
         self.quat = struct.unpack('>4d', buf.read(32))
         return self

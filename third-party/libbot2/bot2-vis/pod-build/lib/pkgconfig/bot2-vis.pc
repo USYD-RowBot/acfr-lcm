@@ -1,4 +1,4 @@
-prefix=/home/navid/proj/acfr/acfr_lcm/third-party/build
+prefix=/usr/local
 exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include

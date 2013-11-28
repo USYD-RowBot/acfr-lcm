@@ -6,6 +6,7 @@
 package bot_lcmgl;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -25,10 +26,10 @@ public final class data_t implements lcm.lcm.LCMEncodable
     public static final long LCM_FINGERPRINT_BASE = 0xe4f854412b5c6ecdL;
  
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_lcmgl.data_t.class))
             return 0L;

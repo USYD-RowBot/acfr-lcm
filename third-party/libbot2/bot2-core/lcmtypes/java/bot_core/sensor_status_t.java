@@ -6,6 +6,7 @@
 package bot_core;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -33,10 +34,10 @@ public final class sensor_status_t implements lcm.lcm.LCMEncodable
     public static final short DYNAMIXEL_SERVO = (short) 7;
 
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_core.sensor_status_t.class))
             return 0L;

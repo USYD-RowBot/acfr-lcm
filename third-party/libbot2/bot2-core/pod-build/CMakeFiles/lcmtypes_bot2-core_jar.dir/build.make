@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build
 
 # Utility rule file for lcmtypes_bot2-core_jar.
 
@@ -47,54 +44,54 @@ include CMakeFiles/lcmtypes_bot2-core_jar.dir/progress.make
 
 CMakeFiles/lcmtypes_bot2-core_jar: lcmtypes_bot2-core.jar
 
-lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/sensor_status_t.class
-lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/planar_lidar_t.class
-lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_metadata_t.class
-lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_sync_t.class
-lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_t.class
 lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/pose_t.class
+lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_sync_t.class
+lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/planar_lidar_t.class
+lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/sensor_status_t.class
 lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/rigid_transform_t.class
 lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/raw_t.class
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_t.class
+lcmtypes_bot2-core.jar: ../lcmtypes/java/bot_core/image_metadata_t.class
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating lcmtypes_bot2-core.jar"
-	/usr/bin/jar cf /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/lcmtypes_bot2-core.jar -C /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java .
+	/usr/bin/jar cf /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/lcmtypes_bot2-core.jar -C /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java .
 
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/sensor_status_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/planar_lidar_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/image_metadata_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/image_sync_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/image_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/pose_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/rigid_transform_t.java
-../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/raw_t.java
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../lcmtypes/java/bot_core/sensor_status_t.class, ../lcmtypes/java/bot_core/planar_lidar_t.class, ../lcmtypes/java/bot_core/image_metadata_t.class, ../lcmtypes/java/bot_core/image_sync_t.class, ../lcmtypes/java/bot_core/image_t.class, ../lcmtypes/java/bot_core/pose_t.class, ../lcmtypes/java/bot_core/rigid_transform_t.class, ../lcmtypes/java/bot_core/raw_t.class"
-	/usr/bin/javac -source 6 -target 6 -cp /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java:/usr/local/share/java/lcm.jar /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/sensor_status_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/planar_lidar_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/image_metadata_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/image_sync_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/image_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/pose_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/rigid_transform_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/java/bot_core/raw_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/pose_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/image_sync_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/planar_lidar_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/sensor_status_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/rigid_transform_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/raw_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/image_t.java
+../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/image_metadata_t.java
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../lcmtypes/java/bot_core/pose_t.class, ../lcmtypes/java/bot_core/image_sync_t.class, ../lcmtypes/java/bot_core/planar_lidar_t.class, ../lcmtypes/java/bot_core/sensor_status_t.class, ../lcmtypes/java/bot_core/rigid_transform_t.class, ../lcmtypes/java/bot_core/raw_t.class, ../lcmtypes/java/bot_core/image_t.class, ../lcmtypes/java/bot_core/image_metadata_t.class"
+	/usr/bin/javac -source 6 -cp /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java:/usr/local/share/java/lcm-0.9.0.jar /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/pose_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/image_sync_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/planar_lidar_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/sensor_status_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/rigid_transform_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/raw_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/image_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/java/bot_core/image_metadata_t.java
 
-../lcmtypes/java/bot_core/planar_lidar_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/image_sync_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/image_metadata_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/planar_lidar_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/image_sync_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/sensor_status_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/image_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/rigid_transform_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/pose_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/raw_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/rigid_transform_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/image_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
-../lcmtypes/java/bot_core/raw_t.class: ../lcmtypes/java/bot_core/sensor_status_t.class
+../lcmtypes/java/bot_core/image_metadata_t.class: ../lcmtypes/java/bot_core/pose_t.class
 
 lcmtypes_bot2-core_jar: CMakeFiles/lcmtypes_bot2-core_jar
 lcmtypes_bot2-core_jar: lcmtypes_bot2-core.jar
-lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/sensor_status_t.class
-lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/planar_lidar_t.class
-lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_metadata_t.class
-lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_sync_t.class
-lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_t.class
 lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/pose_t.class
+lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_sync_t.class
+lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/planar_lidar_t.class
+lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/sensor_status_t.class
 lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/rigid_transform_t.class
 lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/raw_t.class
+lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_t.class
+lcmtypes_bot2-core_jar: ../lcmtypes/java/bot_core/image_metadata_t.class
 lcmtypes_bot2-core_jar: CMakeFiles/lcmtypes_bot2-core_jar.dir/build.make
 .PHONY : lcmtypes_bot2-core_jar
 
@@ -107,6 +104,6 @@ CMakeFiles/lcmtypes_bot2-core_jar.dir/clean:
 .PHONY : CMakeFiles/lcmtypes_bot2-core_jar.dir/clean
 
 CMakeFiles/lcmtypes_bot2-core_jar.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles/lcmtypes_bot2-core_jar.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmtypes_bot2-core_jar.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmtypes_bot2-core_jar.dir/depend
 

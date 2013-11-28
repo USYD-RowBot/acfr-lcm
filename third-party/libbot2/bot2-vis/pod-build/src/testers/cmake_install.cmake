@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/testers
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/testers
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

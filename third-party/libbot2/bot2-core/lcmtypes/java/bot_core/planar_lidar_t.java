@@ -6,6 +6,7 @@
 package bot_core;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -27,10 +28,10 @@ public final class planar_lidar_t implements lcm.lcm.LCMEncodable
     public static final long LCM_FINGERPRINT_BASE = 0xf1e8ba118c05af46L;
  
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_core.planar_lidar_t.class))
             return 0L;

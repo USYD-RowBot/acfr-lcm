@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build
 
 # Include any dependencies generated for this target.
 include src/deputy/CMakeFiles/bot-procman-deputy.dir/depend.make
@@ -51,17 +48,17 @@ include src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o: src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o: ../src/deputy/lcm_util.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.c
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.c > CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.c > CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.c -o CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.c -o CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o.requires:
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o.requires
@@ -74,17 +71,17 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o.provides.build: src/de
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o: src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o: ../src/deputy/procinfo.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procinfo.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procinfo.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.c
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-procman-deputy.dir/procinfo.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.c > CMakeFiles/bot-procman-deputy.dir/procinfo.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.c > CMakeFiles/bot-procman-deputy.dir/procinfo.c.i
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-procman-deputy.dir/procinfo.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.c -o CMakeFiles/bot-procman-deputy.dir/procinfo.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.c -o CMakeFiles/bot-procman-deputy.dir/procinfo.c.s
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o.requires:
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o.requires
@@ -97,17 +94,17 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o.provides.build: src/de
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o: src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o: ../src/deputy/procman.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_3)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procman.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procman.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.c
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-procman-deputy.dir/procman.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.c > CMakeFiles/bot-procman-deputy.dir/procman.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.c > CMakeFiles/bot-procman-deputy.dir/procman.c.i
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-procman-deputy.dir/procman.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.c -o CMakeFiles/bot-procman-deputy.dir/procman.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.c -o CMakeFiles/bot-procman-deputy.dir/procman.c.s
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o.requires:
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o.requires
@@ -120,17 +117,17 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o.provides.build: src/dep
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../src/deputy/procman_deputy.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_4)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_4)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman_deputy.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman_deputy.c
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman_deputy.c > CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman_deputy.c > CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman_deputy.c -o CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman_deputy.c -o CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o.requires:
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o.requires
@@ -143,17 +140,17 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o.provides.build: 
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o: src/deputy/CMakeFiles/bot-procman-deputy.dir/flags.make
 src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o: ../src/deputy/signal_pipe.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_5)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_5)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.c
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.c > CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.c > CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.c -o CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.c -o CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o.requires:
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o.requires
@@ -183,7 +180,7 @@ bin/bot-procman-deputy: src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe
 bin/bot-procman-deputy: src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make
 bin/bot-procman-deputy: src/deputy/CMakeFiles/bot-procman-deputy.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable ../../bin/bot-procman-deputy"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-procman-deputy.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-procman-deputy.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/deputy/CMakeFiles/bot-procman-deputy.dir/build: bin/bot-procman-deputy
@@ -197,10 +194,10 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/requires: src/deputy/CMakeFiles/bot
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/requires
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy && $(CMAKE_COMMAND) -P CMakeFiles/bot-procman-deputy.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy && $(CMAKE_COMMAND) -P CMakeFiles/bot-procman-deputy.dir/cmake_clean.cmake
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/clean
 
 src/deputy/CMakeFiles/bot-procman-deputy.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy/CMakeFiles/bot-procman-deputy.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy/CMakeFiles/bot-procman-deputy.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/depend
 

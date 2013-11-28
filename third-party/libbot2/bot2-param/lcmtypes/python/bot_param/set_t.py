@@ -27,7 +27,6 @@ class set_t(object):
     def _encode_one(self, buf):
         buf.write(struct.pack(">qqii", self.utime, self.server_id, self.sequence_number, self.numEntries))
         for i0 in range(self.numEntries):
-            assert self.entries[i0]._get_packed_fingerprint() == entry_t.entry_t._get_packed_fingerprint()
             self.entries[i0]._encode_one(buf)
 
     def decode(data):

@@ -1,6 +1,6 @@
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles/6zEJBtlKdHjDFWCk6yRvvgG4Gi5otYuw.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/logfilter/CMakeFiles/bot-lcm-logfilter.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/logsplice/CMakeFiles/bot-lcm-logsplice.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/tunnel/CMakeFiles/bot-lcm-tunnel.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who/CMakeFiles/bot-lcm-who.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/tunnel/CMakeFiles/ldpc-wrapper-test.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/logfilter/CMakeFiles/bot-lcm-logfilter.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/logsplice/CMakeFiles/bot-lcm-logsplice.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/tunnel/CMakeFiles/bot-lcm-tunnel.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who/CMakeFiles/bot-lcm-who.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/tunnel/CMakeFiles/ldpc-wrapper-test.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles/uEMWmJ9m9a04mAu1UzzGxbUyXy3hBUR3.dir

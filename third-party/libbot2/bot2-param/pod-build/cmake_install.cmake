@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -33,91 +33,91 @@ IF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/lib/liblcmtypes_bot2-param.a")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE STATIC_LIBRARY FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/lib/liblcmtypes_bot2-param.a")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes" TYPE FILE FILES
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/c/lcmtypes/bot_param_set_t.h"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/c/lcmtypes/bot_param_entry_t.h"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/c/lcmtypes/bot_param_update_t.h"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/c/lcmtypes/bot_param_request_t.h"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/c/lcmtypes/bot2_param.h"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/c/lcmtypes/bot_param_update_t.h"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/c/lcmtypes/bot_param_set_t.h"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/c/lcmtypes/bot_param_entry_t.h"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/c/lcmtypes/bot_param_request_t.h"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/c/lcmtypes/bot2_param.h"
     )
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/lib/pkgconfig/lcmtypes_bot2-param.pc")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/lib/pkgconfig/lcmtypes_bot2-param.pc")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/entry_t.hpp")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/set_t.hpp")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/set_t.hpp")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/update_t.hpp")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/request_t.hpp")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/request_t.hpp")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/update_t.hpp")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/cpp/lcmtypes/bot_param/entry_t.hpp")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/cpp/lcmtypes/bot2_param.hpp")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/lcmtypes" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/cpp/lcmtypes/bot2_param.hpp")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/java" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/lcmtypes_bot2-param.jar")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param/update_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python/bot_param/update_t.py")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/java" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/lcmtypes_bot2-param.jar")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param/entry_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python/bot_param/entry_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_param/update_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python/bot_param/update_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param/request_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python/bot_param/request_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_param/request_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python/bot_param/request_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param/__init__.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python/bot_param/__init__.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_param/set_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python/bot_param/set_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param/set_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python/bot_param/set_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_param/entry_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python/bot_param/entry_t.py")
+ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+
+IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
+  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
+   "/usr/local/lib/python2.7/dist-packages/bot_param/__init__.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_param" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python/bot_param/__init__.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/lcmtypes" TYPE FILE FILES
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_request_t.lcm"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_set_t.lcm"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_update_t.lcm"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_entry_t.lcm"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_entry_t.lcm"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_request_t.lcm"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_update_t.lcm"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_set_t.lcm"
     )
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_tester/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_tester/cmake_install.cmake")
 
 ENDIF(NOT CMAKE_INSTALL_LOCAL_ONLY)
 
@@ -127,7 +127,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)

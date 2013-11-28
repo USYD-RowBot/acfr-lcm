@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build
 
 # Include any dependencies generated for this target.
 include src/param_client/CMakeFiles/bot2-param-client.dir/depend.make
@@ -51,17 +48,17 @@ include src/param_client/CMakeFiles/bot2-param-client.dir/flags.make
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o: src/param_client/CMakeFiles/bot2-param-client.dir/flags.make
 src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o: ../src/param_client/param_internal.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-param-client.dir/param_internal.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_internal.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-param-client.dir/param_internal.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_internal.c
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot2-param-client.dir/param_internal.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_internal.c > CMakeFiles/bot2-param-client.dir/param_internal.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_internal.c > CMakeFiles/bot2-param-client.dir/param_internal.c.i
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot2-param-client.dir/param_internal.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_internal.c -o CMakeFiles/bot2-param-client.dir/param_internal.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_internal.c -o CMakeFiles/bot2-param-client.dir/param_internal.c.s
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o.requires:
 .PHONY : src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o.requires
@@ -74,17 +71,17 @@ src/param_client/CMakeFiles/bot2-param-client.dir/param_internal.c.o.provides.bu
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.o: src/param_client/CMakeFiles/bot2-param-client.dir/flags.make
 src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.o: ../src/param_client/param_util.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-param-client.dir/param_util.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_util.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-param-client.dir/param_util.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_util.c
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot2-param-client.dir/param_util.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_util.c > CMakeFiles/bot2-param-client.dir/param_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_util.c > CMakeFiles/bot2-param-client.dir/param_util.c.i
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot2-param-client.dir/param_util.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client/param_util.c -o CMakeFiles/bot2-param-client.dir/param_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client/param_util.c -o CMakeFiles/bot2-param-client.dir/param_util.c.s
 
 src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.o.requires:
 .PHONY : src/param_client/CMakeFiles/bot2-param-client.dir/param_util.c.o.requires
@@ -108,8 +105,8 @@ lib/libbot2-param-client.so.1: src/param_client/CMakeFiles/bot2-param-client.dir
 lib/libbot2-param-client.so.1: src/param_client/CMakeFiles/bot2-param-client.dir/build.make
 lib/libbot2-param-client.so.1: src/param_client/CMakeFiles/bot2-param-client.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C shared library ../../lib/libbot2-param-client.so"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot2-param-client.dir/link.txt --verbose=$(VERBOSE)
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -E cmake_symlink_library ../../lib/libbot2-param-client.so.1 ../../lib/libbot2-param-client.so.1 ../../lib/libbot2-param-client.so
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot2-param-client.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -E cmake_symlink_library ../../lib/libbot2-param-client.so.1 ../../lib/libbot2-param-client.so.1 ../../lib/libbot2-param-client.so
 
 lib/libbot2-param-client.so: lib/libbot2-param-client.so.1
 
@@ -122,10 +119,10 @@ src/param_client/CMakeFiles/bot2-param-client.dir/requires: src/param_client/CMa
 .PHONY : src/param_client/CMakeFiles/bot2-param-client.dir/requires
 
 src/param_client/CMakeFiles/bot2-param-client.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -P CMakeFiles/bot2-param-client.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client && $(CMAKE_COMMAND) -P CMakeFiles/bot2-param-client.dir/cmake_clean.cmake
 .PHONY : src/param_client/CMakeFiles/bot2-param-client.dir/clean
 
 src/param_client/CMakeFiles/bot2-param-client.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_client /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_client/CMakeFiles/bot2-param-client.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_client /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_client/CMakeFiles/bot2-param-client.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/param_client/CMakeFiles/bot2-param-client.dir/depend
 

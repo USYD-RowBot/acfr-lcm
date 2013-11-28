@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build
 
 # Utility rule file for lcmgen_java.
 
@@ -46,8 +43,8 @@ CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-fr
 include CMakeFiles/lcmgen_java.dir/progress.make
 
 CMakeFiles/lcmgen_java:
-	sh -c '[ -d /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/lcmtypes/java ] || mkdir -p /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/lcmtypes/java'
-	sh -c '/usr/local/bin/lcm-gen --lazy -j /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/lcmtypes/bot_frames_update_t.lcm --jpath /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/lcmtypes/java'
+	sh -c '[ -d /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/lcmtypes/java ] || mkdir -p /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/lcmtypes/java'
+	sh -c '/usr/local/bin/lcm-gen --lazy -j /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/lcmtypes/bot_frames_update_t.lcm --jpath /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/lcmtypes/java'
 
 lcmgen_java: CMakeFiles/lcmgen_java
 lcmgen_java: CMakeFiles/lcmgen_java.dir/build.make
@@ -62,6 +59,6 @@ CMakeFiles/lcmgen_java.dir/clean:
 .PHONY : CMakeFiles/lcmgen_java.dir/clean
 
 CMakeFiles/lcmgen_java.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles/lcmgen_java.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles/lcmgen_java.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmgen_java.dir/depend
 

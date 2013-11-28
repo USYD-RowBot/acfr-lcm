@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build
 
 # Include any dependencies generated for this target.
 include src/renderer/CMakeFiles/bot2-frames-renderers.dir/depend.make
@@ -51,17 +48,17 @@ include src/renderer/CMakeFiles/bot2-frames-renderers.dir/flags.make
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o: src/renderer/CMakeFiles/bot2-frames-renderers.dir/flags.make
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o: ../src/renderer/coord_frames_renderer.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/coord_frames_renderer.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/coord_frames_renderer.c
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/coord_frames_renderer.c > CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/coord_frames_renderer.c > CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/coord_frames_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/coord_frames_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o.requires:
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o.requires
@@ -74,17 +71,17 @@ src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o.prov
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o: src/renderer/CMakeFiles/bot2-frames-renderers.dir/flags.make
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o: ../src/renderer/articulated_body_renderer.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/articulated_body_renderer.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/articulated_body_renderer.c
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/articulated_body_renderer.c > CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/articulated_body_renderer.c > CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/articulated_body_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/articulated_body_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o.requires:
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o.requires
@@ -97,17 +94,17 @@ src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o.
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o: src/renderer/CMakeFiles/bot2-frames-renderers.dir/flags.make
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o: ../src/renderer/frame_modifier_renderer.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_3)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles $(CMAKE_PROGRESS_3)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/frame_modifier_renderer.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/frame_modifier_renderer.c
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/frame_modifier_renderer.c > CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/frame_modifier_renderer.c > CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer/frame_modifier_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer/frame_modifier_renderer.c -o CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o.requires:
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o.requires
@@ -139,8 +136,8 @@ lib/libbot2-frames-renderers.so.1: /usr/lib/x86_64-linux-gnu/libXext.so
 lib/libbot2-frames-renderers.so.1: src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make
 lib/libbot2-frames-renderers.so.1: src/renderer/CMakeFiles/bot2-frames-renderers.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C shared library ../../lib/libbot2-frames-renderers.so"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot2-frames-renderers.dir/link.txt --verbose=$(VERBOSE)
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -E cmake_symlink_library ../../lib/libbot2-frames-renderers.so.1 ../../lib/libbot2-frames-renderers.so.1 ../../lib/libbot2-frames-renderers.so
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot2-frames-renderers.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -E cmake_symlink_library ../../lib/libbot2-frames-renderers.so.1 ../../lib/libbot2-frames-renderers.so.1 ../../lib/libbot2-frames-renderers.so
 
 lib/libbot2-frames-renderers.so: lib/libbot2-frames-renderers.so.1
 
@@ -154,10 +151,10 @@ src/renderer/CMakeFiles/bot2-frames-renderers.dir/requires: src/renderer/CMakeFi
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/requires
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -P CMakeFiles/bot2-frames-renderers.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer && $(CMAKE_COMMAND) -P CMakeFiles/bot2-frames-renderers.dir/cmake_clean.cmake
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/clean
 
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/src/renderer /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer/CMakeFiles/bot2-frames-renderers.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/src/renderer /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer/CMakeFiles/bot2-frames-renderers.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/depend
 

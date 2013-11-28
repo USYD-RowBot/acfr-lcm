@@ -1,3 +1,3 @@
 #!/bin/sh
-export PYTHONPATH=/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages:/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/site-packages:${PYTHONPATH}
+export PYTHONPATH=/usr/local/lib/python2.7/dist-packages:/usr/local/lib/python2.7/site-packages:${PYTHONPATH}
 exec /usr/bin/python -m bot_log2mat.log_to_mat $*

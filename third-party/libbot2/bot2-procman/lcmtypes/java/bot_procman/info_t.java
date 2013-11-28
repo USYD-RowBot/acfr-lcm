@@ -6,6 +6,7 @@
 package bot_procman;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -29,10 +30,10 @@ public final class info_t implements lcm.lcm.LCMEncodable
     public static final long LCM_FINGERPRINT_BASE = 0x925c28f65a35e1d7L;
  
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_procman.info_t.class))
             return 0L;

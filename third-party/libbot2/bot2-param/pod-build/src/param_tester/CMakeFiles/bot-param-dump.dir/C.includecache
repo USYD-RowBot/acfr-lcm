@@ -7,12 +7,12 @@
 #IncludeRegexTransform: 
 
 ../lcmtypes/c/lcmtypes/bot2_param.h
+bot_param_update_t.h
+../lcmtypes/c/lcmtypes/bot_param_update_t.h
 bot_param_set_t.h
 ../lcmtypes/c/lcmtypes/bot_param_set_t.h
 bot_param_entry_t.h
 ../lcmtypes/c/lcmtypes/bot_param_entry_t.h
-bot_param_update_t.h
-../lcmtypes/c/lcmtypes/bot_param_update_t.h
 bot_param_request_t.h
 ../lcmtypes/c/lcmtypes/bot_param_request_t.h
 
@@ -58,17 +58,17 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_tester/../param_client/param_client.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_tester/../param_client/param_client.h
 stdio.h
 -
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_tester/../param_client/param_internal.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_tester/../param_client/param_internal.h
 param_client.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_tester/../param_client/param_client.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_tester/../param_client/param_client.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_tester/param_dump.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_tester/param_dump.c
 stdio.h
 -
 stdlib.h
@@ -78,7 +78,7 @@ bot_param/param_client.h
 lcmtypes/bot2_param.h
 -
 ../param_client/param_internal.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_tester/../param_client/param_internal.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_tester/../param_client/param_internal.h
 
 /usr/local/include/lcm/eventlog.h
 stdio.h

@@ -3,10 +3,10 @@ FILE(REMOVE_RECURSE
   "../lcmtypes/cpp"
   "../lcmtypes/java"
   "../lcmtypes/python"
-  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_entry_t.c.o"
-  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_update_t.c.o"
-  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_request_t.c.o"
   "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_set_t.c.o"
+  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_entry_t.c.o"
+  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_request_t.c.o"
+  "CMakeFiles/lcmtypes_bot2-param.dir/lcmtypes/c/lcmtypes/bot_param_update_t.c.o"
   "lib/liblcmtypes_bot2-param.pdb"
   "lib/liblcmtypes_bot2-param.a"
 )

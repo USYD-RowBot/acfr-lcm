@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/lcmtypes_bot2-lcmgl.dir/depend.make
@@ -51,17 +48,17 @@ include CMakeFiles/lcmtypes_bot2-lcmgl.dir/flags.make
 
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o: CMakeFiles/lcmtypes_bot2-lcmgl.dir/flags.make
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o: ../lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o"
-	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -o CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c
+	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -o CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c
 
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.i"
-	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c > CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.i
+	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c > CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.i
 
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.s"
-	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c -o CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.s
+	/usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -fPIC -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c -o CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.s
 
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o.requires:
 .PHONY : CMakeFiles/lcmtypes_bot2-lcmgl.dir/lcmtypes/c/lcmtypes/bot_lcmgl_data_t.c.o.requires
@@ -98,6 +95,6 @@ CMakeFiles/lcmtypes_bot2-lcmgl.dir/clean:
 .PHONY : CMakeFiles/lcmtypes_bot2-lcmgl.dir/clean
 
 CMakeFiles/lcmtypes_bot2-lcmgl.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles/lcmtypes_bot2-lcmgl.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles/lcmtypes_bot2-lcmgl.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmtypes_bot2-lcmgl.dir/depend
 

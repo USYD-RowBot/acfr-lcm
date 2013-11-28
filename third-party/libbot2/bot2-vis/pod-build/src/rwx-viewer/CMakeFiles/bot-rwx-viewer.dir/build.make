@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build
 
 # Include any dependencies generated for this target.
 include src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/depend.make
@@ -51,17 +48,17 @@ include src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/flags.make
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o: src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/flags.make
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o: ../src/rwx-viewer/main.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-rwx-viewer.dir/main.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/main.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-rwx-viewer.dir/main.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/main.c
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-rwx-viewer.dir/main.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/main.c > CMakeFiles/bot-rwx-viewer.dir/main.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/main.c > CMakeFiles/bot-rwx-viewer.dir/main.c.i
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-rwx-viewer.dir/main.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/main.c -o CMakeFiles/bot-rwx-viewer.dir/main.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/main.c -o CMakeFiles/bot-rwx-viewer.dir/main.c.s
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o.requires:
 .PHONY : src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o.requires
@@ -74,17 +71,17 @@ src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/main.c.o.provides.build: src/rwx-vi
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o: src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/flags.make
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o: ../src/rwx-viewer/renderer_rwx.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/renderer_rwx.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/renderer_rwx.c
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/renderer_rwx.c > CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/renderer_rwx.c > CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.i
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer/renderer_rwx.c -o CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer/renderer_rwx.c -o CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.s
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o.requires:
 .PHONY : src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.o.requires
@@ -108,7 +105,7 @@ bin/bot-rwx-viewer: src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/renderer_rwx.c.
 bin/bot-rwx-viewer: src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/build.make
 bin/bot-rwx-viewer: src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable ../../bin/bot-rwx-viewer"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-rwx-viewer.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-rwx-viewer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/build: bin/bot-rwx-viewer
@@ -119,10 +116,10 @@ src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/requires: src/rwx-viewer/CMakeFiles
 .PHONY : src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/requires
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer && $(CMAKE_COMMAND) -P CMakeFiles/bot-rwx-viewer.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer && $(CMAKE_COMMAND) -P CMakeFiles/bot-rwx-viewer.dir/cmake_clean.cmake
 .PHONY : src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/clean
 
 src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/rwx-viewer /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/rwx-viewer /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/rwx-viewer/CMakeFiles/bot-rwx-viewer.dir/depend
 

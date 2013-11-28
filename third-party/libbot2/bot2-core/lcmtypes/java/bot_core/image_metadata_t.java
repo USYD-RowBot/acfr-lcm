@@ -6,6 +6,7 @@
 package bot_core;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -23,10 +24,10 @@ public final class image_metadata_t implements lcm.lcm.LCMEncodable
     public static final long LCM_FINGERPRINT_BASE = 0x4d25b1a682bbfdc7L;
  
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_core.image_metadata_t.class))
             return 0L;

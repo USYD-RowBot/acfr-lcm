@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/logfilter/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/logfilter/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/rule
 .PHONY : src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot-lcm-logfilter: src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/rule
 
 # fast build rule for target.
 bot-lcm-logfilter/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build
 .PHONY : bot-lcm-logfilter/fast
 
 lcm-logfilter.o: lcm-logfilter.c.o
@@ -158,7 +155,7 @@ lcm-logfilter.o: lcm-logfilter.c.o
 
 # target to build an object file
 lcm-logfilter.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.o
 .PHONY : lcm-logfilter.c.o
 
 lcm-logfilter.i: lcm-logfilter.c.i
@@ -166,7 +163,7 @@ lcm-logfilter.i: lcm-logfilter.c.i
 
 # target to preprocess a source file
 lcm-logfilter.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.i
 .PHONY : lcm-logfilter.c.i
 
 lcm-logfilter.s: lcm-logfilter.c.s
@@ -174,7 +171,7 @@ lcm-logfilter.s: lcm-logfilter.c.s
 
 # target to generate assembly for a file
 lcm-logfilter.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/build.make src/logfilter/CMakeFiles/bot-lcm-logfilter.dir/lcm-logfilter.c.s
 .PHONY : lcm-logfilter.c.s
 
 # Help Target
@@ -204,6 +201,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

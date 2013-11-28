@@ -16,7 +16,7 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.c
 stdio.h
 -
 string.h
@@ -36,11 +36,11 @@ sys/time.h
 zlib.h
 -
 lcmtypes/bot_lcmgl_data_t.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmtypes/bot_lcmgl_data_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmtypes/bot_lcmgl_data_t.h
 lcmgl.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
 lcm/lcm.h
 -
 

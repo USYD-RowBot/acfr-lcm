@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/src/renderer/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/src/renderer/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule
 
 # Convenience name for target.
@@ -150,12 +147,12 @@ bot2-frames-renderers: src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule
 
 # fast build rule for target.
 bot2-frames-renderers/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/build
 .PHONY : bot2-frames-renderers/fast
 
 # Convenience name for target.
 src/renderer/CMakeFiles/test-viewer.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/test-viewer.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/test-viewer.dir/rule
 .PHONY : src/renderer/CMakeFiles/test-viewer.dir/rule
 
 # Convenience name for target.
@@ -164,7 +161,7 @@ test-viewer: src/renderer/CMakeFiles/test-viewer.dir/rule
 
 # fast build rule for target.
 test-viewer/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/build
 .PHONY : test-viewer/fast
 
 articulated_body_renderer.o: articulated_body_renderer.c.o
@@ -172,7 +169,7 @@ articulated_body_renderer.o: articulated_body_renderer.c.o
 
 # target to build an object file
 articulated_body_renderer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.o
 .PHONY : articulated_body_renderer.c.o
 
 articulated_body_renderer.i: articulated_body_renderer.c.i
@@ -180,7 +177,7 @@ articulated_body_renderer.i: articulated_body_renderer.c.i
 
 # target to preprocess a source file
 articulated_body_renderer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.i
 .PHONY : articulated_body_renderer.c.i
 
 articulated_body_renderer.s: articulated_body_renderer.c.s
@@ -188,7 +185,7 @@ articulated_body_renderer.s: articulated_body_renderer.c.s
 
 # target to generate assembly for a file
 articulated_body_renderer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/articulated_body_renderer.c.s
 .PHONY : articulated_body_renderer.c.s
 
 coord_frames_renderer.o: coord_frames_renderer.c.o
@@ -196,7 +193,7 @@ coord_frames_renderer.o: coord_frames_renderer.c.o
 
 # target to build an object file
 coord_frames_renderer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.o
 .PHONY : coord_frames_renderer.c.o
 
 coord_frames_renderer.i: coord_frames_renderer.c.i
@@ -204,7 +201,7 @@ coord_frames_renderer.i: coord_frames_renderer.c.i
 
 # target to preprocess a source file
 coord_frames_renderer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.i
 .PHONY : coord_frames_renderer.c.i
 
 coord_frames_renderer.s: coord_frames_renderer.c.s
@@ -212,7 +209,7 @@ coord_frames_renderer.s: coord_frames_renderer.c.s
 
 # target to generate assembly for a file
 coord_frames_renderer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/coord_frames_renderer.c.s
 .PHONY : coord_frames_renderer.c.s
 
 frame_modifier_renderer.o: frame_modifier_renderer.c.o
@@ -220,7 +217,7 @@ frame_modifier_renderer.o: frame_modifier_renderer.c.o
 
 # target to build an object file
 frame_modifier_renderer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.o
 .PHONY : frame_modifier_renderer.c.o
 
 frame_modifier_renderer.i: frame_modifier_renderer.c.i
@@ -228,7 +225,7 @@ frame_modifier_renderer.i: frame_modifier_renderer.c.i
 
 # target to preprocess a source file
 frame_modifier_renderer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.i
 .PHONY : frame_modifier_renderer.c.i
 
 frame_modifier_renderer.s: frame_modifier_renderer.c.s
@@ -236,7 +233,7 @@ frame_modifier_renderer.s: frame_modifier_renderer.c.s
 
 # target to generate assembly for a file
 frame_modifier_renderer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/frame_modifier_renderer.c.s
 .PHONY : frame_modifier_renderer.c.s
 
 test_viewer.o: test_viewer.c.o
@@ -244,7 +241,7 @@ test_viewer.o: test_viewer.c.o
 
 # target to build an object file
 test_viewer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.o
 .PHONY : test_viewer.c.o
 
 test_viewer.i: test_viewer.c.i
@@ -252,7 +249,7 @@ test_viewer.i: test_viewer.c.i
 
 # target to preprocess a source file
 test_viewer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.i
 .PHONY : test_viewer.c.i
 
 test_viewer.s: test_viewer.c.s
@@ -260,7 +257,7 @@ test_viewer.s: test_viewer.c.s
 
 # target to generate assembly for a file
 test_viewer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/test_viewer.c.s
 .PHONY : test_viewer.c.s
 
 # Help Target
@@ -300,6 +297,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

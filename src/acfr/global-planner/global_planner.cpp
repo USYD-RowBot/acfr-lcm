@@ -25,7 +25,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		} else
 			gp->globalPlannerMessage = globalPlannerRun;
 		gp->mis.dumpMatlab(
-				"/media/water/misc/personal_folders/navid/iver/matlab_plot.m");
+                "matlab_plot.m");
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESUME:

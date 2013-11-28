@@ -69,7 +69,6 @@ class image_t(object):
         buf.write(self.data[:self.size])
         buf.write(struct.pack(">i", self.nmetadata))
         for i0 in range(self.nmetadata):
-            assert self.metadata[i0]._get_packed_fingerprint() == image_metadata_t.image_metadata_t._get_packed_fingerprint()
             self.metadata[i0]._encode_one(buf)
 
     def decode(data):

@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/bot_vis/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/bot_vis/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/bot_vis/CMakeFiles/bot2-vis.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/CMakeFiles/bot2-vis.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_vis/CMakeFiles/bot2-vis.dir/rule
 .PHONY : src/bot_vis/CMakeFiles/bot2-vis.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot2-vis: src/bot_vis/CMakeFiles/bot2-vis.dir/rule
 
 # fast build rule for target.
 bot2-vis/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/build
 .PHONY : bot2-vis/fast
 
 batch_gl.o: batch_gl.c.o
@@ -158,7 +155,7 @@ batch_gl.o: batch_gl.c.o
 
 # target to build an object file
 batch_gl.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.o
 .PHONY : batch_gl.c.o
 
 batch_gl.i: batch_gl.c.i
@@ -166,7 +163,7 @@ batch_gl.i: batch_gl.c.i
 
 # target to preprocess a source file
 batch_gl.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.i
 .PHONY : batch_gl.c.i
 
 batch_gl.s: batch_gl.c.s
@@ -174,7 +171,7 @@ batch_gl.s: batch_gl.c.s
 
 # target to generate assembly for a file
 batch_gl.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/batch_gl.c.s
 .PHONY : batch_gl.c.s
 
 console.o: console.c.o
@@ -182,7 +179,7 @@ console.o: console.c.o
 
 # target to build an object file
 console.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.o
 .PHONY : console.c.o
 
 console.i: console.c.i
@@ -190,7 +187,7 @@ console.i: console.c.i
 
 # target to preprocess a source file
 console.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.i
 .PHONY : console.c.i
 
 console.s: console.c.s
@@ -198,7 +195,7 @@ console.s: console.c.s
 
 # target to generate assembly for a file
 console.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/console.c.s
 .PHONY : console.c.s
 
 default_view_handler.o: default_view_handler.c.o
@@ -206,7 +203,7 @@ default_view_handler.o: default_view_handler.c.o
 
 # target to build an object file
 default_view_handler.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.o
 .PHONY : default_view_handler.c.o
 
 default_view_handler.i: default_view_handler.c.i
@@ -214,7 +211,7 @@ default_view_handler.i: default_view_handler.c.i
 
 # target to preprocess a source file
 default_view_handler.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.i
 .PHONY : default_view_handler.c.i
 
 default_view_handler.s: default_view_handler.c.s
@@ -222,7 +219,7 @@ default_view_handler.s: default_view_handler.c.s
 
 # target to generate assembly for a file
 default_view_handler.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/default_view_handler.c.s
 .PHONY : default_view_handler.c.s
 
 fbgl_drawing_area.o: fbgl_drawing_area.c.o
@@ -230,7 +227,7 @@ fbgl_drawing_area.o: fbgl_drawing_area.c.o
 
 # target to build an object file
 fbgl_drawing_area.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.o
 .PHONY : fbgl_drawing_area.c.o
 
 fbgl_drawing_area.i: fbgl_drawing_area.c.i
@@ -238,7 +235,7 @@ fbgl_drawing_area.i: fbgl_drawing_area.c.i
 
 # target to preprocess a source file
 fbgl_drawing_area.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.i
 .PHONY : fbgl_drawing_area.c.i
 
 fbgl_drawing_area.s: fbgl_drawing_area.c.s
@@ -246,7 +243,7 @@ fbgl_drawing_area.s: fbgl_drawing_area.c.s
 
 # target to generate assembly for a file
 fbgl_drawing_area.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/fbgl_drawing_area.c.s
 .PHONY : fbgl_drawing_area.c.s
 
 gl_drawing_area.o: gl_drawing_area.c.o
@@ -254,7 +251,7 @@ gl_drawing_area.o: gl_drawing_area.c.o
 
 # target to build an object file
 gl_drawing_area.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.o
 .PHONY : gl_drawing_area.c.o
 
 gl_drawing_area.i: gl_drawing_area.c.i
@@ -262,7 +259,7 @@ gl_drawing_area.i: gl_drawing_area.c.i
 
 # target to preprocess a source file
 gl_drawing_area.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.i
 .PHONY : gl_drawing_area.c.i
 
 gl_drawing_area.s: gl_drawing_area.c.s
@@ -270,7 +267,7 @@ gl_drawing_area.s: gl_drawing_area.c.s
 
 # target to generate assembly for a file
 gl_drawing_area.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_drawing_area.c.s
 .PHONY : gl_drawing_area.c.s
 
 gl_image_area.o: gl_image_area.c.o
@@ -278,7 +275,7 @@ gl_image_area.o: gl_image_area.c.o
 
 # target to build an object file
 gl_image_area.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.o
 .PHONY : gl_image_area.c.o
 
 gl_image_area.i: gl_image_area.c.i
@@ -286,7 +283,7 @@ gl_image_area.i: gl_image_area.c.i
 
 # target to preprocess a source file
 gl_image_area.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.i
 .PHONY : gl_image_area.c.i
 
 gl_image_area.s: gl_image_area.c.s
@@ -294,7 +291,7 @@ gl_image_area.s: gl_image_area.c.s
 
 # target to generate assembly for a file
 gl_image_area.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_image_area.c.s
 .PHONY : gl_image_area.c.s
 
 gl_util.o: gl_util.c.o
@@ -302,7 +299,7 @@ gl_util.o: gl_util.c.o
 
 # target to build an object file
 gl_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.o
 .PHONY : gl_util.c.o
 
 gl_util.i: gl_util.c.i
@@ -310,7 +307,7 @@ gl_util.i: gl_util.c.i
 
 # target to preprocess a source file
 gl_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.i
 .PHONY : gl_util.c.i
 
 gl_util.s: gl_util.c.s
@@ -318,7 +315,7 @@ gl_util.s: gl_util.c.s
 
 # target to generate assembly for a file
 gl_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gl_util.c.s
 .PHONY : gl_util.c.s
 
 glm.o: glm.c.o
@@ -326,7 +323,7 @@ glm.o: glm.c.o
 
 # target to build an object file
 glm.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.o
 .PHONY : glm.c.o
 
 glm.i: glm.c.i
@@ -334,7 +331,7 @@ glm.i: glm.c.i
 
 # target to preprocess a source file
 glm.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.i
 .PHONY : glm.c.i
 
 glm.s: glm.c.s
@@ -342,7 +339,7 @@ glm.s: glm.c.s
 
 # target to generate assembly for a file
 glm.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm.c.s
 .PHONY : glm.c.s
 
 glm_util.o: glm_util.c.o
@@ -350,7 +347,7 @@ glm_util.o: glm_util.c.o
 
 # target to build an object file
 glm_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.o
 .PHONY : glm_util.c.o
 
 glm_util.i: glm_util.c.i
@@ -358,7 +355,7 @@ glm_util.i: glm_util.c.i
 
 # target to preprocess a source file
 glm_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.i
 .PHONY : glm_util.c.i
 
 glm_util.s: glm_util.c.s
@@ -366,7 +363,7 @@ glm_util.s: glm_util.c.s
 
 # target to generate assembly for a file
 glm_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glm_util.c.s
 .PHONY : glm_util.c.s
 
 glmimg.o: glmimg.c.o
@@ -374,7 +371,7 @@ glmimg.o: glmimg.c.o
 
 # target to build an object file
 glmimg.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.o
 .PHONY : glmimg.c.o
 
 glmimg.i: glmimg.c.i
@@ -382,7 +379,7 @@ glmimg.i: glmimg.c.i
 
 # target to preprocess a source file
 glmimg.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.i
 .PHONY : glmimg.c.i
 
 glmimg.s: glmimg.c.s
@@ -390,7 +387,7 @@ glmimg.s: glmimg.c.s
 
 # target to generate assembly for a file
 glmimg.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg.c.s
 .PHONY : glmimg.c.s
 
 glmimg_jpg.o: glmimg_jpg.c.o
@@ -398,7 +395,7 @@ glmimg_jpg.o: glmimg_jpg.c.o
 
 # target to build an object file
 glmimg_jpg.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.o
 .PHONY : glmimg_jpg.c.o
 
 glmimg_jpg.i: glmimg_jpg.c.i
@@ -406,7 +403,7 @@ glmimg_jpg.i: glmimg_jpg.c.i
 
 # target to preprocess a source file
 glmimg_jpg.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.i
 .PHONY : glmimg_jpg.c.i
 
 glmimg_jpg.s: glmimg_jpg.c.s
@@ -414,7 +411,7 @@ glmimg_jpg.s: glmimg_jpg.c.s
 
 # target to generate assembly for a file
 glmimg_jpg.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_jpg.c.s
 .PHONY : glmimg_jpg.c.s
 
 glmimg_png.o: glmimg_png.c.o
@@ -422,7 +419,7 @@ glmimg_png.o: glmimg_png.c.o
 
 # target to build an object file
 glmimg_png.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.o
 .PHONY : glmimg_png.c.o
 
 glmimg_png.i: glmimg_png.c.i
@@ -430,7 +427,7 @@ glmimg_png.i: glmimg_png.c.i
 
 # target to preprocess a source file
 glmimg_png.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.i
 .PHONY : glmimg_png.c.i
 
 glmimg_png.s: glmimg_png.c.s
@@ -438,7 +435,7 @@ glmimg_png.s: glmimg_png.c.s
 
 # target to generate assembly for a file
 glmimg_png.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/glmimg_png.c.s
 .PHONY : glmimg_png.c.s
 
 gtk_util.o: gtk_util.c.o
@@ -446,7 +443,7 @@ gtk_util.o: gtk_util.c.o
 
 # target to build an object file
 gtk_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.o
 .PHONY : gtk_util.c.o
 
 gtk_util.i: gtk_util.c.i
@@ -454,7 +451,7 @@ gtk_util.i: gtk_util.c.i
 
 # target to preprocess a source file
 gtk_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.i
 .PHONY : gtk_util.c.i
 
 gtk_util.s: gtk_util.c.s
@@ -462,7 +459,7 @@ gtk_util.s: gtk_util.c.s
 
 # target to generate assembly for a file
 gtk_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/gtk_util.c.s
 .PHONY : gtk_util.c.s
 
 param_widget.o: param_widget.c.o
@@ -470,7 +467,7 @@ param_widget.o: param_widget.c.o
 
 # target to build an object file
 param_widget.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.o
 .PHONY : param_widget.c.o
 
 param_widget.i: param_widget.c.i
@@ -478,7 +475,7 @@ param_widget.i: param_widget.c.i
 
 # target to preprocess a source file
 param_widget.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.i
 .PHONY : param_widget.c.i
 
 param_widget.s: param_widget.c.s
@@ -486,7 +483,7 @@ param_widget.s: param_widget.c.s
 
 # target to generate assembly for a file
 param_widget.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/param_widget.c.s
 .PHONY : param_widget.c.s
 
 rwx.o: rwx.c.o
@@ -494,7 +491,7 @@ rwx.o: rwx.c.o
 
 # target to build an object file
 rwx.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.o
 .PHONY : rwx.c.o
 
 rwx.i: rwx.c.i
@@ -502,7 +499,7 @@ rwx.i: rwx.c.i
 
 # target to preprocess a source file
 rwx.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.i
 .PHONY : rwx.c.i
 
 rwx.s: rwx.c.s
@@ -510,7 +507,7 @@ rwx.s: rwx.c.s
 
 # target to generate assembly for a file
 rwx.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/rwx.c.s
 .PHONY : rwx.c.s
 
 scrollplot2d.o: scrollplot2d.c.o
@@ -518,7 +515,7 @@ scrollplot2d.o: scrollplot2d.c.o
 
 # target to build an object file
 scrollplot2d.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.o
 .PHONY : scrollplot2d.c.o
 
 scrollplot2d.i: scrollplot2d.c.i
@@ -526,7 +523,7 @@ scrollplot2d.i: scrollplot2d.c.i
 
 # target to preprocess a source file
 scrollplot2d.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.i
 .PHONY : scrollplot2d.c.i
 
 scrollplot2d.s: scrollplot2d.c.s
@@ -534,7 +531,7 @@ scrollplot2d.s: scrollplot2d.c.s
 
 # target to generate assembly for a file
 scrollplot2d.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/scrollplot2d.c.s
 .PHONY : scrollplot2d.c.s
 
 stock_renderer_grid.o: stock_renderer_grid.c.o
@@ -542,7 +539,7 @@ stock_renderer_grid.o: stock_renderer_grid.c.o
 
 # target to build an object file
 stock_renderer_grid.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.o
 .PHONY : stock_renderer_grid.c.o
 
 stock_renderer_grid.i: stock_renderer_grid.c.i
@@ -550,7 +547,7 @@ stock_renderer_grid.i: stock_renderer_grid.c.i
 
 # target to preprocess a source file
 stock_renderer_grid.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.i
 .PHONY : stock_renderer_grid.c.i
 
 stock_renderer_grid.s: stock_renderer_grid.c.s
@@ -558,7 +555,7 @@ stock_renderer_grid.s: stock_renderer_grid.c.s
 
 # target to generate assembly for a file
 stock_renderer_grid.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/stock_renderer_grid.c.s
 .PHONY : stock_renderer_grid.c.s
 
 texture.o: texture.c.o
@@ -566,7 +563,7 @@ texture.o: texture.c.o
 
 # target to build an object file
 texture.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.o
 .PHONY : texture.c.o
 
 texture.i: texture.c.i
@@ -574,7 +571,7 @@ texture.i: texture.c.i
 
 # target to preprocess a source file
 texture.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.i
 .PHONY : texture.c.i
 
 texture.s: texture.c.s
@@ -582,7 +579,7 @@ texture.s: texture.c.s
 
 # target to generate assembly for a file
 texture.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/texture.c.s
 .PHONY : texture.c.s
 
 tokenize.o: tokenize.c.o
@@ -590,7 +587,7 @@ tokenize.o: tokenize.c.o
 
 # target to build an object file
 tokenize.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.o
 .PHONY : tokenize.c.o
 
 tokenize.i: tokenize.c.i
@@ -598,7 +595,7 @@ tokenize.i: tokenize.c.i
 
 # target to preprocess a source file
 tokenize.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.i
 .PHONY : tokenize.c.i
 
 tokenize.s: tokenize.c.s
@@ -606,7 +603,7 @@ tokenize.s: tokenize.c.s
 
 # target to generate assembly for a file
 tokenize.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/tokenize.c.s
 .PHONY : tokenize.c.s
 
 view.o: view.c.o
@@ -614,7 +611,7 @@ view.o: view.c.o
 
 # target to build an object file
 view.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.o
 .PHONY : view.c.o
 
 view.i: view.c.i
@@ -622,7 +619,7 @@ view.i: view.c.i
 
 # target to preprocess a source file
 view.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.i
 .PHONY : view.c.i
 
 view.s: view.c.s
@@ -630,7 +627,7 @@ view.s: view.c.s
 
 # target to generate assembly for a file
 view.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/view.c.s
 .PHONY : view.c.s
 
 viewer.o: viewer.c.o
@@ -638,7 +635,7 @@ viewer.o: viewer.c.o
 
 # target to build an object file
 viewer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.o
 .PHONY : viewer.c.o
 
 viewer.i: viewer.c.i
@@ -646,7 +643,7 @@ viewer.i: viewer.c.i
 
 # target to preprocess a source file
 viewer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.i
 .PHONY : viewer.c.i
 
 viewer.s: viewer.c.s
@@ -654,7 +651,7 @@ viewer.s: viewer.c.s
 
 # target to generate assembly for a file
 viewer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/viewer.c.s
 .PHONY : viewer.c.s
 
 wavefront.o: wavefront.c.o
@@ -662,7 +659,7 @@ wavefront.o: wavefront.c.o
 
 # target to build an object file
 wavefront.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.o
 .PHONY : wavefront.c.o
 
 wavefront.i: wavefront.c.i
@@ -670,7 +667,7 @@ wavefront.i: wavefront.c.i
 
 # target to preprocess a source file
 wavefront.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.i
 .PHONY : wavefront.c.i
 
 wavefront.s: wavefront.c.s
@@ -678,7 +675,7 @@ wavefront.s: wavefront.c.s
 
 # target to generate assembly for a file
 wavefront.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/bot_vis/CMakeFiles/bot2-vis.dir/build.make src/bot_vis/CMakeFiles/bot2-vis.dir/wavefront.c.s
 .PHONY : wavefront.c.s
 
 # Help Target
@@ -771,6 +768,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

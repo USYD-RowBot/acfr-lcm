@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/camtrans.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/camtrans.c
 stdio.h
 -
 stdlib.h
@@ -18,15 +18,15 @@ string.h
 assert.h
 -
 fasttrig.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fasttrig.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fasttrig.h
 small_linalg.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.h
 camtrans.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/camtrans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/camtrans.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/camtrans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/camtrans.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/circular.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/circular.c
 stdio.h
 -
 stdlib.h
@@ -34,11 +34,11 @@ stdlib.h
 string.h
 -
 circular.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/circular.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/circular.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/circular.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/circular.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/color_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/color_util.c
 math.h
 -
 math.h
@@ -48,11 +48,11 @@ stdlib.h
 stdint.h
 -
 color_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/color_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/color_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/color_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/color_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ctrans.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ctrans.c
 stdio.h
 -
 stdlib.h
@@ -62,25 +62,25 @@ string.h
 assert.h
 -
 small_linalg.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.h
 rotations.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rotations.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rotations.h
 glib_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/glib_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/glib_util.h
 circular.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/circular.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/circular.h
 glib.h
 -
 ctrans.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ctrans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ctrans.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ctrans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ctrans.h
 stdint.h
 -
 trans.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/trans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/trans.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fasttrig.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fasttrig.c
 stdio.h
 -
 math.h
@@ -96,11 +96,11 @@ time.h
 sys/time.h
 -
 fasttrig.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fasttrig.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fasttrig.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fasttrig.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fasttrig.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fileutils.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fileutils.c
 unistd.h
 -
 stdlib.h
@@ -122,13 +122,13 @@ string.h
 sys/stat.h
 -
 fileutils.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fileutils.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fileutils.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/fileutils.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/fileutils.h
 stdio.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/glib_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/glib_util.c
 stdio.h
 -
 stdlib.h
@@ -138,15 +138,15 @@ unistd.h
 string.h
 -
 glib_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/glib_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/glib_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/glib_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/glib_util.h
 stdint.h
 -
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/gps_linearize.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/gps_linearize.c
 stdint.h
 -
 stdlib.h
@@ -154,11 +154,11 @@ stdlib.h
 math.h
 -
 gps_linearize.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/gps_linearize.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/gps_linearize.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/gps_linearize.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/gps_linearize.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/lcm_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/lcm_util.c
 stdio.h
 -
 assert.h
@@ -166,17 +166,17 @@ assert.h
 stdlib.h
 -
 lcm_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/lcm_util.h
 timestamp.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timestamp.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timestamp.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/lcm_util.h
 glib.h
 -
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/math_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/math_util.h
 math.h
 -
 stdlib.h
@@ -186,7 +186,7 @@ stdint.h
 assert.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/minheap.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/minheap.c
 stdio.h
 -
 stdlib.h
@@ -196,13 +196,13 @@ assert.h
 glib.h
 -
 minheap.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/minheap.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/minheap.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/minheap.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/minheap.h
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ppm.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ppm.c
 stdio.h
 -
 ctype.h
@@ -216,15 +216,15 @@ malloc/malloc.h
 malloc.h
 -
 ppm.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ppm.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ppm.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ppm.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ppm.h
 stdio.h
 -
 inttypes.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ptr_circular.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ptr_circular.c
 stdlib.h
 -
 assert.h
@@ -232,17 +232,17 @@ assert.h
 string.h
 -
 ptr_circular.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ptr_circular.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ptr_circular.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ptr_circular.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ptr_circular.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rand_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rand_util.c
 rand_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rand_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rand_util.h
 time.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rand_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rand_util.h
 math.h
 -
 stdlib.h
@@ -252,7 +252,7 @@ stdint.h
 assert.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ringbuf.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ringbuf.c
 unistd.h
 -
 string.h
@@ -262,15 +262,15 @@ stdlib.h
 stdio.h
 -
 ringbuf.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ringbuf.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ringbuf.h
 serial.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/serial.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/serial.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ringbuf.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ringbuf.h
 stdint.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rotations.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rotations.c
 stdio.h
 -
 string.h
@@ -280,11 +280,11 @@ math.h
 assert.h
 -
 rotations.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rotations.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rotations.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rotations.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rotations.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/serial.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/serial.c
 sys/types.h
 -
 sys/stat.h
@@ -306,23 +306,23 @@ linux/serial.h
 stdio.h
 -
 serial.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/serial.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/serial.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/serial.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/serial.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/set.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/set.c
 stdio.h
 -
 stdlib.h
 -
 set.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/set.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/set.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/set.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/set.h
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/signal_pipe.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/signal_pipe.c
 stdio.h
 -
 unistd.h
@@ -336,17 +336,17 @@ stdlib.h
 signal.h
 -
 signal_pipe.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/signal_pipe.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/signal_pipe.h
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.c
 small_linalg.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.h
 stdio.h
 -
 math.h
@@ -354,7 +354,7 @@ math.h
 assert.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ssocket.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ssocket.c
 stdio.h
 -
 stdlib.h
@@ -388,9 +388,9 @@ string.h
 signal.h
 -
 ssocket.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ssocket.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ssocket.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/ssocket.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/ssocket.h
 sys/types.h
 -
 sys/socket.h
@@ -398,7 +398,7 @@ sys/socket.h
 stdio.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/tictoc.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/tictoc.c
 stdio.h
 -
 stdlib.h
@@ -412,11 +412,11 @@ glib.h
 sys/time.h
 -
 tictoc.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/tictoc.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/tictoc.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/tictoc.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/tictoc.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timespec.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timespec.c
 sys/time.h
 -
 time.h
@@ -424,15 +424,15 @@ time.h
 stdio.h
 -
 timespec.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timespec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timespec.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timespec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timespec.h
 sys/time.h
 -
 time.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timestamp.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timestamp.c
 stdio.h
 -
 stdlib.h
@@ -444,9 +444,9 @@ sys/time.h
 sys/select.h
 -
 timestamp.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timestamp.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timestamp.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/timestamp.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/timestamp.h
 stdint.h
 -
 sys/time.h
@@ -454,7 +454,7 @@ sys/time.h
 time.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/trans.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/trans.c
 stdlib.h
 -
 string.h
@@ -462,15 +462,15 @@ string.h
 glib.h
 -
 small_linalg.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/small_linalg.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/small_linalg.h
 rotations.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/rotations.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/rotations.h
 trans.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/trans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/trans.h
 math_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/math_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/math_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/src/bot_core/trans.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/src/bot_core/trans.h
 
 /usr/include/glib-2.0/glib.h
 glib/galloca.h

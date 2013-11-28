@@ -52,7 +52,7 @@ class sensor_status_t(object):
         self = sensor_status_t()
         self.utime = struct.unpack(">q", buf.read(8))[0]
         __sensor_name_len = struct.unpack('>I', buf.read(4))[0]
-        self.sensor_name = buf.read(__sensor_name_len)[:-1].decode('utf-8', 'replace')
+        self.sensor_name = buf.read(__sensor_name_len)[:-1].decode('utf-8')
         self.rate, self.type = struct.unpack(">dh", buf.read(10))
         return self
     _decode_one = staticmethod(_decode_one)

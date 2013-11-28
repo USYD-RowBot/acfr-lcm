@@ -3,6 +3,30 @@ svn:wc:ra_dav:version-url
 V 54
 /svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc
 END
+ldpc_fec.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.cpp
+END
+tools.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/tools.cpp
+END
+getopt.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/getopt.cpp
+END
+ldpc_fec.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+END
 tools.h
 K 25
 svn:wc:ra_dav:version-url
@@ -110,28 +134,4 @@ K 25
 svn:wc:ra_dav:version-url
 V 66
 /svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
-END
-ldpc_fec.cpp
-K 25
-svn:wc:ra_dav:version-url
-V 67
-/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.cpp
-END
-tools.cpp
-K 25
-svn:wc:ra_dav:version-url
-V 64
-/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/tools.cpp
-END
-getopt.cpp
-K 25
-svn:wc:ra_dav:version-url
-V 65
-/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/getopt.cpp
-END
-ldpc_fec.h
-K 25
-svn:wc:ra_dav:version-url
-V 65
-/svn/!svn/ver/414/trunk/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 END

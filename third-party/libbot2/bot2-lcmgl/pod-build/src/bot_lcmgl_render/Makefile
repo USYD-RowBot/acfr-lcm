@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/src/bot_lcmgl_render/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/src/bot_lcmgl_render/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/rule
 .PHONY : src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot2-lcmgl-renderer: src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/rul
 
 # fast build rule for target.
 bot2-lcmgl-renderer/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build
 .PHONY : bot2-lcmgl-renderer/fast
 
 lcmgl_bot_renderer.o: lcmgl_bot_renderer.c.o
@@ -158,7 +155,7 @@ lcmgl_bot_renderer.o: lcmgl_bot_renderer.c.o
 
 # target to build an object file
 lcmgl_bot_renderer.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.o
 .PHONY : lcmgl_bot_renderer.c.o
 
 lcmgl_bot_renderer.i: lcmgl_bot_renderer.c.i
@@ -166,7 +163,7 @@ lcmgl_bot_renderer.i: lcmgl_bot_renderer.c.i
 
 # target to preprocess a source file
 lcmgl_bot_renderer.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.i
 .PHONY : lcmgl_bot_renderer.c.i
 
 lcmgl_bot_renderer.s: lcmgl_bot_renderer.c.s
@@ -174,7 +171,7 @@ lcmgl_bot_renderer.s: lcmgl_bot_renderer.c.s
 
 # target to generate assembly for a file
 lcmgl_bot_renderer.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_bot_renderer.c.s
 .PHONY : lcmgl_bot_renderer.c.s
 
 lcmgl_decode.o: lcmgl_decode.c.o
@@ -182,7 +179,7 @@ lcmgl_decode.o: lcmgl_decode.c.o
 
 # target to build an object file
 lcmgl_decode.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.o
 .PHONY : lcmgl_decode.c.o
 
 lcmgl_decode.i: lcmgl_decode.c.i
@@ -190,7 +187,7 @@ lcmgl_decode.i: lcmgl_decode.c.i
 
 # target to preprocess a source file
 lcmgl_decode.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.i
 .PHONY : lcmgl_decode.c.i
 
 lcmgl_decode.s: lcmgl_decode.c.s
@@ -198,7 +195,7 @@ lcmgl_decode.s: lcmgl_decode.c.s
 
 # target to generate assembly for a file
 lcmgl_decode.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/build.make src/bot_lcmgl_render/CMakeFiles/bot2-lcmgl-renderer.dir/lcmgl_decode.c.s
 .PHONY : lcmgl_decode.c.s
 
 # Help Target
@@ -231,6 +228,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

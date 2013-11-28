@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build
 
 # Include any dependencies generated for this target.
 include src/param_server/CMakeFiles/bot-param-server.dir/depend.make
@@ -51,17 +48,17 @@ include src/param_server/CMakeFiles/bot-param-server.dir/flags.make
 
 src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o: src/param_server/CMakeFiles/bot-param-server.dir/flags.make
 src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o: ../src/param_server/param_server.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-param-server.dir/param_server.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/param_server.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-param-server.dir/param_server.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/param_server.c
 
 src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-param-server.dir/param_server.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/param_server.c > CMakeFiles/bot-param-server.dir/param_server.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/param_server.c > CMakeFiles/bot-param-server.dir/param_server.c.i
 
 src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-param-server.dir/param_server.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/param_server.c -o CMakeFiles/bot-param-server.dir/param_server.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/param_server.c -o CMakeFiles/bot-param-server.dir/param_server.c.s
 
 src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o.requires:
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o.requires
@@ -74,17 +71,17 @@ src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o.provides.build
 
 src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o: src/param_server/CMakeFiles/bot-param-server.dir/flags.make
 src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o: ../src/param_server/lcm_util.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-param-server.dir/lcm_util.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/lcm_util.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-param-server.dir/lcm_util.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/lcm_util.c
 
 src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-param-server.dir/lcm_util.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/lcm_util.c > CMakeFiles/bot-param-server.dir/lcm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/lcm_util.c > CMakeFiles/bot-param-server.dir/lcm_util.c.i
 
 src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-param-server.dir/lcm_util.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server/lcm_util.c -o CMakeFiles/bot-param-server.dir/lcm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server/lcm_util.c -o CMakeFiles/bot-param-server.dir/lcm_util.c.s
 
 src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o.requires:
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o.requires
@@ -108,7 +105,7 @@ bin/bot-param-server: src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.
 bin/bot-param-server: src/param_server/CMakeFiles/bot-param-server.dir/build.make
 bin/bot-param-server: src/param_server/CMakeFiles/bot-param-server.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable ../../bin/bot-param-server"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-param-server.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-param-server.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/param_server/CMakeFiles/bot-param-server.dir/build: bin/bot-param-server
@@ -119,10 +116,10 @@ src/param_server/CMakeFiles/bot-param-server.dir/requires: src/param_server/CMak
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/requires
 
 src/param_server/CMakeFiles/bot-param-server.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server && $(CMAKE_COMMAND) -P CMakeFiles/bot-param-server.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server && $(CMAKE_COMMAND) -P CMakeFiles/bot-param-server.dir/cmake_clean.cmake
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/clean
 
 src/param_server/CMakeFiles/bot-param-server.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/src/param_server /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server/CMakeFiles/bot-param-server.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/src/param_server /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server/CMakeFiles/bot-param-server.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/depend
 

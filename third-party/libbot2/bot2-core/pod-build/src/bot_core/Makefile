@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/src/bot_core/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/src/bot_core/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/bot_core/CMakeFiles/bot2-core.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/CMakeFiles/bot2-core.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/bot_core/CMakeFiles/bot2-core.dir/rule
 .PHONY : src/bot_core/CMakeFiles/bot2-core.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot2-core: src/bot_core/CMakeFiles/bot2-core.dir/rule
 
 # fast build rule for target.
 bot2-core/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/build
 .PHONY : bot2-core/fast
 
 camtrans.o: camtrans.c.o
@@ -158,7 +155,7 @@ camtrans.o: camtrans.c.o
 
 # target to build an object file
 camtrans.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.o
 .PHONY : camtrans.c.o
 
 camtrans.i: camtrans.c.i
@@ -166,7 +163,7 @@ camtrans.i: camtrans.c.i
 
 # target to preprocess a source file
 camtrans.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.i
 .PHONY : camtrans.c.i
 
 camtrans.s: camtrans.c.s
@@ -174,7 +171,7 @@ camtrans.s: camtrans.c.s
 
 # target to generate assembly for a file
 camtrans.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/camtrans.c.s
 .PHONY : camtrans.c.s
 
 circular.o: circular.c.o
@@ -182,7 +179,7 @@ circular.o: circular.c.o
 
 # target to build an object file
 circular.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.o
 .PHONY : circular.c.o
 
 circular.i: circular.c.i
@@ -190,7 +187,7 @@ circular.i: circular.c.i
 
 # target to preprocess a source file
 circular.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.i
 .PHONY : circular.c.i
 
 circular.s: circular.c.s
@@ -198,7 +195,7 @@ circular.s: circular.c.s
 
 # target to generate assembly for a file
 circular.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/circular.c.s
 .PHONY : circular.c.s
 
 color_util.o: color_util.c.o
@@ -206,7 +203,7 @@ color_util.o: color_util.c.o
 
 # target to build an object file
 color_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.o
 .PHONY : color_util.c.o
 
 color_util.i: color_util.c.i
@@ -214,7 +211,7 @@ color_util.i: color_util.c.i
 
 # target to preprocess a source file
 color_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.i
 .PHONY : color_util.c.i
 
 color_util.s: color_util.c.s
@@ -222,7 +219,7 @@ color_util.s: color_util.c.s
 
 # target to generate assembly for a file
 color_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/color_util.c.s
 .PHONY : color_util.c.s
 
 ctrans.o: ctrans.c.o
@@ -230,7 +227,7 @@ ctrans.o: ctrans.c.o
 
 # target to build an object file
 ctrans.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.o
 .PHONY : ctrans.c.o
 
 ctrans.i: ctrans.c.i
@@ -238,7 +235,7 @@ ctrans.i: ctrans.c.i
 
 # target to preprocess a source file
 ctrans.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.i
 .PHONY : ctrans.c.i
 
 ctrans.s: ctrans.c.s
@@ -246,7 +243,7 @@ ctrans.s: ctrans.c.s
 
 # target to generate assembly for a file
 ctrans.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ctrans.c.s
 .PHONY : ctrans.c.s
 
 fasttrig.o: fasttrig.c.o
@@ -254,7 +251,7 @@ fasttrig.o: fasttrig.c.o
 
 # target to build an object file
 fasttrig.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.o
 .PHONY : fasttrig.c.o
 
 fasttrig.i: fasttrig.c.i
@@ -262,7 +259,7 @@ fasttrig.i: fasttrig.c.i
 
 # target to preprocess a source file
 fasttrig.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.i
 .PHONY : fasttrig.c.i
 
 fasttrig.s: fasttrig.c.s
@@ -270,7 +267,7 @@ fasttrig.s: fasttrig.c.s
 
 # target to generate assembly for a file
 fasttrig.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fasttrig.c.s
 .PHONY : fasttrig.c.s
 
 fileutils.o: fileutils.c.o
@@ -278,7 +275,7 @@ fileutils.o: fileutils.c.o
 
 # target to build an object file
 fileutils.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.o
 .PHONY : fileutils.c.o
 
 fileutils.i: fileutils.c.i
@@ -286,7 +283,7 @@ fileutils.i: fileutils.c.i
 
 # target to preprocess a source file
 fileutils.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.i
 .PHONY : fileutils.c.i
 
 fileutils.s: fileutils.c.s
@@ -294,7 +291,7 @@ fileutils.s: fileutils.c.s
 
 # target to generate assembly for a file
 fileutils.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/fileutils.c.s
 .PHONY : fileutils.c.s
 
 glib_util.o: glib_util.c.o
@@ -302,7 +299,7 @@ glib_util.o: glib_util.c.o
 
 # target to build an object file
 glib_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.o
 .PHONY : glib_util.c.o
 
 glib_util.i: glib_util.c.i
@@ -310,7 +307,7 @@ glib_util.i: glib_util.c.i
 
 # target to preprocess a source file
 glib_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.i
 .PHONY : glib_util.c.i
 
 glib_util.s: glib_util.c.s
@@ -318,7 +315,7 @@ glib_util.s: glib_util.c.s
 
 # target to generate assembly for a file
 glib_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/glib_util.c.s
 .PHONY : glib_util.c.s
 
 gps_linearize.o: gps_linearize.c.o
@@ -326,7 +323,7 @@ gps_linearize.o: gps_linearize.c.o
 
 # target to build an object file
 gps_linearize.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.o
 .PHONY : gps_linearize.c.o
 
 gps_linearize.i: gps_linearize.c.i
@@ -334,7 +331,7 @@ gps_linearize.i: gps_linearize.c.i
 
 # target to preprocess a source file
 gps_linearize.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.i
 .PHONY : gps_linearize.c.i
 
 gps_linearize.s: gps_linearize.c.s
@@ -342,7 +339,7 @@ gps_linearize.s: gps_linearize.c.s
 
 # target to generate assembly for a file
 gps_linearize.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/gps_linearize.c.s
 .PHONY : gps_linearize.c.s
 
 lcm_util.o: lcm_util.c.o
@@ -350,7 +347,7 @@ lcm_util.o: lcm_util.c.o
 
 # target to build an object file
 lcm_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.o
 .PHONY : lcm_util.c.o
 
 lcm_util.i: lcm_util.c.i
@@ -358,7 +355,7 @@ lcm_util.i: lcm_util.c.i
 
 # target to preprocess a source file
 lcm_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.i
 .PHONY : lcm_util.c.i
 
 lcm_util.s: lcm_util.c.s
@@ -366,7 +363,7 @@ lcm_util.s: lcm_util.c.s
 
 # target to generate assembly for a file
 lcm_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/lcm_util.c.s
 .PHONY : lcm_util.c.s
 
 minheap.o: minheap.c.o
@@ -374,7 +371,7 @@ minheap.o: minheap.c.o
 
 # target to build an object file
 minheap.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.o
 .PHONY : minheap.c.o
 
 minheap.i: minheap.c.i
@@ -382,7 +379,7 @@ minheap.i: minheap.c.i
 
 # target to preprocess a source file
 minheap.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.i
 .PHONY : minheap.c.i
 
 minheap.s: minheap.c.s
@@ -390,7 +387,7 @@ minheap.s: minheap.c.s
 
 # target to generate assembly for a file
 minheap.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/minheap.c.s
 .PHONY : minheap.c.s
 
 ppm.o: ppm.c.o
@@ -398,7 +395,7 @@ ppm.o: ppm.c.o
 
 # target to build an object file
 ppm.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.o
 .PHONY : ppm.c.o
 
 ppm.i: ppm.c.i
@@ -406,7 +403,7 @@ ppm.i: ppm.c.i
 
 # target to preprocess a source file
 ppm.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.i
 .PHONY : ppm.c.i
 
 ppm.s: ppm.c.s
@@ -414,7 +411,7 @@ ppm.s: ppm.c.s
 
 # target to generate assembly for a file
 ppm.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ppm.c.s
 .PHONY : ppm.c.s
 
 ptr_circular.o: ptr_circular.c.o
@@ -422,7 +419,7 @@ ptr_circular.o: ptr_circular.c.o
 
 # target to build an object file
 ptr_circular.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.o
 .PHONY : ptr_circular.c.o
 
 ptr_circular.i: ptr_circular.c.i
@@ -430,7 +427,7 @@ ptr_circular.i: ptr_circular.c.i
 
 # target to preprocess a source file
 ptr_circular.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.i
 .PHONY : ptr_circular.c.i
 
 ptr_circular.s: ptr_circular.c.s
@@ -438,7 +435,7 @@ ptr_circular.s: ptr_circular.c.s
 
 # target to generate assembly for a file
 ptr_circular.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ptr_circular.c.s
 .PHONY : ptr_circular.c.s
 
 rand_util.o: rand_util.c.o
@@ -446,7 +443,7 @@ rand_util.o: rand_util.c.o
 
 # target to build an object file
 rand_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.o
 .PHONY : rand_util.c.o
 
 rand_util.i: rand_util.c.i
@@ -454,7 +451,7 @@ rand_util.i: rand_util.c.i
 
 # target to preprocess a source file
 rand_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.i
 .PHONY : rand_util.c.i
 
 rand_util.s: rand_util.c.s
@@ -462,7 +459,7 @@ rand_util.s: rand_util.c.s
 
 # target to generate assembly for a file
 rand_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rand_util.c.s
 .PHONY : rand_util.c.s
 
 ringbuf.o: ringbuf.c.o
@@ -470,7 +467,7 @@ ringbuf.o: ringbuf.c.o
 
 # target to build an object file
 ringbuf.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.o
 .PHONY : ringbuf.c.o
 
 ringbuf.i: ringbuf.c.i
@@ -478,7 +475,7 @@ ringbuf.i: ringbuf.c.i
 
 # target to preprocess a source file
 ringbuf.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.i
 .PHONY : ringbuf.c.i
 
 ringbuf.s: ringbuf.c.s
@@ -486,7 +483,7 @@ ringbuf.s: ringbuf.c.s
 
 # target to generate assembly for a file
 ringbuf.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ringbuf.c.s
 .PHONY : ringbuf.c.s
 
 rotations.o: rotations.c.o
@@ -494,7 +491,7 @@ rotations.o: rotations.c.o
 
 # target to build an object file
 rotations.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.o
 .PHONY : rotations.c.o
 
 rotations.i: rotations.c.i
@@ -502,7 +499,7 @@ rotations.i: rotations.c.i
 
 # target to preprocess a source file
 rotations.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.i
 .PHONY : rotations.c.i
 
 rotations.s: rotations.c.s
@@ -510,7 +507,7 @@ rotations.s: rotations.c.s
 
 # target to generate assembly for a file
 rotations.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/rotations.c.s
 .PHONY : rotations.c.s
 
 serial.o: serial.c.o
@@ -518,7 +515,7 @@ serial.o: serial.c.o
 
 # target to build an object file
 serial.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.o
 .PHONY : serial.c.o
 
 serial.i: serial.c.i
@@ -526,7 +523,7 @@ serial.i: serial.c.i
 
 # target to preprocess a source file
 serial.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.i
 .PHONY : serial.c.i
 
 serial.s: serial.c.s
@@ -534,7 +531,7 @@ serial.s: serial.c.s
 
 # target to generate assembly for a file
 serial.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/serial.c.s
 .PHONY : serial.c.s
 
 set.o: set.c.o
@@ -542,7 +539,7 @@ set.o: set.c.o
 
 # target to build an object file
 set.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.o
 .PHONY : set.c.o
 
 set.i: set.c.i
@@ -550,7 +547,7 @@ set.i: set.c.i
 
 # target to preprocess a source file
 set.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.i
 .PHONY : set.c.i
 
 set.s: set.c.s
@@ -558,7 +555,7 @@ set.s: set.c.s
 
 # target to generate assembly for a file
 set.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/set.c.s
 .PHONY : set.c.s
 
 signal_pipe.o: signal_pipe.c.o
@@ -566,7 +563,7 @@ signal_pipe.o: signal_pipe.c.o
 
 # target to build an object file
 signal_pipe.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.o
 .PHONY : signal_pipe.c.o
 
 signal_pipe.i: signal_pipe.c.i
@@ -574,7 +571,7 @@ signal_pipe.i: signal_pipe.c.i
 
 # target to preprocess a source file
 signal_pipe.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.i
 .PHONY : signal_pipe.c.i
 
 signal_pipe.s: signal_pipe.c.s
@@ -582,7 +579,7 @@ signal_pipe.s: signal_pipe.c.s
 
 # target to generate assembly for a file
 signal_pipe.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/signal_pipe.c.s
 .PHONY : signal_pipe.c.s
 
 small_linalg.o: small_linalg.c.o
@@ -590,7 +587,7 @@ small_linalg.o: small_linalg.c.o
 
 # target to build an object file
 small_linalg.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.o
 .PHONY : small_linalg.c.o
 
 small_linalg.i: small_linalg.c.i
@@ -598,7 +595,7 @@ small_linalg.i: small_linalg.c.i
 
 # target to preprocess a source file
 small_linalg.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.i
 .PHONY : small_linalg.c.i
 
 small_linalg.s: small_linalg.c.s
@@ -606,7 +603,7 @@ small_linalg.s: small_linalg.c.s
 
 # target to generate assembly for a file
 small_linalg.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/small_linalg.c.s
 .PHONY : small_linalg.c.s
 
 ssocket.o: ssocket.c.o
@@ -614,7 +611,7 @@ ssocket.o: ssocket.c.o
 
 # target to build an object file
 ssocket.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.o
 .PHONY : ssocket.c.o
 
 ssocket.i: ssocket.c.i
@@ -622,7 +619,7 @@ ssocket.i: ssocket.c.i
 
 # target to preprocess a source file
 ssocket.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.i
 .PHONY : ssocket.c.i
 
 ssocket.s: ssocket.c.s
@@ -630,7 +627,7 @@ ssocket.s: ssocket.c.s
 
 # target to generate assembly for a file
 ssocket.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/ssocket.c.s
 .PHONY : ssocket.c.s
 
 tictoc.o: tictoc.c.o
@@ -638,7 +635,7 @@ tictoc.o: tictoc.c.o
 
 # target to build an object file
 tictoc.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.o
 .PHONY : tictoc.c.o
 
 tictoc.i: tictoc.c.i
@@ -646,7 +643,7 @@ tictoc.i: tictoc.c.i
 
 # target to preprocess a source file
 tictoc.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.i
 .PHONY : tictoc.c.i
 
 tictoc.s: tictoc.c.s
@@ -654,7 +651,7 @@ tictoc.s: tictoc.c.s
 
 # target to generate assembly for a file
 tictoc.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/tictoc.c.s
 .PHONY : tictoc.c.s
 
 timespec.o: timespec.c.o
@@ -662,7 +659,7 @@ timespec.o: timespec.c.o
 
 # target to build an object file
 timespec.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.o
 .PHONY : timespec.c.o
 
 timespec.i: timespec.c.i
@@ -670,7 +667,7 @@ timespec.i: timespec.c.i
 
 # target to preprocess a source file
 timespec.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.i
 .PHONY : timespec.c.i
 
 timespec.s: timespec.c.s
@@ -678,7 +675,7 @@ timespec.s: timespec.c.s
 
 # target to generate assembly for a file
 timespec.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timespec.c.s
 .PHONY : timespec.c.s
 
 timestamp.o: timestamp.c.o
@@ -686,7 +683,7 @@ timestamp.o: timestamp.c.o
 
 # target to build an object file
 timestamp.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.o
 .PHONY : timestamp.c.o
 
 timestamp.i: timestamp.c.i
@@ -694,7 +691,7 @@ timestamp.i: timestamp.c.i
 
 # target to preprocess a source file
 timestamp.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.i
 .PHONY : timestamp.c.i
 
 timestamp.s: timestamp.c.s
@@ -702,7 +699,7 @@ timestamp.s: timestamp.c.s
 
 # target to generate assembly for a file
 timestamp.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/timestamp.c.s
 .PHONY : timestamp.c.s
 
 trans.o: trans.c.o
@@ -710,7 +707,7 @@ trans.o: trans.c.o
 
 # target to build an object file
 trans.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.o
 .PHONY : trans.c.o
 
 trans.i: trans.c.i
@@ -718,7 +715,7 @@ trans.i: trans.c.i
 
 # target to preprocess a source file
 trans.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.i
 .PHONY : trans.c.i
 
 trans.s: trans.c.s
@@ -726,7 +723,7 @@ trans.s: trans.c.s
 
 # target to generate assembly for a file
 trans.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(MAKE) -f src/bot_core/CMakeFiles/bot2-core.dir/build.make src/bot_core/CMakeFiles/bot2-core.dir/trans.c.s
 .PHONY : trans.c.s
 
 # Help Target
@@ -825,6 +822,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

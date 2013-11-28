@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/deputy/CMakeFiles/bot-procman-deputy.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/CMakeFiles/bot-procman-deputy.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/deputy/CMakeFiles/bot-procman-deputy.dir/rule
 .PHONY : src/deputy/CMakeFiles/bot-procman-deputy.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot-procman-deputy: src/deputy/CMakeFiles/bot-procman-deputy.dir/rule
 
 # fast build rule for target.
 bot-procman-deputy/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/build
 .PHONY : bot-procman-deputy/fast
 
 lcm_util.o: lcm_util.c.o
@@ -158,7 +155,7 @@ lcm_util.o: lcm_util.c.o
 
 # target to build an object file
 lcm_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.o
 .PHONY : lcm_util.c.o
 
 lcm_util.i: lcm_util.c.i
@@ -166,7 +163,7 @@ lcm_util.i: lcm_util.c.i
 
 # target to preprocess a source file
 lcm_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.i
 .PHONY : lcm_util.c.i
 
 lcm_util.s: lcm_util.c.s
@@ -174,7 +171,7 @@ lcm_util.s: lcm_util.c.s
 
 # target to generate assembly for a file
 lcm_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/lcm_util.c.s
 .PHONY : lcm_util.c.s
 
 procinfo.o: procinfo.c.o
@@ -182,7 +179,7 @@ procinfo.o: procinfo.c.o
 
 # target to build an object file
 procinfo.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.o
 .PHONY : procinfo.c.o
 
 procinfo.i: procinfo.c.i
@@ -190,7 +187,7 @@ procinfo.i: procinfo.c.i
 
 # target to preprocess a source file
 procinfo.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.i
 .PHONY : procinfo.c.i
 
 procinfo.s: procinfo.c.s
@@ -198,7 +195,7 @@ procinfo.s: procinfo.c.s
 
 # target to generate assembly for a file
 procinfo.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procinfo.c.s
 .PHONY : procinfo.c.s
 
 procman.o: procman.c.o
@@ -206,7 +203,7 @@ procman.o: procman.c.o
 
 # target to build an object file
 procman.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o
 .PHONY : procman.c.o
 
 procman.i: procman.c.i
@@ -214,7 +211,7 @@ procman.i: procman.c.i
 
 # target to preprocess a source file
 procman.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.i
 .PHONY : procman.c.i
 
 procman.s: procman.c.s
@@ -222,7 +219,7 @@ procman.s: procman.c.s
 
 # target to generate assembly for a file
 procman.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.s
 .PHONY : procman.c.s
 
 procman_deputy.o: procman_deputy.c.o
@@ -230,7 +227,7 @@ procman_deputy.o: procman_deputy.c.o
 
 # target to build an object file
 procman_deputy.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o
 .PHONY : procman_deputy.c.o
 
 procman_deputy.i: procman_deputy.c.i
@@ -238,7 +235,7 @@ procman_deputy.i: procman_deputy.c.i
 
 # target to preprocess a source file
 procman_deputy.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.i
 .PHONY : procman_deputy.c.i
 
 procman_deputy.s: procman_deputy.c.s
@@ -246,7 +243,7 @@ procman_deputy.s: procman_deputy.c.s
 
 # target to generate assembly for a file
 procman_deputy.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.s
 .PHONY : procman_deputy.c.s
 
 signal_pipe.o: signal_pipe.c.o
@@ -254,7 +251,7 @@ signal_pipe.o: signal_pipe.c.o
 
 # target to build an object file
 signal_pipe.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.o
 .PHONY : signal_pipe.c.o
 
 signal_pipe.i: signal_pipe.c.i
@@ -262,7 +259,7 @@ signal_pipe.i: signal_pipe.c.i
 
 # target to preprocess a source file
 signal_pipe.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.i
 .PHONY : signal_pipe.c.i
 
 signal_pipe.s: signal_pipe.c.s
@@ -270,7 +267,7 @@ signal_pipe.s: signal_pipe.c.s
 
 # target to generate assembly for a file
 signal_pipe.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/signal_pipe.c.s
 .PHONY : signal_pipe.c.s
 
 # Help Target
@@ -312,6 +309,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

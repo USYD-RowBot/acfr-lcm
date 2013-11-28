@@ -6,28 +6,6 @@
 
 #IncludeRegexTransform: 
 
-../lcmtypes/c/lcmtypes/bot_procman_command2_t.h
-stdint.h
--
-stdlib.h
--
-lcm/lcm_coretypes.h
--
-lcm/lcm.h
--
-
-../lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.h
-stdint.h
--
-stdlib.h
--
-lcm/lcm_coretypes.h
--
-lcm/lcm.h
--
-lcmtypes/bot_procman_command2_t.h
-../lcmtypes/c/lcmtypes/lcmtypes/bot_procman_command2_t.h
-
 ../lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.h
 stdint.h
 -
@@ -48,18 +26,6 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-../lcmtypes/c/lcmtypes/bot_procman_info2_t.h
-stdint.h
--
-stdlib.h
--
-lcm/lcm_coretypes.h
--
-lcm/lcm.h
--
-lcmtypes/bot_procman_deputy_cmd2_t.h
-../lcmtypes/c/lcmtypes/lcmtypes/bot_procman_deputy_cmd2_t.h
-
 ../lcmtypes/c/lcmtypes/bot_procman_info_t.h
 stdint.h
 -
@@ -71,18 +37,6 @@ lcm/lcm.h
 -
 lcmtypes/bot_procman_deputy_cmd_t.h
 ../lcmtypes/c/lcmtypes/lcmtypes/bot_procman_deputy_cmd_t.h
-
-../lcmtypes/c/lcmtypes/bot_procman_orders2_t.h
-stdint.h
--
-stdlib.h
--
-lcm/lcm_coretypes.h
--
-lcm/lcm.h
--
-lcmtypes/bot_procman_sheriff_cmd2_t.h
-../lcmtypes/c/lcmtypes/lcmtypes/bot_procman_sheriff_cmd2_t.h
 
 ../lcmtypes/c/lcmtypes/bot_procman_orders_t.h
 stdint.h
@@ -106,18 +60,6 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-../lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.h
-stdint.h
--
-stdlib.h
--
-lcm/lcm_coretypes.h
--
-lcm/lcm.h
--
-lcmtypes/bot_procman_command2_t.h
-../lcmtypes/c/lcmtypes/lcmtypes/bot_procman_command2_t.h
-
 ../lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.h
 stdint.h
 -
@@ -128,7 +70,7 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.c
 stdio.h
 -
 assert.h
@@ -136,15 +78,15 @@ assert.h
 stdlib.h
 -
 lcm_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.h
 glib.h
 -
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.c
 stdio.h
 -
 unistd.h
@@ -166,13 +108,13 @@ assert.h
 glib.h
 -
 procinfo.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.h
 stdint.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.c
 stdio.h
 -
 stdlib.h
@@ -189,8 +131,6 @@ time.h
 -
 errno.h
 -
-sys/time.h
--
 util.h
 -
 pty.h
@@ -206,17 +146,17 @@ glib.h
 libgen.h
 -
 procman.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.h
 procinfo.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.h
 stdint.h
 -
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman_deputy.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman_deputy.c
 stdio.h
 -
 stdlib.h
@@ -255,24 +195,20 @@ lcmtypes/bot_procman_printf_t.h
 -
 lcmtypes/bot_procman_info_t.h
 -
-lcmtypes/bot_procman_discovery_t.h
--
 lcmtypes/bot_procman_orders_t.h
 -
-lcmtypes/bot_procman_info2_t.h
--
-lcmtypes/bot_procman_orders2_t.h
+lcmtypes/bot_procman_discovery_t.h
 -
 procman.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procman.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procman.h
 procinfo.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/procinfo.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/procinfo.h
 signal_pipe.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.h
 lcm_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/lcm_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.c
 stdio.h
 -
 unistd.h
@@ -286,9 +222,9 @@ stdlib.h
 signal.h
 -
 signal_pipe.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/src/deputy/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/src/deputy/signal_pipe.h
 glib.h
 -
 

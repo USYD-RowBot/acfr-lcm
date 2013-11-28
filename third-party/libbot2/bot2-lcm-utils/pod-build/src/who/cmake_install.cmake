@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -37,15 +37,15 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who")
     FILE(RPATH_CHECK
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who"
-         RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib")
+         RPATH "/usr/local/lib")
   ENDIF()
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/bin/bot-lcm-who")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/bin/bot-lcm-who")
   IF(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who")
     FILE(RPATH_CHANGE
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who"
-         OLD_RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/lib:/home/navid/proj/acfr/acfr_lcm/third-party/build/lib:"
-         NEW_RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib")
+         OLD_RPATH "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/lib:/usr/local/lib:"
+         NEW_RPATH "/usr/local/lib")
     IF(CMAKE_INSTALL_DO_STRIP)
       EXECUTE_PROCESS(COMMAND "/usr/bin/strip" "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/bot-lcm-who")
     ENDIF(CMAKE_INSTALL_DO_STRIP)

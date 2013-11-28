@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/logfilter/lcm-logfilter.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/logfilter/lcm-logfilter.c
 stdio.h
 -
 stdlib.h

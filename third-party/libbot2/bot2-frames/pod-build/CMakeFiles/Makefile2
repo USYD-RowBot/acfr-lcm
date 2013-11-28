@@ -43,44 +43,41 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build
 
 #=============================================================================
-# Target rules for target CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir
+# Target rules for target CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir
 
 # All Build rule for target.
-CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/all:
-	$(MAKE) -f CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/build.make CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/depend
-	$(MAKE) -f CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/build.make CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 
-	@echo "Built target DAJTcCkgMNklJkClVlKmRR29p69he9TH"
-.PHONY : CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/all
+CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/all:
+	$(MAKE) -f CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/build.make CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/depend
+	$(MAKE) -f CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/build.make CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 
+	@echo "Built target PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK"
+.PHONY : CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
-	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
-.PHONY : CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/rule
+CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
+.PHONY : CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/rule
 
 # Convenience name for target.
-DAJTcCkgMNklJkClVlKmRR29p69he9TH: CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/rule
-.PHONY : DAJTcCkgMNklJkClVlKmRR29p69he9TH
+PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK: CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/rule
+.PHONY : PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK
 
 # clean rule for target.
-CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/clean:
-	$(MAKE) -f CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/build.make CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/clean
-.PHONY : CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/clean
+CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/clean:
+	$(MAKE) -f CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/build.make CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/clean
+.PHONY : CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/clean
 
 # clean rule for target.
-clean: CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/clean
+clean: CMakeFiles/PDSFfrdvqWo9R2vcdFDDlcCRbeR6iakK.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -90,7 +87,7 @@ clean: CMakeFiles/DAJTcCkgMNklJkClVlKmRR29p69he9TH.dir/clean
 CMakeFiles/lcmgen_c.dir/all:
 	$(MAKE) -f CMakeFiles/lcmgen_c.dir/build.make CMakeFiles/lcmgen_c.dir/depend
 	$(MAKE) -f CMakeFiles/lcmgen_c.dir/build.make CMakeFiles/lcmgen_c.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 
 	@echo "Built target lcmgen_c"
 .PHONY : CMakeFiles/lcmgen_c.dir/all
 
@@ -100,9 +97,9 @@ all: CMakeFiles/lcmgen_c.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmgen_c.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmgen_c.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmgen_c.dir/rule
 
 # Convenience name for target.
@@ -125,7 +122,7 @@ clean: CMakeFiles/lcmgen_c.dir/clean
 CMakeFiles/lcmgen_cpp.dir/all:
 	$(MAKE) -f CMakeFiles/lcmgen_cpp.dir/build.make CMakeFiles/lcmgen_cpp.dir/depend
 	$(MAKE) -f CMakeFiles/lcmgen_cpp.dir/build.make CMakeFiles/lcmgen_cpp.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 
 	@echo "Built target lcmgen_cpp"
 .PHONY : CMakeFiles/lcmgen_cpp.dir/all
 
@@ -135,9 +132,9 @@ all: CMakeFiles/lcmgen_cpp.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmgen_cpp.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmgen_cpp.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmgen_cpp.dir/rule
 
 # Convenience name for target.
@@ -160,7 +157,7 @@ clean: CMakeFiles/lcmgen_cpp.dir/clean
 CMakeFiles/lcmgen_java.dir/all:
 	$(MAKE) -f CMakeFiles/lcmgen_java.dir/build.make CMakeFiles/lcmgen_java.dir/depend
 	$(MAKE) -f CMakeFiles/lcmgen_java.dir/build.make CMakeFiles/lcmgen_java.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 
 	@echo "Built target lcmgen_java"
 .PHONY : CMakeFiles/lcmgen_java.dir/all
 
@@ -170,9 +167,9 @@ all: CMakeFiles/lcmgen_java.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmgen_java.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmgen_java.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmgen_java.dir/rule
 
 # Convenience name for target.
@@ -195,7 +192,7 @@ clean: CMakeFiles/lcmgen_java.dir/clean
 CMakeFiles/lcmgen_python.dir/all:
 	$(MAKE) -f CMakeFiles/lcmgen_python.dir/build.make CMakeFiles/lcmgen_python.dir/depend
 	$(MAKE) -f CMakeFiles/lcmgen_python.dir/build.make CMakeFiles/lcmgen_python.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 
 	@echo "Built target lcmgen_python"
 .PHONY : CMakeFiles/lcmgen_python.dir/all
 
@@ -205,9 +202,9 @@ all: CMakeFiles/lcmgen_python.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmgen_python.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmgen_python.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmgen_python.dir/rule
 
 # Convenience name for target.
@@ -230,7 +227,7 @@ clean: CMakeFiles/lcmgen_python.dir/clean
 CMakeFiles/lcmtypes_bot2-frames.dir/all: CMakeFiles/lcmgen_c.dir/all
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-frames.dir/build.make CMakeFiles/lcmtypes_bot2-frames.dir/depend
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-frames.dir/build.make CMakeFiles/lcmtypes_bot2-frames.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  6
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  6
 	@echo "Built target lcmtypes_bot2-frames"
 .PHONY : CMakeFiles/lcmtypes_bot2-frames.dir/all
 
@@ -240,9 +237,9 @@ all: CMakeFiles/lcmtypes_bot2-frames.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmtypes_bot2-frames.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 1
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 1
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmtypes_bot2-frames.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmtypes_bot2-frames.dir/rule
 
 # Convenience name for target.
@@ -265,7 +262,7 @@ clean: CMakeFiles/lcmtypes_bot2-frames.dir/clean
 CMakeFiles/lcmtypes_bot2-frames_jar.dir/all: CMakeFiles/lcmgen_java.dir/all
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-frames_jar.dir/build.make CMakeFiles/lcmtypes_bot2-frames_jar.dir/depend
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-frames_jar.dir/build.make CMakeFiles/lcmtypes_bot2-frames_jar.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  7 8
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  7 8
 	@echo "Built target lcmtypes_bot2-frames_jar"
 .PHONY : CMakeFiles/lcmtypes_bot2-frames_jar.dir/all
 
@@ -275,9 +272,9 @@ all: CMakeFiles/lcmtypes_bot2-frames_jar.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/lcmtypes_bot2-frames_jar.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/lcmtypes_bot2-frames_jar.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : CMakeFiles/lcmtypes_bot2-frames_jar.dir/rule
 
 # Convenience name for target.
@@ -315,7 +312,7 @@ src/preinstall:
 src/CMakeFiles/bot2-frames.dir/all: CMakeFiles/lcmtypes_bot2-frames.dir/all
 	$(MAKE) -f src/CMakeFiles/bot2-frames.dir/build.make src/CMakeFiles/bot2-frames.dir/depend
 	$(MAKE) -f src/CMakeFiles/bot2-frames.dir/build.make src/CMakeFiles/bot2-frames.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  1
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  1
 	@echo "Built target bot2-frames"
 .PHONY : src/CMakeFiles/bot2-frames.dir/all
 
@@ -325,9 +322,9 @@ all: src/CMakeFiles/bot2-frames.dir/all
 
 # Build rule for subdir invocation for target.
 src/CMakeFiles/bot2-frames.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 2
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 2
 	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/bot2-frames.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : src/CMakeFiles/bot2-frames.dir/rule
 
 # Convenience name for target.
@@ -366,7 +363,7 @@ src/test/CMakeFiles/coord-frames-test.dir/all: CMakeFiles/lcmtypes_bot2-frames.d
 src/test/CMakeFiles/coord-frames-test.dir/all: src/CMakeFiles/bot2-frames.dir/all
 	$(MAKE) -f src/test/CMakeFiles/coord-frames-test.dir/build.make src/test/CMakeFiles/coord-frames-test.dir/depend
 	$(MAKE) -f src/test/CMakeFiles/coord-frames-test.dir/build.make src/test/CMakeFiles/coord-frames-test.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  5
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  5
 	@echo "Built target coord-frames-test"
 .PHONY : src/test/CMakeFiles/coord-frames-test.dir/all
 
@@ -376,9 +373,9 @@ all: src/test/CMakeFiles/coord-frames-test.dir/all
 
 # Build rule for subdir invocation for target.
 src/test/CMakeFiles/coord-frames-test.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 3
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 3
 	$(MAKE) -f CMakeFiles/Makefile2 src/test/CMakeFiles/coord-frames-test.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : src/test/CMakeFiles/coord-frames-test.dir/rule
 
 # Convenience name for target.
@@ -419,7 +416,7 @@ src/renderer/CMakeFiles/bot2-frames-renderers.dir/all: CMakeFiles/lcmtypes_bot2-
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/all: src/CMakeFiles/bot2-frames.dir/all
 	$(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/depend
 	$(MAKE) -f src/renderer/CMakeFiles/bot2-frames-renderers.dir/build.make src/renderer/CMakeFiles/bot2-frames-renderers.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  2 3 4
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  2 3 4
 	@echo "Built target bot2-frames-renderers"
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/all
 
@@ -429,9 +426,9 @@ all: src/renderer/CMakeFiles/bot2-frames-renderers.dir/all
 
 # Build rule for subdir invocation for target.
 src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 5
 	$(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/bot2-frames-renderers.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : src/renderer/CMakeFiles/bot2-frames-renderers.dir/rule
 
 # Convenience name for target.
@@ -452,11 +449,11 @@ clean: src/renderer/CMakeFiles/bot2-frames-renderers.dir/clean
 
 # All Build rule for target.
 src/renderer/CMakeFiles/test-viewer.dir/all: CMakeFiles/lcmtypes_bot2-frames.dir/all
-src/renderer/CMakeFiles/test-viewer.dir/all: src/CMakeFiles/bot2-frames.dir/all
 src/renderer/CMakeFiles/test-viewer.dir/all: src/renderer/CMakeFiles/bot2-frames-renderers.dir/all
+src/renderer/CMakeFiles/test-viewer.dir/all: src/CMakeFiles/bot2-frames.dir/all
 	$(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/depend
 	$(MAKE) -f src/renderer/CMakeFiles/test-viewer.dir/build.make src/renderer/CMakeFiles/test-viewer.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles  9
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles  9
 	@echo "Built target test-viewer"
 .PHONY : src/renderer/CMakeFiles/test-viewer.dir/all
 
@@ -466,9 +463,9 @@ all: src/renderer/CMakeFiles/test-viewer.dir/all
 
 # Build rule for subdir invocation for target.
 src/renderer/CMakeFiles/test-viewer.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 6
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 6
 	$(MAKE) -f CMakeFiles/Makefile2 src/renderer/CMakeFiles/test-viewer.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-frames/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-frames/pod-build/CMakeFiles 0
 .PHONY : src/renderer/CMakeFiles/test-viewer.dir/rule
 
 # Convenience name for target.

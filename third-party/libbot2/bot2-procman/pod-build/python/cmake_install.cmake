@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -34,153 +34,117 @@ ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/deputy_cmd_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/deputy_cmd_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/build_prefix.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/build_prefix.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/build_prefix.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/build_prefix.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/printf_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/printf_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_script.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_script.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_cmd_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_cmd_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/deputy_cmd2_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/deputy_cmd2_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_config.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_config.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/orders_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/orders_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_console.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/command_console.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/info_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/info_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_model.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/command_model.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/sheriff_gtk.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_gtk.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/sheriff_dialogs.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_dialogs.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/sheriff_dialogs.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_dialogs.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/__init__.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/__init__.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_treeview.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/command_treeview.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/sheriff_gtk.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_gtk.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/__init__.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/__init__.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_treeview.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/command_treeview.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/hosts_treeview.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/hosts_treeview.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/hosts_treeview.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_gtk/hosts_treeview.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_model.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/command_model.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/signal_slot.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/signal_slot.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk/command_console.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_gtk" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_gtk/command_console.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/printf_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/printf_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_config.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_config.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/command2_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/command2_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/__init__.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/__init__.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/discovery_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/discovery_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/__init__.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/__init__.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/deputy_cmd_t.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/deputy_cmd_t.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_cmd_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_cmd_t.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_procman/sheriff_script.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/src/bot_procman/sheriff_script.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/info_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/info_t.py")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/python/bot-procman-sheriff")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/sheriff_cmd2_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/sheriff_cmd2_t.py")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/info2_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/info2_t.py")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/orders2_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/orders2_t.py")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/orders_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/orders_t.py")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman/discovery_t.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/src/bot_procman/discovery_t.py")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/python/bot-procman-sheriff")
-ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-
-IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/bot_procman" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/python/procman-sheriff.glade")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/bot_procman" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/python/procman-sheriff.glade")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 

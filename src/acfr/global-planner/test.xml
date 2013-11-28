@@ -6,8 +6,8 @@
     </desc>
     <global>
         <turn_radius m='4' />
-        <drop_distance m="2" />
-        <drop_angle rad="0.5" />
+        <drop_distance m="4" />
+        <drop_angle deg="57" />
         <mission_timeout t = "7200"/>
         <!-- To have the same drop distance in the corners use 
             drop_angle [rad] = drop_distance / turn_radius -->
@@ -71,12 +71,12 @@
         </goto>
     </primative>
 -->
-<!--
+
     <primative>
         <zambonie>
             <position x="20" y="20" z="3"/>
             <heading deg = "45" />
-            <spacing m = "5" />
+            <spacing m = "0.707" />
             <length m = "25" />
             <width m = "38" />
             <timeout t="5000" />
@@ -87,11 +87,11 @@
             <command device="camera" onoff="on"/>
         </zambonie>
     </primative>
--->
+
 
     <primative>
         <goto>
-            <position x="30" y="05" z="3"/>
+            <position x="-5" y="-5" z="3"/>
             <rotation deg = "0" />
             <timeout t="1000" />
             <velocity x="0" />

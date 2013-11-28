@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -33,16 +33,16 @@ IF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/bot-spy")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/bot-spy")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/logfilter/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/logsplice/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/tunnel/cmake_install.cmake")
-  INCLUDE("/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/python/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/logfilter/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/logsplice/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/tunnel/cmake_install.cmake")
+  INCLUDE("/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/python/cmake_install.cmake")
 
 ENDIF(NOT CMAKE_INSTALL_LOCAL_ONLY)
 
@@ -52,7 +52,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)

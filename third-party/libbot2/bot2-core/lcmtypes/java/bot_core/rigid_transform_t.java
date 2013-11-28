@@ -6,6 +6,7 @@
 package bot_core;
  
 import java.io.*;
+import java.nio.*;
 import java.util.*;
 import lcm.lcm.*;
  
@@ -25,10 +26,10 @@ public final class rigid_transform_t implements lcm.lcm.LCMEncodable
     public static final long LCM_FINGERPRINT_BASE = 0x754ffdf95662e2d7L;
  
     static {
-        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
+        LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class>());
     }
  
-    public static long _hashRecursive(ArrayList<Class<?>> classes)
+    public static long _hashRecursive(ArrayList<Class> classes)
     {
         if (classes.contains(bot_core.rigid_transform_t.class))
             return 0L;

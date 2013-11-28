@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build
 
 # Utility rule file for lcmtypes_bot2-procman_jar.
 
@@ -47,69 +44,44 @@ include CMakeFiles/lcmtypes_bot2-procman_jar.dir/progress.make
 
 CMakeFiles/lcmtypes_bot2-procman_jar: lcmtypes_bot2-procman.jar
 
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/info2_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/info_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/printf_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/orders2_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/deputy_cmd_t.class
 lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/deputy_cmd2_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/command2_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/sheriff_cmd2_t.class
-lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/discovery_t.class
+lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/printf_t.class
+lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/info_t.class
+lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/deputy_cmd_t.class
 lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/orders_t.class
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+lcmtypes_bot2-procman.jar: ../lcmtypes/java/bot_procman/discovery_t.class
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating lcmtypes_bot2-procman.jar"
-	/usr/bin/jar cf /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/lcmtypes_bot2-procman.jar -C /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java .
+	/usr/bin/jar cf /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/lcmtypes_bot2-procman.jar -C /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java .
 
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/info2_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/info_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/printf_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/orders2_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/deputy_cmd_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/deputy_cmd2_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/command2_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd2_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/discovery_t.java
-../lcmtypes/java/bot_procman/info2_t.class: ../lcmtypes/java/bot_procman/orders_t.java
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../lcmtypes/java/bot_procman/info2_t.class, ../lcmtypes/java/bot_procman/info_t.class, ../lcmtypes/java/bot_procman/printf_t.class, ../lcmtypes/java/bot_procman/orders2_t.class, ../lcmtypes/java/bot_procman/deputy_cmd_t.class, ../lcmtypes/java/bot_procman/sheriff_cmd_t.class, ../lcmtypes/java/bot_procman/deputy_cmd2_t.class, ../lcmtypes/java/bot_procman/command2_t.class, ../lcmtypes/java/bot_procman/sheriff_cmd2_t.class, ../lcmtypes/java/bot_procman/discovery_t.class, ../lcmtypes/java/bot_procman/orders_t.class"
-	/usr/bin/javac -source 6 -target 6 -cp /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java:/usr/local/share/java/lcm.jar:/home/navid/proj/acfr/acfr_lcm/third-party/build/share/java/lcmtypes_bot2-core.jar /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/info2_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/info_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/printf_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/orders2_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/deputy_cmd_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/sheriff_cmd_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/deputy_cmd2_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/command2_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/sheriff_cmd2_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/discovery_t.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/java/bot_procman/orders_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/printf_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/info_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/deputy_cmd_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/orders_t.java
+../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/discovery_t.java
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating ../lcmtypes/java/bot_procman/sheriff_cmd_t.class, ../lcmtypes/java/bot_procman/printf_t.class, ../lcmtypes/java/bot_procman/info_t.class, ../lcmtypes/java/bot_procman/deputy_cmd_t.class, ../lcmtypes/java/bot_procman/orders_t.class, ../lcmtypes/java/bot_procman/discovery_t.class"
+	/usr/bin/javac -source 6 -cp /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java:/usr/local/share/java/lcm-0.9.0.jar:/usr/local/share/java/lcmtypes_bot2-core.jar:/usr/local/share/java/lcmtypes_bot2-core.jar /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/sheriff_cmd_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/printf_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/info_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/deputy_cmd_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/orders_t.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/java/bot_procman/discovery_t.java
 
-../lcmtypes/java/bot_procman/info_t.class: ../lcmtypes/java/bot_procman/info2_t.class
+../lcmtypes/java/bot_procman/printf_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
 
-../lcmtypes/java/bot_procman/printf_t.class: ../lcmtypes/java/bot_procman/info2_t.class
+../lcmtypes/java/bot_procman/info_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
 
-../lcmtypes/java/bot_procman/orders2_t.class: ../lcmtypes/java/bot_procman/info2_t.class
+../lcmtypes/java/bot_procman/deputy_cmd_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
 
-../lcmtypes/java/bot_procman/deputy_cmd_t.class: ../lcmtypes/java/bot_procman/info2_t.class
+../lcmtypes/java/bot_procman/orders_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
 
-../lcmtypes/java/bot_procman/sheriff_cmd_t.class: ../lcmtypes/java/bot_procman/info2_t.class
-
-../lcmtypes/java/bot_procman/deputy_cmd2_t.class: ../lcmtypes/java/bot_procman/info2_t.class
-
-../lcmtypes/java/bot_procman/command2_t.class: ../lcmtypes/java/bot_procman/info2_t.class
-
-../lcmtypes/java/bot_procman/sheriff_cmd2_t.class: ../lcmtypes/java/bot_procman/info2_t.class
-
-../lcmtypes/java/bot_procman/discovery_t.class: ../lcmtypes/java/bot_procman/info2_t.class
-
-../lcmtypes/java/bot_procman/orders_t.class: ../lcmtypes/java/bot_procman/info2_t.class
+../lcmtypes/java/bot_procman/discovery_t.class: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
 
 lcmtypes_bot2-procman_jar: CMakeFiles/lcmtypes_bot2-procman_jar
 lcmtypes_bot2-procman_jar: lcmtypes_bot2-procman.jar
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/info2_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/info_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/printf_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/orders2_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/deputy_cmd_t.class
 lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/sheriff_cmd_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/deputy_cmd2_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/command2_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/sheriff_cmd2_t.class
-lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/discovery_t.class
+lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/printf_t.class
+lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/info_t.class
+lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/deputy_cmd_t.class
 lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/orders_t.class
+lcmtypes_bot2-procman_jar: ../lcmtypes/java/bot_procman/discovery_t.class
 lcmtypes_bot2-procman_jar: CMakeFiles/lcmtypes_bot2-procman_jar.dir/build.make
 .PHONY : lcmtypes_bot2-procman_jar
 
@@ -122,6 +94,6 @@ CMakeFiles/lcmtypes_bot2-procman_jar.dir/clean:
 .PHONY : CMakeFiles/lcmtypes_bot2-procman_jar.dir/clean
 
 CMakeFiles/lcmtypes_bot2-procman_jar.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman_jar.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman_jar.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmtypes_bot2-procman_jar.dir/depend
 

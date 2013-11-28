@@ -1,7 +1,19 @@
 K 25
 svn:wc:ra_dav:version-url
 V 71
-/svn/!svn/ver/475/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk
+/svn/!svn/ver/453/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk
+END
+command_treeview.py
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/453/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/command_treeview.py
+END
+sheriff_dialogs.py
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/453/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_dialogs.py
 END
 hosts_treeview.py
 K 25
@@ -13,7 +25,7 @@ sheriff_gtk.py
 K 25
 svn:wc:ra_dav:version-url
 V 86
-/svn/!svn/ver/471/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_gtk.py
+/svn/!svn/ver/433/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_gtk.py
 END
 command_model.py
 K 25
@@ -31,17 +43,5 @@ command_console.py
 K 25
 svn:wc:ra_dav:version-url
 V 90
-/svn/!svn/ver/475/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/command_console.py
-END
-command_treeview.py
-K 25
-svn:wc:ra_dav:version-url
-V 91
-/svn/!svn/ver/453/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/command_treeview.py
-END
-sheriff_dialogs.py
-K 25
-svn:wc:ra_dav:version-url
-V 90
-/svn/!svn/ver/465/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/sheriff_dialogs.py
+/svn/!svn/ver/442/trunk/bot2-procman/python/src/bot_procman/sheriff_gtk/command_console.py
 END

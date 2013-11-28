@@ -1,8 +1,8 @@
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/UAkqTIyftbFdxXjEKPydwcktxuwWtZVS.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/src/deputy/CMakeFiles/bot-procman-deputy.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmgen_c.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmgen_cpp.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmgen_java.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmgen_python.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman.dir
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman_jar.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/src/deputy/CMakeFiles/bot-procman-deputy.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmgen_c.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmgen_cpp.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmgen_java.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmgen_python.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmtypes_bot2-procman_jar.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0.dir

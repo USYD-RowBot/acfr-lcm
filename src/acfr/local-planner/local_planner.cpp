@@ -68,10 +68,10 @@ LocalPlanner::LocalPlanner() :
 	//    pthread_mutex_init(&currPoseLock, NULL);
 	//    pthread_mutex_init(&destPoseLock, NULL);
 	//    pthread_mutex_init(&waypointsLock, NULL);
-	fp.open("/media/water/misc/personal_folders/navid/iver/log_waypoint.txt",
+    fp.open("/tmp/log_waypoint.txt",
 			ios::out);
 	fp_wp.open(
-			"/media/water/misc/personal_folders/navid/iver/log_waypoint_now.txt",
+            "/tmp/log_waypoint_now.txt",
 			ios::out);
 }
 
@@ -465,7 +465,7 @@ int LocalPlanner::calculateWaypoints() {
 	cout << "waypoints = [" << endl;
 	if (!fp.is_open())
 		fp.open(
-				"/media/water/misc/personal_folders/navid/iver/log_waypoint.txt",
+                "/tmp/log_waypoint.txt",
 				ios::out | ios::app);
 	for (unsigned int i = 0; i < waypoints.size(); i++) {
 		cout << waypoints.at(i).getX() << ", " << waypoints.at(i).getY() << ", "
@@ -659,7 +659,7 @@ int LocalPlanner::processWaypoints() {
 		// write to log file
 		if (!fp_wp.is_open())
 			fp_wp.open(
-					"/media/water/misc/personal_folders/navid/iver/log_waypoint_now.txt",
+                    "/tmp/log_waypoint_now.txt",
 					ios::out); // don't append
 		for (unsigned int i = 0; i < waypoints.size(); i++) {
 			fp_wp << waypoints.at(i).getX() << " " << waypoints.at(i).getY()

@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,9 +107,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -138,19 +135,6 @@ preinstall/fast:
 depend:
 	$(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
-
-#=============================================================================
-# Target rules for targets named UAkqTIyftbFdxXjEKPydwcktxuwWtZVS
-
-# Build rule for target.
-UAkqTIyftbFdxXjEKPydwcktxuwWtZVS: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 UAkqTIyftbFdxXjEKPydwcktxuwWtZVS
-.PHONY : UAkqTIyftbFdxXjEKPydwcktxuwWtZVS
-
-# fast build rule for target.
-UAkqTIyftbFdxXjEKPydwcktxuwWtZVS/fast:
-	$(MAKE) -f CMakeFiles/UAkqTIyftbFdxXjEKPydwcktxuwWtZVS.dir/build.make CMakeFiles/UAkqTIyftbFdxXjEKPydwcktxuwWtZVS.dir/build
-.PHONY : UAkqTIyftbFdxXjEKPydwcktxuwWtZVS/fast
 
 #=============================================================================
 # Target rules for targets named lcmgen_c
@@ -231,6 +215,19 @@ lcmtypes_bot2-procman_jar/fast:
 .PHONY : lcmtypes_bot2-procman_jar/fast
 
 #=============================================================================
+# Target rules for targets named mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0
+
+# Build rule for target.
+mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0
+.PHONY : mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0
+
+# fast build rule for target.
+mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0/fast:
+	$(MAKE) -f CMakeFiles/mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0.dir/build.make CMakeFiles/mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0.dir/build
+.PHONY : mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0/fast
+
+#=============================================================================
 # Target rules for targets named bot-procman-deputy
 
 # Build rule for target.
@@ -242,54 +239,6 @@ bot-procman-deputy: cmake_check_build_system
 bot-procman-deputy/fast:
 	$(MAKE) -f src/deputy/CMakeFiles/bot-procman-deputy.dir/build.make src/deputy/CMakeFiles/bot-procman-deputy.dir/build
 .PHONY : bot-procman-deputy/fast
-
-lcmtypes/c/lcmtypes/bot_procman_command2_t.o: lcmtypes/c/lcmtypes/bot_procman_command2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.o
-
-# target to build an object file
-lcmtypes/c/lcmtypes/bot_procman_command2_t.c.o:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_command2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.c.o
-
-lcmtypes/c/lcmtypes/bot_procman_command2_t.i: lcmtypes/c/lcmtypes/bot_procman_command2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.i
-
-# target to preprocess a source file
-lcmtypes/c/lcmtypes/bot_procman_command2_t.c.i:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_command2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.c.i
-
-lcmtypes/c/lcmtypes/bot_procman_command2_t.s: lcmtypes/c/lcmtypes/bot_procman_command2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.s
-
-# target to generate assembly for a file
-lcmtypes/c/lcmtypes/bot_procman_command2_t.c.s:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_command2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_command2_t.c.s
-
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.o: lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.o
-
-# target to build an object file
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.o:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.o
-
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.i: lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.i
-
-# target to preprocess a source file
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.i:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.i
-
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.s: lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.s
-
-# target to generate assembly for a file
-lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.s:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.c.s
 
 lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.o: lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.c.o
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.o
@@ -339,30 +288,6 @@ lcmtypes/c/lcmtypes/bot_procman_discovery_t.c.s:
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_discovery_t.c.s
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_discovery_t.c.s
 
-lcmtypes/c/lcmtypes/bot_procman_info2_t.o: lcmtypes/c/lcmtypes/bot_procman_info2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.o
-
-# target to build an object file
-lcmtypes/c/lcmtypes/bot_procman_info2_t.c.o:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_info2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.c.o
-
-lcmtypes/c/lcmtypes/bot_procman_info2_t.i: lcmtypes/c/lcmtypes/bot_procman_info2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.i
-
-# target to preprocess a source file
-lcmtypes/c/lcmtypes/bot_procman_info2_t.c.i:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_info2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.c.i
-
-lcmtypes/c/lcmtypes/bot_procman_info2_t.s: lcmtypes/c/lcmtypes/bot_procman_info2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.s
-
-# target to generate assembly for a file
-lcmtypes/c/lcmtypes/bot_procman_info2_t.c.s:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_info2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_info2_t.c.s
-
 lcmtypes/c/lcmtypes/bot_procman_info_t.o: lcmtypes/c/lcmtypes/bot_procman_info_t.c.o
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_info_t.o
 
@@ -386,30 +311,6 @@ lcmtypes/c/lcmtypes/bot_procman_info_t.s: lcmtypes/c/lcmtypes/bot_procman_info_t
 lcmtypes/c/lcmtypes/bot_procman_info_t.c.s:
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_info_t.c.s
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_info_t.c.s
-
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.o: lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.o
-
-# target to build an object file
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.o:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.o
-
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.i: lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.i
-
-# target to preprocess a source file
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.i:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.i
-
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.s: lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.s
-
-# target to generate assembly for a file
-lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.s:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_orders2_t.c.s
 
 lcmtypes/c/lcmtypes/bot_procman_orders_t.o: lcmtypes/c/lcmtypes/bot_procman_orders_t.c.o
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_orders_t.o
@@ -459,30 +360,6 @@ lcmtypes/c/lcmtypes/bot_procman_printf_t.c.s:
 	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_printf_t.c.s
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_printf_t.c.s
 
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.o: lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.o
-
-# target to build an object file
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.o:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.o
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.o
-
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.i: lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.i
-
-# target to preprocess a source file
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.i:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.i
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.i
-
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.s: lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.s
-
-# target to generate assembly for a file
-lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.s:
-	$(MAKE) -f CMakeFiles/lcmtypes_bot2-procman.dir/build.make CMakeFiles/lcmtypes_bot2-procman.dir/lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.s
-.PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.c.s
-
 lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.o: lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.c.o
 .PHONY : lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.o
 
@@ -513,7 +390,6 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... UAkqTIyftbFdxXjEKPydwcktxuwWtZVS"
 	@echo "... edit_cache"
 	@echo "... install"
 	@echo "... install/local"
@@ -525,38 +401,24 @@ help:
 	@echo "... lcmtypes_bot2-procman"
 	@echo "... lcmtypes_bot2-procman_jar"
 	@echo "... list_install_components"
+	@echo "... mxScG09e0baGPrVfBHg3uiKLe9QtQjJ0"
 	@echo "... rebuild_cache"
 	@echo "... bot-procman-deputy"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_command2_t.o"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_command2_t.i"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_command2_t.s"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.o"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.i"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_discovery_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_discovery_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_discovery_t.s"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_info2_t.o"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_info2_t.i"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_info2_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_info_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_info_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_info_t.s"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders2_t.o"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders2_t.i"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders2_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_orders_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_printf_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_printf_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_printf_t.s"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.o"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.i"
-	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.s"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.o"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.i"
 	@echo "... lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.s"

@@ -41,7 +41,7 @@ class image_metadata_t(object):
     def _decode_one(buf):
         self = image_metadata_t()
         __key_len = struct.unpack('>I', buf.read(4))[0]
-        self.key = buf.read(__key_len)[:-1].decode('utf-8', 'replace')
+        self.key = buf.read(__key_len)[:-1].decode('utf-8')
         self.n = struct.unpack(">i", buf.read(4))[0]
         self.value = buf.read(self.n)
         return self

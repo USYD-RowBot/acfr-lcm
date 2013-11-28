@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build
 
 # Utility rule file for lcmgen_cpp.
 
@@ -46,8 +43,8 @@ CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-co
 include CMakeFiles/lcmgen_cpp.dir/progress.make
 
 CMakeFiles/lcmgen_cpp:
-	sh -c '[ -d /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/cpp/lcmtypes ] || mkdir -p /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/cpp/lcmtypes'
-	sh -c '/usr/local/bin/lcm-gen --lazy --cpp /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_rigid_transform_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_image_sync_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_image_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_sensor_status_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_planar_lidar_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_pose_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_raw_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/bot_core_image_metadata_t.lcm --cpp-hpath /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/lcmtypes/cpp/lcmtypes'
+	sh -c '[ -d /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/cpp/lcmtypes ] || mkdir -p /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/cpp/lcmtypes'
+	sh -c '/usr/local/bin/lcm-gen --lazy --cpp /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_planar_lidar_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_image_sync_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_pose_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_raw_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_rigid_transform_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_image_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_image_metadata_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/bot_core_sensor_status_t.lcm --cpp-hpath /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/lcmtypes/cpp/lcmtypes'
 
 lcmgen_cpp: CMakeFiles/lcmgen_cpp
 lcmgen_cpp: CMakeFiles/lcmgen_cpp.dir/build.make
@@ -62,6 +59,6 @@ CMakeFiles/lcmgen_cpp.dir/clean:
 .PHONY : CMakeFiles/lcmgen_cpp.dir/clean
 
 CMakeFiles/lcmgen_cpp.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles/lcmgen_cpp.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmgen_cpp.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmgen_cpp.dir/depend
 

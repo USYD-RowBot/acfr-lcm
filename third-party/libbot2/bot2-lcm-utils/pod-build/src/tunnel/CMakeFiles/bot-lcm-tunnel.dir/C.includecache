@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/introspect.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/introspect.c
 stdint.h
 -
 string.h
@@ -22,19 +22,19 @@ netinet/in.h
 glib.h
 -
 introspect.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/introspect.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/introspect.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/introspect.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/introspect.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.c
 string.h
 -
 lcm_tunnel_disconnect_msg_t.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_disconnect_msg_t.h
 stdint.h
 -
 stdlib.h
@@ -44,13 +44,13 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.c
 string.h
 -
 lcm_tunnel_params_t.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_params_t.h
 stdint.h
 -
 stdlib.h
@@ -60,13 +60,13 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.c
 string.h
 -
 lcm_tunnel_sub_msg_t.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_sub_msg_t.h
 stdint.h
 -
 stdlib.h
@@ -76,13 +76,13 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.c
 string.h
 -
 lcm_tunnel_udp_msg_t.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_tunnel_udp_msg_t.h
 stdint.h
 -
 stdlib.h
@@ -92,7 +92,7 @@ lcm/lcm_coretypes.h
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_util.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_util.c
 stdio.h
 -
 assert.h
@@ -100,15 +100,15 @@ assert.h
 stdlib.h
 -
 lcm_util.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_util.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/lcm_util.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/lcm_util.h
 glib.h
 -
 lcm/lcm.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/signal_pipe.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/signal_pipe.c
 stdio.h
 -
 unistd.h
@@ -122,13 +122,13 @@ stdlib.h
 signal.h
 -
 signal_pipe.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/signal_pipe.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/signal_pipe.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/signal_pipe.h
 glib.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ssocket.c
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ssocket.c
 stdio.h
 -
 stdlib.h
@@ -164,9 +164,9 @@ string.h
 signal.h
 -
 ssocket.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ssocket.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ssocket.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ssocket.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ssocket.h
 sys/types.h
 -
 sys/socket.h

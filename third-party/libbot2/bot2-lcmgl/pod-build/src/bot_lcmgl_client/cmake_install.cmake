@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -41,12 +41,12 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
        NOT IS_SYMLINK "${file}")
       FILE(RPATH_CHECK
            FILE "${file}"
-           RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib")
+           RPATH "/usr/local/lib")
     ENDIF()
   ENDFOREACH()
   FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib" TYPE SHARED_LIBRARY FILES
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/lib/libbot2-lcmgl-client.so.1"
-    "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/lib/libbot2-lcmgl-client.so"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/lib/libbot2-lcmgl-client.so.1"
+    "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/lib/libbot2-lcmgl-client.so"
     )
   FOREACH(file
       "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/libbot2-lcmgl-client.so.1"
@@ -56,8 +56,8 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
        NOT IS_SYMLINK "${file}")
       FILE(RPATH_CHANGE
            FILE "${file}"
-           OLD_RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/lib:/home/navid/proj/acfr/acfr_lcm/third-party/build/lib:"
-           NEW_RPATH "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib")
+           OLD_RPATH "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/lib:/usr/local/lib:"
+           NEW_RPATH "/usr/local/lib")
       IF(CMAKE_INSTALL_DO_STRIP)
         EXECUTE_PROCESS(COMMAND "/usr/bin/strip" "${file}")
       ENDIF(CMAKE_INSTALL_DO_STRIP)
@@ -66,10 +66,10 @@ IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspeci
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/bot_lcmgl_client" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/include/bot_lcmgl_client" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/lib/pkgconfig/bot2-lcmgl-client.pc")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/lib/pkgconfig/bot2-lcmgl-client.pc")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 

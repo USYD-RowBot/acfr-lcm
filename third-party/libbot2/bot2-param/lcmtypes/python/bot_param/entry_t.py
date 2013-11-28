@@ -42,9 +42,9 @@ class entry_t(object):
     def _decode_one(buf):
         self = entry_t()
         __key_len = struct.unpack('>I', buf.read(4))[0]
-        self.key = buf.read(__key_len)[:-1].decode('utf-8', 'replace')
+        self.key = buf.read(__key_len)[:-1].decode('utf-8')
         __value_len = struct.unpack('>I', buf.read(4))[0]
-        self.value = buf.read(__value_len)[:-1].decode('utf-8', 'replace')
+        self.value = buf.read(__value_len)[:-1].decode('utf-8')
         return self
     _decode_one = staticmethod(_decode_one)
 

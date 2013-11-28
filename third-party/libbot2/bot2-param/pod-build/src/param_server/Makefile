@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/src/param_server/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/src/param_server/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/param_server/CMakeFiles/bot-param-server.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/CMakeFiles/bot-param-server.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/CMakeFiles/bot-param-server.dir/rule
 .PHONY : src/param_server/CMakeFiles/bot-param-server.dir/rule
 
 # Convenience name for target.
@@ -150,12 +147,12 @@ bot-param-server: src/param_server/CMakeFiles/bot-param-server.dir/rule
 
 # fast build rule for target.
 bot-param-server/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/build
 .PHONY : bot-param-server/fast
 
 # Convenience name for target.
 src/param_server/CMakeFiles/bot-param-tool.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/CMakeFiles/bot-param-tool.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/param_server/CMakeFiles/bot-param-tool.dir/rule
 .PHONY : src/param_server/CMakeFiles/bot-param-tool.dir/rule
 
 # Convenience name for target.
@@ -164,7 +161,7 @@ bot-param-tool: src/param_server/CMakeFiles/bot-param-tool.dir/rule
 
 # fast build rule for target.
 bot-param-tool/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/build
 .PHONY : bot-param-tool/fast
 
 lcm_util.o: lcm_util.c.o
@@ -172,7 +169,7 @@ lcm_util.o: lcm_util.c.o
 
 # target to build an object file
 lcm_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.o
 .PHONY : lcm_util.c.o
 
 lcm_util.i: lcm_util.c.i
@@ -180,7 +177,7 @@ lcm_util.i: lcm_util.c.i
 
 # target to preprocess a source file
 lcm_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.i
 .PHONY : lcm_util.c.i
 
 lcm_util.s: lcm_util.c.s
@@ -188,7 +185,7 @@ lcm_util.s: lcm_util.c.s
 
 # target to generate assembly for a file
 lcm_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/lcm_util.c.s
 .PHONY : lcm_util.c.s
 
 param_server.o: param_server.c.o
@@ -196,7 +193,7 @@ param_server.o: param_server.c.o
 
 # target to build an object file
 param_server.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.o
 .PHONY : param_server.c.o
 
 param_server.i: param_server.c.i
@@ -204,7 +201,7 @@ param_server.i: param_server.c.i
 
 # target to preprocess a source file
 param_server.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.i
 .PHONY : param_server.c.i
 
 param_server.s: param_server.c.s
@@ -212,7 +209,7 @@ param_server.s: param_server.c.s
 
 # target to generate assembly for a file
 param_server.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-server.dir/build.make src/param_server/CMakeFiles/bot-param-server.dir/param_server.c.s
 .PHONY : param_server.c.s
 
 param_tool.o: param_tool.c.o
@@ -220,7 +217,7 @@ param_tool.o: param_tool.c.o
 
 # target to build an object file
 param_tool.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.o
 .PHONY : param_tool.c.o
 
 param_tool.i: param_tool.c.i
@@ -228,7 +225,7 @@ param_tool.i: param_tool.c.i
 
 # target to preprocess a source file
 param_tool.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.i
 .PHONY : param_tool.c.i
 
 param_tool.s: param_tool.c.s
@@ -236,7 +233,7 @@ param_tool.s: param_tool.c.s
 
 # target to generate assembly for a file
 param_tool.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(MAKE) -f src/param_server/CMakeFiles/bot-param-tool.dir/build.make src/param_server/CMakeFiles/bot-param-tool.dir/param_tool.c.s
 .PHONY : param_tool.c.s
 
 # Help Target
@@ -273,6 +270,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

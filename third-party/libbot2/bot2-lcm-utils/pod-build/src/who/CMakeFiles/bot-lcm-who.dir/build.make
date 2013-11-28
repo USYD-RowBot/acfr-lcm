@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build
 
 # Include any dependencies generated for this target.
 include src/who/CMakeFiles/bot-lcm-who.dir/depend.make
@@ -51,17 +48,17 @@ include src/who/CMakeFiles/bot-lcm-who.dir/flags.make
 
 src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o: src/who/CMakeFiles/bot-lcm-who.dir/flags.make
 src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o: ../src/who/lcm-who.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-lcm-who.dir/lcm-who.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/lcm-who.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-lcm-who.dir/lcm-who.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/lcm-who.c
 
 src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-lcm-who.dir/lcm-who.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/lcm-who.c > CMakeFiles/bot-lcm-who.dir/lcm-who.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/lcm-who.c > CMakeFiles/bot-lcm-who.dir/lcm-who.c.i
 
 src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-lcm-who.dir/lcm-who.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/lcm-who.c -o CMakeFiles/bot-lcm-who.dir/lcm-who.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/lcm-who.c -o CMakeFiles/bot-lcm-who.dir/lcm-who.c.s
 
 src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o.requires:
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o.requires
@@ -74,17 +71,17 @@ src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o.provides.build: src/who/CMakeFile
 
 src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o: src/who/CMakeFiles/bot-lcm-who.dir/flags.make
 src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o: ../src/who/signal_pipe.c
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building C object src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o   -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/signal_pipe.c
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -o CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o   -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/signal_pipe.c
 
 src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/signal_pipe.c > CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -E /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/signal_pipe.c > CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i
 
 src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who/signal_pipe.c -o CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && /usr/bin/gcc  $(C_DEFINES) $(C_FLAGS) -S /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who/signal_pipe.c -o CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s
 
 src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o.requires:
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o.requires
@@ -108,7 +105,7 @@ bin/bot-lcm-who: src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o
 bin/bot-lcm-who: src/who/CMakeFiles/bot-lcm-who.dir/build.make
 bin/bot-lcm-who: src/who/CMakeFiles/bot-lcm-who.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking C executable ../../bin/bot-lcm-who"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-lcm-who.dir/link.txt --verbose=$(VERBOSE)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/bot-lcm-who.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 src/who/CMakeFiles/bot-lcm-who.dir/build: bin/bot-lcm-who
@@ -119,10 +116,10 @@ src/who/CMakeFiles/bot-lcm-who.dir/requires: src/who/CMakeFiles/bot-lcm-who.dir/
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/requires
 
 src/who/CMakeFiles/bot-lcm-who.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who && $(CMAKE_COMMAND) -P CMakeFiles/bot-lcm-who.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who && $(CMAKE_COMMAND) -P CMakeFiles/bot-lcm-who.dir/cmake_clean.cmake
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/clean
 
 src/who/CMakeFiles/bot-lcm-who.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/who /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who/CMakeFiles/bot-lcm-who.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/who /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who/CMakeFiles/bot-lcm-who.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/depend
 

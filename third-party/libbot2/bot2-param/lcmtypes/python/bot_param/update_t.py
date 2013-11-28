@@ -42,7 +42,7 @@ class update_t(object):
         self = update_t()
         self.utime, self.server_id, self.sequence_number = struct.unpack(">qqi", buf.read(20))
         __params_len = struct.unpack('>I', buf.read(4))[0]
-        self.params = buf.read(__params_len)[:-1].decode('utf-8', 'replace')
+        self.params = buf.read(__params_len)[:-1].decode('utf-8')
         return self
     _decode_one = staticmethod(_decode_one)
 

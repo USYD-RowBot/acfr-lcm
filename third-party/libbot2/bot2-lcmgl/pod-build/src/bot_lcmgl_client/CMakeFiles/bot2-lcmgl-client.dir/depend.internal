@@ -3,8 +3,8 @@
 
 src/bot_lcmgl_client/CMakeFiles/bot2-lcmgl-client.dir/lcmgl.c.o
  ../lcmtypes/c/lcmtypes/bot_lcmgl_data_t.h
- /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.c
- /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
+ /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.c
+ /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/src/bot_lcmgl_client/lcmgl.h
  /usr/local/include/lcm/eventlog.h
  /usr/local/include/lcm/lcm.h
  /usr/local/include/lcm/lcm_coretypes.h

@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,9 +107,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -140,17 +137,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named Kv885NRKsSsezwTicwo9HVLyyRfShTW6
+# Target rules for targets named Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK
 
 # Build rule for target.
-Kv885NRKsSsezwTicwo9HVLyyRfShTW6: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 Kv885NRKsSsezwTicwo9HVLyyRfShTW6
-.PHONY : Kv885NRKsSsezwTicwo9HVLyyRfShTW6
+Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK
+.PHONY : Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK
 
 # fast build rule for target.
-Kv885NRKsSsezwTicwo9HVLyyRfShTW6/fast:
-	$(MAKE) -f CMakeFiles/Kv885NRKsSsezwTicwo9HVLyyRfShTW6.dir/build.make CMakeFiles/Kv885NRKsSsezwTicwo9HVLyyRfShTW6.dir/build
-.PHONY : Kv885NRKsSsezwTicwo9HVLyyRfShTW6/fast
+Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK/fast:
+	$(MAKE) -f CMakeFiles/Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK.dir/build.make CMakeFiles/Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK.dir/build
+.PHONY : Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK/fast
 
 #=============================================================================
 # Target rules for targets named bot2-vis
@@ -236,7 +233,7 @@ help:
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
-	@echo "... Kv885NRKsSsezwTicwo9HVLyyRfShTW6"
+	@echo "... Lr7ErlugrP374mRDBmpXjzBd2zCS9ASK"
 	@echo "... edit_cache"
 	@echo "... install"
 	@echo "... install/local"

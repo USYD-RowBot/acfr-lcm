@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/src/lcmgl-viewer/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/src/lcmgl-viewer/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/rule
 .PHONY : src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot-lcmgl-viewer: src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/rule
 
 # fast build rule for target.
 bot-lcmgl-viewer/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build
 .PHONY : bot-lcmgl-viewer/fast
 
 main.o: main.c.o
@@ -158,7 +155,7 @@ main.o: main.c.o
 
 # target to build an object file
 main.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.o
 .PHONY : main.c.o
 
 main.i: main.c.i
@@ -166,7 +163,7 @@ main.i: main.c.i
 
 # target to preprocess a source file
 main.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.i
 .PHONY : main.c.i
 
 main.s: main.c.s
@@ -174,7 +171,7 @@ main.s: main.c.s
 
 # target to generate assembly for a file
 main.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/main.c.s
 .PHONY : main.c.s
 
 udp_util.o: udp_util.c.o
@@ -182,7 +179,7 @@ udp_util.o: udp_util.c.o
 
 # target to build an object file
 udp_util.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.o
 .PHONY : udp_util.c.o
 
 udp_util.i: udp_util.c.i
@@ -190,7 +187,7 @@ udp_util.i: udp_util.c.i
 
 # target to preprocess a source file
 udp_util.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.i
 .PHONY : udp_util.c.i
 
 udp_util.s: udp_util.c.s
@@ -198,7 +195,7 @@ udp_util.s: udp_util.c.s
 
 # target to generate assembly for a file
 udp_util.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/udp_util.c.s
 .PHONY : udp_util.c.s
 
 view_menu.o: view_menu.c.o
@@ -206,7 +203,7 @@ view_menu.o: view_menu.c.o
 
 # target to build an object file
 view_menu.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.o
 .PHONY : view_menu.c.o
 
 view_menu.i: view_menu.c.i
@@ -214,7 +211,7 @@ view_menu.i: view_menu.c.i
 
 # target to preprocess a source file
 view_menu.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.i
 .PHONY : view_menu.c.i
 
 view_menu.s: view_menu.c.s
@@ -222,7 +219,7 @@ view_menu.s: view_menu.c.s
 
 # target to generate assembly for a file
 view_menu.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(MAKE) -f src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/build.make src/lcmgl-viewer/CMakeFiles/bot-lcmgl-viewer.dir/view_menu.c.s
 .PHONY : view_menu.c.s
 
 # Help Target
@@ -258,6 +255,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcmgl/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

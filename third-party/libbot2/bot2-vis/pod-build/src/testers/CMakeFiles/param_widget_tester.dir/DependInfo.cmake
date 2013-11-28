@@ -4,7 +4,7 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_C
-  "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/src/testers/param_widget_tester.c" "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.o"
+  "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/src/testers/param_widget_tester.c" "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.o"
   )
 SET(CMAKE_C_COMPILER_ID "GNU")
 

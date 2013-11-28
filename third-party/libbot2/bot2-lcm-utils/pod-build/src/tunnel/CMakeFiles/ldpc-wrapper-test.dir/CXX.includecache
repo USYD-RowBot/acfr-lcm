@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/getopt.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/getopt.cpp
 stddef.h
 -
 ctype.h
@@ -14,11 +14,11 @@ ctype.h
 string.h
 -
 getopt.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/getopt.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/getopt.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/getopt.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/getopt.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.cpp
 stdio.h
 -
 stdlib.h
@@ -28,23 +28,23 @@ string.h
 math.h
 -
 ldpc_create_pchk.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
 ldpc_rand.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
 ldpc_matrix_sparse.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.cpp
 ldpc_fec.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 macros.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/macros.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/macros.h
 conio.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 math.h
 -
 sys/types.h
@@ -62,23 +62,23 @@ inttypes.h
 STDDEF.H
 -
 ldpc_profile.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
 ldpc_types.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
 ldpc_matrix_sparse.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
 ldpc_create_pchk.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_create_pchk.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec_iterative_decoding.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec_iterative_decoding.cpp
 ldpc_fec.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 macros.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/macros.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/macros.h
 conio.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.cpp
 stdlib.h
 -
 stdio.h
@@ -88,49 +88,49 @@ math.h
 string.h
 -
 ldpc_matrix_sparse.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_matrix_sparse.h
 ldpc_profile.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
 tools.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/tools.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/tools.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_profile.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.cpp
 stdlib.h
 -
 stdio.h
 -
 ldpc_rand.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.cpp
 ldpc_fec.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 macros.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/macros.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/macros.h
 ldpc_scheme.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
 ldpc_rand.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_rand.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
 ldpc_types.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_types.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.cpp
 stdlib.h
 -
 stdio.h
 -
 ldpc_wrapper.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
 math.h
 -
 getopt.h
@@ -142,7 +142,7 @@ netinet/in.h
 arpa/inet.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
 unistd.h
 -
 ctype.h
@@ -158,29 +158,29 @@ arpa/inet.h
 stdlib.h
 -
 ldpc_fec.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_fec.h
 ldpc_scheme.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_scheme.h
 macros.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/macros.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/macros.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper_test.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper_test.cpp
 ldpc_wrapper.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/ldpc_wrapper.h
 time.h
 -
 sys/time.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/macros.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/macros.h
 stdio.h
 -
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/tools.cpp
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/tools.cpp
 tools.h
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/tools.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/tools.h
 
-/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/src/tunnel/ldpc/tools.h
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/src/tunnel/ldpc/tools.h
 stdlib.h
 -
 stdio.h

@@ -16,8 +16,8 @@
 
 // set the delta T to 0.1s, 10Hz loop rate
 #define CONTROL_DT 0.1
-#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
-#define W_HEADING 0.05 //amount to weight the heading in the heading controller
+//#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
+//#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
 typedef enum
 {   DEPTH_MODE,
@@ -408,6 +408,17 @@ int main(int argc, char **argv)
             yaw2 = yaw2 - 2*M_PI;
         else if (yaw1 - yaw2 > M_PI)
             yaw1 = yaw1 - 2*M_PI;
+
+        //Weight the heading more as the velocity magnitude decreases
+
+        double W_BEARING;
+
+        if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
+            W_BEARING = fabs(state.nav.vx) / 0.2;
+        else
+            W_BEARING = 1;
+
+        double W_HEADING = 1 - W_BEARING;
 
         double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;
 

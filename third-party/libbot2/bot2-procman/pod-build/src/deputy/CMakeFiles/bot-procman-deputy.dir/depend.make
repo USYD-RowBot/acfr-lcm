@@ -241,16 +241,11 @@ src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o: /usr/include/glib-2.0/
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o: /usr/include/glib-2.0/glib/gwin32.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman.c.o: /usr/lib/x86_64-linux-gnu/glib-2.0/include/glibconfig.h
 
-src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_command2_t.h
-src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_deputy_cmd2_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_deputy_cmd_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_discovery_t.h
-src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_info2_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_info_t.h
-src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_orders2_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_orders_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_printf_t.h
-src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd2_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../lcmtypes/c/lcmtypes/bot_procman_sheriff_cmd_t.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../src/deputy/lcm_util.h
 src/deputy/CMakeFiles/bot-procman-deputy.dir/procman_deputy.c.o: ../src/deputy/procinfo.h

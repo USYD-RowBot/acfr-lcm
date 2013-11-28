@@ -1,8 +1,8 @@
-# Install script for directory: /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/python
+# Install script for directory: /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/python
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  SET(CMAKE_INSTALL_PREFIX "/home/navid/proj/acfr/acfr_lcm/third-party/build")
+  SET(CMAKE_INSTALL_PREFIX "/usr/local")
 ENDIF(NOT DEFINED CMAKE_INSTALL_PREFIX)
 STRING(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -34,23 +34,23 @@ ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/log_to_mat.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/python/src/bot_log2mat/log_to_mat.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_log2mat/scan_for_lcmtypes.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/python/src/bot_log2mat/scan_for_lcmtypes.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/scan_for_lcmtypes.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/python/src/bot_log2mat/scan_for_lcmtypes.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_log2mat/log_to_mat.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/python/src/bot_log2mat/log_to_mat.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
   list(APPEND CPACK_ABSOLUTE_DESTINATION_FILES
-   "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat/__init__.py")
-FILE(INSTALL DESTINATION "/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/python/src/bot_log2mat/__init__.py")
+   "/usr/local/lib/python2.7/dist-packages/bot_log2mat/__init__.py")
+FILE(INSTALL DESTINATION "/usr/local/lib/python2.7/dist-packages/bot_log2mat" TYPE FILE FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/python/src/bot_log2mat/__init__.py")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 
 IF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
-  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/python/bot-log2mat")
+  FILE(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE PROGRAM FILES "/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/python/bot-log2mat")
 ENDIF(NOT CMAKE_INSTALL_COMPONENT OR "${CMAKE_INSTALL_COMPONENT}" STREQUAL "Unspecified")
 

@@ -3,11 +3,11 @@
 
 # compile C with /usr/bin/gcc
 # compile CXX with /usr/bin/c++
-C_FLAGS = -O3 -DNDEBUG -I/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/include -I/home/navid/proj/acfr/acfr_lcm/third-party/build/include -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include   
+C_FLAGS = -O3 -DNDEBUG -I/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/include -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include   
 
 C_DEFINES = 
 
-CXX_FLAGS = -O3 -DNDEBUG -I/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/include -I/home/navid/proj/acfr/acfr_lcm/third-party/build/include -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include   
+CXX_FLAGS = -O3 -DNDEBUG -I/home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/include -I/usr/local/include -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include   
 
 CXX_DEFINES = 
 

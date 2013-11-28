@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build
 
 # Utility rule file for lcmgen_python.
 
@@ -46,7 +43,7 @@ CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-pa
 include CMakeFiles/lcmgen_python.dir/progress.make
 
 CMakeFiles/lcmgen_python:
-	sh -c '/usr/local/bin/lcm-gen --lazy -p /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_request_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_set_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_update_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/bot_param_entry_t.lcm --ppath /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/lcmtypes/python'
+	sh -c '/usr/local/bin/lcm-gen --lazy -p /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_entry_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_request_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_update_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/bot_param_set_t.lcm --ppath /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/lcmtypes/python'
 
 lcmgen_python: CMakeFiles/lcmgen_python
 lcmgen_python: CMakeFiles/lcmgen_python.dir/build.make
@@ -61,6 +58,6 @@ CMakeFiles/lcmgen_python.dir/clean:
 .PHONY : CMakeFiles/lcmgen_python.dir/clean
 
 CMakeFiles/lcmgen_python.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-param/pod-build/CMakeFiles/lcmgen_python.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-param/pod-build/CMakeFiles/lcmgen_python.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmgen_python.dir/depend
 

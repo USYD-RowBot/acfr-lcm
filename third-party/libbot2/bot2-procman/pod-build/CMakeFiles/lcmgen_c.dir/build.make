@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build
 
 # Utility rule file for lcmgen_c.
 
@@ -46,8 +43,8 @@ CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-pr
 include CMakeFiles/lcmgen_c.dir/progress.make
 
 CMakeFiles/lcmgen_c:
-	sh -c '[ -d /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/c/lcmtypes ] || mkdir -p /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/c/lcmtypes'
-	sh -c '/usr/local/bin/lcm-gen --lazy -c /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_orders_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_deputy_cmd_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_deputy_cmd2_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_info_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_printf_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_sheriff_cmd_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_discovery_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_orders2_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_command2_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_info2_t.lcm /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/bot_procman_sheriff_cmd2_t.lcm --c-cpath /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/c/lcmtypes --c-hpath /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/lcmtypes/c/lcmtypes'
+	sh -c '[ -d /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/c/lcmtypes ] || mkdir -p /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/c/lcmtypes'
+	sh -c '/usr/local/bin/lcm-gen --lazy -c /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_discovery_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_orders_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_printf_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_info_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_sheriff_cmd_t.lcm /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/bot_procman_deputy_cmd_t.lcm --c-cpath /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/c/lcmtypes --c-hpath /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/lcmtypes/c/lcmtypes'
 
 lcmgen_c: CMakeFiles/lcmgen_c
 lcmgen_c: CMakeFiles/lcmgen_c.dir/build.make
@@ -62,6 +59,6 @@ CMakeFiles/lcmgen_c.dir/clean:
 .PHONY : CMakeFiles/lcmgen_c.dir/clean
 
 CMakeFiles/lcmgen_c.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-procman/pod-build/CMakeFiles/lcmgen_c.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-procman/pod-build/CMakeFiles/lcmgen_c.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/lcmgen_c.dir/depend
 

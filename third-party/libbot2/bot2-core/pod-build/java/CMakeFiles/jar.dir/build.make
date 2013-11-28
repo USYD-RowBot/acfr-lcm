@@ -31,14 +31,11 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build
 
 # Utility rule file for jar.
 
@@ -49,16 +46,16 @@ java/CMakeFiles/jar: java/lcmspy_plugins_bot2.jar
 
 java/lcmspy_plugins_bot2.jar: java/java-build/bot2_spy/PlanarLidarPlugin.class
 java/lcmspy_plugins_bot2.jar: java/java-build/bot2_spy/ImagePlugin.class
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating lcmspy_plugins_bot2.jar"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java && /usr/bin/jar cf lcmspy_plugins_bot2.jar -C /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java/java-build .
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java && /usr/bin/jar cf lcmspy_plugins_bot2.jar -C /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java/java-build .
 
 java/java-build/bot2_spy/PlanarLidarPlugin.class: ../java/src/bot2_spy/PlanarLidarPlugin.java
 java/java-build/bot2_spy/PlanarLidarPlugin.class: ../java/src/bot2_spy/ImagePlugin.java
 java/java-build/bot2_spy/PlanarLidarPlugin.class: lcmtypes_bot2-core.jar
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles $(CMAKE_PROGRESS_2)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Generating java-build/bot2_spy/PlanarLidarPlugin.class, java-build/bot2_spy/ImagePlugin.class"
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java && /usr/bin/javac -source 6 -target 6 -cp /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/java/src:/usr/local/share/java/lcm.jar:/home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/lcmtypes_bot2-core.jar -d /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java/java-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/java/src/bot2_spy/PlanarLidarPlugin.java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/java/src/bot2_spy/ImagePlugin.java
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java && /usr/bin/javac -source 6 -cp /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/java/src:/usr/local/share/java/lcm-0.9.0.jar:/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/lcmtypes_bot2-core.jar -d /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java/java-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/java/src/bot2_spy/PlanarLidarPlugin.java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/java/src/bot2_spy/ImagePlugin.java
 
 java/java-build/bot2_spy/ImagePlugin.class: java/java-build/bot2_spy/PlanarLidarPlugin.class
 
@@ -74,10 +71,10 @@ java/CMakeFiles/jar.dir/build: jar
 .PHONY : java/CMakeFiles/jar.dir/build
 
 java/CMakeFiles/jar.dir/clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java && $(CMAKE_COMMAND) -P CMakeFiles/jar.dir/cmake_clean.cmake
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java && $(CMAKE_COMMAND) -P CMakeFiles/jar.dir/cmake_clean.cmake
 .PHONY : java/CMakeFiles/jar.dir/clean
 
 java/CMakeFiles/jar.dir/depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-core/pod-build/java/CMakeFiles/jar.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java /home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java/CMakeFiles/jar.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : java/CMakeFiles/jar.dir/depend
 

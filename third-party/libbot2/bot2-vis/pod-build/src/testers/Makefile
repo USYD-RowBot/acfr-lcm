@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/src/testers/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/src/testers/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/testers/CMakeFiles/gl_drawing_area_tester.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/gl_drawing_area_tester.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/gl_drawing_area_tester.dir/rule
 .PHONY : src/testers/CMakeFiles/gl_drawing_area_tester.dir/rule
 
 # Convenience name for target.
@@ -150,12 +147,12 @@ gl_drawing_area_tester: src/testers/CMakeFiles/gl_drawing_area_tester.dir/rule
 
 # fast build rule for target.
 gl_drawing_area_tester/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/build
 .PHONY : gl_drawing_area_tester/fast
 
 # Convenience name for target.
 src/testers/CMakeFiles/gl_image_area_tester.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/gl_image_area_tester.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/gl_image_area_tester.dir/rule
 .PHONY : src/testers/CMakeFiles/gl_image_area_tester.dir/rule
 
 # Convenience name for target.
@@ -164,12 +161,12 @@ gl_image_area_tester: src/testers/CMakeFiles/gl_image_area_tester.dir/rule
 
 # fast build rule for target.
 gl_image_area_tester/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/build
 .PHONY : gl_image_area_tester/fast
 
 # Convenience name for target.
 src/testers/CMakeFiles/param_widget_tester.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/param_widget_tester.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/testers/CMakeFiles/param_widget_tester.dir/rule
 .PHONY : src/testers/CMakeFiles/param_widget_tester.dir/rule
 
 # Convenience name for target.
@@ -178,7 +175,7 @@ param_widget_tester: src/testers/CMakeFiles/param_widget_tester.dir/rule
 
 # fast build rule for target.
 param_widget_tester/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/build
 .PHONY : param_widget_tester/fast
 
 gl_drawing_area_tester.o: gl_drawing_area_tester.c.o
@@ -186,7 +183,7 @@ gl_drawing_area_tester.o: gl_drawing_area_tester.c.o
 
 # target to build an object file
 gl_drawing_area_tester.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.o
 .PHONY : gl_drawing_area_tester.c.o
 
 gl_drawing_area_tester.i: gl_drawing_area_tester.c.i
@@ -194,7 +191,7 @@ gl_drawing_area_tester.i: gl_drawing_area_tester.c.i
 
 # target to preprocess a source file
 gl_drawing_area_tester.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.i
 .PHONY : gl_drawing_area_tester.c.i
 
 gl_drawing_area_tester.s: gl_drawing_area_tester.c.s
@@ -202,7 +199,7 @@ gl_drawing_area_tester.s: gl_drawing_area_tester.c.s
 
 # target to generate assembly for a file
 gl_drawing_area_tester.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_drawing_area_tester.dir/build.make src/testers/CMakeFiles/gl_drawing_area_tester.dir/gl_drawing_area_tester.c.s
 .PHONY : gl_drawing_area_tester.c.s
 
 gl_image_area_tester.o: gl_image_area_tester.c.o
@@ -210,7 +207,7 @@ gl_image_area_tester.o: gl_image_area_tester.c.o
 
 # target to build an object file
 gl_image_area_tester.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.o
 .PHONY : gl_image_area_tester.c.o
 
 gl_image_area_tester.i: gl_image_area_tester.c.i
@@ -218,7 +215,7 @@ gl_image_area_tester.i: gl_image_area_tester.c.i
 
 # target to preprocess a source file
 gl_image_area_tester.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.i
 .PHONY : gl_image_area_tester.c.i
 
 gl_image_area_tester.s: gl_image_area_tester.c.s
@@ -226,7 +223,7 @@ gl_image_area_tester.s: gl_image_area_tester.c.s
 
 # target to generate assembly for a file
 gl_image_area_tester.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/gl_image_area_tester.dir/build.make src/testers/CMakeFiles/gl_image_area_tester.dir/gl_image_area_tester.c.s
 .PHONY : gl_image_area_tester.c.s
 
 param_widget_tester.o: param_widget_tester.c.o
@@ -234,7 +231,7 @@ param_widget_tester.o: param_widget_tester.c.o
 
 # target to build an object file
 param_widget_tester.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.o
 .PHONY : param_widget_tester.c.o
 
 param_widget_tester.i: param_widget_tester.c.i
@@ -242,7 +239,7 @@ param_widget_tester.i: param_widget_tester.c.i
 
 # target to preprocess a source file
 param_widget_tester.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.i
 .PHONY : param_widget_tester.c.i
 
 param_widget_tester.s: param_widget_tester.c.s
@@ -250,7 +247,7 @@ param_widget_tester.s: param_widget_tester.c.s
 
 # target to generate assembly for a file
 param_widget_tester.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(MAKE) -f src/testers/CMakeFiles/param_widget_tester.dir/build.make src/testers/CMakeFiles/param_widget_tester.dir/param_widget_tester.c.s
 .PHONY : param_widget_tester.c.s
 
 # Help Target
@@ -288,6 +285,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-vis/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

@@ -35,22 +35,19 @@ CMAKE_COMMAND = /usr/bin/cmake
 # The command to remove a file.
 RM = /usr/bin/cmake -E remove -f
 
-# The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /usr/bin/ccmake
-
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils
+CMAKE_SOURCE_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build
+CMAKE_BINARY_DIR = /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build
 
 #=============================================================================
 # Targets provided globally by CMake.
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
-	/usr/bin/ccmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running interactive CMake command-line interface..."
+	/usr/bin/cmake -i .
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -110,14 +107,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/src/who/CMakeFiles/progress.marks
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build/CMakeFiles 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/src/who/CMakeFiles/progress.marks
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/clean
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/clean
 .PHONY : clean
 
 # The main clean target
@@ -126,22 +123,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/preinstall
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 src/who/CMakeFiles/bot-lcm-who.dir/rule:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/CMakeFiles/bot-lcm-who.dir/rule
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f CMakeFiles/Makefile2 src/who/CMakeFiles/bot-lcm-who.dir/rule
 .PHONY : src/who/CMakeFiles/bot-lcm-who.dir/rule
 
 # Convenience name for target.
@@ -150,7 +147,7 @@ bot-lcm-who: src/who/CMakeFiles/bot-lcm-who.dir/rule
 
 # fast build rule for target.
 bot-lcm-who/fast:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/build
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/build
 .PHONY : bot-lcm-who/fast
 
 lcm-who.o: lcm-who.c.o
@@ -158,7 +155,7 @@ lcm-who.o: lcm-who.c.o
 
 # target to build an object file
 lcm-who.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.o
 .PHONY : lcm-who.c.o
 
 lcm-who.i: lcm-who.c.i
@@ -166,7 +163,7 @@ lcm-who.i: lcm-who.c.i
 
 # target to preprocess a source file
 lcm-who.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.i
 .PHONY : lcm-who.c.i
 
 lcm-who.s: lcm-who.c.s
@@ -174,7 +171,7 @@ lcm-who.s: lcm-who.c.s
 
 # target to generate assembly for a file
 lcm-who.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/lcm-who.c.s
 .PHONY : lcm-who.c.s
 
 signal_pipe.o: signal_pipe.c.o
@@ -182,7 +179,7 @@ signal_pipe.o: signal_pipe.c.o
 
 # target to build an object file
 signal_pipe.c.o:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.o
 .PHONY : signal_pipe.c.o
 
 signal_pipe.i: signal_pipe.c.i
@@ -190,7 +187,7 @@ signal_pipe.i: signal_pipe.c.i
 
 # target to preprocess a source file
 signal_pipe.c.i:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.i
 .PHONY : signal_pipe.c.i
 
 signal_pipe.s: signal_pipe.c.s
@@ -198,7 +195,7 @@ signal_pipe.s: signal_pipe.c.s
 
 # target to generate assembly for a file
 signal_pipe.c.s:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(MAKE) -f src/who/CMakeFiles/bot-lcm-who.dir/build.make src/who/CMakeFiles/bot-lcm-who.dir/signal_pipe.c.s
 .PHONY : signal_pipe.c.s
 
 # Help Target
@@ -231,6 +228,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /home/navid/proj/acfr/acfr_lcm/third-party/libbot2New/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/lash/git/acfr_lcm/third-party/libbot2/bot2-lcm-utils/pod-build && $(CMAKE_COMMAND) -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
