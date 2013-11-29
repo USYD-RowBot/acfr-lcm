@@ -32,7 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
-#define CURRENT 0.5
+#define CURRENT 0.1
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4
