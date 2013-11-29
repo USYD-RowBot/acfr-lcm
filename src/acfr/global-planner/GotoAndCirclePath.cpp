@@ -11,8 +11,38 @@ bool GotoAndCirclePath::calcPath(void) {
 
 	waypoint wp;
 	Pose3D pRel;
-	double distance = 0;
-
+	double finalWPVel = 0;
+	cout << "numLoops = " << numLoops << endl
+			<< "timeout = " << timeout << endl
+			<< "leg vel = " << velocity << endl
+			<< "FinalWPVel = " << finalWPVel << endl;
+#if 1
+	if( numLoops == 0 && timeout == 0 ) {
+		cerr << "Either number of loops or timeout has to be set" << endl;
+		return false;
+	}
+	else if( numLoops == 0 && timeout > 0 ) {
+		// calculate number of loops based on the timeout and the velocity
+		numLoops = timeout * velocity;
+		finalWPVel = velocity;
+	}
+	else if( numLoops > 0 && timeout == 0 ) {
+		// calculate the timeout based on the nubmer of loops and the velocity
+		timeout = numLoops / velocity;
+		finalWPVel = velocity;
+	}
+	else if( numLoops > 0 && timeout > 0 ){
+		// calculate the velocity based on the number of loops and the timeout
+		// NOTE: the requested velocity in this mode corresponds to the final
+		//			waypoint velocity
+		finalWPVel = velocity;
+		velocity = numLoops / timeout;
+	}
+	cout << "numLoops = " << numLoops << endl
+			<< "timeout = " << timeout << endl
+			<< "leg vel = " << velocity << endl
+			<< "FinalWPVel = " << finalWPVel << endl;
+#endif
 	// Go to the desired position
 	wp.pose = position;
 	wp.pose.setRollPitchYawRad(0, 0, heading);
@@ -61,13 +91,13 @@ bool GotoAndCirclePath::calcPath(void) {
 		path.push_back(wp);
 	}
 
-	cout << "p = [" << endl;
-	for (it = path.begin(); it != path.end(); it++) {
-		cout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", "
-				<< (*it).pose.getZ() << ", " << (*it).pose.getYawRad()/M_PI*180 << endl;
-	}
-	cout << "];" << endl;
-	cout << "plot3d(p', 'r-o'); view(0,90); axis equal" << endl;
+//	cout << "p = [" << endl;
+//	for (it = path.begin(); it != path.end(); it++) {
+//		cout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", "
+//				<< (*it).pose.getZ() << ", " << (*it).pose.getYawRad()/M_PI*180 << endl;
+//	}
+//	cout << "];" << endl;
+//	cout << "plot3d(p', 'r-o'); view(0,90); axis equal" << endl;
 	return true;
 }
 
