@@ -12,18 +12,18 @@
         <!-- To have the same drop distance in the corners use 
             drop_angle [rad] = drop_distance / turn_radius -->
     </global>
-<!--
+
 	<primative>
         <goto>
-            <position x="0" y="0" z="3"/>
+            <position x="30" y="30" z="0"/>
             <rotation deg = "0" />
-            <timeout t="1000" />
-            <velocity x="1" />
+            <timeout t="600" />
+            <velocity x="0" />
             <depth mode = "depth" />
-            <command device="camera" onoff="on"/>
+            <command device="camera" onoff="off"/>
         </goto>
     </primative>
-    -->
+    
     
     
     <!--    
@@ -89,7 +89,7 @@
     </primative>
 -->
 
-    <primative>
+<!--    <primative>
         <gotoandcircle>
             <position x="30" y="05" z="3"/>
             <rotation deg = "0" />
@@ -101,5 +101,5 @@
             <command device="camera" onoff="on"/>
         </gotoandcircle>
     </primative>
-
+-->
 </mission>
