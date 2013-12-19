@@ -1,0 +1,7 @@
+# ignore svn files
+*.svn*
+# ignore temporary files
+*~
+CMakeFiles
+CMakeCache.txt
+build

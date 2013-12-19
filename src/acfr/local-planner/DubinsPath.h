@@ -27,12 +27,6 @@ using namespace SMALL;
 
 class DubinsPath {
 
-protected:
-	const static int right = -1;
-	const static int left = -right;
-	int side[2];
-	vector<string> sideStr;
-
 private:
 	int minDistI;
 	double minDist;
@@ -48,14 +42,15 @@ private:
 	double maxPitch;
 	double dropDist;
 	double dropAngle;
-    double angle1_report;
-    double angle2_report;
+	double angle1_report;
+	double angle2_report;
 
 	vector<Pose3D> path;
 	double pathLength;
 
 public:
-	DubinsPath(double circleRad = 1.0, double maxPitch = 0.0, double dropDist = 1.0, double dropAngle = M_PI / 18);
+	DubinsPath();
+	DubinsPath(double circleRad, double maxPitch, double dropDist, double dropAngle);
 
 	vector<Pose3D> calcPath(Pose3D currPose, Pose3D destPose);
 
@@ -87,8 +82,16 @@ public:
 
 		return false;
 	}
-
-	bool setWaypointDropAngle(double ang) {
+	bool setWaypointDropAngleFromDropDist(void) {
+		if( this->dropDist <= 0 ) {
+			return false;
+		}
+		// 2*PI / circumference / dist
+		//this->dropAngle = (2*M_PI)/(2*M_PI*this->circleRad / this->dropDist);
+		this->dropAngle = dropDist / circleRad;
+		return true;
+	}
+	bool setWaypointDropAngleRad(double ang) {
 		if (ang > 0) {
 			this->dropAngle = ang;
 			return true;
@@ -97,9 +100,18 @@ public:
 		return false;
 	}
 
-    double getMaxAngle() {
-    return (fabs(angle1_report) > fabs(angle2_report) ? fabs(angle1_report) / M_PI * 180: fabs(angle2_report)/ M_PI * 180);
-    }
+	double getMaxAngle() {
+		return (fabs(angle1_report) > fabs(angle2_report) ?
+				fabs(angle1_report) / M_PI * 180 :
+				fabs(angle2_report) / M_PI * 180);
+	}
+
+public:
+	static const int right = -1;
+	static const int left = -right;
+	static const int side[2];
+	vector<string> sideStr;
+
 };
 
 #endif // DUBINSPATH_H

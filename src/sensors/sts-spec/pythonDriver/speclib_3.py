@@ -445,7 +445,7 @@ and writes a timestamp to specData[’spectraTimeStamp’].'''
         proc = processPacket(b,'spectra')
         
         specData['latestSpectra'] = proc.payload
-        specData['spectraTimeStamp'] = datetime.datetime.now()
+        specData['spectraTimeStamp'] = datetime.datetime.utcnow()
         specData['latestSpecMean'] = average(proc.payload[250:650])
         specData['latestSpecMax'] = max(proc.payload)
 #        print 'Spectra Acquired'
@@ -616,7 +616,8 @@ other pieces of information relevant to the data.'''
     if label == None:
         label = 'No Label'
     
-    timeNow = datetime.datetime.now()
+    timeNow = datetime.datetime.utcnow()
+#    timezone = time.strftime('%z', time.gmtime())
 
 #    Check for the existance of the log file directory
 
@@ -624,10 +625,11 @@ other pieces of information relevant to the data.'''
     if os.path.exists(logDir) == False:
         os.mkdir(logDir)
 
-    fnm = '%s/%s-SpectraLog.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
+
+    fnm = '%s/%s-SPEC_UP_SURF.txt' % (logDir,timeNow.strftime('%Y%m%d-%H%M%S'))
     fid = open(fnm, 'w')
     fid.write('RS232 STS MicroSpectrometer Spectra Log - Daniel Bongiorno, 2013\n')
-    fid.write('Date:\t%s\tTime:\t%s\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S')) )
+    fid.write('Date:\t%s\tTime:\t%s UTC\n' % (timeNow.strftime('%d/%m/%Y'),timeNow.strftime('%H:%M:%S.%f') ))
     fid.write('Label: \t%s\n' % label)
     fid.write('Serial Number:\t%s\n' % (specData['serialNum']))  
     fid.write('Initial Integration Time: (microsec)\t%u\n' % (specData['intTime']))

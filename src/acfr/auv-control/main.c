@@ -16,8 +16,8 @@
 
 // set the delta T to 0.1s, 10Hz loop rate
 #define CONTROL_DT 0.1
-#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
-#define W_HEADING 0.05 //amount to weight the heading in the heading controller
+//#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
+//#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
 typedef enum
 {   DEPTH_MODE,
@@ -45,6 +45,7 @@ typedef struct
     pid_gains_t gains_depth;
     pid_gains_t gains_altitude;
     pid_gains_t gains_pitch;
+    pid_gains_t gains_pitch_r;
     pid_gains_t gains_heading;
     
     // Maximum values
@@ -114,6 +115,21 @@ int load_config(state_t *state, char *rootkey)
 
     sprintf(key, "%s.pitch.sat", rootkey);
     state->gains_pitch.sat = bot_param_get_double_or_fail(param, key);
+
+    //Pitch reverse gains
+    memset(&state->gains_pitch_r, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.pitch_r.kp", rootkey);
+    state->gains_pitch_r.kp = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.pitch_r.ki", rootkey);
+    state->gains_pitch_r.ki = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.pitch_r.kd", rootkey);
+    state->gains_pitch_r.kd = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.pitch_r.sat", rootkey);
+    state->gains_pitch_r.sat = bot_param_get_double_or_fail(param, key);
+
 
     // Depth gains
     memset(&state->gains_depth, 0, sizeof(pid_gains_t));
@@ -192,18 +208,18 @@ control_callback (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm
     
     switch(control->depth_mode)
     {
-        case ACFRLCM_AUV_CONTROL_T_DEPTH_MODE:
-            state->command.depth_mode = DEPTH_MODE;
-            break;
-        case ACFRLCM_AUV_CONTROL_T_ALTITUDE_MODE:
-            state->command.depth_mode = ALTITUDE_MODE;
-            break;
-        case ACFRLCM_AUV_CONTROL_T_PITCH_MODE:
-            state->command.depth_mode = PITCH_MODE;
-            break;
-     }
+    case ACFRLCM_AUV_CONTROL_T_DEPTH_MODE:
+        state->command.depth_mode = DEPTH_MODE;
+        break;
+    case ACFRLCM_AUV_CONTROL_T_ALTITUDE_MODE:
+        state->command.depth_mode = ALTITUDE_MODE;
+        break;
+    case ACFRLCM_AUV_CONTROL_T_PITCH_MODE:
+        state->command.depth_mode = PITCH_MODE;
+        break;
+    }
 
-     pthread_mutex_unlock(&state->command_lock);
+    pthread_mutex_unlock(&state->command_lock);
 }
 
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
@@ -327,8 +343,10 @@ int main(int argc, char **argv)
         else if( pitch < -state.pitch_max )
             pitch = -state.pitch_max;
         
-        plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
-        
+        if (state.nav.vx > 0)
+            plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
+        else
+            plane_angle = pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
         
         // Heading
         while(state.nav.heading < -M_PI)
@@ -348,29 +366,29 @@ int main(int argc, char **argv)
         while(bearing > M_PI)
             bearing -= 2*M_PI;
 
-//        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
-//        {
-//            if(state.command.heading < (-M_PI / 2))
-//                state.command.heading += 2*M_PI;
-//            else if(state.nav.heading < (-M_PI / 2))
-//                state.nav.heading += 2*M_PI;
-//        }
+        //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+        //        {
+        //            if(state.command.heading < (-M_PI / 2))
+        //                state.command.heading += 2*M_PI;
+        //            else if(state.nav.heading < (-M_PI / 2))
+        //                state.nav.heading += 2*M_PI;
+        //        }
 
-//        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
-//        {
-//            if(state.command.heading < (-M_PI / 2))
-//                state.command.heading += 2*M_PI;
-//            else if(bearing < (-M_PI / 2))
-//                bearing += 2*M_PI;
-//        }
+        //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
+        //        {
+        //            if(state.command.heading < (-M_PI / 2))
+        //                state.command.heading += 2*M_PI;
+        //            else if(bearing < (-M_PI / 2))
+        //                bearing += 2*M_PI;
+        //        }
 
 
-//        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+        //        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
         printf("%f\n", roll_offset);
 
-//        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+        //        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
 
-//        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
+        //        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
 
         // correctly compute the weighted bearing
 
@@ -390,6 +408,17 @@ int main(int argc, char **argv)
             yaw2 = yaw2 - 2*M_PI;
         else if (yaw1 - yaw2 > M_PI)
             yaw1 = yaw1 - 2*M_PI;
+
+        //Weight the heading more as the velocity magnitude decreases
+
+        double W_BEARING;
+
+        if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
+            W_BEARING = fabs(state.nav.vx) / 0.2;
+        else
+            W_BEARING = 1;
+
+        double W_HEADING = 1 - W_BEARING;
 
         double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;
 
@@ -423,7 +452,7 @@ int main(int argc, char **argv)
         double port = plane_angle - roll_offset;
         double starboard = plane_angle - roll_offset;
 
-        if (state.nav.vx < 0)  // reverse all the fin angles for reverse direction. May not be enough due to completely different dynamics in reverse.
+        if (state.nav.vx < 0)  // reverse all the fin angles for reverse direction (water relative, so at the moment the assumption is no water currents). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
         {
             //printf("reversing, flipping fin control\n");
             top  = -top;

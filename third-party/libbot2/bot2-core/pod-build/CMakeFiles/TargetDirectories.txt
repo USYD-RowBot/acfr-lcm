@@ -1,0 +1,9 @@
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/YPpZjblloPKQEBRnWc91PCZ5Ba9J9ogT.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/src/bot_core/CMakeFiles/bot2-core.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/java/CMakeFiles/jar.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmgen_c.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmgen_cpp.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmgen_java.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmgen_python.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmtypes_bot2-core.dir
+/home/lash/git/acfr_lcm/third-party/libbot2/bot2-core/pod-build/CMakeFiles/lcmtypes_bot2-core_jar.dir
