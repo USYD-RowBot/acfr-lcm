@@ -1,13 +1,7 @@
 K 25
 svn:wc:ra_dav:version-url
 V 43
-/svn/!svn/ver/453/trunk/bot2-procman/python
-END
-setup.py
-K 25
-svn:wc:ra_dav:version-url
-V 52
-/svn/!svn/ver/414/trunk/bot2-procman/python/setup.py
+/svn/!svn/ver/475/trunk/bot2-procman/python
 END
 CMakeLists.txt
 K 25
@@ -20,4 +14,10 @@ K 25
 svn:wc:ra_dav:version-url
 V 65
 /svn/!svn/ver/414/trunk/bot2-procman/python/procman-sheriff.glade
+END
+setup.py
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/!svn/ver/414/trunk/bot2-procman/python/setup.py
 END

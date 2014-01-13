@@ -1,15 +1,15 @@
 10
 
 dir
-479
+484
 http://libbot.googlecode.com/svn/trunk/bot2-procman
 http://libbot.googlecode.com/svn
 
 
 
-2013-10-12T05:19:11.097064Z
-479
-ashuang
+2013-11-27T19:23:40.523766Z
+484
+rtedrake@gmail.com
 has-props
 
 
@@ -26,13 +26,19 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
+doc
+dir
+
+src
+dir
+
 CMakeLists.txt
 file
 
 
 
 
-2013-10-25T22:32:05.280903Z
+2014-01-13T11:50:16.661668Z
 2bcbc4db3b40331dc4ebcd0f3aa02068
 2013-07-25T02:48:08.313811Z
 453
@@ -66,7 +72,7 @@ file
 
 
 
-2013-10-25T22:32:05.280903Z
+2014-01-13T11:50:16.661668Z
 f30c4b885e63c81a85b78ae3abd1a802
 2011-11-20T23:01:20.387591Z
 324
@@ -100,7 +106,7 @@ file
 
 
 
-2013-10-25T22:32:05.280903Z
+2014-01-13T11:50:16.661668Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -135,11 +141,5 @@ lcmtypes
 dir
 
 python
-dir
-
-doc
-dir
-
-src
 dir
 

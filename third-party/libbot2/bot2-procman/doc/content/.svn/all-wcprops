@@ -1,7 +1,13 @@
 K 25
 svn:wc:ra_dav:version-url
 V 48
-/svn/!svn/ver/479/trunk/bot2-procman/doc/content
+/svn/!svn/ver/483/trunk/bot2-procman/doc/content
+END
+comms.md
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/472/trunk/bot2-procman/doc/content/comms.md
 END
 tutorial.md
 K 25
@@ -19,17 +25,11 @@ config_file.md
 K 25
 svn:wc:ra_dav:version-url
 V 63
-/svn/!svn/ver/477/trunk/bot2-procman/doc/content/config_file.md
+/svn/!svn/ver/483/trunk/bot2-procman/doc/content/config_file.md
 END
 design.md
 K 25
 svn:wc:ra_dav:version-url
 V 58
 /svn/!svn/ver/472/trunk/bot2-procman/doc/content/design.md
-END
-comms.md
-K 25
-svn:wc:ra_dav:version-url
-V 57
-/svn/!svn/ver/472/trunk/bot2-procman/doc/content/comms.md
 END

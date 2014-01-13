@@ -1,14 +1,14 @@
 10
 
 dir
-479
+484
 http://libbot.googlecode.com/svn/trunk/bot2-core
 http://libbot.googlecode.com/svn
 
 
 
-2013-08-29T20:08:06.190665Z
-467
+2013-11-27T19:23:40.523766Z
+484
 rtedrake@gmail.com
 has-props
 
@@ -26,13 +26,22 @@ has-props
 
 9146db76-5286-039a-5f50-05d86fea6eed
 
+cmake
+dir
+
+lcmtypes
+dir
+
+java
+dir
+
 Doxyfile
 file
 
 
 
 
-2013-10-25T22:32:06.332903Z
+2014-01-13T11:50:17.317661Z
 6e2c13a8c9a56d8b4dd635ddb653bf99
 2010-10-12T18:18:36.335000Z
 81
@@ -72,7 +81,7 @@ file
 
 
 
-2013-10-25T22:32:06.332903Z
+2014-01-13T11:50:17.317661Z
 eb721b2dc5c41d919f4ce06b6c1ca79d
 2012-01-16T16:21:18.672537Z
 348
@@ -106,7 +115,7 @@ file
 
 
 
-2013-10-25T22:32:06.332903Z
+2014-01-13T11:50:17.317661Z
 a8c1ede2c57cfd27f205d53a2f42cdfe
 2011-01-14T15:46:54.668161Z
 135
@@ -140,7 +149,7 @@ file
 
 
 
-2013-10-25T22:32:06.336903Z
+2014-01-13T11:50:17.317661Z
 e4b542718323bc6fc7bdeafa1719fcb2
 2012-09-21T16:32:40.146672Z
 408
@@ -167,13 +176,4 @@ abachrach@gmail.com
 
 
 1598
-
-cmake
-dir
-
-lcmtypes
-dir
-
-java
-dir
 

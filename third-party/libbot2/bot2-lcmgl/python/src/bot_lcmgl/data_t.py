@@ -43,7 +43,7 @@ class data_t(object):
     def _decode_one(buf):
         self = data_t()
         __name_len = struct.unpack('>I', buf.read(4))[0]
-        self.name = buf.read(__name_len)[:-1].decode('utf-8')
+        self.name = buf.read(__name_len)[:-1].decode('utf-8', 'replace')
         self.scene, self.sequence, self.datalen = struct.unpack(">iii", buf.read(12))
         self.data = buf.read(self.datalen)
         return self
