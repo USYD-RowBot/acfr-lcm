@@ -1,12 +1,14 @@
 """@package sheriff
 
 \defgroup python_api Python API
+@{
 """
 import os
 import platform
 import sys
 import time
 import random
+#import types
 import signal
 
 import gobject
@@ -23,7 +25,6 @@ from bot_procman.deputy_cmd2_t import deputy_cmd2_t
 from bot_procman.discovery_t import discovery_t
 import bot_procman.sheriff_config as sheriff_config
 from bot_procman.sheriff_script import SheriffScript
-from bot_procman.signal_slot import Signal
 
 def _dbg(text):
     return
@@ -35,49 +36,23 @@ def _warn(text):
 def _now_utime():
     return int(time.time() * 1000000)
 
-## \addtogroup python_api
-# @{
-
-## Command status - trying to start
-TRYING_TO_START = "Starting (Command Sent)"
-
-## Command status - running
+TRYING_TO_START = "Command Sent"
 RUNNING = "Running"
-
-## Command status - trying to stop a command
-TRYING_TO_STOP = "Stopping (Command Sent)"
-
-## Command status - removing a command
-REMOVING = "Removing (Command Sent)"
-
-## Command status - command stopped without error
+TRYING_TO_STOP = "Command Sent"
+REMOVING = "Command Sent"
 STOPPED_OK = "Stopped (OK)"
-
-## Command status - command stopped with error
 STOPPED_ERROR = "Stopped (Error)"
-
-## Command status - unknown status
 UNKNOWN = "Unknown"
-
-## Command status - restarting a command
-RESTARTING = "Restarting (Command Sent)"
-
-## @} ##
+RESTARTING = "Command Sent"
 
 DEFAULT_STOP_SIGNAL = 2
 DEFAULT_STOP_TIME_ALLOWED = 7
 
 class SheriffCommandSpec(object):
-    """Basic command specification.
-
-    \ingroup python_api
-    """
     __slots__ = [ "deputy_name", "exec_str", "command_id", "group_name",
             "auto_respawn", "stop_signal", "stop_time_allowed" ]
 
     def __init__(self):
-        """Initializer.
-        """
 
         ## the name of the deputy that will manage this command.
         self.deputy_name = ""
@@ -105,73 +80,36 @@ class SheriffCommandSpec(object):
         # to stop via a SIGKILL
         self.stop_time_allowed = DEFAULT_STOP_TIME_ALLOWED
 
-class SheriffDeputyCommand(object):
+
+class SheriffDeputyCommand(gobject.GObject):
     """A command managed by a deputy, which is in turn managed by the %Sheriff.
 
-    \ingroup python_api
+    Represents an executable command that can be run as a child process of a
+    Procman deputy process.
+
+    Use this class to  TODO
     """
     def __init__(self):
-        ## Sheriff-assigned number used to identify the process to this
-        # sheriff.
+        gobject.GObject.__init__(self)
         self.sheriff_id = 0
-
-        ## Process ID of the command as reported by the deputy.
-        # Has value -1 if the PID is unknown.
-        # Has value 0 if the process is not running (i.e., stopped)
-        # Has a positive value if the process is running.
         self.pid = -1
-
-        ## If the command is stopped, its exit code.
         self.exit_code = 0
-
-        ## Command CPU usage, as reported by the deputy.  Ranges from [0, 1]
         self.cpu_usage = 0
-
-        ## Virtual memory used by the command.
         self.mem_vsize_bytes = 0
-
-        ## Resident memory used by the command.
         self.mem_rss_bytes = 0
-
-        ## The executable string for the command.
         self.exec_str = ""
-
-        ## A user-assigned string identifier for the comand.
         self.command_id = ""
-
-        ## A user-assigned group name for the command, possibly empty.
         self.group = ""
-
-        ## Sheriff-managed variable used to start and stop the command.
         self.desired_runid = 0
-
-        ## Sheriff-managed variable used to start and stop the command.
         self.force_quit = 0
-
-        ## True if the command is being removed.
         self.scheduled_for_removal = False
-
-        ## Deputy-reported variable identifying the run ID of the command.
-        # This variable changes each time the command is started.
         self.actual_runid = 0
-
-        ## True if the deputy should automatically restart the command when it
-        # exits.  Auto respawn only happens if the command is set to running.
         self.auto_respawn = False
-
-        ## When stopping the command, which OS signal to send the command to
-        # request that it cleanly exit.  This usually defaults to SIGINT.
         self.stop_signal = DEFAULT_STOP_SIGNAL
-
-        ## When stopping the command, how much time to wait in between sending
-        # it stop_signal and a SIGKILL.
         self.stop_time_allowed = DEFAULT_STOP_TIME_ALLOWED
-
-        ## True if this data structure has been updated with information
-        # received from a deputy, False if not.
         self.updated_from_info = False
 
-    def _update_from_cmd_info2(self, cmd_msg):
+    def update_from_cmd_info2(self, cmd_msg):
         self.pid = cmd_msg.pid
         self.actual_runid = cmd_msg.actual_runid
         self.exit_code = cmd_msg.exit_code
@@ -188,7 +126,7 @@ class SheriffDeputyCommand(object):
             not self.force_quit:
                 self.force_quit = 1
 
-    def _update_from_cmd_order2(self, cmd_msg):
+    def update_from_cmd_order2(self, cmd_msg):
         assert self.sheriff_id == cmd_msg.sheriff_id
         self.exec_str = cmd_msg.cmd.exec_str
         self.command_id = cmd_msg.cmd.command_name
@@ -198,10 +136,10 @@ class SheriffDeputyCommand(object):
         self.stop_signal = cmd_msg.cmd.stop_signal
         self.stop_time_allowed = cmd_msg.cmd.stop_time_allowed
 
-    def _set_group(self, group):
+    def set_group(self, group):
         self.group = group
 
-    def _start(self):
+    def start(self):
         # if the command is already running, then ignore
         if self.pid > 0 and not self.force_quit:
             return
@@ -211,29 +149,19 @@ class SheriffDeputyCommand(object):
             self.desired_runid = 1
         self.force_quit = 0
 
-    def _restart(self):
+    def restart(self):
         self.desired_runid += 1
         if self.desired_runid > (2 << 31):
             self.desired_runid = 1
         self.force_quit = 0
 
-    def _stop(self):
+    def stop(self):
         self.force_quit = 1
 
-    def status(self):
-        """Retrieve the status of the command, as understood by the
-        sheriff.
+    def get_group_name(self):
+        return self.group
 
-        Returns one of:
-        - bot_procman.sheriff.TRYING_TO_START
-        - bot_procman.sheriff.RUNNING
-        - bot_procman.sheriff.TRYING_TO_STOP
-        - bot_procman.sheriff.REMOVING
-        - bot_procman.sheriff.STOPPED_OK
-        - bot_procman.sheriff.STOPPED_ERROR
-        - bot_procman.sheriff.UNKNOWN
-        - bot_procman.sheriff.RESTARTING
-        """
+    def status(self):
         if not self.updated_from_info:
             return UNKNOWN
         if self.desired_runid != self.actual_runid and not self.force_quit:
@@ -258,8 +186,7 @@ class SheriffDeputyCommand(object):
                              signal.SIGINT, signal.SIGKILL ]:
                          return STOPPED_OK
                 else:                          return STOPPED_ERROR
-        else:
-            return UNKNOWN
+        else: return UNKNOWN
 
     def __str__(self):
         return """[%(exec_str)s]
@@ -272,68 +199,61 @@ class SheriffDeputyCommand(object):
    mem_rss:      %(mem_rss_bytes)d
    actual_runid: %(actual_runid)d""" % self.__dict__
 
-class SheriffDeputy(object):
+class SheriffDeputy(gobject.GObject):
     """%Sheriff view of a deputy
 
-    \ingroup python_api
+    You shouldn't need to use this class directly.
     """
     def __init__(self, name):
-        """Initializes a deputy with the specified name.  Do not use this
-        constructor directly.  Instead, get a list of deputies from the
-        Sheriff.
-        """
-
-        ## Deputy name
+        gobject.GObject.__init__(self)
         self.name = name
-
-        ## Last reported CPU load on the deputy.  Ranges from [0, 1], where 0
-        # is no load and 1 is fully loaded.
-        self.cpu_load = 0
-
-        ## Last reported total memory (in bytes) on the deputy.
-        self.phys_mem_total_bytes = 0
-
-        ## Last reported free memory (in bytes) on the deputy.
-        self.phys_mem_free_bytes = 0
-
-        ## Last time info from te deputy was received.  Zero if no info has
-        # ever been received.  Represented in microseconds since the epoch.
+        self.commands = {}
         self.last_update_utime = 0
-
-        # Set to 1 if the deputy uses info_t, orders_t, etc.
-        # Set to 2 if the deputy uses info2_t, order2_t, etc.
+        self.cpu_load = 0
+        self.phys_mem_total_bytes = 0
+        self.phys_mem_free_bytes = 0
+        self.variables = {}
         self._orders_version = 2
-
-        # Dictionary of commands owned by the deputy
-        self._commands = {}
-
 
     def get_commands(self):
         """Retrieve a list of all commands managed by the deputy
 
         @return a list of SheriffDeputyCommand objects
         """
-        return self._commands.values()
+        return self.commands.values()
 
-    def owns_command(self, cmd_object):
+    def owns_command(self, command):
         """Check to see if this deputy manages the specified command
 
-        @param cmd_object a SheriffDeputyCommand object.
+        @param command a SheriffDeputyCommand object.
 
         @return True if this deputy object manages \p command, False if not.
         """
-        return command.sheriff_id in self._commands and \
-                self._commands [command.sheriff_id] is command
+        return command.sheriff_id in self.commands and \
+                self.commands [command.sheriff_id] is command
 
-    def _update_from_deputy_info2(self, dep_info_msg):
+    def get_variables(self):
+        return self.variables
+
+    def set_variable(self, name, val):
+        self.variables[name] = val
+
+    def remove_variable(self, name):
+        if name in self.variables:
+            del self.variables[name]
+
+    def get_variable(self, name):
+        return self.variables[name]
+
+    def update_from_deputy_info2(self, dep_info_msg):
         """
         @dep_info_msg: an instance of bot_procman.info2_t
         """
         status_changes = []
         for cmd_msg in dep_info_msg.cmds:
             # look up the command, or create a new one if it's not found
-            if cmd_msg.sheriff_id in self._commands:
-                cmd = self._commands[cmd_msg.sheriff_id]
+            if cmd_msg.sheriff_id in self.commands:
+                cmd = self.commands[cmd_msg.sheriff_id]
                 old_status = cmd.status()
             else:
                 cmd = SheriffDeputyCommand()
@@ -346,10 +266,10 @@ class SheriffDeputy(object):
                 cmd.desired_runid = cmd_msg.actual_runid
                 cmd.stop_time_allowed = cmd_msg.cmd.stop_time_allowed
                 # TODO handle options
-                self._add_command(cmd)
+                self.add_command(cmd)
                 old_status = None
 
-            cmd._update_from_cmd_info2(cmd_msg)
+            cmd.update_from_cmd_info2(cmd_msg)
             new_status = cmd.status()
 
             if old_status != new_status:
@@ -357,15 +277,17 @@ class SheriffDeputy(object):
 
         updated_ids = [ cmd_msg.sheriff_id for cmd_msg in dep_info_msg.cmds ]
 
-        can_safely_remove = [ cmd for cmd in self._commands.values() \
+        can_safely_remove = [ cmd for cmd in self.commands.values() \
                 if cmd.scheduled_for_removal and \
                 cmd.sheriff_id not in updated_ids ]
 
         for toremove in can_safely_remove:
-            cmd = self._commands[toremove.sheriff_id]
+            cmd = self.commands[toremove.sheriff_id]
             old_status = cmd.status()
             status_changes.append((cmd, old_status, None))
-            del self._commands[toremove.sheriff_id]
+            del self.commands[toremove.sheriff_id]
+
+        # TODO update variables
 
         self.last_update_utime = _now_utime()
         self.cpu_load = dep_info_msg.cpu_load
@@ -373,11 +295,11 @@ class SheriffDeputy(object):
         self.phys_mem_free_bytes = dep_info_msg.phys_mem_free_bytes
         return status_changes
 
-    def _update_from_deputy_orders2(self, orders_msg):
+    def update_from_deputy_orders2(self, orders_msg):
         status_changes = []
         for cmd_msg in orders_msg.cmds:
-            if cmd_msg.sheriff_id in self._commands:
-                cmd = self._commands[cmd_msg.sheriff_id]
+            if cmd_msg.sheriff_id in self.commands:
+                cmd = self.commands[cmd_msg.sheriff_id]
                 old_status = cmd.status()
             else:
                 cmd = SheriffDeputyCommand()
@@ -389,34 +311,41 @@ class SheriffDeputy(object):
                 cmd.stop_signal = cmd_msg.cmd.stop_signal
                 cmd.stop_time_allowed = cmd_msg.cmd.stop_time_allowed
                 cmd.desired_runid = cmd_msg.desired_runid
-                self._add_command(cmd)
+                self.add_command(cmd)
                 old_status = None
-            cmd._update_from_cmd_order2(cmd_msg)
+            cmd.update_from_cmd_order2(cmd_msg)
             new_status = cmd.status()
             if old_status != new_status:
                 status_changes.append((cmd, old_status, new_status))
         updated_ids = set([ cmd_msg.sheriff_id for cmd_msg in orders_msg.cmds ])
-        for cmd in self._commands.values():
+        for cmd in self.commands.values():
             if cmd.sheriff_id not in updated_ids:
                 old_status = cmd.status()
                 cmd.scheduled_for_removal = True
                 new_status = cmd.status()
                 if old_status != new_status:
                     status_changes.append((cmd, old_status, new_status))
+        # TODO update variables
         return status_changes
 
-    def _add_command(self, newcmd):
+    def set_orders_version(self, version):
+        self._orders_version = version
+
+    def get_orders_version(self):
+        return self._orders_version
+
+    def add_command(self, newcmd):
         assert newcmd.sheriff_id != 0
         assert isinstance(newcmd, SheriffDeputyCommand)
-        self._commands[newcmd.sheriff_id] = newcmd
+        self.commands[newcmd.sheriff_id] = newcmd
 
-    def _schedule_for_removal(self, cmd):
+    def schedule_for_removal(self, cmd):
         if not self.owns_command(cmd):
             raise KeyError("invalid command")
         old_status = cmd.status()
         cmd.scheduled_for_removal = True
         if not self.last_update_utime:
-            del self._commands[cmd.sheriff_id]
+            del self.commands[cmd.sheriff_id]
             new_status = None
         else:
             new_status = cmd.status()
@@ -426,9 +355,9 @@ class SheriffDeputy(object):
         orders = orders_t()
         orders.utime = _now_utime()
         orders.host = self.name
-        orders.ncmds = len(self._commands)
+        orders.ncmds = len(self.commands)
         orders.sheriff_name = sheriff_name
-        for cmd in self._commands.values():
+        for cmd in self.commands.values():
             if cmd.scheduled_for_removal:
                 orders.ncmds -= 1
                 continue
@@ -441,18 +370,19 @@ class SheriffDeputy(object):
             cmd_msg.group = cmd.group
             cmd_msg.auto_respawn = cmd.auto_respawn
             orders.cmds.append(cmd_msg)
-        orders.nvars = 0
-        orders.varnames = []
-        orders.varvals = []
+        orders.nvars = len(self.variables)
+        for name, val in self.variables.items():
+            orders.varnames.append(name)
+            orders.varvals.append(val)
         return orders
 
     def _make_orders2_message(self, sheriff_name):
         msg = orders2_t()
         msg.utime = _now_utime()
         msg.host = self.name
-        msg.ncmds = len(self._commands)
+        msg.ncmds = len(self.commands)
         msg.sheriff_name = sheriff_name
-        for cmd in self._commands.values():
+        for cmd in self.commands.values():
             if cmd.scheduled_for_removal:
                 msg.ncmds -= 1
                 continue
@@ -508,10 +438,8 @@ class ScriptExecutionContext(object):
         else:
             return action
 
-class Sheriff(object):
+class Sheriff(gobject.GObject):
     """Controls deputies and processes.
-
-    \ingroup python_api
 
     The Sheriff class provides the primary interface for controlling processes
     using the Procman Python API.  It requires a GLib event loop to run.
@@ -531,151 +459,82 @@ class Sheriff(object):
     gobject.timeout_add(1000, lambda *s: sheriff.send_orders() or True)
     mainloop.run()
     \endcode
-
-    ## Signals ##
-    The Sheriff exposes a number of signals that you can use to
-    register a callback function that gets called when a particular event
-    happens.
-
-    For example, to be notified when the status of a command changes:
-
-    \code
-    def on_command_status_changed(cmd_object, old_status, new_status):
-        print("Command %s status changed from %s -> %s" % (cmd_obj.command_id,
-            old_status, new_status)
-
-    sheriff.command_status_changed.connect(on_command_status_changed)
-    \endcode
     """
 
-    def __init__ (self, lcm_obj = None):
-        """Initialize a new Sheriff object.
+    __gsignals__ = {
+            'deputy-info-received' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+            'command-added' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE,
+                (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+            'command-removed' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE,
+                (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT)),
+            'command-status-changed' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE,
+                (gobject.TYPE_PYOBJECT, gobject.TYPE_PYOBJECT,
+                    gobject.TYPE_PYOBJECT)),
+            'command-group-changed' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+            'script-added' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+            'script-removed' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+            'script-started' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,)),
+            'script-action-executing' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,
+                    gobject.TYPE_PYOBJECT,)),
+            'script-finished' : (gobject.SIGNAL_RUN_LAST,
+                gobject.TYPE_NONE, (gobject.TYPE_PYOBJECT,))
+            }
 
-        \param lcm_obj the LCM object to use for communication.  If None, then
-        the sheriff creates a new lcm.LCM() instance.
-        """
-        self._lcm = lcm_obj
-        if self._lcm is None:
-            self._lcm = lcm.LCM()
-        self._lcm.subscribe("PMD_INFO", self._on_pmd_info)
-        self._lcm.subscribe("PMD_INFO2", self._on_pmd_info2)
-        self._lcm.subscribe("PMD_ORDERS", self._on_pmd_orders)
-        self._lcm.subscribe("PMD_ORDERS2", self._on_pmd_orders2)
-        self._deputies = {}
+    def __init__ (self, comms):
+        gobject.GObject.__init__ (self)
+        self.comms = comms
+        self.comms.subscribe("PMD_INFO", self._on_pmd_info)
+        self.comms.subscribe("PMD_INFO2", self._on_pmd_info2)
+        self.comms.subscribe("PMD_ORDERS", self._on_pmd_orders)
+        self.comms.subscribe("PMD_ORDERS2", self._on_pmd_orders2)
+        self.deputies = {}
         self._is_observer = False
-        self._name = platform.node() + ":" + str(os.getpid()) + \
+        self.name = platform.node() + ":" + str(os.getpid()) + \
                 ":" + str(_now_utime())
 
         # variables for scripts
-        self._scripts = []
-        self._active_script_context = None
-        self._waiting_on_commands = []
-        self._waiting_for_status = None
-        self._last_script_action_time = None
+        self.scripts = []
+        self.active_script_context = None
+        self.waiting_on_commands = []
+        self.waiting_for_status = None
+        self.last_script_action_time = None
 
         # publish a discovery message to query for existing deputies
         discover_msg = discovery_t()
         discover_msg.utime = _now_utime()
         discover_msg.host = ""
         discover_msg.nonce = 0
-        self._lcm.publish("PMD_DISCOVER", discover_msg.encode())
-
-        # signals
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when
-        # information from a deputy is received and processed.
-        # `deputy_info_received(deputy_object)`
-        #
-        # \param deputy_object is a SheriffDeputy corresponding to the updated deputy.
-        self.deputy_info_received = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a new
-        # command is added to the sheriff.
-        #
-        # \param deputy_object is a SheriffDeputy for the deputy that owns the
-        # command.
-        # \param cmd_object is a SheriffDeputyCommand for the new command.
-        self.command_added = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a command
-        # is removed from the sheriff.
-        # `command_removed(deputy_object, cmd_object)`
-        #
-        # \param deputy_object is a SheriffDeputy for the deputy that owned the command.
-        # \param cmd_object is a SheriffDeputyCommand for the removed command.
-        self.command_removed = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when the
-        # status of a command changes (e.g., running, stopped, etc.).
-        # `command_status_changed(cmd_object, old_status, new_status)`
-        #
-        # \param cmd_object is a SheriffDeputyCommand for the command.
-        # \param old_status indicates the old command status.
-        # \param new_status indicates the new command status.
-        self.command_status_changed = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a command
-        # is moved into a different group.
-        #
-        # \param cmd_object the command whose group changes.
-        self.command_group_changed = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a script
-        # is added.
-        #
-        # \param script_object a [SheriffScript](\ref bot_procman.sheriff_script.SheriffScript) object.
-        self.script_added = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a script
-        # is removed.
-        #
-        # \param script_object a [SheriffScript](\ref bot_procman.sheriff_script.SheriffScript) object.
-        self.script_removed = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a script
-        # begins executing.
-        # `script_started(script_object)`
-        #
-        # \param script_object a [SheriffScript](\ref bot_procman.sheriff_script.SheriffScript) object.
-        self.script_started = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a single
-        # action in a script begins to run.  (e.g., start a command)
-        # `script_action_executing(script_object, action)`
-        #
-        # \param script_object a [SheriffScript](\ref bot_procman.sheriff_script.SheriffScript) object
-        # \param action one of: [StartStopRestartAction](\ref bot_procman.sheriff_script.StartStopRestartAction),
-        # [WaitMsAction](\ref bot_procman.sheriff_script.WaitMsAction),
-        # [WaitStatusAction](\ref bot_procman.sheriff_script.WaitStatusAction),
-        # [RunScriptAction](\ref bot_procman.sheriff_script.RunScriptAction)
-        self.script_action_executing = Signal()
-
-        ## [Signal](\ref bot_procman.signal_slot.Signal) emitted when a script
-        # finishes execution.
-        # `script_finished(script_object)`
-        #
-        # \param script_object a SheriffScript object
-        self.script_finished = Signal()
+        self.comms.publish("PMD_DISCOVER", discover_msg.encode())
 
     def _get_or_make_deputy(self, deputy_name):
-        if deputy_name not in self._deputies:
-            self._deputies[deputy_name] = SheriffDeputy(deputy_name)
-        return self._deputies[deputy_name]
+        if deputy_name not in self.deputies:
+            self.deputies[deputy_name] = SheriffDeputy(deputy_name)
+        return self.deputies[deputy_name]
 
     def _maybe_emit_status_change_signals(self, deputy, status_changes):
         for cmd, old_status, new_status in status_changes:
             if old_status == new_status:
                 continue
             if old_status is None:
-                self.command_added(deputy, cmd)
+                self.emit("command-added", deputy, cmd)
             elif new_status is None:
-                self.command_removed(deputy, cmd)
+                self.emit("command-removed", deputy, cmd)
             else:
                 self._check_wait_action_status()
-                self.command_status_changed(cmd, old_status, new_status)
+                self.emit("command-status-changed", cmd,
+                        old_status, new_status)
 
     def _get_command_deputy(self, cmd):
-        for deputy in self._deputies.values():
+        for deputy in self.deputies.values():
             if deputy.owns_command(cmd):
                 return deputy
         raise KeyError()
@@ -693,14 +552,14 @@ class Sheriff(object):
         # If this is the first time we've heard from the deputy and we already
         # have a desired state for the deputy, then try to reconcile the stored
         # desired state with the deputy's reported state.
-        if not deputy.last_update_utime and deputy._commands:
+        if not deputy.last_update_utime and deputy.commands:
             _dbg("First update from [%s]" % info_msg.host)
             # for each command we already have lined up in the deputy, check to
             # see if the deputy is already managing that command.  If the
             # deputy is already managing that command, then reassign the
             # internal ID for the command to match what the deputy is
             # reporting.
-            for cmd in deputy._commands.values():
+            for cmd in deputy.commands.values():
                 for cmd_msg in info_msg.cmds:
                     matched = cmd.exec_str == cmd_msg.cmd.exec_str and \
                               cmd.command_id == cmd_msg.cmd.command_name and \
@@ -709,8 +568,8 @@ class Sheriff(object):
                     if not matched:
                         continue
                     collision = False
-                    for other_deputy in self._deputies.values():
-                        if other_deputy._commands.get(cmd_msg.sheriff_id, cmd) \
+                    for other_deputy in self.deputies.values():
+                        if other_deputy.commands.get(cmd_msg.sheriff_id, cmd) \
                                 is not cmd:
                             collision = True
                             break
@@ -720,18 +579,18 @@ class Sheriff(object):
                     # exactly like the command the sheriff wants the
                     # deputy to run.  Reassign the sheriff ID to match
                     # what the deputy is reporting.
-                    del deputy._commands[cmd.sheriff_id]
+                    del deputy.commands[cmd.sheriff_id]
                     cmd.sheriff_id = cmd_msg.sheriff_id
-                    deputy._commands[cmd.sheriff_id] = cmd
+                    deputy.commands[cmd.sheriff_id] = cmd
                     _dbg("Merging command [%s] with command reported by deputy" \
                             % cmd.command_id)
                     break
 
-        deputy._orders_version = version
+        deputy.set_orders_version(version)
 
-        status_changes = deputy._update_from_deputy_info2(info_msg)
+        status_changes = deputy.update_from_deputy_info2(info_msg)
 
-        self.deputy_info_received(deputy)
+        self.emit("deputy-info-received", deputy)
         self._maybe_emit_status_change_signals(deputy, status_changes)
 
     def _on_pmd_info2(self, _, data):
@@ -790,7 +649,7 @@ class Sheriff(object):
             return
 
         deputy = self._get_or_make_deputy(orders_msg.host)
-        status_changes = deputy._update_from_deputy_orders2(orders_msg)
+        status_changes = deputy.update_from_deputy_orders2(orders_msg)
         self._maybe_emit_status_change_signals(deputy, status_changes)
 
     def _on_pmd_orders2(self, _, data):
@@ -832,8 +691,8 @@ class Sheriff(object):
 
         for _ in range(1 << 16):
             collision = False
-            for deputy in self._deputies.values():
-                if id_to_try in deputy._commands:
+            for deputy in self.deputies.values():
+                if id_to_try in deputy.commands:
                     collision = True
                     break
 
@@ -846,36 +705,30 @@ class Sheriff(object):
                 return result
         raise RuntimeError("no available sheriff id")
 
-    def get_name(self):
-        """Retrieve the sheriff name, as self reported to deputies.
-         The sheriff name is automatically set to a combination of the
-         hostname, current PID, and the time the sheriff was created."""
-        return self._name
-
     def send_orders(self):
-        """Transmit orders to all deputies.  Call this method for the sheriff
-        to send updated orders to its deputies.  This method is automatically
-        called when you call other sheriff methods such as add_command(),
-        start_command(), etc.  In general, you should only need to explicitly
-        call this method for a periodic transmission to be robust against
-        network failures and dropped messages.
+        """Transmit orders to all deputies.
+        Call this method for the sheriff to send updated orders to its deputies.
+        This method is automatically called when you call other sheriff methods
+        such as add_command, start_command, etc.  In general, you should only
+        need to explicitly call this method for a periodic transmission to be
+        robust against network failures and dropped messages.
 
         @note Orders will only be sent to a deputy if the sheriff has received at
         least one update from the deputy.
         """
         if self._is_observer:
             raise ValueError("Can't send orders in Observer mode")
-        for deputy in self._deputies.values():
+        for deputy in self.deputies.values():
             # only send orders to a deputy if we've heard from it.
             if deputy.last_update_utime > 0:
 
-                version = deputy._orders_version
+                version = deputy.get_orders_version()
                 if version == 1:
-                    msg = deputy._make_orders_message(self._name)
-                    self._lcm.publish("PMD_ORDERS", msg.encode())
+                    msg = deputy._make_orders_message(self.name)
+                    self.comms.publish("PMD_ORDERS", msg.encode())
                 else:
-                    msg = deputy._make_orders2_message(self._name)
-                    self._lcm.publish("PMD_ORDERS2", msg.encode())
+                    msg = deputy._make_orders2_message(self.name)
+                    self.comms.publish("PMD_ORDERS2", msg.encode())
 
     def add_command(self, spec):
         """Add a new command.
@@ -905,15 +758,16 @@ class Sheriff(object):
         newcmd.auto_respawn = spec.auto_respawn
         newcmd.stop_signal = spec.stop_signal
         newcmd.stop_time_allowed = spec.stop_time_allowed
-        dep._add_command(newcmd)
-        self.command_added(dep, newcmd)
+        dep.add_command(newcmd)
+        self.emit("command-added", dep, newcmd)
         self.send_orders()
         return newcmd
 
     def start_command(self, cmd):
-        """Sets a command's desired status to running.  If the command is not
-        running, then the deputy will start it.  If the command is already
-        running, then no action is taken.
+        """Sets a command's desired status to running.
+
+        If the command is not running, then the deputy will start it.
+        If the command is already running, then no action is taken.
         This method calls send_orders().
 
         @param cmd a SheriffDeputyCommand object specifying the command to run.
@@ -921,7 +775,7 @@ class Sheriff(object):
         if self._is_observer:
             raise ValueError("Can't modify commands in Observer mode")
         old_status = cmd.status()
-        cmd._start()
+        cmd.start()
         new_status = cmd.status()
         deputy = self.get_command_deputy(cmd)
         self._maybe_emit_status_change_signals(deputy,
@@ -930,9 +784,11 @@ class Sheriff(object):
 
     def restart_command(self, cmd):
         """Starts a command if it's not running, or stop and then start it if it's
-        already running.  If the command is not running, then the deputy will
-        start it.  If the command is already running, then the deputy will
-        terminate it and then start it again.
+        already running.
+
+        If the command is not running, then the deputy will start it.
+        If the command is already running, then the deputy will terminate it and
+        then start it again.
         This method calls send_orders().
 
         @param cmd a SheriffDeputyCommand object specifying the command to
@@ -941,7 +797,7 @@ class Sheriff(object):
         if self._is_observer:
             raise ValueError("Can't modify commands in Observer mode")
         old_status = cmd.status()
-        cmd._restart()
+        cmd.restart()
         new_status = cmd.status()
         deputy = self.get_command_deputy(cmd)
         self._maybe_emit_status_change_signals(deputy,
@@ -949,16 +805,18 @@ class Sheriff(object):
         self.send_orders()
 
     def stop_command(self, cmd):
-        """Sets a command's desired status to stopped.  If the command is
-        running, then the deputy will stop it.  If the command is not running,
-        then no action is taken.  This method calls send_orders().
+        """Sets a command's desired status to stopped.
+
+        If the command is running, then the deputy will stop it.
+        If the command is not running, then no action is taken.
+        This method calls send_orders().
 
         @param cmd a SheriffDeputyCommand object specifying the command to stop.
         """
         if self._is_observer:
             raise ValueError("Can't modify commands in Observer mode")
         old_status = cmd.status()
-        cmd._stop()
+        cmd.stop()
         new_status = cmd.status()
         deputy = self.get_command_deputy(cmd)
         self._maybe_emit_status_change_signals(deputy,
@@ -966,10 +824,11 @@ class Sheriff(object):
         self.send_orders()
 
     def set_command_exec(self, cmd, exec_str):
-        """Set the executable string for a command.  Calling this will not
-        terminate the command if it's already running, and the new execution
-        command will not take effect until the next time the command is run by
-        the deputy.
+        """Set the actual command to be executed when running a command.
+
+        Calling this will not terminate the command if it's already running, and
+        the new execution command will not take effect until the next time the
+        command is run by the deputy.
 
         This method does not call send_orders()
 
@@ -1002,10 +861,10 @@ class Sheriff(object):
         if self._is_observer:
             raise ValueError("Can't modify commands in Observer mode")
 #        deputy = self._get_command_deputy(cmd)
-        old_group = cmd.group
+        old_group = cmd.get_group_name()
         if old_group != group_name:
-            cmd._set_group(group_name)
-            self.command_group_changed( cmd)
+            cmd.set_group(group_name)
+            self.emit("command-group-changed", cmd)
 
     def set_auto_respawn(self, cmd, newauto_respawn):
         """Set if a deputy should auto-respawn the command when the command
@@ -1029,10 +888,12 @@ class Sheriff(object):
         """
         cmd.stop_time_allowed = int(new_stop_time_allowed)
 
-    def schedule_command_for_removal(self, cmd):
-        """Remove a command.  This starts the process of purging a command from
-        the sheriff and deputies.  It is not instantaneous, because the sheriff
-        needs to wait for removal confirmation from the deputy.
+    def schedule_command_for_removal(self, command):
+        """Remove a command.
+
+        This starts the process of purging a command from the sheriff and
+        deputies.  It is not instantaneous, because the sheriff needs to wait for
+        removal confirmation from the deputy.
 
         This method calls send_orders()
 
@@ -1041,18 +902,19 @@ class Sheriff(object):
         if self._is_observer:
             raise ValueError("Can't remove commands in Observer mode")
         deputy = self.get_command_deputy(command)
-        status_changes = deputy._schedule_for_removal(command)
+        status_changes = deputy.schedule_for_removal(command)
         self._maybe_emit_status_change_signals(deputy, status_changes)
         self.send_orders()
 
     def move_command_to_deputy(self, cmd, newdeputy_name):
-        """Move a command from one deputy to another.  This removes the command
-        from one deputy, and creates it in another.  This method calls
-        send_orders().  On return, the passed in command object is no longer
-        valid and should not be used.
+        """Move a command from one deputy to another.
+
+        This removes the command from one deputy, and creates it in another.
+        This method calls send_orders().  On return, the passed in command
+        object is no longer valid and should not be used.
 
         @param cmd a SheriffDeputyCommand object to move.  This object is invalidated by this method.
-        @param newdeputy_name the name of the new deputy for the command.
+        @newdeputy_name the name of the new deputy for the command.
 
         @return the newly created command
         """
@@ -1088,7 +950,7 @@ class Sheriff(object):
 
         @return a list of SheriffDeputy objects.
         """
-        return self._deputies.values()
+        return self.deputies.values()
 
     def find_deputy(self, name):
         """Retrieve the SheriffDeputy object by deputy name.
@@ -1097,7 +959,7 @@ class Sheriff(object):
 
         @return a SheriffDeputy object.
         """
-        return self._deputies[name]
+        return self.deputies[name]
 
     def purge_useless_deputies(self):
         """Clean up the Sheriff internal state.
@@ -1106,22 +968,16 @@ class Sheriff(object):
         commands and terminates.  It purges the Sheriff's internal representation
         of deputies that don't have any commands.
         """
-        for deputy_name, deputy in self._deputies.items():
-            cmds = deputy._commands.values()
-            if not deputy._commands or \
+        for deputy_name, deputy in self.deputies.items():
+            cmds = deputy.commands.values()
+            if not deputy.commands or \
                     all([ cmd.scheduled_for_removal for cmd in cmds ]):
-                del self._deputies[deputy_name]
+                del self.deputies[deputy_name]
 
     def get_command_by_sheriff_id(self, sheriff_id):
-        """Retrieve a command by its sheriff ID.
-
-        The sheriff ID is assigned and managed by the sheriff automtically.  It
-        is not the same as the user-assigned command ID.  You generally should
-        not need to use this function.
-        """
-        for deputy in self._deputies.values():
-            if sheriff_id in deputy._commands:
-                return deputy._commands[sheriff_id]
+        for deputy in self.deputies.values():
+            if sheriff_id in deputy.commands:
+                return deputy.commands[sheriff_id]
         raise KeyError("No such command")
 
     def get_command_deputy(self, command):
@@ -1132,8 +988,8 @@ class Sheriff(object):
         @return a SheriffDeputy object corresponding to the deputy that manages
         the specified command.
         """
-        for deputy in self._deputies.values():
-            if command.sheriff_id in deputy._commands:
+        for deputy in self.deputies.values():
+            if command.sheriff_id in deputy.commands:
                 return deputy
         raise KeyError("No such command")
 
@@ -1143,13 +999,13 @@ class Sheriff(object):
         @return a list of SheriffDeputyCommand objects.
         """
         cmds = []
-        for dep in self._deputies.values():
-            cmds.extend(dep._commands.values())
+        for dep in self.deputies.values():
+            cmds.extend(dep.commands.values())
         return cmds
 
     def get_commands_by_deputy_and_id(self, deputy_name, cmd_id):
-        """Search for commands with the specified deputy name and command
-        id.  This should return at most one command.
+        """Search for commands with the specified deputy name and command id.
+        This should return at most one command.
 
         @param deputy_name the desired deputy name
         @param cmd_id the desired command id.
@@ -1157,17 +1013,17 @@ class Sheriff(object):
         @return a list of SheriffDeputyCommand objects matching the query, or an
         empty list if none are found.
         """
-        if deputy_name not in self._deputies:
+        if deputy_name not in self.deputies:
             return []
         result = []
-        for cmd in self._deputies[deputy_name]._commands.values():
+        for cmd in self.deputies[deputy_name].commands.values():
             if cmd.command_id == cmd_id:
                 result.append(cmd)
         return result
 
     def get_commands_by_id(self, cmd_id):
-        """Retrieve all commands with the specified id.  This should only
-        return one command.
+        """Retrieve all commands with the specified id.
+        This should only return one command.
 
         @param cmd_id the desired command id.
 
@@ -1175,16 +1031,17 @@ class Sheriff(object):
         empty list if none are found.
         """
         result = []
-        for deputy in self._deputies.values():
-            for cmd in deputy._commands.values():
+        for deputy in self.deputies.values():
+            for cmd in deputy.commands.values():
                 if cmd.command_id == cmd_id:
                     result.append(cmd)
         return result
 
     def get_commands_by_group(self, group_name):
-        """Retrieve a list of all commands in the specified group.  Use this
-        method to find out what commands are in a group.  Commands in subgroups
-        of the specified group are also included.
+        """Retrieve a list of all commands in the specified group.
+
+        Use this method to find out what commands are in a group.  Commands in
+        subgroups of the specified group are also included.
 
         @param group_name the name of the desired group
 
@@ -1195,8 +1052,8 @@ class Sheriff(object):
         while group_name.find("//") >= 0:
             group_name = group_name.replace("//", "/")
         group_parts = group_name.split("/")
-        for deputy in self._deputies.values():
-            for cmd in deputy._commands.values():
+        for deputy in self.deputies.values():
+            for cmd in deputy.commands.values():
                 cmd_group_parts = cmd.group.split("/")
                 if len(group_parts) <= len(cmd_group_parts) and \
                         all([ cgp == gp for cgp, gp in zip(group_parts,
@@ -1210,8 +1067,8 @@ class Sheriff(object):
         @return the SheriffScript object corresponding to the active script, or
         None if there is no active script.
         """
-        if self._active_script_context:
-            return self._active_script_context.script
+        if self.active_script_context:
+            return self.active_script_context.script
         return None
 
     def get_script(self, name):
@@ -1221,7 +1078,7 @@ class Sheriff(object):
 
         @return a SheriffScript object, or None if no such script is found.
         """
-        for script in self._scripts:
+        for script in self.scripts:
             if script.name == name:
                 return script
         return None
@@ -1231,7 +1088,7 @@ class Sheriff(object):
 
         @return a list of SheriffScript objects
         """
-        return self._scripts
+        return self.scripts
 
     def add_script(self, script):
         """Add a new script to the sheriff.
@@ -1240,20 +1097,20 @@ class Sheriff(object):
         """
         if self.get_script(script.name) is not None:
             raise ValueError("Script [%s] already exists", script.name)
-        self._scripts.append(script)
-        self.script_added(script)
+        self.scripts.append(script)
+        self.emit("script-added", script)
 
     def remove_script(self, script):
         """Remove a script.
 
         @param script the SheriffScript object to remove.
         """
-        if self._active_script_context is not None:
+        if self.active_script_context is not None:
             raise RuntimeError("Script removal is not allowed while a script is running.")
 
-        if script in self._scripts:
-            self._scripts.remove(script)
-            self.script_removed(script)
+        if script in self.scripts:
+            self.scripts.remove(script)
+            self.emit("script-removed", script)
         else:
             raise ValueError("Unknown script [%s]", script.name)
 
@@ -1268,9 +1125,10 @@ class Sheriff(object):
             raise ValueError("Invalid ident_type %s" % ident_type)
 
     def check_script_for_errors(self, script, path_to_root=None):
-        """Check a script object for errors that would prevent its
-        execution.  Possible errors include a command or group mentioned in the
-        script not being found by the sheriff.
+        """Check a script object for errors that would prevent its execution
+
+        Possible errors include a command or group mentioned in the script not
+        being found by the sheriff.
 
         @param script a SheriffScript object to inspect
 
@@ -1319,45 +1177,45 @@ class Sheriff(object):
         return err_msgs
 
     def _finish_script_execution(self):
-        script = self._active_script_context.script
-        self._active_script_context = None
-        self._waiting_on_commands = []
-        self._waiting_for_status = None
+        script = self.active_script_context.script
+        self.active_script_context = None
+        self.waiting_on_commands = []
+        self.waiting_for_status = None
         if script:
-            self.script_finished(script)
+            self.emit("script-finished", script)
 
     def _check_wait_action_status(self):
-        if not self._waiting_on_commands:
+        if not self.waiting_on_commands:
             return
 
         # hack.. don't execute actions faster than 10 Hz
-        time_elapsed_ms = (_now_utime() - self._last_script_action_time) * 1000
+        time_elapsed_ms = (_now_utime() - self.last_script_action_time) * 1000
         if time_elapsed_ms < 100:
             return
 
-        if self._waiting_for_status == "running":
+        if self.waiting_for_status == "running":
             acceptable_statuses = RUNNING
-        elif self._waiting_for_status == "stopped":
+        elif self.waiting_for_status == "stopped":
             acceptable_statuses = [ STOPPED_OK, STOPPED_ERROR ]
         else:
             raise ValueError("Invalid desired status %s" % \
-                    self._waiting_for_status)
+                    self.waiting_for_status)
 
-        for cmd in self._waiting_on_commands:
+        for cmd in self.waiting_on_commands:
             if cmd.status() not in acceptable_statuses:
                 return
 
         # all commands passed the status check.  schedule the next action
-        self._waiting_on_commands = []
-        self._waiting_for_status = None
+        self.waiting_on_commands = []
+        self.waiting_for_status = None
         gobject.timeout_add(0, self._execute_next_script_action)
 
     def _execute_next_script_action(self):
         # make sure there's an active script
-        if not self._active_script_context:
+        if not self.active_script_context:
             return False
 
-        action = self._active_script_context.get_next_action()
+        action = self.active_script_context.get_next_action()
 
         if action is None:
             # no more actions, script is done.
@@ -1366,7 +1224,8 @@ class Sheriff(object):
 
         assert action.action_type != "run_script"
 
-        self.script_action_executing(self._active_script_context.script, action)
+        self.emit("script-action-executing", self.active_script_context.script,
+                action)
 
         # fixed time wait -- just set a GObject timer to call this function
         # again
@@ -1378,7 +1237,7 @@ class Sheriff(object):
         # find the commands that we're operating on
         cmds = self._get_action_commands(action.ident_type, action.ident)
 
-        self._last_script_action_time = _now_utime()
+        self.last_script_action_time = _now_utime()
 
         # execute an immediate action if applicable
         if action.action_type == "start":
@@ -1394,8 +1253,8 @@ class Sheriff(object):
         # do we need to wait for the commands to achieve a desired status?
         if action.wait_status:
             # yes
-            self._waiting_on_commands = cmds
-            self._waiting_for_status = action.wait_status
+            self.waiting_on_commands = cmds
+            self.waiting_for_status = action.wait_status
             self._check_wait_action_status()
         else:
             # no.  Just move on
@@ -1404,10 +1263,12 @@ class Sheriff(object):
         return False
 
     def execute_script(self, script):
-        """Starts executing a script.  If another script is executing, then
-        that script is aborted first.  Calling this method executes the first
-        action in the script.  Other actions will be invoked during LCM message
-        handling and by the GLib event loop (e.g., timers).
+        """Starts executing a script
+
+        If another script is executing, then that script is aborted first.
+        Calling this method executes the first action in the script.  Other
+        actions will be invoked during LCM message handling and by the GLib event
+        loop (e.g., timers).
 
         @param script a sheriff_script.SheriffScript object to execute
         @sa get_script()
@@ -1416,15 +1277,15 @@ class Sheriff(object):
         error message indicates a problem with the script.  Otherwise, the script
         has successfully started execution if the returned list is empty.
         """
-        if self._active_script_context:
+        if self.active_script_context:
             self.abort_script()
 
         errors = self.check_script_for_errors(script)
         if errors:
             return errors
 
-        self._active_script_context = ScriptExecutionContext(self, script)
-        self.script_started(script)
+        self.active_script_context = ScriptExecutionContext(self, script)
+        self.emit("script-started", script)
         self._execute_next_script_action()
 
     def abort_script(self):
@@ -1439,21 +1300,21 @@ class Sheriff(object):
             raise ValueError("Can't load config in Observer mode")
 
         # always replace scripts.
-        for script in self._scripts[:]:
+        for script in self.scripts[:]:
             self.remove_script(script)
 
         current_command_strs = set()
         if merge_with_existing:
             # if merging new config with existing commands, then build an index
             # of the existing commands.
-            for dep in self._deputies.values():
-                for cmd in dep._commands.values():
+            for dep in self.deputies.values():
+                for cmd in dep.commands.values():
                     cmdstr = "%s!%s!%s!%s!%s" % (dep.name, cmd.exec_str, cmd.command_id, cmd.group, cmd.auto_respawn)
                     current_command_strs.add(cmdstr)
         else:
             # remove all current commands if we're not merging.
-            for dep in self._deputies.values():
-                for cmd in dep._commands.values():
+            for dep in self.deputies.values():
+                for cmd in dep.commands.values():
                     self.schedule_command_for_removal(cmd)
 
         commands_to_add = []
@@ -1505,18 +1366,18 @@ class Sheriff(object):
             self.add_script(SheriffScript.from_script_node(script_node))
 
     def save_config(self, file_obj):
-        """Write the current sheriff configuration to the specified file
-        object.  The current sheriff configuration consists of all commands
-        managed by all deputies along with their settings, and all scripts as
-        well.  This information is written out to the specified file object,
-        which can then be loaded into the sheriff again at a later point in
-        time.
+        """Write the current sheriff configuration to the specified file object.
+
+        The current sheriff configuration consists of all commands managed by all
+        deputies along with their settings, and all scripts as well.  This
+        information is written out to the specified file object, which can then
+        be loaded into the sheriff again at a later point in time.
 
         @param file_obj a file object for saving the current sheriff configuration
         """
         config_node = sheriff_config.ConfigNode()
-        for deputy in self._deputies.values():
-            for cmd in deputy._commands.values():
+        for deputy in self.deputies.values():
+            for cmd in deputy.commands.values():
                 cmd_node = sheriff_config.CommandNode()
                 cmd_node.attributes["exec"] = cmd.exec_str
                 cmd_node.attributes["nickname"] = cmd.command_id
@@ -1526,7 +1387,7 @@ class Sheriff(object):
 
                 group = config_node.get_group(cmd.group, True)
                 group.add_command(cmd_node)
-        for script in self._scripts:
+        for script in self.scripts:
             config_node.add_script(script.toScriptNode())
         file_obj.write(str(config_node))
 
@@ -1563,7 +1424,7 @@ def main():
             print "ERROR!  Unable to execute script:\n%s" % "\n  ".join(errors)
             sys.exit(1)
 
-    sheriff.deputy_info_received.connect(\
+    sheriff.connect("deputy-info-received",
             lambda s, dep: sys.stdout.write("deputy info received from %s\n" %
                 dep.name))
     mainloop = gobject.MainLoop()
@@ -1573,3 +1434,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+"""
+@}
+"""
