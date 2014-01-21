@@ -115,7 +115,7 @@ int program_tcm(generic_sensor_driver_t *gsd)
     // set the return types
     memset(data, 0, sizeof(data));
     data[0] = kSetDataComponents;
-    data[1] = 7;
+    data[1] = 4;
     data[2] = kHeading;
     data[3] = kPAngle;
     data[4] = kRAngle;

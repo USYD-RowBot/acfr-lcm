@@ -700,6 +700,13 @@ int LocalPlanner::processWaypoints() {
 						<< endl;
 				setDestReached(true);
 				setNewDest(false);
+
+                // for a message to send
+                acfrlcm::auv_control_t cc;
+                cc.utime = timestamp_now();
+
+                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+                lcm.publish("AUV_CONTROL", &cc);
 			}
 
 			return 1;
@@ -758,7 +765,7 @@ int LocalPlanner::processWaypoints() {
 	acfrlcm::auv_control_t cc;
 	cc.utime = timestamp_now();
 
-	//if( desVel < 1e-3 ) {
+	//if( fabs(desVel) < 1e-3 ) {
 	// stop the motors
 	//cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
 

@@ -199,7 +199,6 @@ int GlobalPlanner::clock() {
 		// Send the global state change message
 		cout << "Publishing new global state: " << gpState.state << endl;
 		lcm.publish("GLOBAL_STATE", &gpState);
-		
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
