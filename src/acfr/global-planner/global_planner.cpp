@@ -171,6 +171,35 @@ int GlobalPlanner::clock() {
 		cout << timestamp_now() << " Current state: " << getCurrentStateString() << "  ";
 		currentState = nextState;
 		cout <<  " New state: " << getCurrentStateString() << endl;
+
+		// broadcast the state change
+		acfrlcm::auv_global_planner_state_t gpState;
+		gpState.utime = timestamp_now();
+		switch (nextState) {
+		case globalPlannerFsmAbort: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::ABORT;
+			break;
+		case globalPlannerFsmIdle: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
+			break;
+		case globalPlannerFsmRun: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::RUN;
+			break;
+		case globalPlannerFsmDone: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::DONE;
+			break;
+		case globalPlannerFsmPause: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::PAUSE;
+			break;
+		case globalPlannerFsmFault: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::FAULT;
+			break;
+		}
+		
+		// Send the global state change message
+		cout << "Publishing new global state: " << gpState.state << endl;
+		lcm.publish("GLOBAL_STATE", &gpState);
+		
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
