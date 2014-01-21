@@ -1,5 +1,6 @@
 <?xml version="1.0" standalone="no" ?>
 <mission>
+<<<<<<< HEAD
     <location lat="0.000" lon="0.000" />
     <desc>
         This is a test mission
@@ -46,8 +47,56 @@
             <velocity x="1" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
+=======
+<location lat="0.000" lon="0.000" />
+<desc>
+This is a test mission
+</desc>
+<global>
+<turn_radius m='4' />
+<drop_distance m="2" />
+<drop_angle rad="0.5" />
+<mission_timeout t = "7200"/>
+<!-- To have the same drop distance in the corners use
+drop_angle [rad] = drop_distance / turn_radius -->
+</global>
+
+	<primative>
+        <goto>
+        <position x="0" y="0" z="2"/>
+        <rotation deg = "0" />
+        <timeout t="1000" />
+        <velocity x="1" />
+        <depth mode = "depth" />
+        <command device="camera" onoff="on"/>
+>>>>>>> 669d440ecdafe27c0fb6e8394418ad8547296c2a
         </goto>
+        </primative>
+
+    <!--
+
+<primative>
+<goto>
+<position x="30" y="0" z="2"/>
+<heading deg = "0" />
+<timeout t="120" />
+<velocity x="0" />
+<depth mode = "depth" />
+<command device="camera" onoff="on"/>
+</goto>
+</primative>
+
+    <primative>
+    <goto>
+    <position x="0" y="0" z="2"/>
+    <rotation deg = "180" />
+    <timeout t="1000" />
+    <velocity x="1" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </goto>
     </primative>
+<<<<<<< HEAD
     
         
     <primative>
@@ -59,9 +108,25 @@
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
-    </primative>
+=======
 
     <primative>
+    <goto>
+    <position x="30" y="0" z="2"/>
+    <heading deg = "0" />
+    <timeout t="120" />
+    <velocity x="1" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </goto>
+>>>>>>> 669d440ecdafe27c0fb6e8394418ad8547296c2a
+    </primative>
+
+-->
+
+    <!--    
+    <primative>
+<<<<<<< HEAD
         <goto>
             <position x="30" y="10" z="1"/>
             <rotation deg = "270" />
@@ -81,10 +146,21 @@
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
+=======
+    <goto>
+    <position x="0" y="0" z="3"/>
+    <heading deg = "180" />
+    <timeout t="1000" />
+    <velocity x="1" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </goto>
+>>>>>>> 669d440ecdafe27c0fb6e8394418ad8547296c2a
     </primative>
     
         
     <primative>
+<<<<<<< HEAD
         <goto>
             <position x="15" y="10" z="1"/>
             <rotation deg = "180" />
@@ -118,23 +194,30 @@
 
 
 <!--
-    <primative>
-        <zambonie>
-            <position x="20" y="20" z="3"/>
-            <heading deg = "45" />
-            <spacing m = "5" />
-            <length m = "25" />
-            <width m = "38" />
-            <timeout t="5000" />
-            <velocity x="1" />
-            <direction d="ccw" />
-            <pitch deg="10" />
-            <depth mode = "depth" />
-            <command device="camera" onoff="on"/>
-        </zambonie>
+=======
+    <goto>
+    <position x="5" y="5" z="3"/>
+    <rotation deg = "0" />
+    <timeout t="1000" />
+    <velocity x="1" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </goto>
     </primative>
--->
+>>>>>>> 669d440ecdafe27c0fb6e8394418ad8547296c2a
+    <primative>
+    <goto>
+    <position x="30" y="05" z="3"/>
+    <rotation deg = "45" />
+    <timeout t="50" />
+    <velocity x="1" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </goto>
+    </primative>
+    -->
 
+<<<<<<< HEAD
 <!--    <primative>
         <gotoandcircle>
             <position x="30" y="05" z="3"/>
@@ -148,4 +231,36 @@
         </gotoandcircle>
     </primative>
 -->
+=======
+    <primative>
+    <zambonie>
+    <position x="20" y="20" z="3"/>
+    <heading deg = "45" />
+    <spacing m = "5" />
+    <length m = "25" />
+    <width m = "38" />
+    <timeout t="5000" />
+    <velocity x="1" />
+    <direction d="ccw" />
+    <pitch deg="10" />
+    <depth mode = "depth" />
+    <command device="camera" onoff="on"/>
+    </zambonie>
+    </primative>
+
+
+<!--    <primative>
+<gotoandcircle>
+<position x="30" y="05" z="2"/>
+<rotation deg = "0" />
+<loops n="1"/>
+<direction d="-1" />
+<timeout t="1000" />
+<velocity x="1" />
+<depth mode = "depth" />
+<command device="camera" onoff="on"/>
+</gotoandcircle>
+</primative>-->
+
+>>>>>>> 669d440ecdafe27c0fb6e8394418ad8547296c2a
 </mission>
