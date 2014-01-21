@@ -171,6 +171,17 @@ int GlobalPlanner::clock() {
 		cout << timestamp_now() << " Current state: " << getCurrentStateString() << "  ";
 		currentState = nextState;
 		cout <<  " New state: " << getCurrentStateString() << endl;
+                /* //Should have some way to tell low level planner that we have switched modes
+		switch(currentState) {
+		case globalPlannerFsmIdle:
+		case globalPlannerFsmAbort:
+			stopMotor();
+			break;
+		case globalPlannerFsmRun:
+			enableMotor();
+			break;
+		}*/
+		
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;

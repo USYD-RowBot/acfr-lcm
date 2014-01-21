@@ -738,7 +738,7 @@ int LocalPlanner::processWaypoints() {
 	acfrlcm::auv_control_t cc;
 	cc.utime = timestamp_now();
 
-	//if( desVel < 1e-3 ) {
+	//if( fabs(desVel) < 1e-3 ) {
 	// stop the motors
 	//cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
 
