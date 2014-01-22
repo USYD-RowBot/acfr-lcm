@@ -13,6 +13,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
 #include <fstream>
 
@@ -31,6 +32,7 @@ class LocalPlanner {
         int loadConfig(char *programName);
         int onNav(const acfrlcm::auv_acfr_nav_t *nav);
         int onPathCommand(const acfrlcm::auv_path_command_t *pc);
+        int onGlobalState(const acfrlcm::auv_global_planner_state_t *gpState);
         int calculateWaypoints();
 	    int processWaypoints();
         lcm::LCM lcm;
@@ -102,6 +104,7 @@ class LocalPlanner {
         
         int destID;
         
+	acfrlcm::auv_global_planner_state_t gpState;
 
         double turningRadius;
         double maxPitch;

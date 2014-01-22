@@ -19,6 +19,13 @@ void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 	lp->onPathCommand(pc);
 }
 
+// Global State command callback
+void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
+		const std::string& channel, const acfrlcm::auv_global_planner_state_t *gpState,
+		LocalPlanner *lp) {
+	lp->onGlobalState(gpState);
+}
+
 // heartbeat callback
 void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp) {
@@ -63,7 +70,10 @@ LocalPlanner::LocalPlanner() :
 	// sunscribe to the required LCM messages
 	lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
 	lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction("GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", calculateLCM, this);
+
+	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	//    pthread_mutex_init(&currPoseLock, NULL);
 	//    pthread_mutex_init(&destPoseLock, NULL);
@@ -480,6 +490,16 @@ int LocalPlanner::calculateWaypoints() {
 
 	return 1;
 }
+
+/**
+ * Account for changes in system state
+ */
+int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpStateLCM) {
+	cout << "Change of global state to: " << gpStateLCM->state << endl;
+	gpState = *gpStateLCM;
+}
+
+
 
 int LocalPlanner::loadConfig(char *program_name) {
 	BotParam *param = NULL;
