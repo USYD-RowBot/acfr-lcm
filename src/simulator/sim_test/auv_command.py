@@ -12,7 +12,7 @@ from acfrlcm.auv_control_t import auv_control_t
 lc = lcm.LCM();
 
 msg = auv_control_t()
-msg.depth_mode = auv_control_t.DEPTH_MODE
+msg.depth_mode = auv_control_t.PITCH_MODE
 msg.run_mode = auv_control_t.RUN
 
 if (len(sys.argv) > 3):

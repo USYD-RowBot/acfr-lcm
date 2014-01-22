@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <math.h>
 
 #include "perls-common/timestamp.h"
 #include <bot_param/param_client.h>
@@ -28,7 +29,7 @@ enum
 
 #define RC_OFFSET 505
 #define RC_THROTTLE_OFFSET 415
-#define RC_TO_DEGREES 0.071875
+#define RC_TO_RAD 0.071875*M_PI/180
 #define RC_TO_RPM 2.8
 
 
@@ -101,9 +102,9 @@ parse_rc(char *buf, lcm_t *lcm)
     {
         acfrlcm_auv_iver_motor_command_t rc;
         rc.utime = timestamp_now();
-        rc.top = -(channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_DEGREES;
+        rc.top = -(channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
         rc.bottom = rc.top;
-        rc.port = -(channel_values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_DEGREES;
+        rc.port = -(channel_values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
         rc.starboard = rc.port;
         rc.main = (channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET) * RC_TO_RPM;
         if(abs(rc.main) < 40)

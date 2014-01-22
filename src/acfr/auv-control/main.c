@@ -358,40 +358,41 @@ int main(int argc, char **argv)
             state.command.heading += 2*M_PI;
         while(state.command.heading > M_PI)
             state.command.heading -= 2*M_PI;
-
+	
         double bearing = atan2(state.nav.vy*cos(state.nav.heading)+state.nav.vx*sin(state.nav.heading),-state.nav.vy*sin(state.nav.heading)+state.nav.vx*cos(state.nav.heading));
 
         while(bearing < -M_PI)
             bearing += 2*M_PI;
         while(bearing > M_PI)
             bearing -= 2*M_PI;
-
+	
         //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
-        //        {
+	//      {
         //            if(state.command.heading < (-M_PI / 2))
-        //                state.command.heading += 2*M_PI;
-        //            else if(state.nav.heading < (-M_PI / 2))
-        //                state.nav.heading += 2*M_PI;
-        //        }
-
-        //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
-        //        {
-        //            if(state.command.heading < (-M_PI / 2))
-        //                state.command.heading += 2*M_PI;
-        //            else if(bearing < (-M_PI / 2))
-        //                bearing += 2*M_PI;
-        //        }
+	//               state.command.heading += 2*M_PI;
+	//           else if(state.nav.heading < (-M_PI / 2))
+	//               state.nav.heading += 2*M_PI;
+	//       }
+		/*
+                if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
+                {
+                    if(state.command.heading < (-M_PI / 2))
+                        state.command.heading += 2*M_PI;
+                    else if(bearing < (-M_PI / 2))
+                        bearing += 2*M_PI;
+		}
+		*/
 
 
         //        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
-        printf("%f\n", roll_offset);
+        //printf("%f\n", roll_offset);
 
-        //        rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+	//      rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
 
         //        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
 
         // correctly compute the weighted bearing
-
+		
         double yaw1 = bearing;
         if (yaw1 > 2*M_PI)
             yaw1 = yaw1 - 2*M_PI;
@@ -408,7 +409,7 @@ int main(int argc, char **argv)
             yaw2 = yaw2 - 2*M_PI;
         else if (yaw1 - yaw2 > M_PI)
             yaw1 = yaw1 - 2*M_PI;
-
+		
         //Weight the heading more as the velocity magnitude decreases
 
         double W_BEARING;
@@ -435,10 +436,10 @@ int main(int argc, char **argv)
                 bearing_weighted += 2*M_PI;
         }
 
-        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
+	        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
 
         printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
-        
+		        
         // Special dive case, no heading control
         if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
         {
@@ -452,9 +453,10 @@ int main(int argc, char **argv)
         double port = plane_angle - roll_offset;
         double starboard = plane_angle - roll_offset;
 
+
         if (state.nav.vx < 0)  // reverse all the fin angles for reverse direction (water relative, so at the moment the assumption is no water currents). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
         {
-            //printf("reversing, flipping fin control\n");
+            printf("reversing, flipping fin control\n");
             top  = -top;
             bottom  = -bottom;
             port = -port;
@@ -462,6 +464,7 @@ int main(int argc, char **argv)
         }
 
 
+	printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
         limit_value(&top, state.plane_rudder_max);
         limit_value(&bottom, state.plane_rudder_max);
         limit_value(&port, state.plane_rudder_max);
