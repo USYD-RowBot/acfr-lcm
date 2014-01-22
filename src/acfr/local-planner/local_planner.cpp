@@ -118,12 +118,18 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 #endif
 	currVel = nav->vx, nav->vy, nav->vz;
 
-	// if required process the special dive mode
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
-
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		// if required process the special dive mode
+		if (diveMode)
+			dive();
+		else
+			processWaypoints();
+	}
+	
 	return 1;
 }
 
@@ -169,10 +175,16 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 	}
 	resetWaypointTime(timestamp_now());
 
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		if (diveMode)
+			dive();
+		else
+			processWaypoints();
+	}
 
 	return 1;
 }
@@ -495,8 +507,20 @@ int LocalPlanner::calculateWaypoints() {
  * Account for changes in system state
  */
 int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpStateLCM) {
-	cout << "Change of global state to: " << gpStateLCM->state << endl;
+	cout << "Change of global state to: " << (int)(gpStateLCM->state) << endl;
 	gpState = *gpStateLCM;
+	// for the moment, send a STOP command to the low level controller
+	// for transitions into any state but RUN.  This may need to be
+	// modified for more complex PAUSE or ABORT behaviours.
+	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+	{
+                // form a STOP message to send
+                acfrlcm::auv_control_t cc;
+                cc.utime = timestamp_now();
+
+                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+                lcm.publish("AUV_CONTROL", &cc);
+	}
 }
 
 
@@ -701,7 +725,7 @@ int LocalPlanner::processWaypoints() {
 				setDestReached(true);
 				setNewDest(false);
 
-                // for a message to send
+                // form a STOP message to send
                 acfrlcm::auv_control_t cc;
                 cc.utime = timestamp_now();
 
