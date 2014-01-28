@@ -307,7 +307,8 @@ void acfrNav::handleHeartBeat(const perllcm_heartbeat_t *heartbeat) {
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		nav.altitude = min(altitude, oasAltitude);
+		//nav.altitude = min(altitude, oasAltitude);
+		nav.altitude = altitude;
 		nav.fwd_obstacle_dist = fwdObstacleDist;
 		
 		

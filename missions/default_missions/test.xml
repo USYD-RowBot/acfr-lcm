@@ -5,12 +5,11 @@
         This is a test mission
     </desc>
     <global>
-        <turn_radius m='4' />
-        <drop_distance m="2" />
-        <drop_angle rad="0.5" />
-        <mission_timeout t = "7200"/>
-        <!-- To have the same drop distance in the corners use 
-            drop_angle [rad] = drop_distance / turn_radius -->
+        <turn_radius m='5' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.7" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
     </global>
 <!--
 	<primative>
@@ -30,10 +29,10 @@
         
     <primative>
         <goto>
-            <position x="30" y="10" z="2"/>
-            <heading deg = "0" />
+            <position x="40" y="10" z="2"/>
+            <heading deg="0" />
             <timeout t="300" />
-            <velocity x="1" />
+            <velocity x="0.75" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
@@ -41,15 +40,38 @@
 
     <primative>
         <goto>
-            <position x="50" y="10" z="1"/>
-            <heading deg = "0" />
+            <position x="70" y="10" z="1"/>
+            <heading deg="0" />
             <timeout t="300" />
-            <velocity x="1" />
+            <velocity x="0.75" />
             <depth mode = "depth" />
             <command device="camera" onoff="on"/>
         </goto>
         </primative>
 
+    <primative>
+        <goto>
+            <position x="70" y="40" z="1"/>
+            <heading deg="90" />
+            <timeout t="300" />
+            <velocity x="0.75" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="on"/>
+        </goto>
+        </primative>
+
+    <primative>
+        <goto>
+            <position x="40" y="40" z="1"/>
+            <heading deg="180" />
+            <timeout t="300" />
+            <velocity x="0.75" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="on"/>
+        </goto>
+    </primative>
+
+<!--
     <primative>
         <goto>
             <position x="30" y="10" z="2"/>
@@ -72,7 +94,7 @@
         </goto>
         </primative>
 
-
+-->
     <!--
 
 <primative>
