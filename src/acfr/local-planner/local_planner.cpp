@@ -19,6 +19,13 @@ void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 	lp->onPathCommand(pc);
 }
 
+// Global State command callback
+void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
+		const std::string& channel, const acfrlcm::auv_global_planner_state_t *gpState,
+		LocalPlanner *lp) {
+	lp->onGlobalState(gpState);
+}
+
 // heartbeat callback
 void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp) {
@@ -63,15 +70,18 @@ LocalPlanner::LocalPlanner() :
 	// sunscribe to the required LCM messages
 	lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
 	lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction("GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", calculateLCM, this);
+
+	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	//    pthread_mutex_init(&currPoseLock, NULL);
 	//    pthread_mutex_init(&destPoseLock, NULL);
 	//    pthread_mutex_init(&waypointsLock, NULL);
-	fp.open("/media/water/misc/personal_folders/navid/iver/log_waypoint.txt",
+    fp.open("/tmp/log_waypoint.txt",
 			ios::out);
 	fp_wp.open(
-			"/media/water/misc/personal_folders/navid/iver/log_waypoint_now.txt",
+            "/tmp/log_waypoint_now.txt",
 			ios::out);
 }
 
@@ -108,12 +118,18 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 #endif
 	currVel = nav->vx, nav->vy, nav->vz;
 
-	// if required process the special dive mode
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
-
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		// if required process the special dive mode
+		if (diveMode)
+			dive();
+		else
+			processWaypoints();
+	}
+	
 	return 1;
 }
 
@@ -159,15 +175,22 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 	}
 	resetWaypointTime(timestamp_now());
 
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		if (diveMode)
+			dive();
+		else
+			processWaypoints();
+	}
 
 	return 1;
 }
 
 #define DIVE_REV_VEL -0.5
+//#define DIVE_REV_VEL 0 // for lab testing
 #define DIVE_PICTH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
@@ -465,7 +488,7 @@ int LocalPlanner::calculateWaypoints() {
 	cout << "waypoints = [" << endl;
 	if (!fp.is_open())
 		fp.open(
-				"/media/water/misc/personal_folders/navid/iver/log_waypoint.txt",
+                "/tmp/log_waypoint.txt",
 				ios::out | ios::app);
 	for (unsigned int i = 0; i < waypoints.size(); i++) {
 		cout << waypoints.at(i).getX() << ", " << waypoints.at(i).getY() << ", "
@@ -480,6 +503,28 @@ int LocalPlanner::calculateWaypoints() {
 
 	return 1;
 }
+
+/**
+ * Account for changes in system state
+ */
+int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpStateLCM) {
+	cout << "Change of global state to: " << (int)(gpStateLCM->state) << endl;
+	gpState = *gpStateLCM;
+	// for the moment, send a STOP command to the low level controller
+	// for transitions into any state but RUN.  This may need to be
+	// modified for more complex PAUSE or ABORT behaviours.
+	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+	{
+                // form a STOP message to send
+                acfrlcm::auv_control_t cc;
+                cc.utime = timestamp_now();
+
+                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+                lcm.publish("AUV_CONTROL", &cc);
+	}
+}
+
+
 
 int LocalPlanner::loadConfig(char *program_name) {
 	BotParam *param = NULL;
@@ -659,7 +704,7 @@ int LocalPlanner::processWaypoints() {
 		// write to log file
 		if (!fp_wp.is_open())
 			fp_wp.open(
-					"/media/water/misc/personal_folders/navid/iver/log_waypoint_now.txt",
+                    "/tmp/log_waypoint_now.txt",
 					ios::out); // don't append
 		for (unsigned int i = 0; i < waypoints.size(); i++) {
 			fp_wp << waypoints.at(i).getX() << " " << waypoints.at(i).getY()
@@ -680,6 +725,13 @@ int LocalPlanner::processWaypoints() {
 						<< endl;
 				setDestReached(true);
 				setNewDest(false);
+
+                // form a STOP message to send
+                acfrlcm::auv_control_t cc;
+                cc.utime = timestamp_now();
+
+                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+                lcm.publish("AUV_CONTROL", &cc);
 			}
 
 			return 1;
@@ -738,7 +790,7 @@ int LocalPlanner::processWaypoints() {
 	acfrlcm::auv_control_t cc;
 	cc.utime = timestamp_now();
 
-	//if( desVel < 1e-3 ) {
+	//if( fabs(desVel) < 1e-3 ) {
 	// stop the motors
 	//cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
 

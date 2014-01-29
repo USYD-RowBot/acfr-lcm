@@ -613,7 +613,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         cout << "Truth: ";
 
         if(! fp.is_open() )
-        	fp.open("/media/water/misc/personal_folders/navid/iver/log.txt",
+            fp.open("/tmp/log.txt",
         			ios::out|ios::app);
         for(int i=0; i<12; i++) {
             printf("%2.3f ", state(i));
@@ -855,7 +855,7 @@ void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     nav_state[12] = nav->altitude;
 
     if( !fp_nav.is_open() )
-    	fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt",
+        fp_nav.open( "/tmp/log_nav.txt",
     			ios::out | ios::app);
     for(int i=0; i<13; i++) {
         printf("%2.3f ", nav_state[i]);
@@ -965,8 +965,8 @@ int main(int argc, char **argv)
     in(2) = 0;
     in(3) = 0;
 
-    fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt", ios::out);
-    fp.open("/media/water/misc/personal_folders/navid/iver/log.txt", ios::out);
+    fp_nav.open( "/tmp/log_nav.txt", ios::out);
+    fp.open("/tmp/log.txt", ios::out);
 
     int fd = lcm.getFileno();
     fd_set rfds;

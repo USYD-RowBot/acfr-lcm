@@ -1,3 +1,0 @@
-#!/bin/sh
-export PYTHONPATH=/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/dist-packages:/home/navid/proj/acfr/acfr_lcm/third-party/build/lib/python2.7/site-packages:${PYTHONPATH}
-exec /usr/bin/python -m bot_procman.sheriff_gtk.sheriff_gtk $*
