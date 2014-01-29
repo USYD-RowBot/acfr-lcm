@@ -1,0 +1,10 @@
+package acfrlcm;
+
+struct classified_t
+{
+    int64_t utime;
+    
+    double x;
+    double y;
+    
+}
