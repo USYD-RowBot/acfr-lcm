@@ -500,7 +500,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         
             if(element->get_name().lowercase() == "timeout")
             {
-                if(!getSingleValue(element, "t", missionTimeout))
+                if(!getSingleValue(element, "t", timeout))
                     return 0;
             }
             else if(element->get_name().lowercase() == "command")
@@ -520,7 +520,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         
     }
 
-    mp->generatePath(missionTimeout, depthMode, commands, waypoints.size());
+    mp->generatePath(timeout, depthMode, commands, waypoints.size());
 
     waypoints.splice(waypoints.end(), mp->getPath());   
     
