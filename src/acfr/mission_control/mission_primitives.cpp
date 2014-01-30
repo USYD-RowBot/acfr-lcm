@@ -1,7 +1,7 @@
 
-// Contains the functions to turn the primatives into a list of points
+// Contains the functions to turn the primitives into a list of points
 
-#include "mission_primatives.hpp"
+#include "mission_primitives.hpp"
 
 int mission_line::to_points(list<goal_point> &points)
 {

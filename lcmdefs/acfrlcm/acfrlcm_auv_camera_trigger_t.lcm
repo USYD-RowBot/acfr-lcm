@@ -2,7 +2,13 @@ package acfrlcm;
 
 struct auv_camera_trigger_t
 {
-    int64_t utime;
+	const int8_t SET_FREQ = 1;
+	const int8_t SET_DELAY = 2;
+	const int8_t SET_WIDTH = 3;
+	const int8_t SET_STATE = 4;
+	const int8_t SET_ALL = 5;
+
+	int64_t utime;
 	
 	int32_t command;
 	double freq;

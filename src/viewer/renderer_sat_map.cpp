@@ -227,7 +227,7 @@ plot_tile (RendererSatMap *self, double clat, double clon)
         }
     }
     
-    //map image data on to graphical primative
+    //map image data on to graphical primitive
     glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, img_width, img_height,
                   0, GL_RGBA, GL_UNSIGNED_BYTE, tmp_buf);
     free (tmp_buf);
