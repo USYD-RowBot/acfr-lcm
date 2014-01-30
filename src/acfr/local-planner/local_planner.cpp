@@ -127,7 +127,9 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 		if (diveMode)
 			dive();
 		else
+        {
 			processWaypoints();
+        }
 	}
 	
 	return 1;
@@ -157,6 +159,8 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 	if ((currPose.getZ() < 0.2)
 			&& (depthMode == acfrlcm::auv_control_t::DEPTH_MODE)
 			&& (pc->waypoint[2] > 0)) {
+        setNewDest(false);
+        setDestReached(false);
 		diveStage = 0;
 		diveMode = 1;
 		cout << "Going into dive mode" << endl;
@@ -190,6 +194,7 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 }
 
 #define DIVE_REV_VEL -0.5
+//#define DIVE_REV_VEL 0 // for lab testing
 #define DIVE_PICTH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
@@ -220,8 +225,7 @@ int LocalPlanner::dive() {
 		lcm.publish("AUV_CONTROL", &cc);
 
 		// go until we are under, keeping in mind out pressure sensor is at the front
-		if (currPose.getZ() > DIVE_DEPTH
-		)
+        if (currPose.getZ() > DIVE_DEPTH)
 			diveStage = 2;
 		break;
 
@@ -245,6 +249,17 @@ int LocalPlanner::dive() {
 		if (fabs(currVel[0]) < 0.1) {
 			diveMode = 0;
 			diveStage = 4;
+            setDestReached(false);
+            setNewDest(true);
+            if (calculateWaypoints() == 0) {
+                // TODO: We must do something more clever here!!!!!
+                cout
+                        << endl
+                        << "----------------------------------------"
+                        << "Can't calcualte a feasible path. Let's cruise and see what happens"
+                        << "----------------------------------------" << endl << endl;
+            }
+            processWaypoints();
 		}
 		break;
 	}
@@ -512,15 +527,15 @@ int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpSta
 	// for the moment, send a STOP command to the low level controller
 	// for transitions into any state but RUN.  This may need to be
 	// modified for more complex PAUSE or ABORT behaviours.
-	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
-	{
+    if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+    {
                 // form a STOP message to send
                 acfrlcm::auv_control_t cc;
                 cc.utime = timestamp_now();
 
                 cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
                 lcm.publish("AUV_CONTROL", &cc);
-	}
+    }
 }
 
 
@@ -726,11 +741,11 @@ int LocalPlanner::processWaypoints() {
 				setNewDest(false);
 
                 // form a STOP message to send
-                acfrlcm::auv_control_t cc;
-                cc.utime = timestamp_now();
+//                acfrlcm::auv_control_t cc;
+//                cc.utime = timestamp_now();
 
-                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
-                lcm.publish("AUV_CONTROL", &cc);
+//                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+//                lcm.publish("AUV_CONTROL", &cc);
 			}
 
 			return 1;

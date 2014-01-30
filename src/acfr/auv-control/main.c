@@ -343,7 +343,7 @@ int main(int argc, char **argv)
         else if( pitch < -state.pitch_max )
             pitch = -state.pitch_max;
         
-        if (state.nav.vx > 0)
+        if ((state.nav.vx > -0.05)||(prop_rpm > -100))
             plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
         else
             plane_angle = pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
 
 	        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
 
-        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
+		//        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
 		        
         // Special dive case, no heading control
         if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
@@ -453,8 +453,8 @@ int main(int argc, char **argv)
         double port = plane_angle - roll_offset;
         double starboard = plane_angle - roll_offset;
 
-
-        if (state.nav.vx < 0)  // reverse all the fin angles for reverse direction (water relative, so at the moment the assumption is no water currents). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
+	//	printf("prop_rpm: %f\n",prop_rpm);
+        if ((state.nav.vx < -0.05)&&(prop_rpm < -100))  // reverse all the fin angles for reverse direction (given rpm is negative and so is velocity, so water relative should be negative, or soon will be). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
         {
             printf("reversing, flipping fin control\n");
             top  = -top;
@@ -464,7 +464,7 @@ int main(int argc, char **argv)
         }
 
 
-	printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
+		printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
         limit_value(&top, state.plane_rudder_max);
         limit_value(&bottom, state.plane_rudder_max);
         limit_value(&port, state.plane_rudder_max);

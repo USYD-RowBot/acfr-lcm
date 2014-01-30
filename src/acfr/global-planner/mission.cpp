@@ -53,12 +53,12 @@
         }
         
         xmlpp::Node::NodeList xml_other;
-        xmlpp::Node::NodeList xml_primatives;
+        xmlpp::Node::NodeList xml_primitives;
         xmlpp::Node::NodeList xml_globals;
         for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
         {
-            if((*iter)->get_name().lowercase() == "primative")
-                xml_primatives.push_back(*iter);
+            if((*iter)->get_name().lowercase() == "primitive")
+                xml_primitives.push_back(*iter);
             else if((*iter)->get_name().lowercase() == "global")
                 xml_globals.push_back(*iter);            
             else if((*iter)->get_name() != "text")
@@ -69,12 +69,12 @@
         parseGlobals(xml_globals);
         
         // extract the actual mission
-        for(xmlpp::Node::NodeList::iterator iter = xml_primatives.begin(); iter != xml_primatives.end(); ++iter)
+        for(xmlpp::Node::NodeList::iterator iter = xml_primitives.begin(); iter != xml_primitives.end(); ++iter)
         {
-            xmlpp::Node::NodeList primative_list = (*iter)->get_children();
+            xmlpp::Node::NodeList primitive_list = (*iter)->get_children();
             
             
-            for(xmlpp::Node::NodeList::iterator i = primative_list.begin(); i != primative_list.end(); ++i)
+            for(xmlpp::Node::NodeList::iterator i = primitive_list.begin(); i != primitive_list.end(); ++i)
             {
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
@@ -82,7 +82,7 @@
 						|| tag == "spiral_inward")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
-                    cerr << "Unknown mission primative " << (*i)->get_name() << endl;
+                    cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
             }      
                 
         }
@@ -314,28 +314,31 @@ int Mission::getCommand(const xmlpp::Element* element)
         if(device.lowercase() == "camera")
             mc.device = CAMERA;
         else if(device.lowercase() == "dvl")
-            mc.device = CAMERA;
+            mc.device = DVL;
             
         // Camera specific
         if(mc.device == CAMERA)
         {
             if((*i).command.lowercase() == "freq")
             {
-                mc.command = CAMERA_RATE;
+                mc.command = CAMERA_FREQ;
                 mc.valueDouble = atof((*i).value.c_str());
             }            
-            else if((*i).command.lowercase() == "time")
+            else if((*i).command.lowercase() == "width")
             {
-                mc.command = CAMERA_STROBE_DURATION;
+                mc.command = CAMERA_WIDTH;
                 mc.valueDouble = atof((*i).value.c_str());
             }            
             else if((*i).command.lowercase() == "onoff")
             {
-                mc.command = ON_OFF;
-                if((*i).value.lowercase() == "on")
-                    mc.valueInt = 1;
-                else
-                    mc.valueInt = 0;
+		if ((*i).value.lowercase() == "start")
+		{
+                	mc.command = CAMERA_START;
+		}
+		else
+		{
+			mc.command = CAMERA_STOP;
+		}
             }
         }
         

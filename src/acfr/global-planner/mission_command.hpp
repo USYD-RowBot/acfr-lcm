@@ -10,11 +10,12 @@ typedef enum {
 
 // The actual command, some of these require a number or flag
 typedef enum {
-    ON_OFF,
-    CAMERA_RATE,
-    CAMERA_STROBE_DURATION,
-    PD0,
-    PD5
+    CAMERA_START,
+    CAMERA_STOP,
+    CAMERA_FREQ,
+    CAMERA_WIDTH,
+    DVL_PD0,
+    DVL_PD5
 } missionCommandTypeT;
 
 
