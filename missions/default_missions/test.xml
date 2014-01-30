@@ -29,7 +29,7 @@
         
     <primitive>
         <goto>
-            <position x="40" y="10" z="2"/>
+            <position x="100" y="10" z="20"/>
             <heading deg="0" />
             <timeout t="300" />
             <velocity x="0.75" />
