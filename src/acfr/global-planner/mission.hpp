@@ -58,7 +58,7 @@ class Mission
         
         // common variables
         list<MissionCommand> commands;
-        double timout;
+        double timeout;
         depthModeT depthMode;
         
         // Mission globals

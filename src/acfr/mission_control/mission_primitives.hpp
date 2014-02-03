@@ -1,15 +1,15 @@
-// Class definitions of the mission primatives
+// Class definitions of the mission primitives
 
 #include <small/Pose3D.hh>
 #include <list>
 #include "waypoint.hpp"
 
-#ifndef MISSION_PRIMATIVES_HPP
-#define MISSION_PRIMATIVES_HPP
+#ifndef MISSION_PRIMITIVES_HPP
+#define MISSION_PRIMITIVES_HPP
 
 
 // Base clase
-class mission_primative
+class mission_primitive
 {
     public:
         double timeout;
@@ -23,13 +23,13 @@ class mission_primative
         };
 };
 
-class mission_com : public mission_primative
+class mission_com : public mission_primitive
 {
     public:
         int to_points(list<goal_point>&);
 };
 
-class mission_line : public mission_primative
+class mission_line : public mission_primitive
 {   
     public:
         SMALL::Pose3D start;
@@ -41,7 +41,7 @@ class mission_line : public mission_primative
 
 };
 
-class mission_goto : public mission_primative
+class mission_goto : public mission_primitive
 {
     public:
         SMALL::Pose3D end;
@@ -49,7 +49,7 @@ class mission_goto : public mission_primative
         int to_points(list<goal_point>&);
 };
 
-class mission_grid : public mission_primative
+class mission_grid : public mission_primitive
 {
     public:
         SMALL::Pose3D center;
@@ -61,14 +61,14 @@ class mission_grid : public mission_primative
         int to_points(list<goal_point>&);
 };	
 
-class mission_pause : public mission_primative
+class mission_pause : public mission_primitive
 {   
     public:
         double time;
         int to_points(list<goal_point>&);
 };    
 
-class mission_hold : public mission_primative
+class mission_hold : public mission_primitive
 {
     public:
         SMALL::Pose3D position;
@@ -76,7 +76,7 @@ class mission_hold : public mission_primative
         int to_points(list<goal_point>&);
 };
 
-class mission_zambonie : public mission_primative
+class mission_zambonie : public mission_primitive
 {
     public:
         SMALL::Pose3D center;
