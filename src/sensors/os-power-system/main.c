@@ -73,13 +73,13 @@ battery_arg (const char *str, int n, char out[])
     
     c = str;
     // find a delim
-    while ((*c != ',') && (*c != '%') && (*c != '\0'))
+    while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
         c++;    // $CCCCC,
     c++;        // skip the comma
 
     // for preceding args
     for (int i=0; i<(n-1); i++) {
-        while ((*c != ',') && (*c != '%') && (*c != '\0'))
+        while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
             c++; // skip preceding args
         c++;     // skip comma
     }
@@ -89,7 +89,7 @@ battery_arg (const char *str, int n, char out[])
     }
     
     c1 = c; // points to first char of arg we want, or next comma
-    while ((*c != ',') && (*c != '%') && (*c != '\0'))
+    while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
         c++;     // skip to end
     c2 = c - 1;  // points to last char before comma
 
@@ -144,16 +144,18 @@ int parse_os_controller(char *buf, state_t *state, int cont_num) {
 	// the data is valid, lets see what it is
 	if(!strncmp(buf, "$S", 2)) {
 		// system data
+		
 		while(battery_arg(buf, i++, field)) {
+			memset(value, 0, sizeof(value));
 			battery_arg(buf, i++, value);
 			fieldI = ahtoi(field);
-			
 			if(fieldI == 1)
 				state->ps.minutes_tef = (int)ahtoi(value);
 			if(fieldI == 3) 
 				strcpy(state->ps.controller[cont_num].sys_message, value);
 			if(fieldI == 4) 
-				state->ps.controller[cont_num].avg_charge_p = (int)ahtoi(value);
+			{	state->ps.controller[cont_num].avg_charge_p = (int)ahtoi(value);
+			}
 		}
 	}
 	
@@ -331,6 +333,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             minutes_ttf = 0;
             tte_good = 1;
             ttf_good = 1;
+	    
             for(int i=0; i<state->ps.controller[j].num_batteries; i++)
             {
                 state->ps.controller[j].capacity += state->ps.controller[j].battery[i].remaining_capacity * BATT_VOLTAGE;
