@@ -15,6 +15,7 @@
 #include "perls-lcmtypes++/senlcm/micron_ping_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/parosci_t.hpp"
+#include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
 
@@ -35,7 +36,8 @@ public:
     acfrlcm::auv_acfr_nav_t nav;
     senlcm::kvh1750_t imu;
     senlcm::rdi_pd5_t dvl;
-    senlcm::parosci_t depth;
+    senlcm::parosci_t parosci;
+    senlcm::ysi_t ysi;
     senlcm::micron_ping_t oas;
 
     //lcm_t *lcm;

@@ -297,8 +297,8 @@ int LocalPlanner::calculateWaypoints() {
 	//	on the controller to get us there.
 	// TODO: Should we change this so if the waypoint is more than 45deg to each
 	//		side, then we calculate rather that if it is only behind us?
-	if ((currPose.positionDistance(destPose) > 2 * turningRadius)
-			|| (wpRel.getX() < 0)) {
+	if (0) {//(currPose.positionDistance(destPose) > 2 * turningRadius)
+	//		|| (wpRel.getX() < 0)) {
 
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);

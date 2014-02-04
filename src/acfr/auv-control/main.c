@@ -325,10 +325,12 @@ int main(int argc, char **argv)
 
         
         // Depth to pitch
+	// Invert sign of depth/altitude pitch reference to reflect pitch
+	// orientation
         if(state.command.depth_mode == ALTITUDE_MODE)
-            pitch = pid(&state.gains_altitude, state.nav.altitude, state.command.altitude, CONTROL_DT);
+            pitch = -pid(&state.gains_altitude, state.nav.altitude, state.command.altitude, CONTROL_DT);
         else
-            pitch = pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
+            pitch = -pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
         
         // Pitch to fins
         if(state.command.depth_mode == PITCH_MODE)

@@ -55,7 +55,12 @@ void handle_rdi(const lcm::ReceiveBuffer *rbuf, const std::string& channel, cons
 
 void handle_parosci(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const senlcm::parosci_t *sensor, HealthMonitor *state)
 {
-    state->depth = *sensor;
+    state->parosci = *sensor;
+}
+
+void handle_ysi(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const senlcm::ysi_t *sensor, HealthMonitor *state)
+{
+    state->ysi = *sensor;
 }
 
 void handle_nav(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const acfrlcm::auv_acfr_nav_t *sensor, HealthMonitor *state)
@@ -78,7 +83,10 @@ HealthMonitor::HealthMonitor()
     nav.utime = 0;
     imu.utime = 0;
     dvl.utime = 0;
-    depth.utime = 0;
+    parosci.utime = 0;
+    parosci.depth = 0;
+    ysi.utime = 0;
+    ysi.depth = 0;
     oas.utime = 0;
     
     compass_timeout = COMPASS_TIMEOUT;
@@ -94,11 +102,12 @@ HealthMonitor::HealthMonitor()
     // Subscribe to all the sensors we need to monitor
     lcm.subscribeFunction("TCM", handle_tcm, this);
     lcm.subscribeFunction("KVH1550", handle_imu, this); 
-    lcm.subscribeFunction("GPS", handle_gps, this); 
+    lcm.subscribeFunction("GPSD_CLIENT", handle_gps, this); 
     lcm.subscribeFunction("ECOPUCK", handle_ecopuck, this); 
     lcm.subscribeFunction("MICRON", handle_micron, this); 
     lcm.subscribeFunction("RDI", handle_rdi, this);  
     lcm.subscribeFunction("PAROSCI", handle_parosci, this); 
+    lcm.subscribeFunction("YSI", handle_ysi, this); 
     lcm.subscribeFunction("ACFR_NAV", handle_nav, this); 
     
     // Subscribe to the heartbeat
@@ -149,7 +158,10 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     if((hbTime - dvl.utime) < dvl_timeout)
         status.status |= DVL_BIT;
 
-    if((hbTime - depth.utime) < depth_timeout)
+    if(dvl.pd4.btv_status != 0)
+        status.status |= DVL_BIT;
+
+    if((hbTime - parosci.utime) < depth_timeout || (hbTime - ysi.utime) < depth_timeout)
         status.status |= DEPTH_BIT;
 
     if((hbTime - oas.utime) < oas_timeout)
@@ -163,7 +175,9 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 
 int HealthMonitor::checkAbortConditions()
 {
-    if (nav.depth > max_depth || depth.depth > max_depth)
+    // for now check depth against nav solution.  This could also consider
+    // the raw sensor measurements but would have to account for tare.
+    if (nav.depth > max_depth)
     {
 	std::cout << "ABORT: Exceeded max depth" << std::endl;
 	acfrlcm::auv_global_planner_t abortMsg;
