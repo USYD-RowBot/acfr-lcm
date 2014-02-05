@@ -86,16 +86,18 @@ textread_stop (textread_t *tr)
     if (tr->mutable) {
         tr->mutable = false;
 
-        /* generate matlab textread cmd */
-        g_string_printf (tr->textread_string, "[");
-        for (int i=0; i<tr->nfields; i++)
-            g_string_append_printf (tr->textread_string, "nav_t.%s.%s,", tr->srcid, tr->lvalue[i]);
-        g_string_truncate (tr->textread_string, tr->textread_string->len-1); /* backup over last comma */
-        g_string_append_printf (tr->textread_string, "]=textread('%s','", tr->csvlog_fname);
+        /* generate matlab textscan cmd */
+        g_string_printf (tr->textread_string, "fid=fopen('%s');", tr->csvlog_fname);
+	g_string_append_printf (tr->textread_string, "nav_t.%s_scan=textscan(fid,'", tr->srcid);
         for (int i=0; i<tr->nfields; i++)
             g_string_append_printf (tr->textread_string, "%s", tr->rvalue[i]);
         g_string_append_printf (tr->textread_string, "','headerlines',2,'delimiter',';');");
-        fprintf (tr->csvlog_fid, "%s\n", tr->textread_string->str);
+
+        for (int i=0; i<tr->nfields; i++)
+            g_string_append_printf (tr->textread_string, "nav_t.%s.%s=nav_t.%s_scan{%d};", tr->srcid, tr->lvalue[i], tr->srcid, i+1);
+	g_string_append_printf (tr->textread_string, "fclose(fid);");
+fprintf(stderr, "Preparing to write string:\n%s\n", tr->textread_string->str);
+        fprintf (tr->csvlog_fid, "%s;\n", tr->textread_string->str);
 
         /* csv header tags */
         for (int i=0; i<tr->nfields; i++)
