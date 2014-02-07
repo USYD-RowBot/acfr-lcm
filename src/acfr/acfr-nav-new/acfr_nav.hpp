@@ -50,7 +50,7 @@ typedef enum
 class state_c
 {
     public:
-        lcm::LCM lcm;
+        lcm::LCM *lcm;
         Seabed_Interface *slam;
         
         // used to be able to output data in the old format

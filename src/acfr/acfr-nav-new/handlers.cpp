@@ -43,6 +43,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 	// the number of satellites has dropped to 0.
 
     if((gps->status >= 1) && (gps->fix.mode >= 2)) // & (gps->satellites_used >= 3 ))
+    {
         if(state->mode == NAV)
         {
             state->slam->handle_gps_data(gps_data);
@@ -52,6 +53,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
             gps_data.print(state->raw_out);
 	    	state->raw_out << endl;
 		}
+	}
 }
 
 // Handle a Parosci depth sensor message
