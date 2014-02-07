@@ -67,6 +67,12 @@ GlobalPlanner::GlobalPlanner() :
 	// subscribe to the relevant LCM messages
 	lcm.subscribeFunction("TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
 	lcm.subscribeFunction("PATH_RESPONSE", onPathResponse, this);
+
+	// set default values
+	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
+	cameraTriggerMsg.freq = 1;
+	cameraTriggerMsg.pulseWidthUs = -1;
+	cameraTriggerMsg.strobeDelayUs = 1;
 }
 
 GlobalPlanner::~GlobalPlanner() {
@@ -171,6 +177,34 @@ int GlobalPlanner::clock() {
 		cout << timestamp_now() << " Current state: " << getCurrentStateString() << "  ";
 		currentState = nextState;
 		cout <<  " New state: " << getCurrentStateString() << endl;
+
+		// broadcast the state change
+		acfrlcm::auv_global_planner_state_t gpState;
+		gpState.utime = timestamp_now();
+		switch (nextState) {
+		case globalPlannerFsmAbort: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::ABORT;
+			break;
+		case globalPlannerFsmIdle: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
+			break;
+		case globalPlannerFsmRun: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::RUN;
+			break;
+		case globalPlannerFsmDone: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::DONE;
+			break;
+		case globalPlannerFsmPause: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::PAUSE;
+			break;
+		case globalPlannerFsmFault: 
+			gpState.state = acfrlcm::auv_global_planner_state_t::FAULT;
+			break;
+		}
+		
+		// Send the global state change message
+		cout << "Publishing new global state: " << (int)(gpState.state) << endl;
+		lcm.publish("GLOBAL_STATE", &gpState);
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
@@ -264,6 +298,36 @@ int GlobalPlanner::sendLeg() {
 
 // Send commands to instruments
 int GlobalPlanner::sendCommands(list<MissionCommand> &commands) {
+	for (std::list<MissionCommand>::iterator itr = commands.begin(); itr != commands.end(); itr++)
+	{
+		switch(itr->device) {
+		case CAMERA:
+			cameraTriggerMsg.utime = timestamp_now();
+			if (itr->command == CAMERA_FREQ)
+			{
+				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_FREQ;
+				cameraTriggerMsg.freq = itr->valueDouble;
+			} else if (itr->command == CAMERA_WIDTH)
+			{
+				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_WIDTH;
+				cameraTriggerMsg.pulseWidthUs = itr->valueDouble;
+			} else if (itr->command == CAMERA_START)
+			{
+				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
+				cameraTriggerMsg.enabled = 1;
+			} else if (itr->command == CAMERA_STOP)
+			{
+				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
+				cameraTriggerMsg.enabled = 0;
+			}
+			// Send the trigger command 
+			std::cout << "Sending camera trigger: state:" << (int)(cameraTriggerMsg.enabled) << " f:" << (int)(cameraTriggerMsg.freq) << " w:" << (int)(cameraTriggerMsg.pulseWidthUs) << endl;
+			lcm.publish("CAMERA_TRIGGER", &cameraTriggerMsg);
+			break;
+		case DVL:
+			break;
+		}
+	}
 	return 1;
 }
 

@@ -173,7 +173,7 @@ image_draw (BotViewer *viewer, BotRenderer *renderer)
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); //zoom out sampling by nearst pixel
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); //zoom in sampling by nearst pixel
     
-    //map image data on to graphical primative
+    //map image data on to graphical primitive
     glTexImage2D (GL_TEXTURE_2D, 0, GL_INTENSITY8, img_width, img_height,
                   0, GL_LUMINANCE, GL_UNSIGNED_BYTE, img_data);
 

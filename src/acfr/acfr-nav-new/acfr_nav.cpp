@@ -121,7 +121,8 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		nav.altitude = min(state->altitude, state->oas_altitude);
+		//nav.altitude = min(state->altitude, state->oas_altitude);
+		nav.altitude = state->altitude;
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		

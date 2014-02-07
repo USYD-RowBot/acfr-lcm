@@ -4,6 +4,8 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_camera_trigger_t.hpp"
 #include "perls-common/timestamp.h"
 
 #include "mission.hpp"
@@ -64,6 +66,9 @@ class GlobalPlanner
         int sendLeg();
         int sendCommands(list<MissionCommand> &commands);
         int64_t legStartTime;        
+
+	// command settings
+	acfrlcm::auv_camera_trigger_t cameraTriggerMsg;
 };
 
 #endif

@@ -19,6 +19,13 @@ void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 	lp->onPathCommand(pc);
 }
 
+// Global State command callback
+void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
+		const std::string& channel, const acfrlcm::auv_global_planner_state_t *gpState,
+		LocalPlanner *lp) {
+	lp->onGlobalState(gpState);
+}
+
 // heartbeat callback
 void calculateLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp) {
@@ -63,7 +70,10 @@ LocalPlanner::LocalPlanner() :
 	// sunscribe to the required LCM messages
 	lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
 	lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction("GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", calculateLCM, this);
+
+	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	//    pthread_mutex_init(&currPoseLock, NULL);
 	//    pthread_mutex_init(&destPoseLock, NULL);
@@ -108,12 +118,20 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 #endif
 	currVel = nav->vx, nav->vy, nav->vz;
 
-	// if required process the special dive mode
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
-
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		// if required process the special dive mode
+		if (diveMode)
+			dive();
+		else
+        {
+			processWaypoints();
+        }
+	}
+	
 	return 1;
 }
 
@@ -141,6 +159,8 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 	if ((currPose.getZ() < 0.2)
 			&& (depthMode == acfrlcm::auv_control_t::DEPTH_MODE)
 			&& (pc->waypoint[2] > 0)) {
+        setNewDest(false);
+        setDestReached(false);
 		diveStage = 0;
 		diveMode = 1;
 		cout << "Going into dive mode" << endl;
@@ -159,15 +179,22 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc) {
 	}
 	resetWaypointTime(timestamp_now());
 
-	if (diveMode)
-		dive();
-	else
-		processWaypoints();
+	// for now only process waypoints or dive commands if we are in
+	// RUN mode.  This will need to be modified to take into account
+	// an active PAUSE mode.
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	{
+		if (diveMode)
+			dive();
+		else
+			processWaypoints();
+	}
 
 	return 1;
 }
 
 #define DIVE_REV_VEL -0.5
+//#define DIVE_REV_VEL 0 // for lab testing
 #define DIVE_PICTH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
@@ -198,8 +225,7 @@ int LocalPlanner::dive() {
 		lcm.publish("AUV_CONTROL", &cc);
 
 		// go until we are under, keeping in mind out pressure sensor is at the front
-		if (currPose.getZ() > DIVE_DEPTH
-		)
+        if (currPose.getZ() > DIVE_DEPTH)
 			diveStage = 2;
 		break;
 
@@ -223,6 +249,17 @@ int LocalPlanner::dive() {
 		if (fabs(currVel[0]) < 0.1) {
 			diveMode = 0;
 			diveStage = 4;
+            setDestReached(false);
+            setNewDest(true);
+            if (calculateWaypoints() == 0) {
+                // TODO: We must do something more clever here!!!!!
+                cout
+                        << endl
+                        << "----------------------------------------"
+                        << "Can't calcualte a feasible path. Let's cruise and see what happens"
+                        << "----------------------------------------" << endl << endl;
+            }
+            processWaypoints();
 		}
 		break;
 	}
@@ -260,8 +297,8 @@ int LocalPlanner::calculateWaypoints() {
 	//	on the controller to get us there.
 	// TODO: Should we change this so if the waypoint is more than 45deg to each
 	//		side, then we calculate rather that if it is only behind us?
-	if ((currPose.positionDistance(destPose) > 2 * turningRadius)
-			|| (wpRel.getX() < 0)) {
+	if (0) {//(currPose.positionDistance(destPose) > 2 * turningRadius)
+	//		|| (wpRel.getX() < 0)) {
 
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -481,6 +518,28 @@ int LocalPlanner::calculateWaypoints() {
 	return 1;
 }
 
+/**
+ * Account for changes in system state
+ */
+int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpStateLCM) {
+	cout << "Change of global state to: " << (int)(gpStateLCM->state) << endl;
+	gpState = *gpStateLCM;
+	// for the moment, send a STOP command to the low level controller
+	// for transitions into any state but RUN.  This may need to be
+	// modified for more complex PAUSE or ABORT behaviours.
+    if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+    {
+                // form a STOP message to send
+                acfrlcm::auv_control_t cc;
+                cc.utime = timestamp_now();
+
+                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+                lcm.publish("AUV_CONTROL", &cc);
+    }
+}
+
+
+
 int LocalPlanner::loadConfig(char *program_name) {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
@@ -680,6 +739,13 @@ int LocalPlanner::processWaypoints() {
 						<< endl;
 				setDestReached(true);
 				setNewDest(false);
+
+                // form a STOP message to send
+//                acfrlcm::auv_control_t cc;
+//                cc.utime = timestamp_now();
+
+//                cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
+//                lcm.publish("AUV_CONTROL", &cc);
 			}
 
 			return 1;
@@ -738,7 +804,7 @@ int LocalPlanner::processWaypoints() {
 	acfrlcm::auv_control_t cc;
 	cc.utime = timestamp_now();
 
-	//if( desVel < 1e-3 ) {
+	//if( fabs(desVel) < 1e-3 ) {
 	// stop the motors
 	//cc.run_mode = acfrlcm::auv_control_t::STOP; // commented out so that the vehicle stays stationary even with currents, so the motor never stops
 

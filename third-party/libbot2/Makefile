@@ -18,6 +18,7 @@ $(VERBOSE).SILENT:
 all: 
 	@[ -d $(BUILD_PREFIX) ] || mkdir -p $(BUILD_PREFIX) || exit 1
 	@for subdir in $(SUBDIRS); do \
+echo "$(BUILD_PREFIX)" \
 		echo "\n-------------------------------------------"; \
 		echo "-- $$subdir"; \
 		echo "-------------------------------------------"; \

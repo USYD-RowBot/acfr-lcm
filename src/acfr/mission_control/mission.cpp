@@ -54,11 +54,11 @@
         }
         
         xmlpp::Node::NodeList xml_other;
-        xmlpp::Node::NodeList xml_primatives;
+        xmlpp::Node::NodeList xml_primitives;
         for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
         {
-            if((*iter)->get_name().lowercase() == "primative")
-                xml_primatives.push_back(*iter);
+            if((*iter)->get_name().lowercase() == "primitive")
+                xml_primitives.push_back(*iter);
             else if((*iter)->get_name() != "text")
                 xml_other.push_back(*iter);
         }
@@ -67,12 +67,12 @@
         
         
         // extract the actual mission
-        for(xmlpp::Node::NodeList::iterator iter = xml_primatives.begin(); iter != xml_primatives.end(); ++iter)
+        for(xmlpp::Node::NodeList::iterator iter = xml_primitives.begin(); iter != xml_primitives.end(); ++iter)
         {
-            xmlpp::Node::NodeList primative_list = (*iter)->get_children();
+            xmlpp::Node::NodeList primitive_list = (*iter)->get_children();
             
             
-            for(xmlpp::Node::NodeList::iterator i = primative_list.begin(); i != primative_list.end(); ++i)
+            for(xmlpp::Node::NodeList::iterator i = primitive_list.begin(); i != primitive_list.end(); ++i)
             {
                 if((*i)->get_name().lowercase() == "goto")
                     parse_goto(*i);
@@ -87,7 +87,7 @@
                 else if((*i)->get_name().lowercase() == "zambonie")
                     parse_zambonie(*i);
                 else if((*i)->get_name().lowercase() != "text")
-                    cerr << "Unknown mission primative " << (*i)->get_name() << endl;
+                    cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
             }      
                 
         }
@@ -319,11 +319,11 @@ int mission::get_command(const xmlpp::Element* element, list<mission_command> &c
             
 }
 
-// Get all the primative attributes that are common to all primatives
-int mission::get_common(xmlpp::Node *node, mission_primative &primative)
+// Get all the primitive attributes that are common to all primitives
+int mission::get_common(xmlpp::Node *node, mission_primitive &primitive)
 {
     // Set some defaults
-    primative.depth_mode = DEPTH_MODE_DEPTH;
+    primitive.depth_mode = DEPTH_MODE_DEPTH;
 
     xmlpp::Node::NodeList list = node->get_children();     
     for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)   
@@ -333,17 +333,17 @@ int mission::get_common(xmlpp::Node *node, mission_primative &primative)
         {
             if(element->get_name().lowercase() == "timeout")
             {
-                if(!get_timeout(element, primative.timeout))
+                if(!get_timeout(element, primitive.timeout))
                     return 0;
             }
             else if(element->get_name().lowercase() == "command")
             {
-                if(!get_command(element, primative.commands))
+                if(!get_command(element, primitive.commands))
                     return 0;
             }
             else if(element->get_name().lowercase() == "depth")
             {
-                if(!get_depth_mode(element, primative.depth_mode))
+                if(!get_depth_mode(element, primitive.depth_mode))
                     return 0;
             }
 
@@ -546,16 +546,16 @@ int mission::parse_zambonie(xmlpp::Node *node)
                     return 0;
             }
             // the default direction in cw
-            mz.direction = mission_primative::direction_cw;
+            mz.direction = mission_primitive::direction_cw;
             if(element->get_name().lowercase() == "direction")
             {
                 Glib::ustring str;
                 if(get_single_value(element, "d", str)) 
                 {
                     if(str.lowercase() == "cw")
-                        mz.direction = mission_primative::direction_cw;
+                        mz.direction = mission_primitive::direction_cw;
                     else if(str.lowercase() == "ccw")
-                        mz.direction = mission_primative::direction_ccw;
+                        mz.direction = mission_primitive::direction_ccw;
                 }
                 
             }
@@ -604,7 +604,7 @@ int mission::parse_hold(xmlpp::Node *node)
 int mission::parse_command(xmlpp::Node *node)
 {
     // no motion command, just a command to control something on the auv
-    // we will just use the mission_primative base class
+    // we will just use the mission_primitive base class
     mission_com mc;
     
     xmlpp::Node::NodeList list = node->get_children();     
