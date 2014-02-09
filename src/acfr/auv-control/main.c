@@ -346,9 +346,9 @@ int main(int argc, char **argv)
             pitch = -state.pitch_max;
         
         if ((state.nav.vx > -0.05)||(prop_rpm > -100))
-            plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
+            plane_angle = -pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
         else
-            plane_angle = pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
+            plane_angle = -pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
         
         // Heading
         while(state.nav.heading < -M_PI)
@@ -438,7 +438,7 @@ int main(int argc, char **argv)
                 bearing_weighted += 2*M_PI;
         }
 
-	        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
+	        rudder_angle = -pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
 
 		//        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
 		        
