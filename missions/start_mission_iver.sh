@@ -20,5 +20,9 @@ mkdir -p $IMAGE_LOGDIR
 killall -q lcm-logger
 killall -q acfr-cam-logger
 
+# copy the curent config file into the data directory
+cp /home/auv/git/acfr_lcm/config/iverACFR.cfg $LOGDIR
+
+
 $LCMBINDIR/acfr-cam-logger -c "PROSILICA_..16" -o $IMAGE_LOGDIR > /dev/null 2> /dev/null &
 lcm-logger -v -c "PROSILICA_..16" $LOGDIR/$MISSION_NAME.lcm > /dev/null 2> /dev/null &
