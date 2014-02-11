@@ -45,6 +45,17 @@ public:
 
 private:
     double max_depth;
+    double min_alt;
+    double max_abs_pitch;
+
+    bool abort_on_no_compass;
+    bool abort_on_no_gps;
+    bool abort_on_no_ecopuck;
+    bool abort_on_no_nav;
+    bool abort_on_no_imu;
+    bool abort_on_no_dvl;
+    bool abort_on_no_depth;
+    bool abort_on_no_oas;
 
     int64_t compass_timeout;
     int64_t gps_timeout;

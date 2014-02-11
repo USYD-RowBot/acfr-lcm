@@ -564,10 +564,10 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 {
     in(0) = mc->main;
     in(1) = 0;
-    in(2) = mc->top;// / 180.0 * M_PI;
-    in(3) = mc->bottom;
-    in(4) = mc->port;// / 180.0 * M_PI;
-    in(5) = mc->starboard;
+    in(2) = -mc->top;// / 180.0 * M_PI;
+    in(3) = -mc->bottom;
+    in(4) = -mc->port;// / 180.0 * M_PI;
+    in(5) = -mc->starboard;
 }
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method

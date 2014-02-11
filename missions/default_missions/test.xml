@@ -28,7 +28,7 @@
     
     <primitive>
         <goto>
-            <position x="-50" y="-10" z="5"/>
+            <position x="-50" y="-15" z="5"/>
             <heading deg="0" />
             <timeout t="300" />
             <velocity x="0.75" />

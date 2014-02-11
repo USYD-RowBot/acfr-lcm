@@ -88,6 +88,15 @@ HealthMonitor::HealthMonitor()
     ysi.utime = 0;
     ysi.depth = 0;
     oas.utime = 0;
+
+   abort_on_no_compass = false;
+   abort_on_no_gps = false;
+   abort_on_no_ecopuck = false;
+   abort_on_no_nav = false;
+   abort_on_no_imu = false;
+   abort_on_no_dvl = false;
+   abort_on_no_depth = false;
+   abort_on_no_oas = false;
     
     compass_timeout = COMPASS_TIMEOUT;
     gps_timeout = GPS_TIMEOUT;
@@ -124,11 +133,79 @@ int HealthMonitor::loadConfig(char *program_name)
 
         char rootkey[64];
         char key[128];
+	double tmp_double;
         sprintf(rootkey, "acfr.%s", program_name);
 
         sprintf(key, "%s.max_depth", rootkey);
         max_depth = bot_param_get_double_or_fail(param, key);
 	std::cout << "Set max depth to: " << max_depth << std::endl;
+
+        sprintf(key, "%s.min_alt", rootkey);
+        min_alt = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set min alt to: " << min_alt << std::endl;
+
+        sprintf(key, "%s.min_alt", rootkey);
+        min_alt = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set min alt to: " << min_alt << std::endl;
+
+	sprintf(key, "%s.abort_on_no_compass", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_compass=tmp_double;
+	sprintf(key, "%s.compass_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	compass_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_gps", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_gps=tmp_double;
+	sprintf(key, "%s.gps_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	gps_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_ecopuck", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_ecopuck=tmp_double;
+	sprintf(key, "%s.ecopuck_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	ecopuck_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_nav", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_nav=tmp_double;
+	sprintf(key, "%s.nav_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	nav_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_imu", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_imu=tmp_double;
+	sprintf(key, "%s.imu_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	imu_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_dvl", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_dvl=tmp_double;
+	sprintf(key, "%s.dvl_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	dvl_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_depth", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_depth=tmp_double;
+	sprintf(key, "%s.depth_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	depth_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_oas", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_oas=tmp_double;
+	sprintf(key, "%s.oas_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	oas_timeout = tmp_double;
+
+
+
 
 	return 1;
 }

@@ -790,7 +790,8 @@ int LocalPlanner::processWaypoints() {
 	//            desVel = lp->getDefaultLegVel();// * distFromStart / velChDist;
 	//        }
 	else {
-		desVel = getDefaultLegVel();
+		// set the desired velocity as the destination velocity
+		desVel = destVel;// getDefaultLegVel();
 	}
 //	cout << "Destination velocity:" << destVel << endl;
 //	cout << "Desired velocity:" << desVel << endl;
