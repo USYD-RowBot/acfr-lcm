@@ -25,6 +25,7 @@ acfrlcm_auv_acfr_nav_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "vx","%f",      msg->vx);
     TEXTREAD_ADD_FIELD (tr, "vy","%f",      msg->vy);
     TEXTREAD_ADD_FIELD (tr, "vz","%f",      msg->vz);
+    TEXTREAD_ADD_FIELD (tr, "altitude","%f",      msg->altitude);
     textread_stop (tr);
 }
 
