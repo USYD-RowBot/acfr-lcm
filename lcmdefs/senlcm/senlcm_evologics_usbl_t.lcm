@@ -1,0 +1,28 @@
+package senlcm;
+
+struct evologics_usbl_t
+{
+    int64_t utime;
+    
+    int32_t remote_id;
+    
+    double x;
+    double y;
+    double z;
+    
+    double e;
+    double n;
+    double u;
+    
+    double r;
+    double p;
+    double h;
+
+    double prop_time;
+    int32_t rssi;
+    double accuracy;
+    int32_t integrity;
+        
+    double depth;
+}
+
