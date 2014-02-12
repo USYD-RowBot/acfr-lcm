@@ -2,7 +2,7 @@
 #include <string.h>	
 #include <signal.h>
 #include <libgen.h>
-#include <zlib.h>   // for crc32
+//#include <zlib.h>   // for crc32
 #include <bot_param/param_client.h>
 
 #include "perls-common/serial.h"
@@ -16,52 +16,59 @@ int program_imu(int fd, int rate)
 {
     char msg_out[64], msg_in[64];
     
+    printf("Programming IMU ");
     // set the port canonical
     serial_set_canonical(fd, '\r', '\n');
     
     // put it in config mode
     sprintf(msg_out, "=config,1\r");
     write(fd, msg_out, strlen(msg_out));
-/*    
+    printf(".");
+    
     // get response
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
         read(fd, msg_in, sizeof(msg_in));
     } while(!strstr(msg_in, "CONFIG,1"));
-    
     // set the data rate
+    printf(".");
+    
     sprintf(msg_out, "=DR,%d\r\n", rate);
     write(fd, msg_out, strlen(msg_out));
-
+    printf(".");
+    
     // get response
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
         read(fd, msg_in, sizeof(msg_in));
     } while(!strstr(msg_in, "DR,"));
-
+    printf(".");
+    
     // set the angular output
     sprintf(msg_out, "=rotfmt,RATE\r\n");
     write(fd, msg_out, strlen(msg_out));
-
+    printf(".");
+    
     // get response
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
         read(fd, msg_in, sizeof(msg_in));
     } while(!strstr(msg_in, "ROTFMT,RATE"));
-    
+    printf(".");
     
     // leave config mode
     sprintf(msg_out, "=CONFIG,0\r\n");
     write(fd, msg_out, strlen(msg_out));
     serial_set_noncanonical(fd, 1, 0);
-*/    
+
+    printf("IMU programmed and ready to roll\n");    
     return 1;
 }
 
-float get_float(unsigned char *d)
+float get_double(unsigned char *d)
 {
     unsigned char d2[4];
     d2[3] = d[0];
@@ -74,7 +81,7 @@ float get_float(unsigned char *d)
 unsigned int calc_checksum(unsigned char *d, int len)
 {
     // lets check the checksum, the standard CRC32 polynomial 0x04C11DB7 is used
-    return crc32(0, d, len);
+    return 0;//crc32(0, d, len);
 }
 
 int parse_imu(unsigned char *d, lcm_t *lcm)
@@ -89,18 +96,18 @@ int parse_imu(unsigned char *d, lcm_t *lcm)
     
     senlcm_kvh1750_t kvh;
     kvh.utime = timestamp_now();
-    kvh.angular[0] = (double)get_float(&d[4]);
-    kvh.angular[1] = (double)get_float(&d[8]);
-    kvh.angular[2] = (double)get_float(&d[12]);
+    kvh.angular[0] = (double)get_double(&d[4]);
+    kvh.angular[1] = (double)get_double(&d[8]);
+    kvh.angular[2] = (double)get_double(&d[12]);
     
-    kvh.linear[0] = (double)get_float(&d[16]);
-    kvh.linear[1] = (double)get_float(&d[20]);
-    kvh.linear[2] = (double)get_float(&d[24]);
+    kvh.linear[0] = (double)get_double(&d[16]);
+    kvh.linear[1] = (double)get_double(&d[20]);
+    kvh.linear[2] = (double)get_double(&d[24]);
     
     kvh.status = d[28];
     kvh.sequence = d[29];
     
-    kvh.temperature = (double)((short)d[30] >> 8 + d[31]);
+    kvh.temperature = (double)((short)(d[30] >> 8) + d[31]);
     
     senlcm_kvh1750_t_publish(lcm, "KVH1750", &kvh);
     
@@ -155,31 +162,26 @@ int main(int argc, char **argv)
     while(!program_exit)
     {
         // read single bytes until we find the header
-//        do
-//        {
+        do
+        {
             read(serial_fd, &buf[0], 1);    
-//        } while(buf[0] != 0xFE);
+        } while(buf[0] != 0xFE);
         
         // read another 3 bytes
         bytes_read = 0;
         while(bytes_read < 3)
             bytes_read += read(serial_fd, &buf[1 + bytes_read], 3 - bytes_read);
-        
-        
-	printf("%02X, %02X, %02X, %02X, ", buf[0], buf[1], buf[2], buf[3]);    
-/*
+                
+        //	printf("%02X, %02X, %02X, %02X, ", buf[0], buf[1], buf[2], buf[3]);    
+
         // check the sequence
-        if((buf[1] == 0x01) && (buf[2] == 0xFF) && (buf[3] == 0xB5)) //*(int *)&buf[0] == 0x55FF01FE)
+        if((buf[1] == 0x81) && (buf[2] == 0xFF) && (buf[3] == 0x55)) //*(int *)&buf[0] == 0x55FF01FE)
         {
-//	printf("Got valid header\n");
             // data packet, read the rest, another 32 bytes
             bytes_read = 0;
             while(bytes_read < 32)
                 bytes_read += read(serial_fd, &buf[4 + bytes_read], 32 - bytes_read);
   
-            for(int i=0; i<36; i++)
-                printf("%02X ", buf[i] & 0xFF);
-            printf("\n");
               
             parse_imu(buf, lcm);
         }
@@ -191,11 +193,8 @@ int main(int argc, char **argv)
                 bytes_read += read(serial_fd, &buf[4 + bytes_read], 7 - bytes_read);
                 
             printf("Self check packet received\n");
-            for(int i=0; i<11; i++)
-                printf("%X ", buf[i] & 0xFF);
-            printf("\n");
         }
-        */
+        
     }
     
     close(serial_fd);

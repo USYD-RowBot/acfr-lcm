@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <libgen.h>
+#include <math.h>
 
 #include "perls-common/lcm_util.h"
 #include "perls-common/serial.h"
@@ -19,14 +20,15 @@
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
 #define SERVO_RANGE 0
+#define DTOR M_PI/180
 
 // gears are servo 19T, intermediat 40T, fin shaft 36T
 // gear ratio is 0.5277
 // servo range is 90 degrees for input 0 - 255
 #define SERVO_GEAR_RATIO 0.5277
-#define SERVO_SCALE (256.0/90.0)
-#define MAX_FIN_ANGLE (90.0 * SERVO_GEAR_RATIO / 2.0)
-#define DEG_TO_SERVO (45.0 / MAX_FIN_ANGLE)
+#define SERVO_SCALE (256.0/(90.0*DTOR))
+#define MAX_FIN_ANGLE (90.0 * DTOR * SERVO_GEAR_RATIO / 2.0)
+#define DEG_TO_SERVO (45.0 * DTOR / MAX_FIN_ANGLE)
 
 #define REMOTE_TIMEOUT 2000000
 
@@ -78,28 +80,28 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     else if(mc->top < -MAX_FIN_ANGLE)
         rudder_top = (char)0;
     else
-        rudder_top = (char)((mc->top * DEG_TO_SERVO + 45) * SERVO_SCALE);
+        rudder_top = (char)((mc->top * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
         
     if(mc->bottom > MAX_FIN_ANGLE)
         rudder_bottom = (char)255;
     else if(mc->bottom < -MAX_FIN_ANGLE)
         rudder_bottom = (char)0;
     else
-        rudder_bottom = (char)((mc->bottom * DEG_TO_SERVO + 45) * SERVO_SCALE);
+        rudder_bottom = (char)((mc->bottom * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
     
     if(mc->port > MAX_FIN_ANGLE)
         plane_port = (char)255;
     else if(mc->port < -MAX_FIN_ANGLE)
         plane_port = (char)0;
     else
-        plane_port = (char)((mc->port * DEG_TO_SERVO + 45) * SERVO_SCALE);
+        plane_port = (char)((mc->port * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
     
     if(mc->starboard > MAX_FIN_ANGLE)
         plane_starboard = (char)255;
     else if(mc->starboard < -MAX_FIN_ANGLE)
         plane_starboard = (char)0;
     else
-        plane_starboard = (char)((mc->starboard * DEG_TO_SERVO + 45) * SERVO_SCALE);
+        plane_starboard = (char)((mc->starboard * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
     
     
     
@@ -126,6 +128,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     // we don't want to send the data at to high a rate
     if((timestamp_now() - state->last_data_time) > 100000)
     {
+//printf("Motor cmd: %f %s\n", mc->main, motor_string);
         state->last_data_time = timestamp_now();
         write(state->servo_fd, servo_command, 12);
         write(state->motor_fd, motor_string, strlen(motor_string));

@@ -1,6 +1,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include <signal.h>
 #include <string>
+#include <iomanip>
 #include <libgen.h>
 #include <pthread.h>
 #include <error.h>
@@ -12,7 +13,9 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
+#include <fstream>
 
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
@@ -29,12 +32,15 @@ class LocalPlanner {
         int loadConfig(char *programName);
         int onNav(const acfrlcm::auv_acfr_nav_t *nav);
         int onPathCommand(const acfrlcm::auv_path_command_t *pc);
+        int onGlobalState(const acfrlcm::auv_global_planner_state_t *gpState);
         int calculateWaypoints();
 	    int processWaypoints();
         lcm::LCM lcm;
         int process();
         int sendResponse();
         int dive();
+
+        ofstream fp, fp_wp;
       
         Pose3D getCurrPose( void ) const { return currPose; }
         Pose3D getDestPose( void ) const { return destPose; }
@@ -56,9 +62,18 @@ class LocalPlanner {
         
         double getWpDropDist( void ) const { return wpDropDist; }
 
+        double getReplanInterval( void ) const { return replanInterval; }
+
 		double getWaypointTimeout(void) const { return waypointTimeout; }
 		void resetWaypointTime( int64_t t ) { waypointTime = t; }
-		int64_t getWaypointTime( void ) { return waypointTime; }
+		int64_t getWaypointTime( void ) const { return waypointTime; }
+		double getWaypointTimePassedSec(void) const {
+			return (double)(timestamp_now() - getWaypointTime()) / 1000000.;
+		}
+
+        void resetReplanTime( int64_t t ) { replanTime = t; }
+        int64_t getReplanTime( void ) { return replanTime; }
+
 		
 //        pthread_mutex_t currPoseLock;
 //        pthread_mutex_t destPoseLock;
@@ -70,6 +85,7 @@ class LocalPlanner {
         
         Pose3D currPose;
         Vector3D currVel;
+	double currAltitude;
         
         Pose3D startPose;
         double startVel;
@@ -77,7 +93,9 @@ class LocalPlanner {
         Pose3D destPose;
         double destVel;
         
+        // New destination from GLOBAL
         bool newDest;
+        // Global destination
         bool destReached;
         
         int depthMode;
@@ -87,7 +105,8 @@ class LocalPlanner {
         
         int destID;
         
-        double wpDropDist;
+	acfrlcm::auv_global_planner_state_t gpState;
+
         double turningRadius;
         double maxPitch;
         double lookaheadVelScale;
@@ -102,8 +121,12 @@ class LocalPlanner {
         double maxAngleWaypointChange;
         double radiusIncrease;
         double maxAngle;
+        double wpDropDist;
+        double wpDropAngle;
+        double replanInterval;
 
 		int64_t waypointTime;
+        int64_t replanTime;
         
         
         

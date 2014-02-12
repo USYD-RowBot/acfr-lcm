@@ -36,7 +36,8 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_os_compass_t_subscribe (lcm, "^.*OS_COMPASS$", &senlcm_os_compass_t_handler, lle);
     senlcm_ppsboard_t_subscribe (lcm, "^.*PPSBOARD$", &senlcm_ppsboard_t_handler, lle);
     senlcm_prosilica_t_subscribe (lcm, "^.*PROSILICA.*ATTRIBUTES$", &senlcm_prosilica_t_handler, lle);
-    senlcm_rdi_pd4_t_subscribe (lcm, "^.*RDI$", &senlcm_rdi_pd4_t_handler, lle);
+//    senlcm_rdi_pd4_t_subscribe (lcm, "^.*RDI$", &senlcm_rdi_pd4_t_handler, lle);
+    senlcm_rdi_pd5_t_subscribe (lcm, "^.*RDI$", &senlcm_rdi_pd5_t_handler, lle);
     senlcm_tritech_es_t_subscribe (lcm, "^.*TRITECH_ES$", &senlcm_tritech_es_t_handler, lle);
     senlcm_uvc_osi_t_subscribe (lcm, "^.*OS_CONDUIT_OSI$", &senlcm_uvc_osi_t_handler, lle);
     // senlcm added by ACFR
@@ -48,6 +49,10 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_rdi_pd0_t_subscribe (lcm, "RDI_PD0", &senlcm_rdi_pd0_t_handler, lle);
     senlcm_os_power_system_t_subscribe (lcm, "BATTERY", &senlcm_os_power_system_t_handler, lle);
 	senlcm_micron_ping_t_subscribe (lcm, "MICRON", &senlcm_micron_ping_t_handler, lle);
+	senlcm_tcm_t_subscribe (lcm, "TCM", &senlcm_tcm_t_handler, lle);
+	senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
+    senlcm_usb2000_spec_t_subscribe (lcm, "SPEC_DOWN", &senlcm_usb2000_spec_t_handler, lle);
+    senlcm_sts_spec_t_subscribe (lcm, "SPEC_UP", &senlcm_sts_spec_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);
@@ -89,8 +94,11 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
 
     // acfr channels
     acfrlcm_auv_acfr_nav_t_subscribe(lcm, "ACFR_NAV", &acfrlcm_auv_acfr_nav_t_handler, lle);
-    acfrlcm_auv_path_command_t_subscribe(lcm, "LEG_COMMAND", &acfrlcm_auv_path_response_t_handler, lle);
-    acfrlcm_auv_path_response_t_subscribe(lcm, "LEG_RESPONSE", &acfrlcm_auv_path_command_t_handler, lle);
+    acfrlcm_auv_control_t_subscribe(lcm, "AUV_CONTROL", &acfrlcm_auv_control_t_handler, lle);
+    acfrlcm_auv_path_command_t_subscribe(lcm, "PATH_COMMAND", &acfrlcm_auv_path_command_t_handler, lle);
+    acfrlcm_auv_path_response_t_subscribe(lcm, "PATH_RESPONSE", &acfrlcm_auv_path_response_t_handler, lle);
+    acfrlcm_auv_iver_motor_command_t_subscribe(lcm, "IVER_MOTOR", &acfrlcm_auv_iver_motor_command_t_handler, lle);
+    acfrlcm_auv_global_planner_t_subscribe(lcm, "TASK_PLANNER_COMMAND", &acfrlcm_auv_global_planner_t_handler, lle);
 }
 
 int

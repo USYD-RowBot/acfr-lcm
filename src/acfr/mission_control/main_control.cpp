@@ -202,8 +202,8 @@ int main_control::clock()
                     next_state = main_fsm_goto_hold;
 
             }
-*/           else 
-            next_state = main_fsm_goto_hold;
+*/            else 
+               next_state = main_fsm_goto_hold;
             break;
 
             /***********************************************************************************

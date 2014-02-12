@@ -9,7 +9,9 @@
 #include "SpiralInwardPath.h"
 #include "SpiralPath.h"
 #include "GotoPath.h"
-#include "LegPath.h"    
+#include "GotoAndCirclePath.h"
+#include "LegPath.h"
+
 
 #ifndef MISSION_HPP
 #define MISSION_HPP
@@ -56,12 +58,13 @@ class Mission
         
         // common variables
         list<MissionCommand> commands;
-        double timout;
+        double timeout;
         depthModeT depthMode;
         
         // Mission globals
         double dropDistance;
         double dropAngleRad;
+        double turnRadius;
         double missionTimeout;
         double originLat, originLon;
         

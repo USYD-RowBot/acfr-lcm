@@ -214,7 +214,12 @@ bot_param_get_new_camtrans(BotParam *param, const char *cam_name)
   if (0 != bot_param_get_str(param, key, &distortion_model))
     goto fail;
 
-  if (strcmp(distortion_model, "spherical") == 0) {
+  if (strcmp(distortion_model, "null") == 0) {
+    BotDistortionObj* null_dist = bot_null_distortion_create();
+    BotCamTrans* null_camtrans = bot_camtrans_new(cam_name, width, height, fx, fy, cx, cy, skew, null_dist);
+    return null_camtrans;
+  }
+  else if (strcmp(distortion_model, "spherical") == 0) {
     double distortion_param;
     sprintf(key, "%s.distortion_params", prefix);
     if (1 != bot_param_get_double_array(param, key, &distortion_param, 1))
@@ -238,6 +243,17 @@ bot_param_get_new_camtrans(BotParam *param, const char *cam_name)
     BotDistortionObj* pb_dist = bot_plumb_bob_distortion_create(dist_k[0], dist_k[1], dist_k[2], dist_p[0], dist_p[1]);
     BotCamTrans* pb_camtrans = bot_camtrans_new(cam_name, width, height, fx, fy, cx, cy, skew, pb_dist);
     return pb_camtrans;
+  }
+  else if (strcmp(distortion_model, "angular-poly") == 0) {
+    double coeffs[64];
+    sprintf(key, "%s.distortion_coeffs", prefix);
+    int num_coeffs = bot_param_get_double_array(param, key, coeffs, -1);
+    if (0 >= num_coeffs)
+      goto fail;
+
+    BotDistortionObj* ang_dist = bot_angular_poly_distortion_create(coeffs, num_coeffs);
+    BotCamTrans* ang_camtrans = bot_camtrans_new(cam_name, width, height, fx, fy, cx, cy, skew, ang_dist);
+    return ang_camtrans;
   }
 
   fail: return NULL;

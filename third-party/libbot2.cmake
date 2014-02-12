@@ -38,7 +38,9 @@ if (BUILD_LIBBOT2)
   if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${LIBBOT2_DIR}/PERLS_BUILT)
     add_custom_target (libbot2-target
       COMMAND ${ZLIB_CMD}
-      COMMAND svn export --force ${LIBBOT2_SRC} ${LIBBOT2_DIR}
+      COMMAND mkdir -p ${LIBBOT2_DIR}
+      COMMAND cp -r ${LIBBOT2_SRC} .
+      #COMMAND svn export --force ${LIBBOT2_SRC} ${LIBBOT2_DIR}
       COMMAND cd ${LIBBOT2_DIR} && sudo make BUILD_PREFIX=${CMAKE_INSTALL_PREFIX}
       COMMAND sudo ldconfig
       COMMAND touch ${LIBBOT2_DIR}/PERLS_BUILT

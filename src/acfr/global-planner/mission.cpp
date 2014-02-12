@@ -53,12 +53,12 @@
         }
         
         xmlpp::Node::NodeList xml_other;
-        xmlpp::Node::NodeList xml_primatives;
+        xmlpp::Node::NodeList xml_primitives;
         xmlpp::Node::NodeList xml_globals;
         for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
         {
-            if((*iter)->get_name().lowercase() == "primative")
-                xml_primatives.push_back(*iter);
+            if((*iter)->get_name().lowercase() == "primitive")
+                xml_primitives.push_back(*iter);
             else if((*iter)->get_name().lowercase() == "global")
                 xml_globals.push_back(*iter);            
             else if((*iter)->get_name() != "text")
@@ -69,18 +69,20 @@
         parseGlobals(xml_globals);
         
         // extract the actual mission
-        for(xmlpp::Node::NodeList::iterator iter = xml_primatives.begin(); iter != xml_primatives.end(); ++iter)
+        for(xmlpp::Node::NodeList::iterator iter = xml_primitives.begin(); iter != xml_primitives.end(); ++iter)
         {
-            xmlpp::Node::NodeList primative_list = (*iter)->get_children();
+            xmlpp::Node::NodeList primitive_list = (*iter)->get_children();
             
             
-            for(xmlpp::Node::NodeList::iterator i = primative_list.begin(); i != primative_list.end(); ++i)
+            for(xmlpp::Node::NodeList::iterator i = primitive_list.begin(); i != primitive_list.end(); ++i)
             {
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
-                if( tag == "goto" || tag == "leg" || tag == "zambonie" || tag == "spiral" || tag == "spiral_inward")
-                    parsePrimitive(*i);
-                else if((*i)->get_name().lowercase() != "text")
-                    cerr << "Unknown mission primative " << (*i)->get_name() << endl;
+                if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
+						|| tag == "zambonie" || tag == "spiral"
+						|| tag == "spiral_inward")
+					parsePrimitive(*i);
+				else if((*i)->get_name().lowercase() != "text")
+                    cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
             }      
                 
         }
@@ -110,7 +112,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                     return 0;
             }
             
-            if(element->get_name().lowercase() == "drop_angle")
+            else if(element->get_name().lowercase() == "drop_angle")
             {
                 if(getSingleValue(element, "deg", x))
                     dropAngleRad = x / 180 * M_PI;
@@ -120,15 +122,21 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
                     return 0;
             }
             
-            if(element->get_name().lowercase() == "mission_timeout")
+            else if(element->get_name().lowercase() == "turn_radius")
+            {
+            	if(!getSingleValue(element, "m", turnRadius))
+            		return 0;
+            }
+
+            else if(element->get_name().lowercase() == "mission_timeout")
             {
                 if(!getSingleValue(element, "t", missionTimeout)) {
-                    cerr << "Not mission_timeout variable set in global section." << endl;
+                    cerr << "No mission_timeout variable set in global section." << endl;
                     return 0;
                 }
             }
             
-            if(element->get_name().lowercase() == "location")
+            else if(element->get_name().lowercase() == "location")
             {
                 if(!getSingleValue(element, "lat", originLat) || !getSingleValue(element, "lon", originLon)) {
                     cerr << "Origin not set, set the location variable." << endl;
@@ -138,7 +146,7 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
             
         } 
         if(missionTimeout != missionTimeout) {   
-            cerr << "Not mission_timeout variable set in global section." << endl;
+            cerr << "No mission_timeout variable set in global section." << endl;
             return 0;
         }
     }
@@ -306,28 +314,31 @@ int Mission::getCommand(const xmlpp::Element* element)
         if(device.lowercase() == "camera")
             mc.device = CAMERA;
         else if(device.lowercase() == "dvl")
-            mc.device = CAMERA;
+            mc.device = DVL;
             
         // Camera specific
         if(mc.device == CAMERA)
         {
             if((*i).command.lowercase() == "freq")
             {
-                mc.command = CAMERA_RATE;
+                mc.command = CAMERA_FREQ;
                 mc.valueDouble = atof((*i).value.c_str());
             }            
-            else if((*i).command.lowercase() == "time")
+            else if((*i).command.lowercase() == "width")
             {
-                mc.command = CAMERA_STROBE_DURATION;
+                mc.command = CAMERA_WIDTH;
                 mc.valueDouble = atof((*i).value.c_str());
             }            
             else if((*i).command.lowercase() == "onoff")
             {
-                mc.command = ON_OFF;
-                if((*i).value.lowercase() == "on")
-                    mc.valueInt = 1;
-                else
-                    mc.valueInt = 0;
+		if ((*i).value.lowercase() == "start")
+		{
+                	mc.command = CAMERA_START;
+		}
+		else
+		{
+			mc.command = CAMERA_STOP;
+		}
             }
         }
         
@@ -363,6 +374,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         mp = new GotoPath();
     else if(primitiveType == "leg")
         mp = new LegPath();
+    else if(primitiveType == "gotoandcircle")
+    	mp = new GotoAndCirclePath();
     else 
         return 0;    
         
@@ -399,7 +412,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     return 0;
                 mp->setPathOffset(s);
             }
-            if(element->get_name().lowercase() == "heading")
+            if (element->get_name().lowercase() == "heading"
+					|| element->get_name().lowercase() == "rotation")
             {
                 if(getSingleValue(element, "deg", rot))
                     mp->setHeadingDeg(rot);
@@ -407,7 +421,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     mp->setHeadingRad(rot);
                 else
 				{
-					cout << "Could not set heading" << endl;  
+					cout << "Could not set heading/rotation" << endl;
                     return 0;
 				}
             }
@@ -489,7 +503,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         
             if(element->get_name().lowercase() == "timeout")
             {
-                if(!getSingleValue(element, "t", missionTimeout))
+                if(!getSingleValue(element, "t", timeout))
                     return 0;
             }
             else if(element->get_name().lowercase() == "command")
@@ -509,7 +523,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         
     }
 
-    mp->generatePath(missionTimeout, depthMode, commands, waypoints.size());
+    mp->generatePath(timeout, depthMode, commands, waypoints.size());
+
     waypoints.splice(waypoints.end(), mp->getPath());   
     
     return 1;
@@ -529,14 +544,14 @@ int Mission::dump()
 
 void Mission::dumpMatlab(string filename) {
     ofstream fout(filename.c_str(), ios::out);
-	fout << "path = [" << endl;
+    fout << "path = [" << endl;
 	list<waypoint>::iterator it;
 	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
 		fout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", " << (*it).pose.getZ() << "; " << endl;
 	}
 	fout << "];" << "\n";
-	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
-	fout << "plot3d( path', 'c' )" << endl;
+//	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
+//	fout << "plot3d( path', 'c' )" << endl;
 //	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
 //		fout << "pose = [" << (*it).pose.getX() << " " << (*it).pose.getX() + 0.2 * cos((*it).pose.getYawRad()) << "; "
 //				<< (*it).pose.getY() << " " << (*it).pose.getY() + 0.2 * sin((*it).pose.getYawRad()) << "; "
@@ -544,9 +559,9 @@ void Mission::dumpMatlab(string filename) {
 //		//fout << "plot3d( path(" << i + 1 << ",:)', 'b-o' ); " << "\n";
 //		fout << "plot3d( pose, 'm-' );" << endl;
 //	}
-	fout << "scatter3( path(:,1), path(:,2), path(:,3), 20, 1:size(path,1) )" << endl;
-	fout << "xlabel( 'x [m]' ); ylabel( 'y [m]' );" << "\n";
-	fout << "view(0,90)" << endl;
+//	fout << "scatter3( path(:,1), path(:,2), path(:,3), 20 )" << endl;
+//	fout << "xlabel( 'x [m]' ); ylabel( 'y [m]' );" << "\n";
+//	fout << "view(0,90)" << endl;
 
 	//system("matlab matlab_plot.m");
 }

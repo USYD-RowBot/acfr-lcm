@@ -13,7 +13,7 @@ bool GotoPath::calcPath( void ) {
 	wp.pose = position;
 	wp.pose.setRollPitchYawRad(0, 0, heading);
 	path.push_back( wp );
-
+	cout << "GoTo:calcPath heading=" << heading << endl;
 	return true;
 }
 

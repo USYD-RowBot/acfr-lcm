@@ -8,7 +8,8 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <auv_config_file.hpp>
+#include <libplankton/auv_config_file.hpp>
+#include <libplankton/auv_map_projection.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
@@ -16,7 +17,6 @@
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
-#include "auv_map_projection.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 
@@ -32,7 +32,7 @@ using namespace libplankton;
 #include "vehicle_params_small.h"
 
 #define Kdp 0.01
-
+#define CURRENT 0.1
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4
@@ -92,6 +92,25 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     SMALL::Vector4D nuLinear, nuRotational;
     nuLinear = u, v, w, 0.0;
     nuRotational = p, q, r, 0.0;
+
+    // adjustments for a constant water current (or wind)
+
+    SMALL::Rotation3D Cbn;
+    Cbn.setRollPitchYawRad(phi, theta, psi);
+
+    SMALL::Vector3D vc_n;
+    vc_n = CURRENT,0,0;
+    SMALL::Vector3D vc_b;
+    vc_b = (Cbn.i() * vc_n);
+
+    nuLinear(1) = nuLinear(1) - vc_b(1);
+    nuLinear(2) = nuLinear(2) - vc_b(2);
+    nuLinear(3) = nuLinear(3) - vc_b(3);
+
+    u = u - vc_b(1);
+    v = v - vc_b(2);
+    w = w - vc_b(3);
+
 
     // make heading 0 to 2pi
     while(psi < 0)
@@ -167,11 +186,20 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     // external applied forces
     double X, Y, Z, K, M, N;
     X = prop_force;
-    Y = Ydr * pow(u, 2) * (top + bottom);
-    Z = Zdp * pow(u, 2) * (port + starboard);
-    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
-    M = Mdp * pow(u, 2) * (port + starboard);
-    N = Ndr * pow(u, 2) * (top + bottom);
+
+//    Y = Ydr * pow(u, 2) * (top + bottom);
+//    Z = Zdp * pow(u, 2) * (port + starboard);
+//    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
+//    M = Mdp * pow(u, 2) * (port + starboard);
+//    N = Ndr * pow(u, 2) * (top + bottom);
+
+    Y = Ydr * fabs(u) * u * (top + bottom);
+    Z = Zdp * fabs(u) * u * (port + starboard);
+    K = Kdp * fabs(u) * u * ((top - bottom) + (port - starboard));
+    M = Mdp * fabs(u) * u * (port + starboard);
+    N = Ndr * fabs(u) * u * (top + bottom);
+
+
 
     // Force vectors, props and control surfaces
     SMALL::Vector3D longF, latF;
@@ -229,8 +257,8 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
             - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
     
     latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0,
-            //			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            0, 							-Kpp * fabs(p), 						0, // new addition based on above equations
+//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
             -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
     
     // Damping matrices
@@ -295,12 +323,16 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     SMALL::Vector6D nu_dot;
     nu_dot = longDot[0], latDot[0], longDot[1], latDot[1], longDot[2], latDot[2];
     
-    
-    dxdt[0] = etaDotLin[0];
+    dxdt[0] = etaDotLin[0] + CURRENT;
     dxdt[1] = etaDotLin[1];
     dxdt[2] = etaDotLin[2];
     dxdt[3] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
     dxdt[4] = q*cos(phi) - r*sin(phi); //etaDotRot[1];
+
+    if (fabs(theta) > M_PI/2 - 0.1)
+    {
+        cout << "Close to gimbal lock" << endl;
+    }
     dxdt[5] = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta); //etaDotRot[2];
     dxdt[6] = nu_dot[0];
     dxdt[7] = nu_dot[1];
@@ -333,6 +365,25 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
     SMALL::Vector4D nuLinear, nuRotational;
     nuLinear = u, v, w, 0.0;
     nuRotational = p, q, r, 0.0;
+
+    // adjustments for a constant water current (or wind)
+
+    SMALL::Rotation3D Cbn;
+    Cbn.setRollPitchYawRad(phi, theta, psi);
+
+    SMALL::Vector3D vc_n;
+    vc_n = CURRENT,0,0;
+    SMALL::Vector3D vc_b;
+    vc_b = (Cbn.i() * vc_n);
+
+    nuLinear(1) = nuLinear(1) - vc_b(1);
+    nuLinear(2) = nuLinear(2) - vc_b(2);
+    nuLinear(3) = nuLinear(3) - vc_b(3);
+
+    u = u - vc_b(1);
+    v = v - vc_b(2);
+    w = w - vc_b(3);
+
 
     // make heading 0 to 2pi
     while(psi < 0)
@@ -407,11 +458,18 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
     // external applied forces
     double X, Y, Z, K, M, N;
     X = prop_force;
-    Y = Ydr * pow(u, 2) * (top + bottom);
-    Z = Zdp * pow(u, 2) * (port + starboard);
-    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
-    M = Mdp * pow(u, 2) * (port + starboard);
-    N = Ndr * pow(u, 2) * (top + bottom);
+    //    Y = Ydr * pow(u, 2) * (top + bottom);
+    //    Z = Zdp * pow(u, 2) * (port + starboard);
+    //    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
+    //    M = Mdp * pow(u, 2) * (port + starboard);
+    //    N = Ndr * pow(u, 2) * (top + bottom);
+
+        Y = Ydr * fabs(u) * u * (top + bottom);
+        Z = Zdp * fabs(u) * u * (port + starboard);
+        K = Kdp * fabs(u) * u * ((top - bottom) + (port - starboard));
+        M = Mdp * fabs(u) * u * (port + starboard);
+        N = Ndr * fabs(u) * u * (top + bottom);
+
 
     // Force vectors, props and control surfaces
     SMALL::Vector3D longF, latF;
@@ -469,8 +527,8 @@ void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicl
             - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
 
     latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0,
-            //			-Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
+            0, 							-Kpp * fabs(p), 						0,// new addition based on above equations
+//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
             -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
 
     // Coriolis matrices
@@ -506,10 +564,10 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 {
     in(0) = mc->main;
     in(1) = 0;
-    in(2) = mc->top;// / 180.0 * M_PI;
-    in(3) = mc->bottom;
-    in(4) = mc->port;// / 180.0 * M_PI;
-    in(5) = mc->starboard;
+    in(2) = -mc->top;// / 180.0 * M_PI;
+    in(3) = -mc->bottom;
+    in(4) = -mc->port;// / 180.0 * M_PI;
+    in(5) = -mc->starboard;
 }
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
@@ -554,6 +612,9 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
         cout << "Truth: ";
 
+        if(! fp.is_open() )
+            fp.open("/tmp/log.txt",
+        			ios::out|ios::app);
         for(int i=0; i<12; i++) {
             printf("%2.3f ", state(i));
             fp << state(i) << " ";
@@ -562,8 +623,8 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             printf("%2.3f ", in(i));
             fp << in(i) << " ";
         }
-
         fp << "\n";
+        fp.close();
         printf("\n");
         fflush(NULL);
 
@@ -793,12 +854,15 @@ void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
     nav_state[12] = nav->altitude;
 
+    if( !fp_nav.is_open() )
+        fp_nav.open( "/tmp/log_nav.txt",
+    			ios::out | ios::app);
     for(int i=0; i<13; i++) {
         printf("%2.3f ", nav_state[i]);
         fp_nav << nav_state[i] << " ";
     }
-
     fp_nav << "\n";
+    fp_nav.close();
     printf("\n");
     fflush(NULL);
 
@@ -883,9 +947,9 @@ int main(int argc, char **argv)
             m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
 
     // initial conditions
-    state(0) = 0;
-    state(1) = 0;
-    state(2) = 1;  //Z = 1;
+    state(0) = -10;
+    state(1) = -10;
+    state(2) = 1.9;  //Z = 1;
     state(3) = 0;
     state(4) = 0;
     state(5) = 0;
@@ -900,9 +964,9 @@ int main(int argc, char **argv)
     in(1) = 0;
     in(2) = 0;
     in(3) = 0;
-    fp.open("/tmp/log.txt", ios::out);
-    fp_nav.open("/tmp/log_nav.txt", ios::out);
 
+    fp_nav.open( "/tmp/log_nav.txt", ios::out);
+    fp.open("/tmp/log.txt", ios::out);
 
     int fd = lcm.getFileno();
     fd_set rfds;
@@ -919,9 +983,12 @@ int main(int argc, char **argv)
     }
     delete slamConfigFile;
     delete map_projection_sim;
-    fp.close();
-    fp_nav.close();
+    if( fp.is_open())
+    	fp.close();
+    if( fp_nav.is_open() )
+    	fp_nav.close();
     return 0;
 }
+
 
 

@@ -1,17 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <inttypes.h>
-#include <pthread.h>
-#include <math.h>
 #include <glib.h>
-#include <gps.h> // from debian package libgps-dev
+
+#include <gps.h>
 
 #include "perls-common/bot_util.h"
 #include "perls-common/error.h"
 #include "perls-common/generic_sensor_driver.h"
 #include "perls-common/getopt.h"
-#include "perls-common/lcm_util.h"
 #include "perls-common/nmea.h"
 #include "perls-common/timestamp.h"
 #include "perls-common/units.h"
@@ -21,16 +17,21 @@
 #include "perls-lcmtypes/senlcm_ppsboard_t.h"
 #include "perls-lcmtypes/senlcm_raw_t.h"
 
-#if (GPSD_API_MAJOR_VERSION < 4)
-#error "gspd API version < 4"
+#if (GPSD_API_MAJOR_VERSION < 5)
+#error "gspd API version < 5"
 #endif
 
 #define DTOR (UNITS_DEGREE_TO_RADIAN)
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
 
-typedef struct state state_t;
-struct state {
-    struct gps_data_t *gpsdata;
+static const unsigned int FLAGS = WATCH_ENABLE|WATCH_JSON|WATCH_NMEA;
+static const int TIMEOUT_MICROSEC = 5000000;
+
+typedef struct gps_data_t gpsdata_t;
+
+typedef struct _state_t state_t;
+struct _state_t {
+    gpsdata_t *gpsdata;
     char *gpsddev;
 
     generic_sensor_driver_t *gsd;
@@ -38,125 +39,62 @@ struct state {
     char *ppsboard_channel;
     char *gphdt_channel;
 };
-static state_t *state = NULL;
-
-static void
-init_lcm_gpsd (senlcm_gpsd3_t *gd)
-{
-    // MAXCHANNELS defined in gps.h
-    gd->used = malloc (MAXCHANNELS * sizeof (*gd->used));
-    gd->PRN = malloc (MAXCHANNELS * sizeof (*gd->PRN));
-    gd->elevation = malloc (MAXCHANNELS * sizeof (*gd->elevation));
-    gd->azimuth = malloc (MAXCHANNELS * sizeof (*gd->azimuth));
-    gd->ss = malloc (MAXCHANNELS * sizeof (*gd->ss));
-}
-
-static void
-free_lcm_gpsd (senlcm_gpsd3_t *gd)
-{
-    free (gd->used);
-    free (gd->PRN);
-    free (gd->elevation);
-    free (gd->azimuth);
-    free (gd->ss);
-}
-
-
-static void
-init_lcm_ppsboard (senlcm_ppsboard_t *pb)
-{
-    const int MAXSTRINGLEN = 32;
-    pb->ntp_time = malloc (MAXSTRINGLEN * sizeof (*pb->ntp_time));
-    pb->src_type = malloc (MAXSTRINGLEN * sizeof (*pb->src_type));
-    pb->sync_date = malloc (MAXSTRINGLEN * sizeof (*pb->sync_date));
-    pb->sync_time = malloc (MAXSTRINGLEN * sizeof (*pb->sync_time));
-}
-
-static void
-free_lcm_ppsboard (senlcm_ppsboard_t *pb)
-{
-    free (pb->ntp_time);
-    free (pb->src_type);
-    free (pb->sync_date);
-    free (pb->sync_time);
-}
 
 static int
-parse_gpsd (const struct gps_data_t *ud, senlcm_gpsd3_t *gd)
+gpsd_opts (generic_sensor_driver_t *gsd)
 {
-    gd->utime = timestamp_now ();
-    gd->online    = (int64_t) (ud->online * 1.0E6);
+    getopt_add_description (gsd->gopt, "gpsd client driver.");
+    getopt_add_string (gsd->gopt, 's', "server", "localhost", "gpsd server");
+    getopt_add_string (gsd->gopt, 'p', "port", "2947",        "gpsd port");
+    getopt_add_string (gsd->gopt, '\0', "gpsddev", "",        "gpsd device");
+    return 0;
+}
 
-    /* accumulated PVT data */
-    gd->fix.utime = (int64_t) (ud->fix.time * 1.0E6);
-    gd->fix.mode = ud->fix.mode;
-    gd->fix.ept = ud->fix.ept;
-    gd->fix.latitude = ud->fix.latitude * DTOR;
-    gd->fix.epy = ud->fix.epy;
-    gd->fix.longitude = ud->fix.longitude * DTOR;
-    gd->fix.epx = ud->fix.epx;
-    gd->fix.altitude = ud->fix.altitude;
-    gd->fix.epv = ud->fix.epv;
-    gd->fix.track = ud->fix.track;
-    gd->fix.epd = ud->fix.epd;
-    gd->fix.speed = ud->fix.speed;
-    gd->fix.eps = ud->fix.eps;
-    gd->fix.climb = ud->fix.climb;
-    gd->fix.epc = ud->fix.epc;
+state_t*
+state_init (int argc, char *argv[])
+{
+    state_t* state = calloc (1, sizeof (*state));
+    state->gsd = gsd_create (argc, argv, NULL, &gpsd_opts);
 
-    gd->geoidal_separation = ud->separation;
-
-    /* GPS status */
-    gd->status = ud->status;
-
-    /* precision of fix */
-    gd->satellites_used = ud->satellites_used;
-    for (int i=0; i<ud->satellites_used; i++)
-        gd->used[i] = ud->used[i];
-    gd->dop.pdop = ud->dop.pdop;
-    gd->dop.hdop = ud->dop.hdop;
-    gd->dop.tdop = ud->dop.tdop;
-    gd->dop.gdop = ud->dop.gdop;
-    gd->dop.xdop = ud->dop.xdop;
-    gd->dop.ydop = ud->dop.ydop;
-
-    /* spherical position error, 95% confidence */
-    gd->epe    = ud->epe;
-
-    /* satellite status */
-    gd->skyview_utime = (int64_t) (ud->skyview_time * 1.0E6);
-    gd->satellites_visible = ud->satellites_visible;
-    for (size_t i=0; i<gd->satellites_visible; i++) {
-        gd->PRN[i] = ud->PRN[i];
-        gd->elevation[i] = ud->elevation[i];
-        gd->azimuth[i] = ud->azimuth[i];
-        gd->ss[i] = ud->ss[i];
-    }
-
-    /* devconfig_t data */
-    if (ud->set & DEVICE_SET) {
-        gd->dev.path = strdup (ud->dev.path);
-        gd->dev.flags = ud->dev.flags;
-        gd->dev.driver = strdup (ud->dev.driver);
-        gd->dev.subtype = strdup (ud->dev.subtype);
-        gd->dev.activated = ud->dev.activated;
-        gd->dev.baudrate = ud->dev.baudrate;
-        gd->dev.stopbits = ud->dev.stopbits;
-        gd->dev.cycle = ud->dev.cycle;
-        gd->dev.mincycle = ud->dev.mincycle;
-        gd->dev.driver_mode = ud->dev.driver_mode;
-    }
+    // gps device---not clear if this really does anything within libgps
+    state->gpsddev = NULL;
+    if (getopt_has_flag (state->gsd->gopt, "gpsddev"))
+        state->gpsddev = g_strdup (getopt_get_string (state->gsd->gopt, "gpsddev"));
     else {
-        gd->dev.path = strdup ("");
-        gd->dev.driver = strdup ("");
-        gd->dev.subtype = strdup ("");
+        char key[256];
+        snprintf (key, sizeof key, "%s.gpsddev", state->gsd->rootkey);
+        if (bot_param_get_str (state->gsd->params, key, &state->gpsddev)) {
+            ERROR ("gpsddev not set");
+            exit (EXIT_FAILURE);
+        }
     }
 
-    /* policy_t data ignored */
+    // non-default lcm channels
+    state->ppsboard_channel = g_strconcat (state->gsd->channel, ".PPSBOARD", NULL);
+    state->gphdt_channel = g_strconcat (state->gsd->channel, ".GPHDT", NULL);
 
-    gd->tag = strdup (ud->tag);
-    
-    return 1;
+    // gpsd client
+    const char *server = getopt_get_string (state->gsd->gopt, "server");
+    const char *port = getopt_get_string (state->gsd->gopt, "port");
+    state->gpsdata = calloc (1, sizeof (gpsdata_t));
+    if (gps_open (server, port, state->gpsdata) != 0) {
+        ERROR ("gps_open () failed");
+        exit (EXIT_FAILURE);
+    }
+
+    return state;
+}
+
+void 
+state_destroy (state_t *state)
+{
+    gps_stream (state->gpsdata, WATCH_DISABLE, NULL);
+    gps_close (state->gpsdata);
+
+    g_free (state->gpsddev);
+    gsd_destroy (state->gsd);
+    g_free (state->ppsboard_channel);
+    g_free (state->gphdt_channel);
 }
 
 static int
@@ -304,16 +242,11 @@ parse_gphdt (const char *buf, senlcm_nmea_gphdt_t *gphdt)
     return 1;
 }
 
-static void
-handle_nmea_packet (const char *_buf, size_t ulen)
-{
-    /*** GPSD NMEA strings have a weird control character (0x13) after hex checksum 05/31/2011 ***/
-    char *buf = g_strdup (_buf);
-    char *checksum_str = strstr (buf, "*");
-    if (checksum_str && strlen (checksum_str) > 3)
-        checksum_str[3] = '\0';
-    /*************************************************/
+static const int MAXSTRINGLEN = 32;
 
+static void
+handle_nmea (state_t *state, const char *buf)
+{
     senlcm_raw_t raw = {
         .utime = timestamp_now (),
         .length = strlen (buf) + 1, // +1 for '\0' char
@@ -321,9 +254,12 @@ handle_nmea_packet (const char *_buf, size_t ulen)
     };
     senlcm_raw_t_publish (state->gsd->lcm, state->gsd->read_channel, &raw);
 
-    if (0==strncmp (buf, "$PPSDA", 6)) {
+    if (strncmp (buf, "$PPSDA", 6) == 0) {
         senlcm_ppsboard_t *ppsboard = calloc (1, sizeof (*ppsboard));
-        init_lcm_ppsboard (ppsboard);
+        ppsboard->ntp_time = malloc (MAXSTRINGLEN * sizeof (*ppsboard->ntp_time));
+        ppsboard->src_type = malloc (MAXSTRINGLEN * sizeof (*ppsboard->src_type));
+        ppsboard->sync_date = malloc (MAXSTRINGLEN * sizeof (*ppsboard->sync_date));
+        ppsboard->sync_time = malloc (MAXSTRINGLEN * sizeof (*ppsboard->sync_time));
         if (parse_ppsda (buf, ppsboard)) {
             senlcm_ppsboard_t_publish (state->gsd->lcm, state->ppsboard_channel, ppsboard);
             gsd_update_stats (state->gsd, 1);
@@ -344,130 +280,140 @@ handle_nmea_packet (const char *_buf, size_t ulen)
         if (parse_gphdt (buf, &gphdt))
             senlcm_nmea_gphdt_t_publish (state->gsd->lcm, state->gphdt_channel, &gphdt);
     }
-
-    free (buf);
 }
 
-static void
-handle_gpsd_packet (struct gps_data_t *ud, const char *buf, size_t ulen)
+static int 
+pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
 {
-    if (0==strncmp (buf, "{\"class\":\"TPV\"", 14)) {
-        senlcm_gpsd3_t *gpsd = calloc (1, sizeof (*gpsd));
-        init_lcm_gpsd (gpsd);
-        if (parse_gpsd (ud, gpsd)) {
-            senlcm_gpsd3_t_publish (state->gsd->lcm, state->gsd->channel, gpsd);
-            
-            gsd_update_stats (state->gsd, 1);
-            ud->set = 0;
-        }
-        else
-            gsd_update_stats (state->gsd, -1);
-        
-        senlcm_gpsd3_t_destroy (gpsd);
+    gd->utime = timestamp_now ();
+    gd->online    = (int64_t) (ud->online * 1.0E6);
+
+    /* accumulated PVT data */
+    gd->fix.utime = (int64_t) (ud->fix.time * 1.0E6);
+    gd->fix.mode = ud->fix.mode;
+    gd->fix.ept = ud->fix.ept;
+    gd->fix.latitude = ud->fix.latitude * DTOR;
+    gd->fix.epy = ud->fix.epy;
+    gd->fix.longitude = ud->fix.longitude * DTOR;
+    gd->fix.epx = ud->fix.epx;
+    gd->fix.altitude = ud->fix.altitude;
+    gd->fix.epv = ud->fix.epv;
+    gd->fix.track = ud->fix.track;
+    gd->fix.epd = ud->fix.epd;
+    gd->fix.speed = ud->fix.speed;
+    gd->fix.eps = ud->fix.eps;
+    gd->fix.climb = ud->fix.climb;
+    gd->fix.epc = ud->fix.epc;
+
+    gd->geoidal_separation = ud->separation;
+
+    /* GPS status */
+    gd->status = ud->status;
+
+    /* precision of fix */
+    gd->satellites_used = ud->satellites_used;
+    for (int i=0; i<ud->satellites_used; i++)
+        gd->used[i] = ud->used[i];
+    gd->dop.pdop = ud->dop.pdop;
+    gd->dop.hdop = ud->dop.hdop;
+    gd->dop.tdop = ud->dop.tdop;
+    gd->dop.gdop = ud->dop.gdop;
+    gd->dop.xdop = ud->dop.xdop;
+    gd->dop.ydop = ud->dop.ydop;
+
+    /* spherical position error, 95% confidence */
+    gd->epe    = ud->epe;
+
+    /* satellite status */
+    gd->skyview_utime = (int64_t) (ud->skyview_time * 1.0E6);
+    gd->satellites_visible = ud->satellites_visible;
+    for (size_t i=0; i<gd->satellites_visible; i++) {
+        gd->PRN[i] = ud->PRN[i];
+        gd->elevation[i] = ud->elevation[i];
+        gd->azimuth[i] = ud->azimuth[i];
+        gd->ss[i] = ud->ss[i];
     }
-}
 
-static void
-on_clean_data (struct gps_data_t *ud, char *buf, size_t ulen)
-{
-    if (buf[0] == '$') // raw NMEA pkt
-        handle_nmea_packet (buf, ulen);
-    else // gpsd gps_data_t packet
-        handle_gpsd_packet (ud, buf, ulen);
-}
-
-static void
-on_data (struct gps_data_t *ud, char *buf, size_t ulen)
-{
-    if (buf[0] == '$' && strstr (buf, "GPSD,")) {
-        // ensure string is properly terminated
-        char mybuf[ulen+1];
-        memcpy (mybuf, buf, ulen);
-        mybuf[ulen] = '\0';
-
-        // weirdness - gpsd seems to sometimes append to line feeds together into a single string
-        char *tok = strchr (mybuf, '\n');
-        if (tok) {
-            mybuf[tok-mybuf] = '\0';
-            on_clean_data (ud, mybuf, strlen (mybuf));
-
-            tok++;
-            on_clean_data (ud, tok, strlen (tok));
-        }
+    /* devconfig_t data */
+    if (ud->set & DEVICE_SET) {
+        gd->dev.path = strdup (ud->dev.path);
+        gd->dev.flags = ud->dev.flags;
+        gd->dev.driver = strdup (ud->dev.driver);
+        gd->dev.subtype = strdup (ud->dev.subtype);
+        gd->dev.activated = ud->dev.activated;
+        gd->dev.baudrate = ud->dev.baudrate;
+        gd->dev.stopbits = ud->dev.stopbits;
+        gd->dev.cycle = ud->dev.cycle;
+        gd->dev.mincycle = ud->dev.mincycle;
+        gd->dev.driver_mode = ud->dev.driver_mode;
     }
-    else
-        on_clean_data (ud, buf, ulen);
-}
+    else {
+        gd->dev.path = strdup ("");
+        gd->dev.driver = strdup ("");
+        gd->dev.subtype = strdup ("");
+    }
 
-static int
-myopts (generic_sensor_driver_t *gsd)
-{
-    getopt_add_description (gsd->gopt, "gpsd client driver.");
-    getopt_add_string (gsd->gopt, 's', "server", "127.0.0.1", "gpsd server");
-    getopt_add_string (gsd->gopt, 'p', "port",   "2947",      "gpsd port");
-    getopt_add_string (gsd->gopt, '\0', "gpsddev", "",        "gpsd device");
+    /* policy_t data ignored */
+
+    gd->tag = strdup (ud->tag);
+
     return 0;
+}
+
+static void
+handle_gpsd (state_t *state, const char *buf)
+{
+    senlcm_gpsd3_t *gpsd = calloc (1, sizeof (*gpsd));
+
+    // MAXCHANNELS defined in gps.h
+    gpsd->used = malloc (MAXCHANNELS * sizeof (*gpsd->used));
+    gpsd->PRN = malloc (MAXCHANNELS * sizeof (*gpsd->PRN));
+    gpsd->elevation = malloc (MAXCHANNELS * sizeof (*gpsd->elevation));
+    gpsd->azimuth = malloc (MAXCHANNELS * sizeof (*gpsd->azimuth));
+    gpsd->ss = malloc (MAXCHANNELS * sizeof (*gpsd->ss));
+
+    if (pack_gpsd (state->gpsdata, gpsd) == 0) {
+        senlcm_gpsd3_t_publish (state->gsd->lcm, state->gsd->channel, gpsd);
+        gsd_update_stats (state->gsd, 1);
+    }
+    else {
+        gsd_update_stats (state->gsd, -1);
+    }
+
+    senlcm_gpsd3_t_destroy (gpsd);
+}
+
+static void
+parse_gpsdata (state_t *state)
+{
+    const char* buf = gps_data (state->gpsdata);
+    if (buf[0] == '$') handle_nmea (state, buf);
+    else handle_gpsd (state, buf);
 }
 
 int
 main (int argc, char *argv[])
 {
-    // so that redirected stdout won't be insanely buffered.
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
-    state = calloc (1, sizeof (*state));
-    state->gsd = gsd_create (argc, argv, NULL, &myopts);
-    
-    // what's our gps device?
-    state->gpsddev = NULL;
-    if (getopt_has_flag (state->gsd->gopt, "gpsddev"))
-        state->gpsddev = g_strdup (getopt_get_string (state->gsd->gopt, "gpsddev"));
-    else {  
-        char key[256];
-        snprintf (key, sizeof key, "%s.gpsddev", state->gsd->rootkey);
-        if (bot_param_get_str (state->gsd->params, key, &state->gpsddev)) {
-            ERROR ("gpsddev not set");
+    state_t *state = state_init (argc, argv);
+
+    // main gps read loop
+    gps_stream (state->gpsdata, FLAGS, NULL);
+    while (!state->gsd->done) {
+        if (!gps_waiting (state->gpsdata, TIMEOUT_MICROSEC)) {
+            ERROR ("gpsd-client timed out waiting for data");
             exit (EXIT_FAILURE);
+        }
+        if (gps_read (state->gpsdata) == -1) {
+            ERROR ("gps_read error");
+            exit (EXIT_SUCCESS);
+        }
+        else {
+            parse_gpsdata (state); 
         }
     }
 
-    // non-default lcm channels
-    state->ppsboard_channel = g_strconcat (state->gsd->channel, ".PPSBOARD", NULL);
-    state->gphdt_channel = g_strconcat (state->gsd->channel, ".GPHDT", NULL);
-
-
-    // open gpsd client
-    state->gpsdata = gps_open (getopt_get_string (state->gsd->gopt, "server"), 
-                               getopt_get_string (state->gsd->gopt, "port"));
-    if (!state->gpsdata) {
-      ERROR ("gps_open() failed.");
-      exit (EXIT_FAILURE);
-    }
-
-    gps_set_raw_hook (state->gpsdata, on_data);
-    gps_stream (state->gpsdata, WATCH_ENABLE | WATCH_RAW | WATCH_JSON, NULL);
-    
-    //this should let you selectivly attach to a gps device based on its device address
-    //but it does not, the daemon complains that it is a unknown response
-    //ERROR response: {"class":"ERROR","message":
-    //"Unrecognized request '?WATCH={"enable":true,"json":true,"device":/idev/ttyS7};'"}
-    //This part of the api changed from versions 2 to 3. Maybe we just need to wait till its 
-    //straightened out. For now if you want to run two gpses on the same robot use different control ports
-    //gps_stream (state->gpsdata, WATCH_DEVICE, state->gpsddev);
-
-    // handle lcm
-    gsd_reset_stats (state->gsd);
-    while (!state->gsd->done) {
-        if (0!=gps_poll (state->gpsdata))
-            ERROR ("trouble polling gpsd!\n");
-    }
-
-    // clean up
-    gps_close (state->gpsdata);
-    g_free (state->gpsddev);
-    g_free (state->ppsboard_channel);
-    g_free (state->gphdt_channel);
-    g_free (state);
-
+    state_destroy (state);
     exit (EXIT_SUCCESS);
 }

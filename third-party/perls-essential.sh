@@ -60,7 +60,10 @@ addpkg \
     libxml2-dev \
     libxmu-dev \
     mesa-common-dev \
-    python-dev
+    python-dev \
+    libsigc++-2.0-dev \
+    libglibmm-2.4-dev \
+    libxml++2.6-dev
 
 #=========================================================================
 # 2) list distribution-specific packages here in alphabetical order

@@ -1,37 +1,0 @@
-10
-
-dir
-440
-http://libbot.googlecode.com/svn/trunk/bot2-lcmgl/src
-http://libbot.googlecode.com/svn
-
-
-
-2012-06-14T21:49:47.963756Z
-398
-abry
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-9146db76-5286-039a-5f50-05d86fea6eed
-
-lcmgl-viewer
-dir
-
-bot_lcmgl_client
-dir
-
-bot_lcmgl_render
-dir
-

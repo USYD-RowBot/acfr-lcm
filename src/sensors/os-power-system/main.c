@@ -73,13 +73,13 @@ battery_arg (const char *str, int n, char out[])
     
     c = str;
     // find a delim
-    while ((*c != ',') && (*c != '%') && (*c != '\0'))
+    while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
         c++;    // $CCCCC,
     c++;        // skip the comma
 
     // for preceding args
     for (int i=0; i<(n-1); i++) {
-        while ((*c != ',') && (*c != '%') && (*c != '\0'))
+        while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
             c++; // skip preceding args
         c++;     // skip comma
     }
@@ -89,7 +89,7 @@ battery_arg (const char *str, int n, char out[])
     }
     
     c1 = c; // points to first char of arg we want, or next comma
-    while ((*c != ',') && (*c != '%') && (*c != '\0'))
+    while ((*c != ',') && (*c != '%') && (*c != '\0') && (*c != '\n') && (*c != '\r'))
         c++;     // skip to end
     c2 = c - 1;  // points to last char before comma
 
@@ -144,16 +144,18 @@ int parse_os_controller(char *buf, state_t *state, int cont_num) {
 	// the data is valid, lets see what it is
 	if(!strncmp(buf, "$S", 2)) {
 		// system data
+		
 		while(battery_arg(buf, i++, field)) {
+			memset(value, 0, sizeof(value));
 			battery_arg(buf, i++, value);
 			fieldI = ahtoi(field);
-			
 			if(fieldI == 1)
 				state->ps.minutes_tef = (int)ahtoi(value);
 			if(fieldI == 3) 
 				strcpy(state->ps.controller[cont_num].sys_message, value);
 			if(fieldI == 4) 
-				state->ps.controller[cont_num].avg_charge_p = (int)ahtoi(value);
+			{	state->ps.controller[cont_num].avg_charge_p = (int)ahtoi(value);
+			}
 		}
 	}
 	
@@ -331,6 +333,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             minutes_ttf = 0;
             tte_good = 1;
             ttf_good = 1;
+	    
             for(int i=0; i<state->ps.controller[j].num_batteries; i++)
             {
                 state->ps.controller[j].capacity += state->ps.controller[j].battery[i].remaining_capacity * BATT_VOLTAGE;
@@ -379,6 +382,7 @@ int readline(int fd, char *buf, int max_len)
     {
         read(fd, &buf[i++], 1);
     } while(buf[i-1] != '\n');
+    return i;
 }
 				
 
@@ -468,6 +472,7 @@ int main (int argc, char *argv[]) {
                 printf("Error opening port %s\n", serial_devs[i]);
                 return 0;
             }
+            serial_set_canonical(batt_fd[i], '\r', '\n');
         }        
         else if(io == io_socket)
         {
@@ -487,7 +492,6 @@ int main (int argc, char *argv[]) {
         state.initialised[i] = 0;
     }
     
-    
     // now we are open we can put all the controllers in the right mode
     for(int i=0; i<state.num_devs; i++)
         init_controller(batt_fd[i]);        
@@ -504,6 +508,7 @@ int main (int argc, char *argv[]) {
     fd_set rfds;
     char buf[MAX_BUF_LEN];
     int64_t timestamp;
+    int j;
        
     // loop to collect data, parse and send it on its way
     while(!program_exit) 
@@ -528,9 +533,14 @@ int main (int argc, char *argv[]) {
             {
                 for(int i=0; i<state.num_devs; i++)
                     if(FD_ISSET(batt_fd[i], &rfds))
-                    {                    
-                        readline(batt_fd[i], buf, MAX_BUF_LEN);
+                    {
+                        memset(buf, 0, MAX_BUF_LEN);
+                        if(io == io_socket)                    
+                            j = readline(batt_fd[i], buf, MAX_BUF_LEN);
+                        else
+                            j = read(batt_fd[i], buf, MAX_BUF_LEN);   
                         timestamp = timestamp_now();
+                        //printf("%d:       %s\n", j, buf);
                         if(parse_os_controller(buf, &state, i)) 
                         {   
                             state.ps.controller[i].utime = timestamp;        

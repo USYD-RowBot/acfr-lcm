@@ -1,0 +1,6 @@
+package senlcm;
+
+struct evologics_config_t
+{
+    int64_t utime;
+}

@@ -879,4 +879,186 @@ senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_rdi_pd5_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                          const senlcm_rdi_pd5_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
 
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",             "%"PRId64, msg->utime);
+    
+    TEXTREAD_ADD_FIELD (tr, "system_config",     "%"PRIu8,  msg->pd4.system_config);
+    TEXTREAD_ADD_FIELD (tr, "btv(:,1)",          "%f",      msg->pd4.btv[0]);
+    TEXTREAD_ADD_FIELD (tr, "btv(:,2)",          "%f",      msg->pd4.btv[1]);
+    TEXTREAD_ADD_FIELD (tr, "btv(:,3)",          "%f",      msg->pd4.btv[2]);
+    TEXTREAD_ADD_FIELD (tr, "btv(:,4)",          "%f",      msg->pd4.btv[3]);
+    TEXTREAD_ADD_FIELD (tr, "btv_status",        "%"PRIu8,  msg->pd4.wtv_status);
+    TEXTREAD_ADD_FIELD (tr, "wtv(:,1)",          "%f",      msg->pd4.wtv[0]);
+    TEXTREAD_ADD_FIELD (tr, "wtv(:,2)",          "%f",      msg->pd4.wtv[1]);
+    TEXTREAD_ADD_FIELD (tr, "wtv(:,3)",          "%f",      msg->pd4.wtv[2]);
+    TEXTREAD_ADD_FIELD (tr, "wtv(:,4)",          "%f",      msg->pd4.wtv[3]);
+    TEXTREAD_ADD_FIELD (tr, "wtv_status",        "%"PRIu8,  msg->pd4.wtv_status);
+    TEXTREAD_ADD_FIELD (tr, "wtv_layer_start",   "%f",      msg->pd4.wtv_layer_start);
+    TEXTREAD_ADD_FIELD (tr, "wtv_layer_end",     "%f",      msg->pd4.wtv_layer_end);
+    TEXTREAD_ADD_FIELD (tr, "range(:,1)",        "%f",      msg->pd4.range[0]);
+    TEXTREAD_ADD_FIELD (tr, "range(:,2)",        "%f",      msg->pd4.range[1]);
+    TEXTREAD_ADD_FIELD (tr, "range(:,3)",        "%f",      msg->pd4.range[2]);
+    TEXTREAD_ADD_FIELD (tr, "range(:,4)",        "%f",      msg->pd4.range[3]);
+    TEXTREAD_ADD_FIELD (tr, "altitude",          "%f",      msg->pd4.altitude);
+    TEXTREAD_ADD_FIELD (tr, "tofp_hour",         "%"PRIu8,  msg->pd4.tofp_hour);
+    TEXTREAD_ADD_FIELD (tr, "tofp_minute",       "%"PRIu8,  msg->pd4.tofp_minute);
+    TEXTREAD_ADD_FIELD (tr, "tofp_second",       "%"PRIu8,  msg->pd4.tofp_second);
+    TEXTREAD_ADD_FIELD (tr, "tofp_hundredth",    "%"PRIu8,  msg->pd4.tofp_hundredth);
+    TEXTREAD_ADD_FIELD (tr, "builtin_test(:,1)", "%"PRIu8,  msg->pd4.builtin_test[0]);
+    TEXTREAD_ADD_FIELD (tr, "builtin_test(:,2)", "%"PRIu8,  msg->pd4.builtin_test[1]);
+    TEXTREAD_ADD_FIELD (tr, "speed_of_sound",    "%f",      msg->pd4.speed_of_sound);
+    TEXTREAD_ADD_FIELD (tr, "xducer_head_temp",  "%f",      msg->pd4.xducer_head_temp);
+
+    TEXTREAD_ADD_FIELD (tr, "salinity",          "%f",      msg->salinity);
+    TEXTREAD_ADD_FIELD (tr, "depth",          "%f",      msg->depth);
+    TEXTREAD_ADD_FIELD (tr, "pitch",          "%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "roll",          "%f",      msg->heading);
+    TEXTREAD_ADD_FIELD (tr, "dmg_btv(:,1)",          "%f",      msg->dmg_btv[0]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_btv(:,2)",          "%f",      msg->dmg_btv[1]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_btv(:,3)",          "%f",      msg->dmg_btv[2]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_btv(:,4)",          "%f",      msg->dmg_btv[3]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_wtv(:,1)",          "%f",      msg->dmg_wtv[0]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_wtv(:,2)",          "%f",      msg->dmg_wtv[1]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_wtv(:,3)",          "%f",      msg->dmg_wtv[2]);
+    TEXTREAD_ADD_FIELD (tr, "dmg_wtv(:,4)",          "%f",      msg->dmg_wtv[3]);
+
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_COORD_MASK",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_COORD_MASK);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_COORD_BEAM",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_COORD_BEAM);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_COORD_INST",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_COORD_INST);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_COORD_SHIP",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_COORD_SHIP);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_COORD_EARTH", SENLCM_RDI_PD4_T_SYSTEM_CONFIG_COORD_EARTH);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_TILT_MASK",   SENLCM_RDI_PD4_T_SYSTEM_CONFIG_TILT_MASK);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_TILT_USED",   SENLCM_RDI_PD4_T_SYSTEM_CONFIG_TILT_USED);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_3BEAM_MASK",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_3BEAM_MASK);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_3BEAM_USED",  SENLCM_RDI_PD4_T_SYSTEM_CONFIG_3BEAM_USED);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_KHZ_MASK",    SENLCM_RDI_PD4_T_SYSTEM_CONFIG_KHZ_MASK);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_KHZ_300",     SENLCM_RDI_PD4_T_SYSTEM_CONFIG_KHZ_300);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_KHZ_600",     SENLCM_RDI_PD4_T_SYSTEM_CONFIG_KHZ_600);
+    TEXTREAD_ADD_CONST (tr, "SYSTEM_CONFIG_KHZ_1200",    SENLCM_RDI_PD4_T_SYSTEM_CONFIG_KHZ_1200);
+
+    TEXTREAD_ADD_CONST (tr, "BTV_SENTINAL", SENLCM_RDI_PD4_T_BTV_SENTINAL);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM4_LOW_ECHO_AMPLITUDE", SENLCM_RDI_PD4_T_BTV_STATUS_BEAM4_LOW_ECHO_AMPLITUDE);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM4_LOW_CORRELATION",    SENLCM_RDI_PD4_T_BTV_STATUS_BEAM4_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM3_LOW_ECHO_AMPLITUDE", SENLCM_RDI_PD4_T_BTV_STATUS_BEAM3_LOW_ECHO_AMPLITUDE);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM3_LOW_CORRELATION",    SENLCM_RDI_PD4_T_BTV_STATUS_BEAM3_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM2_LOW_ECHO_AMPLITUDE", SENLCM_RDI_PD4_T_BTV_STATUS_BEAM2_LOW_ECHO_AMPLITUDE);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM2_LOW_CORRELATION",    SENLCM_RDI_PD4_T_BTV_STATUS_BEAM2_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM1_LOW_ECHO_AMPLITUDE", SENLCM_RDI_PD4_T_BTV_STATUS_BEAM1_LOW_ECHO_AMPLITUDE);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_BEAM1_LOW_CORRELATION",    SENLCM_RDI_PD4_T_BTV_STATUS_BEAM1_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "BTV_STATUS_OK", SENLCM_RDI_PD4_T_BTV_STATUS_OK);
+
+    TEXTREAD_ADD_CONST (tr, "WTV_SENTINAL", SENLCM_RDI_PD4_T_WTV_SENTINAL);
+    TEXTREAD_ADD_CONST (tr, "WTV_STATUS_BEAM4_LOW_CORRELATION", SENLCM_RDI_PD4_T_WTV_STATUS_BEAM4_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "WTV_STATUS_BEAM3_LOW_CORRELATION", SENLCM_RDI_PD4_T_WTV_STATUS_BEAM3_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "WTV_STATUS_BEAM2_LOW_CORRELATION", SENLCM_RDI_PD4_T_WTV_STATUS_BEAM2_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "WTV_STATUS_BEAM1_LOW_CORRELATION", SENLCM_RDI_PD4_T_WTV_STATUS_BEAM1_LOW_CORRELATION);
+    TEXTREAD_ADD_CONST (tr, "WTV_STATUS_OK", SENLCM_RDI_PD4_T_WTV_STATUS_OK);
+
+    TEXTREAD_ADD_CONST (tr, "RANGE_SENTINAL", SENLCM_RDI_PD4_T_RANGE_SENTINAL);
+    TEXTREAD_ADD_CONST (tr, "ALTITUDE_SENTINAL", SENLCM_RDI_PD4_T_ALTITUDE_SENTINAL);
+    TEXTREAD_ADD_CONST (tr, "BUILTIN_TEST_OK", SENLCM_RDI_PD4_T_BUILTIN_TEST_OK);
+
+    textread_stop (tr);
+}
+
+void
+senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_tcm_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
+    TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
+    TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+//    TEXTREAD_ADD_FIELD (tr, "mag_x","%f",      msg->mag_x);
+//    TEXTREAD_ADD_FIELD (tr, "mag_y","%f",      msg->mag_y);
+//    TEXTREAD_ADD_FIELD (tr, "mag_z","%f",      msg->mag_z);
+    
+    textread_stop (tr);
+}
+
+void
+senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const senlcm_kvh1750_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,1)","%f",      msg->angular[0]);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,2)","%f",      msg->angular[1]);
+    TEXTREAD_ADD_FIELD (tr, "angular(:,3)","%f",      msg->angular[2]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,1)","%f",      msg->linear[0]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,2)","%f",      msg->linear[1]);
+    TEXTREAD_ADD_FIELD (tr, "linear(:,3)","%f",      msg->linear[2]);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+    TEXTREAD_ADD_FIELD (tr, "status", "%"PRIu8,      msg->status);
+    TEXTREAD_ADD_FIELD (tr, "sequence", "%"PRIu8,      msg->sequence);
+
+    textread_stop (tr);
+}
+
+void 
+senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_usb2000_spec_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
+    TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
+    TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
+    
+    for (int i_spec=0;i_spec<2048;i_spec++) {
+        char buf[20];
+        snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
+        TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
+    }
+    TEXTREAD_ADD_FIELD (tr, "sixteenBitData",     "%"PRId8,   msg->sixteenBitData);
+    TEXTREAD_ADD_FIELD (tr, "startEndIdx1",     "%"PRId8,   msg->startEndIdx);
+    TEXTREAD_ADD_FIELD (tr, "startEndIdx2",     "%"PRId8,   msg->startEndIdx);
+    TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
+    
+    textread_stop (tr);
+}
+
+
+
+void 
+senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_sts_spec_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
+    TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
+    TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
+    
+    for (int i_spec=0;i_spec<1024;i_spec++) {
+        char buf[20];
+        snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
+        TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
+    }
+    TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
+    TEXTREAD_ADD_FIELD (tr, "boardTemp", "%f", msg->boardTemp);
+    TEXTREAD_ADD_FIELD (tr, "detectTemp", "%f", msg->detectTemp);
+    TEXTREAD_ADD_FIELD (tr, "newTemps", "%"PRId8, msg->newTemps);
+    
+    
+    textread_stop (tr);
+}

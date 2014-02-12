@@ -22,16 +22,24 @@ bool ZamboniePath::calcPath(void) {
 	cout << "DropAngl = " << this->dropAngle / M_PI * 180 << endl;
 
 	// Perform initial checks
+	bool error = false;
 	if( this->length <= 0 || this->width <= 0 || this->pathOffset <= 0 ) {
-		cerr << "Invalid width/length/offset" << endl;
-		return false;
+		cerr << "Error: Invalid width/length/offset" << endl;
+		error = true;
 	}
 	if( this->length < 2 * turnRadius ) {
-		cerr << "Area LENGTH too short. Min l=" << 2 * turnRadius << endl;
-		return false;
+		cerr << "Error: Area LENGTH too short. Min l=2*turnRadius=" << 2 * turnRadius
+				<< "m" << endl;
+		error = true;
 	}
-	if( this->width < 4 * turnRadius + 2 * pathOffset + 2 * centerOverlap ) {
-		cerr << "Area WIDTH too short. Min w=" << 4 * turnRadius + 2 * pathOffset + 2 * centerOverlap << endl;
+	if (this->width < 4 * turnRadius + 2 * pathOffset + 2 * centerOverlap) {
+		cerr << "Error: Area WIDTH too short. Min w=4*turnRadius+2*pathOffset+2*centerOverlap="
+				<< 4 * turnRadius + 2 * pathOffset + 2 * centerOverlap << "m"
+				<< endl;
+		error = true;
+	}
+	if( true == error ) {
+		cerr << "Fix this and try again. Exiting..." << endl;
 		return false;
 	}
 

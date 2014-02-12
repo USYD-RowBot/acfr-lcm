@@ -17,7 +17,7 @@ class SheriffCommandTreeView(gtk.TreeView):
         status_tr = gtk.CellRendererText ()
 
         cols_to_make = [ \
-            ("Name",     cmds_tr,   cm.COL_CMDS_TV_DISPLAY_NAME,  None),
+            ("Id",       cmds_tr,   cm.COL_CMDS_TV_COMMAND_ID,  None),
             ("Command",  cmds_tr,   cm.COL_CMDS_TV_EXEC,  None),
             ("Deputy",   plain_tr,  cm.COL_CMDS_TV_HOST, None),
             ("Status",   status_tr, cm.COL_CMDS_TV_STATUS_ACTUAL, self._status_cell_data_func),
@@ -26,15 +26,15 @@ class SheriffCommandTreeView(gtk.TreeView):
             ]
 
         self.columns = []
-        for name, renderer, col_id, cell_data_func in cols_to_make:
-            col = gtk.TreeViewColumn(name, renderer, text=col_id)
+        for command_id, renderer, col_id, cell_data_func in cols_to_make:
+            col = gtk.TreeViewColumn(command_id, renderer, text=col_id)
             col.set_sort_column_id(col_id)
             col.set_data("col-id", col_id)
             if cell_data_func:
                 col.set_cell_data_func(renderer, cell_data_func)
             self.columns.append(col)
 
-        # set an initial width for the name column
+        # set an initial width for the id column
         self.columns[0].set_sizing(gtk.TREE_VIEW_COLUMN_FIXED)
         self.columns[0].set_fixed_width(150)
 
@@ -152,7 +152,7 @@ class SheriffCommandTreeView(gtk.TreeView):
             width_key = "cmd_treeview:width:%s" % col_id
             should_be_visible = save_map.get(visible_key, True)
             col.set_visible(should_be_visible)
-            if int(col_id) == cm.COL_CMDS_TV_DISPLAY_NAME:
+            if int(col_id) == cm.COL_CMDS_TV_COMMAND_ID:
                 self.cmds_ts.set_populate_exec_with_group_name(not should_be_visible)
 
             width = save_map.get(width_key, 0)
@@ -279,10 +279,13 @@ class SheriffCommandTreeView(gtk.TreeView):
         unchanged_val = "[Unchanged]"
 
         old_deputies = [self.sheriff.get_command_deputy(cmd).name for cmd in cmds]
-        old_names = [cmd.name for cmd in cmds]
-        old_nicknames = [cmd.nickname for cmd in cmds]
+
+        old_exec_strs = [cmd.exec_str for cmd in cmds]
+        old_command_ids = [cmd.command_id for cmd in cmds]
         old_groups = [cmd.group for cmd in cmds]
         old_auto_respawns = [cmd.auto_respawn for cmd in cmds]
+        old_stop_signals = [cmd.stop_signal for cmd in cmds]
+        old_stop_times_allowed = [cmd.stop_time_allowed for cmd in cmds]
 
         # handle all same/different deputies
         if all(x == old_deputies[0] for x in old_deputies):
@@ -302,16 +305,17 @@ class SheriffCommandTreeView(gtk.TreeView):
             groups_list.extend(self.cmds_ts.get_known_group_names ())
             cur_group = unchanged_val
 
-        # name and nickname
-        if all(x == old_names[0] for x in old_names):
-            cur_name = old_names[0]
+        # executable string, command id
+        if all(x == old_exec_strs[0] for x in old_exec_strs):
+            cur_exec_str = old_exec_strs[0]
         else:
-            cur_name = unchanged_val
-        if all(x == old_nicknames[0] for x in old_nicknames):
-            cur_nickname = old_nicknames[0]
+            cur_exec_str = unchanged_val
+        if all(x == old_command_ids[0] for x in old_command_ids):
+            cur_command_id = old_command_ids[0]
         else:
-            cur_nickname = unchanged_val
+            cur_command_id = unchanged_val
 
+        # auto respawn
         if all(x == old_auto_respawns[0] for x in old_auto_respawns):
             if (old_auto_respawns[0]):
                 cur_auto_respawn = 1
@@ -320,37 +324,86 @@ class SheriffCommandTreeView(gtk.TreeView):
         else:
             cur_auto_respawn = -1
 
+        # stop signal
+        if all(x == old_stop_signals[0] for x in old_stop_signals):
+            cur_stop_signal = old_stop_signals[0]
+        else:
+            cur_stop_signal = unchanged_val
+
+        # stop time allowed
+        if all(x == old_stop_times_allowed[0] for x in old_stop_times_allowed):
+            cur_stop_time_allowed = old_stop_times_allowed[0]
+        else:
+            cur_stop_time_allowed = unchanged_val
 
         # create the dialog box
         dlg = sd.AddModifyCommandDialog (self.get_toplevel(),
                                          deputies_list,
                                          groups_list,
-                                         cur_name, cur_nickname, cur_deputy,
-                                         cur_group, cur_auto_respawn)
+                                         cur_exec_str, cur_command_id, cur_deputy,
+                                         cur_group, cur_auto_respawn,
+                                         cur_stop_signal,
+                                         cur_stop_time_allowed)
 
-        if dlg.run () == gtk.RESPONSE_ACCEPT:
-            newname = dlg.get_command ()
-            newnickname = dlg.get_nickname ()
-            newdeputy = dlg.get_deputy ()
-            newgroup = dlg.get_group ().strip ()
-            newauto_respawn = dlg.get_auto_respawn ()
+        while dlg.run () == gtk.RESPONSE_ACCEPT:
+            new_exec_str = dlg.get_command()
+            new_id = dlg.get_command_id()
+            newdeputy = dlg.get_deputy()
+            newgroup = dlg.get_group()
+            newauto_respawn = dlg.get_auto_respawn()
+            new_stop_signal = dlg.get_stop_signal()
+            new_stop_time_allowed = dlg.get_stop_time_allowed()
             cmd_ind = 0
-            for cmd in cmds:
-                if newname != cmd.name and newname != unchanged_val:
-                    self.sheriff.set_command_exec (cmd, newname)
 
-                if newnickname != cmd.nickname and newnickname != unchanged_val:
-                    self.sheriff.set_command_nickname (cmd, newnickname)
+            validated = True
+            for cmd in cmds:
+                errmsg = None
+                if new_id == unchanged_val:
+                    continue
+                existing_cmds = self.sheriff.get_commands_by_deputy_and_id(newdeputy, new_id)
+                if existing_cmds and existing_cmds != [ cmd ]:
+                    errmsg = "Deputy [%s] already has a command [%s]" % (newdeputy, new_id)
+                if not new_id:
+                    errmsg = "Empty command id not allowed"
+                if not errmsg:
+                    continue
+
+                errdlg = gtk.MessageDialog(dlg,
+                        gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT,
+                        gtk.MESSAGE_ERROR, gtk.BUTTONS_CLOSE)
+                errdlg.set_markup("Error!\n<span font_family=\"monospace\">%s</span>" % errmsg)
+                errdlg.run()
+                errdlg.destroy()
+                validated = False
+                break
+
+            if not validated:
+                continue
+
+            for cmd in cmds:
+                if newdeputy != old_deputies[cmd_ind] and newdeputy != unchanged_val:
+                    cmd = self.sheriff.move_command_to_deputy(cmd, newdeputy)
+
+                if new_exec_str != cmd.exec_str and new_exec_str != unchanged_val:
+                    self.sheriff.set_command_exec(cmd, new_exec_str)
+
+                if new_id != cmd.command_id and new_id != unchanged_val:
+                    self.sheriff.set_command_id(cmd, new_id)
 
                 if newauto_respawn != cmd.auto_respawn and newauto_respawn >=0:
-                    self.sheriff.set_auto_respawn (cmd, newauto_respawn)
-
-                if newdeputy != old_deputies[cmd_ind] and newdeputy != unchanged_val:
-                    self.sheriff.move_command_to_deputy(cmd, newdeputy)
+                    self.sheriff.set_auto_respawn(cmd, newauto_respawn)
 
                 if newgroup != cmd.group and newgroup != unchanged_val:
-                    self.sheriff.set_command_group (cmd, newgroup)
+                    self.sheriff.set_command_group(cmd, newgroup)
+
+                if new_stop_signal != cmd.stop_signal and new_stop_signal != unchanged_val:
+                    self.sheriff.set_command_stop_signal(cmd, new_stop_signal)
+
+                if new_stop_time_allowed != cmd.stop_time_allowed and new_stop_time_allowed != unchanged_val:
+                    self.sheriff.set_command_stop_time_allowed(cmd, new_stop_time_allowed)
+
                 cmd_ind = cmd_ind+1
+            break
         dlg.destroy ()
 
     def _on_cmds_tv_row_activated (self, treeview, path, column):

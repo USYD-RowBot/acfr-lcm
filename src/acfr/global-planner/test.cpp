@@ -3,11 +3,11 @@
 
 #include "mission.hpp"
 
-int main()
+int main(int argc, char ** argv)
 {
     Mission mis;
-    mis.load("./test.xml");
-    mis.dumpMatlab();
+    mis.load((string)argv[1]);
+    mis.dumpMatlab((string)argv[2]);
     
     return 1;
 }

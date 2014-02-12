@@ -7,6 +7,8 @@ acfr_nav::acfr_nav()
 {
     state = new(state_c);
     state->mode = NAV;
+    state->lcm = new lcm::LCM();
+    state->altitude = 0;
 }
 
 acfr_nav::~acfr_nav()
@@ -18,7 +20,7 @@ acfr_nav::~acfr_nav()
 int acfr_nav::initialise()
 {
 
-    Config_File *slam_config_file = new Config_File(slam_config_filename);
+    //Config_File *slam_config_file = new Config_File(slam_config_filename);
 	//poseAugOptions  = new Pose_Aug_Options(*slam_config_file);
 	//lastPoseAugmentationTime = 0;
 
@@ -33,27 +35,27 @@ int acfr_nav::initialise()
     // subscribe to the relevant LCM channel based on our configuration
     
     // we always subscribe to the GPS
-    state->lcm.subscribeFunction("GPSD_CLIENT", on_gps, state);
+    state->lcm->subscribeFunction("GPSD_CLIENT", on_gps, state);
     
     // Are we using the TCM compass
     if(attitude_source == TCM)
-        state->lcm.subscribeFunction("TCM", on_tcm_compass, state);
+        state->lcm->subscribeFunction("TCM", on_tcm_compass, state);
     else if(attitude_source == OS)
-        state->lcm.subscribeFunction("OS_COMPASS", on_os_compass, state);
+        state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
         
     // Which depth sensor are we using
     if(depth_source == YSI)
-        state->lcm.subscribeFunction("YSI", on_ysi, state);
+        state->lcm->subscribeFunction("YSI", on_ysi, state);
     else if(depth_source == PAROSCI)
-        state->lcm.subscribeFunction("PAROSCI", on_parosci, state);
+        state->lcm->subscribeFunction("PAROSCI", on_parosci, state);
     else if(depth_source == SEABIRD)
-        state->lcm.subscribeFunction("SEABIRD", on_seabird_depth, state);
+        state->lcm->subscribeFunction("SEABIRD", on_seabird_depth, state);
     
     // We always subscribe to this as our velocity source
-    state->lcm.subscribeFunction("RDI", on_rdi, state);
+    state->lcm->subscribeFunction("RDI", on_rdi, state);
 
     // Always subscribe to the IMU
-    state->lcm.subscribeFunction("IMU", on_imu, state);
+    state->lcm->subscribeFunction("IMU", on_imu, state);
     
     state->lowRateCount = 0;
     
@@ -63,7 +65,7 @@ int acfr_nav::initialise()
 int acfr_nav::load_config(char *program_name)
 {
     BotParam *param = NULL;
-    param = bot_param_new_from_server (state->lcm.getUnderlyingLCM(), 1);
+    param = bot_param_new_from_server (state->lcm->getUnderlyingLCM(), 1);
     if(param == NULL)
         return 0;
         
@@ -94,7 +96,7 @@ int acfr_nav::load_config(char *program_name)
     else if(!strcmp(depth_source_str, "SEABIRD"))
         depth_source = SEABIRD;
         
-    
+    return 1;    
 
 }
 
@@ -120,17 +122,18 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		nav.altitude = min(state->altitude, state->oas_altitude);
+		//nav.altitude = min(state->altitude, state->oas_altitude);
+		nav.altitude = state->altitude;
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		
 		printf("%ld\r", (long int)nav.utime);
 
-        state->lcm.publish("ACFR_NAV", &nav);   
+        state->lcm->publish("ACFR_NAV", &nav);   
 
     	if(state->lowRateCount++ == 9) {
     		state->lowRateCount = 0;
-            state->lcm.publish("ACFR_NAV.TOP", &nav);   
+            state->lcm->publish("ACFR_NAV.TOP", &nav);   
 
     	}
 /*        }
@@ -160,8 +163,8 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 
 int acfr_nav::process()
 {
-    state->lcm.subscribeFunction("HEARTBEAT_10HZ", publish_nav, state);
-    int fd = state->lcm.getFileno();
+    state->lcm->subscribeFunction("HEARTBEAT_10HZ", publish_nav, state);
+    int fd = state->lcm->getFileno();
     fd_set rfds;
     while(!loop_exit)
     {
@@ -172,7 +175,7 @@ int acfr_nav::process()
         timeout.tv_usec = 0;
         int ret = select (fd + 1, &rfds, NULL, NULL, &timeout);
         if(ret > 0)
-            state->lcm.handle();
+            state->lcm->handle();
     }
     
     return 1;
