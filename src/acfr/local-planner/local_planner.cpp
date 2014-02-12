@@ -101,6 +101,7 @@ LocalPlanner::~LocalPlanner() {
 int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav) {
 
 	currPose.setPosition(nav->x, nav->y, nav->depth);
+	currAltitude = nav->altitude;
 
 	// Instead of heading, we make the current pose "heading" actually the slip
 	// 	angle (bearing), for control
@@ -536,6 +537,7 @@ int LocalPlanner::onGlobalState(const acfrlcm::auv_global_planner_state_t *gpSta
                 cc.run_mode = acfrlcm::auv_control_t::STOP; // The instant we hit a waypoint, stop the motors, until the global planner sends a waypoint. This fixes idle behaviour.
                 lcm.publish("AUV_CONTROL", &cc);
     }
+    return 1;
 }
 
 
@@ -817,8 +819,13 @@ int LocalPlanner::processWaypoints() {
 		cc.depth = waypoint.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	} else {
-		cc.altitude = waypoint.getZ();
-		cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
+		//cc.altitude = waypoint.getZ();
+		//cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
+		// for now let's set the depth goal using the filtered 
+		// desired altitude. 
+		double depth_ref = currPose.getZ() + (currAltitude - waypoint.getZ()); 
+		cc.depth = depth_ref;
+		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	cc.vx = desVel;
 	//}

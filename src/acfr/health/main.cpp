@@ -1,3 +1,4 @@
+#include <math.h>
 #include "health_monitor.hpp"
 
 
@@ -144,9 +145,9 @@ int HealthMonitor::loadConfig(char *program_name)
         min_alt = bot_param_get_double_or_fail(param, key);
 	std::cout << "Set min alt to: " << min_alt << std::endl;
 
-        sprintf(key, "%s.min_alt", rootkey);
+        sprintf(key, "%s.max_pitch", rootkey);
         min_alt = bot_param_get_double_or_fail(param, key);
-	std::cout << "Set min alt to: " << min_alt << std::endl;
+	std::cout << "Set max pitch to: " << max_pitch << std::endl;
 
 	sprintf(key, "%s.abort_on_no_compass", rootkey);
         if (0==bot_param_get_double(param, key, &tmp_double))
@@ -219,33 +220,60 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     // check the age of the sensor data
     if((hbTime - compass.utime) < compass_timeout)
         status.status |= COMPASS_BIT;
+    else if (abort_on_no_compass == true)
+	sendAbortMessage("COMPASS dead");
     
     if((hbTime - gps.utime) < gps_timeout)
         status.status |= GPS_BIT;
+    else if (abort_on_no_gps == true)
+	sendAbortMessage("GPS dead");
 
     if((hbTime - ecopuck.utime) < ecopuck_timeout)
         status.status |= ECOPUCK_BIT;
+    else if (abort_on_no_ecopuck == true)
+	sendAbortMessage("ECOPUCK dead");
 
     if((hbTime - nav.utime) < nav_timeout)
         status.status |= NAV_BIT;
+    else if (abort_on_no_nav == true)
+	sendAbortMessage("NAV dead");
 
     if((hbTime - imu.utime) < imu_timeout)
         status.status |= IMU_BIT;
+    else if (abort_on_no_imu == true)
+	sendAbortMessage("IMU dead");
 
     if((hbTime - dvl.utime) < dvl_timeout)
         status.status |= DVL_BIT;
+    else if (abort_on_no_dvl == true)
+	sendAbortMessage("DVL dead");
 
     if(dvl.pd4.btv_status != 0)
         status.status |= DVL_BIT;
 
     if((hbTime - parosci.utime) < depth_timeout || (hbTime - ysi.utime) < depth_timeout)
         status.status |= DEPTH_BIT;
+    else if (abort_on_no_depth == true)
+	sendAbortMessage("DEPTH dead");
 
     if((hbTime - oas.utime) < oas_timeout)
         status.status |= OAS_BIT;
+    else if (abort_on_no_oas == true)
+	sendAbortMessage("OAS dead");
+
 
 
     lcm.publish("AUV_HEALTH", &status);
+
+    return 1;
+}
+
+int HealthMonitor::sendAbortMessage(const char *msg)
+{
+    acfrlcm::auv_global_planner_t abortMsg;
+    abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
+    abortMsg.str = msg;
+    lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
 
     return 1;
 }
@@ -257,10 +285,17 @@ int HealthMonitor::checkAbortConditions()
     if (nav.depth > max_depth)
     {
 	std::cout << "ABORT: Exceeded max depth" << std::endl;
-	acfrlcm::auv_global_planner_t abortMsg;
-	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
-	abortMsg.str = "MAX_DEPTH exceeded";
-	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
+	sendAbortMessage("MAX_DEPTH exceeded");
+    }
+    if (fabs(nav.pitch) > max_pitch)
+    {
+	std::cout << "ABORT: Exceeded max pitch" << std::endl;
+	sendAbortMessage("MAX_PITCH exceeded");
+    }
+    if (nav.altitude > 0.0 && nav.altitude < min_alt)
+    {
+	std::cout << "ABORT: Exceeded min altitude" << std::endl;
+	sendAbortMessage("MIN_ALT exceeded");
     }
     return 0;
 }

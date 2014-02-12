@@ -419,13 +419,14 @@ int main(int argc, char **argv)
 		
             //Weight the heading more as the velocity magnitude decreases
 
-            double W_BEARING;
+            double W_BEARING = 0;
+/* for the moment, use the heading as the yaw reference
 
             if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
                 W_BEARING = fabs(state.nav.vx) / 0.2;
             else
                 W_BEARING = 1;
-
+*/
             double W_HEADING = 1 - W_BEARING;
 
             double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;

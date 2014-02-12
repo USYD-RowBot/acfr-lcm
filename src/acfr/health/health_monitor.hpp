@@ -28,6 +28,7 @@ public:
 
     int loadConfig(char *programName);
     int checkStatus(int64_t hbTime);
+    int sendAbortMessage(const char *);
     int checkAbortConditions();
 
     senlcm::tcm_t compass;
@@ -46,7 +47,7 @@ public:
 private:
     double max_depth;
     double min_alt;
-    double max_abs_pitch;
+    double max_pitch;
 
     bool abort_on_no_compass;
     bool abort_on_no_gps;
