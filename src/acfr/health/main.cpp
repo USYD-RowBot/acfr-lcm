@@ -146,7 +146,7 @@ int HealthMonitor::loadConfig(char *program_name)
 	std::cout << "Set min alt to: " << min_alt << std::endl;
 
         sprintf(key, "%s.max_pitch", rootkey);
-        min_alt = bot_param_get_double_or_fail(param, key);
+        max_pitch = bot_param_get_double_or_fail(param, key);
 	std::cout << "Set max pitch to: " << max_pitch << std::endl;
 
 	sprintf(key, "%s.abort_on_no_compass", rootkey);
@@ -289,12 +289,12 @@ int HealthMonitor::checkAbortConditions()
     }
     if (fabs(nav.pitch) > max_pitch)
     {
-	std::cout << "ABORT: Exceeded max pitch" << std::endl;
+	std::cout << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
 	sendAbortMessage("MAX_PITCH exceeded");
     }
     if (nav.altitude > 0.0 && nav.altitude < min_alt)
     {
-	std::cout << "ABORT: Exceeded min altitude" << std::endl;
+	std::cout << "ABORT: Exceeded min altitude:" << nav.altitude << std::endl;
 	sendAbortMessage("MIN_ALT exceeded");
     }
     return 0;
