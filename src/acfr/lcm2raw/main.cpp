@@ -40,11 +40,11 @@ int main(int argc, char **argv) {
     state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
     state->lcm->subscribeFunction("YSI", on_ysi, state);
     state->lcm->subscribeFunction("PAROSCI", on_parosci, state);
-    state->lcm->subscribeFunction("SEABIRD", on_seabird_depth, state);
     state->lcm->subscribeFunction("RDI", on_rdi, state);
     state->lcm->subscribeFunction("IMU", on_imu, state);
     state->lcm->subscribeFunction("ACFR_AUV_VIS_RAWLOG", on_vis, state);
-     
+    state->lcm->subscribeFunction("3DM", on_ms_gx1, state);
+    state->lcm->subscribeFunction("SEABIRD_DEPTH", on_seabird_depth, state);
     cout << "Done subscribing" << endl;
     
     // run the log
