@@ -85,6 +85,7 @@ class LocalPlanner {
         
         Pose3D currPose;
         Vector3D currVel;
+	double currAltitude;
         
         Pose3D startPose;
         double startVel;

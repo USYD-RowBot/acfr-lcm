@@ -1,3 +1,4 @@
+#include <math.h>
 #include "health_monitor.hpp"
 
 
@@ -88,6 +89,15 @@ HealthMonitor::HealthMonitor()
     ysi.utime = 0;
     ysi.depth = 0;
     oas.utime = 0;
+
+   abort_on_no_compass = false;
+   abort_on_no_gps = false;
+   abort_on_no_ecopuck = false;
+   abort_on_no_nav = false;
+   abort_on_no_imu = false;
+   abort_on_no_dvl = false;
+   abort_on_no_depth = false;
+   abort_on_no_oas = false;
     
     compass_timeout = COMPASS_TIMEOUT;
     gps_timeout = GPS_TIMEOUT;
@@ -124,11 +134,79 @@ int HealthMonitor::loadConfig(char *program_name)
 
         char rootkey[64];
         char key[128];
+	double tmp_double;
         sprintf(rootkey, "acfr.%s", program_name);
 
         sprintf(key, "%s.max_depth", rootkey);
         max_depth = bot_param_get_double_or_fail(param, key);
 	std::cout << "Set max depth to: " << max_depth << std::endl;
+
+        sprintf(key, "%s.min_alt", rootkey);
+        min_alt = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set min alt to: " << min_alt << std::endl;
+
+        sprintf(key, "%s.max_pitch", rootkey);
+        max_pitch = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set max pitch to: " << max_pitch << std::endl;
+
+	sprintf(key, "%s.abort_on_no_compass", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_compass=tmp_double;
+	sprintf(key, "%s.compass_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	compass_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_gps", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_gps=tmp_double;
+	sprintf(key, "%s.gps_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	gps_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_ecopuck", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_ecopuck=tmp_double;
+	sprintf(key, "%s.ecopuck_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	ecopuck_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_nav", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_nav=tmp_double;
+	sprintf(key, "%s.nav_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	nav_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_imu", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_imu=tmp_double;
+	sprintf(key, "%s.imu_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	imu_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_dvl", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_dvl=tmp_double;
+	sprintf(key, "%s.dvl_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	dvl_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_depth", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_depth=tmp_double;
+	sprintf(key, "%s.depth_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	depth_timeout = tmp_double;
+
+	sprintf(key, "%s.abort_on_no_oas", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+		abort_on_no_oas=tmp_double;
+	sprintf(key, "%s.oas_timeout", rootkey);
+        if (0==bot_param_get_double(param, key, &tmp_double))
+        	oas_timeout = tmp_double;
+
+
+
 
 	return 1;
 }
@@ -142,33 +220,60 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     // check the age of the sensor data
     if((hbTime - compass.utime) < compass_timeout)
         status.status |= COMPASS_BIT;
+    else if (abort_on_no_compass == true)
+	sendAbortMessage("COMPASS dead");
     
     if((hbTime - gps.utime) < gps_timeout)
         status.status |= GPS_BIT;
+    else if (abort_on_no_gps == true)
+	sendAbortMessage("GPS dead");
 
     if((hbTime - ecopuck.utime) < ecopuck_timeout)
         status.status |= ECOPUCK_BIT;
+    else if (abort_on_no_ecopuck == true)
+	sendAbortMessage("ECOPUCK dead");
 
     if((hbTime - nav.utime) < nav_timeout)
         status.status |= NAV_BIT;
+    else if (abort_on_no_nav == true)
+	sendAbortMessage("NAV dead");
 
     if((hbTime - imu.utime) < imu_timeout)
         status.status |= IMU_BIT;
+    else if (abort_on_no_imu == true)
+	sendAbortMessage("IMU dead");
 
     if((hbTime - dvl.utime) < dvl_timeout)
         status.status |= DVL_BIT;
+    else if (abort_on_no_dvl == true)
+	sendAbortMessage("DVL dead");
 
     if(dvl.pd4.btv_status != 0)
         status.status |= DVL_BIT;
 
     if((hbTime - parosci.utime) < depth_timeout || (hbTime - ysi.utime) < depth_timeout)
         status.status |= DEPTH_BIT;
+    else if (abort_on_no_depth == true)
+	sendAbortMessage("DEPTH dead");
 
     if((hbTime - oas.utime) < oas_timeout)
         status.status |= OAS_BIT;
+    else if (abort_on_no_oas == true)
+	sendAbortMessage("OAS dead");
+
 
 
     lcm.publish("AUV_HEALTH", &status);
+
+    return 1;
+}
+
+int HealthMonitor::sendAbortMessage(const char *msg)
+{
+    acfrlcm::auv_global_planner_t abortMsg;
+    abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
+    abortMsg.str = msg;
+    lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
 
     return 1;
 }
@@ -180,10 +285,17 @@ int HealthMonitor::checkAbortConditions()
     if (nav.depth > max_depth)
     {
 	std::cout << "ABORT: Exceeded max depth" << std::endl;
-	acfrlcm::auv_global_planner_t abortMsg;
-	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
-	abortMsg.str = "MAX_DEPTH exceeded";
-	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
+	sendAbortMessage("MAX_DEPTH exceeded");
+    }
+    if (fabs(nav.pitch) > max_pitch)
+    {
+	std::cout << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
+	sendAbortMessage("MAX_PITCH exceeded");
+    }
+    if (nav.altitude > 0.0 && nav.altitude < min_alt)
+    {
+	std::cout << "ABORT: Exceeded min altitude:" << nav.altitude << std::endl;
+	sendAbortMessage("MIN_ALT exceeded");
     }
     return 0;
 }

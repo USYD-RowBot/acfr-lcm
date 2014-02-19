@@ -307,74 +307,79 @@ int main(int argc, char **argv)
     // main loop
     while(!main_exit)
     {
-        // lock the nav and command data
-        pthread_mutex_lock(&state.nav_lock);
-        pthread_mutex_lock(&state.command_lock);
-
-        // X Velocity
-        prop_rpm = pid(&state.gains_vel, state.nav.vx, state.command.vx, CONTROL_DT);
-        
-        // Roll compenstation
-        // We try to keep the AUV level, ie roll = 0
-        roll_offset = pid(&state.gains_roll, state.nav.roll, 0.0, CONTROL_DT);
-        // Pitch limit
-        if( roll_offset > state.roll_offset_max )
-            roll_offset = state.roll_offset_max;
-        else if( roll_offset < -state.roll_offset_max )
-            roll_offset = -state.roll_offset_max;
-
-        
-        // Depth to pitch
-	// Invert sign of depth/altitude pitch reference to reflect pitch
-	// orientation
-        if(state.command.depth_mode == ALTITUDE_MODE)
-            pitch = -pid(&state.gains_altitude, state.nav.altitude, state.command.altitude, CONTROL_DT);
-        else
-            pitch = -pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
-        
-        // Pitch to fins
-        if(state.command.depth_mode == PITCH_MODE)
+        // prepare the motor command
+        acfrlcm_auv_iver_motor_command_t mc;
+        memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
+        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN || state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
         {
-            pitch = state.command.pitch;
+            // lock the nav and command data
+            pthread_mutex_lock(&state.nav_lock);
+            pthread_mutex_lock(&state.command_lock);
+
+            // X Velocity
+            prop_rpm = pid(&state.gains_vel, state.nav.vx, state.command.vx, CONTROL_DT);
+        
+            // Roll compenstation
+            // We try to keep the AUV level, ie roll = 0
+            roll_offset = pid(&state.gains_roll, state.nav.roll, 0.0, CONTROL_DT);
+            // Pitch limit
+            if( roll_offset > state.roll_offset_max )
+                roll_offset = state.roll_offset_max;
+            else if( roll_offset < -state.roll_offset_max )
+                roll_offset = -state.roll_offset_max;
+
+        
+            // Depth to pitch
+    	    // Invert sign of depth/altitude pitch reference to reflect pitch
+	    // orientation
+            if(state.command.depth_mode == ALTITUDE_MODE)
+                pitch = -pid(&state.gains_altitude, state.nav.altitude, state.command.altitude, CONTROL_DT);
+            else
+                pitch = -pid(&state.gains_depth, state.nav.depth, state.command.depth, CONTROL_DT);
+        
+            // Pitch to fins
+            if(state.command.depth_mode == PITCH_MODE)
+            {
+                pitch = state.command.pitch;
             
-        }
+            }
         
-        // Pitch limit
-        if( pitch > state.pitch_max )
-            pitch = state.pitch_max;
-        else if( pitch < -state.pitch_max )
-            pitch = -state.pitch_max;
+            // Pitch limit
+            if( pitch > state.pitch_max )
+                pitch = state.pitch_max;
+            else if( pitch < -state.pitch_max )
+                pitch = -state.pitch_max;
         
-        if ((state.nav.vx > -0.05)||(prop_rpm > -100))
-            plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
-        else
-            plane_angle = pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
+            if ((state.nav.vx > -0.05)||(prop_rpm > -100))
+                plane_angle = pid(&state.gains_pitch, state.nav.pitch, pitch, CONTROL_DT);
+            else
+                plane_angle = pid(&state.gains_pitch_r, state.nav.pitch, pitch, CONTROL_DT);
         
-        // Heading
-        while(state.nav.heading < -M_PI)
-            state.nav.heading += 2*M_PI;
-        while(state.nav.heading > M_PI)
-            state.nav.heading -= 2*M_PI;
+            // Heading
+            while(state.nav.heading < -M_PI)
+                state.nav.heading += 2*M_PI;
+            while(state.nav.heading > M_PI)
+                state.nav.heading -= 2*M_PI;
 
-        while(state.command.heading < -M_PI)
-            state.command.heading += 2*M_PI;
-        while(state.command.heading > M_PI)
-            state.command.heading -= 2*M_PI;
+            while(state.command.heading < -M_PI)
+                state.command.heading += 2*M_PI;
+            while(state.command.heading > M_PI)
+                state.command.heading -= 2*M_PI;
 	
-        double bearing = atan2(state.nav.vy*cos(state.nav.heading)+state.nav.vx*sin(state.nav.heading),-state.nav.vy*sin(state.nav.heading)+state.nav.vx*cos(state.nav.heading));
+            double bearing = atan2(state.nav.vy*cos(state.nav.heading)+state.nav.vx*sin(state.nav.heading),-state.nav.vy*sin(state.nav.heading)+state.nav.vx*cos(state.nav.heading));
 
-        while(bearing < -M_PI)
-            bearing += 2*M_PI;
-        while(bearing > M_PI)
-            bearing -= 2*M_PI;
+            while(bearing < -M_PI)
+                bearing += 2*M_PI;
+            while(bearing > M_PI)
+                bearing -= 2*M_PI;
 	
-        //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
-	//      {
-        //            if(state.command.heading < (-M_PI / 2))
-	//               state.command.heading += 2*M_PI;
-	//           else if(state.nav.heading < (-M_PI / 2))
-	//               state.nav.heading += 2*M_PI;
-	//       }
+            //        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(state.nav.heading) / state.nav.heading))
+	    //      {
+            //            if(state.command.heading < (-M_PI / 2))
+	    //               state.command.heading += 2*M_PI;
+	    //           else if(state.nav.heading < (-M_PI / 2))
+	    //               state.nav.heading += 2*M_PI;
+	    //       }
 		/*
                 if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing) / bearing))
                 {
@@ -386,108 +391,113 @@ int main(int argc, char **argv)
 		*/
 
 
-        //        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
-        //printf("%f\n", roll_offset);
+            //        printf("%03.1f %03.1f\n", state.command.heading / M_PI * 180, state.nav.heading / M_PI * 180);
+            //printf("%f\n", roll_offset);
 
-	//      rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
+	    //      rudder_angle = pid(&state.gains_heading, state.nav.heading, state.command.heading, CONTROL_DT);
 
-        //        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
+            //        rudder_angle = pid(&state.gains_heading, bearing, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing the desired
 
-        // correctly compute the weighted bearing
+            // correctly compute the weighted bearing
 		
-        double yaw1 = bearing;
-        if (yaw1 > 2*M_PI)
-            yaw1 = yaw1 - 2*M_PI;
-        else if (yaw1 < 0)
-            yaw1 = yaw1 + 2*M_PI;
+            double yaw1 = bearing;
+            if (yaw1 > 2*M_PI)
+                yaw1 = yaw1 - 2*M_PI;
+            else if (yaw1 < 0)
+                yaw1 = yaw1 + 2*M_PI;
 
-        double yaw2 = state.nav.heading;
-        if (yaw2 > 2*M_PI)
-            yaw2 = yaw2 - 2*M_PI;
-        else if (yaw2 < 0)
-            yaw2 = yaw2 + 2*M_PI;
+            double yaw2 = state.nav.heading;
+            if (yaw2 > 2*M_PI)
+                yaw2 = yaw2 - 2*M_PI;
+            else if (yaw2 < 0)
+                yaw2 = yaw2 + 2*M_PI;
 
-        if (yaw2 - yaw1 > M_PI)
-            yaw2 = yaw2 - 2*M_PI;
-        else if (yaw1 - yaw2 > M_PI)
-            yaw1 = yaw1 - 2*M_PI;
+            if (yaw2 - yaw1 > M_PI)
+                yaw2 = yaw2 - 2*M_PI;
+            else if (yaw1 - yaw2 > M_PI)
+                yaw1 = yaw1 - 2*M_PI;
 		
-        //Weight the heading more as the velocity magnitude decreases
+            //Weight the heading more as the velocity magnitude decreases
 
-        double W_BEARING;
+            double W_BEARING = 0;
+/* for the moment, use the heading as the yaw reference
 
-        if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
-            W_BEARING = fabs(state.nav.vx) / 0.2;
-        else
-            W_BEARING = 1;
+            if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
+                W_BEARING = fabs(state.nav.vx) / 0.2;
+            else
+                W_BEARING = 1;
+*/
+            double W_HEADING = 1 - W_BEARING;
 
-        double W_HEADING = 1 - W_BEARING;
+            double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;
 
-        double bearing_weighted = W_BEARING*yaw1 + W_HEADING*yaw2;
-
-        while(bearing_weighted < -M_PI)
-            bearing_weighted += 2*M_PI;
-        while(bearing_weighted > M_PI)
-            bearing_weighted -= 2*M_PI;
-
-        if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing_weighted) / bearing_weighted))
-        {
-            if(state.command.heading < (-M_PI / 2))
-                state.command.heading += 2*M_PI;
-            else if(bearing_weighted < (-M_PI / 2))
+            while(bearing_weighted < -M_PI)
                 bearing_weighted += 2*M_PI;
-        }
+            while(bearing_weighted > M_PI)
+                bearing_weighted -= 2*M_PI;
 
-	        rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
+            if((int)(fabs(state.command.heading) / state.command.heading) != (int)(fabs(bearing_weighted) / bearing_weighted))
+            {
+                if(state.command.heading < (-M_PI / 2))
+                    state.command.heading += 2*M_PI;
+                else if(bearing_weighted < (-M_PI / 2))
+                    bearing_weighted += 2*M_PI;
+            }
 
-		//        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
+            rudder_angle = pid(&state.gains_heading, bearing_weighted, state.command.heading, CONTROL_DT);//account for side slip by making the velocity bearing weighted on the desired heading
+
+            //        printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
 		        
-        // Special dive case, no heading control
-        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
-        {
-            rudder_angle = 0;
-            roll_offset = 0;
-        }
+            // Special dive case, no heading control
+            if(state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+            {
+                rudder_angle = 0;
+                roll_offset = 0;
+            }
         
-        // Add in the roll offset
-        double top = rudder_angle - roll_offset;
-        double bottom = rudder_angle + roll_offset;
-        double port = plane_angle - roll_offset;
-        double starboard = plane_angle - roll_offset;
+            // Add in the roll offset
+            double top = rudder_angle - roll_offset;
+            double bottom = rudder_angle + roll_offset;
+            double port = plane_angle - roll_offset;
+            double starboard = plane_angle - roll_offset;
 
-	//	printf("prop_rpm: %f\n",prop_rpm);
-        if ((state.nav.vx < -0.05)&&(prop_rpm < -100))  // reverse all the fin angles for reverse direction (given rpm is negative and so is velocity, so water relative should be negative, or soon will be). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
-        {
-            printf("reversing, flipping fin control\n");
-            top  = -top;
-            bottom  = -bottom;
-            port = -port;
-            starboard = -starboard;
-        }
+	    //	printf("prop_rpm: %f\n",prop_rpm);
+            if ((state.nav.vx < -0.05)&&(prop_rpm < -100))  // reverse all the fin angles for reverse direction (given rpm is negative and so is velocity, so water relative should be negative, or soon will be). May not be enough due to completely different dynamics in reverse, hence there are new gains for the reverse pitch control now.
+            {
+                printf("reversing, flipping fin control\n");
+                top  = -top;
+                bottom  = -bottom;
+                port = -port;
+                starboard = -starboard;
+            }
 
 
-		printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
-        limit_value(&top, state.plane_rudder_max);
-        limit_value(&bottom, state.plane_rudder_max);
-        limit_value(&port, state.plane_rudder_max);
-        limit_value(&starboard, state.plane_rudder_max);
+		//printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
+            limit_value(&top, state.plane_rudder_max);
+            limit_value(&bottom, state.plane_rudder_max);
+            limit_value(&port, state.plane_rudder_max);
+            limit_value(&starboard, state.plane_rudder_max);
         
-        // unlock the nav and command data
-        pthread_mutex_unlock(&state.nav_lock);
-        pthread_mutex_unlock(&state.command_lock);
+            // unlock the nav and command data
+            pthread_mutex_unlock(&state.nav_lock);
+            pthread_mutex_unlock(&state.command_lock);
         
-        // send the motor command
-        acfrlcm_auv_iver_motor_command_t mc;
-        memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
-        mc.utime = timestamp_now();
-        if(state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN || state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
-        {
             mc.main = prop_rpm;
             mc.top = top;
             mc.bottom = bottom;
             mc.port = port;
             mc.starboard = starboard;
+        } else {
+            // if we are not in RUN or DIVE mode, zero the integral terms
+            state.gains_vel.integral = 0;
+            state.gains_roll.integral = 0;
+            state.gains_depth.integral = 0;
+            state.gains_altitude.integral = 0;
+            state.gains_pitch.integral = 0;
+            state.gains_pitch_r.integral = 0;
+            state.gains_heading.integral = 0;
         }
+        mc.utime = timestamp_now();
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
 

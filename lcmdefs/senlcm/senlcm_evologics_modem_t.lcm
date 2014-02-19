@@ -1,0 +1,8 @@
+package senlcm;
+
+struct evologics_modem_t
+{
+    int64_t utime;
+    int32_t size;
+    byte data[size];    
+}
