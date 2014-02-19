@@ -65,7 +65,7 @@ lcm-logger -v -c PROSILICA_..16 $LOGDIR/$MISSION_NAME.lcm > /dev/null &
 
 # Restart the cam-logger, directing it to log data into the idir
 killall -q acfr-cam-logger 
-$LCMROOT/build/bin/acfr-cam-logger -e PROSILICA_..16 -o $ILOGDIR > /dev/null &
+$LCMROOT/build/bin/acfr-cam-logger -c "PROSILICA_..16" -o $ILOGDIR > /dev/null 2> /dev/null &
 
 # Send camera trigger START message
 python $LCMROOT/src/acfr/python/camtrigger.py start &
