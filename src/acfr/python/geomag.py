@@ -1,3 +1,6 @@
+#!/usr/bin/python
+#
+
 # geomag.py
 # by Christopher Weiss cmweiss@gmail.com
 
@@ -18,7 +21,7 @@
 # Modified by Ariell Friedman to be runnable from CLI with arguments
 
 # CLI USAGE: 
-# ./geomag.py <lat> <lon> <date>
+# ./geomag.py <WMM_FILE> <lat> <lon> [<date>]
 #
 
 import math, os, unittest, sys
@@ -312,10 +315,13 @@ class GeoMagTest(unittest.TestCase):
             self.assertAlmostEqual(values[4], calcval.dec, 2, 'Expected %s, result %s' % (values[4], calcval.dec))
 
 if __name__ == '__main__':
-    #unittest.main()
-    args = [float(i) for i in sys.argv[1:]]
-    #print "lat: {}, lon: {}, date: {}".format(*sys.argv[1:])
-    gm = GeoMag("WMM.COF")
-    mag = gm.GeoMag(*args)
-    print mag.dec
+    if len(sys.argv) == 4:
+        latlon = [float(i) for i in sys.argv[2:4]]
+        wmmfile = sys.argv[1]
+        gm = GeoMag(wmmfile)
+        mag = gm.GeoMag(*latlon)
+        print mag.dec
+    else :
+        unittest.main()
+        
 

@@ -12,7 +12,8 @@
 #####################################################################
 
 # Magnetic variation test_script
-MAGVARTESTPROG="magfield_test"
+MAGVARWMM="/home/auv/git/acfr_lcm/src/acfr/python/WMM.COF"
+MAGVARPROG="/home/auv/git/acfr_lcm/src/acfr/python/geomag.py"
 
 
 # Check for right number of arguments, otherwise print usage.
@@ -38,9 +39,10 @@ DEPTH_TARE="$3"
 
 
 # Calculate magnetic variation
-MAGVARDATEARG=`date --utc +%m\ %d\ %y`
-MAGVAROUT=`$MAGVARTESTPROG $ORIGIN_LAT $ORIGIN_LNG 0 $MAGVARDATEARG`
-MAG_VAR=`echo $MAGVAROUT | cut -d " " -f 17`
+#MAGVARDATEARG=`date --utc +%m\ %d\ %y`
+MAG_VAR=`$MAGVARPROG $MAGVARWMM $ORIGIN_LAT $ORIGIN_LNG`
+#MAGVAROUT=`$MAGVARTESTPROG $ORIGIN_LAT $ORIGIN_LNG 0 $MAGVARDATEARG`
+#MAG_VAR=`echo $MAGVAROUT | cut -d " " -f 17`
 
 # echo mission config
 echo "# Generated automatically by 

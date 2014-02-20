@@ -112,7 +112,7 @@ def check_reedswitch(threadName, readdelay, debouncedelay) :
             count = 0
             time.sleep(readdelay)
         triggered = curtrigger
-        IMGDATA['CTL'] = "{}/{}".format(count, maxcount)
+        IMGDATA['TRIG'] = "|"+"|"*count + "-"*(maxcount-count)+"|" #"{}/{}".format(count, maxcount)
 
 def update_display(threadName, delay):
     while True:
