@@ -20,15 +20,16 @@
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
 #define SERVO_RANGE 0
-#define DTOR M_PI/180
+#define DTOR M_PI/180.
 
 // gears are servo 19T, intermediat 40T, fin shaft 36T
 // gear ratio is 0.5277
-// servo range is 90 degrees for input 0 - 255
 #define SERVO_GEAR_RATIO 0.5277
+// servo range is 90 degrees for input 0 - 255
 #define SERVO_SCALE (256.0/(90.0*DTOR))
-#define MAX_FIN_ANGLE (90.0 * DTOR * SERVO_GEAR_RATIO / 2.0)
-#define DEG_TO_SERVO (45.0 * DTOR / MAX_FIN_ANGLE)
+// we never allow is to get close to 0 or 255
+#define MAX_FIN_ANGLE (80.0 * DTOR) / 2
+//#define DEG_TO_SERVO (45.0 * DTOR / MAX_FIN_ANGLE)
 
 #define REMOTE_TIMEOUT 2000000
 
@@ -75,33 +76,30 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     
     
     // limit check and scale
-    if(mc->top > MAX_FIN_ANGLE)
-        rudder_top = (char)255;
-    else if(mc->top < -MAX_FIN_ANGLE)
-        rudder_top = (char)0;
-    else
-        rudder_top = (char)((mc->top * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
+    if(mc->top >= MAX_FIN_ANGLE)
+        mc->top = MAX_FIN_ANGLE;
+    else if(mc->top <= -MAX_FIN_ANGLE)
+        mc->top = -MAX_FIN_ANGLE;
+
+    rudder_top = (char)((mc->top + 45*DTOR) * SERVO_SCALE);
         
-    if(mc->bottom > MAX_FIN_ANGLE)
-        rudder_bottom = (char)255;
-    else if(mc->bottom < -MAX_FIN_ANGLE)
-        rudder_bottom = (char)0;
-    else
-        rudder_bottom = (char)((mc->bottom * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
+    if(mc->bottom >= MAX_FIN_ANGLE)
+        mc->bottom = MAX_FIN_ANGLE;
+    else if(mc->bottom <= -MAX_FIN_ANGLE)
+        mc->bottom = -MAX_FIN_ANGLE;
+    rudder_bottom = (char)((mc->bottom + 45*DTOR) * SERVO_SCALE);
     
-    if(mc->port > MAX_FIN_ANGLE)
-        plane_port = (char)255;
-    else if(mc->port < -MAX_FIN_ANGLE)
-        plane_port = (char)0;
-    else
-        plane_port = (char)((mc->port * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
+    if(mc->port >= MAX_FIN_ANGLE)
+        mc->port = MAX_FIN_ANGLE;
+    else if(mc->port <= -MAX_FIN_ANGLE)
+        mc->port = -MAX_FIN_ANGLE;
+    plane_port = (char)((mc->port + 45*DTOR) * SERVO_SCALE);
     
-    if(mc->starboard > MAX_FIN_ANGLE)
-        plane_starboard = (char)255;
-    else if(mc->starboard < -MAX_FIN_ANGLE)
-        plane_starboard = (char)0;
-    else
-        plane_starboard = (char)((mc->starboard * DEG_TO_SERVO + 45*DTOR) * SERVO_SCALE);
+    if(mc->starboard >= MAX_FIN_ANGLE)
+        mc->starboard = MAX_FIN_ANGLE;
+    else if(mc->starboard <= -MAX_FIN_ANGLE)
+        mc->starboard = -MAX_FIN_ANGLE;
+    plane_starboard = (char)((mc->starboard + 45*DTOR) * SERVO_SCALE);
     
     
     
