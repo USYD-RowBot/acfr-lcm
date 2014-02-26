@@ -289,6 +289,8 @@ int main(int argc, char **argv) {
 	double roll_offset = 0.0;
 	double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
+	long loopCount = 0;
+
 	// main loop
 	while (!main_exit) {
 		// prepare the motor command
@@ -481,6 +483,19 @@ int main(int argc, char **argv) {
 			mc.bottom = bottom;
 			mc.port = port;
 			mc.starboard = starboard;
+
+
+
+			// Print out status message every 10 loops
+			if( ++loopCount % 10 == 0 ) {
+				printf( "Velocity: curr=%.2f, des=%.2f\n", nav.vx, cmd.vx );
+				printf( "Heading : curr=%.2f, des=%.2f, diff=%.2f",
+						nav.heading, cmd.heading, diff_heading );
+				printf( "Motor   : main=%d, top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
+						mc.main, mc.top, mc.bottom, mc.port, mc.starboard);
+				printf( "\n" );
+			}
+
 		} else {
 			// if we are not in RUN or DIVE mode, zero the integral terms
 			state.gains_vel.integral = 0;
