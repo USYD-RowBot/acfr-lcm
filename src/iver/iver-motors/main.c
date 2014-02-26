@@ -50,7 +50,7 @@ typedef struct
 } state_t;    
 
 void
-motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc, void *u) 
+motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc_, void *u) 
 {
     state_t *state = (state_t *)u;
     
@@ -58,11 +58,12 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     char rudder_top, rudder_bottom;
     char plane_port, plane_starboard;
     
+    acfrlcm_auv_iver_motor_command_t mc = *mc_;
     
     // we got a remote command, set the time and mode
-    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
+    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
     {
-        state->remote_time = mc->utime;
+        state->remote_time = mc.utime;
         state->remote = 1;
     }
 
@@ -71,35 +72,35 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         state->remote = 0;
     
     // if we got a auto cammand but we are still in remote mode the return
-    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO && state->remote)
+    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO && state->remote)
         return;
     
     
     // limit check and scale
-    if(mc->top >= MAX_FIN_ANGLE)
-        mc->top = MAX_FIN_ANGLE;
-    else if(mc->top <= -MAX_FIN_ANGLE)
-        mc->top = -MAX_FIN_ANGLE;
+    if(mc.top >= MAX_FIN_ANGLE)
+        mc.top = MAX_FIN_ANGLE;
+    else if(mc.top <= -MAX_FIN_ANGLE)
+        mc.top = -MAX_FIN_ANGLE;
 
-    rudder_top = (char)((mc->top + 45*DTOR) * SERVO_SCALE);
+    rudder_top = (char)((mc.top + 45*DTOR) * SERVO_SCALE);
         
-    if(mc->bottom >= MAX_FIN_ANGLE)
-        mc->bottom = MAX_FIN_ANGLE;
-    else if(mc->bottom <= -MAX_FIN_ANGLE)
-        mc->bottom = -MAX_FIN_ANGLE;
-    rudder_bottom = (char)((mc->bottom + 45*DTOR) * SERVO_SCALE);
+    if(mc.bottom >= MAX_FIN_ANGLE)
+        mc.bottom = MAX_FIN_ANGLE;
+    else if(mc.bottom <= -MAX_FIN_ANGLE)
+        mc.bottom = -MAX_FIN_ANGLE;
+    rudder_bottom = (char)((mc.bottom + 45*DTOR) * SERVO_SCALE);
     
-    if(mc->port >= MAX_FIN_ANGLE)
-        mc->port = MAX_FIN_ANGLE;
-    else if(mc->port <= -MAX_FIN_ANGLE)
-        mc->port = -MAX_FIN_ANGLE;
-    plane_port = (char)((mc->port + 45*DTOR) * SERVO_SCALE);
+    if(mc.port >= MAX_FIN_ANGLE)
+        mc.port = MAX_FIN_ANGLE;
+    else if(mc.port <= -MAX_FIN_ANGLE)
+        mc.port = -MAX_FIN_ANGLE;
+    plane_port = (char)((mc.port + 45*DTOR) * SERVO_SCALE);
     
-    if(mc->starboard >= MAX_FIN_ANGLE)
-        mc->starboard = MAX_FIN_ANGLE;
-    else if(mc->starboard <= -MAX_FIN_ANGLE)
-        mc->starboard = -MAX_FIN_ANGLE;
-    plane_starboard = (char)((mc->starboard + 45*DTOR) * SERVO_SCALE);
+    if(mc.starboard >= MAX_FIN_ANGLE)
+        mc.starboard = MAX_FIN_ANGLE;
+    else if(mc.starboard <= -MAX_FIN_ANGLE)
+        mc.starboard = -MAX_FIN_ANGLE;
+    plane_starboard = (char)((mc.starboard + 45*DTOR) * SERVO_SCALE);
     
     
     
@@ -110,23 +111,32 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     servo_command[1] = 0x04;
     servo_command[2] = plane_starboard;
 
-    
     servo_command[4] = 0x01 + SERVO_RANGE;
     servo_command[5] = rudder_top;
         
     servo_command[7] = 0x02 + SERVO_RANGE;
     servo_command[8] = rudder_bottom;
-
     
     servo_command[10] = 0x03 + SERVO_RANGE;
     servo_command[11] = plane_port;
 
-    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(-mc->main * 32212.0 / 60.0));
+    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(-mc.main * 32212.0 / 60.0));
     
     // we don't want to send the data at to high a rate
     if((timestamp_now() - state->last_data_time) > 100000)
     {
-//printf("Motor cmd: %f %s\n", mc->main, motor_string);
+	static int throttle = 0;
+	
+	if (throttle++ > 10)
+	{
+		printf("Motor cmd: %f %s\n", mc.main, motor_string);
+		printf("Servo cmd: t:%f %x b:%f %x s:%f %x p:%f %x\n", 
+			mc.top, rudder_top,
+			mc.bottom, rudder_bottom,
+			mc.starboard, plane_starboard,
+			mc.port, plane_port);
+		throttle = 0;
+	}
         state->last_data_time = timestamp_now();
         write(state->servo_fd, servo_command, 12);
         write(state->motor_fd, motor_string, strlen(motor_string));
