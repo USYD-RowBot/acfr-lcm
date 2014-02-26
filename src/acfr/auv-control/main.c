@@ -489,9 +489,9 @@ int main(int argc, char **argv) {
 			// Print out status message every 10 loops
 			if( ++loopCount % 10 == 0 ) {
 				printf( "Velocity: curr=%.2f, des=%.2f\n", nav.vx, cmd.vx );
-				printf( "Heading : curr=%.2f, des=%.2f, diff=%.2f",
-						nav.heading, cmd.heading, diff_heading );
-				printf( "Motor   : main=%d, top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
+				printf( "Heading : curr=%.2f, des=%.2f, diff=%.2f\n",
+						nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
+				printf( "Motor   : main=%f, top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
 						mc.main, mc.top, mc.bottom, mc.port, mc.starboard);
 				printf( "\n" );
 			}
