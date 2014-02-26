@@ -295,7 +295,6 @@ int LocalPlanner::calculateWaypoints()
 
 	// Save the start pose and start velocity
 	startPose = currPose;
-	startVel = currVel[0];
 
 	//setDestReached( false );
 
