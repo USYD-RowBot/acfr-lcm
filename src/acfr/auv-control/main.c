@@ -448,10 +448,10 @@ int main(int argc, char **argv) {
 			}
 
 			// Add in the roll offset
-			double top = rudder_angle - roll_offset;
-			double bottom = rudder_angle + roll_offset;
-			double port = plane_angle - roll_offset;
-			double starboard = plane_angle - roll_offset;
+			double top       = rudder_angle - roll_offset;
+			double bottom    = rudder_angle + roll_offset;
+			double port      = plane_angle  - roll_offset;
+			double starboard = plane_angle  - roll_offset;
 
 			//	printf("prop_rpm: %f\n",prop_rpm);
 			// Reverse all the fin angles for reverse direction (given rpm is
@@ -462,29 +462,25 @@ int main(int argc, char **argv) {
 			if ((nav.vx < -0.05) && (prop_rpm < -100))
 			{
 				printf("reversing, flipping fin control\n");
-				top = -top;
-				bottom = -bottom;
-				port = -port;
+				top       = -top;
+				bottom    = -bottom;
+				port      = -port;
 				starboard = -starboard;
 			}
 
-			//printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n", state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
+			//printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n",
+			// state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
 			limit_value(&top, state.plane_rudder_max);
 			limit_value(&bottom, state.plane_rudder_max);
 			limit_value(&port, state.plane_rudder_max);
 			limit_value(&starboard, state.plane_rudder_max);
 
-//			// unlock the nav and command data
-//			pthread_mutex_unlock(&state.nav_lock);
-//			pthread_mutex_unlock(&state.command_lock);
-
+			// Set motor controller values
 			mc.main = prop_rpm;
 			mc.top = top;
 			mc.bottom = bottom;
 			mc.port = port;
 			mc.starboard = starboard;
-
-
 
 			// Print out status message every 10 loops
 			if( ++loopCount % 10 == 0 ) {

@@ -298,6 +298,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 {
     state_t *state = (state_t *)u;
     int initialised = 1;
+    static long loopCount = 0;
     
     for(int j=0; j<state->num_devs; j++) 
     {
@@ -371,6 +372,11 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         state->ps.minutes_tef = state->ps.minutes_tef / state->num_devs;
 
         senlcm_os_power_system_t_publish (state->lcm, "BATTERY", &state->ps);
+
+        if(++loopCount % 60 == 0) {
+        	printf( "Time=%l Avg charge = %d\n",
+        			state->ps.utime, state->ps.avg_charge_p);
+        }
     }
 
 }
