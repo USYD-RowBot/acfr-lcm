@@ -60,6 +60,10 @@ typedef struct {
 	int run_mode;
 	pthread_mutex_t command_lock;
 
+	// remote
+    int64_t remote_time;
+    int remote;
+
 } state_t;
 
 // load all the config variables
@@ -210,6 +214,23 @@ static void control_callback(const lcm_recv_buf_t *rbuf, const char *channel,
 	pthread_mutex_unlock(&state->command_lock);
 }
 
+void
+motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
+		const acfrlcm_auv_iver_motor_command_t *mc, void *u)
+{
+	state_t *state = (state_t *)u;
+
+    // we got a remote command, set the time and mode
+    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
+    {
+        state->remote_time = mc.utime;
+        state->remote = 1;
+    }
+    else {
+    	state->remote = 0;
+    }
+
+}
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
 // every time it comes in
 static void acfr_nav_callback(const lcm_recv_buf_t *rbuf, const char *channel,
@@ -289,6 +310,8 @@ int main(int argc, char **argv) {
 			&state);
 	acfrlcm_auv_control_t_subscribe(state.lcm, "AUV_CONTROL", &control_callback,
 			&state);
+	acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, "IVER_MOTOR",
+			&motor_callback, &state);
 
 	periodic_info timer_info;
 	make_periodic(CONTROL_DT * 1000000, &timer_info);
@@ -308,6 +331,10 @@ int main(int argc, char **argv) {
 		// prepare the motor command
 		acfrlcm_auv_iver_motor_command_t mc;
 		memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
+
+		if( state.remote ) {
+			printf( "Remote is on! Should we (not) do something??\n" );
+		}
 
 		if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN
 				|| state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
