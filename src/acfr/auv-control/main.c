@@ -258,6 +258,7 @@ int main(int argc, char **argv) {
 
 	state_t state;
 	state.lcm = lcm_create(NULL);
+	state.run_mode = ACFRLCM_AUV_CONTROL_T_STOP;
 
 	char root_key[64];
 	sprintf(root_key, "acfr.%s", basename(argv[0]));
@@ -293,9 +294,12 @@ int main(int argc, char **argv) {
 
 	// main loop
 	while (!main_exit) {
+		loopCount++;
+
 		// prepare the motor command
 		acfrlcm_auv_iver_motor_command_t mc;
 		memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
+
 		if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN
 				|| state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
 				{
@@ -483,12 +487,14 @@ int main(int argc, char **argv) {
 			mc.starboard = starboard;
 
 			// Print out status message every 10 loops
-			if( ++loopCount % 10 == 0 ) {
-				printf( "Velocity: curr=%.2f, des=%.2f\n", nav.vx, cmd.vx );
-				printf( "Heading : curr=%.2f, des=%.2f, diff=%.2f\n",
+			if( loopCount % 10 == 0 ) {
+				printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+						nav.vx, cmd.vx, (cmd.vx - nav.vx) );
+				printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
 						nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
-				printf( "Motor   : main=%f, top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
-						mc.main, mc.top, mc.bottom, mc.port, mc.starboard);
+				printf( "Motor   : main=%4d\n", (int)mc.main);
+				printf( "Fins    : top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
+							mc.top, mc.bottom, mc.port, mc.starboard);
 				printf( "\n" );
 			}
 
@@ -501,6 +507,11 @@ int main(int argc, char **argv) {
 			state.gains_pitch.integral = 0;
 			state.gains_pitch_r.integral = 0;
 			state.gains_heading.integral = 0;
+
+			if( loopCount % 10 == 0 ) {
+				printf( "o" );
+			}
+
 		}
 		mc.utime = timestamp_now();
 		mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
