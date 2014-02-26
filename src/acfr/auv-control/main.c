@@ -292,6 +292,8 @@ int main(int argc, char **argv) {
 
 	long loopCount = 0;
 
+
+
 	// main loop
 	while (!main_exit) {
 		loopCount++;
