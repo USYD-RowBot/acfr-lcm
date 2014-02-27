@@ -68,23 +68,23 @@ bool ZamboniePath::calcPath(void) {
 	//	- bottom-left when performing clockwise spirals
 	//	- bottom-right when performing counter-clockwise spirals
 	currPose.setPosition(position.getX(), position.getY(), position.getZ());
-	currPose.setRollPitchYawRad(0, 0, heading - M_PI/2*direction);
+	currPose.setRollPitchYawRad(0, 0, heading)
 	wp.pose = currPose;
 	path.push_back(wp);
 
 	// Initial way points
-	nextPose.setIdentity();
-	nextPose.setPosition(0, direction * turnRadius, 0);
-	c = currPose.compose(nextPose);
-	c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
-	for( int i = 0; i < nWpC; i++ ) {
-		double heading = direction * dropAngleC * (i + 1);
-		nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
-		nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
-		currPose = c.compose(nextPose);
-		wp.pose = currPose;
-		path.push_back(wp);
-	}
+//	nextPose.setIdentity();
+//	nextPose.setPosition(0, direction * turnRadius, 0);
+//	c = currPose.compose(nextPose);
+//	c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
+//	for( int i = 0; i < nWpC; i++ ) {
+//		double heading = direction * dropAngleC * (i + 1);
+//		nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
+//		nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
+//		currPose = c.compose(nextPose);
+//		wp.pose = currPose;
+//		path.push_back(wp);
+//	}
 
 	// For every loop
 	double loopNum = 0;
