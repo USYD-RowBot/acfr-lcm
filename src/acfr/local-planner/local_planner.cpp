@@ -228,7 +228,10 @@ int LocalPlanner::calculateWaypoints()
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
 	cout << "Dest rel: X=" << destPoseRel.getX()
 			<< ", Angle=" << relAngle/M_PI*180 << endl;
-	vector<Pose3D> waypoints;
+
+	bool success = false;
+	vector<Pose3D> wps;
+
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
 	if ( destPoseRel.getX() < 0 ||
@@ -252,32 +255,38 @@ int LocalPlanner::calculateWaypoints()
 
 		// Try to calculate a feasible Dubins path. If we fail we try
 		//  a second time with twice the circle radius
-		waypoints = dp.calcPath(startPose, destPose);
+		wps = dp.calcPath(startPose, destPose);
 
-		// Todo: is this if statement correct?
-		if ((waypoints.size() == 0))
+		// TODO: should we be more intelligent here?
+		// maybe increase the radius and try again (we had this behavior before)
+		if ((wps.size() == 0))
 		{
 			cerr << "Failed to calculate a feasible path using Dubins path"
 					<< endl;
 			cerr << "Increasing the turn radius to " << turningRadius * 2
 					<< " and trying again" << endl;
 
-				waypoints.push_back(destPose);
-				return false;
+				wps.push_back(destPose);
+				success = false;
 		}
-
-		cout << "New waypoints calculated using Dubins" << endl;
+		else {
+			cout << "New waypoints calculated using Dubins" << endl;
+			success = true;
+		}
 	}
 	else
 	{
-		cout
-				<< "We are close to the new waypoint and use the controller to get us there."
+		cout << "We are close to the new waypoint "
+				<< "and use the controller to get us there."
 				<< endl;
-		waypoints.push_back(destPose);
+		wps.push_back(destPose);
+		success = true;
 	}
 
 	// Managed to calculate a path to destination
-	this->waypoints = waypoints;
+	// TODO: do we need mutex around this?
+	waypoints.clear();
+	waypoints = wps;
 
 	// Save the start pose and start velocity
 	startPose = currPose;
@@ -286,7 +295,7 @@ int LocalPlanner::calculateWaypoints()
 
 	printWaypoints();
 
-	return true;
+	return success;
 }
 
 /**
@@ -307,9 +316,6 @@ int LocalPlanner::onGlobalState(
 		// form a STOP message to send
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
-
-		// The instant we hit a waypoint, stop the motors, until the global
-		// 	planner sends a waypoint. This fixes idle behaviour.
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish("AUV_CONTROL", &cc);
 	}
@@ -443,11 +449,11 @@ int LocalPlanner::processWaypoints()
 				cout << "We have reached our destination :)" << endl;
 			}
 
-			// form a STOP message to send
-			acfrlcm::auv_control_t cc;
-			cc.utime = timestamp_now();
-			cc.run_mode = acfrlcm::auv_control_t::STOP;
-			lcm.publish("AUV_CONTROL", &cc);
+//			// form a STOP message to send
+//			acfrlcm::auv_control_t cc;
+//			cc.utime = timestamp_now();
+//			cc.run_mode = acfrlcm::auv_control_t::STOP;
+//			lcm.publish("AUV_CONTROL", &cc);
 
 			return getDestReached();
 		}
