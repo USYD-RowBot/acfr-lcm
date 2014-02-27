@@ -224,32 +224,30 @@ int LocalPlanner::calculateWaypoints()
 			<< destPose.getY() << "," << destPose.getZ() << " < "
 			<< destPose.getYawRad() / M_PI * 180 << endl;
 
-	Pose3D rot;
-	// Local coord has Z down where as global has Z up
-	rot.setRollPitchYawRad(M_PI, 0, 0);
-	Pose3D wpRel = currPose.compose(rot).inverse().compose(destPose);
-
+	Pose3D destPoseRel = getRelativePose(destPose);
+	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
+	cout << "Dest rel: X=" << destPoseRel.getX()
+			<< ", Angle=" << relAngle/M_PI*180 << endl;
 	vector<Pose3D> waypoints;
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
-	// TODO: Should we change this so if the waypoint is more than 45deg to each
-	//		side, then we calculate rather that if it is only behind us?
-	if (0)
-	{ //(currPose.positionDistance(destPose) > 2 * turningRadius)
-	  //		|| (wpRel.getX() < 0)) {
-
+	if ( destPoseRel.getX() < 0 ||
+			destPoseRel.getX() > 2*turningRadius ||
+			fabs(relAngle) > 45./180*M_PI )
+	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
 		dp.setMaxPitch(maxPitch);
 		dp.setWaypointDropDist(wpDropDist);
-		//dp.setWaypointDropAngleRad(wpDropAngle * M_PI / 180.);
 		dp.setWaypointDropAngleFromDropDist();
 
 		// Don't use current pose but a pose looking a bit ahead. We adjust this
 		//	by employing the current velocity
 		double lookAheadTime = 0.2; // [s]
 		Pose3D lookAheadPose;
-		lookAheadPose.setX(currVel * lookAheadTime);
+		// Using fabs of vel to ensure that even if we are going backwards the
+		// lookaheadpose is in front of us
+		lookAheadPose.setX(fabs(currVel) * lookAheadTime);
 		Pose3D startPose = currPose.compose(lookAheadPose);
 
 		// Try to calculate a feasible Dubins path. If we fail we try
@@ -257,27 +255,15 @@ int LocalPlanner::calculateWaypoints()
 		waypoints = dp.calcPath(startPose, destPose);
 
 		// Todo: is this if statement correct?
-		if ((waypoints.size() == 0)
-				&& ((currPose.positionDistance(destPose) > 4 * turningRadius)
-						|| (wpRel.getX() < 0)))
+		if ((waypoints.size() == 0))
 		{
 			cerr << "Failed to calculate a feasible path using Dubins path"
 					<< endl;
 			cerr << "Increasing the turn radius to " << turningRadius * 2
 					<< " and trying again" << endl;
 
-			dp.setCircleRadius(turningRadius * 2);
-			waypoints = dp.calcPath(startPose, destPose);
-			if (waypoints.size() == 0)
-			{
-				cerr << "LocalPlanner failed to generate a feasible path"
-						<< "\nRelying on the controller to get us there" << endl
-						<< "\tfrom currPose: " << currPose.toString() << endl
-						<< "\tto destPose: " << destPose.toString() << endl;
-
 				waypoints.push_back(destPose);
 				return false;
-			}
 		}
 
 		cout << "New waypoints calculated using Dubins" << endl;
