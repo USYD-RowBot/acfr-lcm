@@ -157,7 +157,9 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	    rdi_data.sv = rdi->pd4.speed_of_sound;
 	    rdi_data.depth_rate = 0;   // FIXME
         
-        state->altitude = rdi->pd4.altitude;
+        double last_altitude = state->altitude;
+        state->altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
+
         if(state->mode == NAV)
     		state->slam->handle_dvl_data(rdi_data);
         else if(state->mode == RAW)
@@ -232,8 +234,11 @@ void on_vis(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const au
 {
 	// the only thing we do here at the moment is process the message for the raw log
 	auv_data_tools::Vision_Data vis_data;
-
-	vis_data.image_name = string(vis->image_name) + ".tif";
+	
+	//vis_data.image_name = string(vis->image_name) + ".tif";
+	vis_data.image_name = string(vis->image_name) ;
+	if (vis_data.image_name.find(".tif") == std::string::npos)
+		   vis_data.image_name = string(vis->image_name) + ".tif";
 	vis_data.set_raw_timestamp((double)vis->utime/1e6);
 	vis_data.set_vis_timestamp((double)vis->utime/1e6);
 	//fix to shift timestamps on RAW log file for 20110603 cam was 3.61 sec ahead
@@ -293,6 +298,7 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
     osc_data.roll = osc->rph[0];
     osc_data.pitch = osc->rph[1];
     osc_data.heading = osc->rph[2];
+    osc_data.depth = osc->rph[3];
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
     if(state->mode == NAV)

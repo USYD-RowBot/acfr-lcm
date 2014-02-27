@@ -8,6 +8,7 @@ acfr_nav::acfr_nav()
     state = new(state_c);
     state->mode = NAV;
     state->lcm = new lcm::LCM();
+    state->altitude = 0;
 }
 
 acfr_nav::~acfr_nav()
@@ -19,7 +20,7 @@ acfr_nav::~acfr_nav()
 int acfr_nav::initialise()
 {
 
-    Config_File *slam_config_file = new Config_File(slam_config_filename);
+    //Config_File *slam_config_file = new Config_File(slam_config_filename);
 	//poseAugOptions  = new Pose_Aug_Options(*slam_config_file);
 	//lastPoseAugmentationTime = 0;
 
@@ -95,7 +96,7 @@ int acfr_nav::load_config(char *program_name)
     else if(!strcmp(depth_source_str, "SEABIRD"))
         depth_source = SEABIRD;
         
-    
+    return 1;    
 
 }
 
