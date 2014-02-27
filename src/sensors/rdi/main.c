@@ -114,19 +114,23 @@ program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
     if(mode == MODE_PD5)
     {
         printf("Programming PD5 mode\n");
-        rdi_send_command(gsd, "BP1\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "WP0\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
+        rdi_send_command(gsd, "BX00250\r", EXPECT_RESPONSE); // max depth 250 [dm]
+        rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE); // No water profiling
         rdi_send_command(gsd, "PD5\r", EXPECT_RESPONSE);   
         rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "CK\r", NO_RESPONSE); // Keep parameters on power cycle
         rdi_send_command(gsd, "CS\r", NO_RESPONSE);
     }
     else if(mode == MODE_PD4)
     {
         printf("Programming PD4 mode\n");
-        rdi_send_command(gsd, "BP1\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "WP0\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "BX00250\r", EXPECT_RESPONSE); // max depth 250 [dm]
+        rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE);
         rdi_send_command(gsd, "PD4\r", EXPECT_RESPONSE);   
         rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(gsd, "CK\r", NO_RESPONSE);
         rdi_send_command(gsd, "CS\r", NO_RESPONSE);
     }
     else

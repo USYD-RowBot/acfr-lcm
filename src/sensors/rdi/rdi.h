@@ -27,6 +27,8 @@ enum _rdi_pd_mode {
 #define RDI_PD4_DATA_ID    0
 #define RDI_PD5_DATA_ID    1
 
+#define RDI_BAD_VALUE      0x8000 // -32768
+
 /* To auto append line continuation in Emacs: C-c C-\
 */
 #define RDI_PD45_COMMON                                                 \
