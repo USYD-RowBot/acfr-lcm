@@ -516,7 +516,7 @@ void LocalPlanner::printWaypoints() const {
 	cout << "waypoints = [" << endl;
 	for (unsigned int i = 0; i < waypoints.size(); i++)
 	{
-		printf( "%3.2f, %3.2f, %3.2f",
+		printf( "%3.2f, %3.2f, %3.2f;\n",
 				waypoints.at(i).getX(),
 				waypoints.at(i).getY(),
 				waypoints.at(i).getZ() );
