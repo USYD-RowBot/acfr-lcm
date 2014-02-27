@@ -259,6 +259,13 @@ int main(int argc, char **argv) {
 	state_t state;
 	state.lcm = lcm_create(NULL);
 	state.run_mode = ACFRLCM_AUV_CONTROL_T_STOP;
+	state.gains_vel.integral = 0;
+	state.gains_roll.integral = 0;
+	state.gains_depth.integral = 0;
+	state.gains_altitude.integral = 0;
+	state.gains_pitch.integral = 0;
+	state.gains_pitch_r.integral = 0;
+	state.gains_heading.integral = 0;
 
 	char root_key[64];
 	sprintf(root_key, "acfr.%s", basename(argv[0]));
@@ -361,7 +368,7 @@ int main(int argc, char **argv) {
 			while (cmd.heading > M_PI)
 				cmd.heading -= 2 * M_PI;
 
-			double diff_heading = cmd.heading - nav.heading;
+			double diff_heading = nav.heading - cmd.heading;
 			while( diff_heading < -M_PI )
 				diff_heading += 2*M_PI;
 			while( diff_heading > M_PI )
@@ -488,8 +495,9 @@ int main(int argc, char **argv) {
 			mc.port = port;
 			mc.starboard = starboard;
 
-			// Print out status message every 10 loops
+			// Print out and publish IVER_MOTOR.TOP status message every 10 loops
 			if( loopCount % 10 == 0 ) {
+				acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR.TOP", &mc);
 				printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
 						nav.vx, cmd.vx, (cmd.vx - nav.vx) );
 				printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
