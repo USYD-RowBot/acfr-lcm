@@ -284,20 +284,7 @@ int LocalPlanner::calculateWaypoints()
 
 	//setDestReached( false );
 
-	cout << "waypoints = [" << endl;
-	if (!fp.is_open())
-		fp.open("/tmp/log_waypoint.txt", ios::out | ios::app);
-	for (unsigned int i = 0; i < waypoints.size(); i++)
-	{
-		cout << waypoints.at(i).getX() << ", " << waypoints.at(i).getY() << ", "
-				<< waypoints.at(i).getZ() << ";" << endl;
-		fp << waypoints.at(i).getX() << " " << waypoints.at(i).getY() << " "
-				<< waypoints.at(i).getZ() << endl;
-
-	}
-	fp << 0 << " " << 0 << " " << 0 << endl;
-	fp.close();
-	cout << "];" << endl;
+	printWaypoints();
 
 	return true;
 }
@@ -435,8 +422,11 @@ int LocalPlanner::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
+		cout << waypoints.back() << " reached." << endl;
 		waypoints.erase(waypoints.begin());
 		resetWaypointTime(timestamp_now());
+
+		printWaypoints();
 
 		// No more waypoints to process
 		if (waypoints.size() == 0)
@@ -510,6 +500,16 @@ int LocalPlanner::sendResponse()
 	lcm.publish("PATH_RESPONSE", &pr);
 
 	return 1;
+}
+
+void LocalPlanner::printWaypoints() const {
+	cout << "waypoints = [" << endl;
+	for (unsigned int i = 0; i < waypoints.size(); i++)
+	{
+		cout << waypoints.at(i).getX() << ", " << waypoints.at(i).getY() << ", "
+				<< waypoints.at(i).getZ() << ";" << endl;
+	}
+	cout << "];" << endl;
 }
 
 int main(int argc, char **argv)

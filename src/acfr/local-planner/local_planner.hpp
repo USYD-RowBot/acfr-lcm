@@ -147,7 +147,7 @@ public:
 		return replanTime;
 	}
 
-
+	void printWaypoints( void ) const;
 
 	vector<Pose3D> waypoints;
 
