@@ -290,7 +290,7 @@ void relay_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
                 state->programming = 1;
                 printf("Reprogramming the DVL\n");
                 sleep(2);
-                program_dvl(&state);
+                program_dvl(state);
                 state->programming = 0;
             }    
         }
