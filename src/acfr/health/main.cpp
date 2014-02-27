@@ -249,7 +249,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	sendAbortMessage("DVL dead");
 
     if(dvl.pd4.btv_status != 0)
-        status.status |= DVL_BIT;
+        status.status |= ~DVL_BIT;
 
     if((hbTime - parosci.utime) < depth_timeout || (hbTime - ysi.utime) < depth_timeout)
         status.status |= DEPTH_BIT;
