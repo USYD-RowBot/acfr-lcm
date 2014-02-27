@@ -77,24 +77,24 @@ int rdi_send_command(generic_sensor_driver_t *gsd, char *cmd, int er)
 }
 
 static void
-program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
+program_dvl(state_t * state) //const char *config)
 {
-    if (gsd->io == GSD_IO_PLAYBACK)
+    if (state->gsd->io == GSD_IO_PLAYBACK)
         return;
     
     char buf[256];
     bool alive=0;
     
-    tcsendbreak(gsd->fd, 0);
+    tcsendbreak(state->gsd->fd, 0);
     usleep(2000000);
     
-    gsd_canonical(gsd, '\r', '\n');
+    gsd_canonical(state->gsd, '\r', '\n');
     
     int alive_tries = 0;
     while (!alive) {
-        tcsendbreak(gsd->fd, 0);
+        tcsendbreak(state->gsd->fd, 0);
         //gsd_write (gsd, "===\n", strlen ("===\n")); // software break
-        alive = gsd_read_timeout (gsd, buf, 256, NULL, 10000);
+        alive = gsd_read_timeout (state->gsd, buf, 256, NULL, 10000);
         printf("*\n");
         if(++alive_tries > 20)
         {
@@ -107,43 +107,43 @@ program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
     // wait to get a prompt
     do
     {
-        gsd_read(gsd, buf, 1, NULL);
+        gsd_read(state->gsd, buf, 1, NULL);
         printf("%c", buf[0]);
                            
     } while(buf[0] != '>');
     
     // Convert the max depth in meters to the command in decimeters
     char max_depth_cmd[8];
-    sprintf( max_depth_cmd, "BX%05d\r", state.pd5_depth_max*10 );
+    sprintf( max_depth_cmd, "BX%05d\r", state->pd5_depth_max*10 );
     printf( "Sending max depth command: %s\n", max_depth_cmd);
 
-    if(mode == MODE_PD5)
+    if(state->mode == MODE_PD5)
     {
         printf("Programming PD5 mode\n");
-        rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
-        rdi_send_command(gsd, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
-        rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE); // No water profiling
-        rdi_send_command(gsd, "PD5\r", EXPECT_RESPONSE);   
-        rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "CK\r", NO_RESPONSE); // Keep parameters on power cycle
-        rdi_send_command(gsd, "CS\r", NO_RESPONSE);
+        rdi_send_command(state->gsd, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
+        rdi_send_command(state->gsd, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
+        rdi_send_command(state->gsd, "WP00000\r", EXPECT_RESPONSE); // No water profiling
+        rdi_send_command(state->gsd, "PD5\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "CK\r", NO_RESPONSE); // Keep parameters on power cycle
+        rdi_send_command(state->gsd, "CS\r", NO_RESPONSE);
     }
-    else if(mode == MODE_PD4)
+    else if(state->mode == MODE_PD4)
     {
         printf("Programming PD4 mode\n");
-        rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, max_depth_cmd, EXPECT_RESPONSE);
-        rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "PD4\r", EXPECT_RESPONSE);   
-        rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "CK\r", NO_RESPONSE);
-        rdi_send_command(gsd, "CS\r", NO_RESPONSE);
+        rdi_send_command(state->gsd, "BP001\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, max_depth_cmd, EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "WP00000\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "PD4\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "CK\r", NO_RESPONSE);
+        rdi_send_command(state->gsd, "CS\r", NO_RESPONSE);
     }
     else
     {
         printf("Programming PD0 mode\n");
-        rdi_send_command(gsd, "WD 100 000 000\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "CF01110\r", EXPECT_RESPONSE); 
+        rdi_send_command(state->gsd, "WD 100 000 000\r", EXPECT_RESPONSE);
+        rdi_send_command(state->gsd, "CF01110\r", EXPECT_RESPONSE);
     }
     fflush(NULL);   
 }
@@ -290,7 +290,7 @@ void relay_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
                 state->programming = 1;
                 printf("Reprogramming the DVL\n");
                 sleep(2);
-                program_dvl(state->gsd, state->mode);
+                program_dvl(&state);
                 state->programming = 0;
             }    
         }
@@ -359,12 +359,12 @@ main (int argc, char *argv[])
     state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
     sprintf(key, "%s.pd5_depth_max", state.gsd->rootkey);
     state.pd5_depth_max = bot_param_get_int_or_fail(state.gsd->params, key);
-    
+    printf( "read max range from config file: %d [m]\n", state.pd5_depth_max);
 
     // initialize dvl
     gsd_flush (state.gsd);
     gsd_reset_stats (state.gsd);
-    program_dvl(state.gsd, state.mode);
+    program_dvl(&state);
 
     gsd_noncanonical(state.gsd, 1024, 1);
 
@@ -427,4 +427,6 @@ main (int argc, char *argv[])
 
     timestamp_sync_free (tss);
     pthread_join(tid, NULL);
+
+    return 0;
 }
