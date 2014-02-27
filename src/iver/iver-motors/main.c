@@ -22,14 +22,17 @@
 #define SERVO_RANGE 0
 #define DTOR M_PI/180.
 
-// gears are servo 19T, intermediat 40T, fin shaft 36T
+// gears are servo 19T, intermediate 40T, fin shaft 36T
 // gear ratio is 0.5277
-#define SERVO_GEAR_RATIO 0.5277
+// Based on testing at OTI it appears that the 0-255 servo commands scale
+// to +/- 45 on the fins.  We therefore have removed the servo gear ratio
+//#define FIN_TO_SERVO_GEAR_RATIO 0.5277
+//#define FIN_TO_SERVO (1 / FIN_TO_SERVO_GEAR_RATIO)
 // servo range is 90 degrees for input 0 - 255
 #define SERVO_SCALE (256.0/(90.0*DTOR))
 // we never allow is to get close to 0 or 255
-#define MAX_FIN_ANGLE (80.0 * DTOR) / 2
-//#define DEG_TO_SERVO (45.0 * DTOR / MAX_FIN_ANGLE)
+// the servo does not change when commaned with 255
+#define MAX_SERVO_ANGLE (80.0 * DTOR) / 2
 
 #define REMOTE_TIMEOUT 2000000
 
@@ -77,29 +80,29 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     
     
     // limit check and scale
-    if(mc.top >= MAX_FIN_ANGLE)
-        mc.top = MAX_FIN_ANGLE;
-    else if(mc.top <= -MAX_FIN_ANGLE)
-        mc.top = -MAX_FIN_ANGLE;
+    if(mc.top >= MAX_SERVO_ANGLE)
+        mc.top = MAX_SERVO_ANGLE;
+    else if(mc.top <= -MAX_SERVO_ANGLE)
+        mc.top = -MAX_SERVO_ANGLE;
 
     rudder_top = (char)((mc.top + 45*DTOR) * SERVO_SCALE);
         
-    if(mc.bottom >= MAX_FIN_ANGLE)
-        mc.bottom = MAX_FIN_ANGLE;
-    else if(mc.bottom <= -MAX_FIN_ANGLE)
-        mc.bottom = -MAX_FIN_ANGLE;
+    if(mc.bottom >= MAX_SERVO_ANGLE)
+        mc.bottom = MAX_SERVO_ANGLE;
+    else if(mc.bottom <= -MAX_SERVO_ANGLE)
+        mc.bottom = -MAX_SERVO_ANGLE;
     rudder_bottom = (char)((mc.bottom + 45*DTOR) * SERVO_SCALE);
     
-    if(mc.port >= MAX_FIN_ANGLE)
-        mc.port = MAX_FIN_ANGLE;
-    else if(mc.port <= -MAX_FIN_ANGLE)
-        mc.port = -MAX_FIN_ANGLE;
+    if(mc.port >= MAX_SERVO_ANGLE)
+        mc.port = MAX_SERVO_ANGLE;
+    else if(mc.port <= -MAX_SERVO_ANGLE)
+        mc.port = -MAX_SERVO_ANGLE;
     plane_port = (char)((mc.port + 45*DTOR) * SERVO_SCALE);
     
-    if(mc.starboard >= MAX_FIN_ANGLE)
-        mc.starboard = MAX_FIN_ANGLE;
-    else if(mc.starboard <= -MAX_FIN_ANGLE)
-        mc.starboard = -MAX_FIN_ANGLE;
+    if(mc.starboard >= MAX_SERVO_ANGLE)
+        mc.starboard = MAX_SERVO_ANGLE;
+    else if(mc.starboard <= -MAX_SERVO_ANGLE)
+        mc.starboard = -MAX_SERVO_ANGLE;
     plane_starboard = (char)((mc.starboard + 45*DTOR) * SERVO_SCALE);
     
     
@@ -131,10 +134,10 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
 	{
 		printf("Motor cmd: %f %s\n", mc.main, motor_string);
 		printf("Servo cmd: t:%f %x b:%f %x s:%f %x p:%f %x\n", 
-			mc.top, rudder_top,
-			mc.bottom, rudder_bottom,
-			mc.starboard, plane_starboard,
-			mc.port, plane_port);
+			mc.top/DTOR, rudder_top,
+			mc.bottom/DTOR, rudder_bottom,
+			mc.starboard/DTOR, plane_starboard,
+			mc.port/DTOR, plane_port);
 		throttle = 0;
 	}
         state->last_data_time = timestamp_now();

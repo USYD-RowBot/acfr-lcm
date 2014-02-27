@@ -221,9 +221,9 @@ motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
 	state_t *state = (state_t *)u;
 
     // we got a remote command, set the time and mode
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
+    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
     {
-        state->remote_time = mc.utime;
+        state->remote_time = mc->utime;
         state->remote = 1;
     }
     else {
@@ -287,6 +287,7 @@ int main(int argc, char **argv) {
 	state.gains_pitch.integral = 0;
 	state.gains_pitch_r.integral = 0;
 	state.gains_heading.integral = 0;
+	state.remote = 0;
 
 	char root_key[64];
 	sprintf(root_key, "acfr.%s", basename(argv[0]));

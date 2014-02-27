@@ -199,12 +199,12 @@ public:
 		numLoops = n;
 	}
 
-	void printPath(void) const {
+	void printPath(void) {
 		cout << "path = [" << endl;
 		it = path.begin();
 		for (; it != path.end(); it++)
 		{
-			printf( "%3.2f, %3.2f, %3.2f",
+			printf( "%3.2f, %3.2f, %3.2f;\n",
 					(*it).pose.getX(),
 					(*it).pose.getY(),
 					(*it).pose.getZ() );
