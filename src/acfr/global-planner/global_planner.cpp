@@ -73,6 +73,8 @@ GlobalPlanner::GlobalPlanner() :
 	cameraTriggerMsg.freq = 1;
 	cameraTriggerMsg.pulseWidthUs = -1;
 	cameraTriggerMsg.strobeDelayUs = 1;
+
+	cout << endl << endl << endl << "GlobalPlanner started" << endl;
 }
 
 GlobalPlanner::~GlobalPlanner() {

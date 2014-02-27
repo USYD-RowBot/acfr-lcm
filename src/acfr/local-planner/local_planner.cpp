@@ -111,6 +111,8 @@ LocalPlanner::LocalPlanner() :
 	//    pthread_mutex_init(&waypointsLock, NULL);
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
+
+	cout << endl << endl << endl << "LocalPlanner started" << endl;
 }
 
 LocalPlanner::~LocalPlanner()
