@@ -258,6 +258,7 @@ int main(int argc, char **argv) {
 
 	state_t state;
 	state.lcm = lcm_create(NULL);
+	state.run_mode = ACFRLCM_AUV_CONTROL_T_STOP;
 
 	char root_key[64];
 	sprintf(root_key, "acfr.%s", basename(argv[0]));
