@@ -8,6 +8,7 @@
 #define NAV_TIMEOUT 1000000
 #define IMU_TIMEOUT 1000000
 #define DVL_TIMEOUT 1000000
+#define DVLBL_TIMEOUT 10000000 // 10sec?
 #define DEPTH_TIMEOUT 1000000
 #define OAS_TIMEOUT 1000000
 
@@ -84,6 +85,7 @@ HealthMonitor::HealthMonitor()
     nav.utime = 0;
     imu.utime = 0;
     dvl.utime = 0;
+    dvlbl_utime = 0;
     parosci.utime = 0;
     parosci.depth = 0;
     ysi.utime = 0;
@@ -105,6 +107,7 @@ HealthMonitor::HealthMonitor()
     nav_timeout = NAV_TIMEOUT;
     imu_timeout = IMU_TIMEOUT;
     dvl_timeout = DVL_TIMEOUT;
+    dvlbl_timeout = DVLBL_TIMEOUT;
     depth_timeout = DEPTH_TIMEOUT;
     oas_timeout = OAS_TIMEOUT;
 
@@ -248,10 +251,15 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     else if (abort_on_no_dvl == true)
 	sendAbortMessage("DVL dead");
 
-    if(dvl.pd4.btv_status == 0)
+    if(dvl.pd4.btv_status == 0) {
         status.status |= DVL_BIT;
-//    else if (abort_on_no_dvl == true)
-//    	sendAbortMessage("DVL dead");
+        dvlbl_utime = dvl.utime;
+    }
+    else if (((hbTime - dvlbl_utime) >= dvlbl_timeout) && (abort_on_no_dvl == true)) {
+    	printf( "last dvlbl at %l. This is older than %l. ABORTING\n\n",
+    			dvlbl_utime, dvlbl_timeout );
+    	sendAbortMessage("DVL lost bottom lock");
+    }
 
     if((hbTime - parosci.utime) < depth_timeout || (hbTime - ysi.utime) < depth_timeout)
         status.status |= DEPTH_BIT;
