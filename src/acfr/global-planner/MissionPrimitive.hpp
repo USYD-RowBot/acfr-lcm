@@ -36,8 +36,8 @@ protected:
 	double dropAngle;
 
 public:
-	static const int DIRECTION_CW = -1;
-	static const int DIRECTION_CCW = 1;
+	static const int DIRECTION_CW = 1;
+	static const int DIRECTION_CCW = -1;
 
 	MissionPrimitive() :
 			timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(
@@ -201,15 +201,15 @@ public:
 
 	void printPath(void) const {
 		cout << "path = [" << endl;
-		list<waypoint>::iterator pathIter;
-			for (pathIter = path.begin(); pathIter != path.end(); pathIter++)
-			{
-				printf( "%3.2f, %3.2f, %3.2f",
-						(*pathIter).pose.getX(),
-						(*pathIter).pose.getY(),
-						(*pathIter).pose.getZ() );
-			}
-			cout << "];" << endl;
+		it = path.begin();
+		for (; it != path.end(); it++)
+		{
+			printf( "%3.2f, %3.2f, %3.2f",
+					(*it).pose.getX(),
+					(*it).pose.getY(),
+					(*it).pose.getZ() );
+		}
+		cout << "];" << endl;
 	}
 };
 

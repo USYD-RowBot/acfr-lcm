@@ -20,6 +20,7 @@ bool ZamboniePath::calcPath(void) {
 	cout << "TurnRad  = " << this->turnRadius << endl;
 	cout << "DropDist = " << this->dropDist << endl;
 	cout << "DropAngl = " << this->dropAngle / M_PI * 180 << endl;
+	cout << "Direction= " << (direction == DIRECTION_CW ? "CW" : "CCW") << endl;
 
 	// Perform initial checks
 	bool error = false;
@@ -67,7 +68,7 @@ bool ZamboniePath::calcPath(void) {
 	//	- bottom-left when performing clockwise spirals
 	//	- bottom-right when performing counter-clockwise spirals
 	currPose.setPosition(position.getX(), position.getY(), position.getZ());
-	currPose.setRollPitchYawRad(0, 0, heading);
+	currPose.setRollPitchYawRad(0, 0, heading - M_PI/2*direction);
 	wp.pose = currPose;
 	path.push_back(wp);
 
