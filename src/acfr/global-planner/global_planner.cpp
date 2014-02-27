@@ -18,14 +18,16 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 	// we just got a message from the task planner
 	switch (gm->command) {
 	case acfrlcm::auv_global_planner_t::LOAD:
+		// Check if file exists
+		fstream fs(gm->str.c_str(), ios::in );
 		// load a mission file and run said mission
-		if (!gp->mis.load(gm->str)) {
+		if (!fs && !gp->mis.load(gm->str)) {
 			cerr << "Could not load mission file " << gm->str << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
-		} else
+		} else {
 			gp->globalPlannerMessage = globalPlannerRun;
-		gp->mis.dumpMatlab(
-                "matlab_plot.m");
+		}
+		gp->mis.dumpMatlab("matlab_plot.m");
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESUME:
