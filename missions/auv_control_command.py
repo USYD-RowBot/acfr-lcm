@@ -7,7 +7,7 @@ import math
 
 sys.path.append('/usr/local/lib/python2.6/dist-packages/perls/lcmtypes')
 
-from acfrlcm.auv_control_t import auv_control_t
+from acfrlcm.auv_control_t import auv_iver_motor_command_t
 
 lc = lcm.LCM();
 
@@ -27,4 +27,3 @@ if (len(sys.argv) > 3):
     lc.publish('AUV_CONTROL', msg.encode())
 else:
     print 'Wrong number of args'
-
