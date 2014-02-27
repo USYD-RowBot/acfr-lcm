@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <string>
 #include <iomanip>
+#include <iostream>
 #include <libgen.h>
 #include <pthread.h>
 #include <error.h>
@@ -17,8 +18,12 @@
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
 #include <fstream>
 
+#include <cstdio>
+
 #ifndef LOCAL_PLANNER_HPP
 #define LOCAL_PLANNER_HPP
+
+using namespace std;
 
 #define DOUBLE_MAX std::numeric_limits< double >::max()
 #define ITERATION_NUM 3

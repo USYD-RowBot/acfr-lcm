@@ -66,9 +66,8 @@ bool ZamboniePath::calcPath(void) {
 	// Calculate start pose
 	//	- bottom-left when performing clockwise spirals
 	//	- bottom-right when performing counter-clockwise spirals
-	currPose.setPosition(position.getX() + direction * (width / 2 - turnRadius), position.getY() - length / 2,
-			position.getZ());
-	currPose.setRollPitchYawRad(0, 0, heading + M_PI / 2 - M_PI / 2 * direction);
+	currPose.setPosition(position.getX(), position.getY(), position.getZ());
+	currPose.setRollPitchYawRad(0, 0, heading);
 	wp.pose = currPose;
 	path.push_back(wp);
 
@@ -132,6 +131,8 @@ bool ZamboniePath::calcPath(void) {
 		}
 
 	}
+
+	printPath();
 
 	return true;
 }

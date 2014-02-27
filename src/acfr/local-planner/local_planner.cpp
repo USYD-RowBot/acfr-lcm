@@ -422,7 +422,11 @@ int LocalPlanner::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
-		cout << waypoints.back() << " reached." << endl;
+
+		printf( "[%3.2f, %3.2f, %3.2f] reached",
+				wp.getX(),
+				wp.getY(),
+				wp.getZ() );
 		waypoints.erase(waypoints.begin());
 		resetWaypointTime(timestamp_now());
 
@@ -506,8 +510,10 @@ void LocalPlanner::printWaypoints() const {
 	cout << "waypoints = [" << endl;
 	for (unsigned int i = 0; i < waypoints.size(); i++)
 	{
-		cout << waypoints.at(i).getX() << ", " << waypoints.at(i).getY() << ", "
-				<< waypoints.at(i).getZ() << ";" << endl;
+		printf( "%3.2f, %3.2f, %3.2f",
+				waypoints.at(i).getX(),
+				waypoints.at(i).getY(),
+				waypoints.at(i).getZ() );
 	}
 	cout << "];" << endl;
 }
