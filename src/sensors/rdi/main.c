@@ -38,6 +38,7 @@ typedef struct
 {
     int pd5_count_max;
     int pd0_count_max;
+    int pd5_depth_max;
     pthread_mutex_t count_lock;
     int mode;
     generic_sensor_driver_t *gsd;
@@ -111,11 +112,16 @@ program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
                            
     } while(buf[0] != '>');
     
+    // Convert the max depth in meters to the command in decimeters
+    char max_depth_cmd[8];
+    sprintf( max_depth_cmd, "BX%05d\r", state.pd5_depth_max*10 );
+    printf( "Sending max depth command: %s\n", max_depth_cmd);
+
     if(mode == MODE_PD5)
     {
         printf("Programming PD5 mode\n");
         rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
-        rdi_send_command(gsd, "BX00250\r", EXPECT_RESPONSE); // max depth 250 [dm]
+        rdi_send_command(gsd, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
         rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE); // No water profiling
         rdi_send_command(gsd, "PD5\r", EXPECT_RESPONSE);   
         rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
@@ -126,7 +132,7 @@ program_dvl(generic_sensor_driver_t *gsd, int mode) //const char *config)
     {
         printf("Programming PD4 mode\n");
         rdi_send_command(gsd, "BP001\r", EXPECT_RESPONSE);
-        rdi_send_command(gsd, "BX00250\r", EXPECT_RESPONSE); // max depth 250 [dm]
+        rdi_send_command(gsd, max_depth_cmd, EXPECT_RESPONSE);
         rdi_send_command(gsd, "WP00000\r", EXPECT_RESPONSE);
         rdi_send_command(gsd, "PD4\r", EXPECT_RESPONSE);   
         rdi_send_command(gsd, "CF11110\r", EXPECT_RESPONSE);
@@ -322,6 +328,7 @@ main (int argc, char *argv[])
     // listen for changes
     state.pd0_count_max = 0;
     state.pd5_count_max = 0;
+    state.pd5_depth_max = 25;
     
     
     char key[256];
@@ -350,6 +357,8 @@ main (int argc, char *argv[])
     state.pd5_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
     sprintf(key, "%s.pd0_count_max", state.gsd->rootkey);
     state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
+    sprintf(key, "%s.pd5_depth_max", state.gsd->rootkey);
+    state.pd5_depth_max = bot_param_get_int_or_fail(state.gsd->params, key);
     
 
     // initialize dvl
