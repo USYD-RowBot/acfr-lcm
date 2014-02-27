@@ -112,13 +112,11 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     servo_command[1] = 0x04;
     servo_command[2] = plane_starboard;
 
-    
     servo_command[4] = 0x01 + SERVO_RANGE;
     servo_command[5] = rudder_top;
         
     servo_command[7] = 0x02 + SERVO_RANGE;
     servo_command[8] = rudder_bottom;
-
     
     servo_command[10] = 0x03 + SERVO_RANGE;
     servo_command[11] = plane_port;
@@ -128,7 +126,18 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     // we don't want to send the data at to high a rate
     if((timestamp_now() - state->last_data_time) > 100000)
     {
-//printf("Motor cmd: %f %s\n", mc->main, motor_string);
+	static int throttle = 0;
+	
+	if (throttle++ > 10)
+	{
+		printf("Motor cmd: %f %s\n", mc->main, motor_string);
+		printf("Servo cmd: t:%f %x b:%f %x s:%f %x p:%f %x\n", 
+			mc->top, rudder_top,
+			mc->bottom, rudder_bottom,
+			mc->starboard, plane_starboard,
+			mc->port, plane_port);
+		throttle = 0;
+	}
         state->last_data_time = timestamp_now();
         write(state->servo_fd, servo_command, 12);
         write(state->motor_fd, motor_string, strlen(motor_string));

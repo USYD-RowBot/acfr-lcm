@@ -355,7 +355,7 @@ int main(int argc, char **argv) {
 			while (cmd.heading > M_PI)
 				cmd.heading -= 2 * M_PI;
 
-			double diff_heading = cmd.heading - nav.heading;
+			double diff_heading = nav.heading - cmd.heading;
 			while( diff_heading < -M_PI )
 				diff_heading += 2*M_PI;
 			while( diff_heading > M_PI )
