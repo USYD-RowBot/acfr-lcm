@@ -186,7 +186,7 @@ int load_config(state_t *state, char *rootkey) {
 	return 1;
 }
 
-// Messages from the trajectory planner
+// Trajectory planner callback
 static void control_callback(const lcm_recv_buf_t *rbuf, const char *channel,
 		const acfrlcm_auv_control_t *control, void *user) {
 	state_t *state = (state_t *) user;
@@ -214,8 +214,8 @@ static void control_callback(const lcm_recv_buf_t *rbuf, const char *channel,
 	pthread_mutex_unlock(&state->command_lock);
 }
 
-void
-motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
+// Remote control callback
+void motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
 		const acfrlcm_auv_iver_motor_command_t *mc, void *u)
 {
 	state_t *state = (state_t *)u;
@@ -231,6 +231,7 @@ motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
     }
 
 }
+
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
 // every time it comes in
 static void acfr_nav_callback(const lcm_recv_buf_t *rbuf, const char *channel,
@@ -323,23 +324,22 @@ int main(int argc, char **argv) {
 
 	long loopCount = 0;
 
-
+	acfrlcm_auv_iver_motor_command_t mc;
 
 	// main loop
 	while (!main_exit) {
 		loopCount++;
 
-		// prepare the motor command
-		acfrlcm_auv_iver_motor_command_t mc;
+		// reset the motor command
 		memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
 
 		if( state.remote ) {
 			printf( "Remote is on! Should we (not) do something??\n" );
 		}
 
-		if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN
-				|| state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
-				{
+		if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN ||
+			state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+		{
 			// lock the nav and command data and get a local copy
 			pthread_mutex_lock(&state.nav_lock);
 			acfrlcm_auv_acfr_nav_t nav = state.nav;

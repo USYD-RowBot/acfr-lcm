@@ -229,7 +229,7 @@ int LocalPlanner::calculateWaypoints()
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
 	cout << "Dest rel: X=" << destPoseRel.getX()
-			<< ", Angle=" << relAngle/M_PI*180 << endl;
+			<< ", angle=" << relAngle/M_PI*180 << endl;
 
 	bool success = false;
 	vector<Pose3D> wps;
@@ -265,8 +265,6 @@ int LocalPlanner::calculateWaypoints()
 		{
 			cerr << "Failed to calculate a feasible path using Dubins path"
 					<< endl;
-			cerr << "Increasing the turn radius to " << turningRadius * 2
-					<< " and trying again" << endl;
 
 				wps.push_back(destPose);
 				success = false;
@@ -296,6 +294,16 @@ int LocalPlanner::calculateWaypoints()
 	//setDestReached( false );
 
 	printWaypoints();
+	acfrlcm::auv_local_path_t lp;
+	lp.utime = timestamp_now();
+	int i;
+	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
+		lp.x[i] = waypoints[i].getX();
+		lp.y[i] = waypoints[i].getY();
+		lp.z[i] = waypoints[i].getZ();
+	}
+	lp.num_el = i;
+	lcm.publish("LOCAL_PATH", &lp);
 
 	return success;
 }
@@ -431,7 +439,7 @@ int LocalPlanner::processWaypoints()
 	if (pointWithinBound(wp))
 	{
 
-		printf( "[%3.2f, %3.2f, %3.2f] reached",
+		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
 				wp.getZ() );

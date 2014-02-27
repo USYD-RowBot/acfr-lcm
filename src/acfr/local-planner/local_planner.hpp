@@ -16,6 +16,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
 #include <fstream>
 
 #include <cstdio>
