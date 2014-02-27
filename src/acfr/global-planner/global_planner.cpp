@@ -122,8 +122,7 @@ int GlobalPlanner::clock() {
 				if( areWeThereYet ) {
 					cout << timestamp_now() << " We are there!" << endl;
 				}
-				if ((timestamp_now() - legStartTime)
-						> (*currPoint).timeout * 1e6) {
+				if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) {
 					cout << "currPoint timed out. timeout="
 							<< (*currPoint).timeout * 1e6 << ", curr="
 							<< (timestamp_now() - legStartTime) << endl;
@@ -131,12 +130,10 @@ int GlobalPlanner::clock() {
 
 				// load the next point and send it along, that is if we are not
 				// at the end of the list
-				list<waypoint>::iterator i = currPoint;
-				i++;
-				if (i == mis.waypoints.end())
+				currPoint++;
+				if (currPoint == mis.waypoints.end())
 					nextState = globalPlannerFsmDone;
 				else {
-					currPoint++;
 					sendLeg();
 					cout << "globalplannerfsmrun" << endl;
 					nextState = globalPlannerFsmRun;

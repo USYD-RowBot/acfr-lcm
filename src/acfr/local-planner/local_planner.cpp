@@ -1,20 +1,5 @@
 #include "local_planner.hpp"
 
-// get the index to the minimum value in an array
-int getMin(double array[], int size)
-{
-	int index = 0;
-	for (int i = 0; i < size; i++)
-	{
-		if (array[i] < array[index])
-		{
-			index = i;
-		}
-	}
-
-	return index;
-
-}
 
 // Exit handler, I swear this is the only global
 int mainExit;
@@ -294,16 +279,7 @@ int LocalPlanner::calculateWaypoints()
 	//setDestReached( false );
 
 	printWaypoints();
-	acfrlcm::auv_local_path_t lp;
-	lp.utime = timestamp_now();
-	int i;
-	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
-		lp.x[i] = waypoints[i].getX();
-		lp.y[i] = waypoints[i].getY();
-		lp.z[i] = waypoints[i].getZ();
-	}
-	lp.num_el = i;
-	lcm.publish("LOCAL_PATH", &lp);
+	publishWaypoints();
 
 	return success;
 }
@@ -532,6 +508,19 @@ void LocalPlanner::printWaypoints() const {
 				waypoints.at(i).getZ() );
 	}
 	cout << "];" << endl;
+}
+bool LocalPlanner::publishWaypoints() {
+	acfrlcm::auv_local_path_t lp;
+	lp.utime = timestamp_now();
+	int i;
+	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
+		lp.x[i] = waypoints[i].getX();
+		lp.y[i] = waypoints[i].getY();
+		lp.z[i] = waypoints[i].getZ();
+	}
+	lp.num_el = i;
+	lcm.publish("LOCAL_PATH", &lp);
+	return true;
 }
 
 int main(int argc, char **argv)

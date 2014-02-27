@@ -154,6 +154,7 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 		btv_ok = false;
 	}
 
+	state->bottomLock = btv_ok;
 
 	if( btv_ok )
 	{

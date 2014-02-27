@@ -29,7 +29,6 @@ using namespace std;
 #define DOUBLE_MAX std::numeric_limits< double >::max()
 #define ITERATION_NUM 3
 
-int getMin(double array[], int size);
 
 class LocalPlanner
 {
@@ -42,11 +41,8 @@ public:
 	int onGlobalState(const acfrlcm::auv_global_planner_state_t *gpState);
 	int calculateWaypoints();
 	int processWaypoints();
-	lcm::LCM lcm;
 	int process();
 	int sendResponse();
-
-	ofstream fp, fp_wp;
 
 	Pose3D getCurrPose(void) const
 	{
@@ -154,8 +150,12 @@ public:
 	}
 
 	void printWaypoints( void ) const;
+	bool publishWaypoints(void);
 
 	vector<Pose3D> waypoints;
+
+	lcm::LCM lcm;
+	ofstream fp, fp_wp;
 
 private:
 
