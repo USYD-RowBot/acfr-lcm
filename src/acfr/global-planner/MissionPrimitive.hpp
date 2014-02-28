@@ -199,15 +199,15 @@ public:
 		numLoops = n;
 	}
 
-	void printPath(void) const {
+	void printPath(void) {
 		cout << "path = [" << endl;
-		list<waypoint>::iterator pathIter;
-			for (pathIter = path.begin(); pathIter != path.end(); pathIter++)
+			it = path.begin();
+			for (; it != path.end(); it++)
 			{
-				printf( "%3.2f, %3.2f, %3.2f",
-						(*pathIter).pose.getX(),
-						(*pathIter).pose.getY(),
-						(*pathIter).pose.getZ() );
+				printf( "%3.2f, %3.2f, %3.2f\n",
+						(*it).pose.getX(),
+						(*it).pose.getY(),
+						(*it).pose.getZ() );
 			}
 			cout << "];" << endl;
 	}
