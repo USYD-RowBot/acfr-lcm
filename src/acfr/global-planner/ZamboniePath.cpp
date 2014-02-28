@@ -68,7 +68,7 @@ bool ZamboniePath::calcPath(void) {
 	//	- bottom-left when performing clockwise spirals
 	//	- bottom-right when performing counter-clockwise spirals
 	currPose.setPosition(position.getX(), position.getY(), position.getZ());
-	currPose.setRollPitchYawRad(0, 0, heading)
+	currPose.setRollPitchYawRad(0, 0, heading);
 	wp.pose = currPose;
 	path.push_back(wp);
 
