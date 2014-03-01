@@ -249,7 +249,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	sendAbortMessage("DVL dead");
 
     if(dvl.pd4.btv_status == 0)
-        status.status |= DVL_BIT;
+        status.status |= DVL_BL_BIT;
 //    else if (abort_on_no_dvl == true)
 //    	sendAbortMessage("DVL dead");
 
