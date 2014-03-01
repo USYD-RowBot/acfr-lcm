@@ -67,5 +67,7 @@ private:
     int64_t dvlbl_timeout;
     int64_t depth_timeout;
     int64_t oas_timeout;
+
+    int64_t dvlbl_utime;
 };
 
