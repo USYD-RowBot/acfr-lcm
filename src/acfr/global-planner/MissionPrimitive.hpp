@@ -41,7 +41,7 @@ public:
 
 	MissionPrimitive() :
 			timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(
-					0), width(0), turnRadius(5), pitch(0), pathOffset(0), velocity(
+					0), width(0), turnRadius(7.5), pitch(0), pathOffset(0), velocity(
 					1), centerOverlap(0), minWidthLength(0), altitudeChange(0), direction(
 					DIRECTION_CW), numLoops(0), dropDist(1), dropAngle(dropDist/turnRadius) {
 

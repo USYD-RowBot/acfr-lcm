@@ -782,6 +782,9 @@ parse_args (state_t *state, int argc, char *argv[])
             PROSILICA_ERROR (NULL, "unrecognized argument to --ExposureMode");
             exit (EXIT_FAILURE);
         }
+    } else {
+        PROSILICA_ERROR (NULL, "no value for --ExposureMode");
+        exit (EXIT_FAILURE);
     }
 
     // FrameRate

@@ -284,7 +284,7 @@ int GlobalPlanner::sendLeg() {
 
 	pc.depth_mode = (*currPoint).depthMode;
 
-	cout << timestamp_now() << " Sending way point " << (*currPoint).id << ": "
+	cout << timestamp_now() << " Sending way point " << (*currPoint).id << " of " << mis.waypoints.size() << ": "
 			<< (*currPoint).pose.getX() << ", " << (*currPoint).pose.getY()
 			<< ", " << (*currPoint).pose.getZ() << endl;
 
