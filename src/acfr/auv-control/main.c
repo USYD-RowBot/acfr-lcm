@@ -44,12 +44,6 @@ typedef struct {
 	pid_gains_t gains_pitch_r;
 	pid_gains_t gains_heading;
 
-	// Maximum values
-	double pitch_max;
-	double plane_rudder_max;
-	double main_rpm_max;
-	double roll_offset_max;
-
 	// Nav solution
 	acfrlcm_auv_acfr_nav_t nav;
 	pthread_mutex_t nav_lock;
@@ -169,19 +163,6 @@ int load_config(state_t *state, char *rootkey) {
 
 	sprintf(key, "%s.heading.sat", rootkey);
 	state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
-
-	// Limit values
-	sprintf(key, "%s.pitch_max", rootkey);
-	state->pitch_max = bot_param_get_double_or_fail(param, key);
-
-	sprintf(key, "%s.plane_rudder_max", rootkey);
-	state->plane_rudder_max = bot_param_get_double_or_fail(param, key);
-
-	sprintf(key, "%s.main_rpm_max", rootkey);
-	state->main_rpm_max = bot_param_get_double_or_fail(param, key);
-
-	sprintf(key, "%s.roll_offset_max", rootkey);
-	state->roll_offset_max = bot_param_get_double_or_fail(param, key);
 
 	return 1;
 }
@@ -368,12 +349,6 @@ int main(int argc, char **argv) {
 				pitch = -pid(&state.gains_depth, nav.depth, cmd.depth,
 						CONTROL_DT);
 
-			// Pitch limit
-			if (pitch > state.pitch_max)
-				pitch = state.pitch_max;
-			else if (pitch < -state.pitch_max)
-				pitch = -state.pitch_max;
-
 			if ((nav.vx > -0.05) || (prop_rpm > -100))
 				plane_angle = pid(&state.gains_pitch, nav.pitch, pitch,
 						CONTROL_DT);
@@ -481,18 +456,13 @@ int main(int argc, char **argv) {
 				// Roll compenstation
 				// We try to keep the AUV level, ie roll = 0
 				roll_offset = pid(&state.gains_roll, nav.roll, 0.0, CONTROL_DT);
-				// Roll limit
-				if (roll_offset > state.roll_offset_max)
-					roll_offset = state.roll_offset_max;
-				else if (roll_offset < -state.roll_offset_max)
-					roll_offset = -state.roll_offset_max;
 			}
 
 			// Add in the roll offset
 			double top       = rudder_angle - roll_offset;
 			double bottom    = rudder_angle + roll_offset;
 			double port      = plane_angle  - roll_offset;
-			double starboard = plane_angle  - roll_offset;
+			double starboard = plane_angle  + roll_offset;
 
 			//	printf("prop_rpm: %f\n",prop_rpm);
 			// Reverse all the fin angles for reverse direction (given rpm is
@@ -511,10 +481,6 @@ int main(int argc, char **argv) {
 
 			//printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n",
 			// state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
-			limit_value(&top, state.plane_rudder_max);
-			limit_value(&bottom, state.plane_rudder_max);
-			limit_value(&port, state.plane_rudder_max);
-			limit_value(&starboard, state.plane_rudder_max);
 
 			// Set motor controller values
 			mc.main = prop_rpm;
@@ -530,6 +496,10 @@ int main(int argc, char **argv) {
 						nav.vx, cmd.vx, (cmd.vx - nav.vx) );
 				printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
 						nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
+				printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+						nav.pitch/M_PI*180, pitch/M_PI*180, (pitch - nav.pitch)/M_PI*180 );
+				printf( "Roll: curr=%3.2f, des=%3.2f, diff=%3.2f offset: %3.2f\n",
+						nav.roll/M_PI*180, 0.0, -nav.roll/M_PI*180, roll_offset/M_PI*180 );
 				printf( "Motor   : main=%4d\n", (int)mc.main);
 				printf( "Fins    : top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
 							mc.top, mc.bottom, mc.port, mc.starboard);

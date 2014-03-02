@@ -23,14 +23,4 @@
             <command device="camera" onoff="start"/>
         </goto>
     </primitive>
-    <primitive>
-        <goto>
-            <position x="-10" y="-50" z="0.5"/>
-            <heading deg="270" />
-            <timeout t="300" />
-            <velocity x="0.0" />
-            <depth mode = "depth" />
-            <command device="camera" onoff="stop"/>
-        </goto>
-    </primitive>
 </mission>
