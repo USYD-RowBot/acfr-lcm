@@ -83,19 +83,25 @@ int main (int argc, char *argv[]) {
     char buf[256];
     senlcm_ysi_t ysi;
     
+    sprintf( buf, "%c", 0x0B );
+    gsd_write(gsd, buf, 1); // esc char (0x0B == \e)
+    gsd_write(gsd, "nmea", 4); // put it in nmea mode
     
     // loop to collect data, parse and send it on its way
     while(!gsd->done) {
         int64_t timestamp;
-	memset(buf, 0, sizeof(buf));
+        memset(buf, 0, sizeof(buf));
         int len = gsd_read (gsd, buf, 256, &timestamp);
         
-   	ysi.utime = timestamp;
-	if(parseYsi(buf, len, &ysi)) {
-	    senlcm_ysi_t_publish (gsd->lcm, gsd->channel, &ysi);
-            gsd_update_stats (gsd, 1);
+		ysi.utime = timestamp;
+		if(parseYsi(buf, len, &ysi)) {
+			senlcm_ysi_t_publish (gsd->lcm, gsd->channel, &ysi);
+				gsd_update_stats (gsd, 1);
         }
-        else
+        else {
             gsd_update_stats (gsd, -1);
+        }
 	}
+
+    return 0;
 }

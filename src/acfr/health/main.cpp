@@ -256,7 +256,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
         dvlbl_utime = dvl.utime;
     }
     else if (((hbTime - dvlbl_utime) >= dvlbl_timeout) && (abort_on_no_dvl == true)) {
-    	printf( "last dvlbl at %d. This is older than %d. ABORTING\n\n",
+    	printf( "last dvlbl at %ld. This is older than %ld. ABORTING\n\n",
     			dvlbl_utime, dvlbl_timeout );
     	sendAbortMessage("DVL lost bottom lock");
     }
