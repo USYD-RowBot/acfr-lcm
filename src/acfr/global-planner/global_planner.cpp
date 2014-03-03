@@ -182,6 +182,7 @@ int GlobalPlanner::clock()
 		break;
 
 	case globalPlannerFsmPause:
+		cout << "pause" << endl;
 		if (globalPlannerMessage == globalPlannerAbort) {
 			cout << "Aborted." << endl;
 			nextState = globalPlannerFsmAbort;
@@ -206,7 +207,7 @@ int GlobalPlanner::clock()
 
 	case globalPlannerFsmDone:
 		// the mission is complete, go back to idle
-		// send a done message up a layer to the main controller
+		// TODO: send a done message up a layer to the main controller
 		nextState = globalPlannerFsmIdle;
 		break;
 
@@ -214,6 +215,9 @@ int GlobalPlanner::clock()
 		// with any luck we will never end up here, the state machine will need an external
 		// signal to be able to leave this state, to be implemented
 		nextState = globalPlannerFsmFault;
+		break;
+	default:
+		nextState = globalPlannerFsmAbort;
 		break;
 	}
 
