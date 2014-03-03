@@ -182,21 +182,18 @@ int GlobalPlanner::clock()
 		break;
 
 	case globalPlannerFsmPause:
-		cout << "pause" << endl;
 		if (globalPlannerMessage == globalPlannerAbort) {
-			cout << "Aborted." << endl;
 			nextState = globalPlannerFsmAbort;
 		}
 		else if (globalPlannerMessage == globalPlannerStop) {
-			cout << "Stopped." << endl;
 			nextState = globalPlannerFsmIdle;
 		}
 		else if (globalPlannerMessage == globalPlannerResume) {
-			cout << "Resumed." << endl;
 			nextState = globalPlannerFsmRun;
 		}
 		else
 			nextState = globalPlannerFsmPause;
+		break;
 
 	case globalPlannerFsmAbort:
 		// We end up here by an external abort message
