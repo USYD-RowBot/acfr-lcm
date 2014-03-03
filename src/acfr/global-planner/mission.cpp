@@ -557,7 +557,7 @@ void Mission::dumpMatlab(string filename) {
 		fout << (*it).pose.getX() << ", "
 			 << (*it).pose.getY() << ", "
 			 << (*it).pose.getZ() << ", "
-			 << (*it).pose.getRollRad()() << ", "
+			 << (*it).pose.getRollRad() << ", "
 			 << (*it).pose.getPitchRad() << ", "
 			 << (*it).pose.getYawRad() << "; "
 			 << endl;
