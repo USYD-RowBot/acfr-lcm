@@ -142,8 +142,10 @@ int GlobalPlanner::clock()
 			nextState = globalPlannerFsmAbort;
 		else if (globalPlannerMessage == globalPlannerStop)
 			nextState = globalPlannerFsmIdle;
-		else if (globalPlannerMessage == globalPlannerPause)
+		else if (globalPlannerMessage == globalPlannerPause) {
+			cout << "Paused..." << endl;
 			nextState = globalPlannerFsmPause;
+		}
 		else
 		{
 			// check to see if we have reached our destination or we have hit the timeout,
@@ -183,8 +185,10 @@ int GlobalPlanner::clock()
 			nextState = globalPlannerFsmAbort;
 		else if (globalPlannerMessage == globalPlannerStop)
 			nextState = globalPlannerFsmIdle;
-		else if (globalPlannerMessage == globalPlannerResume)
+		else if (globalPlannerMessage == globalPlannerResume) {
+			cout << "...Resumed." << endl;
 			nextState = globalPlannerFsmRun;
+		}
 		else
 			nextState = globalPlannerFsmPause;
 
