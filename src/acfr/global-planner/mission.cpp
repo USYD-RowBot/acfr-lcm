@@ -8,7 +8,7 @@
  
  #include "mission.hpp"
  
- Mission::Mission()
+ Mission::Mission() : dropDistance(-1), dropAngleRad(-1), turnRadius(-1), missionTimeout(-1)
  {
  }
  
@@ -379,9 +379,15 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     else 
         return 0;    
         
-    // set from globals
-    mp->setDropDist(dropDistance);
-    mp->setDropAngleRad(dropAngleRad);     
+    // set from globals if given
+    if(dropDistance>0)
+    	mp->setDropDist(dropDistance);
+    if(dropAngleRad>0)
+    	mp->setDropAngleRad(dropAngleRad);
+    if(turnRadius>0)
+    	mp->setTurnRadius(turnRadius);
+    if(missionTimeout>0)
+    	mp->setTimeout(missionTimeout);
     
     xmlpp::Node::NodeList list = node->get_children();     
     for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
