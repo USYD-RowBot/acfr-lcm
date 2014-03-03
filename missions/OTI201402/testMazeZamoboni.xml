@@ -15,12 +15,27 @@
         
     <primitive>
         <goto>
-            <position x="-20" y="-40" z="0.5"/>
-            <heading deg="130" />
-            <timeout t="3000" />
+            <position x="585" y="-1375" z="0.5"/>
+            <heading deg="135"/>
+            <timeout t="300" />
             <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="585" y="-1375" z="0.5"/>
+            <heading deg="135" />
+            <spacing m="1" />
+            <length m="50" />
+            <width m="75" />
+            <timeout t="28800" />
+            <velocity x="1.0" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+            <command device="camera" onoff="start"/>
+        </zambonie>
     </primitive>
 </mission>
