@@ -26,31 +26,37 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		// Check if file exists
 		fs = new fstream(gm->str.c_str(), ios::in);
 		// load a mission file and run said mission
-		if (!fs || !fs->good() || !gp->mis.load(gm->str))
+		if (!fs || !fs->good() ) {
+			cerr << "Invalid mission file" << gm->str
+					<< ". Stopping execution" << endl;
+			gp->globalPlannerMessage = globalPlannerStop;
+		}
+		else if( !gp->mis.load(gm->str) )
 		{
-			cerr << "Could not load mission file " << gm->str << endl;
+			cerr << "Could not load mission file " << gm->str
+					<< ". Stopping execution" << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
 		}
 		else
 		{
-			cout << "loaded new mission" << endl;
+			cout << "\tLoaded new mission" << endl;
 			if( gp->getCurrentState() == globalPlannerFsmRun ) {
-				cout << "currently running. putting the state to idle and then changing again" << endl;
 				gp->globalPlannerMessage = globalPlannerStop;
 				gp->clock();
-				cout << "back from clock" << endl;
 			}
 			gp->globalPlannerMessage = globalPlannerRun;
+			gp->mis.dumpMatlab("matlab_plot.m");
 		}
-		gp->mis.dumpMatlab("matlab_plot.m");
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESUME:
 		// Resume the mission
+		gp->globalPlannerMessage = globalPlannerResume;
 		break;
 
 	case acfrlcm::auv_global_planner_t::PAUSE:
 		// Pause the current mission
+		gp->globalPlannerMessage = globalPlannerPause;
 		break;
 
 	case acfrlcm::auv_global_planner_t::ABORT:
@@ -113,7 +119,6 @@ GlobalPlannerStateT GlobalPlanner::getCurrentState()
 
 int GlobalPlanner::clock()
 {
-	cout << "clock..." << endl;
 	switch (currentState)
 	{
 
