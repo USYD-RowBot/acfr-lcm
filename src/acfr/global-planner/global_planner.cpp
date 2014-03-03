@@ -17,7 +17,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_global_planner_t *gm,
 		GlobalPlanner* gp)
 {
-	fstream * fs;
+	cout << "\nReceived new command\n" << endl;
+	fstream * fs = NULL;
 	// we just got a message from the task planner
 	switch (gm->command)
 	{
@@ -25,13 +26,16 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		// Check if file exists
 		fs = new fstream(gm->str.c_str(), ios::in);
 		// load a mission file and run said mission
-		if (!fs->good() || !gp->mis.load(gm->str))
+		if (!fs || !fs->good() || !gp->mis.load(gm->str))
 		{
 			cerr << "Could not load mission file " << gm->str << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
 		}
 		else
 		{
+			cout << "loaded new mission" << endl;
+			gp->globalPlannerMessage = globalPlannerIdle;
+			gp->clock();
 			gp->globalPlannerMessage = globalPlannerRun;
 		}
 		gp->mis.dumpMatlab("matlab_plot.m");
@@ -409,8 +413,9 @@ int main(int argc, char **argv)
 	signal(SIGINT, signalHandler);
 
 	// create a global planner object and let it do its thing
-	GlobalPlanner gp;
-	gp.process();
+	GlobalPlanner * gp = new GlobalPlanner();
+	gp->process();
 
+	delete gp;
 	return 0;
 }
