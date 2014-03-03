@@ -90,7 +90,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 }
 
 GlobalPlanner::GlobalPlanner() :
-		globalPlannerMessage(globalPlannerIdle), skipWaypoint(false), areWeThereYet(false), distanceToGoal(-1)
+		skipWaypoint(false), areWeThereYet(false), distanceToGoal(-1),
+		globalPlannerMessage(globalPlannerIdle)
 {
 
 	// subscribe to the relevant LCM messages
