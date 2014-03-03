@@ -554,7 +554,13 @@ void Mission::dumpMatlab(string filename) {
     fout << "path = [" << endl;
 	list<waypoint>::iterator it;
 	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
-		fout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", " << (*it).pose.getZ() << "; " << endl;
+		fout << (*it).pose.getX() << ", "
+			 << (*it).pose.getY() << ", "
+			 << (*it).pose.getZ() << ", "
+			 << (*it).pose.getRollRad()() << ", "
+			 << (*it).pose.getPitchRad() << ", "
+			 << (*it).pose.getYawRad() << "; "
+			 << endl;
 	}
 	fout << "];" << "\n";
 //	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
