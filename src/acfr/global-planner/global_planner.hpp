@@ -17,55 +17,53 @@
 // mission FSM states
 typedef enum
 {
-    globalPlannerFsmIdle,
-    globalPlannerFsmRun,
-    globalPlannerFsmAbort,
-    globalPlannerFsmPause,
-    globalPlannerFsmDone,
-    globalPlannerFsmFault
+	globalPlannerFsmIdle,
+	globalPlannerFsmRun,
+	globalPlannerFsmAbort,
+	globalPlannerFsmPause,
+	globalPlannerFsmDone,
+	globalPlannerFsmFault
 } GlobalPlannerStateT;
-    
 
 typedef enum
 {
-    globalPlannerRun,
-    globalPlannerAbort,
-    globalPlannerStop,
-    globalPlannerPause,
-    globalPlannerResume,
-    globalPlannerIdle
+	globalPlannerRun,
+	globalPlannerAbort,
+	globalPlannerStop,
+	globalPlannerPause,
+	globalPlannerResume,
+	globalPlannerIdle
 } globalPlannerMessageT;
 
 class GlobalPlanner
 {
-    public:
-        GlobalPlanner();
-        ~GlobalPlanner();
-        GlobalPlannerStateT getCurrentState();
-        string  getCurrentStateString();
-        
-        bool areWeThereYet;
-        double distanceToGoal;
-        void set_filename(string filename);
+public:
+	GlobalPlanner();
+	~GlobalPlanner();
+	GlobalPlannerStateT getCurrentState();
+	string getCurrentStateString();
 
-        int clock();
-        int process();
-        
-        Mission mis;
-        globalPlannerMessageT globalPlannerMessage;
-    private:
-        
-        lcm::LCM lcm;
-        
-        
-        GlobalPlannerStateT currentState;
-        GlobalPlannerStateT nextState;
-        
-        // mission stuff
-        list<waypoint>::iterator currPoint;
-        int sendLeg();
-        int sendCommands(list<MissionCommand> &commands);
-        int64_t legStartTime;        
+	bool areWeThereYet;
+	double distanceToGoal;
+	void set_filename(string filename);
+
+	int clock();
+	int process();
+
+	Mission mis;
+	globalPlannerMessageT globalPlannerMessage;
+private:
+
+	lcm::LCM lcm;
+
+	GlobalPlannerStateT currentState;
+	GlobalPlannerStateT nextState;
+
+	// mission stuff
+	list<waypoint>::iterator currPoint;
+	int sendLeg();
+	int sendCommands(list<MissionCommand> &commands);
+	int64_t legStartTime;
 
 	// command settings
 	acfrlcm::auv_camera_trigger_t cameraTriggerMsg;

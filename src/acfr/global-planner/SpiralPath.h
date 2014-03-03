@@ -26,8 +26,6 @@ class SpiralPath : public MissionPrimitive {
 
 		bool calcPath(void);
 
-
-
 		void printPose(Pose3D p) {
 			cout << p.getX() << ", " << p.getY() << " < " << p.getYawRad()/M_PI*180 << endl;
 		}

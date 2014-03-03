@@ -4,7 +4,8 @@
 int mainExit;
 
 void onPathResponse(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const acfrlcm::auv_path_response_t *pr, GlobalPlanner* gp) {
+		const acfrlcm::auv_path_response_t *pr, GlobalPlanner* gp)
+{
 	gp->areWeThereYet = pr->are_we_there_yet;
 	gp->distanceToGoal = pr->distance;
 
@@ -14,18 +15,23 @@ void onPathResponse(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 
 void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_global_planner_t *gm,
-		GlobalPlanner* gp) {
-	fstream fs;
+		GlobalPlanner* gp)
+{
+	fstream * fs;
 	// we just got a message from the task planner
-	switch (gm->command) {
+	switch (gm->command)
+	{
 	case acfrlcm::auv_global_planner_t::LOAD:
 		// Check if file exists
-		fs.open(gm->str.c_str(), ios::in );
+		fs = new fstream(gm->str.c_str(), ios::in);
 		// load a mission file and run said mission
-		if (!fs && !gp->mis.load(gm->str)) {
+		if (!fs->good() || !gp->mis.load(gm->str))
+		{
 			cerr << "Could not load mission file " << gm->str << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
-		} else {
+		}
+		else
+		{
 			gp->globalPlannerMessage = globalPlannerRun;
 		}
 		gp->mis.dumpMatlab("matlab_plot.m");
@@ -65,7 +71,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 }
 
 GlobalPlanner::GlobalPlanner() :
-		globalPlannerMessage(globalPlannerIdle) {
+		globalPlannerMessage(globalPlannerIdle)
+{
 
 	// subscribe to the relevant LCM messages
 	lcm.subscribeFunction("TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
@@ -80,31 +87,38 @@ GlobalPlanner::GlobalPlanner() :
 	cout << endl << endl << endl << "GlobalPlanner started" << endl;
 }
 
-GlobalPlanner::~GlobalPlanner() {
+GlobalPlanner::~GlobalPlanner()
+{
 }
 
-string GlobalPlanner::getCurrentStateString() {
-	string GlobalPlannerStateStr[] = { "idle", "run", "abort", "pause", "done",
-			"fault" };
+string GlobalPlanner::getCurrentStateString()
+{
+	string GlobalPlannerStateStr[] =
+	{ "idle", "run", "abort", "pause", "done", "fault" };
 	return GlobalPlannerStateStr[currentState];
 }
 
-GlobalPlannerStateT GlobalPlanner::getCurrentState() {
+GlobalPlannerStateT GlobalPlanner::getCurrentState()
+{
 	return currentState;
 }
 
-int GlobalPlanner::clock() {
-	switch (currentState) {
+int GlobalPlanner::clock()
+{
+	switch (currentState)
+	{
 
 	// We only leave the idle state by going to the run state
 	case globalPlannerFsmIdle:
-		if (globalPlannerMessage == globalPlannerRun) {
+		if (globalPlannerMessage == globalPlannerRun)
+		{
 			// set the start point
 			currPoint = mis.waypoints.begin();
 			nextState = globalPlannerFsmRun;
 			cout << "globalplannerfsmidle" << endl;
 			sendLeg();
-		} else
+		}
+		else
 			nextState = globalPlannerFsmIdle;
 
 		break;
@@ -116,16 +130,20 @@ int GlobalPlanner::clock() {
 			nextState = globalPlannerFsmIdle;
 		else if (globalPlannerMessage == globalPlannerPause)
 			nextState = globalPlannerFsmPause;
-		else {
+		else
+		{
 			// check to see if we have reached our destination or we have hit the timeout,
 			// if so we can feed the next leg to the path planner
 			if ((areWeThereYet) // || distanceToGoal < 1.0)
-					|| ((timestamp_now() - legStartTime)
-							> (*currPoint).timeout * 1e6)) {
-				if( areWeThereYet ) {
+			|| ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6))
+			{
+				if (areWeThereYet)
+				{
 					cout << timestamp_now() << " We are there!" << endl;
 				}
-				if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) {
+				if ((timestamp_now() - legStartTime)
+						> (*currPoint).timeout * 1e6)
+				{
 					cout << "currPoint timed out. timeout="
 							<< (*currPoint).timeout * 1e6 << ", curr="
 							<< (timestamp_now() - legStartTime) << endl;
@@ -136,7 +154,8 @@ int GlobalPlanner::clock() {
 				currPoint++;
 				if (currPoint == mis.waypoints.end())
 					nextState = globalPlannerFsmDone;
-				else {
+				else
+				{
 					sendLeg();
 					cout << "globalplannerfsmrun" << endl;
 					nextState = globalPlannerFsmRun;
@@ -175,49 +194,55 @@ int GlobalPlanner::clock() {
 		break;
 	}
 
-	if (nextState != currentState) {
-		cout << timestamp_now() << " Current state: " << getCurrentStateString() << "  ";
+	if (nextState != currentState)
+	{
+		cout << timestamp_now() << " Current state: " << getCurrentStateString()
+				<< "  ";
 		currentState = nextState;
-		cout <<  " New state: " << getCurrentStateString() << endl;
+		cout << " New state: " << getCurrentStateString() << endl;
 
 		// broadcast the state change
 		acfrlcm::auv_global_planner_state_t gpState;
 		gpState.utime = timestamp_now();
-		switch (nextState) {
-		case globalPlannerFsmAbort: 
+		switch (nextState)
+		{
+		case globalPlannerFsmAbort:
 			gpState.state = acfrlcm::auv_global_planner_state_t::ABORT;
 			break;
-		case globalPlannerFsmIdle: 
+		case globalPlannerFsmIdle:
 			gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 			break;
-		case globalPlannerFsmRun: 
+		case globalPlannerFsmRun:
 			gpState.state = acfrlcm::auv_global_planner_state_t::RUN;
 			break;
-		case globalPlannerFsmDone: 
+		case globalPlannerFsmDone:
 			gpState.state = acfrlcm::auv_global_planner_state_t::DONE;
 			break;
-		case globalPlannerFsmPause: 
+		case globalPlannerFsmPause:
 			gpState.state = acfrlcm::auv_global_planner_state_t::PAUSE;
 			break;
-		case globalPlannerFsmFault: 
+		case globalPlannerFsmFault:
 			gpState.state = acfrlcm::auv_global_planner_state_t::FAULT;
 			break;
 		}
-		
+
 		// Send the global state change message
-		cout << "Publishing new global state: " << (int)(gpState.state) << endl;
+		cout << "Publishing new global state: " << (int) (gpState.state)
+				<< endl;
 		lcm.publish("GLOBAL_STATE", &gpState);
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
 }
 
-int GlobalPlanner::sendLeg() {
+int GlobalPlanner::sendLeg()
+{
 	// we need to check that both the points we have are goal points
 	// if they are not then we need to send the commands in the command
 	// point and increment the indexes appropriately
 
-	while ((*currPoint).goalType == COMMAND) {
+	while ((*currPoint).goalType == COMMAND)
+	{
 		sendCommands((*currPoint).commands);
 		currPoint++;
 	}
@@ -234,39 +259,42 @@ int GlobalPlanner::sendLeg() {
 	list<waypoint>::iterator ii = currPoint;
 	ii++;
 	double waypoint_yaw, yaw1, yaw2;
-	if (ii == mis.waypoints.end()) {
+	if (ii == mis.waypoints.end())
+	{
 		waypoint_yaw = (*currPoint).pose.getYawRad();
 		cout << "Compare yaw commands (final)"
-				<< (*currPoint).pose.getYawRad() * 180 / M_PI << endl;
-	} else {
+		<< (*currPoint).pose.getYawRad() * 180 / M_PI << endl;
+	}
+	else
+	{
 		yaw1 = (*currPoint).pose.getYawRad();
 		if (yaw1 > 2 * M_PI
-			)
-			yaw1 = yaw1 - 2 * M_PI;
+		)
+		yaw1 = yaw1 - 2 * M_PI;
 		else if (yaw1 < 0)
-			yaw1 = yaw1 + 2 * M_PI;
+		yaw1 = yaw1 + 2 * M_PI;
 
 		yaw2 = atan2((*ii).pose.getY() - (*currPoint).pose.getY(),
 				(*ii).pose.getX() - (*currPoint).pose.getX()) + 2 * M_PI;
 		if (yaw2 > 2 * M_PI
-			)
-			yaw2 = yaw2 - 2 * M_PI;
+		)
+		yaw2 = yaw2 - 2 * M_PI;
 		else if (yaw2 < 0)
-			yaw2 = yaw2 + 2 * M_PI;
+		yaw2 = yaw2 + 2 * M_PI;
 
 		if (yaw2 - yaw1 > M_PI
-			)
-			yaw2 = yaw2 - 2 * M_PI;
+		)
+		yaw2 = yaw2 - 2 * M_PI;
 		else if (yaw1 - yaw2 > M_PI
-			)
-			yaw1 = yaw1 - 2 * M_PI;
+		)
+		yaw1 = yaw1 - 2 * M_PI;
 
 		waypoint_yaw = (yaw1 + yaw2) / 2;
 		if (waypoint_yaw > 2 * M_PI
-			)
-			waypoint_yaw = waypoint_yaw - 2 * M_PI;
+		)
+		waypoint_yaw = waypoint_yaw - 2 * M_PI;
 		else if (waypoint_yaw < 0)
-			waypoint_yaw = waypoint_yaw + 2 * M_PI;
+		waypoint_yaw = waypoint_yaw + 2 * M_PI;
 
 		//cout << "Compare yaw commands (lookahead)" << (*currPoint).pose.getYawRad()*180/M_PI << " " << yaw2*180/M_PI << " " << waypoint_yaw*180/M_PI << endl;
 
@@ -274,7 +302,7 @@ int GlobalPlanner::sendLeg() {
 #else
 	double waypoint_yaw = (*currPoint).pose.getYawRad();
 #endif
-	// Put together the LEG message for the path planner
+	// Put together the Waypoint message for the path planner
 	acfrlcm::auv_path_command_t pc;
 	pc.utime = timestamp_now();
 	pc.waypoint[0] = (*currPoint).pose.getX();
@@ -287,7 +315,11 @@ int GlobalPlanner::sendLeg() {
 
 	pc.depth_mode = (*currPoint).depthMode;
 
-	cout << timestamp_now() << " Sending way point " << (*currPoint).id << " of " << mis.waypoints.size() << ": "
+	cout << timestamp_now()
+			<< fixed << setprecision(2)
+			<< " Sending way point "
+			<< (*currPoint).id << " of " << mis.waypoints.size()
+			<< "(" << (*currPoint).id*100/mis.waypoints.size() << "%) : "
 			<< (*currPoint).pose.getX() << ", " << (*currPoint).pose.getY()
 			<< ", " << (*currPoint).pose.getZ() << endl;
 
@@ -299,31 +331,44 @@ int GlobalPlanner::sendLeg() {
 }
 
 // Send commands to instruments
-int GlobalPlanner::sendCommands(list<MissionCommand> &commands) {
-	for (std::list<MissionCommand>::iterator itr = commands.begin(); itr != commands.end(); itr++)
-	{
-		switch(itr->device) {
+int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
+{
+	for (std::list<MissionCommand>::iterator itr = commands.begin();
+			itr != commands.end(); itr++)
+			{
+		switch (itr->device)
+		{
 		case CAMERA:
 			cameraTriggerMsg.utime = timestamp_now();
 			if (itr->command == CAMERA_FREQ)
 			{
-				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_FREQ;
+				cameraTriggerMsg.command =
+						acfrlcm::auv_camera_trigger_t::SET_FREQ;
 				cameraTriggerMsg.freq = itr->valueDouble;
-			} else if (itr->command == CAMERA_WIDTH)
+			}
+			else if (itr->command == CAMERA_WIDTH)
 			{
-				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_WIDTH;
+				cameraTriggerMsg.command =
+						acfrlcm::auv_camera_trigger_t::SET_WIDTH;
 				cameraTriggerMsg.pulseWidthUs = itr->valueDouble;
-			} else if (itr->command == CAMERA_START)
+			}
+			else if (itr->command == CAMERA_START)
 			{
-				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
+				cameraTriggerMsg.command =
+						acfrlcm::auv_camera_trigger_t::SET_STATE;
 				cameraTriggerMsg.enabled = 1;
-			} else if (itr->command == CAMERA_STOP)
+			}
+			else if (itr->command == CAMERA_STOP)
 			{
-				cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
+				cameraTriggerMsg.command =
+						acfrlcm::auv_camera_trigger_t::SET_STATE;
 				cameraTriggerMsg.enabled = 0;
 			}
 			// Send the trigger command 
-			std::cout << "Sending camera trigger: state:" << (int)(cameraTriggerMsg.enabled) << " f:" << (int)(cameraTriggerMsg.freq) << " w:" << (int)(cameraTriggerMsg.pulseWidthUs) << endl;
+			std::cout << "Sending camera trigger: state:"
+					<< (int) (cameraTriggerMsg.enabled) << " f:"
+					<< (int) (cameraTriggerMsg.freq) << " w:"
+					<< (int) (cameraTriggerMsg.pulseWidthUs) << endl;
 			lcm.publish("CAMERA_TRIGGER", &cameraTriggerMsg);
 			break;
 		case DVL:
@@ -333,10 +378,12 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands) {
 	return 1;
 }
 
-int GlobalPlanner::process() {
+int GlobalPlanner::process()
+{
 	int fd = lcm.getFileno();
 	fd_set rfds;
-	while (!mainExit) {
+	while (!mainExit)
+	{
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);
 		struct timeval timeout;
@@ -350,21 +397,20 @@ int GlobalPlanner::process() {
 	return 1;
 }
 
-void signalHandler(int sig) {
+void signalHandler(int sig)
+{
 	mainExit = 1;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	// install the signal handler
 	mainExit = 0;
 	signal(SIGINT, signalHandler);
 
 	// create a global planner object and let it do its thing
-	GlobalPlanner *gp = new GlobalPlanner;
-
-	gp->process();
-
-	delete gp;
+	GlobalPlanner gp;
+	gp.process();
 
 	return 0;
 }
