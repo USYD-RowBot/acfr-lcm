@@ -34,8 +34,12 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "loaded new mission" << endl;
-			gp->globalPlannerMessage = globalPlannerIdle;
-			gp->clock();
+			if( gp->getCurrentState() == globalPlannerFsmRun ) {
+				cout << "currently running. putting the state to idle and then changing again" << endl;
+				gp->globalPlannerMessage = globalPlannerIdle;
+				gp->clock();
+				cout << "back from clock" << endl;
+			}
 			gp->globalPlannerMessage = globalPlannerRun;
 		}
 		gp->mis.dumpMatlab("matlab_plot.m");

@@ -513,6 +513,7 @@ bool LocalPlanner::publishWaypoints() {
 	acfrlcm::auv_local_path_t lp;
 	lp.utime = timestamp_now();
 	int i;
+	// TODO: comparison between signed and unsiged!
 	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
 		lp.x[i] = waypoints[i].getX();
 		lp.y[i] = waypoints[i].getY();
