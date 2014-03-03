@@ -204,10 +204,13 @@ public:
 		it = path.begin();
 		for (; it != path.end(); it++)
 		{
-			printf( "%3.2f, %3.2f, %3.2f;\n",
+			printf( "%3.2f, %3.2f, %3.2f %3.2f, %3.2f, %3.2f;\n",
 					(*it).pose.getX(),
 					(*it).pose.getY(),
-					(*it).pose.getZ() );
+					(*it).pose.getZ(),
+					(*it).pose.getRollRad(),
+					(*it).pose.getPitchRad(),
+					(*it).pose.getYawRad());
 		}
 		cout << "];" << endl;
 	}
