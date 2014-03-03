@@ -69,6 +69,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		gp->globalPlannerMessage = globalPlannerStop;
 		break;
 
+	case acfrlcm::auv_global_planner_t::SKIP:
+		// Skip the current waypoint
+		gp->skipWaypoint = true;
+		break;
+
 	case acfrlcm::auv_global_planner_t::GOTO:
 		break;
 	case acfrlcm::auv_global_planner_t::LEG:
@@ -85,7 +90,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 }
 
 GlobalPlanner::GlobalPlanner() :
-		globalPlannerMessage(globalPlannerIdle)
+		globalPlannerMessage(globalPlannerIdle), skipWaypoint(false), areWeThereYet(false), distanceToGoal(-1)
 {
 
 	// subscribe to the relevant LCM messages
@@ -150,19 +155,22 @@ int GlobalPlanner::clock()
 		{
 			// check to see if we have reached our destination or we have hit the timeout,
 			// if so we can feed the next leg to the path planner
-			if ((areWeThereYet) // || distanceToGoal < 1.0)
-			|| ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6))
+			if ( areWeThereYet || skipWaypoint ||
+				 ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) )
 			{
 				if (areWeThereYet)
 				{
 					cout << timestamp_now() << " We are there!" << endl;
 				}
-				if ((timestamp_now() - legStartTime)
-						> (*currPoint).timeout * 1e6)
+				if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6)
 				{
 					cout << "currPoint timed out. timeout="
 							<< (*currPoint).timeout * 1e6 << ", curr="
 							<< (timestamp_now() - legStartTime) << endl;
+				}
+				if( skipWaypoint ) {
+					cout << "Skipping waypoint at requested" << endl;
+					skipWaypoint = false;
 				}
 
 				// load the next point and send it along, that is if we are not

@@ -43,12 +43,14 @@ public:
 	GlobalPlannerStateT getCurrentState();
 	string getCurrentStateString();
 
+	int clock();
+	int process();
+
+	bool skipWaypoint;
 	bool areWeThereYet;
 	double distanceToGoal;
 	void set_filename(string filename);
 
-	int clock();
-	int process();
 
 	Mission mis;
 	globalPlannerMessageT globalPlannerMessage;
