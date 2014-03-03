@@ -79,7 +79,7 @@
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
 						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiral_inward")
+						|| tag == "spiralinward")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
@@ -366,7 +366,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     
     if(primitiveType == "zambonie")
         mp = new ZamboniePath();
-    else if(primitiveType == "spiral_inward")
+    else if(primitiveType == "spiralinward")
         mp = new SpiralInwardPath();
     else if(primitiveType == "spiral")
         mp = new SpiralPath();
@@ -406,7 +406,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     return 0;
                 mp->setLength(l);
             }
-            if(element->get_name().lowercase() == "spacing")
+            if(element->get_name().lowercase() == "spacing" ||
+            		element->get_name().lowercase() == "offset")
             {
                 if(!getSingleValue(element, "m", s))
                     return 0;
