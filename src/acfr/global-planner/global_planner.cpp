@@ -119,6 +119,7 @@ GlobalPlannerStateT GlobalPlanner::getCurrentState()
 
 int GlobalPlanner::clock()
 {
+	cout << "clock()" << endl;
 	switch (currentState)
 	{
 
@@ -181,12 +182,16 @@ int GlobalPlanner::clock()
 		break;
 
 	case globalPlannerFsmPause:
-		if (globalPlannerMessage == globalPlannerAbort)
+		if (globalPlannerMessage == globalPlannerAbort) {
+			cout << "Aborted." << endl;
 			nextState = globalPlannerFsmAbort;
-		else if (globalPlannerMessage == globalPlannerStop)
+		}
+		else if (globalPlannerMessage == globalPlannerStop) {
+			cout << "Stopped." << endl;
 			nextState = globalPlannerFsmIdle;
+		}
 		else if (globalPlannerMessage == globalPlannerResume) {
-			cout << "...Resumed." << endl;
+			cout << "Resumed." << endl;
 			nextState = globalPlannerFsmRun;
 		}
 		else
