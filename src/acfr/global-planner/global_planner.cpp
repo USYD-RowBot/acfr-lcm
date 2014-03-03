@@ -36,7 +36,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 			cout << "loaded new mission" << endl;
 			if( gp->getCurrentState() == globalPlannerFsmRun ) {
 				cout << "currently running. putting the state to idle and then changing again" << endl;
-				gp->globalPlannerMessage = globalPlannerIdle;
+				gp->globalPlannerMessage = globalPlannerStop;
 				gp->clock();
 				cout << "back from clock" << endl;
 			}
@@ -113,6 +113,7 @@ GlobalPlannerStateT GlobalPlanner::getCurrentState()
 
 int GlobalPlanner::clock()
 {
+	cout << "clock..." << endl;
 	switch (currentState)
 	{
 
