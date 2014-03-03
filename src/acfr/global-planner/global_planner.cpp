@@ -119,7 +119,6 @@ GlobalPlannerStateT GlobalPlanner::getCurrentState()
 
 int GlobalPlanner::clock()
 {
-	cout << "clock()" << endl;
 	switch (currentState)
 	{
 
