@@ -23,9 +23,7 @@ class SpiralInwardPath: public MissionPrimitive {
 	public:
 		SpiralInwardPath() {
 		}
-		~SpiralInwardPath() {
 
-		}
 		bool calcPath(void);
 
 		void printPose(Pose3D p) {
