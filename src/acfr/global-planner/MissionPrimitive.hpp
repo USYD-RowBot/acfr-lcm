@@ -47,8 +47,7 @@ public:
 
 	}
 
-	virtual ~MissionPrimitive() {
-	}
+	~MissionPrimitive() {};
 	virtual bool calcPath(void) = 0;
 
 	bool generatePath(double _timeout, depthModeT _depthMode,
@@ -175,6 +174,16 @@ public:
 	bool setDropAngleDeg(double p) {
 		return setDropAngleRad(p / 180. * M_PI);
 	}
+	bool setDropAngleFromDropDist(void) {
+			if( this->dropDist <= 0 ) {
+				return false;
+			}
+			// 2*PI / circumference / dist
+			//this->dropAngle = (2*M_PI)/(2*M_PI*this->circleRad / this->dropDist);
+			this->dropAngle = dropDist / turnRadius;
+			return true;
+		}
+
 	bool setCenterOverlap(double o) {
 		if (o > 0) {
 			this->centerOverlap = o;

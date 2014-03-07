@@ -14,7 +14,10 @@ bool ZamboniePath::calcPath(void) {
 	Pose3D nextPose;
 	Pose3D c;
 
-	cout << endl << "ZamboniePath" << endl;
+	cout << endl << "====================" << endl;
+	cout << "ZamboniePath" << endl;
+	cout << "Start pose = " << position.getX() << ", " << position.getY() << ", " << position.getZ() << endl;
+	cout << "Heading = " << heading << endl;
 	cout << "Length/Width = " << length << "/" << width << endl;
 	cout << "Offset   = " << this->pathOffset << endl;
 	cout << "TurnRad  = " << this->turnRadius << endl;
@@ -44,21 +47,16 @@ bool ZamboniePath::calcPath(void) {
 		return false;
 	}
 
-	// Calculate loop width and length
-	double loopWidth = this->width / 2 - centerOverlap;
-	double loopLength = this->length;
-	cout << "Loop W/L = " << loopWidth << "/" << loopLength << endl;
-
 	// Calculate number of loops
-	numLoops = ceil(width / (2 * pathOffset) * 2) / 2;
+	numLoops = (width / (2 * pathOffset) * 2) / 2 + 0.2;
 	cout << "Num loops = " << numLoops << endl;
 
 	// Loop leg length
 	double legs[4];
-	legs[0] = loopLength - 2 * turnRadius;
-	legs[1] = loopWidth - 2 * turnRadius;
-	legs[2] = loopLength - 2 * turnRadius;
-	legs[3] = loopWidth - 2 * turnRadius - this->pathOffset;
+	legs[0] = length - 2 * turnRadius;
+	legs[1] = width/2 - 2 * turnRadius + pathOffset;
+	legs[2] = length - 2 * turnRadius;
+	legs[3] = width/2 - 2 * turnRadius;
 	cout << "Loop legs = " << legs[0] << ", " << legs[1] << ", " << legs[2] << ", " << legs[3] << endl;
 
 	int nWpC = floor(0.5 * M_PI / dropAngle);
@@ -93,11 +91,11 @@ bool ZamboniePath::calcPath(void) {
 #endif
 
 	// Now set the current pose to the start of the first straight leg
-	currPose.setPosition(position.getX(), position.getY(), position.getZ());
-	currPose.setRollPitchYawRad(0, 0, heading);
 	nextPose.setIdentity();
 	nextPose.setPosition( turnRadius, 0, 0 );
 	currPose = currPose.compose( nextPose );
+	wp.pose = currPose;
+	path.push_back(wp);
 
 	// For every loop
 	double loopNum = 0;
@@ -106,39 +104,39 @@ bool ZamboniePath::calcPath(void) {
 		for( int leg = 0; leg <= 3; leg++ ) {
 
 			// Leg X way points
-			nextPose.setIdentity();
 			int nWp = floor(legs[leg] / this->dropDist);
 			for( int i = 0; i < nWp; i++ ) {
-				nextPose.setPosition(dropDist, 0, 0);
-				currPose = currPose.compose(nextPose);
-				wp.pose = currPose;
-				path.push_back(wp);
-			}
-			// Insert the last way point
-			double rem = legs[leg]-nWp*dropDist;
-			if( rem > 1e-3 ) {
-				nextPose.setPosition(legs[leg]-nWp*dropDist, 0, 0);
-				currPose = currPose.compose(nextPose);
-				wp.pose = currPose;
+				nextPose.setIdentity();
+				nextPose.setPosition((i+1)*dropDist, 0, 0);
+				wp.pose = currPose.compose(nextPose);
 				path.push_back(wp);
 			}
 
-			// Leg X-X+1 turn way points
+			// We are now at the end of the leg
+			nextPose.setIdentity();
+			nextPose.setPosition(legs[leg], 0, 0);
+			currPose = currPose.compose(nextPose);
+
+			// Leg X to X+1 turn way points
 			nextPose.setIdentity();
 			nextPose.setPosition(0, -direction * turnRadius, 0);
 			c = currPose.compose(nextPose);
-			c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
+			c.setRollPitchYawRad(0, 0, atan2( currPose.getY()-c.getY(), currPose.getX()-c.getX() ));
 			for( int i = 0; i < nWpC; i++ ) {
 				double heading = -direction * dropAngleC * (i + 1);
 				nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
-				nextPose.setRollPitchYawRad(0, 0, heading - direction* M_PI / 2);
-				currPose = c.compose(nextPose);
-				wp.pose = currPose;
+				nextPose.setRollPitchYawRad(0, 0, heading - direction * M_PI / 2);
+				wp.pose = c.compose(nextPose);
 				path.push_back(wp);
 			}
 
-			loopNum += 0.25;
-			if( loopNum > numLoops ) {
+			// We are now at the end of the leg turn
+			double heading = -direction * M_PI/2;
+			nextPose.setPosition( turnRadius * cos(heading), turnRadius * sin(heading), 0 );
+			nextPose.setRollPitchYawRad(0,0,heading-direction*M_PI/2);
+			currPose = c.compose(nextPose);
+
+			if( (loopNum+=.25) > numLoops ) {
 				break;
 			}
 
@@ -146,7 +144,6 @@ bool ZamboniePath::calcPath(void) {
 
 	}
 
-	printPath();
 
 	return true;
 }

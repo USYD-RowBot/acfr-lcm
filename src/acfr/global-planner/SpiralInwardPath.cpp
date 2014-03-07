@@ -16,7 +16,8 @@ bool SpiralInwardPath::calcPath(void) {
 
 	cout << endl << "====================" << endl;
 	cout << "SpiralInwardPath" << endl;
-	cout << "Center = " << position.getX() << ", " << position.getY() << ", " << position.getZ() << endl;
+	cout << "Start pose = " << position.getX() << ", " << position.getY() << ", " << position.getZ() << endl;
+	cout << "Heading = " << heading << endl;
 	cout << "Length/Width = " << length << "/" << width << endl;
 	cout << "Direction = " << (direction == DIRECTION_CCW ? "Counter " : "") << "Clockwise" << endl;
 	cout << "Offset   = " << this->pathOffset << endl;
@@ -114,13 +115,13 @@ bool SpiralInwardPath::calcPath(void) {
 
 			// Leg X to X+1 turn way points
 			nextPose.setIdentity();
-			nextPose.setPosition(0, direction * turnRadius, 0);
+			nextPose.setPosition(0, -direction * turnRadius, 0);
 			c = currPose.compose(nextPose);
 			c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
 			for( int i = 0; i < nWpC; i++ ) {
-				double heading = direction * dropAngleC * (i + 1);
+				double heading = -direction * dropAngleC * (i + 1);
 				nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
-				nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
+				nextPose.setRollPitchYawRad(0, 0, heading - direction * M_PI / 2);
 				currPose = c.compose(nextPose);
 				wp.pose = currPose;
 				path.push_back(wp);

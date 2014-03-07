@@ -25,12 +25,21 @@ class ZamboniePath : public MissionPrimitive {
 		ZamboniePath() : primitiveType("Zambonie")  {
 		}
 
+		ZamboniePath( Pose3D &p, double h, int d, double r, double dd, double da, double po, double w, double l ) {
+			position = p;
+			heading = h;
+			direction = d;
+			turnRadius = r;
+			dropDist = dd;
+			dropAngle = da;
+			pathOffset = po;
+			width = w;
+			length = l;
+		}
+
+
 		bool calcPath(void);
 
-
-		void printPose(Pose3D p) {
-			cout << p.getX() << ", " << p.getY() << " < " << p.getYawRad() / M_PI * 180 << endl;
-		}
 };
 
 #endif /* ZAMBONIEPATH_H_ */

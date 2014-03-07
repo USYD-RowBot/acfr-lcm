@@ -23,6 +23,17 @@ class SpiralInwardPath: public MissionPrimitive {
 	public:
 		SpiralInwardPath() {
 		}
+		SpiralInwardPath( Pose3D &p, double h, int d, double r, double dd, double da, double po, double w, double l ) {
+			position = p;
+			heading = h;
+			direction = d;
+			turnRadius = r;
+			dropDist = dd;
+			dropAngle = da;
+			pathOffset = po;
+			width = w;
+			length = l;
+		}
 
 		bool calcPath(void);
 
