@@ -64,27 +64,40 @@ bool ZamboniePath::calcPath(void) {
 	int nWpC = floor(0.5 * M_PI / dropAngle);
 	double dropAngleC = (0.5 * M_PI) / nWpC;
 
-	// Calculate start pose
+	path.clear();
+	// Start pose
 	//	- bottom-left when performing clockwise spirals
 	//	- bottom-right when performing counter-clockwise spirals
 	currPose.setPosition(position.getX(), position.getY(), position.getZ());
 	currPose.setRollPitchYawRad(0, 0, heading);
-	wp.pose = currPose;
-	path.push_back(wp);
+#if 0 // When doing half a circle
+	// calculate the centre of the circle we are turning around
+	nextPose.setIdentity();
+	nextPose.setPosition(turnRadius, -direction * turnRadius, 0);
+	c = currPose.compose(nextPose);
+	c.setRollPitchYawRad(0, 0, heading-M_PI);
+	// waypoints around this circle
+	for( int i = 0; i < nWpC; i++ ) {
+		double heading = -direction * dropAngleC * (i + 1);
+		nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
+		nextPose.setRollPitchYawRad(0, 0, heading - direction * M_PI / 2);
+		wp.pose = c.compose(nextPose);
+		path.push_back(wp);
+	}
+#else // When doing a straight line
+	for( int i = 0; i < turnRadius; i+= dropDist ) {
+		nextPose.setPosition(i, 0, 0);
+		wp.pose = currPose.compose(nextPose);
+		path.push_back(wp);
+	}
+#endif
 
-	// Initial way points
-//	nextPose.setIdentity();
-//	nextPose.setPosition(0, direction * turnRadius, 0);
-//	c = currPose.compose(nextPose);
-//	c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
-//	for( int i = 0; i < nWpC; i++ ) {
-//		double heading = direction * dropAngleC * (i + 1);
-//		nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
-//		nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
-//		currPose = c.compose(nextPose);
-//		wp.pose = currPose;
-//		path.push_back(wp);
-//	}
+	// Now set the current pose to the start of the first straight leg
+	currPose.setPosition(position.getX(), position.getY(), position.getZ());
+	currPose.setRollPitchYawRad(0, 0, heading);
+	nextPose.setIdentity();
+	nextPose.setPosition( turnRadius, 0, 0 );
+	currPose = currPose.compose( nextPose );
 
 	// For every loop
 	double loopNum = 0;
@@ -112,13 +125,13 @@ bool ZamboniePath::calcPath(void) {
 
 			// Leg X-X+1 turn way points
 			nextPose.setIdentity();
-			nextPose.setPosition(0, direction * turnRadius, 0);
+			nextPose.setPosition(0, -direction * turnRadius, 0);
 			c = currPose.compose(nextPose);
 			c.setRollPitchYawRad(0, 0, atan2(currPose.getY() - c.getY(), currPose.getX() - c.getX()));
 			for( int i = 0; i < nWpC; i++ ) {
-				double heading = direction * dropAngleC * (i + 1);
+				double heading = -direction * dropAngleC * (i + 1);
 				nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), 0);
-				nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
+				nextPose.setRollPitchYawRad(0, 0, heading - direction* M_PI / 2);
 				currPose = c.compose(nextPose);
 				wp.pose = currPose;
 				path.push_back(wp);

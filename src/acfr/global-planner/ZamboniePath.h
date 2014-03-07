@@ -24,7 +24,6 @@ class ZamboniePath : public MissionPrimitive {
 	public:
 		ZamboniePath() : primitiveType("Zambonie")  {
 		}
-		~ZamboniePath() {}
 
 		bool calcPath(void);
 
