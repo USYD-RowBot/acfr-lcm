@@ -1,0 +1,12 @@
+package acfrlcm;
+
+struct auv_camera_control_t
+{
+	const int8_t LOG_START = 1;
+	const int8_t LOG_STOP = 2;
+	const int8_t SET_PATH = 3;
+
+	int64_t utime;
+	int32_t command;
+	string path;
+}
