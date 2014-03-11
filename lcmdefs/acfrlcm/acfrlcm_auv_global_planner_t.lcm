@@ -19,6 +19,7 @@ struct auv_global_planner_t
     const int8_t ABORT = 8;
     const int8_t STOP = 9;
     const int8_t SKIP = 10;
+    const int8_t RESET = 11;
     
     int8_t command;
     

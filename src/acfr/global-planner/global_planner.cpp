@@ -69,6 +69,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		gp->globalPlannerMessage = globalPlannerStop;
 		break;
 
+	case acfrlcm::auv_global_planner_t::RESET:
+			// Stop the currently running mission
+			gp->globalPlannerMessage = globalPlannerReset;
+			break;
+
 	case acfrlcm::auv_global_planner_t::SKIP:
 		// Skip the current waypoint
 		gp->skipWaypoint = true;
@@ -208,6 +213,9 @@ int GlobalPlanner::clock()
 		// we will signal the main control layer to go to abort
 		// then go into idle
 		nextState = globalPlannerFsmAbort;
+		if( globalPlannerMessage == globalPlannerReset ) {
+			nextState = globalPlannerFsmIdle;
+		}
 		break;
 
 	case globalPlannerFsmDone:

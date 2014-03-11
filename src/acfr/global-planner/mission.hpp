@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include "MissionPrimitive.hpp"
+#include "CoveragePath.h"
 #include "ZamboniePath.h"
 #include "SpiralInwardPath.h"
 #include "SpiralPath.h"

@@ -79,7 +79,7 @@
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
 						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiralinward")
+						|| tag == "spiralinward" || tag == "coverage")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
@@ -364,7 +364,9 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     
     Glib::ustring primitiveType = node->get_name().lowercase();
     
-    if(primitiveType == "zambonie")
+    if(primitiveType == "coverage")
+        mp = new CoveragePath();
+    else if(primitiveType == "zambonie")
         mp = new ZamboniePath();
     else if(primitiveType == "spiralinward")
         mp = new SpiralInwardPath();

@@ -27,6 +27,7 @@ typedef enum
 
 typedef enum
 {
+	globalPlannerReset = -1,
 	globalPlannerRun,
 	globalPlannerAbort,
 	globalPlannerStop,
