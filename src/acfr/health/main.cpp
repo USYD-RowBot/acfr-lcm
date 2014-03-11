@@ -148,6 +148,33 @@ int HealthMonitor::loadConfig(char *program_name)
 	double tmp_double;
 	sprintf(rootkey, "acfr.%s", program_name);
 
+	sprintf(key, "%s.min_x", rootkey);
+	min_x = botu_param_get_double_or_default(param, key, LONG_MIN);
+	sprintf(key, "%s.max_x", rootkey);
+	max_x = botu_param_get_double_or_default(param, key, LONG_MAX);
+	sprintf(key, "%s.min_y", rootkey);
+	min_y = botu_param_get_double_or_default(param, key, LONG_MIN);
+	sprintf(key, "%s.max_y", rootkey);
+	max_y = botu_param_get_double_or_default(param, key, LONG_MAX);
+	std::cout << "Operation bounding box is: "
+			<< "\tmin x/y=" << min_x << "/" << min_y << std::endl
+			<< "\tmax x/y=" << max_x << "/" << max_y << std::endl;
+	if( fabs(min_x - LONG_MIN) < 1e-3 ||
+			fabs(max_x - LONG_MAX) < 1e-3 ||
+			fabs(min_y - LONG_MIN) < 1e-3 ||
+			fabs(max_y - LONG_MAX) < 1e-3 ) {
+		abort_on_out_of_bound = true;
+		std::cout << "We will abort when out ot bounds!!\n\n\n";
+	}
+	else {
+		abort_on_out_of_bound = false;
+		std::cout << "We will NOT abort when out ot bounds!!\n\n\n";
+	}
+
+	sprintf(key, "%s.max_depth", rootkey);
+	max_depth = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set max depth to: " << max_depth << std::endl;
+
 	sprintf(key, "%s.max_depth", rootkey);
 	max_depth = bot_param_get_double_or_fail(param, key);
 	std::cout << "Set max depth to: " << max_depth << std::endl;
@@ -301,20 +328,27 @@ int HealthMonitor::checkAbortConditions()
 	// the raw sensor measurements but would have to account for tare.
 	if (nav.depth > max_depth)
 	{
-		std::cout << "ABORT: Exceeded max depth" << std::endl;
+		std::cerr << "ABORT: Exceeded max depth" << std::endl;
 		sendAbortMessage("MAX_DEPTH exceeded");
 	}
 	if (fabs(nav.pitch) > max_pitch)
 	{
-		std::cout << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
+		std::cerr << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
 		sendAbortMessage("MAX_PITCH exceeded");
 	}
 	if (nav.altitude > 0.0 && nav.altitude < min_alt)
 	{
-		std::cout << "ABORT: Exceeded min altitude:" << nav.altitude
+		std::cerr << "ABORT: Exceeded min altitude:" << nav.altitude
 				<< std::endl;
 		sendAbortMessage("MIN_ALT exceeded");
 	}
+	if ( abort_on_out_of_bound &&
+			(nav.x < min_x || nav.x > max_x || nav.y < min_y || nav.y > max_y) ) {
+		std::cerr << "ABORT: Exceeded bounding box limit: x/y" <<
+				nav.x << "/" << nav.y << std::endl;
+		sendAbortMessage("BOUNDS exceeded");
+	}
+
 	return 0;
 }
 

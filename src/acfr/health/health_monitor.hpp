@@ -2,6 +2,9 @@
 #include <iostream>
 #include <stdio.h>
 #include <signal.h>
+#include <climits>
+
+#include "perls-common/bot_util.h"
 #include "perls-common/lcm_util.h"
 #include "perls-common/timestamp.h"
 
@@ -45,10 +48,18 @@ public:
     lcm::LCM lcm;
 
 private:
+
+    double min_x;
+    double max_x;
+    double min_y;
+    double max_y;
+    double min_depth; // not used
     double max_depth;
     double min_alt;
+    double max_alt; // not used
     double max_pitch;
 
+    bool abort_on_out_of_bound;
     bool abort_on_no_compass;
     bool abort_on_no_gps;
     bool abort_on_no_ecopuck;

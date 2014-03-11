@@ -9,7 +9,7 @@ int main(int argc, char ** argv)
 
 	MissionPrimitive * mp = NULL;
 
-	mp = new ZamboniePath();
+	mp = new SpiralInwardPath();
 
 	mp->setTurnRadius(7.5);
 	mp->setLength( 35 );
