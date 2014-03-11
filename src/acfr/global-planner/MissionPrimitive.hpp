@@ -36,8 +36,8 @@ protected:
 	double dropAngle;
 
 public:
-	static const int DIRECTION_CW = 1;
-	static const int DIRECTION_CCW = -1;
+	static const int DIRECTION_CW  = -1;
+	static const int DIRECTION_CCW = +1;
 
 	MissionPrimitive() :
 			timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(
