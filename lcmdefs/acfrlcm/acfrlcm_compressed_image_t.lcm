@@ -1,0 +1,9 @@
+package acfrlcm;
+
+struct compressed_image_t
+{
+    int64_t utime;
+    int32_t size;
+    byte is_rgb;
+    byte image[size];
+}
