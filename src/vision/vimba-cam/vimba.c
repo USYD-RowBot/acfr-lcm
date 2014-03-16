@@ -29,6 +29,7 @@
 
 #define BUFFERS 4
 
+// structure used in the linked list of queued frames to be written to disk
 struct _qframe_t
 {
     VmbFrame_t *frame;
@@ -50,7 +51,7 @@ typedef struct {
     uint8_t is_valid;             // have we ever synced?
 } timestamp_sync_private_state_t;
     
-
+// state structure passed to all functions
 typedef struct 
 {
     lcm_t *lcm;  
@@ -70,6 +71,7 @@ typedef struct
 } state_t;
 
 
+// exit handler
 int program_exit;
 void signal_handler(int sig_num) 
 {
@@ -78,6 +80,7 @@ void signal_handler(int sig_num)
         program_exit = 1;
 }
 
+// List the camera features, may be removed in the future and put in a seperate program
 int list_camera_features(state_t *state) 
 {
     VmbFeatureInfo_t *features;
@@ -148,9 +151,7 @@ int list_camera_features(state_t *state)
 }
 
 
-
-            
-
+// Set the camera attributes based on the LCM config file
 int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
 {
     // get the list of valid attributes from the camera
@@ -307,9 +308,9 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
     return ret;
 }
             
-
+// Convert a Vimba frame to a bot_image message
 static int
-vimbaframe_to_botimage(bot_core_image_t *bot, const VmbFrame_t *frame, int64_t utime, double scale)
+vimbaframe_to_botimage(bot_core_image_t *bot, const VmbFrame_t *frame, int64_t utime)
 {
 
     // sane defaults
@@ -331,6 +332,8 @@ vimbaframe_to_botimage(bot_core_image_t *bot, const VmbFrame_t *frame, int64_t u
         bot->row_stride = 3 * bpp * frame->width; // rgb, yuv
     else
         bot->row_stride = bpp * frame->width;
+
+    bot->size = bot->row_stride * bot->height;
 
     // translate VmbFrame_t's Format to bot's pixelformat
     switch (frame->pixelFormat) 
@@ -563,7 +566,7 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
 
 
 
-
+// A thread that handles the writing of the images to disk
 static void *write_thread(void *context)
 {
     state_t *state = (state_t *)context;
@@ -607,9 +610,150 @@ static void *write_thread(void *context)
     }
     return NULL;
 }
-            
+
+
+// If we are going to publish the image over LCM it happens here, this routine can also debayer and scale the image
+// only problem is it is CPU intensive and may not be worth it            
+int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsigned int gain, int64_t frame_utime)
+{   
+    bot_core_image_t image;
+    bot_core_image_metadata_t metadata;
+    
+    // allocate meta data for exposure time and gain
+    image.nmetadata = 2; 
+    image.metadata=malloc(sizeof(bot_core_image_metadata_t)* image.nmetadata);
+
+    char *key_exp = "ExposureValue";
+    metadata.key =malloc(strlen(key_exp));
+    strcpy(metadata.key,key_exp);
+    metadata.n = 4;
+    metadata.value =  (uint8_t *)&exposure;
+    memcpy(&image.metadata[0], &metadata, sizeof(bot_core_image_metadata_t));
+    
+    char *key_gain = "GainValue";
+    metadata.key =realloc(metadata.key, strlen(key_gain));
+    strcpy(metadata.key,key_gain);
+    metadata.n = 4;
+    metadata.value =  (uint8_t *)&gain;
+    memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
+    
+    int error = 0;
+    // are we going to scale the image
+    if((state->image_scale > 1.01) || (state->image_scale < 0.99))
+    {
+        int output_width = (int)((double)frame->width * state->image_scale);
+        int output_height = (int)((double)frame->height * state->image_scale);
         
+        // load the frame into an OpenCV image
+        int cv_depth;
+        if(frame->pixelFormat & VmbPixelOccupy16Bit)
+            cv_depth = IPL_DEPTH_16U;
+        else
+            cv_depth = IPL_DEPTH_8U;
             
+        IplImage *img = cvCreateImageHeader(cvSize(frame->width, frame->height), cv_depth, 1);
+        cvSetData(img, frame->buffer, CV_AUTOSTEP);
+                
+        
+        // if the image is colour convert to RGB
+        int cv_bayer;
+        IplImage *img_conv, *img_resized;
+        if((frame->pixelFormat != VmbPixelFormatMono8) || (frame->pixelFormat != VmbPixelFormatMono12) || (frame->pixelFormat != VmbPixelFormatMono14) || (frame->pixelFormat != VmbPixelFormatMono16))
+        {
+        
+            img_conv = cvCreateImage(cvSize(frame->width, frame->height), cv_depth, 3);
+            
+            switch(frame->pixelFormat)
+            {
+                case VmbPixelFormatBayerGR8:
+                case VmbPixelFormatBayerGR12:
+                case VmbPixelFormatBayerGR16:
+                    cv_bayer = CV_BayerGR2RGB;
+                    break;
+                case VmbPixelFormatBayerRG8:
+                case VmbPixelFormatBayerRG12:
+                case VmbPixelFormatBayerRG16:
+                    cv_bayer = CV_BayerRG2RGB;
+                    break;
+
+                case VmbPixelFormatBayerBG8:
+                case VmbPixelFormatBayerBG12:
+                case VmbPixelFormatBayerBG16:
+                    cv_bayer = CV_BayerBG2RGB;
+                    break;
+                default:
+                    cv_bayer = -1;
+                    break;
+            }
+            
+            
+            if(cv_bayer == -1)
+            {
+                fprintf(stderr, "Invalid pixel format for image scale\n");
+                error = -1;
+            }
+                
+            cvCvtColor(img, img_conv, cv_bayer);
+            
+            if(cv_depth == IPL_DEPTH_16U)
+            {
+                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16;
+                image.row_stride = output_width * 6;
+            }
+            else
+            {
+                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
+                image.row_stride = output_width * 3;
+            }
+            img_resized = cvCreateImage(cvSize(output_width, output_height), cv_depth, 3);
+        }
+        else
+        {
+            img_conv = img;
+            if(cv_depth == IPL_DEPTH_16U)
+            {
+                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16;
+                image.row_stride = output_width * 2;
+            }
+            else
+            {
+                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
+                image.row_stride = output_width;
+            }
+            img_resized = cvCreateImage(cvSize(output_width, output_height), cv_depth, 1);
+        }
+
+        image.width = output_width;
+        image.height = output_height;
+        image.utime = frame_utime;
+
+        // Now we can scale the image
+        cvResize(img_conv, img_resized, CV_INTER_AREA);
+        
+        image.data = (unsigned char *)img_resized->imageData;
+        image.size = img_resized->imageSize;
+
+        if(error == 0)    
+            bot_core_image_t_publish(state->lcm, state->channel, &image);   
+            
+        cvReleaseImage(&img_resized);
+        if(cv_bayer > 0)
+            cvReleaseImage(&img_conv);
+        cvReleaseImageHeader(&img);
+    }
+    else
+    {
+        vimbaframe_to_botimage(&image, frame, frame_utime);
+        bot_core_image_t_publish(state->lcm, state->channel, &image);   
+    }
+        
+    free(metadata.key);
+    
+    return 1;
+}       
+
+
+// Vimba frame callback, called for every frame that is sent from the camera            
 void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_frame)   
 {
     state_t *state = in_frame->context[0];
@@ -650,7 +794,7 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
             stride = 2 * frame->width;
     }
     
-    // shift the 12 bit data to the top of the 16 bit word
+    // shift the 12 bit data to the top of the 16 bit word, I wish this wasnt required as it takes up CPU cycles
     if((frame->pixelFormat & VmbPixelFormatBayerGR12) || (frame->pixelFormat & VmbPixelFormatBayerRG12) || (frame->pixelFormat & VmbPixelFormatBayerBG12) ||
         (frame->pixelFormat & VmbPixelFormatBayerGB12) || (frame->pixelFormat & VmbPixelFormatMono12) ||
         (frame->pixelFormat & VmbPixelFormatBayerGR10) || (frame->pixelFormat & VmbPixelFormatBayerRG10) || (frame->pixelFormat & VmbPixelFormatBayerBG10) ||
@@ -661,6 +805,8 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
             *d = *d << 4;
         }
     
+    if(state->publish)
+        publish_image(state, frame, exposure, gain, frame_utime);
     
     // If we are writing the data to disk put the frame in the queue
     if(state->write_files)
@@ -681,36 +827,7 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
         free(frame);
     }
 
-    // Are we going to publish the image over LCM, this requires a lot of resources
-    // so it you don't need to do it then don't.
-    if(state->publish) 
-    {
-        bot_core_image_t image;
-        vimbaframe_to_botimage(&image, frame, frame_utime, 0);
-        bot_core_image_metadata_t metadata;
-
-        // allocate meta data for exposure time and gain
-        image.nmetadata = 2; 
-        image.metadata=malloc(sizeof(bot_core_image_metadata_t)* image.nmetadata);
-
-        char *key_exp = "ExposureValue";
-        metadata.key =malloc(strlen(key_exp));
-        strcpy(metadata.key,key_exp);
-        metadata.n = 4;
-        metadata.value =  (uint8_t *)&exposure;
-        memcpy(&image.metadata[0], &metadata, sizeof(bot_core_image_metadata_t));
-        
-        char *key_gain = "GainValue";
-        metadata.key =realloc(metadata.key, strlen(key_gain));
-        strcpy(metadata.key,key_gain);
-        metadata.n = 4;
-        metadata.value =  (uint8_t *)&gain;
-        memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
-
-    //    bot_core_image_t_publish(state->lcm, state->channel, &image);   
-            
-        free(metadata.key);
-    }
+    
 }
     
 void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_camera_control_t *cc, void *u)
@@ -765,8 +882,7 @@ int main(int argc, char **argv)
     sem_init(&state.write_sem, 0, 0);
     state.write_files = 0;
     pthread_mutex_init(&state.frames_mutex, 0);   
-    state.publish = 0;
-    state.image_scale = 1.0;
+    state.publish = 1;
     state.tss.is_valid = 0;
     state.tss.max_rate_error = 1.0;
     state.previous_frame_utime = 0;
@@ -805,6 +921,12 @@ int main(int argc, char **argv)
     
     sprintf(key, "%s.channel", root_key);
     state.channel = bot_param_get_str_or_fail(params, key);
+
+    sprintf(key, "%s.publish", root_key);
+    state.publish = bot_param_get_boolean_or_fail(params, key);
+
+    sprintf(key, "%s.scale", root_key);
+    state.image_scale = bot_param_get_double_or_fail(params, key);
 
     // start Vimba
     if(VmbStartup() == VmbErrorInternalFault)
@@ -910,6 +1032,8 @@ int main(int argc, char **argv)
     
     // start the capture
     err = VmbFeatureCommandRun(state.camera, "AcquisitionStart");
+ 
+    cvNamedWindow( "vimba_debug", CV_WINDOW_AUTOSIZE);
  
     // wait here
     while (!program_exit) {

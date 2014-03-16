@@ -17,7 +17,7 @@ if (BUILD_VIMBA)
     )
 
   if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${VIMBA_DIR}/PERLS_BUILT)
-    add_custom_target (prosilica-target
+    add_custom_target (vimba-target
       COMMAND mkdir -p ${VIMBA_DIR}
       COMMAND tar zxvfp  ${VIMBA_SRC} -C ${VIMBA_DIR} --strip 1
       COMMAND sudo mkdir -p /usr/local/include/vimba
@@ -27,7 +27,7 @@ if (BUILD_VIMBA)
       COMMAND sudo cp -f ${VIMBA_DIR}/VimbaC/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.
       COMMAND sudo cp -f ${VIMBA_DIR}/VimbaCPP/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.      
       COMMAND sudo cp -f ${VIMBA_DIR}/AVTImageTransform/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.      
-      COMMAND sudo cp -f ${VIMBA_BIN}/Tools/Viewer/Bin/${VIMBA_BIN}/VimbaViewer /usr/local/bin/      
+      COMMAND sudo cp -f ${VIMBA_DIR}/Tools/Viewer/Bin/${VIMBA_BIN}/VimbaViewer /usr/local/bin/      
       COMMAND sudo ldconfig
       COMMAND touch ${VIMBA_DIR}/PERLS_BUILT
       COMMAND cmake ..
