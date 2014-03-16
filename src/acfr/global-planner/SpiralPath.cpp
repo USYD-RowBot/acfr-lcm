@@ -28,9 +28,11 @@ bool SpiralPath::calcPath(void) {
 	}
 
 	// Positive altitude is downward, Negative altitude is upward
+	double desPitch = 0;
 	if( altitudeChange != 0 ) {
 		double dist = fabs(altitudeChange / sin(pitch));
 		numLoops = dist / (2 * M_PI * turnRadius);
+		desPitch = pitch;
 		cout << "To change the altitude by " << altitudeChange << "m with a pitch angle of " << pitch / M_PI * 180
 				<< "deg \na distance of " << dist << "m has to be travelled. \nThis corresponds to " << numLoops
 				<< " loops with radius " << turnRadius << "m" << endl;
@@ -47,7 +49,7 @@ bool SpiralPath::calcPath(void) {
 	for( int i = 0; i < nWpC; i++ ) {
 		double heading = direction * dropAngle * i;
 		double dist = (dropAngle * i) * M_PI;
-		double z = dist * sign * sin(pitch);
+		double z = dist * sign * sin(desPitch);
 		nextPose.setPosition(turnRadius * cos(heading), turnRadius * sin(heading), z);
 		nextPose.setRollPitchYawRad(0, 0, heading + direction * M_PI / 2);
 		currPose = position.compose(nextPose);

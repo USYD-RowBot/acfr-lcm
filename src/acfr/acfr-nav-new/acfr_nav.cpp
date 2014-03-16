@@ -9,6 +9,7 @@ acfr_nav::acfr_nav()
     state->mode = NAV;
     state->lcm = new lcm::LCM();
     state->altitude = 0;
+    state->bottomLock = false;
 }
 
 acfr_nav::~acfr_nav()

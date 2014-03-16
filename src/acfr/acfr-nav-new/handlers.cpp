@@ -135,7 +135,29 @@ void on_seabird_depth(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 // we are using the PD5 message as the LCM module was already written
 void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rdi_pd5_t *rdi, state_c* state) 
 {		
-	if((rdi->pd4.btv[0] != -32.786) && (rdi->pd4.btv[1] != -32.786) && (rdi->pd4.btv[2] != -32.786)) {
+	const double bad_value = -32.768;
+
+	/*
+	 * Check the status of the bottom tracking
+	 * - If the values are close to bad value or
+	 * - If we have no bottom lock (status != 0)
+	 */
+	bool btv_ok = true;
+	if( (fabs(rdi->pd4.btv[0] - bad_value) < 1e-3) ||
+		(fabs(rdi->pd4.btv[0] - bad_value) < 1e-3) ||
+		(fabs(rdi->pd4.btv[0] - bad_value) < 1e-3) )
+	{
+		btv_ok = false;
+
+	}
+	if( rdi->pd4.btv_status != 0x00) {
+		btv_ok = false;
+	}
+
+	state->bottomLock = btv_ok;
+
+	if( btv_ok )
+	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)rdi->utime/1e6);
 	    rdi_data.alt = rdi->pd4.altitude;
@@ -298,7 +320,7 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
     osc_data.roll = osc->rph[0];
     osc_data.pitch = osc->rph[1];
     osc_data.heading = osc->rph[2];
-    osc_data.depth = osc->rph[3];
+    //osc_data.depth = osc->rph[3];
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
     if(state->mode == NAV)

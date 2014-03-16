@@ -36,19 +36,18 @@ protected:
 	double dropAngle;
 
 public:
-	static const int DIRECTION_CW = -1;
-	static const int DIRECTION_CCW = 1;
+	static const int DIRECTION_CW = 1;
+	static const int DIRECTION_CCW = -1;
 
 	MissionPrimitive() :
 			timeout(0), depthMode(DEPTH_MODE_DEPTH), goalType(GOAL), heading(0), length(
-					0), width(0), turnRadius(5), pitch(0), pathOffset(0), velocity(
+					0), width(0), turnRadius(7.5), pitch(0), pathOffset(0), velocity(
 					1), centerOverlap(0), minWidthLength(0), altitudeChange(0), direction(
 					DIRECTION_CW), numLoops(0), dropDist(1), dropAngle(dropDist/turnRadius) {
 
 	}
 
-	virtual ~MissionPrimitive() {
-	}
+	~MissionPrimitive() {};
 	virtual bool calcPath(void) = 0;
 
 	bool generatePath(double _timeout, depthModeT _depthMode,
@@ -175,6 +174,16 @@ public:
 	bool setDropAngleDeg(double p) {
 		return setDropAngleRad(p / 180. * M_PI);
 	}
+	bool setDropAngleFromDropDist(void) {
+			if( this->dropDist <= 0 ) {
+				return false;
+			}
+			// 2*PI / circumference / dist
+			//this->dropAngle = (2*M_PI)/(2*M_PI*this->circleRad / this->dropDist);
+			this->dropAngle = dropDist / turnRadius;
+			return true;
+		}
+
 	bool setCenterOverlap(double o) {
 		if (o > 0) {
 			this->centerOverlap = o;
@@ -199,6 +208,21 @@ public:
 		numLoops = n;
 	}
 
+	void printPath(void) {
+		cout << "path = [" << endl;
+		it = path.begin();
+		for (; it != path.end(); it++)
+		{
+			printf( "%3.2f, %3.2f, %3.2f %3.2f, %3.2f, %3.2f;\n",
+					(*it).pose.getX(),
+					(*it).pose.getY(),
+					(*it).pose.getZ(),
+					(*it).pose.getRollRad(),
+					(*it).pose.getPitchRad(),
+					(*it).pose.getYawRad());
+		}
+		cout << "];" << endl;
+	}
 };
 
 #endif

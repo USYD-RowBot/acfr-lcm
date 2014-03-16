@@ -2,12 +2,28 @@
 
 
 #include "mission.hpp"
+#include "CoveragePath.h"
 
 int main(int argc, char ** argv)
 {
-    Mission mis;
-    mis.load((string)argv[1]);
-    mis.dumpMatlab((string)argv[2]);
-    
+
+	MissionPrimitive * mp = NULL;
+
+	mp = new CoveragePath();
+
+	mp->setTurnRadius(7.5);
+	mp->setLength( 35 );
+	mp->setWidth( 40 );
+	mp->setDropDist( 5.0 );
+	mp->setDropAngleFromDropDist();
+	mp->setPathOffset( 1.0 );
+	mp->setDirectionCW();
+
+	mp->setPosition( 0, 0, 0 );
+	mp->setHeadingDeg(0);
+
+	mp->calcPath();
+//	mp->printPath();
+
     return 1;
 }

@@ -8,7 +8,7 @@
  
  #include "mission.hpp"
  
- Mission::Mission()
+ Mission::Mission() : dropDistance(-1), dropAngleRad(-1), turnRadius(-1), missionTimeout(-1)
  {
  }
  
@@ -79,7 +79,7 @@
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
 						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiral_inward")
+						|| tag == "spiralinward")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
@@ -366,7 +366,7 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     
     if(primitiveType == "zambonie")
         mp = new ZamboniePath();
-    else if(primitiveType == "spiral_inward")
+    else if(primitiveType == "spiralinward")
         mp = new SpiralInwardPath();
     else if(primitiveType == "spiral")
         mp = new SpiralPath();
@@ -379,9 +379,15 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     else 
         return 0;    
         
-    // set from globals
-    mp->setDropDist(dropDistance);
-    mp->setDropAngleRad(dropAngleRad);     
+    // set from globals if given
+    if(dropDistance>0)
+    	mp->setDropDist(dropDistance);
+    if(dropAngleRad>0)
+    	mp->setDropAngleRad(dropAngleRad);
+    if(turnRadius>0)
+    	mp->setTurnRadius(turnRadius);
+    if(missionTimeout>0)
+    	mp->setTimeout(missionTimeout);
     
     xmlpp::Node::NodeList list = node->get_children();     
     for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter) {
@@ -406,7 +412,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
                     return 0;
                 mp->setLength(l);
             }
-            if(element->get_name().lowercase() == "spacing")
+            if(element->get_name().lowercase() == "spacing" ||
+            		element->get_name().lowercase() == "offset")
             {
                 if(!getSingleValue(element, "m", s))
                     return 0;
@@ -547,7 +554,13 @@ void Mission::dumpMatlab(string filename) {
     fout << "path = [" << endl;
 	list<waypoint>::iterator it;
 	for( it = waypoints.begin(); it != waypoints.end(); it++ ) {
-		fout << (*it).pose.getX() << ", " << (*it).pose.getY() << ", " << (*it).pose.getZ() << "; " << endl;
+		fout << (*it).pose.getX() << ", "
+			 << (*it).pose.getY() << ", "
+			 << (*it).pose.getZ() << ", "
+			 << (*it).pose.getRollRad() << ", "
+			 << (*it).pose.getPitchRad() << ", "
+			 << (*it).pose.getYawRad() << "; "
+			 << endl;
 	}
 	fout << "];" << "\n";
 //	fout << "figure; clf; grid on; axis equal; hold all;" << "\n";
