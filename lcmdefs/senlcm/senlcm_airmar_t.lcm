@@ -1,0 +1,11 @@
+package senlcm;
+
+struct airmar_t
+{
+    int64_t utime;
+    double alt;
+
+}
+
+
+

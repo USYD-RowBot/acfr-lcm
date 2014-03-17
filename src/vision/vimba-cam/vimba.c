@@ -15,7 +15,7 @@
 
 #include <opencv2/core/core_c.h>
 #include <opencv2/imgproc/imgproc_c.h>
-#include <opencv2/highgui/highgui_c.h>
+//#include <opencv2/highgui/highgui_c.h>
 
 #include <bot_param/param_client.h>
 #include "perls-common/lcm_util.h"
@@ -62,12 +62,14 @@ typedef struct
     VmbInt64_t frame_size;
     char *path;
     int write_files;
-    qframe_t *frames;
+    qframe_t *frames_head, *frames_tail;
     pthread_mutex_t frames_mutex;
     sem_t write_sem;
     int publish;
     double image_scale;    
     int64_t previous_frame_utime;
+    int queue_length;
+    int image_count;
 } state_t;
 
 
@@ -496,7 +498,7 @@ int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
     TIFFSetField (image, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
     TIFFSetField (image, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
     
-    // Put some useful information in the TIFF description field
+    // Put some useful information in the TIFF description field    
     char description[64];
     char *frame_buffer = (char *)frame->buffer;
     char *ancillary = &frame_buffer[frame->imageSize + 8];
@@ -578,35 +580,49 @@ static void *write_thread(void *context)
         struct timespec ts;
         clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += 1;
+
+
         if(sem_timedwait(&state->write_sem, &ts) != -1)
         {
-            // we have managed to decrement the semaphore which means there is data to write
-            qframe_t *frame = state->frames;
-            qframe_t *prev = NULL;
-            
             int count = 0;
-            pthread_mutex_lock(&state->frames_mutex);
-            // go to the end of the queue
-            if(frame != NULL)
+            qframe_t *cframe = state->frames_head;
+            while(cframe != state->frames_tail)
             {
-                while(frame->next != NULL)
-                {   
-                    prev = frame;
-                    frame = frame->next;
-                    count++;
+                cframe = cframe->next;
+                count++;
+            }
+            state->queue_length = count;
+            state->image_count++;
+             
+            // we have managed to decrement the semaphore which means there is data to write
+            pthread_mutex_lock(&state->frames_mutex);            
+            qframe_t *frame = state->frames_head;
+            
+            if(frame != NULL && frame->frame != NULL)
+            {
+                // write the head frame to disk
+                qframe_t *next = state->frames_head->next;
+                write_tiff_image(state, frame->frame, frame->utime);
+                state->frames_head = next;
+                
+                // free some memory
+                if(frame->frame->buffer != NULL)
+                    free(frame->frame->buffer);
+                if(frame->frame != NULL)
+                    free(frame->frame);
+                if(frame != NULL)
+                    free(frame);    
+
+                if(frame == state->frames_tail)
+                {
+//                    printf("List is empty\n");
+                    state->frames_tail = NULL;
                 }
-                if(prev != NULL)
-                    prev->next = NULL;
-            }                
-            pthread_mutex_unlock(&state->frames_mutex);
-            
-            // write the frame
-            write_tiff_image(state, frame->frame, frame->utime);
-            
-            // free the memory, set the next pointer
-            free(frame->frame->buffer);
-            free(frame->frame);
+            }    
+
+            pthread_mutex_unlock(&state->frames_mutex);        
         }
+                
     }
     return NULL;
 }
@@ -760,7 +776,11 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
     int64_t utime = timestamp_now();
         
     if(in_frame->receiveStatus != VmbFrameStatusComplete)
+    {
         printf("Frame error %d\n", in_frame->receiveStatus);
+	    VmbCaptureFrameQueue(state->camera, in_frame, frame_done_callback);
+	    return;
+    }
     
     // make a copy of the frame
     VmbFrame_t *frame = malloc(sizeof(VmbFrame_t));
@@ -782,7 +802,9 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
     
     double fps = 1.0 / ((double)(frame_utime / 1e6) - (double)(state->previous_frame_utime / 1e6));
     state->previous_frame_utime = frame_utime;
-    printf("Exp: %u, Gain: %u, fps: %2.2f, utime: %"PRId64"\n", exposure, gain, fps, frame_utime); 
+    double buffer_length = ((double)(state->queue_length * (state->frame_size + sizeof(qframe_t))) / 1024.0) / 1024.0;
+    printf("Exp: %u, Gain: %u, fps: %2.2f, utime: %"PRId64", size %d kB, buffer: %3.2f MB, count: %d\n", 
+        exposure, gain, fps, frame_utime, frame->imageSize/1024, buffer_length, state->image_count); 
     
     // work out the image stride
     int stride;
@@ -815,8 +837,21 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
         qframe_t *qframe = malloc(sizeof(qframe_t));
         qframe->frame = frame;
         qframe->utime = frame_utime;
-        qframe->next = state->frames;
-        state->frames = qframe;
+        qframe->next = NULL;
+       
+        // stick it in the queue
+        if(state->frames_tail == NULL)
+            state->frames_tail = qframe;
+        else
+        {
+            state->frames_tail->next = qframe;
+            state->frames_tail = state->frames_tail->next;
+        }
+        
+        // if there is only one entry in the list then the head is the tail
+        if(state->frames_head == NULL)
+            state->frames_head = state->frames_tail;
+          
         pthread_mutex_unlock(&state->frames_mutex);    
         // increment the semaphone
         sem_post(&state->write_sem);
@@ -838,6 +873,7 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
         case ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START:
             state->write_files = 1;
             printf("Starting log to disk\n");
+            state->image_count = 0;
             break;
             
         case ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_STOP:
@@ -878,7 +914,10 @@ int main(int argc, char **argv)
     memset(state.path, 0, strlen(path) + 1);
     memcpy(state.path, path, strlen(path));
     
-    state.frames = NULL;
+    state.frames_head = NULL;
+    state.frames_tail = NULL;
+    state.queue_length = 0;
+    state.image_count = 0;
     sem_init(&state.write_sem, 0, 0);
     state.write_files = 0;
     pthread_mutex_init(&state.frames_mutex, 0);   
@@ -1032,8 +1071,6 @@ int main(int argc, char **argv)
     
     // start the capture
     err = VmbFeatureCommandRun(state.camera, "AcquisitionStart");
- 
-    cvNamedWindow( "vimba_debug", CV_WINDOW_AUTOSIZE);
  
     // wait here
     while (!program_exit) {

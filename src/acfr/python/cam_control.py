@@ -30,7 +30,7 @@ SET_PATH = 3
 lc = lcm.LCM()
 
 def print_usage():
-	print "Usage: camcommand command [value]"
+	print "Usage: cam_control command [value]"
 	print "		commands : start, stop, path"
 	exit
 

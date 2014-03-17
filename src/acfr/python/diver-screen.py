@@ -14,7 +14,8 @@ import sys
 LCMROOT='/home/auv/git/acfr_lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
-from senlcm import os_power_system_t, os_compass_t
+from senlcm import os_power_system_t, os_compass_t, airmar_t
+from acfrlcm import auv_vis_rawlog_t
 
 # TRY:
 # sudo setfont /usr/share/consolefonts/Lat15-Terminus24x12.psf.gz
@@ -37,50 +38,101 @@ def get_imagecount( threadName, delay):
     #imgdir = subprocess.check_output("ls -trd /media/data/r*/i* | tail -n 1",shell=True).rstrip()
     while True:
         HIDDATA['IMDIR'] = subprocess.check_output("ls -trd /media/data/r*/i* | tail -n 1",shell=True).rstrip()
-        IMGDATA['#IMS'] = subprocess.check_output("ls {} | wc -l".format(HIDDATA['IMDIR']), shell=True).rstrip()
-        IMGDATA['LIMG'] = subprocess.check_output("ls -tr {} | tail -n 1".format(HIDDATA['IMDIR']), shell=True).rstrip()
+#        IMGDATA['#IMS'] = subprocess.check_output("ls {} | wc -l".format(HIDDATA['IMDIR']), shell=True).rstrip()
+        HIDDATA['LIMG'] = subprocess.check_output("ls -tr {} | tail -n 1".format(HIDDATA['IMDIR']), shell=True).rstrip()
+        IMGDATA['DIVE'] = subprocess.check_output("basename `ls -trd /media/data/r* | tail -n 1`",shell=True).rstrip()
         time.sleep(delay)
 
 
-def get_lcmcompassinfo (threadName, delay):
+####################
+# LCM handlers
+####################
+
+# Every time we get a AUV_RAWLOG message we just increment the image counter
+def rawlog_handler(channel, data):
+    global IMGDATA
+    msg = auv_vis_rawlog_t.decode(data)
+    IMGDATA['#IMS'] += 1
+
+# messages from the Oceam server compass
+def compass_handler(channel, data):
     global NAVDATA
-    def lcmcompass_handler(channel, data):
-        msg = os_compass_t.decode(data)
-        rph = [i * 180/math.pi for i in msg.rph] # convert to degrees
-        NAVDATA['ROLL'] = '{:0.1f}'.format(rph[0])
-        NAVDATA['PTCH'] = '{:0.1f}'.format(rph[1])
-        NAVDATA['HDNG'] = '{:0.1f}'.format(rph[2])
-        NAVDATA['DEPT'] = '{:0.3f}'.format(msg.depth)
-    lc = lcm.LCM()
-    subscription = lc.subscribe("OS_COMPASS", lcmcompass_handler)
-    while True:
-        lc.handle()
+    msg = os_compass_t.decode(data)
+    rph = [i * 180/math.pi for i in msg.rph] # convert to degrees
+    NAVDATA['ROLL'] = '{:0.1f}'.format(rph[0])
+    NAVDATA['PTCH'] = '{:0.1f}'.format(rph[1])
+    NAVDATA['HDNG'] = '{:0.1f}'.format(rph[2])
+    NAVDATA['DEPT'] = '{:0.3f}'.format(msg.depth)
 
-
-def get_lcmbattinfo (threadName, delay):
+# messages from the Ocean Server battery controller
+def battery_handler(channel, data):
     global SYSDATA
-    def lcmbatt_handler(channel, data):
-        msg = os_power_system_t.decode(data)
-        charge=str(msg.avg_charge_p)
-        if int(msg.current) > 0 :
-            mins="CHARGING: "+str(msg.minutes_tef)+" mins"
-        elif msg.minutes_tef == -1:
-            mins="FULLY CHARGED"
-        else :
-            mins=str(msg.minutes_tef)+" mins"
-        SYSDATA['BATT'] = "{}%, {}".format(charge, mins)
+    msg = os_power_system_t.decode(data)
+    charge=str(msg.avg_charge_p)
+    if int(msg.current) > 0 :
+        mins="CHARGING: "+str(msg.minutes_tef)+" mins"
+    elif msg.minutes_tef == -1:
+        mins="FULLY CHARGED"
+    else :
+        mins=str(msg.minutes_tef)+" mins"
+    SYSDATA['BATT'] = "{}%, {}".format(charge, mins)
 
+def airmar_handler(channel, data):
+    global NAVDATA
+    msg = airmar_t.decode(data)
+    NAVDATA['ALTI'] = '{:0.1f}'.format(msg.alt)
+
+######################
+
+def lcm_thread(threadName, delay):
     lc = lcm.LCM()
-    subscription = lc.subscribe("BATTERY", lcmbatt_handler)
+    lc.subscribe("OS_COMPASS", compass_handler)
+    lc.subscribe("BATTERY", battery_handler)
+    lc.subscribe("ACFR_AUV_VIS_RAWLOG", rawlog_handler)
+    lc.subscribe("AIRMAR", airmar_handler)
     while True:
-        #DATADICT['BATT']="----"
         lc.handle()
+    
+
+#def get_lcmcompassinfo (threadName, delay):
+#    global NAVDATA
+#    def lcmcompass_handler(channel, data):
+#        msg = os_compass_t.decode(data)
+#        rph = [i * 180/math.pi for i in msg.rph] # convert to degrees
+#        NAVDATA['ROLL'] = '{:0.1f}'.format(rph[0])
+#        NAVDATA['PTCH'] = '{:0.1f}'.format(rph[1])
+#        NAVDATA['HDNG'] = '{:0.1f}'.format(rph[2])
+#        NAVDATA['DEPT'] = '{:0.3f}'.format(msg.depth)
+#    lc = lcm.LCM()
+#    subscription = lc.subscribe("OS_COMPASS", lcmcompass_handler)
+#    while True:
+#        lc.handle()
+
+
+#def get_lcmbattinfo (threadName, delay):
+#    global SYSDATA
+#    def lcmbatt_handler(channel, data):
+#        msg = os_power_system_t.decode(data)
+#        charge=str(msg.avg_charge_p)
+#        if int(msg.current) > 0 :
+#            mins="CHARGING: "+str(msg.minutes_tef)+" mins"
+#        elif msg.minutes_tef == -1:
+#            mins="FULLY CHARGED"
+#        else :
+#            mins=str(msg.minutes_tef)+" mins"
+#        SYSDATA['BATT'] = "{}%, {}".format(charge, mins)
+
+#    lc = lcm.LCM()
+#    subscription = lc.subscribe("BATTERY", lcmbatt_handler)
+#    while True:
+        #DATADICT['BATT']="----"
+#        lc.handle()
         #time.sleep(delay)
 
 def get_sysinfo (threadName, delay):
     global SYSDATA
     #TMPCMD = "sensors coretemp-isa-* | grep Core* | awk -F ' ' '{print $2 $3}' | tr '\n' ' '"
-    HDDCMD = "df -h | grep /dev/sda6 | awk -F ' ' '{print $3\"/\"$4,\"(\"$5\")\"}'"
+    HDDCMD = "df -h | grep /dev/sda6 | awk -F ' ' '{print $3\"/\"$2,\"(\"$5\" used)\"}'"
     while True:
         t1 = int(open('/sys/class/hwmon/hwmon0/device/temp2_input','r').read())/1000
         t2 = int(open('/sys/class/hwmon/hwmon0/device/temp3_input','r').read())/1000
@@ -121,7 +173,8 @@ def update_display(threadName, delay):
             os.system('setterm -foreground white -background red')
             print "****************************\n***** SHUTTING DOWN !! *****\n****************************"
             os.system('bash {}/scripts/stop_mission_diver.sh'.format(LCMROOT))
-            os.system('bash {}/scripts/stop_lcm.sh'.format(LCMROOT))
+            os.system('bash {}/scripts/stop_lcm_diver.sh'.format(LCMROOT))
+            time.sleep(1)
             os.system('sudo /sbin/halt')
             time.sleep(10)
         elif CURENTSTATE == STATES["TRIG"]:
@@ -130,6 +183,7 @@ def update_display(threadName, delay):
                 os.system('setterm -foreground green -background black')
                 print "\n\n    STARTING cameras...\n\n"
                 os.system('bash {}/scripts/start_mission_diver.sh'.format(LCMROOT))
+                IMGDATA['#IMS'] = 0
                 IMGDATA['CAMS'] = True
             else :
                 os.system('setterm -foreground white -background black')
@@ -172,8 +226,9 @@ try:
     thread.start_new_thread(check_reedswitch, ("thread-ctl", 0.05, 1))
     thread.start_new_thread( get_imagecount, ("thread-img", 1) )
     thread.start_new_thread( get_sysinfo, ("thread-sys", 2) )
-    thread.start_new_thread( get_lcmbattinfo, ("thread-bat", 5) )
-    thread.start_new_thread( get_lcmcompassinfo, ('thread-cmp', 5))
+#    thread.start_new_thread( get_lcmbattinfo, ("thread-bat", 5) )
+#    thread.start_new_thread( get_lcmcompassinfo, ('thread-cmp', 5))
+    thread.start_new_thread( lcm_thread, ('thread-lcm', 1))
     thread.start_new_thread( update_display, ("thread-disp", 0.5) )
 except:
     print "Error: unable to start thread"
