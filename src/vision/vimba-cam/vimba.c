@@ -66,7 +66,7 @@ typedef struct
     pthread_mutex_t frames_mutex;
     sem_t write_sem;
     int publish;
-    double image_scale;    
+    int image_scale;    
     int64_t previous_frame_utime;
     int queue_length;
     int image_count;
@@ -309,112 +309,84 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
     }
     return ret;
 }
-            
-// Convert a Vimba frame to a bot_image message
-static int
-vimbaframe_to_botimage(bot_core_image_t *bot, const VmbFrame_t *frame, int64_t utime)
+
+int vimba_to_bot_pixel_format(VmbPixelFormat_t pf)
 {
-
-    // sane defaults
-    memset (bot, 0, sizeof (*bot));
-    bot->utime = utime;
-    bot->width = frame->width;
-    bot->height = frame->height;
-    bot->size = 0;
-    bot->data = NULL;
-    bot->nmetadata = 0;
-
-    int bpp;
-    if(frame->pixelFormat & VmbPixelOccupy16Bit)
-        bpp = 2;
-    else
-        bpp = 1;
-    
-    if(frame->pixelFormat & VmbPixelColor)
-        bot->row_stride = 3 * bpp * frame->width; // rgb, yuv
-    else
-        bot->row_stride = bpp * frame->width;
-
-    bot->size = bot->row_stride * bot->height;
-
-    // translate VmbFrame_t's Format to bot's pixelformat
-    switch (frame->pixelFormat) 
+    int bot_pf;
+    switch (pf) 
     {
         // mono
         case VmbPixelFormatMono8:   
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
             break;
         case VmbPixelFormatMono16:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16;
             break;
 
         // bayer 8 bit
         case VmbPixelFormatBayerRG8: 
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB;
             break;
         case VmbPixelFormatBayerGB8: 
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG;
             break;
         case VmbPixelFormatBayerGR8: 
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG;
             break;
         case VmbPixelFormatBayerBG8: 
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR;
             break;
 
         // bayer 12 bit (unpacked) or 16 bit
         case VmbPixelFormatBayerRG12:
         case VmbPixelFormatBayerRG16:  
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_RGGB;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_RGGB;
             break;
         case VmbPixelFormatBayerGB12:
         case VmbPixelFormatBayerGB16:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GBRG;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GBRG;
             break;
         case VmbPixelFormatBayerGR12:
         case VmbPixelFormatBayerGR16:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GRBG;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GRBG;
             break;
         case VmbPixelFormatBayerBG12:
         case VmbPixelFormatBayerBG16:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_BGGR;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_BGGR;
             break;
 
             // color
         case VmbPixelFormatRgb8:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
             break;
         case VmbPixelFormatRgb16:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16;
             break;
         case VmbPixelFormatYuv411:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_IYU1;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_IYU1;
             break;
         case VmbPixelFormatYuv422:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_UYVY;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_UYVY;
             break;
         case VmbPixelFormatYuv444:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_IYU2;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_IYU2;
             break;
         case VmbPixelFormatBgr8:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGR;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGR;
             break;
         case VmbPixelFormatRgba8:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGBA;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGBA;
             break;
         case VmbPixelFormatBgra8:
-            bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGRA;
+            bot_pf = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGRA;
             break;
         default:
             fprintf(stderr, "unrecognized pixelformat\n");
             return -1;        
     }
-
-        bot->data = frame->buffer;
-
-    return 0;
+    return bot_pf;
 }
-
+            
 
 // Write the image to disk
 int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
@@ -638,6 +610,8 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
     // allocate meta data for exposure time and gain
     image.nmetadata = 2; 
     image.metadata=malloc(sizeof(bot_core_image_metadata_t)* image.nmetadata);
+    image.utime = frame_utime;
+    image.pixelformat = vimba_to_bot_pixel_format(frame->pixelFormat);
 
     char *key_exp = "ExposureValue";
     metadata.key =malloc(strlen(key_exp));
@@ -653,116 +627,64 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
     metadata.value =  (uint8_t *)&gain;
     memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
     
-    int error = 0;
-    // are we going to scale the image
-    if((state->image_scale > 1.01) || (state->image_scale < 0.99))
+    int bpp;    // bytes per pixel
+    if(frame->pixelFormat & VmbPixelOccupy16Bit)
+        bpp = 2;
+    else
+        bpp = 1;
+    
+    // fast image scale method, bayer images need to be scaled to 1/16, mono can be 1/4 or 1/16
+    if(state->image_scale != 1)
     {
-        int output_width = (int)((double)frame->width * state->image_scale);
-        int output_height = (int)((double)frame->height * state->image_scale);
-        
-        // load the frame into an OpenCV image
-        int cv_depth;
-        if(frame->pixelFormat & VmbPixelOccupy16Bit)
-            cv_depth = IPL_DEPTH_16U;
-        else
-            cv_depth = IPL_DEPTH_8U;
-            
-        IplImage *img = cvCreateImageHeader(cvSize(frame->width, frame->height), cv_depth, 1);
-        cvSetData(img, frame->buffer, CV_AUTOSTEP);
-                
-        
-        // if the image is colour convert to RGB
-        int cv_bayer;
-        IplImage *img_conv, *img_resized;
+        // allocate some memory to put the image in
+        int scale;
+        int step;
         if((frame->pixelFormat != VmbPixelFormatMono8) || (frame->pixelFormat != VmbPixelFormatMono12) || (frame->pixelFormat != VmbPixelFormatMono14) || (frame->pixelFormat != VmbPixelFormatMono16))
         {
-        
-            img_conv = cvCreateImage(cvSize(frame->width, frame->height), cv_depth, 3);
-            
-            switch(frame->pixelFormat)
-            {
-                case VmbPixelFormatBayerGR8:
-                case VmbPixelFormatBayerGR12:
-                case VmbPixelFormatBayerGR16:
-                    cv_bayer = CV_BayerGR2RGB;
-                    break;
-                case VmbPixelFormatBayerRG8:
-                case VmbPixelFormatBayerRG12:
-                case VmbPixelFormatBayerRG16:
-                    cv_bayer = CV_BayerRG2RGB;
-                    break;
-
-                case VmbPixelFormatBayerBG8:
-                case VmbPixelFormatBayerBG12:
-                case VmbPixelFormatBayerBG16:
-                    cv_bayer = CV_BayerBG2RGB;
-                    break;
-                default:
-                    cv_bayer = -1;
-                    break;
-            }
-            
-            
-            if(cv_bayer == -1)
-            {
-                fprintf(stderr, "Invalid pixel format for image scale\n");
-                error = -1;
-            }
-                
-            cvCvtColor(img, img_conv, cv_bayer);
-            
-            if(cv_depth == IPL_DEPTH_16U)
-            {
-                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16;
-                image.row_stride = output_width * 6;
-            }
+            scale = state->image_scale;
+            if(scale == 4)
+                step = 2;
             else
-            {
-                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
-                image.row_stride = output_width * 3;
-            }
-            img_resized = cvCreateImage(cvSize(output_width, output_height), cv_depth, 3);
+                step = 4;
         }
         else
         {
-            img_conv = img;
-            if(cv_depth == IPL_DEPTH_16U)
-            {
-                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16;
-                image.row_stride = output_width * 2;
-            }
-            else
-            {
-                image.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
-                image.row_stride = output_width;
-            }
-            img_resized = cvCreateImage(cvSize(output_width, output_height), cv_depth, 1);
+            scale = 16;
+            step = 4;
         }
-
-        image.width = output_width;
-        image.height = output_height;
-        image.utime = frame_utime;
-
-        // Now we can scale the image
-        cvResize(img_conv, img_resized, CV_INTER_AREA);
         
-        image.data = (unsigned char *)img_resized->imageData;
-        image.size = img_resized->imageSize;
-
-        if(error == 0)    
-            bot_core_image_t_publish(state->lcm, state->channel, &image);   
-            
-        cvReleaseImage(&img_resized);
-        if(cv_bayer > 0)
-            cvReleaseImage(&img_conv);
-        cvReleaseImageHeader(&img);
+        unsigned char *img_resized = malloc(frame->width * frame->height * bpp / scale);
+        unsigned short *img_resized_16 = (unsigned short *)img_resized;
+        
+        // do the fast loop rescale
+        int count = 0;
+        unsigned char *frame_buffer = (unsigned char *)frame->buffer;
+        for(int y=0; y<frame->height; y+=step)
+            for(int x=0; x<frame->width; x+=step)
+                if(bpp == 2)
+                    img_resized_16[count++] = *(short *)&frame_buffer[x + y * frame->width];
+                else
+                    img_resized[count++] = frame_buffer[x + y * frame->width];
+        
+        // done, no publish the image            
+        image.data = img_resized;
+        image.size = frame->width * frame->height * bpp / scale;
+        image.width = frame->width / step;
+        image.height = frame->height / step;
+        image.row_stride = image.width * bpp;
+        
+        
+        bot_core_image_t_publish(state->lcm, state->channel, &image);   
+        free(img_resized);
     }
     else
     {
-        vimbaframe_to_botimage(&image, frame, frame_utime);
+        image.width = frame->width;
+        image.height = frame->height;
+        image.row_stride = image.width * bpp;
         bot_core_image_t_publish(state->lcm, state->channel, &image);   
-    }
-        
+    }    
+    
     free(metadata.key);
     
     return 1;
@@ -965,7 +887,12 @@ int main(int argc, char **argv)
     state.publish = bot_param_get_boolean_or_fail(params, key);
 
     sprintf(key, "%s.scale", root_key);
-    state.image_scale = bot_param_get_double_or_fail(params, key);
+    state.image_scale = bot_param_get_int_or_fail(params, key);
+    if((state.image_scale != 1) && (state.image_scale != 4) && (state.image_scale != 16)) 
+    {
+        fprintf(stderr, "scale must be 1, 4 or 16\n");
+        return 0;
+    }
 
     // start Vimba
     if(VmbStartup() == VmbErrorInternalFault)
