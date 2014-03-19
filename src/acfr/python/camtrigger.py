@@ -22,7 +22,7 @@ import sys
 #import acfrlcm
 #from senlcm.raw_t import raw_t
 #from senlcm.raw_ascii_t import raw_ascii_t
-sys.path.append('/home/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+sys.path.append('/home/auv/git/acfr_lcm/build/lib/python2.6/dist-packages/perls/lcmtypes')
 from acfrlcm.auv_camera_trigger_t import auv_camera_trigger_t
 
 lc = lcm.LCM()

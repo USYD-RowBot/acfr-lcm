@@ -106,10 +106,11 @@ int tcm_form_message(char *in, int data_len, char *out)
 }
     
 
+
 int program_tcm(generic_sensor_driver_t *gsd)
 {
-    char data[32];
-    char out[32];
+    char data[128];
+    char out[128];
     int len;
     
     // set the return types
@@ -138,12 +139,31 @@ int program_tcm(generic_sensor_driver_t *gsd)
     len = tcm_form_message(data, 11, out);    
     gsd_write(gsd, out, len);
 
+    // set the filter mode
+    double c4[4] = {4.6708657655334e-2, 4.5329134234467e-1, 4.5329134234467e-1, 4.6708657655334e-2};
+    double c8[8] = {01.9875512449729e-2, 06.4500864832660e-2, 01.6637325898141e-1, 02.4925036373620e-1, 
+                02.4925036373620e-1, 01.6637325898141e-1, 06.4500864832660e-2, 01.9875512449729e-2};
+    char filter_length = 8;
+    memset(data, 0, sizeof(data));
+    data[0] = 12; //kSetFIRFilters;
+    data[1] = 3;
+    data[2] = 1;
+    data[3] = filter_length;
+    if( filter_length == 4 ) {
+        memcpy(&data[4], c4, sizeof(double)*filter_length);
+    }
+    else {
+        memcpy(&data[4], c8, sizeof(double)*filter_length);
+    }
+    len = tcm_form_message(data, sizeof(double)*filter_length + 4, out);
+    gsd_write(gsd, out, len);
+
+
     // start
     memset(data, 0, sizeof(data));
     data[0] = kStartIntervalMode;
     len = tcm_form_message(data, 1, out);    
     gsd_write(gsd, out, len);
-
 
     return 1;
 }

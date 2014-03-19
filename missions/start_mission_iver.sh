@@ -26,5 +26,7 @@ cp /home/auv/git/acfr_lcm/config/slam_iver.cfg $LOGDIR
 cp /tmp/mission.cfg $LOGDIR
 
 
-$LCMBINDIR/acfr-cam-logger -c "PROSILICA_..16" -o $IMAGE_LOGDIR > /dev/null 2> /dev/null &
+#$LCMBINDIR/acfr-cam-logger -c "PROSILICA_..16" -o $IMAGE_LOGDIR > /dev/null 2> /dev/null &
+/home/auv/git/acfr_lcm/src/acfr/python/cam_control.py path $IMAGE_LOGDIR
+/home/auv/git/acfr_lcm/src/acfr/python/cam_control.py start
 lcm-logger -v -c "PROSILICA_..16" $LOGDIR/$MISSION_NAME.lcm > /dev/null 2> /dev/null &

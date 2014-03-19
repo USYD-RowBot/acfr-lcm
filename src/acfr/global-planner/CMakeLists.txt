@@ -29,3 +29,7 @@ perls_add_executable (GlobalPlannerTest
 perls_target_link_libraries (GlobalPlannerTest 
 	GlobalPlanner
 )
+
+install(TARGETS GlobalPlanner
+     LIBRARY DESTINATION lib
+)
