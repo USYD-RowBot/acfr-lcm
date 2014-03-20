@@ -5,7 +5,7 @@
         This is a test mission
     </desc>
     <global>
-        <turn_radius m='5' />
+        <turn_radius m='7.5' />
         <drop_distance m="4" />
         <drop_angle rad="0.7" />
         <mission_timeout t = "1"/>
@@ -15,7 +15,7 @@
         
     <primitive>
         <goto>
-            <position x="585" y="-1375" z="0.5"/>
+            <position x="585" y="-1375" z="1.0"/>
             <heading deg="135"/>
             <timeout t="300" />
             <velocity x="1.0" />
@@ -25,7 +25,7 @@
     </primitive>
     <primitive>
         <zambonie>
-            <position x="585" y="-1375" z="0.5"/>
+            <position x="585" y="-1375" z="1.0"/>
             <heading deg="135" />
             <spacing m="1" />
             <length m="50" />
