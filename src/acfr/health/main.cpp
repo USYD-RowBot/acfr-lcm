@@ -21,6 +21,7 @@
 #define NAV_BIT 	0b000010000000 //0x0080
 #define ECOPUCK_BIT 0b000100000000 //0x0100
 
+
 // Handlers
 
 void handle_tcm(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
@@ -156,13 +157,12 @@ int HealthMonitor::loadConfig(char *program_name)
 	min_y = botu_param_get_double_or_default(param, key, LONG_MIN);
 	sprintf(key, "%s.max_y", rootkey);
 	max_y = botu_param_get_double_or_default(param, key, LONG_MAX);
-	std::cout << "Operation bounding box is: "
-			<< "\tmin x/y=" << min_x << "/" << min_y << std::endl
-			<< "\tmax x/y=" << max_x << "/" << max_y << std::endl;
-	if( fabs(min_x - LONG_MIN) < 1e-3 ||
-			fabs(max_x - LONG_MAX) < 1e-3 ||
-			fabs(min_y - LONG_MIN) < 1e-3 ||
-			fabs(max_y - LONG_MAX) < 1e-3 ) {
+	std::cout << "Operation bounding box is: \n";
+	print_bounding_box();
+	if( fabs(min_x - LONG_MIN) > 1e-3 ||
+			fabs(max_x - LONG_MAX) > 1e-3 ||
+			fabs(min_y - LONG_MIN) > 1e-3 ||
+			fabs(max_y - LONG_MAX) > 1e-3 ) {
 		abort_on_out_of_bound = true;
 		std::cout << "We will abort when out ot bounds!!\n\n\n";
 	}
@@ -344,8 +344,9 @@ int HealthMonitor::checkAbortConditions()
 	}
 	if ( abort_on_out_of_bound &&
 			(nav.x < min_x || nav.x > max_x || nav.y < min_y || nav.y > max_y) ) {
-		std::cerr << "ABORT: Exceeded bounding box limit: x/y" <<
+		std::cerr << "ABORT: Exceeded bounding box limit: x/y = " <<
 				nav.x << "/" << nav.y << std::endl;
+		print_bounding_box();
 		sendAbortMessage("BOUNDS exceeded");
 	}
 

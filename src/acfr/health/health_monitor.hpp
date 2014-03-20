@@ -33,7 +33,11 @@ public:
     int checkStatus(int64_t hbTime);
     int sendAbortMessage(const char *);
     int checkAbortConditions();
-
+	
+    void print_bounding_box(void) {
+	std::cout << "min x/y = " << min_x << " / " << min_y << std::endl
+		<< "max x/y = " << max_x << " / " << max_y << std::endl;
+    }
     senlcm::tcm_t compass;
     senlcm::gpsd3_t gps;
     senlcm::ecopuck_t ecopuck;
