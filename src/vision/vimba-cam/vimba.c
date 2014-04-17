@@ -480,17 +480,21 @@ int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
     snprintf(description, sizeof(description), "T:%"PRId64",W:%u,H:%u,E:%u,G:%u", utime, frame->width, frame->height, exposure, gain);
     TIFFSetField (image, TIFFTAG_IMAGEDESCRIPTION, description);
     
+    int failed = 0;
     for(int i=0; i<frame->height; i++) 
-        TIFFWriteScanline (image, &frame_buffer[i* stride], i, 0);
+        if(TIFFWriteScanline (image, &frame_buffer[i* stride], i, 0) == -1)
+            failed = 1;
     
-    
-    // Publish the ACFR raw log message    
-    acfrlcm_auv_vis_rawlog_t vis_raw;
-    vis_raw.utime = utime;
-    vis_raw.exp_time = exposure;
-    vis_raw.image_name = filename;
-    acfrlcm_auv_vis_rawlog_t_publish(state->lcm, "ACFR_AUV_VIS_RAWLOG", &vis_raw);
-    
+    if(!failed)
+    {
+        // Publish the ACFR raw log message    
+        acfrlcm_auv_vis_rawlog_t vis_raw;
+        vis_raw.utime = utime;
+        vis_raw.exp_time = exposure;
+        vis_raw.image_name = filename;
+        acfrlcm_auv_vis_rawlog_t_publish(state->lcm, "ACFR_AUV_VIS_RAWLOG", &vis_raw);
+    }
+        
     TIFFClose(image);
     
     return 1;
