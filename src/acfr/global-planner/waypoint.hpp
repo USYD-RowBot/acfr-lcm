@@ -20,6 +20,14 @@ typedef enum {
 	GOAL, COMMAND
 } missionGoalTypeT;
 
+class WaypointSimple {
+    public:
+        WaypointSimple(double _x, double _y, double _z) { x = _x; y = _y, z = _z;};
+        double x;
+        double y;
+        double z;
+};
+
 // goal class, inherites waypoint and adds a time out, velocity and some control tags
 class waypoint {
 	public:
