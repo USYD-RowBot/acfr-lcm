@@ -8,12 +8,21 @@
 #include "perls-lcmtypes/senlcm_evologics_modem_t.h"
 #include "perls-lcmtypes/senlcm_evologics_config_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_status_t.h"
+#include "perls-lcmtypes/senlcm_novatel_t.h"
+#include "perls-lcmtypes/senlcm_usbl_fix_t.h"
+
 
 typedef enum
 {
     LCM_AUV_STATUS = 1,
     LCM_AUV_IMAGE
 } lcm_mesg_t;
+ 
+typedef enum 
+{
+    NOVATEL,
+    INTERNAL
+} attitude_source_t;  
  
 enum {io_socket, io_serial};   
 
@@ -28,6 +37,9 @@ typedef struct
     char term;
     int ping_sem[8];
     int channel_ready;
+    
+    attitude_source_t attitude_source;
+    senlcm_novatel_t *novatel;
 } state_t;
 
 int send_ping(int target, state_t *state);

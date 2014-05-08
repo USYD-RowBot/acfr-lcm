@@ -55,7 +55,6 @@ int wait_response(state_t *state, char *data, int size)
     }
     else if(ret != 0)
     {
-        char buf[32];
         // get the data and check for an OK
         ret = readline(state->fd, data, size);
     }
@@ -90,6 +89,9 @@ int parse_usbllong(char *data, state_t *state, int64_t timestamp)
     ud.accuracy = atof(tokens[18]);
     
     senlcm_evologics_usbl_t_publish(state->lcm, "EVOLOGICS_USBL", &ud);
+    
+    // TODO perform required transforms on position and publish the usbl_fix_t message
+    // this can either be done in a function call from here or by subscribing to the EVOLOGICS_USBL message
     
     return 1;
 }
@@ -169,10 +171,11 @@ int parse_evologics_message(char *data, int size, state_t *state, int64_t timest
 
 int send_evologics_data(char *data, int size, int target, state_t *state)
 {
+    char buf[16];
     // first if the target has changed we need to send a modem command to change the destination target
     if(target != state->current_target)
     {
-        char buf[16];
+        
         sprintf(buf, "+++ATZ4\n");
         if(write(state->fd, buf, strlen(buf)) == -1)
             fprintf(stderr, "Faild to write to modem\n");
@@ -207,11 +210,11 @@ int send_evologics_data(char *data, int size, int target, state_t *state)
     }
     
     // Check to see that the data went through
-    do 
-    {
-        send_evologics_command("+++AT?ZE\n", buf, 64, state);
+ //   do 
+ //   {
+ //       send_evologics_command("+++AT?ZE\n", buf, 64, state);
         
-    } 
+ //   } 
     
     return 1; 
 }    
