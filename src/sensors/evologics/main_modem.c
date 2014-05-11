@@ -31,7 +31,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 void status_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_status_t *as, void *u)
 {
     printf("assembling a status message\n");
-    state_t *state = (state_t *)u;
+    el_state_t *state = (el_state_t *)u;
     char *channel = {"STATUS"};
     int data_size = sizeof(acfrlcm_auv_status_t) + strlen(channel) + 2;
     char *data = malloc(data_size);
@@ -56,8 +56,7 @@ signal_handler(int sigNum)
 
 int main (int argc, char *argv[]) {
 		
-	state_t state;
-	state.term = '\n';
+	el_state_t state;
     
     // install the signal handler
 	program_exit = 0;

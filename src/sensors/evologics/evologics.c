@@ -8,6 +8,7 @@
 
 #include "evologics.h"
 
+
 #define MAX_OUT_SIZE 4096
 
 int readline(int fd, char *buf, int max_len)
@@ -35,7 +36,7 @@ int chop_string(char *data, char **tokens)
     return i;        
 }
 
-int wait_response(state_t *state, char *data, int size)
+int wait_response(el_state_t *state, char *data, int size)
 {
     int ret;
     
@@ -60,16 +61,20 @@ int wait_response(state_t *state, char *data, int size)
     }
     return ret;
 }
+
+
+
+
         
 // Parse a USBLONG message and publish the LCM message
-int parse_usbllong(char *data, state_t *state, int64_t timestamp)
+parse_message_t parse_usbllong(char *data,  el_state_t *state, int64_t timestamp)
 {
     char *tokens[19];
     int ret;
     ret = chop_string(data, tokens);
     
     if(ret != 19)
-        return 0;
+        return  PARSE_ERROR;
         
     senlcm_evologics_usbl_t ud;
     ud.utime = timestamp;
@@ -89,15 +94,15 @@ int parse_usbllong(char *data, state_t *state, int64_t timestamp)
     ud.accuracy = atof(tokens[18]);
     
     senlcm_evologics_usbl_t_publish(state->lcm, "EVOLOGICS_USBL", &ud);
-    
-    // TODO perform required transforms on position and publish the usbl_fix_t message
-    // this can either be done in a function call from here or by subscribing to the EVOLOGICS_USBL message
-    
-    return 1;
+    if(state->usbl != NULL)
+        memcpy(state->usbl, &ud, sizeof(senlcm_evologics_usbl_t));
+    return PARSE_USBL;
 }
+    
+
 
 // Parse an instant message, not really going to do anything with them at this point
-int parse_im(char *data, state_t *state)
+parse_message_t parse_im(char *data,  el_state_t *state)
 {
     char *tokens[12];
     int ret;
@@ -105,24 +110,25 @@ int parse_im(char *data, state_t *state)
     if(ret > 1)
         printf("Got IM: %s\n", data);
 //    if(ret != 12)
-        return 0;    
+        return PARSE_IM;    
 }    
     
     
 
 // Parse a message from an Evologics modem or usbl
-int parse_evologics_message(char *data, int size, state_t *state, int64_t timestamp)
+parse_message_t parse_evologics_message(char *data, int size, el_state_t *state, int64_t timestamp)
 {
     // Since we are in data mode we need to see if it starts with a +++AT
     // which indicates if it is control message or data
+    parse_message_t ret;
     printf("%s", data);
     if(strstr((const char *)data, "+++AT") != NULL)
     {
         // parse the message type
         if(strstr((const char *)data, "USBLLONG") != NULL)
-            parse_usbllong(data, state, timestamp);
+            ret = parse_usbllong(data, state, timestamp);
         else if(strstr((const char *)data, "RECVIM") != NULL)
-            parse_im(data, state);
+            ret = parse_im(data, state);
         else if(strstr((const char *)data, "FAILEDIM") != NULL)
             state->channel_ready = 1;
 //            inc_ping_sem(data, state);
@@ -149,27 +155,31 @@ int parse_evologics_message(char *data, int size, state_t *state, int64_t timest
         if(out_size < 1)
         {
             fprintf(stderr, "Failed to decode message\n");
-            return 0;
+            ret =  PARSE_ERROR;
         }
-        
-        // reconstruct the message based on its type and publish it
-        if(out[0] == LCM_AUV_STATUS)
+        else
         {
-            acfrlcm_auv_status_t s;
-            char channel[16];
-            memset(channel, 0, 16);
-            strncpy(channel, &out[2], out[1]);
-            memcpy(&s, &out[out[1] + 2], sizeof(acfrlcm_auv_status_t));
-            acfrlcm_auv_status_t_publish(state->lcm, channel, &s);
-        }
-        
+            // reconstruct the message based on its type and publish it
+            if(out[0] == LCM_AUV_STATUS)
+            {
+                acfrlcm_auv_status_t s;
+                char channel[16];
+                memset(channel, 0, 16);
+                strncpy(channel, &out[2], out[1]);
+                memcpy(&s, &out[out[1] + 2], sizeof(acfrlcm_auv_status_t));
+                acfrlcm_auv_status_t_publish(state->lcm, channel, &s);
+                ret = PARSE_DATA;
+            }
+            else
+                ret = PARSE_NONE;
+        }    
         free(out);
     }
-    return 1;
+    return ret;
 }
 
 
-int send_evologics_data(char *data, int size, int target, state_t *state)
+int send_evologics_data(char *data, int size, int target, el_state_t *state)
 {
     char buf[16];
     // first if the target has changed we need to send a modem command to change the destination target
@@ -219,7 +229,7 @@ int send_evologics_data(char *data, int size, int target, state_t *state)
     return 1; 
 }    
  
-int send_evologics_command(char *data, char *ret_str, int size, state_t *state)
+int send_evologics_command(char *data, char *ret_str, int size,  el_state_t *state)
 {
     if(write(state->fd, data, strlen(data)) == -1)
     {
@@ -240,24 +250,24 @@ int send_evologics_command(char *data, char *ret_str, int size, state_t *state)
 
  
 // send a ping, used for tracking when we don't need to send any data    
-int send_ping(int target, state_t *state)
+int send_ping(int target,  el_state_t *state)
 {   
     char msg[128];
     char ret_msg[256];
     
     memset(msg, 0, 32);
-    sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d\n", state->targets[target], state->targets[target]);
+    sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d\n", target, target);
     printf("Sending message %s", msg);
     send_evologics_command(msg, ret_msg, 256, state);
     
 
     // check to see that the ping went through ok
     if(strstr(ret_msg, "OK") != NULL)
-        fprintf(stderr, "ping success to target %d\n", state->targets[target]);
+        fprintf(stderr, "ping success to target %d\n", target);
     else if(strstr(ret_msg, "CANCEL") != NULL)
         state->ping_sem[target] = 1;
     else    
-        fprintf(stderr, "ping fail to target %d\n", state->targets[target]);
+        fprintf(stderr, "ping fail to target %d\n", target);
         
     return 1;
 }
