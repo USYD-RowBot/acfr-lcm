@@ -17,11 +17,16 @@
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
+#include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
 
 using namespace std;
 using namespace senlcm;
+using namespace perllcm;
+using namespace acfrlcm;
 
 #define DTOR M_PI/180.0
+#define RTOD 180.0/M_PI
 #define MAX_BUF_LEN 1024
 
 // Attitude source
@@ -48,10 +53,13 @@ class Evologics_Usbl
         int init();
         int process();
         int calc_position();
+        int ping_targets();
+        int task_command(const auv_global_planner_t *task);
         
         // data holders
         gpsd3_t gpsd;
         novatel_t novatel;
+        
         
         
     private:
@@ -77,5 +85,7 @@ class Evologics_Usbl
         // Proj4 lat lon projection
         projPJ pj_latlong;
         
+        int ping_period;
+        int ping_counter;        
 };
          

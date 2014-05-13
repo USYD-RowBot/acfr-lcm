@@ -35,4 +35,5 @@ struct auv_status_t
     float latitude;
     float longitude;
     int32_t img_count;
+    int8_t charge;
 }

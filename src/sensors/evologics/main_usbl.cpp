@@ -32,6 +32,17 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	}
 }
 
+void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *hb, Evologics_Usbl* ev) 
+{
+    ev->ping_targets(); 
+}
+
+void on_task_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_global_planner_t *task, Evologics_Usbl* ev) 
+{
+    ev->task_command(task);
+}
+	
+
 Evologics_Usbl::Evologics_Usbl()
 {
     lcm = new lcm::LCM();
@@ -39,8 +50,35 @@ Evologics_Usbl::Evologics_Usbl()
     state.usbl = (senlcm_evologics_usbl_t *)malloc(sizeof(senlcm_evologics_usbl_t));
 }
 
+int Evologics_Usbl::ping_targets()
+{
+    if(ping_counter == ping_period)
+    {
+        ping_counter = 0;
+        for(int i=0; i<state.num_targets; i++)
+            send_ping(i, &state);
+    }
+    else
+        ping_counter++;
+}
+
+int Evologics_Usbl::task_command(const auv_global_planner_t *task)
+{
+    int d_size = task->getEncodedSize() + 1;
+    char *d = (char *)malloc(d_size);
+    d[0] = LCM_TASK_COMMAND;
+    task->encode(&d[1], 0, task->getEncodedSize());
+    
+    send_evologics_data(d, d_size, 2, &state);
+    free(d);
+
+    return 1;
+}
+
+
 int Evologics_Usbl::calc_position()
 {
+    //cout << "Calc position\n";
     // We have everything we need to work out where the target is
     SMALL::Pose3D target;
     target.setPosition(state.usbl->x, state.usbl->y, state.usbl->z);
@@ -64,6 +102,8 @@ int Evologics_Usbl::calc_position()
     else if(gps_source == GPS_GPSD)
         sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", gpsd.fix.longitude, gpsd.fix.latitude);
     
+     sprintf(proj_str, "+proj=tmerc +lon_0=150.0 +lat_0=-33.5 +units=m");
+    
     projPJ pj_tmerc;
     if (!(pj_tmerc = pj_init_plus(proj_str)))
     {
@@ -78,12 +118,20 @@ int Evologics_Usbl::calc_position()
     
     usbl_fix_t uf;
     uf.utime = timestamp_now();
-    uf.latitude = y;
-    uf.longitude = x;
+    uf.latitude = y * RTOD;
+    uf.longitude = x * RTOD;
     uf.depth = repro_target.getZ();
     uf.accuracy = state.usbl->accuracy;
     lcm->publish("USBL_FIX", &uf);
     
+
+    int d_size = uf.getEncodedSize() + 1;
+    char *d = (char *)malloc(d_size);
+    d[0] = LCM_USBL_FIX;
+    uf.encode(&d[1], 0, uf.getEncodedSize());
+    
+    send_evologics_data(d, d_size, 2, &state);
+    free(d);
     return 1;
     
 }
@@ -110,7 +158,10 @@ int Evologics_Usbl::load_config(char *program_name)
     sprintf(key, "%s.targets", rootkey);
     state.num_targets = bot_param_get_int_array(param, key, state.targets, 8);
     for(int i=0; i<state.num_targets; i++)
-        state.ping_sem[i] = 1;
+        state.ping_semaphore[i] = 0;
+
+    sprintf(key, "%s.ping_period", rootkey);
+    ping_period = bot_param_get_int_or_fail(param, key);
 
     double d[6];
     sprintf(key, "%s.usbl_ins", rootkey);
@@ -147,6 +198,7 @@ int Evologics_Usbl::load_config(char *program_name)
 int Evologics_Usbl::init()
 {
     // open the ports
+    state.interface = IO_ENET;
     struct addrinfo hints, *evo_addr;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -165,7 +217,12 @@ int Evologics_Usbl::init()
     setsockopt(state.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
     
     // put the USBL in a known state
+    //send_evologics_command("ATC\n", NULL, 256, &state);
     send_evologics_command("+++ATZ1\n", NULL, 256, &state);
+    send_evologics_command("+++AT!LC1\n", NULL, 256, &state);
+    send_evologics_command("+++AT!L1\n", NULL, 256, &state);
+    send_evologics_command("+++AT!G1\n", NULL, 256, &state);
+    //send_evologics_command("+++ATC\n", NULL, 256, &state);
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
@@ -173,7 +230,12 @@ int Evologics_Usbl::init()
     if((gps_source == GPS_NOVATEL) || (attitude_source == ATT_NOVATEL))
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
     
-    if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=wgs84")))
+    lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
+    lcm->subscribeFunction("TASK_PLANNER_COMMAND", on_task_command, this);
+    
+    ping_counter = 0;
+    
+    if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=WGS84")))
     {
        cerr <<  "Error creating Proj4 transform (WGS84)\n";
        return 0;
@@ -197,7 +259,7 @@ int Evologics_Usbl::process()
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
-        int ret = select (state.fd + 1, &rfds, NULL, NULL, &timeout);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         if(ret > 0)
         {
             if(FD_ISSET(lcm_fd, &rfds))
@@ -208,13 +270,14 @@ int Evologics_Usbl::process()
                 memset(buf, 0, MAX_BUF_LEN);
                 len = readline(state.fd, buf, MAX_BUF_LEN);
                 timestamp = timestamp_now();
-                
+                cout << "Data in: " << buf;
                 // parsing the meaasge will also set all the channel control flags
                 parse_message_t ret = parse_evologics_message(buf, len, &state, timestamp);
                 if(ret == PARSE_USBL)
                     calc_position();
             }
         }
+        
     }
     
     return 1;

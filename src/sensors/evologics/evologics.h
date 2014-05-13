@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <semaphore.h>
 #include <errno.h>
+#include <zlib.h>
 #include "base91.h"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes/senlcm_evologics_usbl_t.h"
@@ -21,7 +22,9 @@ extern "C" {
 typedef enum
 {
     LCM_AUV_STATUS = 1,
-    LCM_AUV_IMAGE
+    LCM_AUV_IMAGE,
+    LCM_USBL_FIX,
+    LCM_TASK_COMMAND
 } lcm_mesg_t;
 
 typedef enum
@@ -33,15 +36,22 @@ typedef enum
     PARSE_NONE
 } parse_message_t;
 
+typedef enum
+{
+    IO_SERIAL,
+    IO_ENET
+} interface_t;
+
 typedef struct 
 {
     lcm_t *lcm;
     int fd;
     int current_target;
     int channel_ready;
-    int ping_sem[8];
+    int ping_semaphore[8];
     int targets[8];
     int num_targets;
+    interface_t interface;
     senlcm_evologics_usbl_t *usbl;
 } el_state_t;
 

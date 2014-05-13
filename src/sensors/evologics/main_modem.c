@@ -82,11 +82,16 @@ int main (int argc, char *argv[]) {
 
     sprintf(key, "%s.parity", rootkey);
     char *parity = bot_param_get_str_or_fail(param, key);  
-      
+    
+    printf("%s, %d, %s\n", device, baud, parity);  
         
     // Open the serial port
     state.fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
     serial_set_canonical(state.fd, '\r', '\n');
+    //serial_set_noncanonical(state.fd, 1, 0);
+    printf("fd initial: %d\n", state.fd);
+    
+    state.interface = IO_SERIAL;
     
     int lcm_fd = lcm_get_fileno(state.lcm);    
     
@@ -97,11 +102,15 @@ int main (int argc, char *argv[]) {
     char buf[MAX_BUF_LEN];
     int64_t timestamp;
     int len;
-    int ping_counter = 0;
+
     state.channel_ready = 1;
     
     // put the modem in a known state
-    send_evologics_command("+++ATZ1\n", NULL, 256, &state);
+    send_evologics_command("+++ATZ1\r\n", NULL, 256, &state);
+    send_evologics_command("+++AT!LC1\r\n\0", NULL, 256, &state);
+    send_evologics_command("+++AT!L1\r\n", NULL, 256, &state);
+    send_evologics_command("+++AT!G1\r\n", NULL, 256, &state);
+    //send_evologics_command("+++ATC\r\n", NULL, 256, &state);
     
     while(!program_exit) 
     {
@@ -117,7 +126,7 @@ int main (int argc, char *argv[]) {
         
         if(ret != 0)
         {
-           if(FD_ISSET(lcm_fd, &rfds))
+            if(FD_ISSET(lcm_fd, &rfds))
                 lcm_handle(state.lcm);
             else
             {
@@ -125,7 +134,7 @@ int main (int argc, char *argv[]) {
                 memset(buf, 0, MAX_BUF_LEN);
                 len = read(state.fd, buf, MAX_BUF_LEN);
                 timestamp = timestamp_now();
-                
+                printf("Data in: %s", buf);
                 // parsing the meaasge will also set all the channel control flags
                 parse_evologics_message(buf, len, &state, timestamp);
             }
