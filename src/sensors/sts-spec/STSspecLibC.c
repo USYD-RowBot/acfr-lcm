@@ -61,7 +61,7 @@
 #include "STSspecLibC.h"
 #include <sys/select.h>
 
-#define DEBUGGING
+#define DEBUGGING true
 #define TIMEOUTS_ENABLED
 
 
@@ -362,6 +362,7 @@ int sendPacket(int serialPort, char packetToSend[]) {
     
     rxTxInProgress = true;
     error = write(serialPort, packetToSend, n);
+    //printf("tx error = %u\n",error);
     rxTxInProgress = false;
     return error;
 }
@@ -387,11 +388,11 @@ int receivePacket(unsigned char buf[], int bufferSize, int serialPort, double ti
 	    tv.tv_usec = 0;
     
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
-        
+        //printf("select ret = %u\n",ret);
         if(ret != 0 && FD_ISSET(serialPort, &rfds))
         {
             n = read(serialPort, rawbuf, bufferSize-offset);
-            
+            //printf("%u bytes on RX buff",n);
             if(n < 0) {
                 return -1;
             } else if (n == 0) {
@@ -407,7 +408,7 @@ int receivePacket(unsigned char buf[], int bufferSize, int serialPort, double ti
         usleep(1000);
         timeout--;
         if (timeout < 0){
-        printf("Timed out\n");
+        //printf("Timed out\n");
             break;
         }
         if (offset >= bufferSize) {

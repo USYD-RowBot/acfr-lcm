@@ -190,13 +190,13 @@ int main(int argc, const char * argv[])
     
     
     float temps[2];
-
+    //flushBuffer(spec_fd);
     char serialNum[16];
     getSerialNum(spec_fd, serialNum);
     printf("Serial Number :%s\n",serialNum);
     specReading.id = serialNum;
     
-    flushBuffer(spec_fd);
+    //flushBuffer(spec_fd);
     
     //get wavelength coeff
     float waveCoeff[5];
