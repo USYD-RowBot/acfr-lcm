@@ -9,7 +9,7 @@
         <drop_angle deg="10" />
     </global>
 <!--
-    <primative>
+    <primitive>
         <goto>
             <end x="10" y="10" z="1" h="180"/>
             <depth mode = "alititude" />
@@ -19,15 +19,15 @@
             <command/>
             <tag>Goto some place</tag>
         </goto>
-    </primative>
-    <primative>
+    </primitive>
+    <primitive>
         <goto>
             <end x="100" y="100" z="1"/>
             <velocity x="1" />
             <timeout t="60" />
         </goto>
-    </primative>
-    <primative>
+    </primitive>
+    <primitive>
         <line>
             <start x="100" y="100" z="1"/>
             <end x="200" y="100" z="1" />
@@ -36,13 +36,13 @@
             <command device="camera" onoff="on" freq="1.5" time="10000" />
             <timeout t="60" />
         </line>
-    </primative>
-    <primative>
+    </primitive>
+    <primitive>
         <command>
             <command device="camera" onoff="off"/>
         </command>
-    </primative>    
-    <primative>
+    </primitive>    
+    <primitive>
         <grid>
             <center x="200" y="150" z="2"/>
             <length l="25" />
@@ -54,9 +54,9 @@
             <depth mode = "altitude" />
             <velocity x="1" />
         </grid>
-    </primative>
+    </primitive>
     -->
-    <primative>
+    <primitive>
         <zambonie>
             <position x="300" y="300" z="2"/>
             <length l="25" />
@@ -69,5 +69,5 @@
             <velocity x="1" />
             <direction d="ccw" />
         </zambonie>
-    </primative>
+    </primitive>
 </mission>

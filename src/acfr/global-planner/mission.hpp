@@ -37,6 +37,13 @@ class Mission
         void dumpMatlab(string filename="matlab_plot.m");
         // the list of goal points
         list<waypoint> waypoints;
+        double getOriginLat() { return originLat; }
+        double getOriginLon() { return originLon; }
+        
+        // extra methods to make sip behave
+        int load(char *_filename) { return load(string(_filename)); };
+        list<WaypointSimple> dumpSimple();
+        
         
     private:
         string filename;
@@ -58,7 +65,7 @@ class Mission
         
         // common variables
         list<MissionCommand> commands;
-        double timout;
+        double timeout;
         depthModeT depthMode;
         
         // Mission globals

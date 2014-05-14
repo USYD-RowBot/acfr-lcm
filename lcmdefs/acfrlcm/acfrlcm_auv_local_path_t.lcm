@@ -1,0 +1,13 @@
+package acfrlcm;
+
+struct auv_local_path_t
+{
+    int64_t utime;
+
+    int8_t num_el;
+    const int8_t max_num_el = 50;
+    double x[50];
+    double y[50];
+    double z[50];
+    
+}

@@ -756,7 +756,7 @@ double SGMagVar( double lat, double lon, double h, long dat, int model, double* 
     c = cos(theta);
     s = sin(theta);
       /* protect against zero divide at geographic poles */
-    inv_s =  1.0 / (s + (s == 0.)*1.0e-8); 
+    inv_s =  1.0 / (s + (s < 1.0e-8)*1.0e-8);
 
     /*zero out arrays */
     for ( n = 0; n <= nmax; n++ ) {
@@ -939,6 +939,6 @@ double SGMagVar( double lat, double lon, double h, long dat, int model, double* 
     /* find variation in radians */
     /* return zero variation at magnetic pole X=Y=0. */
     /* E is positive */
-    return (X != 0. || Y != 0.) ? atan2(Y, X) : (double) 0.; 
+    return (fabs(X) > 1.0e-8 || fabs(Y) > 1.0e-8) ? atan2(Y, X) : (double) 0.;
 }
 

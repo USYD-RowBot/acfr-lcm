@@ -387,7 +387,8 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 		pRel = minC1.compose(pRel);
 
 		distance += dropAngle * this->circleRad;
-		pRel.setZ(Z0 + sin(minPitch) * distance);
+		//pRel.setZ(Z0 + sin(minPitch) * distance);
+		pRel.setZ( destPose.getZ() );
 		path.push_back(pRel);
 	}
 
@@ -398,7 +399,8 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 		pRel = minPose1.compose(pRel);
 
 		distance += dropDist;
-		pRel.setZ(Z0 + sin(minPitch) * distance);
+//		pRel.setZ(Z0 + sin(minPitch) * distance);
+		pRel.setZ( destPose.getZ() );
 		path.push_back(pRel);
 	}
 
@@ -421,7 +423,8 @@ vector<Pose3D> DubinsPath::calcPath(Pose3D currPose, Pose3D destPose) {
 		pRel = minC2.compose(pRel);
 
 		distance += dropAngle * this->circleRad;
-		pRel.setZ(Z0 + sin(minPitch) * distance);
+//		pRel.setZ(Z0 + sin(minPitch) * distance);
+		pRel.setZ( destPose.getZ() );
 		path.push_back(pRel);
 	}
 

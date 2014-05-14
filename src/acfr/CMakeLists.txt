@@ -1,6 +1,6 @@
 
 # BINARIES
-perls_add_folder (acfr-nav "Build ACFR Nav process?" OFF)
+#perls_add_folder (acfr-nav "Build ACFR Nav process?" OFF)
 perls_add_folder (acfr-nav-new "Build ACFR Nav (new) process?" ON)
 #perls_add_folder (mission_control "Build ACFR Mission Control process?" ON)
 perls_add_folder (send-string "Build ACFR send-string command?" ON)
@@ -12,3 +12,6 @@ perls_add_folder (global-planner "Build ACFR global-planner process?" ON)
 perls_add_folder (task-planner "Build ACFR task-planner process?" ON)
 perls_add_folder (occupancy "Build ACFR occupancy process?" ON)
 perls_add_folder (health "Build ACFR health process?" ON)
+perls_add_folder (vis-rawlog-extract "Build ACFR LCM log exporter for VIS RAW logs?" OFF)
+perls_add_folder (lcm2raw "Build ACFR LCM log exporter for RAW logs?" ON)
+perls_add_folder (mission2kml "Build ACFR XML mission to KML converter?" ON)

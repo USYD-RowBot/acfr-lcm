@@ -9,16 +9,12 @@
 
 bool LegPath::calcPath(void) {
 
-	double Z = 0;
 	if( pitch != 0 && altitudeChange != 0 ) {
 		cerr << "Must set only pitch OR altitudeChange. Not both." << endl;
 		return false;
 	}
-	else if( pitch != 0 ) {
-		Z = length * sin(pitch);
-	}
-	else {
-		Z = altitudeChange;
+	else if( altitudeChange ){
+		pitch = asin( (position.getZ() + altitudeChange) / length);
 	}
 
 
@@ -27,13 +23,24 @@ bool LegPath::calcPath(void) {
 	wp.pose = position;
 	wp.pose.setRollPitchYawRad(0, 0, heading);
 	path.push_back(wp);
-	cout << "First pose = " << wp.pose << endl;
+
+	for( int i = dropDist; i < length; i+=dropDist ) {
+		wp.pose.setPosition(
+				position.getX() + i*cos(heading),
+				position.getY() + i*sin(heading),
+				position.getZ() + i*sin(pitch));
+		wp.pose.setRollPitchYawRad(0, 0, heading);
+		path.push_back(wp);
+	}
 
 	// Last way point
-	wp.pose.setPosition(length * cos(heading), length * sin(heading), Z);
+	wp.pose.setPosition(
+			position.getX() + length * cos(heading),
+			position.getY() + length * sin(heading),
+			position.getZ() + length*sin(pitch));
 	wp.pose.setRollPitchYawRad(0, 0, heading);
 	path.push_back(wp);
-	cout << "Second pose = " << wp.pose << endl;
+
 	return true;
 }
 

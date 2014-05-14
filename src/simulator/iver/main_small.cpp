@@ -8,7 +8,8 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <auv_config_file.hpp>
+#include <libplankton/auv_config_file.hpp>
+#include <libplankton/auv_map_projection.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
@@ -16,7 +17,6 @@
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
-#include "auv_map_projection.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 
@@ -564,10 +564,10 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 {
     in(0) = mc->main;
     in(1) = 0;
-    in(2) = mc->top;// / 180.0 * M_PI;
-    in(3) = mc->bottom;
-    in(4) = mc->port;// / 180.0 * M_PI;
-    in(5) = mc->starboard;
+    in(2) = -mc->top;// / 180.0 * M_PI;
+    in(3) = -mc->bottom;
+    in(4) = -mc->port;// / 180.0 * M_PI;
+    in(5) = -mc->starboard;
 }
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
@@ -613,7 +613,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         cout << "Truth: ";
 
         if(! fp.is_open() )
-        	fp.open("/media/water/misc/personal_folders/navid/iver/log.txt",
+            fp.open("/tmp/log.txt",
         			ios::out|ios::app);
         for(int i=0; i<12; i++) {
             printf("%2.3f ", state(i));
@@ -855,7 +855,7 @@ void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     nav_state[12] = nav->altitude;
 
     if( !fp_nav.is_open() )
-    	fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt",
+        fp_nav.open( "/tmp/log_nav.txt",
     			ios::out | ios::app);
     for(int i=0; i<13; i++) {
         printf("%2.3f ", nav_state[i]);
@@ -965,8 +965,8 @@ int main(int argc, char **argv)
     in(2) = 0;
     in(3) = 0;
 
-    fp_nav.open( "/media/water/misc/personal_folders/navid/iver/log_nav.txt", ios::out);
-    fp.open("/media/water/misc/personal_folders/navid/iver/log.txt", ios::out);
+    fp_nav.open( "/tmp/log_nav.txt", ios::out);
+    fp.open("/tmp/log.txt", ios::out);
 
     int fd = lcm.getFileno();
     fd_set rfds;

@@ -50,7 +50,7 @@ typedef enum
 class state_c
 {
     public:
-        lcm::LCM lcm;
+        lcm::LCM *lcm;
         Seabed_Interface *slam;
         
         // used to be able to output data in the old format
@@ -62,7 +62,8 @@ class state_c
         double oas_altitude;
         double fwd_obs_dist;
         int lowRateCount;
-               
+
+        bool bottomLock;
 };
 
 class acfr_nav
@@ -86,6 +87,7 @@ class acfr_nav
         attitude_source_t attitude_source;
         depth_source_t depth_source;
         char *slam_config_filename;
+
                 
 };
 

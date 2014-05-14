@@ -89,7 +89,7 @@ void oasHandler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_oas_t *
     nav->handleOAS(oas);
 }
 
-acfrNav::acfrNav() : R_gps(3,3) {
+acfrNav::acfrNav() : R_gps(3,3), altitude(0) {
 }
 
 acfrNav::~acfrNav() {
@@ -307,7 +307,8 @@ void acfrNav::handleHeartBeat(const perllcm_heartbeat_t *heartbeat) {
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		nav.altitude = min(altitude, oasAltitude);
+		//nav.altitude = min(altitude, oasAltitude);
+		nav.altitude = altitude;
 		nav.fwd_obstacle_dist = fwdObstacleDist;
 		
 		
@@ -721,7 +722,7 @@ void acfrNav::handleRDI(const senlcm_rdi_pd5_t *rdi) {
 	// handle a message from the RDI DVL, the old code used the PD0 message
 	// we are using the PD5 message as the LCM module was already written
 	
-	if((rdi->pd4.btv[0] != -32.786) && (rdi->pd4.btv[1] != -32.786) && (rdi->pd4.btv[2] != -32.786)) {
+	if((rdi->pd4.btv[0] > -32.786) && (rdi->pd4.btv[1] > -32.786) && (rdi->pd4.btv[2] > -32.786) && (rdi->pd4.btv[3])) {
 	    auv_data_tools::RDI_Data rdiD;
 	    rdiD.set_raw_timestamp((double)rdi->utime/1e6);
 	    rdiD.alt = rdi->pd4.altitude;
@@ -743,8 +744,12 @@ void acfrNav::handleRDI(const senlcm_rdi_pd5_t *rdi) {
 	    rdiD.sv = rdi->pd4.speed_of_sound;
 	    rdiD.depth_rate = 0;   // FIXME
         
-        if(useRdi)
-            altitude = rdi->pd4.altitude;
+        if(useRdi) {
+            // for the moment, filter the altitude. A median filter may be
+            // more appropriate
+	    double last_altitude = altitude;
+            altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
+        }
 
         if(processToRaw) {
 		    rdiD.print(rawOut);
