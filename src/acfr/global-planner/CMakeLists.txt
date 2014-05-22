@@ -35,4 +35,4 @@ install(TARGETS GlobalPlanner
 )
 
 include_directories(/usr/include/python2.7 ${PROJECT_SOURCE_DIR}/acfr/global-planner)
-ADD_SIP_PYTHON_MODULE(missionXML missionXML.sip ${LibXML++_LIBRARIES} GlobalPlanner)
+ADD_SIP_PYTHON_MODULE(missionXML ./missionXML.sip ${LibXML++_LIBRARIES} GlobalPlanner)
