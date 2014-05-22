@@ -13,6 +13,9 @@
 extern "C" {
 #endif
 
+// Uncomment to build with left-hand renderer controls box support enabled
+//#define CONTROLS_BOX_LEFT_ENABLED
+
 /**
  * @defgroup BotViewer BotViewer
  * @brief Graphical debugging utility
@@ -337,8 +340,9 @@ struct _BotViewer {
     BotViewHandler       *default_view_handler;
 
     GtkWidget         *controls_box;
+#ifdef CONTROLS_BOX_LEFT_ENABLED
     GtkWidget         *controls_box_left;
-
+#endif
     GtkWidget         *record_button;
     GtkWidget         *menu_bar;
 
@@ -386,6 +390,10 @@ BotViewer *bot_viewer_new (const char *window_title);
 void bot_viewer_unref(BotViewer *viewer);
 
 void bot_viewer_set_window_title (BotViewer *viewer, const char *window_name);
+
+void bot_viewer_start_recording (BotViewer *viewer);
+void bot_viewer_stop_recording (BotViewer *viewer);
+
 
 /**
  * bot_viewer_request_redraw:
