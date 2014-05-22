@@ -34,6 +34,7 @@
 #define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
 #endif
 
+#define DTOR M_PI/180
 
 // copied from Beej's guide to network programming
 int recvtimeout(int s, char *buf, int len, int timeout) {
@@ -164,6 +165,13 @@ int main(int argc, char *argv[])
      	            init_char, &gps_week, &secs_of_week, &nov.latitude, &nov.longitude, &nov.height,
                         &nov.north_velocity, &nov.east_velocity, &nov.up_velocity, &nov.roll ,&nov.pitch, &nov.heading,
 		                status);
+		
+	        // fix the angles
+	        nov.latitude *= DTOR;
+	        nov.longitude *= DTOR;
+	        nov.roll *= DTOR;
+	        nov.pitch *= DTOR;
+	        nov.heading *= DTOR;
 		
 		    nov.status = status;
             //time_t time_int = secs_of_week + ((gps_week + (10*52)) * GPS_SECS_IN_WEEK);

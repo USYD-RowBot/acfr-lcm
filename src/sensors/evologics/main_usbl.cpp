@@ -195,6 +195,27 @@ int Evologics_Usbl::load_config(char *program_name)
 
 }
 
+int Evologics_Usbl::parse_ahrs_message(char *buf)
+{
+    // decode the AHRS message
+    if(strstr(buf, "AHRS") != NULL)
+    {
+        char *tokens[5];
+        chop_string(buf, tokens);
+        ahrs_t ahrs;
+        ahrs.utime = (int64_t)(atof(tokens[1]) * 1e6);
+        ahrs.roll = atof(tokens[3]) * DTOR;
+        ahrs.pitch = atof(tokens[2]) * DTOR;
+        ahrs.heading = atof(tokens[4]) * DTOR;
+        lcm->publish("AHRS", &ahrs);
+        return 1;
+    }
+    else
+        return 0;
+}
+        
+        
+
 int Evologics_Usbl::init()
 {
     // open the ports
@@ -214,7 +235,25 @@ int Evologics_Usbl::init()
     struct timeval tv;
     tv.tv_sec = 0;  // 1 Secs Timeout 
     tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
-    setsockopt(state.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv,sizeof(struct timeval));
+    setsockopt(state.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+    
+    // open the AHRS port
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    getaddrinfo(ip, AHRS_PORT, &hints, &evo_addr);
+	ahrs_fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+    if(connect(ahrs_fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
+    {
+        printf("Could not connect to %s on port %s\n", ip, AHRS_PORT);
+		return 1;
+    }
+    
+    tv.tv_sec = 0;  // 1 Secs Timeout 
+    tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
+    setsockopt(ahrs_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+    
     
     // put the USBL in a known state
     //send_evologics_command("ATC\n", NULL, 256, &state);
@@ -256,6 +295,7 @@ int Evologics_Usbl::process()
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
         FD_SET (state.fd, &rfds);
+        FD_SET (ahrs_fd, &rfds);
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -264,7 +304,8 @@ int Evologics_Usbl::process()
         {
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm->handle();
-            else
+            
+            if(FD_ISSET(state.fd, &rfds))
             {
                 // data to be read       
                 memset(buf, 0, MAX_BUF_LEN);
@@ -276,6 +317,16 @@ int Evologics_Usbl::process()
                 if(ret == PARSE_USBL)
                     calc_position();
             }
+            
+            if(FD_ISSET(ahrs_fd, &rfds))
+            {
+                // data to be read       
+                memset(buf, 0, MAX_BUF_LEN);
+                len = readline(ahrs_fd, buf, MAX_BUF_LEN);
+                timestamp = timestamp_now();
+                parse_ahrs_message(buf);
+            }
+                
         }
         
     }

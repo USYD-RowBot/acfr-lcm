@@ -17,6 +17,7 @@
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
+#include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
 
@@ -28,6 +29,7 @@ using namespace acfrlcm;
 #define DTOR M_PI/180.0
 #define RTOD 180.0/M_PI
 #define MAX_BUF_LEN 1024
+#define AHRS_PORT "10000"
 
 // Attitude source
 typedef enum 
@@ -55,6 +57,7 @@ class Evologics_Usbl
         int calc_position();
         int ping_targets();
         int task_command(const auv_global_planner_t *task);
+        int parse_ahrs_message(char *buf);
         
         // data holders
         gpsd3_t gpsd;
@@ -66,6 +69,7 @@ class Evologics_Usbl
         // usbl tcp config
         char *ip;
         char *inet_port;
+        int ahrs_fd;
         
         // targets
         int targets[8];
