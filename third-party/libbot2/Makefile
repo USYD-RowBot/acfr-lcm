@@ -18,13 +18,15 @@ $(VERBOSE).SILENT:
 all: 
 	@[ -d $(BUILD_PREFIX) ] || mkdir -p $(BUILD_PREFIX) || exit 1
 	@for subdir in $(SUBDIRS); do \
-echo "$(BUILD_PREFIX)" \
 		echo "\n-------------------------------------------"; \
 		echo "-- $$subdir"; \
 		echo "-------------------------------------------"; \
 		$(MAKE) -C $$subdir all || exit 2; \
 	done
 	@# Place additional commands here if you have any
+
+install_prereqs_homebrew :
+	brew install cmake gtk+
 
 clean:
 	@for subdir in $(SUBDIRS); do \

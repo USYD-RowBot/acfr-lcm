@@ -23,6 +23,7 @@ msg = novatel_t()
 msg.roll = 0
 msg.pitch = 0
 rad = 100
+rad2 = 90
 
 msg2 = usbl_fix_t()
 
@@ -33,16 +34,16 @@ while True:
     lat = rad * math.sin(math.radians(angle))
     h = (angle + 90.0) % 360.0
     
-    msg.latitude = olat + lat * inc 
-    msg.longitude = olon + lon * inc
+    msg.latitude = math.radians(olat + lat * inc )
+    msg.longitude = math.radians(olon + lon * inc)
     msg.heading = h
     
-    lon = rad * math.cos(math.radians(angle-45))     
-    lat = rad * math.sin(math.radians(angle-45))
-    h = (angle + 45) % 360.0
+    lon = rad2 * math.cos(math.radians(angle-45))     
+    lat = rad2 * math.sin(math.radians(angle-45))
+    h = math.radians(angle + 45) % 360.0)
     
-    msg2.latitude = olat + lat * inc 
-    msg2.longitude = olon + lon * inc
+    msg2.latitude = math.radians(olat + lat * inc )
+    msg2.longitude = math.radians(olon + lon * inc)
     msg2.accuracy = 10
     
     

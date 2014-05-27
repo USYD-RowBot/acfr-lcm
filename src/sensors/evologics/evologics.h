@@ -61,6 +61,7 @@ int send_evologics_data(char *data, int size, int target, el_state_t *state);
 parse_message_t parse_evologics_message(char *data, int len, el_state_t *state, int64_t timestamp);
 int readline(int fd, char *buf, int max_len);
 int send_evologics_command(char *data, char *ret_str, int size, el_state_t *state);
+int chop_string(char *data, char **tokens);
 
 #ifdef __cplusplus
 }
