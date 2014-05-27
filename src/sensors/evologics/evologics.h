@@ -51,6 +51,7 @@ typedef struct
     int ping_semaphore[8];
     int targets[8];
     int num_targets;
+    int sending_data;
     interface_t interface;
     senlcm_evologics_usbl_t *usbl;
 } el_state_t;

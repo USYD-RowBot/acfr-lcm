@@ -52,6 +52,11 @@ Evologics_Usbl::Evologics_Usbl()
 
 int Evologics_Usbl::ping_targets()
 {
+    // check the state of the link if we are sending data
+    cout << "sending_data=" << state.sending_data << endl;
+    if(state.sending_data)
+        send_evologics_command("+++AT?S\n", NULL, 256, &state);
+    
     if(ping_counter == ping_period)
     {
         ping_counter = 0;
@@ -68,7 +73,7 @@ int Evologics_Usbl::task_command(const auv_global_planner_t *task)
     char *d = (char *)malloc(d_size);
     d[0] = LCM_TASK_COMMAND;
     task->encode(&d[1], 0, task->getEncodedSize());
-    
+    cout << "Sending task command\n";
     send_evologics_data(d, d_size, 2, &state);
     free(d);
 
@@ -129,8 +134,8 @@ int Evologics_Usbl::calc_position()
     char *d = (char *)malloc(d_size);
     d[0] = LCM_USBL_FIX;
     uf.encode(&d[1], 0, uf.getEncodedSize());
-    
-    send_evologics_data(d, d_size, 2, &state);
+    cout << "Sending USBL fix\n";
+    send_evologics_data(d, d_size, 0, &state);
     free(d);
     return 1;
     
@@ -219,6 +224,7 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
 int Evologics_Usbl::init()
 {
     // open the ports
+    state.sending_data = 0;
     state.interface = IO_ENET;
     struct addrinfo hints, *evo_addr;
     memset(&hints, 0, sizeof(hints));
@@ -233,8 +239,8 @@ int Evologics_Usbl::init()
     }
     
     struct timeval tv;
-    tv.tv_sec = 0;  // 1 Secs Timeout 
-    tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
+    tv.tv_sec = 1;  // 1 Secs Timeout 
+    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
     setsockopt(state.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
     
     // open the AHRS port
@@ -249,8 +255,8 @@ int Evologics_Usbl::init()
 		return 1;
     }
     
-    tv.tv_sec = 0;  // 1 Secs Timeout 
-    tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
+    tv.tv_sec = 1;  // 1 Secs Timeout 
+    tv.tv_usec = 0000;  // Not init'ing this can cause strange errors
     setsockopt(ahrs_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
     
@@ -259,8 +265,9 @@ int Evologics_Usbl::init()
     //send_evologics_command("ATC\n", NULL, 256, &state);
     send_evologics_command("+++ATZ1\n", NULL, 256, &state);
     send_evologics_command("+++AT!LC1\n", NULL, 256, &state);
-    send_evologics_command("+++AT!L1\n", NULL, 256, &state);
+    send_evologics_command("+++AT!L3\n", NULL, 256, &state);
     send_evologics_command("+++AT!G1\n", NULL, 256, &state);
+    send_evologics_command("+++ATH1\n", NULL, 256, &state);
     //send_evologics_command("+++ATC\n", NULL, 256, &state);
     
     if(gps_source == GPS_GPSD)
@@ -299,6 +306,7 @@ int Evologics_Usbl::process()
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
+        memset(buf, 0, MAX_BUF_LEN);
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         if(ret > 0)
         {
@@ -328,6 +336,8 @@ int Evologics_Usbl::process()
             }
                 
         }
+        else
+            cout << "select timeout\n";
         
     }
     
