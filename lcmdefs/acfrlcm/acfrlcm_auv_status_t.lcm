@@ -15,7 +15,7 @@ struct auv_status_t
         bit 6       OAS
         bit 7       Nav
         bit 8       Ecopuck
-        bit 9
+        bit 9       Aborted
         bit 10
         bit 11
         bit 12
@@ -27,4 +27,13 @@ struct auv_status_t
     */
     
     int16_t waypoint;
+    int16_t heading;    /* 0.1 deg */
+    int8_t roll;        /* 0.1 deg */
+    int8_t pitch;       /* 0.1 deg */
+    int16_t depth;      /* 0.1 m */
+    int8_t altitude;    /* 0.1 m */
+    float latitude;
+    float longitude;
+    int32_t img_count;
+    int8_t charge;
 }

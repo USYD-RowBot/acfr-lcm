@@ -33,3 +33,6 @@ perls_target_link_libraries (GlobalPlannerTest
 install(TARGETS GlobalPlanner
      LIBRARY DESTINATION lib
 )
+
+include_directories(/usr/include/python2.7 ${PROJECT_SOURCE_DIR}/acfr/global-planner)
+ADD_SIP_PYTHON_MODULE(missionXML ./missionXML.sip ${LibXML++_LIBRARIES} GlobalPlanner)

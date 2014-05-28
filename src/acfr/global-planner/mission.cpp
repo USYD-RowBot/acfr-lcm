@@ -138,7 +138,8 @@ int Mission::parseGlobals(xmlpp::Node::NodeList &globals) {
             
             else if(element->get_name().lowercase() == "location")
             {
-                if(!getSingleValue(element, "lat", originLat) || !getSingleValue(element, "lon", originLon)) {
+                if(!getSingleValue(element, "lat", 
+                originLat) || !getSingleValue(element, "lon", originLon)) {
                     cerr << "Origin not set, set the location variable." << endl;
                     return 0;            
                 }
@@ -550,6 +551,20 @@ int Mission::dump()
     }
     return 1;
 }    
+
+list<WaypointSimple> Mission::dumpSimple() 
+{
+    list<WaypointSimple> points;
+    for(list<waypoint>::iterator i=waypoints.begin(); i != waypoints.end(); ++i)
+    {
+        WaypointSimple point((*i).pose.getX(), (*i).pose.getY(), (*i).pose.getZ());
+        points.push_back(point);
+    }
+    return points;
+
+}
+
+
 
 void Mission::dumpMatlab(string filename) {
     ofstream fout(filename.c_str(), ios::out);

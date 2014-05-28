@@ -37,6 +37,9 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                 fingerprint == senlcm.nmea_gphdt_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.uvc_osi_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.uvc_rphtd_t.LCM_FINGERPRINT ||
+                fingerprint == senlcm.novatel_t.LCM_FINGERPRINT ||
+                fingerprint == senlcm.ahrs_t.LCM_FINGERPRINT ||
+                fingerprint == senlcm.usbl_fix_t.LCM_FINGERPRINT ||
 
                 fingerprint == hauv.bs_cnv_t.LCM_FINGERPRINT ||
                 fingerprint == hauv.bs_imu_t.LCM_FINGERPRINT ||
@@ -223,6 +226,31 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     for (int i=0;i<3;i++)
                         rphtd.rph[i] = Math.toDegrees(rphtd.rph[i]);
                     o = rphtd;
+                }
+                /* novatel_t */
+                else if (cd.fingerprint == senlcm.novatel_t.LCM_FINGERPRINT) {
+                    senlcm.novatel_t nov = new senlcm.novatel_t(dis);
+                    nov.latitude = Math.toDegrees(nov.latitude);
+                    nov.longitude = Math.toDegrees(nov.longitude);
+                    nov.roll = Math.toDegrees(nov.roll);
+                    nov.pitch = Math.toDegrees(nov.pitch);
+                    nov.heading = Math.toDegrees(nov.heading);
+                    o = nov;
+                }
+                /* ahrs_t */
+                else if (cd.fingerprint == senlcm.ahrs_t.LCM_FINGERPRINT) {
+                    senlcm.ahrs_t ahrs = new senlcm.ahrs_t(dis);
+                    ahrs.roll = Math.toDegrees(ahrs.roll);
+                    ahrs.pitch = Math.toDegrees(ahrs.pitch);
+                    ahrs.heading = Math.toDegrees(ahrs.heading);
+                    o = ahrs;
+                }
+                /* usbl_fix_t */
+                else if (cd.fingerprint == senlcm.usbl_fix_t.LCM_FINGERPRINT) {
+                    senlcm.usbl_fix_t usbl = new senlcm.usbl_fix_t(dis);
+                    usbl.latitude = Math.toDegrees(usbl.latitude);
+                    usbl.longitude = Math.toDegrees(usbl.longitude);
+                    o = usbl;
                 }
 
                 /* HAUV=========================================== */

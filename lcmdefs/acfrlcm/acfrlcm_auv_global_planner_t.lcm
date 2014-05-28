@@ -23,8 +23,10 @@ struct auv_global_planner_t
     
     int8_t command;
     
-    double point[6];
-    double velocity[3];
+    float point1[6];
+    float point2[6];
+    float velocity[3];
+    float timeout;
     
     double var_d[6];
     int32_t var_i[6];
