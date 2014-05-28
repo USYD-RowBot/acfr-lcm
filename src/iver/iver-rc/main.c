@@ -16,6 +16,10 @@
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
+//#define DEBUG
+
+// Original Iver config
+/*
 enum 
 {
     RC_THROTTLE = 0,
@@ -26,11 +30,26 @@ enum
     RC_AUX1,
     RC_AUX2
 };
+*/
+
+// Config using the borrowed controller from Mitch
+enum 
+{
+    RC_THROTTLE = 0,
+    RC_RUDDER,
+    RC_ELEVATOR,
+    RC_AILERON,
+    RC_GEAR,
+    RC_AUX1,
+    RC_AUX2
+};
 
 #define RC_OFFSET 505
-#define RC_THROTTLE_OFFSET 415
-#define RC_TO_RAD 0.071875*M_PI/180
-#define RC_TO_RPM 2.8
+//#define RC_THROTTLE_OFFSET 415    // Iver
+#define RC_THROTTLE_OFFSET 507      // Mitch's
+#define RC_TO_RAD (0.071875*M_PI/180)*2
+//#define RC_TO_RPM 2.8             // Iver
+#define RC_TO_RPM 3.8               // Mitch
 
 
 int
@@ -94,7 +113,14 @@ parse_rc(char *buf, lcm_t *lcm)
         channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
             
         channel_values[channel_id] = channel_value;
+        
     }
+
+#ifdef DEBUG
+    for(int i=1; i<8; i++)
+        printf("Channel %d: value %d\n", i, channel_values[i] & 0xFFFF);
+#endif        
+
     
     
     // create the LCM message to send
