@@ -255,10 +255,10 @@ parse_rc(char *buf, int *channel_values)
             
         channel_values[channel_id] = channel_value;
     }
-    
-//    for(int i=0; i<7; i++)
-//        printf("%u ", channel_values[i]);
-//    printf("\n\n"); 
+    printf("*");
+    for(int i=0; i<7; i++)
+        fprintf(stderr, "%u ", channel_values[i]);
+    printf("\n\n"); 
         
     
     return 1;

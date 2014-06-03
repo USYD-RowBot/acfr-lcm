@@ -78,6 +78,12 @@ void handle_nav(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	state->nav = *sensor;
 }
 
+void handle_vis(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const acfrlcm::auv_vis_rawlog_t *sensor, HealthMonitor *state)
+{
+	state->image_count++;
+}
+
 void handle_heartbeat(const lcm::ReceiveBuffer *rbuf,
 		const std::string& channel, const perllcm::heartbeat_t *hb,
 		HealthMonitor *state)
@@ -101,6 +107,7 @@ HealthMonitor::HealthMonitor()
 	ysi.utime = 0;
 	ysi.depth = 0;
 	oas.utime = 0;
+	image_count = 0;
 
 	abort_on_no_compass = false;
 	abort_on_no_gps = false;
@@ -132,6 +139,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("PAROSCI", handle_parosci, this);
 	lcm.subscribeFunction("YSI", handle_ysi, this);
 	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
+	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -306,6 +314,15 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		status.status |= OAS_BIT;
 	else if (abort_on_no_oas == true)
 		sendAbortMessage("OAS dead");
+
+	status.latitude = (float)nav.latitude;	
+	status.longitude = (float)nav.longitude;
+	status.altitude = (char)(nav.altitude * 10.0);
+	status.depth = (short)(nav.depth * 10.0);
+	status.roll = (char)(nav.roll * 10.0);
+	status.pitch = (char)(nav.pitch * 10.0);
+	status.heading = (short)(nav.heading * 10.0);
+	status.img_count = image_count;
 
 	lcm.publish("AUV_HEALTH", &status);
 

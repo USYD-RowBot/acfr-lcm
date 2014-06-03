@@ -128,7 +128,7 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		
-		printf("%ld\r", (long int)nav.utime);
+		//printf("%ld\r", (long int)nav.utime);
 
         state->lcm->publish("ACFR_NAV", &nav);   
 

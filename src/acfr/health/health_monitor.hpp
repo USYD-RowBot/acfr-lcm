@@ -11,6 +11,7 @@
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_vis_rawlog_t.hpp"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/kvh1750_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
@@ -50,6 +51,7 @@ public:
 
     //lcm_t *lcm;
     lcm::LCM lcm;
+    int32_t image_count;
 
 private:
 
@@ -84,5 +86,7 @@ private:
     int64_t oas_timeout;
 
     int64_t dvlbl_utime;
+    
+    
 };
 

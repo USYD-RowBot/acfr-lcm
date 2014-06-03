@@ -479,7 +479,6 @@ int LocalPlanner::processWaypoints()
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	lcm.publish("AUV_CONTROL", &cc);
-
 	return 1;
 }
 

@@ -19,7 +19,7 @@
 //#define DEBUG
 
 // Original Iver config
-/*
+
 enum 
 {
     RC_THROTTLE = 0,
@@ -30,8 +30,8 @@ enum
     RC_AUX1,
     RC_AUX2
 };
-*/
 
+/*
 // Config using the borrowed controller from Mitch
 enum 
 {
@@ -43,7 +43,7 @@ enum
     RC_AUX1,
     RC_AUX2
 };
-
+*/
 #define RC_OFFSET 505
 //#define RC_THROTTLE_OFFSET 415    // Iver
 #define RC_THROTTLE_OFFSET 507      // Mitch's
