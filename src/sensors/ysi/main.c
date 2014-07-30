@@ -83,10 +83,23 @@ int main (int argc, char *argv[]) {
     char buf[256];
     senlcm_ysi_t ysi;
     
-    sprintf( buf, "%c", 0x0B );
-    gsd_write(gsd, buf, 1); // esc char (0x0B == \e)
-    gsd_write(gsd, "nmea", 4); // put it in nmea mode
+	
+	// Put the YSI in a known state, send and escape character and then wait for the prompt
+	// then send a nmea command
+	gsd_noncanonical(gsd, 1, 0);
+    sprintf( buf, "%c", 27 );
+    gsd_write(gsd, buf, 1); 
+	
+	do
+	{
+		gsd_read(gsd, buf, 1, NULL);
+	}
+	while (buf[0] != '#');
+	
+    gsd_write(gsd, "nmea\r\n", 6); // put it in nmea mode
     
+	gsd_canonical (gsd, '\r','\n');
+	
     // loop to collect data, parse and send it on its way
     while(!gsd->done) {
         int64_t timestamp;

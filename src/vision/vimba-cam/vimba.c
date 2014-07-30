@@ -686,6 +686,8 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
         image.width = frame->width;
         image.height = frame->height;
         image.row_stride = image.width * bpp;
+        image.data = (unsigned char *)frame->buffer;
+        image.size = frame->width * frame->height * bpp;
         bot_core_image_t_publish(state->lcm, state->channel, &image);   
     }    
     
@@ -754,8 +756,10 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
         }
     
     if(state->publish)
+        {
+	printf("pub\n");
         publish_image(state, frame, exposure, gain, frame_utime);
-    
+    }
     // If we are writing the data to disk put the frame in the queue
     if(state->write_files)
     {
@@ -897,6 +901,9 @@ int main(int argc, char **argv)
         fprintf(stderr, "scale must be 1, 4 or 16\n");
         return 0;
     }
+
+
+    printf("Publish = %d, Scale = %d\n", state.publish, state.image_scale);
 
     // start Vimba
     if(VmbStartup() == VmbErrorInternalFault)
