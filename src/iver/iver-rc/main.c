@@ -48,8 +48,8 @@ enum
 //#define RC_THROTTLE_OFFSET 415    // Iver
 #define RC_THROTTLE_OFFSET 507      // Mitch's
 #define RC_TO_RAD (0.071875*M_PI/180)*2
-//#define RC_TO_RPM 2.8             // Iver
-#define RC_TO_RPM 3.8               // Mitch
+//#define RC_TO_RPM 3.8             // Iver
+#define RC_TO_RPM 8              // Mitch
 
 
 int
