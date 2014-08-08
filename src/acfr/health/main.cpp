@@ -20,6 +20,11 @@
 #define OAS_BIT 	0b000001000000 //0x0040
 #define NAV_BIT 	0b000010000000 //0x0080
 #define ECOPUCK_BIT 0b000100000000 //0x0100
+#define PRESSURE_BIT 0b001000000000 //0x2000
+#define TEMP_BIT 0b010000000000 //0x4000
+#define LEAK_BIT 0b100000000000 //0x8000
+
+
 
 
 // Handlers
@@ -92,6 +97,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf,
 	state->checkAbortConditions();
 }
 
+void handle_leak(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const senlcm::leak_t *sensor, HealthMonitor *state)
+{
+	state->leak = *sensor;
+}
+
 HealthMonitor::HealthMonitor()
 {
 	// initialise member variables
@@ -140,6 +151,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("YSI", handle_ysi, this);
 	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
 	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
+	lcm.subscribeFunction("LEAK", handle_leak, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -314,6 +326,12 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		status.status |= OAS_BIT;
 	else if (abort_on_no_oas == true)
 		sendAbortMessage("OAS dead");
+		
+	if(leak.leak == 1)
+	{
+		status.status |= LEAK_BIT;
+		sendAbortMessage("Leak");
+	}
 
 	status.latitude = (float)nav.latitude;	
 	status.longitude = (float)nav.longitude;

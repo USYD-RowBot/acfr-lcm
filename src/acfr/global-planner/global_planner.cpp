@@ -280,13 +280,13 @@ int GlobalPlanner::sendLeg()
 	// we need to check that both the points we have are goal points
 	// if they are not then we need to send the commands in the command
 	// point and increment the indexes appropriately
-
+/*
 	while ((*currPoint).goalType == COMMAND)
 	{
 		sendCommands((*currPoint).commands);
 		currPoint++;
 	}
-
+*/
 	// execute the commands inside the point
 	sendCommands((*currPoint).commands);
 
@@ -375,7 +375,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 {
 	for (std::list<MissionCommand>::iterator itr = commands.begin();
 			itr != commands.end(); itr++)
-			{
+			{ 
 		switch (itr->device)
 		{
 		case CAMERA:
