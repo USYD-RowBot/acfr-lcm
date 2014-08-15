@@ -20,6 +20,7 @@
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/parosci_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
+#include "perls-lcmtypes++/senlcm/leak_t.hpp"
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
 
@@ -47,6 +48,7 @@ public:
     senlcm::rdi_pd5_t dvl;
     senlcm::parosci_t parosci;
     senlcm::ysi_t ysi;
+	senlcm::leak_t leak;
     senlcm::micron_ping_t oas;
 
     //lcm_t *lcm;

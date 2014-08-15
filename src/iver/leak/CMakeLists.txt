@@ -9,7 +9,7 @@ perls_target_link_libraries (leak perls-lcmtypes perls-common perls-math ${PERLS
 
 #ADD_CUSTOM_COMMAND(OUTPUT leak.ko
 #                   COMMAND make -f module.make
-#                   #DEPENDS leak.c Kbuild
+                   #DEPENDS leak.c Kbuild
 #                   COMMENT "Building leak.ko"
 #                  )
 

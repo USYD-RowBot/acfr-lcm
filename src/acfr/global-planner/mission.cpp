@@ -79,11 +79,12 @@
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
 						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiralinward" || tag == "coverage")
+						|| tag == "spiralinward" || tag == "coverage" || tag == "command")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
-            }      
+            }     
+			
                 
         }
     }
@@ -332,7 +333,7 @@ int Mission::getCommand(const xmlpp::Element* element)
             }            
             else if((*i).command.lowercase() == "onoff")
             {
-		if ((*i).value.lowercase() == "start")
+		if (((*i).value.lowercase() == "start") || ((*i).value.lowercase() == "on"))
 		{
                 	mc.command = CAMERA_START;
 		}
@@ -379,6 +380,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         mp = new LegPath();
     else if(primitiveType == "gotoandcircle")
     	mp = new GotoAndCirclePath();
+	else if(primitiveType == "command")
+    	mp = new Command();
     else 
         return 0;    
         

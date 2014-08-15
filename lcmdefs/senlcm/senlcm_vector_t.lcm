@@ -1,0 +1,11 @@
+package senlcm;
+
+struct vector_t
+{
+    int64_t utime;
+    
+    double r;
+    double p;
+    double h;
+    
+}

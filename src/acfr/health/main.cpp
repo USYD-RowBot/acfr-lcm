@@ -11,15 +11,21 @@
 #define DEPTH_TIMEOUT 	1000000
 #define OAS_TIMEOUT 	1000000
 
-#define DVL_BIT 	0b000000000001 //0x0001
-#define DVL_BL_BIT 	0b000000000010 //0x0002
-#define GPS_BIT 	0b000000000100 //0x0004
-#define DEPTH_BIT 	0b000000001000 //0x0008
-#define COMPASS_BIT	0b000000010000 //0x0010
-#define IMU_BIT 	0b000000100000 //0x0020
-#define OAS_BIT 	0b000001000000 //0x0040
-#define NAV_BIT 	0b000010000000 //0x0080
-#define ECOPUCK_BIT 0b000100000000 //0x0100
+#define DVL_BIT 	    0b0000000000000001 //0x0001
+#define DVL_BL_BIT 	    0b0000000000000010 //0x0002
+#define GPS_BIT 	    0b0000000000000100 //0x0004
+#define DEPTH_BIT 	    0b0000000000001000 //0x0008
+#define COMPASS_BIT	    0b0000000000010000 //0x0010
+#define IMU_BIT 	    0b0000000000100000 //0x0020
+#define OAS_BIT 	    0b0000000001000000 //0x0040
+#define NAV_BIT 	    0b0000000010000000 //0x0080
+#define ECOPUCK_BIT     0b0000000100000000 //0x0100
+#define ABORT_BIT       0b0000001000000000 //0x0200
+#define PRESSURE_BIT    0b0010000000000000 //0x2000
+#define TEMP_BIT        0b0100000000000000 //0x4000
+#define LEAK_BIT        0b1000000000000000 //0x8000
+00
+
 
 
 // Handlers
@@ -92,6 +98,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf,
 	state->checkAbortConditions();
 }
 
+void handle_leak(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const senlcm::leak_t *sensor, HealthMonitor *state)
+{
+	state->leak = *sensor;
+}
+
 HealthMonitor::HealthMonitor()
 {
 	// initialise member variables
@@ -140,6 +152,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("YSI", handle_ysi, this);
 	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
 	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
+	lcm.subscribeFunction("LEAK", handle_leak, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -314,6 +327,12 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		status.status |= OAS_BIT;
 	else if (abort_on_no_oas == true)
 		sendAbortMessage("OAS dead");
+		
+	if(leak.leak == 1)
+	{
+		status.status |= LEAK_BIT;
+		sendAbortMessage("Leak");
+	}
 
 	status.latitude = (float)nav.latitude;	
 	status.longitude = (float)nav.longitude;
@@ -335,6 +354,7 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
 	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
+	status.status |= ABORT_BIT;
 
 	return 1;
 }

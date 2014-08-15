@@ -12,6 +12,7 @@
 #include "GotoPath.h"
 #include "GotoAndCirclePath.h"
 #include "LegPath.h"
+#include "Command.h"
 
 
 #ifndef MISSION_HPP

@@ -24,8 +24,9 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     // senlcm channels
     senlcm_acomms_range_t_subscribe (lcm, "^.*ACOMMS_RANGE$", &senlcm_acomms_range_t_handler, lle);
     senlcm_dstar_ssp1_t_subscribe (lcm, "^.*DESERT_STAR$", &senlcm_dstar_ssp1_t_handler, lle);
-    senlcm_gpsd3_t_subscribe (lcm, "^.*GPSD3$", &senlcm_gpsd3_t_handler, lle);
-    senlcm_gpsd_t_subscribe (lcm, "^.*GPSD$", &senlcm_gpsd_t_handler, lle);
+    senlcm_gpsd3_t_subscribe (lcm, "^.*GPSD_CLIENT", &senlcm_gpsd3_t_handler, lle);
+//    senlcm_gpsd3_t_subscribe (lcm, "^.*GPSD3$", &senlcm_gpsd3_t_handler, lle);
+//    senlcm_gpsd_t_subscribe (lcm, "^.*GPSD$", &senlcm_gpsd_t_handler, lle);
     senlcm_kvh_dsp3000_t_subscribe (lcm, "^.*KVH$", &senlcm_kvh_dsp3000_t_handler, lle);
     senlcm_mocap_t_subscribe (lcm, "^.*MOCAP_POSE_ARDRONE$", &senlcm_mocap_t_handler, lle);
     senlcm_mocap_t_subscribe (lcm, "^.*MOCAP_POSE_TARGET$", &senlcm_mocap_t_handler, lle);
