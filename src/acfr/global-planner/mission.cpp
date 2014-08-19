@@ -365,6 +365,9 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     double l, w, rot, s;
     
     Glib::ustring primitiveType = node->get_name().lowercase();
+
+    // clear the list of commands to be associated with this primitive
+    commands.clear();
     
     if(primitiveType == "coverage")
         mp = new CoveragePath();

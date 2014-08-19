@@ -23,6 +23,7 @@
 #include "perls-lcmtypes++/senlcm/leak_t.hpp"
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 
 
 
@@ -50,6 +51,7 @@ public:
     senlcm::ysi_t ysi;
 	senlcm::leak_t leak;
     senlcm::micron_ping_t oas;
+    acfrlcm::auv_global_planner_state_t global_state;
 
     //lcm_t *lcm;
     lcm::LCM lcm;

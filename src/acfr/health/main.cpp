@@ -20,9 +20,10 @@
 #define OAS_BIT 	0b000001000000 //0x0040
 #define NAV_BIT 	0b000010000000 //0x0080
 #define ECOPUCK_BIT 0b000100000000 //0x0100
-#define PRESSURE_BIT 0b001000000000 //0x2000
-#define TEMP_BIT 0b010000000000 //0x4000
-#define LEAK_BIT 0b100000000000 //0x8000
+#define ABORT_BIT   0b001000000000 //0x0200
+#define PRESSURE_BIT 0b0010000000000000 //0x2000
+#define TEMP_BIT 0b0100000000000000 //0x4000
+#define LEAK_BIT 0b1000000000000000 //0x8000
 
 
 
@@ -103,6 +104,12 @@ void handle_leak(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	state->leak = *sensor;
 }
 
+void handle_global_state(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const acfrlcm::auv_global_planner_state_t *sensor, HealthMonitor *state)
+{
+	state->global_state = *sensor;
+}
+
 HealthMonitor::HealthMonitor()
 {
 	// initialise member variables
@@ -152,6 +159,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
 	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
 	lcm.subscribeFunction("LEAK", handle_leak, this);
+	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -332,6 +340,9 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		status.status |= LEAK_BIT;
 		sendAbortMessage("Leak");
 	}
+    
+    if(global_state.state == 0)
+        status.status |= ABORT_BIT;
 
 	status.latitude = (float)nav.latitude;	
 	status.longitude = (float)nav.longitude;
@@ -353,7 +364,6 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
 	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
-
 	return 1;
 }
 

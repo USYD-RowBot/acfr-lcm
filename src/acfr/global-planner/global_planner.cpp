@@ -379,6 +379,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 		switch (itr->device)
 		{
 		case CAMERA:
+            memset(&cameraTriggerMsg, 0, sizeof(cameraTriggerMsg));
 			cameraTriggerMsg.utime = timestamp_now();
 			if (itr->command == CAMERA_FREQ)
 			{
@@ -397,6 +398,8 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 				cameraTriggerMsg.command =
 						acfrlcm::auv_camera_trigger_t::SET_STATE;
 				cameraTriggerMsg.enabled = 1;
+                cameraTriggerMsg.freq = 1.0;
+                cameraTriggerMsg.pulseWidthUs = 10.0;
 			}
 			else if (itr->command == CAMERA_STOP)
 			{
