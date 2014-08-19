@@ -415,6 +415,36 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 			lcm.publish("CAMERA_TRIGGER", &cameraTriggerMsg);
 			break;
 		case DVL:
+		    memset(&rdiCommandMsg, 0, sizeof(rdiCommandMsg));
+			rdiCommandMsg.utime = timestamp_now();
+			string cmd;
+			if (itr->command == DVL_RANGE)
+			{
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::RANGE;
+				rdiCommandMsg.d = itr->valueDouble;
+				cmd = "Range";
+			}
+			if (itr->command == DVL_PD5)
+		    {
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::PD5_COUNT;
+				rdiCommandMsg.i = itr->valueInt;
+				cmd = "PD5 count";
+			}
+			if (itr->command == DVL_PD0)
+			{
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::PD0_COUNT;
+				rdiCommandMsg.i = itr->valueInt;
+				cmd = "PD0 count";
+			}
+			
+			std::cout << "Sending RDI DVL command: "
+					<< cmd << " I:"
+					<< (int) (rdiCommandMsg.d) << " F:"
+					<< (int) (rdiCommandMsg.i) << endl;
+            lcm.publish("RDI_CONTROL", &rdiCommandMsg);
 			break;
 		}
 	}

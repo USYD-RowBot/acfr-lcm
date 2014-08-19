@@ -15,7 +15,8 @@ typedef enum {
     CAMERA_FREQ,
     CAMERA_WIDTH,
     DVL_PD0,
-    DVL_PD5
+    DVL_PD5,
+    DVL_RANGE
 } missionCommandTypeT;
 
 

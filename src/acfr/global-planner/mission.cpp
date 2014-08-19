@@ -333,19 +333,37 @@ int Mission::getCommand(const xmlpp::Element* element)
             }            
             else if((*i).command.lowercase() == "onoff")
             {
-		if (((*i).value.lowercase() == "start") || ((*i).value.lowercase() == "on"))
-		{
+		        if (((*i).value.lowercase() == "start") || ((*i).value.lowercase() == "on"))
+		        {
                 	mc.command = CAMERA_START;
-		}
-		else
-		{
-			mc.command = CAMERA_STOP;
-		}
+		        }
+		        else
+		        {
+			        mc.command = CAMERA_STOP;
+		        }
             }
         }
         
         // DVL Specific
-        // TODO
+        if(mc.device == DVL)
+        {
+            if((*i).command.lowercase() == "range")
+            {
+                mc.command = DVL_RANGE;
+                mc.valueDouble = atof((*i).value.c_str());
+            }            
+            if((*i).command.lowercase() == "pd5_count")
+            {
+                mc.command = DVL_PD5;
+                mc.valueInt = atoi((*i).value.c_str());
+            }            
+            if((*i).command.lowercase() == "pd0_count")
+            {
+                mc.command = DVL_PD0;
+                mc.valueInt = atoi((*i).value.c_str());
+            }            
+        }
+        
         
         commands.push_back(mc);
      
