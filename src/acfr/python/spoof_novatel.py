@@ -36,11 +36,11 @@ while True:
     
     msg.latitude = math.radians(olat + lat * inc )
     msg.longitude = math.radians(olon + lon * inc)
-    msg.heading = h
+    msg.heading = math.radians(h)
     
     lon = rad2 * math.cos(math.radians(angle-45))     
     lat = rad2 * math.sin(math.radians(angle-45))
-    h = math.radians(angle + 45) % 360.0)
+    h = math.radians((angle + 45) % 360.0)
     
     msg2.latitude = math.radians(olat + lat * inc )
     msg2.longitude = math.radians(olon + lon * inc)
