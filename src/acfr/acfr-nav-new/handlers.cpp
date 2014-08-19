@@ -349,3 +349,5 @@ void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IM
 
     state->slam->handle_imu_data(imu_data);
 }
+
+
