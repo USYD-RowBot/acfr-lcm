@@ -4,12 +4,12 @@
 # starts the image logger
 
 LCMBINDIR="/home/auv/git/acfr_lcm/build/bin"
-LOGBASEDIR="/media/data/"
+LOGBASEDIR="/media/data"
 TIMESTAMP=`date --utc +%Y%m%d_%H%M%S`
 
 # Get mission name.
 MISSION_NAME=r$TIMESTAMP\_${1}
-LOGDIR=$LOGBASEDIR/$MISSION_NAME
+LOGDIR=${LOGBASEDIR}/${MISSION_NAME}
 IMAGE_LOGDIR=$LOGDIR/i$TIMESTAMP/
 
 # create the directory for the images
@@ -30,3 +30,4 @@ cp /tmp/mission.cfg $LOGDIR
 /home/auv/git/acfr_lcm/src/acfr/python/cam_control.py path $IMAGE_LOGDIR
 /home/auv/git/acfr_lcm/src/acfr/python/cam_control.py start
 lcm-logger -v -c "PROSILICA_..16" $LOGDIR/$MISSION_NAME.lcm > /dev/null 2> /dev/null &
+lcm-logger -v -c ".*RAW|PMD.*|.*STATS|PARAM.*|PROSILICA_..16|LCM.*|HEARTBEAT.*" $LOGDIR/${MISSION_NAME}_short.lcm > /dev/null 2> /dev/null &

@@ -345,7 +345,7 @@ int main(int argc, char **argv) {
 				pitch = -pid(&state.gains_altitude, nav.altitude, cmd.altitude,
 						CONTROL_DT);
 			// Depth to pitch mode
-			else
+			else 
 				pitch = -pid(&state.gains_depth, nav.depth, cmd.depth,
 						CONTROL_DT);
 

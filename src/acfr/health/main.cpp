@@ -11,15 +11,21 @@
 #define DEPTH_TIMEOUT 	1000000
 #define OAS_TIMEOUT 	1000000
 
-#define DVL_BIT 	0b000000000001 //0x0001
-#define DVL_BL_BIT 	0b000000000010 //0x0002
-#define GPS_BIT 	0b000000000100 //0x0004
-#define DEPTH_BIT 	0b000000001000 //0x0008
-#define COMPASS_BIT	0b000000010000 //0x0010
-#define IMU_BIT 	0b000000100000 //0x0020
-#define OAS_BIT 	0b000001000000 //0x0040
-#define NAV_BIT 	0b000010000000 //0x0080
-#define ECOPUCK_BIT 0b000100000000 //0x0100
+#define DVL_BIT 	    0b0000000000000001 //0x0001
+#define DVL_BL_BIT 	    0b0000000000000010 //0x0002
+#define GPS_BIT 	    0b0000000000000100 //0x0004
+#define DEPTH_BIT 	    0b0000000000001000 //0x0008
+#define COMPASS_BIT	    0b0000000000010000 //0x0010
+#define IMU_BIT 	    0b0000000000100000 //0x0020
+#define OAS_BIT 	    0b0000000001000000 //0x0040
+#define NAV_BIT 	    0b0000000010000000 //0x0080
+#define ECOPUCK_BIT     0b0000000100000000 //0x0100
+#define ABORT_BIT       0b0000001000000000 //0x0200
+#define PRESSURE_BIT    0b0010000000000000 //0x2000
+#define TEMP_BIT        0b0100000000000000 //0x4000
+#define LEAK_BIT        0b1000000000000000 //0x8000
+
+
 
 // Handlers
 
@@ -77,12 +83,30 @@ void handle_nav(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	state->nav = *sensor;
 }
 
+void handle_vis(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const acfrlcm::auv_vis_rawlog_t *sensor, HealthMonitor *state)
+{
+	state->image_count++;
+}
+
 void handle_heartbeat(const lcm::ReceiveBuffer *rbuf,
 		const std::string& channel, const perllcm::heartbeat_t *hb,
 		HealthMonitor *state)
 {
 	state->checkStatus(hb->utime);
 	state->checkAbortConditions();
+}
+
+void handle_leak(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const senlcm::leak_t *sensor, HealthMonitor *state)
+{
+	state->leak = *sensor;
+}
+
+void handle_global_state(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const acfrlcm::auv_global_planner_state_t *sensor, HealthMonitor *state)
+{
+	state->global_state = *sensor;
 }
 
 HealthMonitor::HealthMonitor()
@@ -100,6 +124,7 @@ HealthMonitor::HealthMonitor()
 	ysi.utime = 0;
 	ysi.depth = 0;
 	oas.utime = 0;
+	image_count = 0;
 
 	abort_on_no_compass = false;
 	abort_on_no_gps = false;
@@ -131,6 +156,9 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("PAROSCI", handle_parosci, this);
 	lcm.subscribeFunction("YSI", handle_ysi, this);
 	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
+	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
+	lcm.subscribeFunction("LEAK", handle_leak, this);
+	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -147,6 +175,32 @@ int HealthMonitor::loadConfig(char *program_name)
 	char key[128];
 	double tmp_double;
 	sprintf(rootkey, "acfr.%s", program_name);
+
+	sprintf(key, "%s.min_x", rootkey);
+	min_x = botu_param_get_double_or_default(param, key, LONG_MIN);
+	sprintf(key, "%s.max_x", rootkey);
+	max_x = botu_param_get_double_or_default(param, key, LONG_MAX);
+	sprintf(key, "%s.min_y", rootkey);
+	min_y = botu_param_get_double_or_default(param, key, LONG_MIN);
+	sprintf(key, "%s.max_y", rootkey);
+	max_y = botu_param_get_double_or_default(param, key, LONG_MAX);
+	std::cout << "Operation bounding box is: \n";
+	print_bounding_box();
+	if( fabs(min_x - LONG_MIN) > 1e-3 ||
+			fabs(max_x - LONG_MAX) > 1e-3 ||
+			fabs(min_y - LONG_MIN) > 1e-3 ||
+			fabs(max_y - LONG_MAX) > 1e-3 ) {
+		abort_on_out_of_bound = true;
+		std::cout << "We will abort when out ot bounds!!\n\n\n";
+	}
+	else {
+		abort_on_out_of_bound = false;
+		std::cout << "We will NOT abort when out ot bounds!!\n\n\n";
+	}
+
+	sprintf(key, "%s.max_depth", rootkey);
+	max_depth = bot_param_get_double_or_fail(param, key);
+	std::cout << "Set max depth to: " << max_depth << std::endl;
 
 	sprintf(key, "%s.max_depth", rootkey);
 	max_depth = bot_param_get_double_or_fail(param, key);
@@ -279,6 +333,24 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		status.status |= OAS_BIT;
 	else if (abort_on_no_oas == true)
 		sendAbortMessage("OAS dead");
+		
+	if(leak.leak == 1)
+	{
+		status.status |= LEAK_BIT;
+		sendAbortMessage("Leak");
+	}
+    
+    if(global_state.state == 0)
+        status.status |= ABORT_BIT;
+
+	status.latitude = (float)nav.latitude;	
+	status.longitude = (float)nav.longitude;
+	status.altitude = (char)(nav.altitude * 10.0);
+	status.depth = (short)(nav.depth * 10.0);
+	status.roll = (char)(nav.roll * 10.0);
+	status.pitch = (char)(nav.pitch * 10.0);
+	status.heading = (short)(nav.heading * 10.0);
+	status.img_count = image_count;
 
 	lcm.publish("AUV_HEALTH", &status);
 
@@ -301,20 +373,28 @@ int HealthMonitor::checkAbortConditions()
 	// the raw sensor measurements but would have to account for tare.
 	if (nav.depth > max_depth)
 	{
-		std::cout << "ABORT: Exceeded max depth" << std::endl;
+		std::cerr << "ABORT: Exceeded max depth" << std::endl;
 		sendAbortMessage("MAX_DEPTH exceeded");
 	}
 	if (fabs(nav.pitch) > max_pitch)
 	{
-		std::cout << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
+		std::cerr << "ABORT: Exceeded max pitch: " << nav.pitch << std::endl;
 		sendAbortMessage("MAX_PITCH exceeded");
 	}
 	if (nav.altitude > 0.0 && nav.altitude < min_alt)
 	{
-		std::cout << "ABORT: Exceeded min altitude:" << nav.altitude
+		std::cerr << "ABORT: Exceeded min altitude:" << nav.altitude
 				<< std::endl;
 		sendAbortMessage("MIN_ALT exceeded");
 	}
+	if ( abort_on_out_of_bound &&
+			(nav.x < min_x || nav.x > max_x || nav.y < min_y || nav.y > max_y) ) {
+		std::cerr << "ABORT: Exceeded bounding box limit: x/y = " <<
+				nav.x << "/" << nav.y << std::endl;
+		print_bounding_box();
+		sendAbortMessage("BOUNDS exceeded");
+	}
+
 	return 0;
 }
 

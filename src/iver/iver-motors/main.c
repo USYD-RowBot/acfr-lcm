@@ -21,6 +21,7 @@
 
 #define SERVO_RANGE 0
 #define DTOR M_PI/180.
+#define TOP_SCALE -1.2
 
 // gears are servo 19T, intermediate 40T, fin shaft 36T
 // gear ratio is 0.5277
@@ -80,6 +81,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     
     
     // limit check and scale
+    mc.top = mc.top * TOP_SCALE;
     if(mc.top >= MAX_SERVO_ANGLE)
         mc.top = MAX_SERVO_ANGLE;
     else if(mc.top <= -MAX_SERVO_ANGLE)

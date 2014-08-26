@@ -11,6 +11,7 @@
 #include "perls-lcmtypes/senlcm_rdi_pd4_t.h"
 #include "perls-lcmtypes/senlcm_rdi_pd5_t.h"
 #include "perls-lcmtypes/senlcm_rdi_pd0_t.h"
+#include "perls-lcmtypes/senlcm_rdi_control_t.h"
 #include "perls-lcmtypes/senlcm_raw_ascii_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_relay_t.h"
 
@@ -38,11 +39,11 @@ typedef struct
 {
     int pd5_count_max;
     int pd0_count_max;
-    int pd5_depth_max;
     pthread_mutex_t count_lock;
     int mode;
     generic_sensor_driver_t *gsd;
     int programming;
+    double range;
 } state_t;
 
 rdi_pd_mode_t rdi_pd_mode = RDI_PD5_MODE;
@@ -114,7 +115,7 @@ program_dvl(state_t * state) //const char *config)
     
     // Convert the max depth in meters to the command in decimeters
     char max_depth_cmd[8];
-    sprintf( max_depth_cmd, "BX%05d\r", state->pd5_depth_max*10 );
+    sprintf( max_depth_cmd, "BX%05d\r", (int)state->range*10 );
     printf( "Sending max depth command: %s\n", max_depth_cmd);
 
     if(state->mode == MODE_PD5)
@@ -296,6 +297,28 @@ void relay_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
         }
     
 }
+
+void rdi_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_rdi_control_t *rc, void *u)
+{
+    state_t *state = (state_t *)u;
+    pthread_mutex_lock(&state->count_lock);
+    switch(rc->command)
+    {
+        case SENLCM_RDI_CONTROL_T_PD0_COUNT:
+            state->pd0_count_max = rc->i;
+            break;
+        case SENLCM_RDI_CONTROL_T_PD5_COUNT:
+            state->pd5_count_max = rc->i;
+            break;
+       case SENLCM_RDI_CONTROL_T_RANGE:
+            state->range = rc->d;
+            break;
+    }
+    pthread_mutex_unlock(&state->count_lock);
+}
+    
+                        
+
 // Process LCM messages with callbacks
 static void *
 lcm_thread (void *context)
@@ -328,7 +351,7 @@ main (int argc, char *argv[])
     // listen for changes
     state.pd0_count_max = 0;
     state.pd5_count_max = 0;
-    state.pd5_depth_max = 25;
+    state.range = 25;
     
     
     char key[256];
@@ -357,9 +380,9 @@ main (int argc, char *argv[])
     state.pd5_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
     sprintf(key, "%s.pd0_count_max", state.gsd->rootkey);
     state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
-    sprintf(key, "%s.pd5_depth_max", state.gsd->rootkey);
-    state.pd5_depth_max = bot_param_get_int_or_fail(state.gsd->params, key);
-    printf( "read max range from config file: %d [m]\n", state.pd5_depth_max);
+    sprintf(key, "%s.range", state.gsd->rootkey);
+    state.range = bot_param_get_double_or_fail(state.gsd->params, key);
+    printf( "read max range from config file: %f [m]\n", state.range);
 
     // initialize dvl
     gsd_flush (state.gsd);
@@ -378,13 +401,25 @@ main (int argc, char *argv[])
 
     senlcm_raw_ascii_t_subscribe(state.gsd->lcm, "MP_PASSOUT", &mp_callback, &state);
     acfrlcm_auv_relay_t_subscribe(state.gsd->lcm, "RELAY", &relay_callback, &state);
-
+    senlcm_rdi_control_t_subscribe(state.gsd->lcm, "RDI_CONTROL", &rdi_control_callback, &state);
+    
+    double current_range = state.range;
 
     while (!state.gsd->done) {
+        // are we changing the range
+        pthread_mutex_lock(&state.count_lock);
+        if(abs(state.range - current_range) > 0.001)
+        {
+            char range_cmd[64];
+            sprintf(range_cmd, "BX%05d\r", (int)(state.range*10));
+            printf("Changing Range to %fm\n", state.range);
+            rdi_send_command(state.gsd, range_cmd, EXPECT_RESPONSE); // max depth in decimetre
+            rdi_send_command(state.gsd,"CS\r", NO_RESPONSE);         //trigger the ping
+        }
+    
         if(state.mode == MODE_PD0)
         {
             // Are we doing PD5 now?
-            pthread_mutex_lock(&state.count_lock);
 	        if(pd5_count++ < state.pd5_count_max)
 	        {
                 //Is this the first bottom ping in this sequence?
@@ -418,11 +453,12 @@ main (int argc, char *argv[])
           	  pd0_count=0;
 	          pd5_count=0;
 	        }
-            pthread_mutex_unlock(&state.count_lock);   
+            
         }
         else
             // we are in free running mode, just PD5 or PD4
             get_rdi_and_send(state.gsd, tss);
+        pthread_mutex_unlock(&state.count_lock);   
     } // while
 
     timestamp_sync_free (tss);

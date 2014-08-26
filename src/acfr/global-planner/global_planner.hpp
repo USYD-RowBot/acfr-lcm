@@ -6,6 +6,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_camera_trigger_t.hpp"
+#include "perls-lcmtypes++/senlcm/rdi_control_t.hpp"
 #include "perls-common/timestamp.h"
 
 #include "mission.hpp"
@@ -27,6 +28,7 @@ typedef enum
 
 typedef enum
 {
+	globalPlannerReset = -1,
 	globalPlannerRun,
 	globalPlannerAbort,
 	globalPlannerStop,
@@ -69,6 +71,7 @@ private:
 
 	// command settings
 	acfrlcm::auv_camera_trigger_t cameraTriggerMsg;
+	senlcm::rdi_control_t rdiCommandMsg;
 };
 
 #endif

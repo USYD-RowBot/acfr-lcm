@@ -79,11 +79,12 @@
                 Glib::ustring tag = (*i)->get_name().lowercase(); 
                 if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
 						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiralinward")
+						|| tag == "spiralinward" || tag == "coverage" || tag == "command")
 					parsePrimitive(*i);
 				else if((*i)->get_name().lowercase() != "text")
                     cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
-            }      
+            }     
+			
                 
         }
     }
@@ -332,19 +333,37 @@ int Mission::getCommand(const xmlpp::Element* element)
             }            
             else if((*i).command.lowercase() == "onoff")
             {
-		if ((*i).value.lowercase() == "start")
-		{
+		        if (((*i).value.lowercase() == "start") || ((*i).value.lowercase() == "on"))
+		        {
                 	mc.command = CAMERA_START;
-		}
-		else
-		{
-			mc.command = CAMERA_STOP;
-		}
+		        }
+		        else
+		        {
+			        mc.command = CAMERA_STOP;
+		        }
             }
         }
         
         // DVL Specific
-        // TODO
+        if(mc.device == DVL)
+        {
+            if((*i).command.lowercase() == "range")
+            {
+                mc.command = DVL_RANGE;
+                mc.valueDouble = atof((*i).value.c_str());
+            }            
+            if((*i).command.lowercase() == "pd5_count")
+            {
+                mc.command = DVL_PD5;
+                mc.valueInt = atoi((*i).value.c_str());
+            }            
+            if((*i).command.lowercase() == "pd0_count")
+            {
+                mc.command = DVL_PD0;
+                mc.valueInt = atoi((*i).value.c_str());
+            }            
+        }
+        
         
         commands.push_back(mc);
      
@@ -364,8 +383,13 @@ int Mission::parsePrimitive(xmlpp::Node *node)
     double l, w, rot, s;
     
     Glib::ustring primitiveType = node->get_name().lowercase();
+
+    // clear the list of commands to be associated with this primitive
+    commands.clear();
     
-    if(primitiveType == "zambonie")
+    if(primitiveType == "coverage")
+        mp = new CoveragePath();
+    else if(primitiveType == "zambonie")
         mp = new ZamboniePath();
     else if(primitiveType == "spiralinward")
         mp = new SpiralInwardPath();
@@ -377,6 +401,8 @@ int Mission::parsePrimitive(xmlpp::Node *node)
         mp = new LegPath();
     else if(primitiveType == "gotoandcircle")
     	mp = new GotoAndCirclePath();
+	else if(primitiveType == "command")
+    	mp = new Command();
     else 
         return 0;    
         

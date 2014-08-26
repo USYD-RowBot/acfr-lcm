@@ -16,5 +16,7 @@ sudo apt-get install libglib2.0-dev \
 	doxygen \
 	libf2c2-dev \
 	libgsl0-dev \
-	libjpeg-turbo8-dev	
+	gtk-doc-tools \
+        libgps-dev \
+	libqt4-svg
 

@@ -59,8 +59,8 @@ bool CoveragePath::calcPath(void) {
 	list<waypoint> tmpPath;
 	if(doSpiral) {
 		int numLoops = min(
-				ceil((length - minZambonieLength) / (2*pathOffset)),
-				ceil((width - minZambonieWidth)/(2*pathOffset))
+				floor((length - minZambonieLength) / (2*pathOffset)),
+				floor((width - minZambonieWidth)/(2*pathOffset))
 				);
 		cout << endl << "Performing " << numLoops <<
 				" loops of inward spirals first " << endl;

@@ -467,19 +467,38 @@ int LocalPlanner::processWaypoints()
 	cc.run_mode = acfrlcm::auv_control_t::RUN;
 	cc.heading = desHeading;
 	cc.vx = desVel;
+    static double depth_ref = 0.0;
+    double curr_depth_ref;
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
-		cc.depth = wp.getZ();
+		//cc.depth = wp.getZ();
+        curr_depth_ref = wp.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	else
 	{
 		// set the depth goal using the filtered desired altitude.
-		cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
+		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
+		curr_depth_ref = currPose.getZ() + (currAltitude - wp.getZ());
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
-	lcm.publish("AUV_CONTROL", &cc);
+    // FIXME: limit the depth rate change to yield an achievable 
+    // trajectory. This is modelled on a forward speed of 0.75m/s 
+    // with a max pitch of 0.3rad.  This should be configurable or
+    // calculated automatically.
+    double NAV_DT = 0.1;
+    double max_depth_ref_change = 0.2*NAV_DT;
+    double depth_ref_error = curr_depth_ref - depth_ref;
+    if (depth_ref_error > max_depth_ref_change)
+        depth_ref += max_depth_ref_change;
+    else if (depth_ref_error < -max_depth_ref_change)
+        depth_ref -= max_depth_ref_change;
+    else
+        depth_ref = curr_depth_ref;
 
+    cc.depth = depth_ref;
+
+	lcm.publish("AUV_CONTROL", &cc);
 	return 1;
 }
 

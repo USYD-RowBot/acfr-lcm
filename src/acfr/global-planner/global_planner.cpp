@@ -69,6 +69,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		gp->globalPlannerMessage = globalPlannerStop;
 		break;
 
+	case acfrlcm::auv_global_planner_t::RESET:
+			// Stop the currently running mission
+			gp->globalPlannerMessage = globalPlannerReset;
+			break;
+
 	case acfrlcm::auv_global_planner_t::SKIP:
 		// Skip the current waypoint
 		gp->skipWaypoint = true;
@@ -208,6 +213,9 @@ int GlobalPlanner::clock()
 		// we will signal the main control layer to go to abort
 		// then go into idle
 		nextState = globalPlannerFsmAbort;
+		if( globalPlannerMessage == globalPlannerReset ) {
+			nextState = globalPlannerFsmIdle;
+		}
 		break;
 
 	case globalPlannerFsmDone:
@@ -272,13 +280,13 @@ int GlobalPlanner::sendLeg()
 	// we need to check that both the points we have are goal points
 	// if they are not then we need to send the commands in the command
 	// point and increment the indexes appropriately
-
+/*
 	while ((*currPoint).goalType == COMMAND)
 	{
 		sendCommands((*currPoint).commands);
 		currPoint++;
 	}
-
+*/
 	// execute the commands inside the point
 	sendCommands((*currPoint).commands);
 
@@ -367,10 +375,11 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 {
 	for (std::list<MissionCommand>::iterator itr = commands.begin();
 			itr != commands.end(); itr++)
-			{
+			{ 
 		switch (itr->device)
 		{
 		case CAMERA:
+            memset(&cameraTriggerMsg, 0, sizeof(cameraTriggerMsg));
 			cameraTriggerMsg.utime = timestamp_now();
 			if (itr->command == CAMERA_FREQ)
 			{
@@ -389,6 +398,8 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 				cameraTriggerMsg.command =
 						acfrlcm::auv_camera_trigger_t::SET_STATE;
 				cameraTriggerMsg.enabled = 1;
+                cameraTriggerMsg.freq = 1.0;
+                cameraTriggerMsg.pulseWidthUs = 10.0;
 			}
 			else if (itr->command == CAMERA_STOP)
 			{
@@ -404,6 +415,36 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 			lcm.publish("CAMERA_TRIGGER", &cameraTriggerMsg);
 			break;
 		case DVL:
+		    memset(&rdiCommandMsg, 0, sizeof(rdiCommandMsg));
+			rdiCommandMsg.utime = timestamp_now();
+			string cmd;
+			if (itr->command == DVL_RANGE)
+			{
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::RANGE;
+				rdiCommandMsg.d = itr->valueDouble;
+				cmd = "Range";
+			}
+			if (itr->command == DVL_PD5)
+		    {
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::PD5_COUNT;
+				rdiCommandMsg.i = itr->valueInt;
+				cmd = "PD5 count";
+			}
+			if (itr->command == DVL_PD0)
+			{
+				rdiCommandMsg.command =
+						senlcm::rdi_control_t::PD0_COUNT;
+				rdiCommandMsg.i = itr->valueInt;
+				cmd = "PD0 count";
+			}
+			
+			std::cout << "Sending RDI DVL command: "
+					<< cmd << " I:"
+					<< (int) (rdiCommandMsg.d) << " F:"
+					<< (int) (rdiCommandMsg.i) << endl;
+            lcm.publish("RDI_CONTROL", &rdiCommandMsg);
 			break;
 		}
 	}

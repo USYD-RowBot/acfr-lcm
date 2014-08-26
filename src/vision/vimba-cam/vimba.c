@@ -686,6 +686,8 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
         image.width = frame->width;
         image.height = frame->height;
         image.row_stride = image.width * bpp;
+        image.data = (unsigned char *)frame->buffer;
+        image.size = frame->width * frame->height * bpp;
         bot_core_image_t_publish(state->lcm, state->channel, &image);   
     }    
     
@@ -700,12 +702,14 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
 {
     state_t *state = in_frame->context[0];
     int64_t utime = timestamp_now();
-        
+    VmbError_t err;    
     if(in_frame->receiveStatus != VmbFrameStatusComplete)
     {
         printf("Frame error %d\n", in_frame->receiveStatus);
-	    VmbCaptureFrameQueue(state->camera, in_frame, frame_done_callback);
-	    return;
+	    err = VmbCaptureFrameQueue(state->camera, in_frame, frame_done_callback);
+	    if(err != VmbErrorSuccess)
+            printf("Frame requeue error: %d\n", err);
+        return;
     }
     
     // make a copy of the frame
@@ -714,8 +718,10 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
     frame->buffer = malloc(in_frame->bufferSize);
     memcpy(frame->buffer, in_frame->buffer, in_frame->bufferSize);
     
-    VmbCaptureFrameQueue(state->camera, in_frame, frame_done_callback);
-    
+    err = VmbCaptureFrameQueue(state->camera, in_frame, frame_done_callback);
+	if(err != VmbErrorSuccess)
+        printf("Frame requeue error: %d\n", err);
+
     // get the actual frame timestamp based on its clock and our clock
     int64_t frame_utime = timestamp_sync_private(&state->tss, frame->timestamp, utime);
     
@@ -754,8 +760,10 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
         }
     
     if(state->publish)
+        {
+	printf("pub\n");
         publish_image(state, frame, exposure, gain, frame_utime);
-    
+    }
     // If we are writing the data to disk put the frame in the queue
     if(state->write_files)
     {
@@ -898,6 +906,9 @@ int main(int argc, char **argv)
         return 0;
     }
 
+
+    printf("Publish = %d, Scale = %d\n", state.publish, state.image_scale);
+
     // start Vimba
     if(VmbStartup() == VmbErrorInternalFault)
     {
@@ -990,8 +1001,11 @@ int main(int argc, char **argv)
     
     // Queue frames and register callback
     for(int i=0; i<BUFFERS; i++)
-        VmbCaptureFrameQueue(state.camera, &frames[i], frame_done_callback);
-
+    {    
+        err = VmbCaptureFrameQueue(state.camera, &frames[i], frame_done_callback);
+	    if(err != VmbErrorSuccess)
+            printf("Frame queue error: %d\n", err);
+    }  
     // start the write thread and detach it
     pthread_t tid;
     pthread_create(&tid, NULL, write_thread, &state);

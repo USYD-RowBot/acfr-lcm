@@ -1,0 +1,16 @@
+package senlcm;
+		
+struct rdi_control_t
+{
+    int64_t utime;
+   
+	// Message types
+	const int8_t PD0_COUNT = 0;
+	const int8_t PD5_COUNT = 1;
+	const int8_t RANGE = 2;
+	
+	int8_t command;
+	
+	int32_t i;
+	double d;
+}

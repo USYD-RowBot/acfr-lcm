@@ -4,7 +4,7 @@
 import lcm
 import sys
 
-sys.path.append('/home/auv/git/acfr_lcm/build/lib/python2./dist-packages/perls/lcmtypes')
+sys.path.append('/home/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
 from acfrlcm.auv_path_command_t import auv_path_command_t
 

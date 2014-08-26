@@ -5,12 +5,14 @@
 #include <fstream>
 #include <iostream>
 #include "MissionPrimitive.hpp"
+#include "CoveragePath.h"
 #include "ZamboniePath.h"
 #include "SpiralInwardPath.h"
 #include "SpiralPath.h"
 #include "GotoPath.h"
 #include "GotoAndCirclePath.h"
 #include "LegPath.h"
+#include "Command.h"
 
 
 #ifndef MISSION_HPP

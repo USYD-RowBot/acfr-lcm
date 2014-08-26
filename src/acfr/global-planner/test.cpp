@@ -9,7 +9,7 @@ int main(int argc, char ** argv)
 
 	MissionPrimitive * mp = NULL;
 
-	mp = new CoveragePath();
+	mp = new SpiralInwardPath();
 
 	mp->setTurnRadius(7.5);
 	mp->setLength( 35 );
@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
 	mp->setHeadingDeg(0);
 
 	mp->calcPath();
-//	mp->printPath();
+	mp->printPath();
 
     return 1;
 }
