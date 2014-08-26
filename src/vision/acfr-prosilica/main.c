@@ -272,6 +272,7 @@ write_thread (void *context)
     
     char filename[NAME_MAX];
     vis_botimage_filename (filename, sizeof filename, wdata->state->driver->strftime, wdata->utime, wdata->framecount);
+printf ("Saving image %s\n", filename);
 
     bool color_interpolate = wdata->state->driver->bayer ? false : true;
     prosilica_save_tiff (wdata->Frame, wdata->state->camera->uid, wdata->state->driver->logdir, 
@@ -995,6 +996,7 @@ parse_args (state_t *state, int argc, char *argv[])
     else if (bot_param_get_boolean (state->param, key, &state->driver->publish) != 0)
         state->driver->publish = !getopt_get_bool (state->gopt, "nopublish"); /* default */
 
+printf("LCM publish state: %d\n",  state->driver->publish);
     // url
     sprintf (key, "%s.url", state->rootkey);
     if (getopt_has_flag (state->gopt, "url"))
