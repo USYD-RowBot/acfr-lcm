@@ -9,7 +9,7 @@ import time
 LCMROOT='/home/auv/git/acfr_lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
-from senlcm import novatel_t, usbl_fix_t
+from acfrlcm import auv_acfr_nav_t
 
 
 olon = 152.092212561092
@@ -19,18 +19,16 @@ angle = 0.0
 
 lc = lcm.LCM()
 
-msg = novatel_t()
+msg = auv_acfr_nav_t()
 msg.roll = 0
 msg.pitch = 0
 rad = 100
 rad2 = 90
 
-msg2 = usbl_fix_t()
 
 while True:
     msg.utime = int(time.time() * 1000000)
-    msg2.utime = int(time.time() * 1000000)
-    lat = rad * math.cos(math.radians(angle))     
+    lat = rad * math.cos(math.radians(angle))
     lon = rad * math.sin(math.radians(angle))
     h = (angle + 90.0) % 360.0
     
@@ -38,18 +36,10 @@ while True:
     msg.longitude = math.radians(olon + lon * inc)
     msg.heading = math.radians(h)
     
-    lon = rad2 * math.cos(math.radians(angle-45))     
-    lat = rad2 * math.sin(math.radians(angle-45))
-    h = math.radians((angle + 45) % 360.0)
+
     
-    msg2.latitude = math.radians(olat + lat * inc )
-    msg2.longitude = math.radians(olon + lon * inc)
-    msg2.accuracy = 10
-    
-    
-    lc.publish("NOVATEL", msg.encode())
-    lc.publish("USBL_FIX", msg2.encode())
-    
+    lc.publish("ACFR_NAV.IVER.TOP", msg.encode())
+
     angle = angle + 0.5
     
-    time.sleep(0.2)
+    time.sleep(1)
