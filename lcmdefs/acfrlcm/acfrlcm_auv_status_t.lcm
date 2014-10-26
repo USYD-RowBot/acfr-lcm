@@ -25,7 +25,7 @@ struct auv_status_t
         bit 14      Temp
         bit 15      Leak
     */
-    
+    int8_t  target_id;
     int16_t waypoint;
     int16_t heading;    /* 0.1 deg */
     int8_t roll;        /* 0.1 deg */

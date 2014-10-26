@@ -42,10 +42,24 @@ typedef enum
     IO_ENET
 } interface_t;
 
+typedef enum
+{
+    MODEM_AVAILABLE,
+    MODEM_SENDING_IM,
+    MODEM_SENDING_DATA,
+    MODEM_SENDING_COMMAND,
+    MODEM_WAITING_IM,
+    MODEM_WAITING_DATA,
+    MODEM_WAITING_COMMAND
+} modem_state_t;
+
 typedef struct 
 {
     lcm_t *lcm;
     int fd;
+    
+    modem_state_t modem_state;
+    
     int current_target;
     int channel_ready;
     int ping_semaphore[8];

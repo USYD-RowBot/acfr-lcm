@@ -11,7 +11,7 @@
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
-#include "evologics.h"
+#include "evologics.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
@@ -30,6 +30,8 @@ using namespace acfrlcm;
 #define RTOD 180.0/M_PI
 #define MAX_BUF_LEN 1024
 #define AHRS_PORT "10000"
+
+#define MAX_TARGETS 8
 
 // Attitude source
 typedef enum 
@@ -54,14 +56,16 @@ class Evologics_Usbl
         int load_config(char *program_name);
         int init();
         int process();
-        int calc_position();
+        int calc_position(double x, double y, double z, double accuracy, int remote_id);
         int ping_targets();
-        int task_command(const auv_global_planner_t *task);
         int parse_ahrs_message(char *buf);
         
         // data holders
         gpsd3_t gpsd;
         novatel_t novatel;
+        ahrs_t ahrs;
+        
+        Evologics *evo;
         
         
         
@@ -70,16 +74,19 @@ class Evologics_Usbl
         char *ip;
         char *inet_port;
         int ahrs_fd;
+        int evo_fd;
+        
+        
         
         // targets
-        int targets[8];
+        int targets[MAX_TARGETS];
+        int num_targets;
+        char **lcm_channels;
     
-        el_state_t state;
+       
         attitude_source_t attitude_source;
         gps_source_t gps_source;
-        
-        
-    
+            
         // pose of the usbl to ins
         SMALL::Pose3D usbl_ins_pose;
         
@@ -90,6 +97,9 @@ class Evologics_Usbl
         projPJ pj_latlong;
         
         int ping_period;
-        int ping_counter;        
+        int ping_counter; 
+        
+        int usbl_send_counter[MAX_TARGETS];    
+        int usbl_send[MAX_TARGETS];   
 };
          
