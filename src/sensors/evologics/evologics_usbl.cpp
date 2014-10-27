@@ -25,8 +25,7 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	// Accept GPS only under the following conditions:
 	// nov->status is INS_SOLUTION_GOOD 
 
-
-    if(nov->status == "INS_SOLUTION_GOOD")
+    //if(nov->status == "INS_SOLUTION_GOOD" || nov->status == "INS_ALIGNMENT_COMPLETE")
     {
         memcpy(&ev->novatel, nov, sizeof(novatel_t));
 	}
@@ -48,8 +47,8 @@ void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologic
     char dest_channel[64];
     memset(dest_channel, 0, 64);
     strcpy(dest_channel, channel.c_str());
-    strcat(dest_channel, ".2");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 2, dest_channel);
+    //strcat(dest_channel, ".3");
+    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 3, dest_channel);
 }
     
     
@@ -116,7 +115,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
     if(attitude_source == ATT_NOVATEL)
-        ship.setRollPitchYawRad(novatel.roll * DTOR, novatel.pitch * DTOR, novatel.heading * DTOR);  
+        ship.setRollPitchYawRad(novatel.roll, novatel.pitch, novatel.heading);  
     else if (attitude_source == ATT_EVOLOGICS)
         ship.setRollPitchYawRad(ahrs.roll, ahrs.pitch, ahrs.heading);
     
@@ -127,11 +126,13 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     // set up the coordinate reprojection
     char proj_str[64];
     if(gps_source == GPS_NOVATEL)
-        sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", novatel.longitude, novatel.latitude);
+        sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", novatel.longitude * RTOD, novatel.latitude * RTOD);
     else if(gps_source == GPS_GPSD)
         sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", gpsd.fix.longitude, gpsd.fix.latitude);
     
-    sprintf(proj_str, "+proj=tmerc +lon_0=150.0 +lat_0=-33.5 +units=m");
+    cout << proj_str << endl;
+    
+    //sprintf(proj_str, "+proj=tmerc +lon_0=150.0 +lat_0=-33.5 +units=m");
     
     projPJ pj_tmerc;
     if (!(pj_tmerc = pj_init_plus(proj_str)))
@@ -147,14 +148,14 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     usbl_fix_t uf;
     uf.utime = timestamp_now();
     uf.remote_id = remote_id;
-    uf.latitude = y * RTOD;
-    uf.longitude = x * RTOD;
+    uf.latitude = y;
+    uf.longitude = x;
     uf.depth = repro_target.getZ();
     uf.accuracy = accuracy;
     lcm->publish("USBL_FIX", &uf);
     
     
-    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", remote_id, uf.latitude, uf.longitude, uf.depth, uf.accuracy);
+    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
     
     
     // Get the target index
@@ -226,18 +227,25 @@ int Evologics_Usbl::load_config(char *program_name)
     // Attitude source
     sprintf(key, "%s.attitude_source", rootkey);
     char *att_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strcmp(att_source_str, "NOVATEL"))
+    if(!strncmp(att_source_str, "NOVATEL", 4))
         attitude_source = ATT_NOVATEL;
-    else if(!strcmp(att_source_str, "EVOLOGICS"))
+    else if(!strncmp(att_source_str, "EVOLOGICS", 9))
         attitude_source = ATT_EVOLOGICS;
     
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);
     char *gps_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strcmp(gps_source_str, "NOVATEL"))
+    if(!strncmp(gps_source_str, "NOVATEL", 7))
         gps_source = GPS_NOVATEL;
-    else if(!strcmp(gps_source_str, "GPSD"))
+    else if(!strncmp(gps_source_str, "GPSD", 4))
         gps_source = GPS_GPSD;
+    else
+    {
+        cerr << "Invalid GPS source: " << gps_source_str << endl;
+        return 0;
+    }
+        
+    cout << "GPS source: " << gps_source << endl;
         
     
         

@@ -36,14 +36,14 @@ using namespace acfrlcm;
 // Attitude source
 typedef enum 
 {
-    ATT_NOVATEL,
+    ATT_NOVATEL = 0,
     ATT_EVOLOGICS
 } attitude_source_t; 
 
 // GPS source
 typedef enum 
 {
-    GPS_NOVATEL,
+    GPS_NOVATEL = 0,
     GPS_GPSD
 } gps_source_t; 
 
