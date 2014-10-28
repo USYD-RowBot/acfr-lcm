@@ -32,8 +32,8 @@ struct auv_status_t
     int8_t pitch;       /* 0.1 deg */
     int16_t depth;      /* 0.1 m */
     int8_t altitude;    /* 0.1 m */
-    float latitude;
-    float longitude;
+    double latitude;
+    double longitude;
     float x;
     float y;
     int32_t img_count;
