@@ -51,9 +51,10 @@ int Evologics_Modem::send_status(const auv_status_t *status)
     
     s.target_id = local_address;
     
-    char target_channel[10];
+    char target_channel[16];
+	memset(target_channel, 0, 16);
     sprintf(target_channel, "AUV_STATUS.%d", local_address);
-        
+    cout << "Channel name: " << target_channel << endl;    
     int d_size = s.getEncodedSize();
     unsigned char *d = (unsigned char *)malloc(d_size);
     s.encode(d, 0, s.getEncodedSize());
