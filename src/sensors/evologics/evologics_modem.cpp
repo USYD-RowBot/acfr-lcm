@@ -121,8 +121,8 @@ int Evologics_Modem::init()
     evo->send_command("+++AT!G1\r");
     evo->send_command("+++ATZ1\r");
     // now to force the settings that require a listen mode
-    evo->send_command("+++ATN\n");      // noise mode
-    evo->send_command("+++ATA\n");      // listen state
+    evo->send_command("+++ATN\r");      // noise mode
+    evo->send_command("+++ATA\r");      // listen state
     //send_evologics_command("+++ATC\r", NULL, 256, &state);
     
     keep_alive_count = 0;
