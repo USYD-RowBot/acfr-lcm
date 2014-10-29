@@ -155,7 +155,8 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         sending_im = false;
     }    
     // Data sent, channel ready
-    else if((strstr((const char *)d, "LISTEN") != NULL) || 
+    else if((strstr((const char *)d, "LISTEN") != NULL) ||
+        (strstr((const char *)d, "NOISE") != NULL) || 
         (strstr((const char *)d, "ESTABLISH") != NULL))
     {
         sending_data = false;

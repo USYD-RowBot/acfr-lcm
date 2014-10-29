@@ -336,6 +336,10 @@ int Evologics_Usbl::init()
     evo->send_command("+++AT!G1\n");
     evo->send_command("+++ATH1\n");
     evo->send_command("+++ATZ1\n");
+    
+    // now to force the settings that require a listen mode
+    evo->send_command("+++ATN\n");      // noise mode
+    evo->send_command("+++ATA\n");      // listen state
     //send_evologics_command("+++ATC\n", NULL, 256, &state);
     
     if(gps_source == GPS_GPSD)
