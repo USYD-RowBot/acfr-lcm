@@ -305,7 +305,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
-    cout << "Data size: " << data_size << endl;
+    //cout << "Data size: " << data_size << endl;
     // make sure we can send
     pthread_mutex_lock(&flags_lock);
     int count = 0;
@@ -324,7 +324,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
         cerr << "Failed to send data to modem\n";
         return 0;
     }
-    
+    cout << "Sending LCM message: " << dest_channel << endl;
     sending_data = true;
     pthread_mutex_unlock(&flags_lock);    
     
