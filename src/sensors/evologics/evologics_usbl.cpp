@@ -87,6 +87,17 @@ int Evologics_Usbl::ping_targets()
     else
         ping_counter++;
     
+    // check to make sure we haven't gotten stuck sending a ping
+    // this can happen if we don't get a response, lets wait 10 seconds
+    if(evo->sending_im && ping_time == 10)
+        evo->sending_im = false;
+        
+    if(evo->sending_im && ping_time < 10)
+        ping_time++;
+        
+    if(!evo->sending_im)
+        ping_time = 0;
+        
     
     for(int i=0; i<num_targets; i++)    
     {
@@ -169,7 +180,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     {    
         // generate the channel name for the targets LCM message
         char target_channel[10];
-        sprintf(target_channel, "USBL_FIX.%d", remote_id);
+        //sprintf(target_channel, "USBL_FIX.%d", remote_id);
+        sprintf(target_channel, "USBL_FIX");
         
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);

@@ -98,6 +98,7 @@ class Evologics_Usbl
         
         int ping_period;
         int ping_counter; 
+        int ping_time;
         
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS];   

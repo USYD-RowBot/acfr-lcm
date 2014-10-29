@@ -38,7 +38,7 @@ static void *read_thread(void *u)
             
             while(bytes < 3)
                 bytes += read(evo->fd, &buf[bytes], 3-bytes); 
-                
+                 
             // check for the preamble, either +++ or LCM
             if(!strncmp(buf, "+++", 3))
             {
@@ -63,8 +63,9 @@ static void *read_thread(void *u)
                     data_type = 2;
                 }
             }
-            
-            if(data_good)
+
+            // only proceed if the data is good and we have more then just the header
+            if(data_good && bytes > 3)
             {
             
                 if(data_type == 1)
@@ -350,7 +351,7 @@ int Evologics::send_command(const char *d)
         return 0;
     }
         
-    cerr << "Sending command: " << d << endl;    
+    cerr << "Sending command: " << d;    
     
     int bytes = write(fd, d, strlen(d));
     if( bytes == -1)
