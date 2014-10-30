@@ -126,9 +126,9 @@ int Evologics_Modem::init()
     evo->send_command("+++ATZ1\r");
     
     char cmd[64];
-    sprintf(cmd, "+++AT!L%d\n", source_level);
+    sprintf(cmd, "+++AT!L%d\r", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d\n", gain);
+    sprintf(cmd, "+++AT!G%d\r", gain);
     evo->send_command(cmd);
 
     if(auto_gain)
