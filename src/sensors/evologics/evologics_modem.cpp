@@ -132,7 +132,7 @@ int Evologics_Modem::init()
     evo->send_command(cmd);
 
     if(auto_gain)
-        evo->send_command("+++AT!LC1\n");
+        evo->send_command("+++AT!LC1\r");
     
     evo->send_command("+++ATZ1\r");
     
