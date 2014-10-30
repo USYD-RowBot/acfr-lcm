@@ -75,6 +75,9 @@ class Evologics_Usbl
         char *inet_port;
         int ahrs_fd;
         int evo_fd;
+        int gain;
+        int source_level;
+        bool auto_gain;
         
         
         

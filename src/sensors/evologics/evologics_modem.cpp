@@ -96,6 +96,15 @@ int Evologics_Modem::load_config(char *program_name)
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
     
+    sprintf(key, "%s.gain", rootkey);
+    gain = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.source_level", rootkey);
+    source_level = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.auto_gain", rootkey);
+    auto_gain = bot_param_get_boolean_or_fail(param, key);
+    
     return 1;
 }        
 
@@ -115,14 +124,21 @@ int Evologics_Modem::init()
     
     // put the modem in a known state
     evo->send_command("+++ATZ1\r");
-    evo->send_command("+++AT!LC1\r");
-    evo->send_command("+++AT!L1\r");
-    evo->send_command("+++AT!G1\r");
+    
+    char cmd[64];
+    sprintf(cmd, "+++AT!L%d\n", source_level);
+    evo->send_command(cmd);
+    sprintf(cmd, "+++AT!G%d\n", gain);
+    evo->send_command(cmd);
+
+    if(auto_gain)
+        evo->send_command("+++AT!LC1\n");
+    
     evo->send_command("+++ATZ1\r");
+    
     // now to force the settings that require a listen mode
     evo->send_command("+++ATN\r");      // noise mode
     evo->send_command("+++ATA\r");      // listen state
-    //send_evologics_command("+++ATC\r", NULL, 256, &state);
     
     keep_alive_count = 0;
     

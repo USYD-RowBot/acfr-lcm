@@ -220,6 +220,15 @@ int Evologics_Usbl::load_config(char *program_name)
     sprintf(key, "%s.ping_period", rootkey);
     ping_period = bot_param_get_int_or_fail(param, key);
     
+    sprintf(key, "%s.gain", rootkey);
+    gain = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.source_level", rootkey);
+    source_level = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.auto_gain", rootkey);
+    auto_gain = bot_param_get_boolean_or_fail(param, key);
+    
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
@@ -331,16 +340,22 @@ int Evologics_Usbl::init()
     // put the USBL in a known state
     //send_evologics_command("ATC\n", NULL, 256, &state);
     evo->send_command("+++ATZ1\n");
-    evo->send_command("+++AT!LC1\n");
-    evo->send_command("+++AT!L2\n");
-    evo->send_command("+++AT!G1\n");
+
+    char cmd[64];
+    sprintf(cmd, "+++AT!L%d\n", source_level);
+    evo->send_command(cmd);
+    sprintf(cmd, "+++AT!G%d\n", gain);
+    evo->send_command(cmd);
+
+    if(auto_gain)
+        evo->send_command("+++AT!LC1\n");
+
     evo->send_command("+++ATH1\n");
     evo->send_command("+++ATZ1\n");
     
     // now to force the settings that require a listen mode
     evo->send_command("+++ATN\n");      // noise mode
     evo->send_command("+++ATA\n");      // listen state
-    //send_evologics_command("+++ATC\n", NULL, 256, &state);
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
