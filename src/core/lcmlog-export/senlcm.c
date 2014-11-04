@@ -1062,3 +1062,30 @@ senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     
     textread_stop (tr);
 }
+
+
+void 
+senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_usbl_fix_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "remopte_id",   "%d",  msg->remote_id);
+    TEXTREAD_ADD_FIELD (tr, "latitude","%f",      msg->latitude);
+    TEXTREAD_ADD_FIELD (tr, "longitude","%f",      msg->longitude);
+    TEXTREAD_ADD_FIELD (tr, "depth","%f",      msg->depth);
+    TEXTREAD_ADD_FIELD (tr, "accuracy","%f",      msg->accuracy);
+    TEXTREAD_ADD_FIELD (tr, "ship_latitude","%f",      msg->ship_latitude);
+    TEXTREAD_ADD_FIELD (tr, "ship_longitude","%f",      msg->ship_longitude);
+    TEXTREAD_ADD_FIELD (tr, "ship_roll","%f",      msg->ship_roll);
+    TEXTREAD_ADD_FIELD (tr, "ship_pitch","%f",      msg->ship_pitch);
+    TEXTREAD_ADD_FIELD (tr, "ship_heading","%f",      msg->ship_heading);
+
+    textread_stop (tr);
+}
+    
+    
+    

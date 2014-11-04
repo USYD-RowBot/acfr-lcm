@@ -128,10 +128,23 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
+    double ship_roll;
+    double ship_pitch;
+    double ship_heading;
+    
     if(attitude_source == ATT_NOVATEL)
-        ship.setRollPitchYawRad(novatel.roll, novatel.pitch, novatel.heading);  
+    {
+        ship_roll = novatel.roll;
+        ship_pitch = novatel.pitch;
+        ship_heading = novatel.heading;
+    }
     else if (attitude_source == ATT_EVOLOGICS)
-        ship.setRollPitchYawRad(ahrs.roll, ahrs.pitch, ahrs.heading);
+    {
+        ship_roll = ahrs.roll;
+        ship_pitch = ahrs.pitch;
+        ship_heading = ahrs.heading;
+    }
+    ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
     
     
     cout << "ship" << ship.getPosition() <<  ship.getAxisAngle() * RTOD << endl;
@@ -150,14 +163,22 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     
     // set up the coordinate reprojection
     char proj_str[64];
+    double ship_latitude;
+    double ship_longitude;
     if(gps_source == GPS_NOVATEL)
-        sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", novatel.longitude * RTOD, novatel.latitude * RTOD);
+    {
+        ship_latitude = novatel.latitude * RTOD;
+        ship_longitude = novatel.longitude * RTOD;
+    } 
     else if(gps_source == GPS_GPSD)
-        sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", gpsd.fix.longitude, gpsd.fix.latitude);
+    {
+        ship_latitude = gpsd.fix.latitude;
+        ship_longitude = gpsd.fix.longitude;
+    } 
+     
+    sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", ship_longitude, ship_latitude);
     
     cout << proj_str << endl;
-    
-    //sprintf(proj_str, "+proj=tmerc +lon_0=150.0 +lat_0=-33.5 +units=m");
     
     projPJ pj_tmerc;
     if (!(pj_tmerc = pj_init_plus(proj_str)))
@@ -177,6 +198,12 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     uf.longitude = x;
     uf.depth = repro_target[2];
     uf.accuracy = accuracy;
+    uf.ship_longitude = ship_longitude;
+    uf.ship_latitude = ship_latitude;
+    uf.ship_roll = (float)ship_roll;
+    uf.ship_pitch = (float)ship_pitch;
+    uf.ship_heading = (float)ship_heading;
+    
     lcm->publish("USBL_FIX", &uf);
     
     

@@ -54,6 +54,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
 	senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
     senlcm_usb2000_spec_t_subscribe (lcm, "SPEC_DOWN", &senlcm_usb2000_spec_t_handler, lle);
     senlcm_sts_spec_t_subscribe (lcm, "SPEC_UP", &senlcm_sts_spec_t_handler, lle);
+    senlcm_usbl_fix_t_subscribe (lcm, "USBL_FIX", &senlcm_usbl_fix_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);

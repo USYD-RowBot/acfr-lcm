@@ -252,6 +252,11 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     senlcm.usbl_fix_t usbl = new senlcm.usbl_fix_t(dis);
                     usbl.latitude = Math.toDegrees(usbl.latitude);
                     usbl.longitude = Math.toDegrees(usbl.longitude);
+                    usbl.ship_latitude = Math.toDegrees(usbl.ship_latitude);
+                    usbl.ship_longitude = Math.toDegrees(usbl.ship_longitude);
+                    usbl.ship_roll = (float)Math.toDegrees((double)usbl.ship_roll);
+                    usbl.ship_pitch = (float)Math.toDegrees((double)usbl.ship_pitch);
+                    usbl.ship_heading = (float)Math.toDegrees((double)usbl.ship_heading);
                     o = usbl;
                 }
                 /* rt3202_t */
