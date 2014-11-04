@@ -38,7 +38,7 @@ static void *read_thread(void *u)
             
             while(bytes < 3)
                 bytes += read(evo->fd, &buf[bytes], 3-bytes); 
-                
+                 
             // check for the preamble, either +++ or LCM
             if(!strncmp(buf, "+++", 3))
             {
@@ -63,8 +63,9 @@ static void *read_thread(void *u)
                     data_type = 2;
                 }
             }
-            
-            if(data_good)
+
+            // only proceed if the data is good and we have more then just the header
+            if(data_good && bytes > 3)
             {
             
                 if(data_type == 1)
@@ -154,7 +155,8 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         sending_im = false;
     }    
     // Data sent, channel ready
-    else if((strstr((const char *)d, "LISTEN") != NULL) || 
+    else if((strstr((const char *)d, "LISTEN") != NULL) ||
+        (strstr((const char *)d, "NOISE") != NULL) || 
         (strstr((const char *)d, "ESTABLISH") != NULL))
     {
         sending_data = false;
@@ -303,7 +305,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
-    cout << "Data size: " << data_size << endl;
+    //cout << "Data size: " << data_size << endl;
     // make sure we can send
     pthread_mutex_lock(&flags_lock);
     int count = 0;
@@ -322,7 +324,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
         cerr << "Failed to send data to modem\n";
         return 0;
     }
-    
+    cout << "Sending LCM message: " << dest_channel << endl;
     sending_data = true;
     pthread_mutex_unlock(&flags_lock);    
     
@@ -350,7 +352,7 @@ int Evologics::send_command(const char *d)
         return 0;
     }
         
-    cerr << "Sending command: " << d << endl;    
+    cerr << "Sending command: " << d;    
     
     int bytes = write(fd, d, strlen(d));
     if( bytes == -1)

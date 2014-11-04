@@ -40,6 +40,9 @@ class Evologics_Modem
         char **lcm_channels;
         int usbl_address;
         int local_address;
+        int gain;
+        int source_level;
+        bool auto_gain;
 };
 
 #endif

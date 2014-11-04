@@ -1,7 +1,7 @@
 option (BUILD_LCM "Build and install third-party LCM?" ON)
 if (BUILD_LCM)
-  set (LCM_SRC "${THIRD_PARTY_DIR}/lcm-1.0.0.tar.gz")
-  set (LCM_DIR "lcm-1.0.0")
+  set (LCM_SRC "${THIRD_PARTY_DIR}/lcm-1.1.2.tar.gz")
+  set (LCM_DIR "lcm-1.1.2")
     
   add_custom_target (lcm
     COMMAND rm -f ${LCM_DIR}/PERLS_BUILT
@@ -13,6 +13,7 @@ if (BUILD_LCM)
     add_custom_target (lcm-target
       COMMAND mkdir -p ${LCM_DIR}
       COMMAND tar zxvfp  ${LCM_SRC} -C ${LCM_DIR} --strip 1
+      COMMAND cd ${LCM_DIR} && ./bootstrap.sh
       COMMAND cd ${LCM_DIR} && ./configure
       COMMAND make -C ${LCM_DIR} -j
       COMMAND sudo make -C ${LCM_DIR} install

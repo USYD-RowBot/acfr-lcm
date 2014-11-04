@@ -87,6 +87,17 @@ int Evologics_Usbl::ping_targets()
     else
         ping_counter++;
     
+    // check to make sure we haven't gotten stuck sending a ping
+    // this can happen if we don't get a response, lets wait 10 seconds
+    if(evo->sending_im && ping_time == 10)
+        evo->sending_im = false;
+        
+    if(evo->sending_im && ping_time < 10)
+        ping_time++;
+        
+    if(!evo->sending_im)
+        ping_time = 0;
+        
     
     for(int i=0; i<num_targets; i++)    
     {
@@ -108,9 +119,12 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
 {
     //cout << "Calc position\n";
     // We have everything we need to work out where the target is
-    SMALL::Pose3D target;
-    target.setPosition(xt, yt, zt);
-    target.setRollPitchYawRad(0, 0, 0);
+    //SMALL::Pose3D target;
+    //target.setPosition(xt, yt, zt);
+    //target.setRollPitchYawRad(0, 0, 0);
+    SMALL::Vector3D target;
+    target = xt, yt, zt;
+    
     
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
@@ -120,8 +134,19 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
         ship.setRollPitchYawRad(ahrs.roll, ahrs.pitch, ahrs.heading);
     
     
+    cout << "ship" << ship.getPosition() <<  ship.getAxisAngle() * RTOD << endl;
+    //cout << "target" << target.getPosition() <<  target.getAxisAngle()  * RTOD << endl;
+    cout << "target" << target << endl;
+    
     SMALL::Pose3D sensor2world = ship.compose(usbl_ins_pose);
-    SMALL::Pose3D repro_target = sensor2world.compose(target);
+    cout << "U2W" << sensor2world.getPosition() <<  sensor2world.getAxisAngle()  * RTOD << endl;
+    
+    //SMALL::Pose3D repro_target = sensor2world.compose(target);
+    
+    SMALL::Vector3D repro_target = sensor2world.transformTo(target);
+    
+    //cout << "T2W" << repro_target.getPosition() <<  repro_target.getAxisAngle()   * RTOD << endl;
+    cout << "target" << repro_target << endl;
     
     // set up the coordinate reprojection
     char proj_str[64];
@@ -141,8 +166,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
        return 0;
     }
     
-    double x = repro_target.getX();
-    double y = repro_target.getY();           
+    double x = repro_target[0]; 
+    double y = repro_target[1];           
     pj_transform(pj_tmerc, pj_latlong, 1, 1, &x, &y, NULL);
     
     usbl_fix_t uf;
@@ -150,7 +175,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     uf.remote_id = remote_id;
     uf.latitude = y;
     uf.longitude = x;
-    uf.depth = repro_target.getZ();
+    uf.depth = repro_target[2];
     uf.accuracy = accuracy;
     lcm->publish("USBL_FIX", &uf);
     
@@ -169,7 +194,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     {    
         // generate the channel name for the targets LCM message
         char target_channel[10];
-        sprintf(target_channel, "USBL_FIX.%d", remote_id);
+        //sprintf(target_channel, "USBL_FIX.%d", remote_id);
+        sprintf(target_channel, "USBL_FIX");
         
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
@@ -179,6 +205,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
         
         usbl_send[target_index] = 0;
     }
+    
     return 1;
     
 }
@@ -207,6 +234,15 @@ int Evologics_Usbl::load_config(char *program_name)
 
     sprintf(key, "%s.ping_period", rootkey);
     ping_period = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.gain", rootkey);
+    gain = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.source_level", rootkey);
+    source_level = bot_param_get_int_or_fail(param, key);
+    
+    sprintf(key, "%s.auto_gain", rootkey);
+    auto_gain = bot_param_get_boolean_or_fail(param, key);
     
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
@@ -319,12 +355,22 @@ int Evologics_Usbl::init()
     // put the USBL in a known state
     //send_evologics_command("ATC\n", NULL, 256, &state);
     evo->send_command("+++ATZ1\n");
-    evo->send_command("+++AT!LC1\n");
-    evo->send_command("+++AT!L2\n");
-    evo->send_command("+++AT!G1\n");
+
+    char cmd[64];
+    sprintf(cmd, "+++AT!L%d\n", source_level);
+    evo->send_command(cmd);
+    sprintf(cmd, "+++AT!G%d\n", gain);
+    evo->send_command(cmd);
+
+    if(auto_gain)
+        evo->send_command("+++AT!LC1\n");
+
     evo->send_command("+++ATH1\n");
     evo->send_command("+++ATZ1\n");
-    //send_evologics_command("+++ATC\n", NULL, 256, &state);
+    
+    // now to force the settings that require a listen mode
+    evo->send_command("+++ATN\n");      // noise mode
+    evo->send_command("+++ATA\n");      // listen state
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);

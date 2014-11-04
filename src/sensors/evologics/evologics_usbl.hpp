@@ -75,6 +75,9 @@ class Evologics_Usbl
         char *inet_port;
         int ahrs_fd;
         int evo_fd;
+        int gain;
+        int source_level;
+        bool auto_gain;
         
         
         
@@ -98,6 +101,7 @@ class Evologics_Usbl
         
         int ping_period;
         int ping_counter; 
+        int ping_time;
         
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS];   
