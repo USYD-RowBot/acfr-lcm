@@ -119,9 +119,12 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
 {
     //cout << "Calc position\n";
     // We have everything we need to work out where the target is
-    SMALL::Pose3D target;
-    target.setPosition(xt, yt, zt);
-    target.setRollPitchYawRad(0, 0, 0);
+    //SMALL::Pose3D target;
+    //target.setPosition(xt, yt, zt);
+    //target.setRollPitchYawRad(0, 0, 0);
+    SMALL::Vector3D target;
+    target = xt, yt, zt;
+    
     
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
@@ -131,8 +134,19 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
         ship.setRollPitchYawRad(ahrs.roll, ahrs.pitch, ahrs.heading);
     
     
+    cout << "ship" << ship.getPosition() <<  ship.getAxisAngle() * RTOD << endl;
+    //cout << "target" << target.getPosition() <<  target.getAxisAngle()  * RTOD << endl;
+    cout << "target" << target << endl;
+    
     SMALL::Pose3D sensor2world = ship.compose(usbl_ins_pose);
-    SMALL::Pose3D repro_target = sensor2world.compose(target);
+    cout << "U2W" << sensor2world.getPosition() <<  sensor2world.getAxisAngle()  * RTOD << endl;
+    
+    //SMALL::Pose3D repro_target = sensor2world.compose(target);
+    
+    SMALL::Vector3D repro_target = sensor2world.transformTo(target);
+    
+    //cout << "T2W" << repro_target.getPosition() <<  repro_target.getAxisAngle()   * RTOD << endl;
+    cout << "target" << repro_target << endl;
     
     // set up the coordinate reprojection
     char proj_str[64];
@@ -152,8 +166,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
        return 0;
     }
     
-    double x = repro_target.getX();
-    double y = repro_target.getY();           
+    double x = repro_target[0]; 
+    double y = repro_target[1];           
     pj_transform(pj_tmerc, pj_latlong, 1, 1, &x, &y, NULL);
     
     usbl_fix_t uf;
@@ -161,7 +175,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     uf.remote_id = remote_id;
     uf.latitude = y;
     uf.longitude = x;
-    uf.depth = repro_target.getZ();
+    uf.depth = repro_target[2];
     uf.accuracy = accuracy;
     lcm->publish("USBL_FIX", &uf);
     
@@ -191,6 +205,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
         
         usbl_send[target_index] = 0;
     }
+    
     return 1;
     
 }
