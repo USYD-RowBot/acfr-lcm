@@ -9,6 +9,12 @@ struct usbl_fix_t
     double latitude;
     double longitude;
     double depth;
-    
     double accuracy;
+    
+    double ship_latitude;
+    double ship_longitude;
+    float ship_roll;
+    float ship_pitch;
+    float ship_heading
+    
 }
