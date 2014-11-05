@@ -198,8 +198,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     uf.longitude = x;
     uf.depth = repro_target[2];
     uf.accuracy = accuracy;
-    uf.ship_longitude = ship_longitude;
-    uf.ship_latitude = ship_latitude;
+    uf.ship_longitude = ship_longitude * DTOR;
+    uf.ship_latitude = ship_latitude * DTOR;
     uf.ship_roll = (float)ship_roll;
     uf.ship_pitch = (float)ship_pitch;
     uf.ship_heading = (float)ship_heading;
