@@ -1086,6 +1086,71 @@ senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     textread_stop (tr);
 }
+ 
+ 
+void 
+senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_novatel_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "latitude","%f",      msg->latitude);
+    TEXTREAD_ADD_FIELD (tr, "longitude","%f",      msg->longitude);
+    TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
+    TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
+    TEXTREAD_ADD_FIELD (tr, "height","%f",      msg->height);
+    TEXTREAD_ADD_FIELD (tr, "east_velocity","%f",      msg->east_velocity);
+    TEXTREAD_ADD_FIELD (tr, "north_velocity","%f",      msg->north_velocity);
+    TEXTREAD_ADD_FIELD (tr, "up_velocity","%f",      msg->up_velocity);
+    TEXTREAD_ADD_FIELD (tr, "time","%f",      msg->time);
+    textread_stop (tr);
+}   
+
+void 
+senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_evologics_usbl_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "remopte_id",   "%d",  msg->remote_id)
+    TEXTREAD_ADD_FIELD (tr, "x","%f",      msg->x);
+    TEXTREAD_ADD_FIELD (tr, "y","%f",      msg->y);
+    TEXTREAD_ADD_FIELD (tr, "z","%f",      msg->z);
+    TEXTREAD_ADD_FIELD (tr, "e","%f",      msg->e);
+    TEXTREAD_ADD_FIELD (tr, "n","%f",      msg->n);
+    TEXTREAD_ADD_FIELD (tr, "u","%f",      msg->u);
+    TEXTREAD_ADD_FIELD (tr, "r","%f",      msg->r);
+    TEXTREAD_ADD_FIELD (tr, "p","%f",      msg->p);
+    TEXTREAD_ADD_FIELD (tr, "h","%f",      msg->h);
+    TEXTREAD_ADD_FIELD (tr, "prop_time","%f",      msg->prop_time);
+    TEXTREAD_ADD_FIELD (tr, "rssi","%d",      msg->rssi);
+    TEXTREAD_ADD_FIELD (tr, "accuracy","%f",      msg->accuracy);
+    TEXTREAD_ADD_FIELD (tr, "integrity","%d",      msg->integrity);
+    TEXTREAD_ADD_FIELD (tr, "depth","%f",      msg->depth);
     
-    
-    
+    textread_stop (tr);
+}    
+
+void 
+senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_ahrs_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
+    TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);   
+        
+    textread_stop (tr);
+}    
+
