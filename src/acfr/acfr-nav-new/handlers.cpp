@@ -350,4 +350,31 @@ void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IM
     state->slam->handle_imu_data(imu_data);
 }
 
+void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const usbl_fix_t *usbl, state_c* state)
+{
+    auv_data_tools::Evologics_Fix_Data usbl_data;
+
+    //cout << "IMU reading recieved" << endl;
+
+    usbl_data.set_raw_timestamp((double)usbl->utime/1e6);
+    usbl_data.target_lat = usbl->latitude;    
+    usbl_data.target_lon = usbl->longitude;
+    usbl_data.target_depth = usbl->depth;
+    usbl_data.accuracy = usbl->accuracy;
+    usbl_data.ship_lat = usbl->ship_latitude;
+    usbl_data.ship_lon = usbl->ship_longitude;
+    usbl_data.ship_roll = usbl->ship_roll;
+    usbl_data.ship_pitch = usbl->ship_pitch;
+    usbl_data.ship_heading = usbl->ship_heading;
+    
+    if(state->mode == NAV)
+       	state->slam->handle_evologicsfix_data(usbl_data);
+    else if(state->mode == RAW)
+    {
+        usbl_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+    
+}
+
 

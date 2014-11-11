@@ -25,6 +25,7 @@
 #include "perls-lcmtypes++/senlcm/os_compass_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_vis_rawlog_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
+#include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
 #define DTOR (UNITS_DEGREE_TO_RADIAN)
@@ -44,4 +45,5 @@ void on_vis(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const au
 void on_ms_gx1(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ms_gx1_t *ms, state_c* state);
 void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const os_compass_t *osc, state_c* state);
 void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IMU_t *imu, state_c* state);
+void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const usbl_fix_t *usbl, state_c* state);
 #endif

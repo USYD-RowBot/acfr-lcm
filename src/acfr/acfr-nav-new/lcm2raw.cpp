@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
     char *logFileName;
 //    if(parseArguments(argc, argv, logFileName)) {
-       if(argc != 2)
+       if(argc != 3)
         {
             cout << "Usage: lcm2raw [lcm log file] [raw file]" << endl;
             return 0;
@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
         state.lcm->subscribeFunction("IMU", on_imu, &state);
         state.lcm->subscribeFunction("LQ_MODEM", on_lq_modem, &state);
         state.lcm->subscribeFunction("ACFR_AUV_VIS_RAWLOG", on_vis, &state);
+        state.lcm->subscribeFunction("USBL_FIX", on_evologics, &state);
         
         
         while(!state.lcm->handle());
