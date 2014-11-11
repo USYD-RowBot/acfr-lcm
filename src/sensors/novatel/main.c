@@ -262,8 +262,8 @@ int main(int argc, char *argv[])
             }
             if((strstr(tok[0], "BESTPOS") != NULL) && ret == 22)
             {
-                nov.latitude_sd = atof(tok[8]);
-                nov.longitude_sd = atof(tok[9]);
+                nov.latitude_sd = atof(tok[8]) * DTOR;
+                nov.longitude_sd = atof(tok[9]) * DTOR;
             }
                 
         }

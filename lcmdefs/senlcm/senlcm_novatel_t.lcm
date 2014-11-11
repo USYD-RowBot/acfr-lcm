@@ -16,7 +16,6 @@ struct novatel_t
     double north_velocity;
     double east_velocity;
     double up_velocity;
-    double time;
     double latitude_sd;
     double longitude_sd;
     

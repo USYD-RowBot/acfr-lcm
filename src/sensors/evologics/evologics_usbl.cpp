@@ -27,7 +27,12 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 
     //if(nov->status == "INS_SOLUTION_GOOD" || nov->status == "INS_ALIGNMENT_COMPLETE")
     {
-        memcpy(&ev->novatel, nov, sizeof(novatel_t));
+        if(ev->novatel.size() == 10)
+            ev->novatel.pop_back();
+        
+        novatel_t n;
+        memcpy(&n, nov, sizeof(novatel_t));
+        ev->novatel.insert(ev->novatel.begin(), n);
 	}
 }
 
@@ -132,11 +137,30 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     double ship_pitch;
     double ship_heading;
     
+    int nov_index = 0;
+    if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
+    {
+        // find the closest novatel message in the queue
+        int time_diff, prev_time_diff = 10;
+        for(unsigned int i=0; i<novatel.size(); i++)
+        {
+            time_diff = novatel[i].utime - ef->utime;
+            if(abs(prev_time_diff) < abs(time_diff))
+            {
+                nov_index = i - 1;
+                break;
+            }
+            prev_time_diff = time_diff;
+            nov_index = i;
+        }
+    }
+    
     if(attitude_source == ATT_NOVATEL)
     {
-        ship_roll = novatel.roll;
-        ship_pitch = novatel.pitch;
-        ship_heading = novatel.heading;
+            
+        ship_roll = novatel[nov_index].roll;
+        ship_pitch = novatel[nov_index].pitch;
+        ship_heading = novatel[nov_index].heading;
     }
     else if (attitude_source == ATT_EVOLOGICS)
     {
@@ -178,8 +202,8 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     double ship_longitude;
     if(gps_source == GPS_NOVATEL)
     {
-        ship_latitude = novatel.latitude * RTOD;
-        ship_longitude = novatel.longitude * RTOD;
+        ship_latitude = novatel[nov_index].latitude * RTOD;
+        ship_longitude = novatel[nov_index].longitude * RTOD;
     } 
     else if(gps_source == GPS_GPSD)
     {
@@ -218,8 +242,8 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     
     // given the SD of the novatels position in degrees, convert to meters, calculate the DRMS and add it to the Evologics accuracy
     projUV sd;
-    sd.u = novatel.latitude_sd;
-    sd.v = novatel.longitude_sd;
+    sd.u = novatel[nov_index].latitude_sd * RTOD;
+    sd.v = novatel[nov_index].longitude_sd * RTOD;
     sd = pj_inv(sd, pj_tmerc);
     
     double nov_drms = sqrt(sd.u * sd.u + sd.v * sd.v);

@@ -1097,8 +1097,11 @@ senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "gps_time",   "%"PRId64,  msg->gps_time);
     TEXTREAD_ADD_FIELD (tr, "latitude","%15.12f",      msg->latitude);
     TEXTREAD_ADD_FIELD (tr, "longitude","%15.12f",      msg->longitude);
+    TEXTREAD_ADD_FIELD (tr, "latitude_sd","%15.12f",      msg->latitude_sd);
+    TEXTREAD_ADD_FIELD (tr, "longitude_sd","%15.12f",      msg->longitude_sd);
     TEXTREAD_ADD_FIELD (tr, "roll","%6.3f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%6.3f",      msg->pitch);
     TEXTREAD_ADD_FIELD (tr, "heading","%6.3f",      msg->heading);
@@ -1106,7 +1109,7 @@ senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "east_velocity","%6.3f",      msg->east_velocity);
     TEXTREAD_ADD_FIELD (tr, "north_velocity","%6.3f",      msg->north_velocity);
     TEXTREAD_ADD_FIELD (tr, "up_velocity","%6.3f",      msg->up_velocity);
-    TEXTREAD_ADD_FIELD (tr, "time","%12.9f",      msg->time);
+    
     textread_stop (tr);
 }   
 

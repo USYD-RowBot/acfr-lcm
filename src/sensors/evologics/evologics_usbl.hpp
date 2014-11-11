@@ -1,6 +1,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include <small/Pose3D.hh>
 #include <iostream>
+#include <vector>
 #include <signal.h>
 #include <string>
 #include <libgen.h>
@@ -63,7 +64,7 @@ class Evologics_Usbl
         
         // data holders
         gpsd3_t gpsd;
-        novatel_t novatel;
+        vector<novatel_t> novatel;
         ahrs_t ahrs;
         
         Evologics *evo;
