@@ -227,9 +227,16 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     
     if(ret != 19)
         return 0;
+    
+    // Work out the actual time that the measurment was taken
+    double measurement_time = atof(tokens[4]);
+    double current_time = atof(tokens[3]);
+    
+    // we will correct the time as it may not be sync'd with the computer running this code
+    double time_diff = current_time - measurement_time;
         
     evologics_usbl_t ud;
-    ud.utime = timestamp;
+    ud.utime = timestamp + (int64_t)(time_diff * 1e6);
     ud.remote_id = atoi(tokens[5]);
     ud.x = atof(tokens[6]);
     ud.y = atof(tokens[7]);

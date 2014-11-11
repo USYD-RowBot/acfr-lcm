@@ -57,7 +57,7 @@ class Evologics_Usbl
         int load_config(char *program_name);
         int init();
         int process();
-        int calc_position(double x, double y, double z, double accuracy, int remote_id);
+        int calc_position(const evologics_usbl_t *evo);
         int ping_targets();
         int parse_ahrs_message(char *buf);
         

@@ -27,6 +27,8 @@
 #include "perls-lcmtypes/senlcm_novatel_t.h"
 #include "perls-common/timestamp.h"
 
+#include "time_conversion.h"
+
 
 
 #define DTOR M_PI/180
@@ -60,6 +62,15 @@ int chop_string(char *data, char **tokens)
     }
     return i;        
 }
+
+int program_gps(int fd, char *cmd)
+{
+    write(fd, cmd, strlen(cmd));
+    return 1;
+}
+        
+
+
 
 int program_exit;
 void signal_handler(int sig_num) 
@@ -147,6 +158,11 @@ int main(int argc, char *argv[])
         }
         serial_set_canonical(gps_fd, '\r', '\n');
     }
+
+    program_gps(gps_fd, "UNLOGALL\n");
+    program_gps(gps_fd, "LOG INSPVA ONTIME 0.2\n");
+    program_gps(gps_fd, "LOG BESTPOS ONTIME 0.2\n");
+    
     
 	struct timeval tv;
 
@@ -206,9 +222,13 @@ int main(int argc, char *argv[])
 		
 		char *tok[64];
 		ret = chop_string(data, tok);
+		
+		// we need to decode the inspva message as well as the bestpos message for the standard deviations
+		
 	    if(ret > 1)
 	    {
-	        if((tok[0][0] == '<') && (ret == 13))
+	        if((strstr(tok[0], "INSPVA") != NULL) && ret == 13)
+//	        if((tok[0][0] == '<') && (ret == 13))
 	        {
 	            nov.latitude = atof(tok[3]) * DTOR;
 			    nov.longitude = atof(tok[4]) * DTOR;
@@ -220,11 +240,32 @@ int main(int argc, char *argv[])
 			    nov.east_velocity = atof(tok[7]);
 			    nov.up_velocity = atof(tok[8]);
 			    nov.status = tok[12];
-//			    nov.time = atof(tok[]);
 			    
-	            
+			    // Convert the GPS time into something useful
+			    unsigned short g_year;
+			    unsigned char g_month, g_day, g_hour, g_minute;
+			    float g_seconds;
+			    TIMECONV_GetUTCTimeFromGPSTime(atoi(tok[1]), atof(tok[2]), &g_year, &g_month, &g_day, &g_hour, &g_minute, &g_seconds);
+			    
+			    struct tm gps_time;
+			    gps_time.tm_year = g_year - 1900;
+			    gps_time.tm_mon = g_month - 1;
+			    gps_time.tm_mday = g_day;
+			    gps_time.tm_hour = g_hour;
+			    gps_time.tm_min = g_minute;
+			    gps_time.tm_sec = (int)floor(g_seconds);
+			    
+			    time_t gps_utc_time = mktime(&gps_time);
+			    nov.gps_time = (int64_t)(gps_utc_time * 1e6) + (int64_t)((fmod(g_seconds,1.0)) * 1e6);
+			    
                 senlcm_novatel_t_publish(lcm, "NOVATEL", &nov);
             }
+            if((strstr(tok[0], "BESTPOS") != NULL) && ret == 22)
+            {
+                nov.latitude_sd = atof(tok[8]);
+                nov.longitude_sd = atof(tok[9]);
+            }
+                
         }
 
     }

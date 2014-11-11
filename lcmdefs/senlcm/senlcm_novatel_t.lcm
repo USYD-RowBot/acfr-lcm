@@ -3,6 +3,7 @@ package senlcm;
 struct novatel_t
 {
     int64_t utime;
+    int64_t gps_time;
 
     /* all angles are in radians */
 
@@ -16,6 +17,8 @@ struct novatel_t
     double east_velocity;
     double up_velocity;
     double time;
+    double latitude_sd;
+    double longitude_sd;
     
     string status;
 }

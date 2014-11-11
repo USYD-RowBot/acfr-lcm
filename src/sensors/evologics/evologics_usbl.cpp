@@ -38,7 +38,7 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 void on_evo_usbl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_usbl_t *evo, Evologics_Usbl* ev) 
 {
-    ev->calc_position(evo->x, evo->y, evo->z, evo->accuracy, evo->remote_id); 
+    ev->calc_position(evo); 
 }
 
 // a callback with no automatic decoding
@@ -115,7 +115,7 @@ int Evologics_Usbl::ping_targets()
 
 
 // The Evologics reference frame is Y forward, X right, Z down
-int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accuracy, int remote_id)
+int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
 {
     //cout << "Calc position\n";
     // We have everything we need to work out where the target is
@@ -123,7 +123,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     //target.setPosition(xt, yt, zt);
     //target.setRollPitchYawRad(0, 0, 0);
     SMALL::Vector3D target;
-    target = yt, xt, zt;
+    target = ef->y, ef->x, ef->z;
     
     
     SMALL::Pose3D ship;
@@ -204,24 +204,35 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     
     usbl_fix_t uf;
     uf.utime = timestamp_now();
-    uf.remote_id = remote_id;
+    uf.remote_id = ef->remote_id;
     uf.latitude = y;
     uf.longitude = x;
     uf.depth = target_world[2];
-    uf.accuracy = accuracy;
+    uf.accuracy = ef->accuracy;
     uf.ship_longitude = ship_longitude * DTOR;
     uf.ship_latitude = ship_latitude * DTOR;
     uf.ship_roll = (float)ship_roll;
     uf.ship_pitch = (float)ship_pitch;
     uf.ship_heading = (float)ship_heading;
     
+    
+    // given the SD of the novatels position in degrees, convert to meters, calculate the DRMS and add it to the Evologics accuracy
+    projUV sd;
+    sd.u = novatel.latitude_sd;
+    sd.v = novatel.longitude_sd;
+    sd = pj_inv(sd, pj_tmerc);
+    
+    double nov_drms = sqrt(sd.u * sd.u + sd.v * sd.v);
+    printf("Nov error: %f, %f, DRMS: %f\n", sd.u, sd.u, nov_drms);
+    
+    uf.accuracy += nov_drms;
+    
     lcm->publish("USBL_FIX", &uf);
     
     
-    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
-    
+    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
   
-  
+/*  
     libplankton::Local_WGS84_TM_Projection *map_projection = new libplankton::Local_WGS84_TM_Projection(-33.869475, 151.182582);
     double ship_n, ship_e;
     map_projection->calc_map_coords(ship_latitude, ship_longitude, ship_n, ship_e);
@@ -230,12 +241,12 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     ship_map.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
     SMALL::Vector3D target_map = ship_map.transformFrom(target_ship);
     cout << "target_map" << target_map << endl;
-    
+*/    
     
     // Get the target index
     int target_index;
     for(target_index=0; target_index<num_targets; target_index++)
-        if(targets[target_index] == remote_id)
+        if(targets[target_index] == ef->remote_id)
             break;
     
     // We will limit how often we send the USBL messages through the modem to once every 5 seconds
@@ -249,7 +260,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
         uf.encode(d, 0, uf.getEncodedSize());
-        evo->send_lcm_data(d, d_size, remote_id, target_channel);
+        evo->send_lcm_data(d, d_size, ef->remote_id, target_channel);
         free(d);
         
         usbl_send[target_index] = 0;
