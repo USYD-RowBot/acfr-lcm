@@ -11,6 +11,7 @@
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
+#include <libplankton/auv_map_projection.hpp>
 #include "evologics.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
@@ -104,6 +105,8 @@ class Evologics_Usbl
         int ping_time;
         
         int usbl_send_counter[MAX_TARGETS];    
-        int usbl_send[MAX_TARGETS];   
+        int usbl_send[MAX_TARGETS]; 
+        
+        libplankton::Local_WGS84_TM_Projection *map_projection;  
 };
          

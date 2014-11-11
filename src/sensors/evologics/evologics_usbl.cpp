@@ -123,7 +123,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     //target.setPosition(xt, yt, zt);
     //target.setRollPitchYawRad(0, 0, 0);
     SMALL::Vector3D target;
-    target = xt, yt, zt;
+    target = yt, xt, zt;
     
     
     SMALL::Pose3D ship;
@@ -151,15 +151,26 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     //cout << "target" << target.getPosition() <<  target.getAxisAngle()  * RTOD << endl;
     cout << "target" << target << endl;
     
-    SMALL::Pose3D sensor2world = ship.compose(usbl_ins_pose);
-    cout << "U2W" << sensor2world.getPosition() <<  sensor2world.getAxisAngle()  * RTOD << endl;
+    
+    SMALL::Vector3D target_ship = usbl_ins_pose.transformFrom(target);
+    cout << "target_ship" << target_ship << endl;
+    
+    
+    SMALL::Vector3D target_world = ship.transformFrom(target_ship);
+    cout << "target_world" << target_world << endl;
+    
+    
+    
+    
+    //SMALL::Pose3D sensor2world = ship.compose(usbl_ins_pose);
+    //cout << "U2W" << sensor2world.getPosition() <<  sensor2world.getAxisAngle()  * RTOD << endl;
     
     //SMALL::Pose3D repro_target = sensor2world.compose(target);
     
-    SMALL::Vector3D repro_target = sensor2world.transformTo(target);
+    //SMALL::Vector3D repro_target = sensor2world.transformFrom(target);
     
     //cout << "T2W" << repro_target.getPosition() <<  repro_target.getAxisAngle()   * RTOD << endl;
-    cout << "target" << repro_target << endl;
+    //cout << "target" << repro_target << endl;
     
     // set up the coordinate reprojection
     char proj_str[64];
@@ -187,8 +198,8 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
        return 0;
     }
     
-    double x = repro_target[0]; 
-    double y = repro_target[1];           
+    double x = target_world[1]; 
+    double y = target_world[0];           
     pj_transform(pj_tmerc, pj_latlong, 1, 1, &x, &y, NULL);
     
     usbl_fix_t uf;
@@ -196,7 +207,7 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     uf.remote_id = remote_id;
     uf.latitude = y;
     uf.longitude = x;
-    uf.depth = repro_target[2];
+    uf.depth = target_world[2];
     uf.accuracy = accuracy;
     uf.ship_longitude = ship_longitude * DTOR;
     uf.ship_latitude = ship_latitude * DTOR;
@@ -208,6 +219,17 @@ int Evologics_Usbl::calc_position(double xt, double yt, double zt, double accura
     
     
     printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
+    
+  
+  
+    libplankton::Local_WGS84_TM_Projection *map_projection = new libplankton::Local_WGS84_TM_Projection(-33.869475, 151.182582);
+    double ship_n, ship_e;
+    map_projection->calc_map_coords(ship_latitude, ship_longitude, ship_n, ship_e);
+    SMALL::Pose3D ship_map;
+    ship_map.setPosition(ship_n, ship_e, 0);
+    ship_map.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
+    SMALL::Vector3D target_map = ship_map.transformFrom(target_ship);
+    cout << "target_map" << target_map << endl;
     
     
     // Get the target index
