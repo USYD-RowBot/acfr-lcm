@@ -27,12 +27,23 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 
     //if(nov->status == "INS_SOLUTION_GOOD" || nov->status == "INS_ALIGNMENT_COMPLETE")
     {
-        if(ev->novatel.size() == 10)
-            ev->novatel.pop_back();
+        //cout << "nov size " << ev->novatelq.size() << endl;
         
-        novatel_t n;
-        memcpy(&n, nov, sizeof(novatel_t));
-        ev->novatel.insert(ev->novatel.begin(), n);
+        novatel_t *n = (novatel_t *)malloc(sizeof(novatel_t));
+        memcpy(n, nov, sizeof(novatel_t));
+        ev->novatelq.push_front(n);
+
+        //for(int i=0; i<ev->novatelq.size(); i++)
+        //      cout << ev->novatelq[i]->utime << endl; 
+        
+        
+        if(ev->novatelq.size() > 10)
+        {
+            free(ev->novatelq.back());
+            ev->novatelq.pop_back();
+        }
+        
+    memcpy(&ev->novatel, nov, sizeof(novatel_t));
 	}
 }
 
@@ -45,6 +56,14 @@ void on_evo_usbl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 {
     ev->calc_position(evo); 
 }
+
+void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_config_t *ec, Evologics_Usbl* ev) 
+{
+     
+    ev->send_fixes = ec->send_fixes;
+    cout << "SF:" << ev->send_fixes << endl;
+}
+
 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
@@ -141,13 +160,13 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
     {
         // find the closest novatel message in the queue
-        int time_diff, prev_time_diff = 10;
-        for(unsigned int i=0; i<novatel.size(); i++)
+        int time_diff, prev_time_diff = 10e6;
+        for(unsigned int i=0; i<novatelq.size(); i++)
         {
-            time_diff = novatel[i].utime - ef->utime;
-            if(abs(prev_time_diff) < abs(time_diff))
+            time_diff = ef->utime - novatelq[i]->utime;
+            if(time_diff > 0)
             {
-                nov_index = i - 1;
+                nov_index = i;
                 break;
             }
             prev_time_diff = time_diff;
@@ -155,12 +174,20 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         }
     }
     
+    printf("ET: %ld, NT: %ld, %d\n", ef->utime, novatelq[nov_index]->utime, nov_index);  
+    
     if(attitude_source == ATT_NOVATEL)
     {
             
-        ship_roll = novatel[nov_index].roll;
-        ship_pitch = novatel[nov_index].pitch;
-        ship_heading = novatel[nov_index].heading;
+        ship_roll = novatelq[nov_index]->roll;
+        ship_pitch = novatelq[nov_index]->pitch;
+        ship_heading = novatelq[nov_index]->heading;
+/*
+        ship_roll = novatel.roll;
+        ship_pitch = novatel.pitch;
+        ship_heading = novatel.heading;
+*/
+
     }
     else if (attitude_source == ATT_EVOLOGICS)
     {
@@ -202,8 +229,13 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     double ship_longitude;
     if(gps_source == GPS_NOVATEL)
     {
-        ship_latitude = novatel[nov_index].latitude * RTOD;
-        ship_longitude = novatel[nov_index].longitude * RTOD;
+    
+        ship_latitude = novatelq[nov_index]->latitude * RTOD;
+        ship_longitude = novatelq[nov_index]->longitude * RTOD;
+    /*
+        ship_latitude = novatel.latitude * RTOD;
+        ship_longitude = novatel.longitude * RTOD;
+    */
     } 
     else if(gps_source == GPS_GPSD)
     {
@@ -242,8 +274,15 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     
     // given the SD of the novatels position in degrees, convert to meters, calculate the DRMS and add it to the Evologics accuracy
     projUV sd;
-    sd.u = novatel[nov_index].latitude_sd * RTOD;
-    sd.v = novatel[nov_index].longitude_sd * RTOD;
+
+    sd.u = novatelq[nov_index]->latitude_sd * RTOD;
+    sd.v = novatelq[nov_index]->longitude_sd * RTOD;
+/*.
+    sd.u = novatel.latitude_sd * RTOD;
+    sd.v = novatel.longitude_sd * RTOD;
+*/
+printf("nov sd: %f, %f\n", sd.u, sd.v);
+
     sd = pj_inv(sd, pj_tmerc);
     
     double nov_drms = sqrt(sd.u * sd.u + sd.v * sd.v);
@@ -284,7 +323,11 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
         uf.encode(d, 0, uf.getEncodedSize());
-        evo->send_lcm_data(d, d_size, ef->remote_id, target_channel);
+        if(send_fixes)
+        {
+            cout << "Sending fix of acoustic modem" << endl;
+            evo->send_lcm_data(d, d_size, ef->remote_id, target_channel);
+        }
         free(d);
         
         usbl_send[target_index] = 0;
@@ -464,6 +507,7 @@ int Evologics_Usbl::init()
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVOLOGICS_USBL", on_evo_usbl, this);
+    lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
     
     int i = 0;
     while(lcm_channels[i] != NULL)
@@ -474,6 +518,7 @@ int Evologics_Usbl::init()
     }
     
     ping_counter = 0;
+    send_fixes = true;
     
     if (!(pj_latlong = pj_init_plus("+proj=latlong +ellps=WGS84")))
     {

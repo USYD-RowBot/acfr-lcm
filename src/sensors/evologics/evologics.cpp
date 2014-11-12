@@ -234,9 +234,13 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     
     // we will correct the time as it may not be sync'd with the computer running this code
     double time_diff = current_time - measurement_time;
+    
+    printf("M %30.15f, C %30.15f, U %ld\n", measurement_time, current_time, timestamp + (int64_t)(time_diff * 1e6));
         
     evologics_usbl_t ud;
-    ud.utime = timestamp + (int64_t)(time_diff * 1e6);
+    ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
+    ud.mtime = (int64_t)(measurement_time * 1e6);
+    ud.ctime = (int64_t)(current_time * 1e6);
     ud.remote_id = atoi(tokens[5]);
     ud.x = atof(tokens[6]);
     ud.y = atof(tokens[7]);

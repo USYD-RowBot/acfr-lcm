@@ -159,11 +159,12 @@ int main(int argc, char *argv[])
         serial_set_canonical(gps_fd, '\r', '\n');
     }
 
-    program_gps(gps_fd, "UNLOGALL\n");
-    program_gps(gps_fd, "LOG INSPVA ONTIME 0.2\n");
-    program_gps(gps_fd, "LOG BESTPOS ONTIME 0.2\n");
+    printf("Programing GPS\n");
+    program_gps(gps_fd, "UNLOGALL\r\n");
+    program_gps(gps_fd, "LOG INSPVA ONTIME 0.2\r\n");
+    program_gps(gps_fd, "LOG BESTPOS ONTIME 0.2\r\n");
     
-    
+    printf("Ready\n");
 	struct timeval tv;
 
     int connected = 0;
@@ -219,16 +220,17 @@ int main(int argc, char *argv[])
 	        read(gps_fd, data, 256);
 	            
         nov.utime = timestamp_now();
-		
+		//printf("%s\n", data);
 		char *tok[64];
 		ret = chop_string(data, tok);
 		
 		// we need to decode the inspva message as well as the bestpos message for the standard deviations
-		
+    	// for now we will determine the message type by the response length, I'll fix this later
 	    if(ret > 1)
 	    {
-	        if((strstr(tok[0], "INSPVA") != NULL) && ret == 13)
-//	        if((tok[0][0] == '<') && (ret == 13))
+	        //printf("%s, %d\n", tok[0], ret);
+	        //if((strstr(tok[0], "INSPVA") != NULL) && ret == 13)
+	        if((tok[0][0] == '<') && (ret == 13))
 	        {
 	            nov.latitude = atof(tok[3]) * DTOR;
 			    nov.longitude = atof(tok[4]) * DTOR;
@@ -254,13 +256,14 @@ int main(int argc, char *argv[])
 			    gps_time.tm_hour = g_hour;
 			    gps_time.tm_min = g_minute;
 			    gps_time.tm_sec = (int)floor(g_seconds);
+			    //printf("%u, %u, %u, %u, %u, %u\n", gps_time.tm_year, gps_time.tm_mon, gps_time.tm_mday, gps_time.tm_hour, gps_time.tm_min, gps_time.tm_sec);
 			    
 			    time_t gps_utc_time = mktime(&gps_time);
 			    nov.gps_time = (int64_t)(gps_utc_time * 1e6) + (int64_t)((fmod(g_seconds,1.0)) * 1e6);
-			    
+			    //printf("%s\n", asctime(&gps_time));
                 senlcm_novatel_t_publish(lcm, "NOVATEL", &nov);
             }
-            if((strstr(tok[0], "BESTPOS") != NULL) && ret == 22)
+            if((tok[0][0] == '<') && ret == 22)
             {
                 nov.latitude_sd = atof(tok[8]) * DTOR;
                 nov.longitude_sd = atof(tok[9]) * DTOR;

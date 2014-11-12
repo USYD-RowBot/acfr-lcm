@@ -1,7 +1,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include <small/Pose3D.hh>
 #include <iostream>
-#include <vector>
+#include <deque>
 #include <signal.h>
 #include <string>
 #include <libgen.h>
@@ -19,6 +19,7 @@
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_config_t.hpp"
 #include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
@@ -49,6 +50,7 @@ typedef enum
     GPS_GPSD
 } gps_source_t; 
 
+    
 
 class Evologics_Usbl
 {
@@ -64,12 +66,14 @@ class Evologics_Usbl
         
         // data holders
         gpsd3_t gpsd;
-        vector<novatel_t> novatel;
+        deque<novatel_t *> novatelq;
+        novatel_t novatel;
         ahrs_t ahrs;
         
         Evologics *evo;
         
-        
+        bool send_fixes;
+         
         
     private:
         // usbl tcp config
@@ -108,6 +112,7 @@ class Evologics_Usbl
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS]; 
         
-        libplankton::Local_WGS84_TM_Projection *map_projection;  
+       
+        //libplankton::Local_WGS84_TM_Projection *map_projection;  
 };
          
