@@ -24,6 +24,13 @@ void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologic
     ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 1, dest_channel);
 }
 
+void on_evologics_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_command_t *ec, Evologics_Modem* ev) 
+{
+    if(ec->command == evologics_command_t::CLEAR)
+        ev->evo->clear_modem();
+}
+
+
 Evologics_Modem::Evologics_Modem()
 {
     lcm = new lcm::LCM();
@@ -145,6 +152,7 @@ int Evologics_Modem::init()
     // Subscribe to LCM messages
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("AUV_STATUS", on_auv_status, this);
+    lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evologics_command, this);
     
     int i = 0;
     while(lcm_channels[i] != NULL)

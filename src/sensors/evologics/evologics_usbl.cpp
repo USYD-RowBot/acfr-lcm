@@ -57,11 +57,14 @@ void on_evo_usbl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
     ev->calc_position(evo); 
 }
 
-void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_config_t *ec, Evologics_Usbl* ev) 
+void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_command_t *ec, Evologics_Usbl* ev) 
 {
-     
-    ev->send_fixes = ec->send_fixes;
+    if(ec->command == evologics_command_t::SEND_FIXES) 
+        ev->send_fixes = ec->d;
     cout << "SF:" << ev->send_fixes << endl;
+    
+    if(ec->command == evologics_command_t::CLEAR)
+        ev->evo->clear_modem();
 }
 
 

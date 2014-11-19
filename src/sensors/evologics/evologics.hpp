@@ -6,6 +6,7 @@
 #include <zlib.h>
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_usbl_angles_t.hpp"
 
 #ifndef EVOLOGICS_H
 #define EVOLOGICS_H
@@ -30,6 +31,7 @@ class Evologics
         int send_ping(int target);
         int parse_lcm_data(unsigned char *d, int len);
         int parse_modem_data(char *d, int len, int64_t timestamp);
+        int clear_modem();
         bool sending_im;
         bool sending_data;
         bool sending_command;
