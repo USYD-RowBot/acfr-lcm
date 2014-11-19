@@ -85,7 +85,7 @@ class Evologics_Usbl
         int source_level;
         bool auto_gain;
         
-        
+        int open_port(const char *port);
         
         // targets
         int targets[MAX_TARGETS];
