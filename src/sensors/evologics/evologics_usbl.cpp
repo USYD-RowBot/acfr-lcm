@@ -428,7 +428,8 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         if(chop_string(buf, tokens) != 5)
             return 0;
 
-        ahrs.utime = (int64_t)(atof(tokens[1]) * 1e6);
+        ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
+        ahrs.utime = timestamp_now();
         ahrs.roll = atof(tokens[3]) * DTOR;
         ahrs.pitch = atof(tokens[2]) * DTOR;
         ahrs.heading = atof(tokens[4]) * DTOR;
