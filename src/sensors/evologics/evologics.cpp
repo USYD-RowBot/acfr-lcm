@@ -86,6 +86,135 @@ static void *read_thread(void *u)
     cout << "Read thread exit\n";
     return NULL;
 }
+
+// write thread
+static void *write_thread(void *u)
+{
+    Evologics *evo = (Evologics *)u;
+ 
+    cout << "Write thread started\n";
+    
+    bool data_sent;
+    
+    // wait for data to appear in the write queue, when it does check to see how old
+    // it is, if it is too old don't send it, otherwise send it
+    while(!evo->thread_exit)
+    {
+        data_sent = false;
+        if(!evo->command_queue.empty())
+        {
+            // TODO: impletement modem locking here
+        
+            Evo_Data_Out *od = evo->command_queue.front();
+            if((timestamp_now() - od->timestamp) < MAX_DATA_AGE)
+            {
+                pthread_mutex_lock(&evo->flags_lock);
+                if(!evo->sending_command)
+                {
+                    int bytes = write(evo->fd, od->data, od->size);
+                    if( bytes == -1)
+                    {
+                        cerr << "Failed to send data to modem\n";
+                        evo->sending_command = false;
+                    }
+                    else
+                    {
+                        data_sent = true;
+                        evo->sending_command= true;
+                        if(od->type == evo_im)
+                            evo->sending_im = true;
+                    }
+                }
+                pthread_mutex_unlock(&evo->flags_lock);
+            }
+            else
+            {
+                data_sent = true;   // Data age timeout
+                evo->sending_command = false;
+            }
+                
+            if(data_sent)
+            {   
+                // remove it from the queue
+                delete od->data;
+                delete od;
+                evo->command_queue.pop();
+            }
+        }
+
+
+        data_sent = false;
+        if(!evo->data_queue.empty())
+        {
+            Evo_Data_Out *od = evo->data_queue.front();
+            // check the timestamp
+            if((timestamp_now() - od->timestamp) < MAX_DATA_AGE)
+            {
+                if(od->target != evo->current_target)
+                {
+                    char msg[32];
+                    // we need to change targets, this is the only place we are doing
+                    // out of queue command writes to the modem
+                    sprintf(msg, "+++ATZ4%c", evo->term);
+                    write(evo->fd, msg, strlen(msg));
+                    
+                    int retry = 0;
+                    while(evo->current_target != od->target && retry < 5)
+                    {
+                        sprintf(msg, "+++AT!AR%d%c", od->target, evo->term);
+                        write(evo->fd, msg, strlen(msg));
+                        usleep(10000);
+                        sprintf(msg, "+++AT?AR%c", evo->term); 
+                        write(evo->fd, msg, strlen(msg));
+                        retry++;
+                    }
+                }
+        
+                if(od->target != evo->current_target)
+                {
+                    cerr << "Could not change the modem data target\n";
+                    data_sent = true;
+                }
+            
+            
+                pthread_mutex_lock(&evo->flags_lock);
+                if(!evo->sending_data)
+                {
+                    int bytes = write(evo->fd, od->data, od->size);
+                    if( bytes == -1)
+                    {
+                        cerr << "Failed to send data to modem\n";
+                        evo->sending_data = false;
+                    }
+                    else
+                    {
+                        data_sent = true;
+                        evo->sending_data = true;
+                    }
+                }
+                pthread_mutex_unlock(&evo->flags_lock);    
+            }
+            
+            if(data_sent)
+            {   
+                // remove it from the queue
+                delete od->data;
+                delete od;
+                evo->data_queue.pop();
+            }
+        }
+
+
+        // if the queue is empty, delay a little so not to use so many CPU cycles
+        if(evo->data_queue.empty() && evo->command_queue.empty())
+            usleep(100e3);  // 100ms
+    }
+                           
+ 
+    cout << "Write thread exit\n";
+    return NULL;   
+}
+
                 
 // Helper functions
 
@@ -105,11 +234,12 @@ int chop_string(char *data, char **tokens)
 }                    
 
 
-Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm)
+Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q)
 {
     fd = _fd;
     term = _term;
     lcm = _lcm;
+    fixq = q;
     
     sending_im = false;
     sending_data = false;
@@ -120,12 +250,16 @@ Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm)
     pthread_mutex_init(&flags_lock, NULL);    
     pthread_create(&read_thread_id, NULL, read_thread, this);
     pthread_detach(read_thread_id);
+
+    pthread_create(&write_thread_id, NULL, write_thread, this);
+    pthread_detach(write_thread_id);
 }
 
 Evologics::~Evologics()
 {
     thread_exit = 1;
     pthread_join(read_thread_id, NULL);
+    pthread_join(write_thread_id, NULL);
 }
 
 int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
@@ -256,6 +390,14 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     
     lcm->publish("EVOLOGICS_USBL", &ud);
     
+    // put it in the queue for position calculation
+    if(fixq != NULL)
+    {
+        evologics_usbl_t *fq = new evologics_usbl_t;
+        memcpy(fq, &ud, sizeof(evologics_usbl_t));
+        fixq->push(fq);
+    }
+    
     return 1;
 }
 
@@ -304,6 +446,7 @@ int Evologics::parse_im(char *d)
 
 int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_channel)
 {
+    /*
     // Check to see what the current target is and if its different change it
     char msg[64];
     if(target != current_target)
@@ -329,7 +472,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
             return 0;
         }
     }    
-    
+    */
     
     // we will be adding 9 extra bytes in addition to the name and the name size
     int data_size = strlen(dest_channel) + 10 + size;
@@ -347,6 +490,9 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
+    send_data(dout, data_size, evo_data, target);
+    
+    /*
     //cout << "Data size: " << data_size << endl;
     // make sure we can send
     pthread_mutex_lock(&flags_lock);
@@ -369,13 +515,33 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     cout << "Sending LCM message: " << dest_channel << endl;
     sending_data = true;
     pthread_mutex_unlock(&flags_lock);    
-    
+    */
     return 1;
     
 }
 
+int Evologics::send_data(unsigned char *d, int size, int type, int target)
+{
+    // allocate the memory
+    Evo_Data_Out *od = new Evo_Data_Out;
+    od->data = new unsigned char[size];
+    memcpy(od->data, d, size);
+    od->target = target;
+    od->size = size;
+    od->type = type;
+    
+    // put it in the queue
+    if(type == evo_data)
+        data_queue.push(od);
+    else if(type == evo_command || type == evo_im) 
+        data_queue.push(od);
+    return 1;
+}
+
 int Evologics::send_command(const char *d)
 {
+    send_data((unsigned char *)d, strlen(d), evo_command, 0);
+    /*
     pthread_mutex_lock(&flags_lock);
     int count = 0;
     while(sending_command && count < 30)
@@ -407,7 +573,7 @@ int Evologics::send_command(const char *d)
     
     sending_command = true;
     pthread_mutex_unlock(&flags_lock);    
-    
+    */
     return 1;
 }
 
@@ -418,6 +584,8 @@ int Evologics::send_ping(int target)
     {
         memset(msg, 0, 32);
         sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
+        send_data((unsigned char *)msg, strlen(msg), evo_im, target);
+/*        
         pthread_mutex_lock(&flags_lock);
         sending_im = true;
         pthread_mutex_unlock(&flags_lock);
@@ -427,8 +595,10 @@ int Evologics::send_ping(int target)
             sending_im = false;
             pthread_mutex_unlock(&flags_lock);
         }
+*/
         return 1;
     }
+
     return 0;
 }
 

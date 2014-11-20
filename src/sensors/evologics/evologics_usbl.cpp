@@ -93,11 +93,40 @@ int readline(int fd, char *buf, int max_len)
     return i;
 }
 
-
+// fix processing thread
+// we need this because there is no way to trigger an event for select() on a STL queue
+static void *fix_thread(void *u)
+{
+    Evologics_Usbl *evo = (Evologics_Usbl *)u;
+    
+    while(!loop_exit)
+    {
+        if(!evo->fixq.empty())
+        {
+            evologics_usbl_t *ef = evo->fixq.front();
+            evo->calc_position(ef);
+            delete ef;
+            evo->fixq.pop();
+        }
+        if(evo->fixq.empty())
+            usleep(100e3);  // 100 ms sleep
+    }
+    return NULL;
+}
+        
+           
 Evologics_Usbl::Evologics_Usbl()
 {
     lcm = new lcm::LCM();
+    pthread_create(&fix_thread_id, NULL, fix_thread, this);
+    pthread_detach(fix_thread_id);
 }
+
+Evologics_Usbl::~Evologics_Usbl()
+{
+    pthread_join(fix_thread_id, NULL);
+}
+
 
 int Evologics_Usbl::ping_targets()
 {
@@ -512,7 +541,7 @@ int Evologics_Usbl::init()
     if((ahrs_fd = open_port(AHRS_PORT)) == -1)
         return 0;
     
-    evo = new Evologics(evo_fd, '\n', lcm);
+    evo = new Evologics(evo_fd, '\n', lcm, &fixq);
 
     
     
