@@ -1,7 +1,7 @@
 option (BUILD_LCM "Build and install third-party LCM?" ON)
 if (BUILD_LCM)
-  set (LCM_SRC "${THIRD_PARTY_DIR}/lcm-1.1.2.tar.gz")
-  set (LCM_DIR "lcm-1.1.2")
+  set (LCM_SRC "${THIRD_PARTY_DIR}/lcm-1.2.0.tar.gz")
+  set (LCM_DIR "lcm-1.2.0")
     
   add_custom_target (lcm
     COMMAND rm -f ${LCM_DIR}/PERLS_BUILT
