@@ -8,6 +8,11 @@
 
 #include "evologics.h"
 
+#ifdef EVO_ETHER
+#define TERM "\n"
+#else
+#define TERM "\r"
+#endif
 
 #define MAX_OUT_SIZE 4096
 #define SELECT_TIMEOUT 5
@@ -194,22 +199,22 @@ parse_message_t parse_evologics_message(char *data, int size, el_state_t *state,
     // Since we are in data mode we need to see if it starts with a +++AT
     // which indicates if it is control message or data
     parse_message_t ret;
-    if(strstr((const char *)data, "+AT") != NULL)
+    if(strstr((const char *)data, "+++AT") != NULL)
     {
         printf("Got a command message\n");
         if(strstr((const char *)data, "USBLLONG") != NULL)
         {
             int target;
             ret = parse_usbllong(data, state, timestamp, &target);
-            state->ping_semaphore[parse_im_response(data, state)] = 0;
-            state->channel_ready = 1;
+            //state->ping_semaphore[target] = 0;
+            //state->channel_ready = 1;
         }
         else if(strstr((const char *)data, "USBLANGLES") != NULL)
         {
             int target;
             ret = parse_usblangles(data, state, timestamp, &target);
-            state->ping_semaphore[parse_im_response(data, state)] = 0;
-            state->channel_ready = 1;
+            //state->ping_semaphore[target] = 0;
+            //state->channel_ready = 1;
         }    
         else if(strstr((const char *)data, "RECVIM") != NULL)
             ret = parse_im(data, state);
@@ -218,15 +223,17 @@ parse_message_t parse_evologics_message(char *data, int size, el_state_t *state,
             (strstr((const char *)data, "CANCELEDIM") != NULL))
         {
             printf("reseting channel state to ready\n");
-            state->ping_semaphore[parse_im_response(data, state)] = 0;
-            state->channel_ready = 1;
+            //state->ping_semaphore[parse_im_response(data, state)] = 0;
+            //state->channel_ready = 1;
+            state->modem_state = MODEM_AVAILABLE;
             ret = PARSE_NONE;
         }    
         else if(strstr((const char *)data, "INITIATION LISTEN") != NULL)
         {
-            state->ping_semaphore[parse_im_response(data, state)] = 0;
-            state->channel_ready = 1;
-            state->sending_data = 0;
+            //state->ping_semaphore[parse_im_response(data, state)] = 0;
+            //state->channel_ready = 1;
+            //state->sending_data = 0;
+            state->modem_state = MODEM_AVAILABLE;
             ret = PARSE_NONE;
         }
 
@@ -310,39 +317,63 @@ parse_message_t parse_evologics_message(char *data, int size, el_state_t *state,
 int send_evologics_data(char *data, int size, int target, el_state_t *state)
 {
     // if the channel is still busy just return
-    if((state->ping_semaphore[target] == 1) || state->sending_data)
-        return -2;
-        
+    int count = 0;
+    while(state->modem_state != MODEM_AVAILABLE && count < 5)
+    {
+        usleep(500e6);
+        count++;
+    }
+    if(state->modem_state != MODEM_AVAILABLE)
+        return -2;        
 
-    char buf[16];
+    char msg[16];
+    char ret_msg[256];
     // first if the target has changed we need to send a modem command to change the destination target
     if(target != state->current_target)
     {
         
-        sprintf(buf, "+++ATZ4\r\n");
-        if(write(state->fd, buf, strlen(buf)) == -1)
-            fprintf(stderr, "Faild to write to modem\n");
-        wait_response(state, NULL, 1024);
+        sprintf(msg, "+++ATZ4%s", TERM);
+        send_evologics_command(msg, NULL, 256, state);
         
-        sprintf(buf, "+++AT!AR%d\n\r", state->targets[target]);
-        if(write(state->fd, buf, strlen(buf)) == -1)
-            fprintf(stderr, "Faild to write to modem\n");
-        
-        if(!wait_response(state, NULL, 1024))
-        {    
-            fprintf(stderr, "Could not change target address\n");
-//            return 0;
+        int retry = 0;
+        do
+        {
+            sprintf(msg, "+++AT!AR%d%s", state->targets[target], TERM);
+            send_evologics_command(msg, ret_msg, 256, state);
+            retry++;
         }
-        state->current_target = target;
+        while((strstr((const char *)ret_msg, "OK") == NULL) && retry < 5);
+
+        // check to see if the target actually changed
+        sprintf(msg, "+++AT?AR%s", TERM);
+        send_evologics_command(msg, ret_msg, 256, state);
+        char *tokens[4];
+        int ret;
+        ret = chop_string(ret_msg, tokens);
+        if(atoi(tokens[1]) == target)
+        {
+            fprintf(stderr, "Changing target to %d\n", target);
+            state->current_target = target;
+        }
+        else
+        {
+            fprintf(stderr, "Failed to change target\n");
+            return 0;
+        }
     }
     
     // calculate the CRC
     unsigned long crc = crc32(0, (const void *)data, size);
     // stick it on the end
-    char *d = malloc(size + 4);
-    memcpy(d, data, size);
-    memcpy(&d[size], &crc, 4);  
+    char *d = malloc(size + 8);
+    strcpy(d, "LD");
+    memcpy(&d[2], data, size);
+    memcpy(&d[size + 2], &crc, 4);  
+    strcpy(&d[size + 6], "LE");
     
+    
+    
+    /*
     struct basE91 b91;
     basE91_init(&b91);
     char *out = malloc(MAX_OUT_SIZE);
@@ -352,19 +383,23 @@ int send_evologics_data(char *data, int size, int target, el_state_t *state)
     int out_size;
     out_size = basE91_encode(&b91, d, (size + 4), msg);
     out_size += basE91_encode_end(&b91, &msg[out_size]);
-    strcat(msg, "\r\n");
-    sprintf(out, "EVDATA");
+    strcat(msg, "LE");
+    sprintf(out, "LD");
     strcat(out, msg);
-    printf("Sending : %s", out);
-    if(write(state->fd, out, strlen(out)) == -1)
+    */
+    printf("Sending : %s\n", d);
+    if(write(state->fd, d, size+8) == -1)
     {
         fprintf(stderr, "Could not write data to modem\n");
         return 0;
     }
-    state->sending_data = 1;
+    
+    state->modem_state = MODEM_SENDING_DATA;
+    
     free(d);
-    free(out);
-    free(msg);
+
+//    free(out);
+//   free(msg);
 
     // Check to see that the data went through
  //   do 
@@ -378,6 +413,15 @@ int send_evologics_data(char *data, int size, int target, el_state_t *state)
  
 int send_evologics_command(char *data, char *ret_str, int size,  el_state_t *state)
 {
+    int count = 0;
+    while(state->modem_state != MODEM_AVAILABLE && count < 5)
+    {
+        usleep(500e6);
+        count++;
+    }
+    if(state->modem_state != MODEM_AVAILABLE)
+        return 0;
+        
     int free_buf = 0;
     if(ret_str == NULL)
     {
@@ -393,6 +437,9 @@ int send_evologics_command(char *data, char *ret_str, int size,  el_state_t *sta
         fprintf(stderr, "Failed to send data to modem\n");
         return 0;
     }
+    
+    state->modem_state = MODEM_SENDING_COMMAND;
+/*    
     state->channel_ready = 0;
     // we are always expecting a return
     int ret = 0;
@@ -400,11 +447,12 @@ int send_evologics_command(char *data, char *ret_str, int size,  el_state_t *sta
         ret = wait_response(state, ret_str, size);    
 
     printf("Modem response: %s", ret_str);
-
+    
     if(free_buf)
         free(ret_str);
 
     return ret;
+*/
 }
 
 
@@ -415,6 +463,9 @@ int send_ping(int target,  el_state_t *state)
     char msg[128];
     char ret_msg[256];
     
+    if(state->modem_state != MODEM_AVAILABLE)
+        return 0;
+    
     if(state->ping_semaphore[target] !=0 )
     {   
         printf("Target %d busy\n", target);
@@ -423,10 +474,22 @@ int send_ping(int target,  el_state_t *state)
     
     memset(msg, 0, 32);
     memset(ret_msg, 0, 256);
-    sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d\n", state->targets[target], state->targets[target]);
+    sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%s", state->targets[target], state->targets[target], TERM);
     printf("Sending message %s", msg);
-    send_evologics_command(msg, ret_msg, 256, state);
     
+    int bytes = write(state->fd, msg, strlen(msg));
+    if( bytes == -1)
+    {
+        fprintf(stderr, "Failed to send data to modem\n");
+        return 0;
+    }
+    
+    state->modem_state = MODEM_SENDING_IM;
+    
+    return 1;
+}
+/*
+
 
     // check to see that the ping went through ok
     if(strstr(ret_msg, "OK") != NULL)
@@ -450,6 +513,6 @@ int send_ping(int target,  el_state_t *state)
         
     return 1;
 }
-    
+*/    
 
 

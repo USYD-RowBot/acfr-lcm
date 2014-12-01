@@ -21,20 +21,19 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
-
 #include <bot_param/param_client.h>
 
+#include "perls-common/serial.h"
 #include "perls-lcmtypes/senlcm_novatel_t.h"
 #include "perls-common/timestamp.h"
 
+#include "time_conversion.h"
 
-#ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
-#else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
-#endif
+
 
 #define DTOR M_PI/180
+
+enum {io_socket, io_serial};
 
 int readline(int fd, char *buf, int max_len)
 {
@@ -64,6 +63,15 @@ int chop_string(char *data, char **tokens)
     return i;        
 }
 
+int program_gps(int fd, char *cmd)
+{
+    write(fd, cmd, strlen(cmd));
+    return 1;
+}
+        
+
+
+
 int program_exit;
 void signal_handler(int sig_num) 
 {
@@ -86,25 +94,77 @@ int main(int argc, char *argv[])
     param = bot_param_new_from_server (lcm, 1);
 	    
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
-      
-    char *gps_ip;
-    sprintf(key, "%s.IP", rootkey);
-	gps_ip = bot_param_get_str_or_fail(param, key);
-	
-	char *gps_port;
-    sprintf(key, "%s.port", rootkey);
-	gps_port = bot_param_get_str_or_fail(param, key);
-	
-	// Connect to the GPS
-    struct addrinfo hints, *gps_addr;
-	int gps_fd;
+    
+    
+    // read the config file
+    char *io_str;
+    int io;
+	sprintf(key, "%s.io", rootkey);
+	io_str = bot_param_get_str_or_fail(param, key);
+    if(!strcmp(io_str, "serial"))
+        io = io_serial;
+    else if(!strcmp(io_str, "socket"))
+        io = io_socket;
+    
+    char *serial_dev;
+    char *inet_port;
+    char *ip;
+    int baud;
+    char *parity;
+    
+    
+    if(io == io_serial)
+    {
+        sprintf(key, "%s.serial_dev", rootkey);
+        serial_dev = bot_param_get_str_or_fail(param, key);
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	getaddrinfo(gps_ip, gps_port, &hints, &gps_addr);
-	gps_fd = socket(gps_addr->ai_family, gps_addr->ai_socktype, gps_addr->ai_protocol);
- 
+    	sprintf(key, "%s.baud", rootkey);
+	    baud = bot_param_get_int_or_fail(param, key);
+
+	    sprintf(key, "%s.parity", rootkey);
+	    parity = bot_param_get_str_or_fail(param, key);
+    }
+    
+    if(io == io_socket)
+    {
+        sprintf(key, "%s.ip", rootkey);
+        ip = bot_param_get_str_or_fail(param, key);
+
+        sprintf(key, "%s.port", rootkey);
+        inet_port = bot_param_get_str_or_fail(param, key);
+    }
+    
+    
+    
+    // Connect to the GPS
+    int gps_fd;
+    struct addrinfo hints, *gps_addr;
+    if(io == io_socket)
+    {
+        
+	    memset(&hints, 0, sizeof(hints));
+	    hints.ai_family = AF_INET;
+	    hints.ai_socktype = SOCK_STREAM;
+	    getaddrinfo(ip, inet_port, &hints, &gps_addr);
+	    gps_fd = socket(gps_addr->ai_family, gps_addr->ai_socktype, gps_addr->ai_protocol);
+    }
+    else
+    {
+        gps_fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 1);
+        if(gps_fd < 0)
+        {
+            printf("Error opening port %s\n", serial_dev);
+            return 0;
+        }
+        serial_set_canonical(gps_fd, '\r', '\n');
+    }
+
+    printf("Programing GPS\n");
+    program_gps(gps_fd, "UNLOGALL\r\n");
+    program_gps(gps_fd, "LOG INSPVA ONTIME 0.2\r\n");
+    program_gps(gps_fd, "LOG BESTPOS ONTIME 0.2\r\n");
+    
+    printf("Ready\n");
 	struct timeval tv;
 
     int connected = 0;
@@ -115,34 +175,37 @@ int main(int argc, char *argv[])
 	
 	// main loop
 	while(!program_exit) {
-        if(!connected)
-        {
-            tv.tv_sec = 2;
-    	    tv.tv_usec = 0;
-            FD_ZERO(&rfds);
-            FD_SET(gps_fd, &rfds);
-            int ret = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
-            if(ret != -1)
+	    if(io == io_socket)
+	    {
+            if(!connected)
             {
-    	        if(connect(gps_fd, gps_addr->ai_addr, gps_addr->ai_addrlen) < 0) 
-	    	    {
-                    perror("GPS connect");
+                tv.tv_sec = 2;
+        	    tv.tv_usec = 0;
+                FD_ZERO(&rfds);
+                FD_SET(gps_fd, &rfds);
+                int ret = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
+                if(ret != -1)
+                {
+        	        if(connect(gps_fd, gps_addr->ai_addr, gps_addr->ai_addrlen) < 0) 
+	        	    {
+                        perror("GPS connect");
+                        continue;
+                    }
+                    else 
+                    {
+                        printf("GPS: got a connection\n");
+				        tv.tv_sec = 1;  // 1 Secs Timeout 
+        				tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
+				        setsockopt(gps_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+                        connected = 1;
+                    }
+                }
+                else
+                {
+                    printf("Select timeout\n");
                     continue;
                 }
-                else 
-                {
-                    printf("GPS: got a connection\n");
-				    tv.tv_sec = 1;  // 1 Secs Timeout 
-    				tv.tv_usec = 1000;  // Not init'ing this can cause strange errors
-				    setsockopt(gps_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-
-                    connected = 1;
-                }
-            }
-            else
-            {
-                printf("Select timeout\n");
-                continue;
             }
         }
         
@@ -151,13 +214,22 @@ int main(int argc, char *argv[])
         // now receive and process the GPS messages
 
 		memset(data, 0, sizeof(data));
-  		readline(gps_fd, data, 256);      
+		if(io == io_socket)
+  		    readline(gps_fd, data, 256);
+	    else
+	        read(gps_fd, data, 256);
+	            
         nov.utime = timestamp_now();
-		
+		//printf("%s\n", data);
 		char *tok[64];
 		ret = chop_string(data, tok);
+		
+		// we need to decode the inspva message as well as the bestpos message for the standard deviations
+    	// for now we will determine the message type by the response length, I'll fix this later
 	    if(ret > 1)
 	    {
+	        //printf("%s, %d\n", tok[0], ret);
+	        //if((strstr(tok[0], "INSPVA") != NULL) && ret == 13)
 	        if((tok[0][0] == '<') && (ret == 13))
 	        {
 	            nov.latitude = atof(tok[3]) * DTOR;
@@ -169,11 +241,34 @@ int main(int argc, char *argv[])
 			    nov.north_velocity = atof(tok[6]);
 			    nov.east_velocity = atof(tok[7]);
 			    nov.up_velocity = atof(tok[8]);
-//			    nov.time = atof(tok[]);
+			    nov.status = tok[12];
 			    
-	            
+			    // Convert the GPS time into something useful
+			    unsigned short g_year;
+			    unsigned char g_month, g_day, g_hour, g_minute;
+			    float g_seconds;
+			    TIMECONV_GetUTCTimeFromGPSTime(atoi(tok[1]), atof(tok[2]), &g_year, &g_month, &g_day, &g_hour, &g_minute, &g_seconds);
+			    
+			    struct tm gps_time;
+			    gps_time.tm_year = g_year - 1900;
+			    gps_time.tm_mon = g_month - 1;
+			    gps_time.tm_mday = g_day;
+			    gps_time.tm_hour = g_hour;
+			    gps_time.tm_min = g_minute;
+			    gps_time.tm_sec = (int)floor(g_seconds);
+			    //printf("%u, %u, %u, %u, %u, %u\n", gps_time.tm_year, gps_time.tm_mon, gps_time.tm_mday, gps_time.tm_hour, gps_time.tm_min, gps_time.tm_sec);
+			    
+			    time_t gps_utc_time = mktime(&gps_time);
+			    nov.gps_time = (int64_t)(gps_utc_time * 1e6) + (int64_t)((fmod(g_seconds,1.0)) * 1e6);
+			    //printf("%s\n", asctime(&gps_time));
                 senlcm_novatel_t_publish(lcm, "NOVATEL", &nov);
             }
+            if((tok[0][0] == '<') && ret == 22)
+            {
+                nov.latitude_sd = atof(tok[8]) * DTOR;
+                nov.longitude_sd = atof(tok[9]) * DTOR;
+            }
+                
         }
 
     }

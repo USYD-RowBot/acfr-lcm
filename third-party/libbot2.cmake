@@ -10,10 +10,10 @@ if (BUILD_LIBBOT2)
   endif ()
   
   # requires opencv
-  find_package (OpenCV)
-  if (NOT BUILD_OPENCV AND NOT OpenCV_FOUND)
-    message (SEND_ERROR "libbot requires opencv.  either:\ni) enable the BUILD_OPENCV option or\nii) on ubuntu 10.04 or higher, do\n`sudo apt-get install libcv-dev libcvaux-dev libhighgui-dev libraw1394-dev libdc1394-22-dev`")
-  endif ()
+#  find_package (OpenCV)
+#  if (NOT BUILD_OPENCV AND NOT OpenCV_FOUND)
+#    message (SEND_ERROR "libbot requires opencv.  either:\ni) enable the BUILD_OPENCV option or\nii) on ubuntu 10.04 or higher, do\n`sudo apt-get install libcv-dev libcvaux-dev libhighgui-dev libraw1394-dev libdc1394-22-dev`")
+#  endif ()
  
   # requires zlib 
   execute_process(COMMAND lsb_release -r OUTPUT_VARIABLE UBUNTU_RELEASE)
@@ -40,6 +40,7 @@ if (BUILD_LIBBOT2)
       COMMAND ${ZLIB_CMD}
       COMMAND mkdir -p ${LIBBOT2_DIR}
       COMMAND cp -r ${LIBBOT2_SRC} .
+      COMMAND cd ${LIBBOT_DIR} && svn up
       #COMMAND svn export --force ${LIBBOT2_SRC} ${LIBBOT2_DIR}
       COMMAND cd ${LIBBOT2_DIR} && sudo make BUILD_PREFIX=${CMAKE_INSTALL_PREFIX}
       COMMAND sudo ldconfig

@@ -94,9 +94,9 @@ int TaskPlanner::sendAbort() {
     memset(&ac, 0, sizeof(acfrlcm::auv_global_planner_t));
     ac.utime = timestamp_now();
     ac.command = acfrlcm::auv_global_planner_t::SPIRAL;
-    ac.point1[0] = navX + (sin(M_PI/2 - navH) * 5);
-    ac.point1[1] = navY + (cos(M_PI/2 - navH) * 5);
-    ac.point1[2] = navZ;
+    ac.point1_x = navX + (sin(M_PI/2 - navH) * 5);
+    ac.point1_y = navY + (cos(M_PI/2 - navH) * 5);
+    ac.point1_z = navZ;
     ac.var_d[0] = 5;
     ac.var_d[1] = -navZ;
     lcm.publish("TASK_PLANNER_COMMAND", &tpc);

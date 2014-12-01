@@ -14,6 +14,7 @@ import java.lang.reflect.*;
 
 import lcm.spy.ChannelData;
 import lcm.spy.ObjectPanel;
+import lcm.spy.ChartData;
 import lcm.lcm.LCMDataInputStream;
 
 import hauv.*;
@@ -22,6 +23,8 @@ import senlcm.*;
 
 public class DegViewerPlugin implements lcm.spy.SpyPlugin
 {
+
+
     public boolean canHandle(long fingerprint)
     {
         if (fingerprint == senlcm.pelican_t.LCM_FINGERPRINT ||
@@ -41,6 +44,7 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                 fingerprint == senlcm.ahrs_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.usbl_fix_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.rt3202_t.LCM_FINGERPRINT ||
+                fingerprint == acfrlcm.auv_status_t.LCM_FINGERPRINT ||
 
                 fingerprint == hauv.bs_cnv_t.LCM_FINGERPRINT ||
                 fingerprint == hauv.bs_imu_t.LCM_FINGERPRINT ||
@@ -63,22 +67,25 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
 
     class MyAction extends AbstractAction
     {
-	ChannelData cd;
-	JDesktopPane jdp;
+    	ChannelData cd;
+	    JDesktopPane jdp;
+	    ChartData chartData;
+	    
 
-	public MyAction(JDesktopPane jdp, ChannelData cd)
-	{
-	    super("Structure Viewer (Degrees)...");
-	    this.jdp = jdp;
-	    this.cd = cd;
-	}
+	    public MyAction(JDesktopPane jdp, ChannelData cd)
+	    {
+	        super("Structure Viewer (Degrees)...");
+	        this.jdp = jdp;
+	        this.cd = cd;
+	        this.chartData = new ChartData(System.nanoTime()/1000);
+	    }
 
-	public void actionPerformed(ActionEvent e) 
-	{
-            Viewer v = new Viewer(cd);
-	    jdp.add(v);
-	    v.toFront();
-	}
+	    public void actionPerformed(ActionEvent e) 
+	    {
+	        JFrame frame;
+	        frame = (JFrame)jdp.getParent().getParent().getParent().getParent();
+            Viewer v = new Viewer(cd, chartData, frame);
+	    }
     }
 
     public Action getAction(JDesktopPane jdp, ChannelData cd)
@@ -87,30 +94,59 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
     }
 
 
-    class Viewer extends JInternalFrame implements lcm.lcm.LCMSubscriber
+    class Viewer implements lcm.lcm.LCMSubscriber
     {
         ChannelData cd;
-        ObjectPanel op;
+        public JFrame      viewerFrame;
+        public ObjectPanel viewer;
 
-    	public Viewer(ChannelData cd)
+
+    	public Viewer(ChannelData cd, ChartData chartData, JFrame viewerFrame)
     	{
-            super(cd.name+": Degrees", true, true);
             this.cd = cd;
+            this.viewerFrame = viewerFrame;
+            viewer = null;
 
-            setLayout(new BorderLayout());
-            op = new ObjectPanel(cd.name);
-            add(new JScrollPane(op),BorderLayout.CENTER);
-            setSize(550,400);
-            setVisible(true);
-            
+            if (this.viewerFrame != null && !this.viewerFrame.isVisible())
+            {
+                this.viewerFrame.dispose();
+                viewer = null;
+            }
+
+            if (viewer == null) {
+                this.viewerFrame.setTitle(cd.name+": Degrees");
+                viewer = new ObjectPanel(cd.name, chartData);
+                viewer.setObject(cd.last, cd.last_utime);
+
+                this.viewerFrame.setLayout(new BorderLayout());
+
+                // default scroll speed is too slow, so increase it
+                JScrollPane viewerScrollPane = new JScrollPane(viewer);
+                viewerScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                
+                // we need to tell the viewer what its viewport is so that it can
+                // make smart decisions about which elements are in view of the user
+                // so it can avoid drawing items outside the view
+                viewer.setViewport(viewerScrollPane.getViewport());
+
+                this.viewerFrame.add(viewerScrollPane, BorderLayout.CENTER);
+
+                this.viewerFrame.setSize(650,400);
+                this.viewerFrame.setVisible(true);
+            }
+            else 
+            {
+                this.viewerFrame.setVisible(true);
+            }
+
             lcm.lcm.LCM.getSingleton().subscribe(cd.name, this);	    
         }        
 
-	public void messageReceived (lcm.lcm.LCM lc, String channel, LCMDataInputStream dis)
-	{
+	    public void messageReceived (lcm.lcm.LCM lc, String channel, LCMDataInputStream dis)
+	    {
             Object o = null;
 
-            if (!isVisible())
+            if (!viewerFrame.isVisible())
                 return;
 
             try {
@@ -251,6 +287,11 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     senlcm.usbl_fix_t usbl = new senlcm.usbl_fix_t(dis);
                     usbl.latitude = Math.toDegrees(usbl.latitude);
                     usbl.longitude = Math.toDegrees(usbl.longitude);
+                    usbl.ship_latitude = Math.toDegrees(usbl.ship_latitude);
+                    usbl.ship_longitude = Math.toDegrees(usbl.ship_longitude);
+                    usbl.ship_roll = (float)Math.toDegrees((double)usbl.ship_roll);
+                    usbl.ship_pitch = (float)Math.toDegrees((double)usbl.ship_pitch);
+                    usbl.ship_heading = (float)Math.toDegrees((double)usbl.ship_heading);
                     o = usbl;
                 }
                 /* rt3202_t */
@@ -265,6 +306,14 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     rt.ary = Math.toDegrees(rt.ary);
                     rt.arz = Math.toDegrees(rt.arz);
                     o = rt;
+                }
+                /* rt3202_t */
+                else if (cd.fingerprint == acfrlcm.auv_status_t.LCM_FINGERPRINT) {
+                    acfrlcm.auv_status_t as = new acfrlcm.auv_status_t(dis);
+                    as.latitude = Math.toDegrees(as.latitude);
+                    as.longitude = Math.toDegrees(as.longitude);
+                   
+                    o = as;
                 }
                 /* HAUV=========================================== */
                 /* bs_cnv_t */
@@ -372,8 +421,8 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     o = cls.getConstructor(DataInput.class).newInstance(dis);
                 }
                 
-                if (op != null) 
-                    op.setObject(o);
+                if (viewer != null) 
+                    viewer.setObject(o, cd.last_utime);
 			
             } catch (NullPointerException ex) {
                 cd.nerrors++;

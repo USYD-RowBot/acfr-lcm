@@ -13,7 +13,7 @@ using namespace acfrlcm;
 
                
 int main(int argc, char **argv) {
-    if(argc < 3)
+    if(argc <= 2)
     {
         cerr << "Usage: lcm2raw: [lcm log file] [output raw file]" << endl;
         return 1;

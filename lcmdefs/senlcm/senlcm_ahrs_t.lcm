@@ -3,6 +3,7 @@ package senlcm;
 struct ahrs_t
 {
     int64_t utime;
+    int64_t mtime;
     
     double roll;
     double pitch;

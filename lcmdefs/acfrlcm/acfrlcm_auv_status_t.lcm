@@ -25,15 +25,17 @@ struct auv_status_t
         bit 14      Temp
         bit 15      Leak
     */
-    
+    int8_t  target_id;
     int16_t waypoint;
     int16_t heading;    /* 0.1 deg */
     int8_t roll;        /* 0.1 deg */
     int8_t pitch;       /* 0.1 deg */
     int16_t depth;      /* 0.1 m */
     int8_t altitude;    /* 0.1 m */
-    float latitude;
-    float longitude;
+    double latitude;
+    double longitude;
+    float x;
+    float y;
     int32_t img_count;
     int8_t charge;
 }

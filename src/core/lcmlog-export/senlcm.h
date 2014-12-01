@@ -125,5 +125,21 @@ senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 void                              
 senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
                               const senlcm_sts_spec_t *msg, void *user);
+                              
+void 
+senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_usbl_fix_t *msg, void *user);
+
+void 
+senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_novatel_t *msg, void *user);
+
+void 
+senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_evologics_usbl_t *msg, void *user);                              
+
+void 
+senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                              const senlcm_ahrs_t *msg, void *user);                              
 
 #endif //__HANDLERS_SENLCM_H__

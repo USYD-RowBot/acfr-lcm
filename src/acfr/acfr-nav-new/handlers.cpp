@@ -320,7 +320,7 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
     osc_data.roll = osc->rph[0];
     osc_data.pitch = osc->rph[1];
     osc_data.heading = osc->rph[2];
-    //osc_data.depth = osc->rph[3];
+    osc_data.depth = osc->rph[4];
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
     if(state->mode == NAV)
@@ -348,6 +348,33 @@ void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IM
     imu_data.linZacc_m_persec_sqr = imu->accel[2];
 
     state->slam->handle_imu_data(imu_data);
+}
+
+void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const usbl_fix_t *usbl, state_c* state)
+{
+    auv_data_tools::Evologics_Fix_Data usbl_data;
+
+    //cout << "IMU reading recieved" << endl;
+
+    usbl_data.set_raw_timestamp((double)usbl->utime/1e6);
+    usbl_data.target_lat = usbl->latitude * RTOD;    
+    usbl_data.target_lon = usbl->longitude * RTOD;
+    usbl_data.target_depth = usbl->depth;
+    usbl_data.accuracy = usbl->accuracy;
+    usbl_data.ship_lat = usbl->ship_latitude * RTOD;
+    usbl_data.ship_lon = usbl->ship_longitude * RTOD;
+    usbl_data.ship_roll = usbl->ship_roll * RTOD;
+    usbl_data.ship_pitch = usbl->ship_pitch * RTOD;
+    usbl_data.ship_heading = usbl->ship_heading * RTOD;
+    
+    if(state->mode == NAV)
+       	state->slam->handle_evologicsfix_data(usbl_data);
+    else if(state->mode == RAW)
+    {
+        usbl_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+    
 }
 
 
