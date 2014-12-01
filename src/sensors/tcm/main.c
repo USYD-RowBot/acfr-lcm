@@ -168,9 +168,21 @@ int program_tcm(generic_sensor_driver_t *gsd)
     return 1;
 }
 
+int program_exit;
+void
+signal_handler(int sigNum)
+{
+   // do a safe exit
+   program_exit = 1;
+}
+
 int
 main (int argc, char *argv[])
 {
+    // install the signal handler
+    program_exit = 0;
+    signal(SIGINT, signal_handler);
+                
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_launch (gsd);
     gsd_noncanonical(gsd, 1, 1);
@@ -188,27 +200,42 @@ main (int argc, char *argv[])
     
     int start_pos;
     
-    while(1)
+    while(!program_exit)
     {
         memset(buf, 0, sizeof(buf));
+        start_pos = 0;
     	do
         {
-            len = gsd_read(gsd, buf, sizeof(buf), &timestamp);
-            //printf("len = %d\n", len);
-            for(int i=0; i<len; i++)
-                if(buf[i] == 0)
-                {
-                    start_pos = i;
-                    break;
-                }
-        } while(buf[start_pos] != 0);
+            //len = gsd_read(gsd, buf, sizeof(buf), &timestamp);
+            //look for a leading 0 that may be the start of a data frame
+            len = gsd_read(gsd, buf, 1, &timestamp);
+            if (len < 1) {
+                printf("ERROR: got len = %d bytes from gsd_read. Resetting connection in 1s.\n", len);
+                sleep(1);
+                gsd_update_stats (gsd, false);
+                gsd_flush(gsd);
+                gsd_destroy(gsd);
+                gsd = gsd_create (argc, argv, NULL, myopts);
+                gsd_launch (gsd);
+                gsd_noncanonical(gsd, 1, 1);
+            } else {
+                for(int i=0; i<len; i++)
+                    if(buf[i] == 0)
+                    {
+                        start_pos = i;
+                        break;
+                    }
+            }
+        } while(buf[start_pos] != 0 && len > 0);
 
         if(len < 2)
        	    len += gsd_read(gsd, &buf[start_pos + 1], 1, NULL);
     	    
  	    unsigned short data_len = (buf[start_pos] << 8) + buf[start_pos + 1];
 
-        //if(data_len == 26)
+        // the minimum valid  data length is 5.  Make sure we don't pass an
+        // invalide length to the tcm_crc function.
+        if(data_len > 5)
         {
         
             // read the rest of the data
@@ -239,8 +266,15 @@ main (int argc, char *argv[])
                 gsd_update_stats (gsd, false);
             }
         }
-        
+	    else
+        {
+         printf("\nBad data_len %d\n", data_len);
+            gsd_update_stats (gsd, false);
+        }
+    
     }
+
+    gsd_destroy(gsd);
     
     return 0;
     

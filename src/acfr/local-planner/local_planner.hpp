@@ -214,6 +214,7 @@ private:
 	double wpDropDist;
 	double wpDropAngle;
 	double replanInterval;
+	//double depth_ref;
 
 	int64_t waypointTime;
 	int64_t replanTime;
