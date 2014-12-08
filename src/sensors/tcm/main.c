@@ -283,9 +283,9 @@ main (int argc, char *argv[])
         {
             timestamp = timestamp_now();
             len = read(fd, buf, 1);
-            if(len < 1 && buf[0] != 0)
-                continue;
-            else
+            if(len == 1 && buf[0] == 0)
+            //    continue;
+            //else
             {
                 // read another byte
                 len += read(fd, &buf[1], 1);
@@ -310,7 +310,8 @@ main (int argc, char *argv[])
         	        else
             	        printf("Bad CRC\n");
     	        }
-                printf("\nBad data_len %d\n", data_len);
+                else
+                    printf("\nBad data_len %d\n", data_len);
             }
         }
     }        
