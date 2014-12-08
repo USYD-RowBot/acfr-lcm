@@ -11,19 +11,14 @@
 #include <libgen.h>
 
 #include "perls-common/timestamp.h"
-#include <bot_param/param_client.h>
-#include "perls-common/serial.h"
-
 #include "perls-lcmtypes/senlcm_tcm_t.h"
+#include "acfr-common/sensor.h"
 
 #include "tcm.h"
 
 #define update_rate 0.1
 
 #define DTOR 3.141592/180
-
-enum {io_socket, io_serial};
-
 
 int parse_tcm(char *buf, senlcm_tcm_t *tcm)
 {
@@ -107,7 +102,7 @@ int tcm_form_message(char *in, int data_len, char *out)
     
 
 
-int program_tcm(int fd)
+int program_tcm(acfr_sensor_t *s)
 {
     char data[128];
     char out[128];
@@ -126,7 +121,7 @@ int program_tcm(int fd)
 //    data[8] = kZAligned;
     len = tcm_form_message(data, 6, out);
 //    len = tcm_form_message(data, 9, out);
-    write(fd, out, len);
+    acfr_sensor_write(s, out, len);
     
     
     // set the acquisition mode
@@ -137,7 +132,7 @@ int program_tcm(int fd)
     float interval = update_rate;
     memcpy(&data[7], &interval, sizeof(float));
     len = tcm_form_message(data, 11, out);    
-    write(fd, out, len);
+    acfr_sensor_write(s, out, len);
 
     // set the filter mode
     double c4[4] = {4.6708657655334e-2, 4.5329134234467e-1, 4.5329134234467e-1, 4.6708657655334e-2};
@@ -156,24 +151,28 @@ int program_tcm(int fd)
         memcpy(&data[4], c8, sizeof(double)*filter_length);
     }
     len = tcm_form_message(data, sizeof(double)*filter_length + 4, out);
-    write(fd, out, len);
+    acfr_sensor_write(s, out, len);
 
 
     // start
     memset(data, 0, sizeof(data));
     data[0] = kStartIntervalMode;
     len = tcm_form_message(data, 1, out);    
-    write(fd, out, len);
+    acfr_sensor_write(s, out, len);
 
     return 1;
 }
 
 int program_exit;
+int broken_pipe;
 void
-signal_handler(int sigNum)
+signal_handler(int sig_num)
 {
    // do a safe exit
-   program_exit = 1;
+    if(sig_num == SIGPIPE)
+        broken_pipe = 1;
+    else
+        program_exit = 1;
 }
 
 int
@@ -181,96 +180,41 @@ main (int argc, char *argv[])
 {
     // install the signal handler
     program_exit = 0;
+    broken_pipe = 0;
     signal(SIGINT, signal_handler);
-
+    signal(SIGPIPE, signal_handler);
+    
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
                 
-    // Read the LCM config file
-    BotParam *param;
-	char rootkey[64];
-	char key[64];
-	
-    param = bot_param_new_from_server (lcm, 1);
-    
+	char rootkey[64];    
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
-    // read the config file
-    int io;
-	sprintf(key, "%s.io", rootkey);
-	char *io_str = bot_param_get_str_or_fail(param, key);
-    if(!strcmp(io_str, "serial"))
-        io = io_serial;
-    else if(!strcmp(io_str, "socket"))
-        io = io_socket;
-    
-    char *serial_dev, *parity;
-    int baud;
-    char *ip, *inet_port;
-    
-    if(io == io_serial)
-    {
-        sprintf(key, "%s.serial_dev", rootkey);
-        serial_dev = bot_param_get_str_or_fail(param, key);
+    acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
+    if(sensor == NULL)
+        return 0;
 
-    	sprintf(key, "%s.baud", rootkey);
-	    baud = bot_param_get_int_or_fail(param, key);
-
-	    sprintf(key, "%s.parity", rootkey);
-	    parity = bot_param_get_str_or_fail(param, key);
-    }
-    
-    if(io == io_socket)
-    {
-        sprintf(key, "%s.ip", rootkey);
-        ip = bot_param_get_str_or_fail(param, key);
-
-        sprintf(key, "%s.port", rootkey);
-        inet_port = bot_param_get_str_or_fail(param, key);
-    }
-
-    // Open either the serial port or the socket
-    struct addrinfo hints, *spec_addr;
-    int fd;
-    if(io == io_serial)
-    {
-        fd = serial_open(serial_dev, serial_translate_speed(baud), serial_translate_parity(parity), 1);
-        if(fd < 0)
-        {
-            printf("Error opening port %s\n", serial_dev);
-            return 0;
-        }
-    }        
-    else if(io == io_socket)
-    {
-        memset(&hints, 0, sizeof hints);
-        hints.ai_family = AF_UNSPEC;
-        hints.ai_socktype = SOCK_STREAM;
-        getaddrinfo(ip, inet_port, &hints, &spec_addr);
-    	fd = socket(spec_addr->ai_family, spec_addr->ai_socktype, spec_addr->ai_protocol);
-        if(connect(fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0) 
-        {
-	        printf("Could not connect to %s on port %s\n", ip, inet_port);
-    		return 1;
-        }
-    
-    }
+    acfr_sensor_noncanonical(sensor, 1, 0);    
     
     int len;
     char buf[256];
     int64_t timestamp;
     senlcm_tcm_t tcm;
     
-    program_tcm(fd);
+    program_tcm(sensor);
     
     fd_set rfds;
     
     while(!program_exit)
     {
+        // check for broken pipes, if it is broken make sure it is closed and then reopen it
+        if(broken_pipe)
+		    sensor->port_open = 0;
+    
         memset(buf, 0, sizeof(buf));
         
         FD_ZERO(&rfds);
-        FD_SET(fd, &rfds);
+        FD_SET(sensor->fd, &rfds);
 	
 		struct timeval tv;
 		tv.tv_sec = 1;
@@ -282,19 +226,17 @@ main (int argc, char *argv[])
         else if(ret != 0)
         {
             timestamp = timestamp_now();
-            len = read(fd, buf, 1);
+            len = acfr_sensor_read(sensor, buf, 1);
             if(len == 1 && buf[0] == 0)
-            //    continue;
-            //else
             {
                 // read another byte
-                len += read(fd, &buf[1], 1);
+                len += acfr_sensor_read(sensor, &buf[1], 1);
                 unsigned short data_len = (buf[0] << 8) + buf[1];   
                 if(data_len > 5)
                 {
                     // read the rest of the data
                     while(len < data_len)
-                        len += read(fd, &buf[len], data_len - len);
+                        len += acfr_sensor_read(sensor, &buf[len], data_len - len);
 
                     // check the checksum
                     unsigned short crc = *(unsigned short *)&buf[len - 2];
@@ -314,9 +256,15 @@ main (int argc, char *argv[])
                     printf("\nBad data_len %d\n", data_len);
             }
         }
+        else
+        {
+            // timeout, check the connection
+            fprintf(stderr, "Timeout: Checking connection\n");
+            acfr_sensor_write(sensor, "\n", 1);
+        }
     }        
         
-    close(fd);
+    acfr_sensor_destroy(sensor);
     
     return 0;
     

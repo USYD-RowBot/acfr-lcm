@@ -128,11 +128,13 @@ int main (int argc, char *argv[]) {
     char rootkey[64];
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
     
-    acfr_sensor_t sensor;
-    if(!acfr_sensor_load_config(lcm, &sensor, rootkey))
+    acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
+    if(sensor == NULL)
         return 0;
+//    if(!acfr_sensor_load_config(lcm, &sensor, rootkey))
+//        return 0;
 
-    acfr_sensor_open(&sensor);
+//    acfr_sensor_open(&sensor);
 /*                
     // Read the LCM config file
     BotParam *param;
@@ -211,26 +213,26 @@ int main (int argc, char *argv[]) {
 	// then send a nmea command
     
     
-    acfr_sensor_noncanonical(&sensor, 1, 0);
+    acfr_sensor_noncanonical(sensor, 1, 0);
 	sprintf( buf, "%c", 27 );
-    acfr_sensor_write(&sensor, buf, 1); 
+    acfr_sensor_write(sensor, buf, 1); 
 	
 	do
 	{
-		acfr_sensor_read(&sensor, buf, 1);
+		acfr_sensor_read(sensor, buf, 1);
 	}
 	while (buf[0] != '#');
 	
-    acfr_sensor_write(&sensor, "nmea\r\n", 6); // put it in nmea mode
+    acfr_sensor_write(sensor, "nmea\r\n", 6); // put it in nmea mode
 	
-    acfr_sensor_canonical(&sensor, '\n', '\r');
+    acfr_sensor_canonical(sensor, '\n', '\r');
     
 	fd_set rfds;	
     // loop to collect data, parse and send it on its way
     while(!program_exit) {
         // check for broken pipes, if it is broken make sure it is closed and then reopen it
         if(broken_pipe)
-		sensor.port_open = 0;
+		    sensor->port_open = 0;
             //if(!sensor.port_open)
                 //acfr_sensor_open(&sensor);
     
@@ -238,7 +240,7 @@ int main (int argc, char *argv[]) {
         memset(buf, 0, sizeof(buf));
 		
 		FD_ZERO(&rfds);
-        FD_SET(sensor.fd, &rfds);
+        FD_SET(sensor->fd, &rfds);
 	
 		struct timeval tv;
 		tv.tv_sec = 1;
@@ -256,7 +258,7 @@ int main (int argc, char *argv[]) {
 			else
 				len = readline(sensor.fd, buf, 256);
 */
-            len = acfr_sensor_read(&sensor, buf, 256);
+            len = acfr_sensor_read(sensor, buf, 256);
             if(len > 0)
 				if(parseYsi(buf, len, &ysi))
 					senlcm_ysi_t_publish (lcm, "YSI", &ysi);
@@ -266,9 +268,11 @@ int main (int argc, char *argv[]) {
         {
             // timeout, check the connection
             fprintf(stderr, "Timeout: Checking connection\n");
-            acfr_sensor_write(&sensor, "\n", 1);
+            acfr_sensor_write(sensor, "\n", 1);
         }
 	}
 
+    acfr_sensor_destroy(sensor);
+    
     return 0;
 }

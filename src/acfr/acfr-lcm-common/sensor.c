@@ -1,6 +1,25 @@
 #include "sensor.h"
 
 
+acfr_sensor_t *acfr_sensor_create(lcm_t *lcm, char *rootkey)
+{
+    acfr_sensor_t *s = (acfr_sensor_t *)malloc(sizeof(acfr_sensor_t));
+    if(acfr_sensor_load_config(lcm, s, rootkey))
+        return s;
+    else
+        return NULL;
+}
+
+int acfr_sensor_destroy(acfr_sensor_t *s)
+{
+    if(s->port_open)
+        close(s->fd);
+    free(s);
+    
+    return 1;
+}
+
+
 // load the config from the param server
 int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *rootkey)
 {
