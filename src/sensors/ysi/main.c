@@ -18,12 +18,13 @@
 #include <bot_param/param_client.h>
 
 #include "perls-common/timestamp.h"
-#include "perls-common/serial.h"
+//#include "perls-common/serial.h"
 #include "perls-common/nmea.h"
+#include "acfr-common/sensor.h"
 
 #include "perls-lcmtypes/senlcm_ysi_t.h"
 
-enum {io_socket, io_serial};
+//enum {io_socket, io_serial};
 
 // parse the nmea string from the YSI sensor
 static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi) {
@@ -101,30 +102,43 @@ int readline(int fd, char *d, int len)
 
 
 int program_exit;
+int broken_pipe;
 void
-signal_handler(int sigNum)
+signal_handler(int sig_num)
 {
    // do a safe exit
-   program_exit = 1;
+    if(sig_num == SIGPIPE)
+        broken_pipe = 1;
+    else
+        program_exit = 1;
 }
 
 int main (int argc, char *argv[]) {
 		
     // install the signal handler
     program_exit = 0;
+    broken_pipe = 0;
     signal(SIGINT, signal_handler);
+    signal(SIGPIPE, signal_handler);
 	
 	//Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
-                
+
+    char rootkey[64];
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+    
+    acfr_sensor_t sensor;
+    acfr_sensor_load_config(lcm, &sensor, rootkey);
+    acfr_sensor_open(&sensor);
+/*                
     // Read the LCM config file
     BotParam *param;
-	char rootkey[64];
+	
 	char key[64];
 	
     param = bot_param_new_from_server (lcm, 1);
     
-    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+    
 
     // read the config file
     int io;
@@ -186,7 +200,7 @@ int main (int argc, char *argv[]) {
         }
     
     }
-   	
+*/   	
 	char buf[256];
     senlcm_ysi_t ysi;
    	
@@ -194,23 +208,29 @@ int main (int argc, char *argv[]) {
 	// then send a nmea command
     
 	sprintf( buf, "%c", 27 );
-    write(fd, buf, 1); 
+    write(sensor.fd, buf, 1); 
 	
 	do
 	{
-		read(fd, buf, 1);
+		read(sensor.fd, buf, 1);
 	}
 	while (buf[0] != '#');
 	
-    write(fd, "nmea\r\n", 6); // put it in nmea mode
+    write(sensor.fd, "nmea\r\n", 6); // put it in nmea mode
 	
 	fd_set rfds;	
     // loop to collect data, parse and send it on its way
     while(!program_exit) {
+        // check for broken pipes, if it is broken make sure it is closed and then reopen it
+        if(broken_pipe)
+            if(!sensor.port_open)
+                acfr_sensor_open(&sensor);
+    
+    
         memset(buf, 0, sizeof(buf));
 		
 		FD_ZERO(&rfds);
-        FD_SET(fd, &rfds);
+        FD_SET(sensor.fd, &rfds);
 	
 		struct timeval tv;
 		tv.tv_sec = 1;
@@ -223,10 +243,10 @@ int main (int argc, char *argv[]) {
         {
 			int len;			
             ysi.utime = timestamp_now();
-			if(io == io_serial)
-				len = read(fd, buf, 256);
+			if(sensor.io_type == io_serial)
+				len = read(sensor.fd, buf, 256);
 			else
-				len = readline(fd, buf, 256);
+				len = readline(sensor.fd, buf, 256);
             if(len > 0)
 				if(parseYsi(buf, len, &ysi))
 					senlcm_ysi_t_publish (lcm, "YSI", &ysi);
