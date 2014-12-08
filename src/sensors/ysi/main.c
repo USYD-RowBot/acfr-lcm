@@ -78,6 +78,7 @@ static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi) {
 	return valid;
 }
 
+/*
 // read a line in a canonical way on a socket
 int readline(int fd, char *d, int len)
 {
@@ -97,7 +98,7 @@ int readline(int fd, char *d, int len)
 	else
 		return -1;
 }
-	
+*/	
 
 
 
@@ -128,7 +129,9 @@ int main (int argc, char *argv[]) {
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
     
     acfr_sensor_t sensor;
-    acfr_sensor_load_config(lcm, &sensor, rootkey);
+    if(!acfr_sensor_load_config(lcm, &sensor, rootkey))
+        return 0;
+
     acfr_sensor_open(&sensor);
 /*                
     // Read the LCM config file
@@ -207,24 +210,29 @@ int main (int argc, char *argv[]) {
 	// Put the YSI in a known state, send and escape character and then wait for the prompt
 	// then send a nmea command
     
+    
+    acfr_sensor_noncanonical(&sensor, 1, 0);
 	sprintf( buf, "%c", 27 );
-    write(sensor.fd, buf, 1); 
+    acfr_sensor_write(&sensor, buf, 1); 
 	
 	do
 	{
-		read(sensor.fd, buf, 1);
+		acfr_sensor_read(&sensor, buf, 1);
 	}
 	while (buf[0] != '#');
 	
-    write(sensor.fd, "nmea\r\n", 6); // put it in nmea mode
+    acfr_sensor_write(&sensor, "nmea\r\n", 6); // put it in nmea mode
 	
+    acfr_sensor_canonical(&sensor, '\n', '\r');
+    
 	fd_set rfds;	
     // loop to collect data, parse and send it on its way
     while(!program_exit) {
         // check for broken pipes, if it is broken make sure it is closed and then reopen it
         if(broken_pipe)
-            if(!sensor.port_open)
-                acfr_sensor_open(&sensor);
+		sensor.port_open = 0;
+            //if(!sensor.port_open)
+                //acfr_sensor_open(&sensor);
     
     
         memset(buf, 0, sizeof(buf));
@@ -243,14 +251,22 @@ int main (int argc, char *argv[]) {
         {
 			int len;			
             ysi.utime = timestamp_now();
-			if(sensor.io_type == io_serial)
+/*			if(sensor.io_type == io_serial)
 				len = read(sensor.fd, buf, 256);
 			else
 				len = readline(sensor.fd, buf, 256);
+*/
+            len = acfr_sensor_read(&sensor, buf, 256);
             if(len > 0)
 				if(parseYsi(buf, len, &ysi))
 					senlcm_ysi_t_publish (lcm, "YSI", &ysi);
 					
+        }
+        else
+        {
+            // timeout, check the connection
+            fprintf(stderr, "Timeout: Checking connection\n");
+            acfr_sensor_write(&sensor, "\n", 1);
         }
 	}
 

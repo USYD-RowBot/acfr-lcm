@@ -19,6 +19,8 @@ typedef struct
 {
     int fd;
     int io_type;
+    int canonical;
+	char t1, t2;
     char *ip;
     char *inet_port;
     char *serial_dev;
@@ -30,6 +32,10 @@ typedef struct
 
 int acfr_sensor_open(acfr_sensor_t *s);
 int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *root_key);
+int acfr_sensor_noncanonical(acfr_sensor_t *s, int min, int time);
+int acfr_sensor_canonical(acfr_sensor_t *s, char t1, char t2);
+int acfr_sensor_write(acfr_sensor_t *s, char *d, int size);
+int acfr_sensor_read(acfr_sensor_t *s, char *d, int len);
 
 
 

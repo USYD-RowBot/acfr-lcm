@@ -20,7 +20,11 @@ int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *rootkey)
         s->io_type = io_tcp;
     else if(!strcmp(io_str, "udp"))
         s->io_type = io_udp;
-
+    else
+    {
+        fprintf(stderr, "Unknown io type %s\n", io_str);
+        return 0;
+    }
     
     if(s->io_type == io_serial)
     {
@@ -87,4 +91,71 @@ int acfr_sensor_open(acfr_sensor_t *s)
     }
     //TODO: UDP   
     return 1;
+}
+
+// read from the port, the behavior is different depending on if the connection is canonical or not
+int acfr_sensor_read(acfr_sensor_t *s, char *d, int len)
+{
+	if(!s->port_open)
+		acfr_sensor_open(s);
+	
+	if(s->io_type == io_serial && s->canonical)
+		return read(s->fd, d, len);
+	else if((s->io_type == io_tcp || s->io_type == io_udp) && s->canonical)
+	{
+		int bytes = 0;
+		int term = 0;
+		while(bytes < len)
+		{
+			bytes += read(s->fd, &d[bytes], 1);
+			if(d[bytes-1] == s->t1)
+			{
+				term = 1;
+				break;
+			}
+		}
+		if(term)
+			return bytes;
+		else
+			return -1;
+	}
+	else
+	{
+		int bytes = 0;
+		while(bytes < len)
+			bytes += read(s->fd, &d[bytes], len - bytes);
+		return bytes;
+	}
+		
+		
+}
+
+// write to the port, check from broken pipes, if it is broken then we need to reopen it
+int acfr_sensor_write(acfr_sensor_t *s, char *d, int size)
+{
+	if(!s->port_open)
+		acfr_sensor_open(s);
+	
+	return write(s->fd, d, size);
+}
+
+// Set the canonical processing termination characters, t2 is only used if it is a serial port
+int acfr_sensor_canonical(acfr_sensor_t *s, char t1, char t2)
+{
+	if(s->io_type == io_serial)
+		serial_set_canonical (s->fd, t1, t2);
+	s->canonical = 1;
+	s->t1 = t1;
+	s->t2 = t2;
+	
+	return 1;
+}
+
+// Set noncanonical processing
+int acfr_sensor_noncanonical(acfr_sensor_t *s, int min, int time)
+{
+	if(s->io_type == io_serial)
+		serial_set_noncanonical (s->fd, min, time) ;
+	s->canonical = 0;
+	return 1;
 }
