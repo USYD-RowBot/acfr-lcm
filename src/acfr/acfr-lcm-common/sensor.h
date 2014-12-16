@@ -9,6 +9,7 @@
 #include <bot_param/param_client.h>
 #include "error.h"
 #include "serial.h"
+#include "timestamp.h"
 
 
 #ifndef SENSOR_H
@@ -37,6 +38,7 @@ int acfr_sensor_noncanonical(acfr_sensor_t *s, int min, int time);
 int acfr_sensor_canonical(acfr_sensor_t *s, char t1, char t2);
 int acfr_sensor_write(acfr_sensor_t *s, char *d, int size);
 int acfr_sensor_read(acfr_sensor_t *s, char *d, int len);
+int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout);
 int acfr_sensor_destroy(acfr_sensor_t *s);
 acfr_sensor_t *acfr_sensor_create(lcm_t *lcm, char *rootkey);
 

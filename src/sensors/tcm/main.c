@@ -168,10 +168,13 @@ int broken_pipe;
 void
 signal_handler(int sig_num)
 {
+    printf("Got a signal\n");
    // do a safe exit
     if(sig_num == SIGPIPE)
         broken_pipe = 1;
-    else
+	else if (sig_num == SIGTERM)
+		broken_pipe = 1;
+    else if(sig_num == SIGINT)
         program_exit = 1;
 }
 
@@ -181,8 +184,27 @@ main (int argc, char *argv[])
     // install the signal handler
     program_exit = 0;
     broken_pipe = 0;
-    signal(SIGINT, signal_handler);
-    signal(SIGPIPE, signal_handler);
+	
+	struct sigaction sa;
+	sa.sa_flags = 0;
+	sigemptyset (&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGPIPE);
+	sigaddset(&sa.sa_mask, SIGHUP);
+	sigaddset(&sa.sa_mask, SIGTERM);
+	sigaddset(&sa.sa_mask, SIGINT);
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &sa, NULL) == -1)
+	{
+		perror("sigaction");
+		exit(1);
+	}
+	sa.sa_handler = signal_handler;
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+
+   // signal(SIGINT, signal_handler);
+    //signal(SIGPIPE, signal_handler);
     
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
@@ -198,75 +220,107 @@ main (int argc, char *argv[])
     
     int len;
     char buf[256];
+    
     int64_t timestamp;
     senlcm_tcm_t tcm;
     
     program_tcm(sensor);
+    int programmed = 1;
     
     fd_set rfds;
     
     while(!program_exit)
     {
+        //printf("Programed: %d, open: %d, pipe: %d\n", programmed, sensor->port_open, broken_pipe);
+        
         // check for broken pipes, if it is broken make sure it is closed and then reopen it
         if(broken_pipe)
-		    sensor->port_open = 0;
+        {
+            sensor->port_open = 0;
+            programmed = 0;
+            fprintf(stderr, "Pipe broken\n");
+            continue;
+        }
     
+        if(!programmed)
+        {
+            fprintf(stderr, "reprogramming the device\n");
+            program_tcm(sensor);
+            programmed = 1;
+            continue;
+        }
+        
         memset(buf, 0, sizeof(buf));
         
         FD_ZERO(&rfds);
         FD_SET(sensor->fd, &rfds);
 	
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 	    
-	    int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1)
             perror("Select failure: ");
         else if(ret != 0)
         {
             timestamp = timestamp_now();
             len = acfr_sensor_read(sensor, buf, 1);
-            if(len == 1 && buf[0] == 0)
-            {
-                // read another byte
-                len += acfr_sensor_read(sensor, &buf[1], 1);
-                unsigned short data_len = (buf[0] << 8) + buf[1];   
-                if(data_len > 5)
-                {
-                    // read the rest of the data
-                    while(len < data_len)
-                        len += acfr_sensor_read(sensor, &buf[len], data_len - len);
+            if(len == 1)
+			{
+				if (buf[0] == 0)
+				{
+					// read another byte
+					len += acfr_sensor_read(sensor, &buf[1], 1);
+					if(len != 2)
+						continue;
 
-                    // check the checksum
-                    unsigned short crc = *(unsigned short *)&buf[len - 2];
-                    if(tcm_crc(&buf[0], data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
-                    {
-                        memset(&tcm, 0, sizeof(senlcm_tcm_t));
-                        tcm.utime = timestamp;
-                        // its good data, lets parse it
+					unsigned short data_len = (buf[0] << 8) + buf[1];   
+					//printf ("Looking for %d bytes\n", data_len);
+					if(data_len > 5 && data_len < 56)
+					{
+						// read the rest of the data
+						while(len < data_len)
+							len += acfr_sensor_read(sensor, &buf[len], data_len - len);
 
-                        if(parse_tcm(&buf[0], &tcm))
-                            senlcm_tcm_t_publish(lcm, "TCM", &tcm);
-                    }
-        	        else
-            	        printf("Bad CRC\n");
+						// check the checksum
+						unsigned short crc = *(unsigned short *)&buf[len - 2];
+						if(tcm_crc(&buf[0], data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
+						{
+							memset(&tcm, 0, sizeof(senlcm_tcm_t));
+							tcm.utime = timestamp;
+							// its good data, lets parse it
+
+							if(parse_tcm(&buf[0], &tcm))
+								senlcm_tcm_t_publish(lcm, "TCM", &tcm);
+						}
+						else
+							printf("Bad CRC\n");
+					}
     	        }
                 else
-                    printf("\nBad data_len %d\n", data_len);
-            }
+                    printf("Bad data_len\n");
+            } 
+			else 
+			{
+				fprintf(stderr, "Error in read\n");
+			}
         }
         else
         {
             // timeout, check the connection
             fprintf(stderr, "Timeout: Checking connection\n");
-            acfr_sensor_write(sensor, "\n", 1);
+			acfr_sensor_write(sensor, "\n", 1);
+            //if (acfr_sensor_write(sensor, "\n", 1) < 0)
+				//fprintf(stderr, "Broken pipe!\n");
+			//else
+				//fprintf(stderr, "Pipe appears fine.\n");
         }
     }        
         
     acfr_sensor_destroy(sensor);
+	lcm_destroy(lcm);
     
     return 0;
-    
-    	
+
 }
