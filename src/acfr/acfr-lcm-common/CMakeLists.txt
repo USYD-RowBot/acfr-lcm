@@ -5,6 +5,7 @@ set (SRC
 	timestamp.c	timestamp.h
 )
 
+
 perls_add_library (acfr-common ${SRC})
-#perls_target_link_libraries ()
+perls_target_link_libraries ( bot2-param-client)
 

@@ -1,10 +1,16 @@
 #include "sensor.h"
 
+
 acfr_sensor_t *acfr_sensor_create(lcm_t *lcm, char *rootkey)
 {
     acfr_sensor_t *s = (acfr_sensor_t *)malloc(sizeof(acfr_sensor_t));
     if(acfr_sensor_load_config(lcm, s, rootkey))
-        return s;
+    {
+        if(acfr_sensor_open(s))
+            return s;
+        else
+            return NULL;
+    }
     else
         return NULL;
 }
@@ -23,15 +29,14 @@ int acfr_sensor_destroy(acfr_sensor_t *s)
 int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *rootkey)
 {
     // Read the LCM config file
-    BotParam *param;
 	char key[64];
 	
-    param = bot_param_new_from_server (lcm, 1);
+    s->param = bot_param_new_from_server (lcm, 1);
     
     // read the config file
 
 	sprintf(key, "%s.io", rootkey);
-	char *io_str = bot_param_get_str_or_fail(param, key);
+	char *io_str = bot_param_get_str_or_fail(s->param, key);
     if(!strcmp(io_str, "serial"))
         s->io_type = io_serial;
     else if(!strcmp(io_str, "tcp"))
@@ -47,22 +52,22 @@ int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *rootkey)
     if(s->io_type == io_serial)
     {
         sprintf(key, "%s.serial_dev", rootkey);
-        s->serial_dev = bot_param_get_str_or_fail(param, key);
+        s->serial_dev = bot_param_get_str_or_fail(s->param, key);
 
     	sprintf(key, "%s.baud", rootkey);
-	    s->baud = bot_param_get_int_or_fail(param, key);
+	    s->baud = bot_param_get_int_or_fail(s->param, key);
 
 	    sprintf(key, "%s.parity", rootkey);
-	    s->parity = bot_param_get_str_or_fail(param, key);
+	    s->parity = bot_param_get_str_or_fail(s->param, key);
     }
     
     if(s->io_type == io_tcp || s->io_type == io_udp)
     {
         sprintf(key, "%s.ip", rootkey);
-        s->ip = bot_param_get_str_or_fail(param, key);
+        s->ip = bot_param_get_str_or_fail(s->param, key);
 
         sprintf(key, "%s.port", rootkey);
-        s->inet_port = bot_param_get_str_or_fail(param, key);
+        s->inet_port = bot_param_get_str_or_fail(s->param, key);
     }
     
     s->port_open = 0;
@@ -227,7 +232,7 @@ int acfr_sensor_canonical(acfr_sensor_t *s, char t1, char t2)
 int acfr_sensor_noncanonical(acfr_sensor_t *s, int min, int time)
 {
 	if(s->io_type == io_serial)
-		serial_set_noncanonical (s->fd, min, time) ;
+		serial_set_noncanonical (s->fd, min, time);
 	s->canonical = 0;
 	return 1;
 }
