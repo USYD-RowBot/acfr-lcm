@@ -275,13 +275,13 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     // given the SD of the novatels position in degrees, convert to meters, calculate the DRMS and add it to the Evologics accuracy
     projUV sd;
 
-    sd.u = novatelq[nov_index]->latitude_sd * RTOD;
-    sd.v = novatelq[nov_index]->longitude_sd * RTOD;
+    sd.u = (novatelq[nov_index]->latitude + novatelq[nov_index]->latitude_sd) * RTOD;
+    sd.v = (novatelq[nov_index]->longitude + novatelq[nov_index]->longitude_sd) * RTOD;
 /*.
     sd.u = novatel.latitude_sd * RTOD;
     sd.v = novatel.longitude_sd * RTOD;
 */
-printf("nov sd: %f, %f\n", sd.u, sd.v);
+//printf("nov sd: %f, %f\n", sd.u, sd.v);
 
     sd = pj_inv(sd, pj_tmerc);
     
