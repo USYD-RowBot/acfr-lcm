@@ -1,0 +1,12 @@
+package senlcm;
+
+struct evologics_command_t
+{
+    int64_t utime;
+    
+    const int8_t SEND_FIXES = 0;
+    const int8_t CLEAR = 1;
+    
+    int8_t command;
+    int8_t d;
+}

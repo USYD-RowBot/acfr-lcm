@@ -1,6 +1,7 @@
 #include "evologics_usbl.hpp"
 
 int loop_exit;
+int pipe_broken;
 
 // Handle a GPS message, this will only work for Version 3 of the GPSD software
 // which everything should run by now
@@ -57,11 +58,14 @@ void on_evo_usbl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
     ev->calc_position(evo); 
 }
 
-void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_config_t *ec, Evologics_Usbl* ev) 
+void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_command_t *ec, Evologics_Usbl* ev) 
 {
-     
-    ev->send_fixes = ec->send_fixes;
+    if(ec->command == evologics_command_t::SEND_FIXES) 
+        ev->send_fixes = ec->d;
     cout << "SF:" << ev->send_fixes << endl;
+    
+    if(ec->command == evologics_command_t::CLEAR)
+        ev->evo->clear_modem();
 }
 
 
@@ -160,7 +164,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
     {
         // find the closest novatel message in the queue
-        int time_diff, prev_time_diff = 10e6;
+        int time_diff;
         for(unsigned int i=0; i<novatelq.size(); i++)
         {
             time_diff = ef->utime - novatelq[i]->utime;
@@ -169,7 +173,6 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
                 nov_index = i;
                 break;
             }
-            prev_time_diff = time_diff;
             nov_index = i;
         }
     }
@@ -425,7 +428,8 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         if(chop_string(buf, tokens) != 5)
             return 0;
 
-        ahrs.utime = (int64_t)(atof(tokens[1]) * 1e6);
+        ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
+        ahrs.utime = timestamp_now();
         ahrs.roll = atof(tokens[3]) * DTOR;
         ahrs.pitch = atof(tokens[2]) * DTOR;
         ahrs.heading = atof(tokens[4]) * DTOR;
@@ -436,12 +440,39 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         return 0;
 }
         
-        
+
+int Evologics_Usbl::open_port(const char *port)
+{
+    // In a seperate function so we can reconnect if the pipe breaks    
+    
+    int fd;
+    
+    struct addrinfo hints, *evo_addr;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    getaddrinfo(ip, port, &hints, &evo_addr);
+	fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+    if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
+    {
+        printf("Could not connect to %s on port %s\n", ip, inet_port);
+		return -1;
+    }
+    
+    struct timeval tv;
+    tv.tv_sec = 1;  // 1 Secs Timeout 
+    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+    return fd;
+}
+
+    
 
 int Evologics_Usbl::init()
 {
     // open the ports
-    
+    /*
     struct addrinfo hints, *evo_addr;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -474,6 +505,12 @@ int Evologics_Usbl::init()
     tv.tv_sec = 1;  // 1 Secs Timeout 
     tv.tv_usec = 0000;  // Not init'ing this can cause strange errors
     setsockopt(ahrs_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+    */
+    
+    if((evo_fd = open_port(inet_port)) == -1)
+        return 0;
+    if((ahrs_fd = open_port(AHRS_PORT)) == -1)
+        return 0;
     
     evo = new Evologics(evo_fd, '\n', lcm);
 
@@ -536,6 +573,10 @@ int Evologics_Usbl::process()
     
     while(!loop_exit)
     {
+        // check the port status, broekn pipes
+        if(pipe_broken)
+            open_port(inet_port);
+        
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
         FD_SET (ahrs_fd, &rfds);
@@ -569,7 +610,12 @@ int Evologics_Usbl::process()
 
 void signal_handler(int sig)
 {
-    loop_exit = 1;
+    if(sig == SIGPIPE)
+        // the connection to the Evologics has failed for some reason,
+        // we will just reconnect it
+        pipe_broken = 1;
+    else
+        loop_exit = 1;
 }
 
 // Main entry point
@@ -578,6 +624,7 @@ int main(int argc, char **argv)
     // install the exit handler
     loop_exit = 0;
     signal(SIGINT, signal_handler);
+    signal(SIGPIPE, signal_handler);
     Evologics_Usbl *usbl = new Evologics_Usbl;
     usbl->load_config(basename((argv[0])));
     usbl->init();

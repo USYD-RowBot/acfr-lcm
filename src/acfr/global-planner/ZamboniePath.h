@@ -38,7 +38,8 @@ class ZamboniePath : public MissionPrimitive {
 		}
 
 
-		bool calcPath(void);
+		bool calcPath(void) { return calcPath(true); };
+		bool calcPath(bool straightLeadIn = true);
 
 };
 

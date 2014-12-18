@@ -4,26 +4,21 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <signal.h>
+#include <libgen.h>
 
 #include "perls-common/timestamp.h"
-#include "perls-common/error.h"
-#include "perls-common/generic_sensor_driver.h"
-
 #include "perls-lcmtypes/senlcm_tcm_t.h"
+#include "acfr-common/sensor.h"
 
 #include "tcm.h"
 
 #define update_rate 0.1
 
 #define DTOR 3.141592/180
-
-static int
-myopts (generic_sensor_driver_t *gsd)
-{
-    getopt_add_description (gsd->gopt, "PNI TCM Fieldforce compass driver.");
-    return 0;
-}
-
 
 int parse_tcm(char *buf, senlcm_tcm_t *tcm)
 {
@@ -107,7 +102,7 @@ int tcm_form_message(char *in, int data_len, char *out)
     
 
 
-int program_tcm(generic_sensor_driver_t *gsd)
+int program_tcm(acfr_sensor_t *s)
 {
     char data[128];
     char out[128];
@@ -126,7 +121,7 @@ int program_tcm(generic_sensor_driver_t *gsd)
 //    data[8] = kZAligned;
     len = tcm_form_message(data, 6, out);
 //    len = tcm_form_message(data, 9, out);
-    gsd_write(gsd, out, len);
+    acfr_sensor_write(s, out, len);
     
     
     // set the acquisition mode
@@ -137,7 +132,7 @@ int program_tcm(generic_sensor_driver_t *gsd)
     float interval = update_rate;
     memcpy(&data[7], &interval, sizeof(float));
     len = tcm_form_message(data, 11, out);    
-    gsd_write(gsd, out, len);
+    acfr_sensor_write(s, out, len);
 
     // set the filter mode
     double c4[4] = {4.6708657655334e-2, 4.5329134234467e-1, 4.5329134234467e-1, 4.6708657655334e-2};
@@ -156,93 +151,176 @@ int program_tcm(generic_sensor_driver_t *gsd)
         memcpy(&data[4], c8, sizeof(double)*filter_length);
     }
     len = tcm_form_message(data, sizeof(double)*filter_length + 4, out);
-    gsd_write(gsd, out, len);
+    acfr_sensor_write(s, out, len);
 
 
     // start
     memset(data, 0, sizeof(data));
     data[0] = kStartIntervalMode;
     len = tcm_form_message(data, 1, out);    
-    gsd_write(gsd, out, len);
+    acfr_sensor_write(s, out, len);
 
     return 1;
+}
+
+int program_exit;
+int broken_pipe;
+void
+signal_handler(int sig_num)
+{
+    printf("Got a signal\n");
+   // do a safe exit
+    if(sig_num == SIGPIPE)
+        broken_pipe = 1;
+	else if (sig_num == SIGTERM)
+		broken_pipe = 1;
+    else if(sig_num == SIGINT)
+        program_exit = 1;
 }
 
 int
 main (int argc, char *argv[])
 {
-    generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
-    gsd_launch (gsd);
-    gsd_noncanonical(gsd, 1, 1);
+    // install the signal handler
+    program_exit = 0;
+    broken_pipe = 0;
+	
+	struct sigaction sa;
+	sa.sa_flags = 0;
+	sigemptyset (&sa.sa_mask);
+	sigaddset(&sa.sa_mask, SIGPIPE);
+	sigaddset(&sa.sa_mask, SIGHUP);
+	sigaddset(&sa.sa_mask, SIGTERM);
+	sigaddset(&sa.sa_mask, SIGINT);
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &sa, NULL) == -1)
+	{
+		perror("sigaction");
+		exit(1);
+	}
+	sa.sa_handler = signal_handler;
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+
+   // signal(SIGINT, signal_handler);
+    //signal(SIGPIPE, signal_handler);
     
-    gsd_reset_stats(gsd);
+    //Initalise LCM object - specReading
+    lcm_t *lcm = lcm_create(NULL);
+                
+	char rootkey[64];    
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
+    if(sensor == NULL)
+        return 0;
+
+    acfr_sensor_noncanonical(sensor, 1, 0);    
     
     int len;
     char buf[256];
+    
     int64_t timestamp;
     senlcm_tcm_t tcm;
     
-    program_tcm(gsd);
+    program_tcm(sensor);
+    int programmed = 1;
     
-    gsd_flush(gsd);
+    fd_set rfds;
     
-    int start_pos;
-    
-    while(1)
+    while(!program_exit)
     {
-        memset(buf, 0, sizeof(buf));
-    	do
-        {
-            len = gsd_read(gsd, buf, sizeof(buf), &timestamp);
-            //printf("len = %d\n", len);
-            for(int i=0; i<len; i++)
-                if(buf[i] == 0)
-                {
-                    start_pos = i;
-                    break;
-                }
-        } while(buf[start_pos] != 0);
-
-        if(len < 2)
-       	    len += gsd_read(gsd, &buf[start_pos + 1], 1, NULL);
-    	    
- 	    unsigned short data_len = (buf[start_pos] << 8) + buf[start_pos + 1];
-
-        //if(data_len == 26)
-        {
+        //printf("Programed: %d, open: %d, pipe: %d\n", programmed, sensor->port_open, broken_pipe);
         
-            // read the rest of the data
-
-            while(len < data_len)
-                len += gsd_read(gsd, &buf[start_pos + len], data_len - len, NULL);
-
-           	// check the checksum
-            unsigned short crc = *(unsigned short *)&buf[start_pos + len - 2];
-            
-            if(tcm_crc(&buf[start_pos], data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
-            {
-                memset(&tcm, 0, sizeof(senlcm_tcm_t));
-                tcm.utime = timestamp;
-                // its good data, lets parse it
-
-                if(parse_tcm(&buf[start_pos], &tcm))
-                {
-                    senlcm_tcm_t_publish(gsd->lcm, gsd->channel, &tcm);
-                    gsd_update_stats (gsd, true);
-                }
-                else
-                    gsd_update_stats (gsd, false);
-            }
-	        else
-            {
-    	        printf("Bad CRC\n");
-                gsd_update_stats (gsd, false);
-            }
+        // check for broken pipes, if it is broken make sure it is closed and then reopen it
+        if(broken_pipe)
+        {
+            sensor->port_open = 0;
+            programmed = 0;
+            fprintf(stderr, "Pipe broken\n");
+            continue;
+        }
+    
+        if(!programmed)
+        {
+            fprintf(stderr, "reprogramming the device\n");
+            program_tcm(sensor);
+            programmed = 1;
+            continue;
         }
         
-    }
+        memset(buf, 0, sizeof(buf));
+        
+        FD_ZERO(&rfds);
+        FD_SET(sensor->fd, &rfds);
+	
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+	    
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret == -1)
+            perror("Select failure: ");
+        else if(ret != 0)
+        {
+            timestamp = timestamp_now();
+            len = acfr_sensor_read(sensor, buf, 1);
+            if(len == 1)
+			{
+				if (buf[0] == 0)
+				{
+					// read another byte
+					len += acfr_sensor_read(sensor, &buf[1], 1);
+					if(len != 2)
+						continue;
+
+					unsigned short data_len = (buf[0] << 8) + buf[1];   
+					//printf ("Looking for %d bytes\n", data_len);
+					if(data_len > 5 && data_len < 56)
+					{
+						// read the rest of the data
+						while(len < data_len)
+							len += acfr_sensor_read(sensor, &buf[len], data_len - len);
+
+						// check the checksum
+						unsigned short crc = *(unsigned short *)&buf[len - 2];
+						if(tcm_crc(&buf[0], data_len-2) == (((crc >> 8) | (crc & 0xff) << 8)))
+						{
+							memset(&tcm, 0, sizeof(senlcm_tcm_t));
+							tcm.utime = timestamp;
+							// its good data, lets parse it
+
+							if(parse_tcm(&buf[0], &tcm))
+								senlcm_tcm_t_publish(lcm, "TCM", &tcm);
+						}
+						else
+							printf("Bad CRC\n");
+					}
+    	        }
+                else
+                    printf("Bad data_len\n");
+            } 
+			else 
+			{
+				fprintf(stderr, "Error in read\n");
+			}
+        }
+        else
+        {
+            // timeout, check the connection
+            fprintf(stderr, "Timeout: Checking connection\n");
+			acfr_sensor_write(sensor, "\n", 1);
+            //if (acfr_sensor_write(sensor, "\n", 1) < 0)
+				//fprintf(stderr, "Broken pipe!\n");
+			//else
+				//fprintf(stderr, "Pipe appears fine.\n");
+        }
+    }        
+        
+    acfr_sensor_destroy(sensor);
+	lcm_destroy(lcm);
     
     return 0;
-    
-    	
+
 }

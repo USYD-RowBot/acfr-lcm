@@ -233,10 +233,8 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     double current_time = atof(tokens[3]);
     
     // we will correct the time as it may not be sync'd with the computer running this code
-    double time_diff = current_time - measurement_time;
+    //double time_diff = current_time - measurement_time;
     
-    printf("M %30.15f, C %30.15f, U %ld\n", measurement_time, current_time, timestamp + (int64_t)(time_diff * 1e6));
-        
     evologics_usbl_t ud;
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
@@ -263,8 +261,41 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
 
 int Evologics::parse_usblangles(char *d, int64_t timestamp)
 {
+    char *tokens[16];
+    int ret;
+    ret = chop_string(d, tokens);
+    
+    if(ret != 16)
+        return 0;
+    
+    // Work out the actual time that the measurment was taken
+    double measurement_time = atof(tokens[4]);
+    double current_time = atof(tokens[3]);
+    
+    // we will correct the time as it may not be sync'd with the computer running this code
+    //double time_diff = current_time - measurement_time;
+    
+    evologics_usbl_angles_t ud;
+    ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
+    ud.mtime = (int64_t)(measurement_time * 1e6);
+    ud.ctime = (int64_t)(current_time * 1e6);
+    ud.remote_id = atoi(tokens[5]);
+    ud.lbearing = atof(tokens[6]);
+    ud.lelevation = atof(tokens[7]);
+    ud.bearing = atof(tokens[8]);
+    ud.elevation = atof(tokens[9]);
+    ud.r = atof(tokens[10]);
+    ud.p = atof(tokens[11]);
+    ud.h = atof(tokens[12]);
+    ud.rssi = atoi(tokens[13]);
+    ud.integrity = atoi(tokens[14]);
+    ud.accuracy = atof(tokens[15]);
+
+    lcm->publish("EVOLOGICS_USBL_ANGLES", &ud);
+    
     return 1;
 }
+
 
 int Evologics::parse_im(char *d)
 {
@@ -400,3 +431,12 @@ int Evologics::send_ping(int target)
     }
     return 0;
 }
+
+int Evologics::clear_modem()
+{
+    char msg[32];
+    sprintf(msg, "+++ATZ4%c", term);
+    send_command(msg);
+    return 1;
+}
+

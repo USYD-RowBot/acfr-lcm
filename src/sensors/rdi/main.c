@@ -300,6 +300,7 @@ void relay_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
 
 void rdi_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_rdi_control_t *rc, void *u)
 {
+    printf("In RDI control callback\n");
     state_t *state = (state_t *)u;
     pthread_mutex_lock(&state->count_lock);
     switch(rc->command)
@@ -314,6 +315,7 @@ void rdi_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senl
             state->range = rc->d;
             break;
     }
+    printf("new range recv, %f\n", state->range);
     pthread_mutex_unlock(&state->count_lock);
 }
     
@@ -324,6 +326,7 @@ static void *
 lcm_thread (void *context)
 {
     generic_sensor_driver_t *gsd = (generic_sensor_driver_t *) context;
+    printf("LCM thread starting\n");
     while (!gsd->done) {
        struct timeval tv;
 	    tv.tv_sec = 1;
@@ -415,10 +418,14 @@ main (int argc, char *argv[])
             printf("Changing Range to %fm\n", state.range);
             rdi_send_command(state.gsd, range_cmd, EXPECT_RESPONSE); // max depth in decimetre
             rdi_send_command(state.gsd,"CS\r", NO_RESPONSE);         //trigger the ping
+            current_range = state.range;
         }
-    
+        pthread_mutex_unlock(&state.count_lock);   
+
         if(state.mode == MODE_PD0)
         {
+
+            pthread_mutex_lock(&state.count_lock);   
             // Are we doing PD5 now?
 	        if(pd5_count++ < state.pd5_count_max)
 	        {
@@ -454,11 +461,12 @@ main (int argc, char *argv[])
 	          pd5_count=0;
 	        }
             
+        pthread_mutex_unlock(&state.count_lock);   
         }
         else
             // we are in free running mode, just PD5 or PD4
             get_rdi_and_send(state.gsd, tss);
-        pthread_mutex_unlock(&state.count_lock);   
+
     } // while
 
     timestamp_sync_free (tss);

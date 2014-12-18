@@ -74,8 +74,12 @@ bool CoveragePath::calcPath(void) {
 			spiral->printPath();
 
 			// now set the new start position for the Zambonie
-			position.setX( position.getX() + numLoops * pathOffset );
-			position.setY( position.getY() -direction * numLoops * pathOffset );
+			//position.setX( position.getX() + numLoops * pathOffset );
+			//position.setY( position.getY() -direction * numLoops * pathOffset );
+            waypoint finalSpiralWaypoint = tmpPath.back();
+            cout << "Setting zamboni start to X: " << finalSpiralWaypoint.pose.getX() << " Y: " << finalSpiralWaypoint.pose.getY() << endl;
+			position.setX( finalSpiralWaypoint.pose.getX() );
+			position.setY( finalSpiralWaypoint.pose.getY() );
 			length -= numLoops * 2*pathOffset;
 			width  -= numLoops * 2*pathOffset;
 		}
@@ -84,7 +88,7 @@ bool CoveragePath::calcPath(void) {
 	if(doZambonie ) {
 		zambonie = new ZamboniePath( position, heading, direction, turnRadius,
 				dropDist, dropAngle, pathOffset, width, length );
-		if( zambonie->calcPath() ) {
+		if( zambonie->calcPath( false ) ) {
 			tmpPath = zambonie->getPath();
 			list<waypoint>::iterator it = path.begin();
 			if( path.size() > 0 )

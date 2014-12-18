@@ -7,6 +7,7 @@
 #include "perls-common/serial.h"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
 #include "evologics.hpp"
 
 #ifndef EVOLOGICS_MODEM_H
