@@ -45,7 +45,7 @@ static void *read_thread(void *u)
                 while(bytes < MAX_BUF_LEN)
                 {
                     bytes += read(evo->fd, &buf[bytes], 1);
-                    if((buf[bytes-2] == 0x0D) && (buf[bytes-1] == 0x0A))
+                    if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
                         break;
                     
                     data_good = true;
@@ -100,17 +100,21 @@ static void *write_thread(void *u)
     // it is, if it is too old don't send it, otherwise send it
     while(!evo->thread_exit)
     {
+        //cout << "Command Q size: " << evo->command_queue.size() << endl;
         data_sent = false;
         if(!evo->command_queue.empty())
         {
             // TODO: impletement modem locking here
         
             Evo_Data_Out *od = evo->command_queue.front();
+            
             if((timestamp_now() - od->timestamp) < MAX_DATA_AGE)
             {
                 pthread_mutex_lock(&evo->flags_lock);
                 if(!evo->sending_command)
                 {
+//                    DEBUG_PRINTF(("Command age: %ld\n", timestamp_now() - od->timestamp));
+                    DEBUG_PRINTF(("Sending command: %.*s, Age: %ld\n", od->size - 1, od->data, timestamp_now() - od->timestamp));
                     int bytes = write(evo->fd, od->data, od->size);
                     if( bytes == -1)
                     {
@@ -129,8 +133,10 @@ static void *write_thread(void *u)
             }
             else
             {
+                DEBUG_PRINTF(("Deleteing command from queue due to age: %.*s\n", od->size-1, od->data));
                 data_sent = true;   // Data age timeout
                 evo->sending_command = false;
+                evo->sending_im = false;
             }
                 
             if(data_sent)
@@ -156,14 +162,16 @@ static void *write_thread(void *u)
                     // we need to change targets, this is the only place we are doing
                     // out of queue command writes to the modem
                     sprintf(msg, "+++ATZ4%c", evo->term);
+                    usleep(100e3);
                     write(evo->fd, msg, strlen(msg));
                     
                     int retry = 0;
                     while(evo->current_target != od->target && retry < 5)
                     {
+                        cout << "Target, current: " << evo->current_target << "   destination: " << od->target << endl;
                         sprintf(msg, "+++AT!AR%d%c", od->target, evo->term);
                         write(evo->fd, msg, strlen(msg));
-                        usleep(10000);
+                        usleep(1e5);
                         sprintf(msg, "+++AT?AR%c", evo->term); 
                         write(evo->fd, msg, strlen(msg));
                         retry++;
@@ -391,6 +399,7 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     lcm->publish("EVOLOGICS_USBL", &ud);
     
     // put it in the queue for position calculation
+    
     if(fixq != NULL)
     {
         evologics_usbl_t *fq = new evologics_usbl_t;
@@ -525,16 +534,18 @@ int Evologics::send_data(unsigned char *d, int size, int type, int target)
     // allocate the memory
     Evo_Data_Out *od = new Evo_Data_Out;
     od->data = new unsigned char[size];
+    memset(od->data, 0, size);
     memcpy(od->data, d, size);
     od->target = target;
     od->size = size;
     od->type = type;
+    od->timestamp = timestamp_now();
     
     // put it in the queue
     if(type == evo_data)
         data_queue.push(od);
     else if(type == evo_command || type == evo_im) 
-        data_queue.push(od);
+        command_queue.push(od);
     return 1;
 }
 
@@ -583,7 +594,7 @@ int Evologics::send_ping(int target)
     if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
+        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d000%c", target, target, term);
         send_data((unsigned char *)msg, strlen(msg), evo_im, target);
 /*        
         pthread_mutex_lock(&flags_lock);
@@ -607,6 +618,16 @@ int Evologics::clear_modem()
     char msg[32];
     sprintf(msg, "+++ATZ4%c", term);
     send_command(msg);
+    return 1;
+}
+
+int Evologics::clear_queues()
+{
+    queue<Evo_Data_Out *> empty;
+    swap(command_queue, empty);
+    
+//    data_queue.clear();
+//    fixq.clear();
     return 1;
 }
 

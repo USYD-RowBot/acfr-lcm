@@ -15,6 +15,8 @@
 using namespace senlcm;
 using namespace std;
 
+#define DEBUG_PRINTF(x) printf x
+
 
 #define DTOR M_PI/180.0
 #define RTOD 180.0/M_PI
@@ -47,6 +49,7 @@ class Evologics
         int parse_lcm_data(unsigned char *d, int len);
         int parse_modem_data(char *d, int len, int64_t timestamp);
         int clear_modem();
+        int clear_queues();
         
         // channel flags
         pthread_mutex_t flags_lock;

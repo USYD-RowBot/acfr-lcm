@@ -38,7 +38,7 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
         //      cout << ev->novatelq[i]->utime << endl; 
         
         
-        if(ev->novatelq.size() > 10)
+        if(ev->novatelq.size() > 40)
         {
             free(ev->novatelq.back());
             ev->novatelq.pop_back();
@@ -51,11 +51,6 @@ void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *hb, Evologics_Usbl* ev) 
 {
     ev->ping_targets(); 
-}
-
-void on_evo_usbl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_usbl_t *evo, Evologics_Usbl* ev) 
-{
-    ev->calc_position(evo); 
 }
 
 void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_command_t *ec, Evologics_Usbl* ev) 
@@ -174,11 +169,6 @@ int Evologics_Usbl::ping_targets()
 // The Evologics reference frame is Y forward, X right, Z down
 int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
 {
-    //cout << "Calc position\n";
-    // We have everything we need to work out where the target is
-    //SMALL::Pose3D target;
-    //target.setPosition(xt, yt, zt);
-    //target.setRollPitchYawRad(0, 0, 0);
     SMALL::Vector3D target;
     target = ef->y, ef->x, ef->z;
     
@@ -214,11 +204,6 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         ship_roll = novatelq[nov_index]->roll;
         ship_pitch = novatelq[nov_index]->pitch;
         ship_heading = novatelq[nov_index]->heading;
-/*
-        ship_roll = novatel.roll;
-        ship_pitch = novatel.pitch;
-        ship_heading = novatel.heading;
-*/
 
     }
     else if (attitude_source == ATT_EVOLOGICS)
@@ -243,18 +228,6 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     cout << "target_world" << target_world << endl;
     
     
-    
-    
-    //SMALL::Pose3D sensor2world = ship.compose(usbl_ins_pose);
-    //cout << "U2W" << sensor2world.getPosition() <<  sensor2world.getAxisAngle()  * RTOD << endl;
-    
-    //SMALL::Pose3D repro_target = sensor2world.compose(target);
-    
-    //SMALL::Vector3D repro_target = sensor2world.transformFrom(target);
-    
-    //cout << "T2W" << repro_target.getPosition() <<  repro_target.getAxisAngle()   * RTOD << endl;
-    //cout << "target" << repro_target << endl;
-    
     // set up the coordinate reprojection
     char proj_str[64];
     double ship_latitude;
@@ -264,10 +237,6 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     
         ship_latitude = novatelq[nov_index]->latitude * RTOD;
         ship_longitude = novatelq[nov_index]->longitude * RTOD;
-    /*
-        ship_latitude = novatel.latitude * RTOD;
-        ship_longitude = novatel.longitude * RTOD;
-    */
     } 
     else if(gps_source == GPS_GPSD)
     {
@@ -276,9 +245,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     } 
      
     sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", ship_longitude, ship_latitude);
-    
-    cout << proj_str << endl;
-    
+        
     projPJ pj_tmerc;
     if (!(pj_tmerc = pj_init_plus(proj_str)))
     {
@@ -309,11 +276,8 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
 
     sd.u = novatelq[nov_index]->latitude_sd * RTOD;
     sd.v = novatelq[nov_index]->longitude_sd * RTOD;
-/*.
-    sd.u = novatel.latitude_sd * RTOD;
-    sd.v = novatel.longitude_sd * RTOD;
-*/
-printf("nov sd: %f, %f\n", sd.u, sd.v);
+
+    printf("nov sd: %f, %f\n", sd.u, sd.v);
 
     sd = pj_inv(sd, pj_tmerc);
     
@@ -326,18 +290,7 @@ printf("nov sd: %f, %f\n", sd.u, sd.v);
     
     
     printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
-  
-/*  
-    libplankton::Local_WGS84_TM_Projection *map_projection = new libplankton::Local_WGS84_TM_Projection(-33.869475, 151.182582);
-    double ship_n, ship_e;
-    map_projection->calc_map_coords(ship_latitude, ship_longitude, ship_n, ship_e);
-    SMALL::Pose3D ship_map;
-    ship_map.setPosition(ship_n, ship_e, 0);
-    ship_map.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
-    SMALL::Vector3D target_map = ship_map.transformFrom(target_ship);
-    cout << "target_map" << target_map << endl;
-*/    
-    
+      
     // Get the target index
     int target_index;
     for(target_index=0; target_index<num_targets; target_index++)
@@ -501,41 +454,7 @@ int Evologics_Usbl::open_port(const char *port)
 int Evologics_Usbl::init()
 {
     // open the ports
-    /*
-    struct addrinfo hints, *evo_addr;
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    getaddrinfo(ip, inet_port, &hints, &evo_addr);
-	evo_fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
-    if(connect(evo_fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
-    {
-        printf("Could not connect to %s on port %s\n", ip, inet_port);
-		return 1;
-    }
-    
-    struct timeval tv;
-    tv.tv_sec = 1;  // 1 Secs Timeout 
-    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
-    setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-    
-    // open the AHRS port
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    getaddrinfo(ip, AHRS_PORT, &hints, &evo_addr);
-	ahrs_fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
-    if(connect(ahrs_fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
-    {
-        printf("Could not connect to %s on port %s\n", ip, AHRS_PORT);
-		return 1;
-    }
-    
-    tv.tv_sec = 1;  // 1 Secs Timeout 
-    tv.tv_usec = 0000;  // Not init'ing this can cause strange errors
-    setsockopt(ahrs_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-    */
-    
+
     if((evo_fd = open_port(inet_port)) == -1)
         return 0;
     if((ahrs_fd = open_port(AHRS_PORT)) == -1)
@@ -549,7 +468,10 @@ int Evologics_Usbl::init()
     //send_evologics_command("ATC\n", NULL, 256, &state);
     evo->send_command("+++ATZ1\n");
 
+    //usleep(5e6);
+
     char cmd[64];
+    memset(cmd, 0, 64);
     sprintf(cmd, "+++AT!L%d\n", source_level);
     evo->send_command(cmd);
     sprintf(cmd, "+++AT!G%d\n", gain);
@@ -558,11 +480,17 @@ int Evologics_Usbl::init()
     if(auto_gain)
         evo->send_command("+++AT!LC1\n");
 
-    evo->send_command("+++ATH1\n");
-    evo->send_command("+++ATZ1\n");
-    
+    //evo->send_command("+++ATH1\n");
+    //evo->send_command("+++ATZ1\n");
+
+
     // now to force the settings that require a listen mode
+    // we need to wait for the modem to catch up before the next two commands
+    while(evo->sending_command)
+        usleep(10e3);
     evo->send_command("+++ATN\n");      // noise mode
+    while(evo->sending_command)
+        usleep(10e3);
     evo->send_command("+++ATA\n");      // listen state
     
     if(gps_source == GPS_GPSD)
@@ -572,7 +500,7 @@ int Evologics_Usbl::init()
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
-    lcm->subscribeFunction("EVOLOGICS_USBL", on_evo_usbl, this);
+//    lcm->subscribeFunction("EVOLOGICS_USBL", on_evo_usbl, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
     
     int i = 0;
@@ -591,6 +519,9 @@ int Evologics_Usbl::init()
        cerr <<  "Error creating Proj4 transform (WGS84)\n";
        return 0;
     }
+    
+    evo->clear_queues();
+    
     return 1;       
 }
 

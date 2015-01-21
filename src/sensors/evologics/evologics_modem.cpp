@@ -125,7 +125,7 @@ int Evologics_Modem::init()
     serial_set_noncanonical(evo_fd, 1, 0);
     
     // Create the Evologics object
-    evo = new Evologics(evo_fd, '\r', lcm);
+    evo = new Evologics(evo_fd, '\r', lcm, NULL);
     
     // subscribe to the relevant streams
     
@@ -133,6 +133,7 @@ int Evologics_Modem::init()
     evo->send_command("+++ATZ1\r");
     
     char cmd[64];
+    memset(cmd, 0, 64);
     sprintf(cmd, "+++AT!L%d\r", source_level);
     evo->send_command(cmd);
     sprintf(cmd, "+++AT!G%d\r", gain);
@@ -144,7 +145,14 @@ int Evologics_Modem::init()
     evo->send_command("+++ATZ1\r");
     
     // now to force the settings that require a listen mode
+//    usleep(2e6);
+    while(evo->sending_command)
+        usleep(10e3);
     evo->send_command("+++ATN\r");      // noise mode
+//    usleep(2e6);
+    while(evo->sending_command)
+        usleep(10e3);
+
     evo->send_command("+++ATA\r");      // listen state
     
     keep_alive_count = 0;
