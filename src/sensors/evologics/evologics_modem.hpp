@@ -7,10 +7,13 @@
 #include "perls-common/serial.h"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
 #include "evologics.hpp"
 
 #ifndef EVOLOGICS_MODEM_H
 #define EVOLOGICS_MODEM_H
+
+#define MAX_TARGETS 8
 
 using namespace senlcm;
 using namespace perllcm;
@@ -43,6 +46,12 @@ class Evologics_Modem
         int gain;
         int source_level;
         bool auto_gain;
+        
+        int targets[MAX_TARGETS];
+        int num_targets;
+        int ping_period;
+        int ping_counter;
+        int ping_timeout;
 };
 
 #endif

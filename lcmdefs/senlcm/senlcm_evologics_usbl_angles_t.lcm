@@ -1,0 +1,26 @@
+package senlcm;
+
+struct evologics_usbl_angles_t
+{
+    int64_t utime;
+    int64_t mtime;
+    int64_t ctime;
+        
+    int32_t remote_id;
+    
+    double lbearing;
+    double lelevation;
+    
+    double bearing;
+    double elevation;
+    
+    double r;
+    double p;
+    double h;
+
+    double prop_time;
+    int32_t rssi;
+    double accuracy;
+    int32_t integrity;        
+}
+

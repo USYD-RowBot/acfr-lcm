@@ -1,7 +1,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include <small/Pose3D.hh>
 #include <iostream>
-#include <vector>
+#include <deque>
 #include <signal.h>
 #include <string>
 #include <libgen.h>
@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
@@ -19,6 +20,7 @@
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
 #include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
@@ -49,11 +51,13 @@ typedef enum
     GPS_GPSD
 } gps_source_t; 
 
+    
 
 class Evologics_Usbl
 {
     public:
         Evologics_Usbl();
+        ~Evologics_Usbl();
         lcm::LCM *lcm;
         int load_config(char *program_name);
         int init();
@@ -64,12 +68,15 @@ class Evologics_Usbl
         
         // data holders
         gpsd3_t gpsd;
-        vector<novatel_t> novatel;
+        deque<novatel_t *> novatelq;
+        queue<evologics_usbl_t *> fixq;
+        novatel_t novatel;
         ahrs_t ahrs;
         
         Evologics *evo;
         
-        
+        bool send_fixes;
+         
         
     private:
         // usbl tcp config
@@ -81,7 +88,7 @@ class Evologics_Usbl
         int source_level;
         bool auto_gain;
         
-        
+        int open_port(const char *port);
         
         // targets
         int targets[MAX_TARGETS];
@@ -104,10 +111,14 @@ class Evologics_Usbl
         int ping_period;
         int ping_counter; 
         int ping_time;
+        int ping_timeout;
         
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS]; 
         
-        libplankton::Local_WGS84_TM_Projection *map_projection;  
+        pthread_t fix_thread_id;
+        
+       
+        //libplankton::Local_WGS84_TM_Projection *map_projection;  
 };
          

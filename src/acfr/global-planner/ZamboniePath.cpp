@@ -7,7 +7,7 @@
 
 #include "ZamboniePath.h"
 
-bool ZamboniePath::calcPath(void) {
+bool ZamboniePath::calcPath(bool straightLeadIn) {
 
 	waypoint wp;
 	Pose3D currPose;
@@ -48,7 +48,9 @@ bool ZamboniePath::calcPath(void) {
 	}
 
 	// Calculate number of loops
-	numLoops = (width / (2 * pathOffset) * 2) / 2 + 0.2;
+	//numLoops = (width / (2 * pathOffset) * 2) / 2 + 0.2;
+    // add a couple of extra loops to ensure overlap in the centre
+	numLoops = (width / (2 * pathOffset) * 2) / 2 + 2;
 	cout << "Num loops = " << numLoops << endl;
 
 	// Loop leg length
@@ -83,16 +85,23 @@ bool ZamboniePath::calcPath(void) {
 		path.push_back(wp);
 	}
 #else // When doing a straight line
-	for( int i = 0; i < turnRadius; i+= dropDist ) {
-		nextPose.setPosition(i, 0, 0);
-		wp.pose = currPose.compose(nextPose);
-		path.push_back(wp);
-	}
+    // account for the combined paths that require stitching together two
+    // primitives by deciding whether to include a lead in.
+	nextPose.setIdentity();
+    if (straightLeadIn == true) {
+	    for( int i = 0; i < turnRadius; i+= dropDist ) {
+    		nextPose.setPosition(i, 0, 0);
+    		wp.pose = currPose.compose(nextPose);
+    		path.push_back(wp);
+    	}
+	    nextPose.setPosition( turnRadius, 0, 0 );
+    } else {
+        cout << "Omitting leadin positions" << endl;
+	    nextPose.setPosition( pathOffset, 0, 0 );
+    }
 #endif
 
 	// Now set the current pose to the start of the first straight leg
-	nextPose.setIdentity();
-	nextPose.setPosition( turnRadius, 0, 0 );
 	currPose = currPose.compose( nextPose );
 	wp.pose = currPose;
 	path.push_back(wp);

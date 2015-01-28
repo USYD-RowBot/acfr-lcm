@@ -1122,6 +1122,8 @@ senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
 
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "mtime",   "%"PRId64,  msg->mtime);
+    TEXTREAD_ADD_FIELD (tr, "ctime",   "%"PRId64,  msg->ctime);
     TEXTREAD_ADD_FIELD (tr, "remopte_id",   "%d",  msg->remote_id)
     TEXTREAD_ADD_FIELD (tr, "x","%f",      msg->x);
     TEXTREAD_ADD_FIELD (tr, "y","%f",      msg->y);
