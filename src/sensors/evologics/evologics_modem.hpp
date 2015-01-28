@@ -13,6 +13,8 @@
 #ifndef EVOLOGICS_MODEM_H
 #define EVOLOGICS_MODEM_H
 
+#define MAX_TARGETS 8
+
 using namespace senlcm;
 using namespace perllcm;
 using namespace acfrlcm;
@@ -44,6 +46,12 @@ class Evologics_Modem
         int gain;
         int source_level;
         bool auto_gain;
+        
+        int targets[MAX_TARGETS];
+        int num_targets;
+        int ping_period;
+        int ping_counter;
+        int ping_timeout;
 };
 
 #endif

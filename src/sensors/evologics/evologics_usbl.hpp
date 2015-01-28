@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
@@ -56,6 +57,7 @@ class Evologics_Usbl
 {
     public:
         Evologics_Usbl();
+        ~Evologics_Usbl();
         lcm::LCM *lcm;
         int load_config(char *program_name);
         int init();
@@ -67,6 +69,7 @@ class Evologics_Usbl
         // data holders
         gpsd3_t gpsd;
         deque<novatel_t *> novatelq;
+        queue<evologics_usbl_t *> fixq;
         novatel_t novatel;
         ahrs_t ahrs;
         
@@ -108,11 +111,12 @@ class Evologics_Usbl
         int ping_period;
         int ping_counter; 
         int ping_time;
+        int ping_timeout;
         
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS]; 
         
-        // Queue to hold the evologics fixes
+        pthread_t fix_thread_id;
         
        
         //libplankton::Local_WGS84_TM_Projection *map_projection;  
