@@ -18,6 +18,8 @@
 #include "acfr-common/timestamp.h"
 #include "acfr-common/sensor.h"
 
+#include "novatel.h"
+
 #define DTOR M_PI/180
 #define LEAP_SECONDS 16
 
@@ -41,11 +43,14 @@ int program_novatel(acfr_sensor_t *s, int rate)
 
     sprintf(msg, "log inspvab ontime %f\r\n", 1.0/(double)rate);
     acfr_sensor_write(s, msg, strlen(msg));
+    
+    sprintf(msg, "log bestposb ontime %f\r\n", 1.0/(double)rate);
+    acfr_sensor_write(s, msg, strlen(msg));
 
     return 1;
 }
 
-int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time)
+int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time, float lat_std, float lon_std)
 {
     senlcm_novatel_t nov;
     
@@ -61,12 +66,22 @@ int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time)
     nov.east_velocity = *(double *)&d[44];
     nov.up_velocity = *(double *)&d[52];
     nov.status = novatel_status[*(int *)&d[84]];
+    nov.latitude_sd = lat_std;
+    nov.longitude_sd = lon_std;
     
     senlcm_novatel_t_publish(lcm, "NOVATEL", &nov);
 
     return 1;    
 }
 
+// We only extract the standard deviations out of this message
+int parse_bestposb(char *d, float *lat_std, float *lon_std)
+{
+    *lat_std = *(float *)&d[40];
+    *lon_std = *(float *)&d[44];
+    
+    return 1;
+}
 
 int program_exit;
 int broken_pipe;
@@ -112,6 +127,8 @@ main (int argc, char *argv[])
     fd_set rfds;
     char buf[512];
     int64_t timestamp;
+    
+    float lat_std, lon_std;
     
     while(!program_exit)
     {
@@ -163,9 +180,19 @@ main (int argc, char *argv[])
                 
                 // read the rest of the message including the checksum
                 acfr_sensor_read(sensor, &buf[header_length], message_length + 4);
-
-                if(message_id == 507)                
-                    parse_inspvab(lcm, &buf[header_length], timestamp, gps_time);
+                
+                // Check the CRC
+                unsigned long crc = CalculateBlockCRC32(header_length + message_length, (unsigned char *)buf);
+                if(crc != (*(unsigned long *)&buf[header_length + message_length]))
+                    printf("CRC error: 0x%08lX, actual: 0x%08lX\n", crc, *(unsigned long *)&buf[header_length + message_length]);
+                else
+                {
+                    if(message_id == 507)                
+                        parse_inspvab(lcm, &buf[header_length], timestamp, gps_time, lat_std, lon_std);
+                        
+                    if(message_id == 42)                
+                        parse_bestposb(&buf[header_length], &lat_std, &lon_std);
+                }
             }
         }
         else

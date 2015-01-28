@@ -7,5 +7,5 @@ set (SRC
 
 
 perls_add_library (acfr-common ${SRC})
-perls_target_link_libraries ( bot2-param-client)
+perls_target_link_libraries ( acfr-common bot2-param-client)
 

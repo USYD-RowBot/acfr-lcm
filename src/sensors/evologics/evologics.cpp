@@ -31,7 +31,10 @@ static void *read_thread(void *u)
             // we need to do single character reads as the termination character can change
             // this minimum return is going to be 3 characters
             bytes = 0;
-            bytes += read(evo->fd, &buf[bytes], 1);
+            char *d = &buf[0];
+            data_type = 0;
+            
+            bytes += read(evo->fd, &d[bytes], 1);
             if(buf[0] != '+' && buf[0] != 'L')
                 continue;
             
@@ -40,30 +43,47 @@ static void *read_thread(void *u)
                 bytes += read(evo->fd, &buf[bytes], 3-bytes); 
                  
             // check for the preamble, either +++ or LCM
-            if(!strncmp(buf, "+++", 3))
+            if(!strncmp(buf, "LCM", 3))
             {
                 while(bytes < MAX_BUF_LEN)
                 {
                     bytes += read(evo->fd, &buf[bytes], 1);
-                    if((buf[bytes-2] == 0x0D) && (buf[bytes-1] == 0x0A))
+                    if((buf[bytes-2] == 'L') && (buf[bytes-1] == 'E'))
+                    {
+                        data_good = true;
+                        data_type = 2;
+                        break;
+                    }
+                    /*
+                    // for the strange case where we do not see the termination due to error
+                    // but we do get a +++, copy the first 3 bytes of the message, set the counter to 3
+                    // and continue
+                    if((buf[bytes-3] == '+') && (buf[bytes-2] == '+') && (buf[bytes-1] == '+'))
+                    {
+                        memcpy(buf, &buf[bytes-3], 3);
+                        bytes = 3;
+                        cout << "***** Found a +++ in the LCM data\n";
+                        break;
+                    }
+                    */
+                }
+            }
+            
+            
+            if(!strncmp(buf, "+++", 3) && data_type == 0)
+            {
+                while(bytes < (MAX_BUF_LEN))
+                {
+                    bytes += read(evo->fd, &buf[bytes], 1);
+                    if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
                         break;
                     
                     data_good = true;
                     data_type = 1;
                 }
             }    
-            else if(!strncmp(buf, "LCM", 3))
-            {
-                while(bytes < MAX_BUF_LEN)
-                {
-                    bytes += read(evo->fd, &buf[bytes], 1);
-                    if((buf[bytes-2] == 'L') && (buf[bytes-1] == 'E'))
-                        break;
-                    data_good = true;
-                    data_type = 2;
-                }
-            }
 
+            
             // only proceed if the data is good and we have more then just the header
             if(data_good && bytes > 3)
             {
@@ -86,6 +106,197 @@ static void *read_thread(void *u)
     cout << "Read thread exit\n";
     return NULL;
 }
+
+// write thread
+static void *write_thread(void *u)
+{
+    Evologics *evo = (Evologics *)u;
+ 
+    cout << "Write thread started\n";
+    
+    bool data_sent;
+    
+    // wait for data to appear in the write queue, when it does check to see how old
+    // it is, if it is too old don't send it, otherwise send it
+    int command_queue_size;
+    int data_queue_size;
+    
+    while(!evo->thread_exit)
+    {
+        //cout << "Command Q size: " << evo->command_queue.size() << endl;
+        // check the queue sizes, we only want to do this once as it is expensive
+        command_queue_size = evo->command_queue.size();
+        data_queue_size = evo->data_queue.size();
+        //cout << "Command queue size: " << command_queue_size << endl;
+        
+        if(command_queue_size > 0)
+        {
+            data_sent = false;
+            // TODO: impletement modem locking here
+            
+            pthread_mutex_lock(&evo->queue_lock);
+            vector<Evo_Data_Out *>::iterator od = evo->command_queue.end() - 1;
+            pthread_mutex_unlock(&evo->queue_lock);
+            
+            //DEBUG_PRINTF(("Command: %.*s\n", (*od)->size - 1, (*od)->data));
+            int64_t timestamp = timestamp_now();
+            
+            if((timestamp - (*od)->timestamp) < MAX_DATA_AGE)
+            {
+                pthread_mutex_lock(&evo->flags_lock);
+                
+                if(!evo->sending_command && !((*od)->type == evo_im && evo->sending_im))
+                {
+                    DEBUG_PRINTF(("Sending command: %.*s, Age: %f\n", (*od)->size - 1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                    int bytes = write(evo->fd, (*od)->data, (*od)->size);
+                    if( bytes == -1)
+                    {
+                        cerr << "Failed to send data to modem\n";
+                        evo->sending_command = false;
+                    }
+                    else
+                    {
+                        data_sent = true;
+                        evo->sending_command= true;
+                        if((*od)->type == evo_im)
+                            evo->sending_im = true;
+                    }
+                }
+                //else
+                //    cout << "Not sent: sending_command: " << evo->sending_command << " Sending IM: " << evo->sending_im << " Type: " << (*od)->type << endl;
+            
+                pthread_mutex_unlock(&evo->flags_lock);
+            }
+            else
+            {
+                DEBUG_PRINTF(("Deleteing command from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                data_sent = true;   // Data age timeout
+                pthread_mutex_lock(&evo->flags_lock);
+                evo->sending_command = false;
+                pthread_mutex_unlock(&evo->flags_lock);
+                //evo->sending_im = false;
+            }
+                
+            if(data_sent)
+            {  
+                pthread_mutex_lock(&evo->queue_lock); 
+                // remove it from the queue
+                delete (*od)->data;
+                delete *od;
+                evo->command_queue.erase(od);
+                //evo->command_queue.pop_back(od);
+                pthread_mutex_unlock(&evo->queue_lock);
+                command_queue_size--;
+            }
+            
+//            pthread_mutex_unlock(&evo->queue_lock);
+        }
+
+
+        
+        if(data_queue_size > 0)
+        {
+            data_sent = false;
+            pthread_mutex_lock(&evo->queue_lock);
+            vector<Evo_Data_Out *>::iterator od = evo->data_queue.end() - 1;
+            pthread_mutex_unlock(&evo->queue_lock);
+            int64_t timestamp = timestamp_now();
+            
+            if((timestamp - (*od)->timestamp) < MAX_DATA_AGE)
+            {
+                if((*od)->target != evo->current_target)
+                {
+                    char msg[32];
+                    // we need to change targets, this is the only place we are doing
+                    // out of queue command writes to the modem
+                    sprintf(msg, "+++ATZ4%c", evo->term);
+                    usleep(100e3);
+                    write(evo->fd, msg, strlen(msg));
+                    
+                    int retry = 0;
+                    while(evo->current_target != (*od)->target && retry < 5)
+                    {
+                        cout << "Target, current: " << evo->current_target << "   destination: " << (*od)->target << endl;
+                        sprintf(msg, "+++AT!AR%d%c", (*od)->target, evo->term);
+                        write(evo->fd, msg, strlen(msg));
+                        usleep(10e3);
+                        sprintf(msg, "+++AT?AR%c", evo->term); 
+                        write(evo->fd, msg, strlen(msg));
+                        retry++;
+                    }
+                }
+        
+                if((*od)->target != evo->current_target)
+                {
+                    cerr << "Could not change the modem data target\n";
+                    data_sent = true;
+                }
+            
+            
+                pthread_mutex_lock(&evo->flags_lock);
+                if(!evo->sending_data)
+                {
+                    int bytes = write(evo->fd, (*od)->data, (*od)->size);
+                    if( bytes == -1)
+                    {
+                        cerr << "Failed to send data to modem\n";
+                        evo->sending_data = false;
+                    }
+                    else
+                    {
+                        data_sent = true;
+                        evo->drop_at_send = evo->drop_counter;
+                        evo->sending_data = true;
+                    }
+                }
+                pthread_mutex_unlock(&evo->flags_lock);    
+            }
+            else
+            {
+                DEBUG_PRINTF(("Deleteing data from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                data_sent = true;   // Data age timeout
+                pthread_mutex_lock(&evo->flags_lock);
+                evo->sending_data = false;
+                pthread_mutex_unlock(&evo->flags_lock);
+                //evo->sending_im = false;
+            }
+            
+            if(data_sent)
+            {   
+                // remove it from the queue
+                pthread_mutex_lock(&evo->queue_lock);
+                delete (*od)->data;
+                delete *od;
+                evo->data_queue.erase(od);
+                pthread_mutex_unlock(&evo->queue_lock);
+                data_queue_size--;
+            }
+            
+            
+        }
+        
+        
+
+
+        // if the queue is empty, delay a little so not to use so many CPU cycles
+        if(command_queue_size < 1 && data_queue_size < 1)
+        {
+            //cout << "Wait due to empty" << endl;
+            usleep(100e3);  // 100ms
+        }
+            
+        if(data_queue_size < 1 && evo->sending_im)
+        {
+            //cout << "Wait due to IM" << endl;
+            usleep(100e3);
+        }
+    }
+                           
+ 
+    cout << "Write thread exit\n";
+    return NULL;   
+}
+
                 
 // Helper functions
 
@@ -104,28 +315,109 @@ int chop_string(char *data, char **tokens)
     return i;        
 }                    
 
+// LCM handlers
+void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *hb, Evologics* ev) 
+{
+    ev->handle_heartbeat(); 
+}
 
-Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm)
+
+Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
     fd = _fd;
     term = _term;
     lcm = _lcm;
+    fixq = q;
+    ping_timeout = _ping_timeout;
     
     sending_im = false;
     sending_data = false;
     sending_command = false;
     current_target = 0;
+    drop_counter = 0;
+    im_sent = 0;
+    last_im_sent = 0;
+    im_counter = 0;
+    
     
     thread_exit = 0;
-    pthread_mutex_init(&flags_lock, NULL);    
+    pthread_mutex_init(&flags_lock, NULL);
+    pthread_mutex_init(&queue_lock, NULL);
+            
     pthread_create(&read_thread_id, NULL, read_thread, this);
     pthread_detach(read_thread_id);
+
+    pthread_create(&write_thread_id, NULL, write_thread, this);
+    pthread_detach(write_thread_id);
+    
 }
 
 Evologics::~Evologics()
 {
     thread_exit = 1;
     pthread_join(read_thread_id, NULL);
+    pthread_join(write_thread_id, NULL);
+}
+
+int Evologics::start_handlers()
+{
+    // LCM subscriptions
+    lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
+    
+    return 1;
+}
+
+int Evologics::handle_heartbeat()
+{
+    // If we are sending data we need to check to make sure it has gone through
+    // we will send an AT?S one a second until it has completed.
+    if(sending_data)
+    {
+        char msg[16] = {0};
+        sprintf(msg, "+++AT?S%c", term);
+        send_command_front(msg);
+    }
+    
+    char msg[16] = {0};
+    sprintf(msg, "+++AT?ZD%c", term);
+    send_command_front(msg);
+
+    // if we have gotten stuck sending an IM we need to clear the buffer
+    if(im_sent == last_im_sent)
+        im_counter++;
+    else
+    {
+        im_counter = 0;
+        last_im_sent = im_sent;
+    }
+    if(im_counter > ping_timeout)
+    {
+        char msg[16] = {0};
+        sprintf(msg, "+++ATZ3%c", term);
+        send_command_front(msg);
+        
+        im_counter = 0;
+        //sending_im = false;
+    }
+    
+    // if we have gotten stuck sending a command then clear the flag
+    if(sending_command)
+    {
+        if(command_timeout_counter > 5)
+        {
+            sending_command = false;
+            command_timeout_counter = 0;
+        }
+        else
+            command_timeout_counter++;
+    }
+    else
+        command_timeout_counter = 0;
+        
+    
+    //cout << "*************         im_sent: " << im_sent << " last_im_sent: " << last_im_sent << " im_counter: " << im_counter << "Sending C: " << sending_command << " Sending IM: " << sending_im << endl; 
+
+    return 1;
 }
 
 int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
@@ -149,17 +441,51 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         parse_im(d);
     // Sent IM information    
     else if((strstr((const char *)d, "FAILEDIM") != NULL) ||
-        (strstr((const char *)d, "DELIVEREDIM") != NULL) ||
         (strstr((const char *)d, "CANCELEDIM") != NULL))
     {
         sending_im = false;
-    }    
+        im_sent++;
+    }
+    // Special case of instant messages, we can get the propagation time
+    else if(strstr((const char *)d, "DELIVEREDIM") != NULL)
+    {
+        // Find out who the target was
+        char *tokens[4];
+        if(chop_string(d, tokens) == 4)
+            last_im_target = atoi(tokens[3]);
+        last_im_timestamp = timestamp;
+        sending_im = false;
+        im_sent++;
+        char msg[16] = {0};
+        sprintf(msg, "+++AT?T%c", term);
+        send_command_front(msg);
+    }
+    else if(strstr((const char *)d, "AT?T") != NULL)
+    {
+        sending_command = false;
+        char *tokens[4];
+        if(chop_string(d, tokens) == 4)
+        {
+            evologics_range_t er;
+            er.time = atoi(tokens[3]);
+            er.target = last_im_target;
+            er.source = local_address;
+            er.utime = last_im_timestamp;
+            lcm->publish("EVOLOGICS_RANGE", &er);
+        }
+    }
     // Data sent, channel ready
     else if((strstr((const char *)d, "LISTEN") != NULL) ||
-        (strstr((const char *)d, "NOISE") != NULL) || 
+        (strstr((const char *)d, "NOISE") != NULL) ||
         (strstr((const char *)d, "ESTABLISH") != NULL))
     {
-        sending_data = false;
+        if(strstr((const char *)d, "LISTEN") != NULL)
+        {
+            sending_data = false;
+            if(drop_counter > drop_at_send)
+                cerr << "Dropped data, last message not sent" << endl;
+        }
+            
         sending_command = false;
     }
     else if(strstr((const char *)d, "ONLINE") != NULL) 
@@ -185,6 +511,34 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
             current_target = atoi(tokens[3]);
         sending_command = false;
     }
+    else if(strstr((const char *)d, "OUT_OF_CONTEXT") != NULL)
+    {
+        sending_command = false;
+    }
+    // Get the local address
+    else if(strstr((const char *)d, "?AL") != NULL)
+    {
+        sending_command = false;
+        char *tokens[4];
+        if(chop_string(d, tokens) == 4)
+        {
+            local_address = atoi(tokens[3]);
+            cout << "Local address: " << local_address << endl;
+        }
+    }
+    // Get the drop counter
+    else if(strstr((const char *)d, "?ZD") != NULL)
+    {
+        sending_command = false;
+        char *tokens[4];
+        if(chop_string(d, tokens) == 4)
+        {
+            drop_counter = atoi(tokens[3]);
+        }
+    }
+    else
+        cerr << "Unknown modem message: " << d;
+    
     pthread_mutex_unlock(&flags_lock);
     return 1;   
 }
@@ -256,6 +610,15 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     
     lcm->publish("EVOLOGICS_USBL", &ud);
     
+    // put it in the queue for position calculation
+    
+    if(fixq != NULL)
+    {
+        evologics_usbl_t *fq = new evologics_usbl_t;
+        memcpy(fq, &ud, sizeof(evologics_usbl_t));
+        fixq->push(fq);
+    }
+    
     return 1;
 }
 
@@ -304,33 +667,7 @@ int Evologics::parse_im(char *d)
 
 int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_channel)
 {
-    // Check to see what the current target is and if its different change it
-    char msg[64];
-    if(target != current_target)
-    {
-        
-        sprintf(msg, "+++ATZ4%c", term);
-        send_command(msg);
-        
-        int retry = 0;
-        while(current_target != target && retry < 5)
-        {
-            sprintf(msg, "+++AT!AR%d%c", target, term);
-            send_command(msg);
-            usleep(1000);
-            sprintf(msg, "+++AT?AR%c", term); 
-            send_command(msg);
-            retry++;
-        }
-        
-        if(target != current_target)
-        {
-            cerr << "Could not change the modem data target\n";
-            return 0;
-        }
-    }    
-    
-    
+   
     // we will be adding 9 extra bytes in addition to the name and the name size
     int data_size = strlen(dest_channel) + 10 + size;
     unsigned char *dout = (unsigned char *)malloc(data_size);
@@ -347,88 +684,75 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
-    //cout << "Data size: " << data_size << endl;
-    // make sure we can send
-    pthread_mutex_lock(&flags_lock);
-    int count = 0;
-    while(sending_data && count < 5)
-    {
-        pthread_mutex_unlock(&flags_lock);
-        usleep(5e5);
-        count++;
-        pthread_mutex_lock(&flags_lock);
-    }
-    
-    // send the data
-    int bytes = write(fd, dout, data_size);
-    if( bytes == -1)
-    {
-        cerr << "Failed to send data to modem\n";
-        return 0;
-    }
-    cout << "Sending LCM message: " << dest_channel << endl;
-    sending_data = true;
-    pthread_mutex_unlock(&flags_lock);    
+    send_data(dout, data_size, evo_data, target, 0);
     
     return 1;
     
+}
+
+int Evologics::send_data(unsigned char *d, int size, int type, int target, int end)
+{
+    // allocate the memory
+    Evo_Data_Out *od = new Evo_Data_Out;
+    od->data = new unsigned char[size];
+    memset(od->data, 0, size);
+    memcpy(od->data, d, size);
+    od->target = target;
+    od->size = size;
+    od->type = type;
+    od->timestamp = timestamp_now();
+    
+    pthread_mutex_lock(&queue_lock);
+    // put it in the queue
+    if(type == evo_data)
+    {
+        if(!end)
+//            data_queue.push_back(od);
+            data_queue.insert(data_queue.begin(), od);
+        else
+//            data_queue.push_front(od);
+            data_queue.push_back(od);
+    }
+    else if(type == evo_command || type == evo_im) 
+    {
+        if(!end)
+//            command_queue.push_back(od);
+            command_queue.insert(command_queue.begin(), od);
+        else
+//            command_queue.push_front(od);
+            command_queue.push_back(od);
+    }
+    
+    pthread_mutex_unlock(&queue_lock);
+    
+    return 1;
 }
 
 int Evologics::send_command(const char *d)
 {
-    pthread_mutex_lock(&flags_lock);
-    int count = 0;
-    while(sending_command && count < 30)
-    {
-        pthread_mutex_unlock(&flags_lock);
-        usleep(5e5);
-        count++;
-        pthread_mutex_lock(&flags_lock);
-    }
-    if(sending_command)
-    {
-        cerr << "Could not send command, modem busy\n";
-        cerr << "Clearing flag anyway\n";
-        sending_command = false;
-        pthread_mutex_unlock(&flags_lock);
-        return 0;
-    }
-        
-    cerr << "Sending command: " << d;    
-    
-    int bytes = write(fd, d, strlen(d));
-    if( bytes == -1)
-    {
-        cerr << "Failed to send data to modem\n";
-        sending_command = false;
-        pthread_mutex_unlock(&flags_lock);
-        return 0;
-    }
-    
-    sending_command = true;
-    pthread_mutex_unlock(&flags_lock);    
-    
+    send_data((unsigned char *)d, strlen(d), evo_command, 0, 0);
     return 1;
 }
+
+int Evologics::send_command_front(const char *d)
+{
+    send_data((unsigned char *)d, strlen(d), evo_command, 0, 1);
+    return 1;
+}
+
 
 int Evologics::send_ping(int target)
 {
     char msg[32];
-    if(!sending_im)
+    //if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
-        pthread_mutex_lock(&flags_lock);
-        sending_im = true;
-        pthread_mutex_unlock(&flags_lock);
-        if(!send_command((const char *)msg))
-        {
-            pthread_mutex_lock(&flags_lock);
-            sending_im = false;
-            pthread_mutex_unlock(&flags_lock);
-        }
+        sprintf(msg, "+++AT*SENDIM,4,%d,ack,%d000%c", target, target, term);
+        send_data((unsigned char *)msg, strlen(msg), evo_im, target, 0);
+
         return 1;
     }
+
     return 0;
 }
 
@@ -440,3 +764,21 @@ int Evologics::clear_modem()
     return 1;
 }
 
+int Evologics::clear_queues()
+{
+    command_queue.erase(command_queue.begin(), command_queue.end());
+//    queue<Evo_Data_Out *> empty;
+//    swap(command_queue, empty);
+    
+//    data_queue.clear();
+//    fixq.clear();
+    return 1;
+}
+
+int Evologics::wait_for_commands()
+{
+    while(sending_command && !command_queue.empty())
+        usleep(10e3);
+    
+    return 1;
+}
