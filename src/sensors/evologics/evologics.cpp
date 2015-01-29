@@ -54,7 +54,7 @@ static void *read_thread(void *u)
                         data_type = 2;
                         break;
                     }
-                    /*
+                    
                     // for the strange case where we do not see the termination due to error
                     // but we do get a +++, copy the first 3 bytes of the message, set the counter to 3
                     // and continue
@@ -65,7 +65,7 @@ static void *read_thread(void *u)
                         cout << "***** Found a +++ in the LCM data\n";
                         break;
                     }
-                    */
+                    
                 }
             }
             
@@ -415,7 +415,7 @@ int Evologics::handle_heartbeat()
         command_timeout_counter = 0;
         
     
-    //cout << "*************         im_sent: " << im_sent << " last_im_sent: " << last_im_sent << " im_counter: " << im_counter << "Sending C: " << sending_command << " Sending IM: " << sending_im << endl; 
+    cout << "*************     Sending C: " << sending_command << " Sending IM: " << sending_im << endl; 
 
     return 1;
 }
