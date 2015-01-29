@@ -61,6 +61,7 @@ static void *read_thread(void *u)
                     if((buf[bytes-3] == '+') && (buf[bytes-2] == '+') && (buf[bytes-1] == '+'))
                     {
                         memcpy(buf, &buf[bytes-3], 3);
+                        memset(&buf[3], 0, MAX_BUF_LEN-3);
                         bytes = 3;
                         cout << "***** Found a +++ in the LCM data\n";
                         break;
@@ -126,22 +127,20 @@ static void *write_thread(void *u)
         //cout << "Command Q size: " << evo->command_queue.size() << endl;
         // check the queue sizes, we only want to do this once as it is expensive
         command_queue_size = evo->command_queue.size();
-        data_queue_size = evo->data_queue.size();
         //cout << "Command queue size: " << command_queue_size << endl;
         
         if(command_queue_size > 0)
         {
             data_sent = false;
             // TODO: impletement modem locking here
-            
             pthread_mutex_lock(&evo->queue_lock);
             vector<Evo_Data_Out *>::iterator od = evo->command_queue.end() - 1;
-            pthread_mutex_unlock(&evo->queue_lock);
+            //pthread_mutex_unlock(&evo->queue_lock);
             
             //DEBUG_PRINTF(("Command: %.*s\n", (*od)->size - 1, (*od)->data));
             int64_t timestamp = timestamp_now();
             
-            if((timestamp - (*od)->timestamp) < MAX_DATA_AGE)
+            if((*od) != NULL && (timestamp - (*od)->timestamp) < MAX_DATA_AGE)
             {
                 pthread_mutex_lock(&evo->flags_lock);
                 
@@ -179,30 +178,31 @@ static void *write_thread(void *u)
                 
             if(data_sent)
             {  
-                pthread_mutex_lock(&evo->queue_lock); 
+                //pthread_mutex_lock(&evo->queue_lock); 
                 // remove it from the queue
                 delete (*od)->data;
                 delete *od;
                 evo->command_queue.erase(od);
                 //evo->command_queue.pop_back(od);
-                pthread_mutex_unlock(&evo->queue_lock);
+                //pthread_mutex_unlock(&evo->queue_lock);
                 command_queue_size--;
             }
             
-//            pthread_mutex_unlock(&evo->queue_lock);
+            pthread_mutex_unlock(&evo->queue_lock);
         }
 
 
+        data_queue_size = evo->data_queue.size();
         
         if(data_queue_size > 0)
         {
             data_sent = false;
             pthread_mutex_lock(&evo->queue_lock);
             vector<Evo_Data_Out *>::iterator od = evo->data_queue.end() - 1;
-            pthread_mutex_unlock(&evo->queue_lock);
+            //pthread_mutex_unlock(&evo->queue_lock);
             int64_t timestamp = timestamp_now();
             
-            if((timestamp - (*od)->timestamp) < MAX_DATA_AGE)
+            if((*od) != NULL && (timestamp - (*od)->timestamp) < MAX_DATA_AGE)
             {
                 if((*od)->target != evo->current_target)
                 {
@@ -264,15 +264,15 @@ static void *write_thread(void *u)
             if(data_sent)
             {   
                 // remove it from the queue
-                pthread_mutex_lock(&evo->queue_lock);
+                //pthread_mutex_lock(&evo->queue_lock);
                 delete (*od)->data;
                 delete *od;
                 evo->data_queue.erase(od);
-                pthread_mutex_unlock(&evo->queue_lock);
+                //pthread_mutex_unlock(&evo->queue_lock);
                 data_queue_size--;
             }
             
-            
+            pthread_mutex_unlock(&evo->queue_lock);
         }
         
         
@@ -376,11 +376,11 @@ int Evologics::handle_heartbeat()
         char msg[16] = {0};
         sprintf(msg, "+++AT?S%c", term);
         send_command_front(msg);
+        
+        sprintf(msg, "+++AT?ZD%c", term);
+        send_command_front(msg);
     }
     
-    char msg[16] = {0};
-    sprintf(msg, "+++AT?ZD%c", term);
-    send_command_front(msg);
 
     // if we have gotten stuck sending an IM we need to clear the buffer
     if(im_sent == last_im_sent)
@@ -397,7 +397,13 @@ int Evologics::handle_heartbeat()
         send_command_front(msg);
         
         im_counter = 0;
-        //sending_im = false;
+        
+        // request the size of the current IM queue
+        sprintf(msg, "+++AT?DI%c", term);
+        send_command_front(msg);
+        /*pthread_mutex_lock(&flags_lock);
+        sending_im = false;
+        pthread_mutex_unlock(&flags_lock);*/
     }
     
     // if we have gotten stuck sending a command then clear the flag
@@ -405,7 +411,9 @@ int Evologics::handle_heartbeat()
     {
         if(command_timeout_counter > 10)
         {
+            pthread_mutex_lock(&flags_lock);
             sending_command = false;
+            pthread_mutex_unlock(&flags_lock);
             command_timeout_counter = 0;
         }
         else
@@ -536,6 +544,19 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
             drop_counter = atoi(tokens[3]);
         }
     }
+    // Get the IM counter
+    else if(strstr((const char *)d, "?DI") != NULL)
+    {
+        sending_command = false;
+        char *tokens[4];
+        if(chop_string(d, tokens) == 4)
+        {
+            if (strstr(tokens[3], "EMPTY") != NULL)
+            {
+              sending_im = false;
+            }
+        }
+    }    
     else
         cerr << "Unknown modem message: " << d;
     

@@ -487,11 +487,15 @@ int Evologics_Usbl::init()
     // we need to wait for the modem to catch up before the next two commands
     evo->wait_for_commands();
     usleep(1e6);
+    
     evo->send_command("+++ATN\n");      // noise mode
     evo->wait_for_commands();
     usleep(1e6);
+    
     evo->send_command("+++ATA\n");      // listen state
     evo->wait_for_commands();
+    
+    usleep(1e6);
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
