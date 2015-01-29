@@ -431,7 +431,7 @@ int Evologics::handle_heartbeat()
 int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
 {
     // if we got this far then the first three charaters are +++
-    pthread_mutex_lock(&flags_lock);
+    //pthread_mutex_lock(&flags_lock);
     // work out what the message was
     
     // USBL message
@@ -451,7 +451,9 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     else if((strstr((const char *)d, "FAILEDIM") != NULL) ||
         (strstr((const char *)d, "CANCELEDIM") != NULL))
     {
+        pthread_mutex_lock(&flags_lock);
         sending_im = false;
+        pthread_mutex_unlock(&flags_lock);
         im_sent++;
     }
     // Special case of instant messages, we can get the propagation time
@@ -462,7 +464,9 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         if(chop_string(d, tokens) == 4)
             last_im_target = atoi(tokens[3]);
         last_im_timestamp = timestamp;
+        pthread_mutex_lock(&flags_lock);
         sending_im = false;
+        pthread_mutex_unlock(&flags_lock);
         im_sent++;
         char msg[16] = {0};
         sprintf(msg, "+++AT?T%c", term);
@@ -487,6 +491,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         (strstr((const char *)d, "NOISE") != NULL) ||
         (strstr((const char *)d, "ESTABLISH") != NULL))
     {
+        pthread_mutex_lock(&flags_lock);
         if(strstr((const char *)d, "LISTEN") != NULL)
         {
             sending_data = false;
@@ -495,21 +500,28 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         }
             
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "ONLINE") != NULL) 
     {
+        pthread_mutex_lock(&flags_lock);
         sending_data = false;
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     // Command response
     else if(strstr((const char *)d, "OK") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     // Command response
     else if(strstr((const char *)d, "DISCONNECT") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     // Target change
     else if(strstr((const char *)d, "?AR") != NULL)
@@ -517,16 +529,22 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         char *tokens[4];
         if(chop_string(d, tokens) == 4)
             current_target = atoi(tokens[3]);
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "OUT_OF_CONTEXT") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     // Get the local address
     else if(strstr((const char *)d, "?AL") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens) == 4)
         {
@@ -537,7 +555,9 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     // Get the drop counter
     else if(strstr((const char *)d, "?ZD") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens) == 4)
         {
@@ -547,6 +567,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     // Get the IM counter
     else if(strstr((const char *)d, "?DI") != NULL)
     {
+        pthread_mutex_lock(&flags_lock);
         sending_command = false;
         char *tokens[4];
         if(chop_string(d, tokens) == 4)
@@ -556,11 +577,12 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
               sending_im = false;
             }
         }
+        pthread_mutex_unlock(&flags_lock);
     }    
     else
         cerr << "Unknown modem message: " << d;
     
-    pthread_mutex_unlock(&flags_lock);
+    //pthread_mutex_unlock(&flags_lock);
     return 1;   
 }
 
