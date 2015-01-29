@@ -771,7 +771,7 @@ int Evologics::clear_queues()
 //    swap(command_queue, empty);
     
 //    data_queue.clear();
-//    fixq.clear();
+    //fixq.clear();
     return 1;
 }
 
