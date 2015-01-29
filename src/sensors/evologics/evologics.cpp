@@ -403,7 +403,7 @@ int Evologics::handle_heartbeat()
     // if we have gotten stuck sending a command then clear the flag
     if(sending_command)
     {
-        if(command_timeout_counter > 5)
+        if(command_timeout_counter > 10)
         {
             sending_command = false;
             command_timeout_counter = 0;
@@ -777,8 +777,14 @@ int Evologics::clear_queues()
 
 int Evologics::wait_for_commands()
 {
-    while(sending_command && !command_queue.empty())
+    bool empty = false;
+    while(sending_command && !empty)
+    {
+	pthread_mutex_lock(&queue_lock);
+	empty = command_queue.empty();
+	pthread_mutex_unlock(&queue_lock);
         usleep(10e3);
+    }
     
     return 1;
 }
