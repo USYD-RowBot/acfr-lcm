@@ -67,7 +67,7 @@ void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologic
     memset(dest_channel, 0, 64);
     strcpy(dest_channel, channel.c_str());
     //strcat(dest_channel, ".3");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 2, dest_channel);
+    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 3, dest_channel);
 }
     
     
@@ -109,8 +109,8 @@ static void *fix_thread(void *u)
 Evologics_Usbl::Evologics_Usbl()
 {
     lcm = new lcm::LCM();
-    pthread_create(&fix_thread_id, NULL, fix_thread, this);
-    pthread_detach(fix_thread_id);
+//    pthread_create(&fix_thread_id, NULL, fix_thread, this);
+//    pthread_detach(fix_thread_id);
 }
 
 Evologics_Usbl::~Evologics_Usbl()
@@ -464,10 +464,7 @@ int Evologics_Usbl::init()
     // put the USBL in a known state
     //send_evologics_command("ATC\n", NULL, 256, &state);
     evo->send_command("+++ATZ1\n");
-    while(evo->sending_command)
-        usleep(10e3);
-
-    //usleep(5e6);
+    evo->wait_for_commands();
 
     char cmd[64];
     memset(cmd, 0, 64);
@@ -489,9 +486,10 @@ int Evologics_Usbl::init()
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
     evo->wait_for_commands();
+    usleep(1e6);
     evo->send_command("+++ATN\n");      // noise mode
     evo->wait_for_commands();
-    usleep(2e6);
+    usleep(1e6);
     evo->send_command("+++ATA\n");      // listen state
     evo->wait_for_commands();
     
@@ -502,7 +500,6 @@ int Evologics_Usbl::init()
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
-//    lcm->subscribeFunction("EVOLOGICS_USBL", on_evo_usbl, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
     
     evo->start_handlers();
@@ -524,7 +521,17 @@ int Evologics_Usbl::init()
        return 0;
     }
     
-    //evo->clear_queues();
+    evo->clear_queues();
+    
+    // Clean out the fix queue
+    queue<evologics_usbl_t *> empty;
+    swap(fixq, empty);
+
+    
+    pthread_create(&fix_thread_id, NULL, fix_thread, this);
+    pthread_detach(fix_thread_id);
+
+  
     
     return 1;       
 }
