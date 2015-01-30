@@ -244,6 +244,7 @@ static void *write_thread(void *u)
                     }
                     else
                     {
+                        DEBUG_PRINTF(("Sent LCM data to channel %.*s\n", (*od)->data[3], &(*od)->data[4]));
                         data_sent = true;
                         evo->drop_at_send = evo->drop_counter;
                         evo->sending_data = true;
