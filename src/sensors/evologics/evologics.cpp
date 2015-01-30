@@ -281,7 +281,7 @@ static void *write_thread(void *u)
 
         // if the queue is empty, delay a little so not to use so many CPU cycles
         if((command_queue_size < 1 && data_queue_size < 1) ||
-           (data_queue_size < 1 && evo->sending_im) ||
+           (data_queue_size < 1 && (evo->sending_im || evo->sending_command)) ||
            (command_queue_size < 1 && evo->sending_data))
         {
             //cout << "Wait due to empty" << endl;
