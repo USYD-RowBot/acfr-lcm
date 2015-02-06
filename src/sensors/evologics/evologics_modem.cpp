@@ -46,6 +46,20 @@ int Evologics_Modem::keep_alive()
     else
         keep_alive_count++;
 
+    
+    if(ping_period > -1)
+    {
+        if(ping_counter == ping_period)
+        {
+            ping_counter = 0;
+            for(int i=0; i<num_targets; i++)
+                evo->send_ping(targets[i]);
+        }
+        else
+            ping_counter++;
+        
+    }
+
     return 1;
 }
 
@@ -56,11 +70,11 @@ int Evologics_Modem::send_status(const auv_status_t *status)
     auv_status_t s;
     memcpy(&s, status, sizeof(auv_status_t));
     
-    s.target_id = local_address;
+    s.target_id = evo->local_address;
     
     char target_channel[16];
 	memset(target_channel, 0, 16);
-    sprintf(target_channel, "AUV_STATUS.%d", local_address);
+    sprintf(target_channel, "AUV_STATUS.%d", evo->local_address);
     int d_size = s.getEncodedSize();
     unsigned char *d = (unsigned char *)malloc(d_size);
     s.encode(d, 0, s.getEncodedSize());
@@ -96,9 +110,27 @@ int Evologics_Modem::load_config(char *program_name)
 	sprintf(key, "%s.usbl_address", rootkey);
     usbl_address = bot_param_get_int_or_fail(param, key);
 
-	sprintf(key, "%s.local_address", rootkey);
-    local_address = bot_param_get_int_or_fail(param, key);
+    // Ping information
+    sprintf(key, "%s.targets", rootkey);
+    if(bot_param_has_key(param, key))
+        num_targets = bot_param_get_int_array(param, key, targets, 8);
+    else
+        num_targets = 0;
+
+    sprintf(key, "%s.ping_period", rootkey);
+    if(bot_param_has_key(param, key))
+        ping_period = bot_param_get_int_or_fail(param, key);
+    else
+        ping_period = -1;
+
+    sprintf(key, "%s.ping_timeout", rootkey);
+    if(bot_param_has_key(param, key))
+        ping_timeout = bot_param_get_int_or_fail(param, key);
+    else
+        ping_timeout = 15;
+
     
+    // LCM messages to push through the tunnel
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
@@ -123,20 +155,29 @@ int Evologics_Modem::init()
     evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
     //serial_set_canonical(state.fd, '\r', '\n');
     serial_set_noncanonical(evo_fd, 1, 0);
+   
+    tcflush(evo_fd,TCIOFLUSH);
     
     // Create the Evologics object
-    evo = new Evologics(evo_fd, '\r', lcm);
+    evo = new Evologics(evo_fd, '\r', lcm, NULL, ping_timeout);
     
     // subscribe to the relevant streams
     
     // put the modem in a known state
     evo->send_command("+++ATZ1\r");
     
+    // we need to put in an additonal wait as the modem may just be waking up
+    evo->wait_for_commands();
+    
     char cmd[64];
+    memset(cmd, 0, 64);
     sprintf(cmd, "+++AT!L%d\r", source_level);
     evo->send_command(cmd);
     sprintf(cmd, "+++AT!G%d\r", gain);
     evo->send_command(cmd);
+
+    // Get the local address
+    evo->send_command("+++AT?AL\r");
 
     if(auto_gain)
         evo->send_command("+++AT!LC1\r");
@@ -144,10 +185,15 @@ int Evologics_Modem::init()
     evo->send_command("+++ATZ1\r");
     
     // now to force the settings that require a listen mode
+    evo->wait_for_commands();
     evo->send_command("+++ATN\r");      // noise mode
+    evo->wait_for_commands();
+    usleep(3e6);
     evo->send_command("+++ATA\r");      // listen state
+    evo->wait_for_commands();
     
     keep_alive_count = 0;
+    ping_counter = 0;
     
     // Subscribe to LCM messages
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
@@ -161,6 +207,8 @@ int Evologics_Modem::init()
         i++;
       
     }
+    
+    evo->start_handlers();
     
     return 1;
 }

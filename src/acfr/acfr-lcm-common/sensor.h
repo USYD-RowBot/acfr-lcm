@@ -29,6 +29,7 @@ typedef struct
     char *parity;
     int baud;
     int port_open;
+    BotParam *param;
 } acfr_sensor_t;
 
 

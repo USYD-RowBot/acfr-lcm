@@ -1,8 +1,8 @@
 option (BUILD_VIMBA "Build and install third-party Allied Vision Vimba SDK?" ON)
 
 if (BUILD_VIMBA)
-  set (VIMBA_SRC "${THIRD_PARTY_DIR}/AVTVimbaSDK_v1.2.tgz")
-  set (VIMBA_DIR "Vimba_1_2")
+  set (VIMBA_SRC "${THIRD_PARTY_DIR}/AVTVimba_v1.3_Linux.tgz")
+  set (VIMBA_DIR "Vimba_1_3")
 
   if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set (VIMBA_BIN x86_64bit)
@@ -26,7 +26,7 @@ if (BUILD_VIMBA)
       COMMAND sudo cp -f ${VIMBA_DIR}/AVTImageTransform/Include/* /usr/local/include/vimba/.
       COMMAND sudo cp -f ${VIMBA_DIR}/VimbaC/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.
       COMMAND sudo cp -f ${VIMBA_DIR}/VimbaCPP/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.      
-      COMMAND sudo cp -f ${VIMBA_DIR}/AVTImageTransform/DynamicLib/${VIMBA_BIN}/* /usr/local/lib/.      
+      COMMAND sudo cp -f ${VIMBA_DIR}/AVTImageTransform/DynamicLib/${VIMBA_BIN}/*.so /usr/local/lib/.      
       COMMAND sudo cp -f ${VIMBA_DIR}/Tools/Viewer/Bin/${VIMBA_BIN}/VimbaViewer /usr/local/bin/      
       COMMAND sudo ldconfig
       COMMAND touch ${VIMBA_DIR}/PERLS_BUILT

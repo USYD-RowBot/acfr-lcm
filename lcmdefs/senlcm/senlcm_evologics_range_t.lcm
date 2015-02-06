@@ -1,0 +1,9 @@
+package senlcm;
+
+struct evologics_range_t
+{
+    int64_t utime;
+    int8_t source;
+    int8_t target;
+    int32_t time;
+}
