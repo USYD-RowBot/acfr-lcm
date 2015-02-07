@@ -1,0 +1,55 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    
+    <desc>
+        This is a test mission
+    </desc>
+    <global>
+        <location lat="-33.9657" lon="151.2533" />
+        <turn_radius m='10' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+    
+        
+    <primitive>
+        <goto>
+            <position x="2180" y="-150" z="0.0"/>
+            <heading deg="0" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="2200" y="-150" z="0.0"/>
+            <heading deg="0" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="2200" y="-150" z="0.0"/>
+            <heading deg="0" />
+            <spacing m="1" />
+            <length m="100" />
+            <width m="50" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>
+    <primitive>
+        <command>
+            <command device="camera" onoff="stop"/>
+        </command>
+    </primitive>
+</mission>

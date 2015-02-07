@@ -1,0 +1,99 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    <location lat="-14.698974" lon="145.448254" />
+    <desc>
+        This is a dense coverage at Trimodal Site 1
+    </desc>
+    <global>
+        <turn_radius m='10' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+        
+    <primitive>
+        <goto>
+            <position x="-54" y="-80" z="0.0"/>
+            <heading deg="38" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-15" y="-49" z="0.0"/>
+            <heading deg="38" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-45" y="-50" z="0.0"/>
+            <heading deg="308" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <!-- trimodal M1 - -14.69912, 145.447473 -->
+            <position x="-16" y="-84" z="0.0"/>
+            <heading deg="38" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <!-- trimodal C1 - -14.699334, 145.447320 -->
+            <position x="-40" y="-100" z="0.0"/>
+            <heading deg="128" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <coverage>
+            <!-- trimodal C1 - -14.699334, 145.447320 -->
+            <position x="-40" y="-100" z="0.0"/>
+            <heading deg="128" />
+            <spacing m="0.75" />
+            <length m="50" />
+            <width m="50" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </coverage>
+    </primitive>
+    <primitive>
+        <goto>
+            <!-- trimodal C2 - -14.698940, 145.447612 -->
+            <position x="4" y="-69" z="0.0"/>
+            <heading deg="308" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <!-- trimodal C1 - -14.699334, 145.447320 -->
+            <position x="-40" y="-100" z="0.0"/>
+            <heading deg="128" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>
