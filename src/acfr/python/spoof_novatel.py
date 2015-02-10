@@ -13,8 +13,8 @@ from senlcm import novatel_t, usbl_fix_t
 from acfrlcm import auv_status_t
 
 
-olon = 152.092212561092
-olat = -23.5074821434718
+olon = 151.254255
+olat = -33.839919
 inc = 1.0 / 111128.0
 angle = 0.0
 
@@ -61,7 +61,7 @@ while True:
     lc.publish("USBL_FIX", msg2.encode())
     
     if count == 20:
-        lc.publish("AUV_STATUS", msg3.encode())
+        lc.publish("AUV_STATUS.IVER", msg3.encode())
         count = 0
     else:
         count = count + 1
