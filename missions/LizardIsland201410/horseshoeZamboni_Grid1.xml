@@ -1,0 +1,84 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    
+    <desc>
+        This is a 42 x 42m double overlapping zamobni at Horshoe Reef LI
+    </desc>
+    <global>
+        <location lat="-33.9657" lon="151.2533" />
+        <turn_radius m='10' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+
+     <primitive>
+        <goto>
+            <position x="1265" y="-495" z="0.0"/>
+            <heading deg="115" />
+            <timeout t="600" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="1265" y="-495" z="0.0"/>
+            <heading deg="115" />
+            <spacing m="1" />
+            <length m="42" />
+            <width m="42" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>
+   
+        
+    <primitive>
+        <goto>
+            <position x="1265" y="-495" z="0.0"/>
+            <heading deg="24" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="1265" y="-495" z="0.0"/>
+            <heading deg="24" />
+            <spacing m="1" />
+            <length m="42" />
+            <width m="42" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="cw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="2000" y="-150" z="0.0"/>
+            <heading deg="45" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="2025" y="-125" z="0.0"/>
+            <heading deg="0" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>

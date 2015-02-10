@@ -1,0 +1,74 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    <location lat="-14.698974" lon="145.448254" />
+    <desc>
+        This is a dense coverage at Trimodal Site 1
+    </desc>
+    <global>
+        <turn_radius m='10' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+
+     <primitive>
+        <goto>
+            <!-- trimodal M2 - -14.699617, 145.447687 -->
+            <position x="-76" y="-48" z="0.0"/>
+            <heading deg="128" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="-76" y="-48" z="0.0"/>
+            <heading deg="128" />
+            <spacing m="0.75" />
+            <length m="42" />
+            <width m="42" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>       
+    <primitive>
+        <goto>
+            <position x="-76" y="-48" z="0.0"/>
+            <heading deg="38" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="-76" y="-48" z="0.0"/>
+            <heading deg="38" />
+            <spacing m="0.75" />
+            <length m="42" />
+            <width m="42" />
+            <timeout t="14400" />
+            <velocity x="0.75" />
+            <direction d="cw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>
+    <primitive>
+        <goto>
+            <!-- trimodal M2 - -14.699617, 145.447687 -->
+            <position x="-71" y="-61" z="0.0"/>
+            <heading deg="128" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>
