@@ -13,7 +13,6 @@
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
-#include <libplankton/auv_map_projection.hpp>
 #include "evologics.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
@@ -119,6 +118,5 @@ class Evologics_Usbl
         pthread_t fix_thread_id;
         
        
-        //libplankton::Local_WGS84_TM_Projection *map_projection;  
 };
          
