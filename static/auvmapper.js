@@ -65,10 +65,11 @@ function auvmapper () {
             auto_extent ("all", false);
         })
 
-        var d = new L.Control.Distance();
-        this.map.addControl(d);
-        this.map.addControl(new L.Control.Scale());
-        //this.map.addControl(new L.Control.Permalink({line: d.getLine(), useLocation: true}));
+
+        // Add measurement control
+        L.Control.measureControl().addTo(this.map);
+
+
 
         /*
         // TEST: control to get latlng - WIP
@@ -149,6 +150,18 @@ function auvmapper () {
                 console.log("Cannot load geotiff: "+imgurl,jqXHR);
                 setTimeout(function(){_this.get_geotiff(layer, imgurl, url)},5000); // try again in 5 seconds
             }
+        });
+    }
+
+    this.get_kml = function(layer, filepath){
+
+        _this.layers.overlays[layer] = new L.KML(filepath, {async: true});
+        _this.layers.overlays[layer].addTo(this.map).on("loaded", function(e) {
+            $("#track-layers").prepend($("<li><i class='fa fa-file-image-o'> KML: "+layer+"</i></li>").click(function(){
+                auto_extent ("all", false);
+                _this.map.fitBounds(e.target.getBounds());
+            }));
+            _this.layerctl.addOverlay(_this.layers.overlays[layer].bringToBack(), layer);
         });
     }
 
