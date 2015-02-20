@@ -65,6 +65,11 @@ function auvmapper () {
             auto_extent ("all", false);
         })
 
+        var d = new L.Control.Distance();
+        this.map.addControl(d);
+        this.map.addControl(new L.Control.Scale());
+        //this.map.addControl(new L.Control.Permalink({line: d.getLine(), useLocation: true}));
+
         /*
         // TEST: control to get latlng - WIP
         this.add_control("o",function(){

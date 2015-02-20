@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/python
 
 ######################################################################
 # Simple webserver that runs mission viewer.
@@ -56,7 +56,7 @@ import sys
 app = Flask(__name__)
 
 # automatically work out IP address
-ipaddress = socket.gethostbyname("%s.local" % socket.gethostname())
+ipaddress = "%s.local" % socket.gethostname()
 thisserver = "http://%s:8080" % ipaddress
 
 # import all the worker threads and functions to deal with platform data updates
