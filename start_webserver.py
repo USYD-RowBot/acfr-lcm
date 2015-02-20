@@ -56,7 +56,11 @@ import sys
 app = Flask(__name__)
 
 # automatically work out IP address
-ipaddress = socket.gethostbyname("%s.local" % socket.gethostname())
+ipaddress = "%s.local" % socket.gethostname()
+try:
+    ipaddress = socket.gethostbyname()
+except:
+    pass
 thisserver = "http://%s:8080" % ipaddress
 
 # import all the worker threads and functions to deal with platform data updates
