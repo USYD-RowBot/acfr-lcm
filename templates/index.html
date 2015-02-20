@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>AUV trackview</title>
+        <link rel="stylesheet" href="/static/leaflet-0.7.3/leaflet.css" />
+        <link rel="stylesheet" href="/static/bootstrap-3.2.0-dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="/static/jqwidgets/styles/jqx.base.css" type="text/css" />
+        <link href="/static/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet">
+        <link href="/static/auvmapper.css" rel="stylesheet">
+
+        <script src="/static/jquery-2.1.0.min.js"></script>
+        <script src="/static/bootstrap-3.2.0-dist/js/bootstrap.min.js"></script>
+        <script src="/static/leaflet-0.7.3/leaflet.js"></script>
+        <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
+        <script src="/static/leaflet-plugins-master/layer/tile/Google.js"></script>
+        <script src="http://cdn-geoweb.s3.amazonaws.com/esri-leaflet/1.0.0-rc.5/esri-leaflet.js"></script>
+        <script src="/static/jQuery-Knob/dist/jquery.knob.min.js"></script>
+        <script src="/static/auvmapper.js"></script>
+    </head>
+    <body>
+        <div style="width:500px; height:500px; background: #387486" id="map">
+            <!--This is the div that contains all the magic-->
+        </div>
+
+        <!-- Modal -->
+        <div class="modal" id="settings" tabindex="-1" role="dialog" aria-hidden="true" >
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body">
+                <a href="javascript:void(0)" class="pull-right close" data-dismiss="modal"><i class="fa fa-times"></i></a>
+                <i class="fa fa-gears"></i> This modal will contain settings and allow you to configure data server URLs, and platform layers
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script type='text/javascript'>
+
+            // Create the map object - subscribe to an address
+            var server = "{{ server }}"; // server from template address
+            var map = new auvmapper();
+
+            $(window).resize(function () {
+                map.fullsize();
+            });
+            $(window).ready(function(){
+                // initialise map
+                map.init("map");
+
+                // Add settings modal control
+                map.add_control("<i class='fa fa-gear'></i>", function(){$("#settings").modal("show")},"Settings","topright");
+
+                // Add settings modal control
+                map.add_control("<i class='fa fa-crosshairs'></i><ul id='track-layers'></ul>", function(){return 0},"Zoom to layers","topleft");
+                $("#track-layers").parent().addClass("hover-expand");
+
+                // add geotiff layer to map
+                //map.get_geotiff("ChowderBayGeotiff", "/static/charts/chowder-bay.jpg",server+"/get_geotiff");
+                // Add platforms
+                //map.add_posetracker("Iver", server+"/get_platformdata?platform=auv1", {color: 'yellow', showdash: true, interval: 1000,size:3});
+                //map.add_posetracker("Sirius", server+"/get_platformdata?platform=auv2", {color: 'red', showdash: true, interval: 1000,size:4});
+                //map.add_posetracker("Ship", server+"/get_platformdata?platform=ship1", {color: 'white', showdash: false, interval: 1000, size:{width:13, length:83, loffset:20}});
+                //map.add_posetracker("Tender", server+"/get_platformdata?platform=ship2", {color: 'blue', showdash: false, interval: 1000, size:{width:5, length:15, loffset:1.5}});
+                // load mission points
+                //map.get_mission("Mission", "pathtomission",server+"/get_mission", {color: "red"});
+
+                // Load layers from config file
+                loadlayersfromcfg("/get_config","platformdata_cfg.ini");
+
+            });
+
+            /**
+             * Get the list of layers from the config file
+             * @param url
+             * @param cfg
+             */
+            function loadlayersfromcfg (url, cfg) {
+                get_config(url, cfg, 'layers', load_layers);
+            }
+
+            /**
+             * Load the layers from the config file for each of the layer types
+             * @param data
+             * @param url
+             * @param cfg
+             */
+            function load_layers(data, url, cfg) {
+                // load targets
+                if (data.hasOwnProperty('targets')) {
+                    var targets = data.targets.split(',');
+                    for (var i = 0; i < targets.length; i++)
+                        get_config(url, cfg, targets[i].trim(), function (data, url, cfg) {
+                            map.add_posetracker(data.name, data.url, {color: data.color, showdash: true, interval: parseInt(data.interval), size: parseInt(data.size)});
+                        });
+                }
+                // load ships
+                if (data.hasOwnProperty('ships')) {
+                    var ships = data.ships.split(',');
+                    for (var i = 0; i < ships.length; i++)
+                        get_config(url, cfg, ships[i].trim(), function (data, url, cfg) {
+                            map.add_posetracker(data.name, data.url, {color: data.color, showdash: false, interval: parseInt(data.interval), size: {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)}});
+                        });
+                }
+                // load geotiffs
+                if (data.hasOwnProperty('geotiffs')) {
+                    var geotiffs = data.geotiffs.split(',');
+                    for (var i = 0; i < geotiffs.length; i++)
+                        get_config(url, cfg, geotiffs[i].trim(), function (data, url, cfg) {
+                            map.get_geotiff(data.name, data.filepath, "/get_geotiff");
+                        });
+                }
+                // load missions
+                if (data.hasOwnProperty('missions')) {
+                    var missions = data.missions.split(',');
+                    for (var i = 0; i < missions.length; i++)
+                        get_config(url, cfg, missions[i].trim(), function (data, url, cfg) {
+                            // check is there is an origin specified in the cfg and pass it in if it does
+                            if (data.hasOwnProperty('origin_lat') && data.hasOwnProperty('origin_lon')) {
+                                var origin = [data.origin_lat , data.origin_lon];
+                                map.get_mission(data.name, data.filepath, "/get_mission", {color: data.color}, origin);
+                            }
+                            else
+                                map.get_mission(data.name, data.filepath, "/get_mission", {color: data.color});
+                        });
+                }
+            }
+
+
+            function get_config (url, cfg, sec, callbackfnc) {
+                var dataurl = url+"?cfg="+cfg+"&sec="+sec;
+                $.ajax({
+                    dataType: "jsonp",
+                    url: dataurl,
+                    async: false,                    // prevent async to return variables
+                    success: function (data) {
+                        callbackfnc(data, url, cfg);
+                    },
+                    error : function (jqXHR, status, desc) {
+                        console.log("Cannot load config for: "+cfg+">"+sec+" "+desc);
+                    }
+                });
+            }
+
+        </script>
+    </body>
+</html>
