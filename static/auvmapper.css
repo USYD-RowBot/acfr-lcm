@@ -263,8 +263,10 @@ body, html {
     font-weight: bold;
 }
 
-.hover-expand:hover i {
-    display: none;
+.hover-expand:hover>i {
+    /*display: none;*/
+    float: left;
+    padding: 5px;
 }
 .hover-expand:hover {
     width: auto;
@@ -278,6 +280,7 @@ body, html {
     padding: 5px;
     /*line-height: 1.5;*/
     margin: 0;
+    float: right;
 }
 .hover-expand:hover #track-layers {
     display: block;

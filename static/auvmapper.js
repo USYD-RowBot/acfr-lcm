@@ -358,11 +358,11 @@ function auvmapper () {
             },
             onAdd: function (map) {
                 var ctldiv = L.DomUtil.create('div', 'platform-panel');
-                $(ctldiv).append(
+                $(ctldiv).prepend(
                     $("<b style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+"</b>")
                         .click(function(){_this.info[platform].toggle()})
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform+"'></i>")
+                    $("<i class='fa fa-search platform-ctrl' id='snap-"+platform+"'></i>")
                         .click(function(){auto_extent(platform)})
                         .tooltip({title:"Keep in view",trigger:"hover",container:"body"}),
                     $("<i class='fa fa-tencent-weibo platform-ctrl'></i>")

@@ -27,7 +27,7 @@ platformdata = {}
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    FakeAUVThread('0', 1).start()
+    FakeAUVThread('0', 0.5).start()
     FakeAUVThread('3', 5).start()
     FakeShipThread('1', 1).start()
     FakeShipThread('ship2', 1).start()
@@ -151,6 +151,7 @@ class FakeShipThread (threading.Thread):
 
 def FakeCoordOnCircle(i, radius, o):
     N = 101
+    radius += (random()*2-1)
     angle = math.pi*2*(i % N)/N
     dx = radius*math.cos(angle)
     dy = radius*math.sin(angle)

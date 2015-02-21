@@ -58,7 +58,7 @@ app = Flask(__name__)
 # automatically work out IP address
 ipaddress = "%s.local" % socket.gethostname()
 try:
-    ipaddress = socket.gethostbyname()
+    ipaddress = socket.gethostbyname(ipaddress)
 except:
     pass
 thisserver = "http://%s:8080" % ipaddress
