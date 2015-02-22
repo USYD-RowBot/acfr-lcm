@@ -55,7 +55,7 @@ def parse_mission (filepath, origin=[0, 0]):
     # TODO: parse mission file and origin and return in LAT/LON
     # filepath will contain the filepath to the mission file
 
-    origin = [-33.839919, 151.254255]       # lat lon origin of mission
+    origin = [-33.84119 , 151.25612]       # lat lon origin of mission
     latlngs = [[origin[0]+(random()-0.5)/500, origin[1]+(random()-0.5)/500],
                [origin[0]+(random()-0.5)/500, origin[1]+(random()-0.5)/500],
                [origin[0]+(random()-0.5)/500, origin[1]+(random()-0.5)/500],
@@ -78,7 +78,7 @@ class FakeAUVThread (threading.Thread):
         self.radius = randint(30, 70)
 
     def run (self):
-        o = [-33.839919, 151.254255]       # fake origin to bounce around
+        o = [-33.84119 , 151.25612]       # fake origin to bounce around
         i = 0
 
         while(1) :
@@ -130,7 +130,7 @@ class FakeShipThread (threading.Thread):
         self.radius = randint(30, 70)
 
     def run (self):
-        o = [-33.839919, 151.254255]       # fake origin to bounce around
+        o = [-33.84119 , 151.25612]       # fake origin to bounce around
         i = 0
 
         while(1) :

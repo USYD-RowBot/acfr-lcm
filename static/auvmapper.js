@@ -38,7 +38,8 @@ function auvmapper () {
             center: new L.LatLng(this.origin[0],this.origin[1]),
             zoom: 18,
             maxZoom: 25,  // max zoom is more than native zoom - leads to pixelated tiles
-            maxNativeZoom: 18
+            maxNativeZoom: 18,
+            fullscreenControl: true
         });
         // Add base layers
         try {
@@ -68,6 +69,8 @@ function auvmapper () {
 
         // Add measurement control
         L.Control.measureControl().addTo(this.map);
+        // Add mouse position
+        L.control.mousePosition().addTo(this.map);
 
 
 

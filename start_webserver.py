@@ -65,7 +65,7 @@ thisserver = "http://%s:8080" % ipaddress
 
 # import all the worker threads and functions to deal with platform data updates
 mode = sys.argv[1] if len(sys.argv) > 1 else "test"
-exec "from platformdata_thread_{} import *".format(mode)
+exec "from platformdata.{} import *".format(mode)
 
 
 @app.route('/')
