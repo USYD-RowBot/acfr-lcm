@@ -45,7 +45,8 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
     return latlngs, origin
 
 def get_mission_start (path) :
-    lat = os.popen("cat {}/d*/*localiser.cfg | grep ^LATITUDE | awk \'{ print $2 }\'".format(path)).read().strip()
-    lon = os.popen("cat {}/d*/*localiser.cfg | grep ^LONGITUDE | awk \'{ print $2 }\'".format(path)).read().strip()
+    print path
+    lat = os.popen("cat {}/d*/*localiser.cfg | grep ^LATITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
+    lon = os.popen("cat {}/d*/*localiser.cfg | grep ^LONGITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
     mpfile = os.popen("ls {}/d*/*.mp".format(path)).read().strip()
     return parse_mission(mpfile, [lat, lon])
