@@ -45,14 +45,20 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
     return latlngs, origin
 
 def get_mission_start (path) :
-    print path
     lat = os.popen("cat {}/d*/*localiser.cfg | grep ^LATITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
     lon = os.popen("cat {}/d*/*localiser.cfg | grep ^LONGITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
     mpfile = os.popen("ls {}/d*/*.mp".format(path)).read().strip()
-    mpcoords =  parse_mission(mpfile, [lat, lon])
-    print mpcoords[0][0]
+    if mpfile:
+        mpcoords =  parse_mission(mpfile, [lat, lon])
+        return mpcoords[0][0],mpcoords[1]
+    return false,false
 
-
-missions = glob.glob(sys.argv[1])
+missions = glob.glob("{}/r*".format(sys.argv[1]))
+f = open('mission_origins.txt','w')
 for m in missions:
-    get_mission_start(m)
+    try:
+        start,origin = get_mission_start(m)
+        f.write('{}\nstart: {}, {}\norigin: {}, {}\n'.format(m,start[0],start[1],origin[0],origin[1])) # python will convert \n to os.linesep
+    except:
+        print "ERROR!!!!!!!!!!!!!!!!!!"
+f.close() # you can omit in most cases as the destructor will call if
