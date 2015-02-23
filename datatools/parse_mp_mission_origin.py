@@ -49,4 +49,10 @@ def get_mission_start (path) :
     lat = os.popen("cat {}/d*/*localiser.cfg | grep ^LATITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
     lon = os.popen("cat {}/d*/*localiser.cfg | grep ^LONGITUDE  | tr -s ' ' | cut -d' ' -f2".format(path)).read().strip()
     mpfile = os.popen("ls {}/d*/*.mp".format(path)).read().strip()
-    return parse_mission(mpfile, [lat, lon])
+    mpcoords =  parse_mission(mpfile, [lat, lon])
+    print mpcoords[0][0]
+
+
+missions = glob.glob(sys.argv[1])
+for m in missions:
+    get_mission_start(m)
