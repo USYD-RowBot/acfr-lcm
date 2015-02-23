@@ -82,6 +82,9 @@ class getRemoteDataThread (threading.Thread):
 
         while(1) :
             for key in platforms:
-                platformdata[key] = json.loads(requests.get(url=platforms[key]).text)
-                print "Received data for: {}".format(platforms[key])
+                try:
+                    platformdata[key] = json.loads(requests.get(url=platforms[key]).text)
+                    print "Received data for: {}".format(platforms[key])
+                except:
+                    print "Error getting data for: {}".format(platforms[key])
             time.sleep(self.delay)

@@ -28,7 +28,6 @@ import pyproj
 
 LCMROOT='/home/auv/git/acfr_lcm'
 SEABEDGUIROOT='/home/auv/git/seabed_gui'
-sys.path.append("{}/src/acfr/global-planner/".format(LCMROOT))
 sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes'.format(LCMROOT, sys.version_info[0], sys.version_info[1]))
 sys.path.append('{0}/build/lib/'.format(LCMROOT))
 sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
