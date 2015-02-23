@@ -51,14 +51,14 @@ def get_mission_start (path) :
     if mpfile:
         mpcoords =  parse_mission(mpfile, [lat, lon])
         return mpcoords[0][0],mpcoords[1]
-    return false,false
+    return False, False
 
 missions = glob.glob("{}/r*".format(sys.argv[1]))
 f = open('mission_origins.txt','w')
 for m in missions:
     try:
         start,origin = get_mission_start(m)
-        f.write('{}\nstart: {}, {}\norigin: {}, {}\n'.format(m,start[0],start[1],origin[0],origin[1])) # python will convert \n to os.linesep
+        f.write('{}\nstart: {}, {}\norigin: {}, {}\n'.format(m,start[0],start[1],origin[0],origin[1]))
     except:
         print "ERROR!!!!!!!!!!!!!!!!!!"
-f.close() # you can omit in most cases as the destructor will call if
+f.close()  # you can omit in most cases as the destructor will call if

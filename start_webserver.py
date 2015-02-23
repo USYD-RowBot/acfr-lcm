@@ -141,6 +141,7 @@ if __name__ == '__main__':
 
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
+    #print app.config
     app.run(
         host = "0.0.0.0",
         port = 8080

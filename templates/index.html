@@ -21,6 +21,9 @@
         <script src="/static/leaflet-mouseposition/src/L.Control.MousePosition.js"></script>
 
         <script src="/static/leaflet-draw/dist/leaflet.draw.js"></script>
+        <script src="/static/leaflet-plugins/control/Permalink.js"></script>
+{#        <script src="/static/leaflet-plugins/control/Permalink.Line.js"></script>#}
+{#        <script src="/static/leaflet-plugins/control/Permalink.Layer.js"></script>#}
         <!--<script src="/static/leaflet-plugins/control/Scale.js"></script>-->
         <script src="/static/leaflet-measure/leaflet.measurecontrol.js"></script>
         <script src="/static/leaflet-plugins/layer/vector/KML.js"></script>
@@ -62,18 +65,8 @@
                 map.add_control("<i class='fa fa-gear'></i>", function(){$("#settings").modal("show")},"Settings","topright");
 
                 // Add settings modal control
-                map.add_control("<i class='fa fa-search'></i><ul id='track-layers'></ul>", function(){return 0},"Zoom to layers","topleft");
+                map.add_control("<i class='fa fa-bullseye'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
                 $("#track-layers").parent().addClass("hover-expand");
-
-                // add geotiff layer to map
-                //map.get_geotiff("ChowderBayGeotiff", "/static/charts/chowder-bay.jpg",server+"/get_geotiff");
-                // Add platforms
-                //map.add_posetracker("Iver", server+"/get_platformdata?platform=auv1", {color: 'yellow', showdash: true, interval: 1000,size:3});
-                //map.add_posetracker("Sirius", server+"/get_platformdata?platform=auv2", {color: 'red', showdash: true, interval: 1000,size:4});
-                //map.add_posetracker("Ship", server+"/get_platformdata?platform=ship1", {color: 'white', showdash: false, interval: 1000, size:{width:13, length:83, loffset:20}});
-                //map.add_posetracker("Tender", server+"/get_platformdata?platform=ship2", {color: 'blue', showdash: false, interval: 1000, size:{width:5, length:15, loffset:1.5}});
-                // load mission points
-                //map.get_mission("Mission", "pathtomission",server+"/get_mission", {color: "red"});
 
                 // Load layers from config file
                 loadlayersfromcfg("/get_config","platformdata_cfg.ini");
@@ -140,6 +133,15 @@
                     for (var i = 0; i < kmls.length; i++)
                         get_config(url, cfg, kmls[i].trim(), function (data, url, cfg) {
                             map.get_kml(data.name, data.filepath);
+                        });
+                }
+                // load baselayers
+                if (data.hasOwnProperty('baselayers')) {
+                    var baselayers = data.baselayers.split(',');
+                    for (var i = 0; i < baselayers.length; i++)
+                        get_config(url, cfg, baselayers[i].trim(), function (data, url, cfg) {
+                            map.layers.base[data.name] = new L.TileLayer(data.url);
+                            map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                         });
                 }
             }

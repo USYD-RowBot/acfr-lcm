@@ -38,19 +38,19 @@ function auvmapper () {
             center: new L.LatLng(this.origin[0],this.origin[1]),
             zoom: 18,
             maxZoom: 25,  // max zoom is more than native zoom - leads to pixelated tiles
-            maxNativeZoom: 18,
+            maxNativeZoom: 17,
             fullscreenControl: true
         });
         // Add base layers
         try {
             this.layers.base = {
-                "OSM": new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
                 "Google": new L.Google('STREETMAP'),
-                "Hybrid": new L.Google('HYBRID'),
-                "Ocean": new L.esri.basemapLayer('Oceans', {maxZoom:16})
-                //"Ocean": new L.TileLayer('http://services.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer')
+                "Satellite": new L.Google('HYBRID')
+                //"Ocean": new L.TileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}', {maxZoom:10}),
+                //"OSM": new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                //"ScottBathy": new L.TileLayer("uploads/charts/tiles/Scott2009/{z}/{x}/{y}.png")
             };
-            this.map.addLayer(this.layers.base.Hybrid); // load default map layer
+            this.map.addLayer(this.layers.base.Satellite); // load default map layer
         }
         catch(err) {
             console.log(err);
@@ -61,16 +61,21 @@ function auvmapper () {
         // Add layer control
         this.layerctl = new L.control.layers(this.layers.base, this.layers.overlays, {autoZIndex: true}).addTo(this.map);
 
+
         // Deactivate auto-extent on map drag
         this.map.on("dragstart",function(){
             auto_extent ("all", false);
         })
 
+        this.map.addControl(new L.Control.Permalink({useLocation: true}));
+
 
         // Add measurement control
         L.Control.measureControl().addTo(this.map);
+        $(".leaflet-control-fullscreen-button").tooltip({placement:"right",trigger:"hover",container:"body"});
         // Add mouse position
         L.control.mousePosition().addTo(this.map);
+        $(".leaflet-control-draw-measure").tooltip({placement:"right",trigger:"hover",container:"body"});
 
 
 
@@ -365,12 +370,15 @@ function auvmapper () {
                     $("<b style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+"</b>")
                         .click(function(){_this.info[platform].toggle()})
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-search platform-ctrl' id='snap-"+platform+"'></i>")
+                    $("<i class='fa fa-bullseye platform-ctrl' id='snap-"+platform+"'></i>")
                         .click(function(){auto_extent(platform)})
                         .tooltip({title:"Keep in view",trigger:"hover",container:"body"}),
                     $("<i class='fa fa-tencent-weibo platform-ctrl'></i>")
                         .click(function(){_this.layers.overlays[tracklayer].setLatLngs([])})
-                        .tooltip({title:"Clear track history",trigger:"hover",container:"body"})
+                        .tooltip({title:"Clear track history",trigger:"hover",container:"body"}),
+                    $("<i class='fa fa-crosshairs platform-ctrl'></i>")
+                        .click(function(){setwaypoint(platform)})
+                        .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
                 );
                 //$("#track-layers").append($("<li><i class='fa fa-crosshairs' id='snap-"+platform+"'>&nbsp&nbsp"+platform+"</i></li>")
                 //        .click(function(){auto_extent(platform)}));
@@ -384,6 +392,18 @@ function auvmapper () {
             }
         });
         this.map.addControl(new ctl());
+    }
+
+    function setwaypoint (platform) {
+        if (confirm("Are you sure you want to set a Waypoint for "+platform+"?"))
+            setTimeout(function(){
+                $(".leaflet-container").css("cursor","crosshair");
+                _this.map.on("click",function(e){
+                    alert("You clicked the map at:\nLAT: " + e.latlng.lat + "\nLON: " + e.latlng.lng+"\n\nTODO: send this to "+platform+"!");
+                    _this.map.off("click");
+                    $(".leaflet-container").css("cursor","inherit");
+                });
+            },200);
     }
 
     /**
