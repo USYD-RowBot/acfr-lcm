@@ -9,9 +9,9 @@ import sys
 # import string
 import os
 import pyproj
+import glob
 
-SEABEDGUIROOT='/home/auv/git/seabed_gui'
-sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
+
 
 import missionMP
 
@@ -43,3 +43,9 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
         latlngs.append(latlng)
 
     return latlngs, origin
+
+def get_mission_start (path) :
+    lat = os.popen("cat d*/*localiser.cfg | grep ^LATITUDE | cut -d " " -f2").read().strip()
+    lon = os.popen("cat d*/*localiser.cfg | grep ^LONGITUDE | cut -d " " -f2").read().strip()
+    mpfile = os.popen("ls d*/*.mp").read().strip()
+    return parse_mission(mpfile, [lat, lon])
