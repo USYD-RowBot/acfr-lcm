@@ -32,13 +32,13 @@ sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes'.forma
 sys.path.append('{0}/build/lib/'.format(LCMROOT))
 sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
 
-import missionXML
-import missionMP
-
-
-from acfrlcm import auv_status_t, ship_status_t
-from senlcm import usbl_fix_t
-
+try:
+    import missionMP
+    import missionXML
+    from acfrlcm import auv_status_t, ship_status_t
+    from senlcm import usbl_fix_t
+except:
+    pass
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
@@ -50,7 +50,7 @@ threads = []
 # These are currently fake threads that update the vehicle
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
-def start_platformdata_threads():
+def init_platformdata_threads():
     thread_list = [LcmThread()]
     for t in thread_list:
         tid = t
