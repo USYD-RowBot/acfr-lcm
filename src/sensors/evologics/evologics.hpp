@@ -1,6 +1,6 @@
 #include <lcm/lcm-cpp.hpp>
 #include <small/Pose3D.hh>
-#include <proj_api.h>
+//#include <proj_api.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <deque>

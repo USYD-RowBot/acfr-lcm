@@ -51,6 +51,7 @@ addpkg \
     libgtk2.0-dev \
     liblapack-dev \
     libncurses-dev \
+    libproj-dev \
     libsdl1.2-dev \
     libsuitesparse-dev \
     libraw1394-dev \
