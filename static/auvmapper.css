@@ -258,9 +258,24 @@ body, html {
         -1px 0px 0 #000;
 }
 
-.error {
+.platform-panel .error {
     color: red;
     font-weight: bold;
+    float: right;
+    position: absolute;
+    width: 150px;
+    right: -155px;
+    top: 3px;
+    line-height: 10px;
+    font-size:10px;
+    text-shadow:1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        0px 1px 0 #000,
+        1px 0px 0 #000,
+        0px -1px 0 #000,
+        -1px 0px 0 #000;
 }
 
 .hover-expand:hover>i {
@@ -327,4 +342,13 @@ body, html {
 }
 .progress .bat {
     line-height: 12px;
+}
+.platform-panel .popover.fade.in {
+    opacity: 0.6;
+    /*margin-top: -10px;*/
+}
+.platform-panel .popover-content {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: red;
 }
