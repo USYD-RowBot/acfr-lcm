@@ -21,12 +21,14 @@
         <script src="/static/leaflet-mouseposition/src/L.Control.MousePosition.js"></script>
 
         <script src="/static/leaflet-draw/dist/leaflet.draw.js"></script>
-        <script src="/static/leaflet-plugins/control/Permalink.js"></script>
+{#        <script src="/static/leaflet-plugins/control/Permalink.js"></script>#}
 {#        <script src="/static/leaflet-plugins/control/Permalink.Line.js"></script>#}
 {#        <script src="/static/leaflet-plugins/control/Permalink.Layer.js"></script>#}
         <!--<script src="/static/leaflet-plugins/control/Scale.js"></script>-->
         <script src="/static/leaflet-measure/leaflet.measurecontrol.js"></script>
         <script src="/static/leaflet-plugins/layer/vector/KML.js"></script>
+
+        <script src="/static/bootstrap-plugins/bootbox.min.js"></script>
 
         <script src="/static/jQuery-Knob/dist/jquery.knob.min.js"></script>
         <script src="/static/auvmapper.js"></script>
@@ -65,7 +67,7 @@
                 map.add_control("<i class='fa fa-gear'></i>", function(){$("#settings").modal("show")},"Settings","topright");
 
                 // Add settings modal control
-                map.add_control("<i class='fa fa-bullseye'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
+                map.add_control("<i class='fa fa-crosshairs'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
                 $("#track-layers").parent().addClass("hover-expand");
 
                 // Load layers from config file
@@ -92,17 +94,15 @@
                 // load targets
                 if (data.hasOwnProperty('targets')) {
                     var targets = data.targets.split(',');
+                    var size, inputoptions, dispoptions;
                     for (var i = 0; i < targets.length; i++)
                         get_config(url, cfg, targets[i].trim(), function (data, url, cfg) {
-                            map.add_posetracker(data.name, data.url, {color: data.color, showdash: true, interval: parseInt(data.interval), size: parseInt(data.size)});
-                        });
-                }
-                // load ships
-                if (data.hasOwnProperty('ships')) {
-                    var ships = data.ships.split(',');
-                    for (var i = 0; i < ships.length; i++)
-                        get_config(url, cfg, ships[i].trim(), function (data, url, cfg) {
-                            map.add_posetracker(data.name, data.url, {color: data.color, showdash: false, interval: parseInt(data.interval), size: {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)}});
+                            inputoptions = data.options.split(',');
+                            dispoptions = {};
+                            for (var i = 0; i < inputoptions.length; i++) dispoptions[inputoptions[i].trim()] = true;
+                            if (data.hasOwnProperty("size")) size = parseInt(data.size);
+                            else size = {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)}
+                            map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size});
                         });
                 }
                 // load geotiffs
@@ -135,13 +135,19 @@
                             map.get_kml(data.name, data.filepath);
                         });
                 }
-                // load baselayers
-                if (data.hasOwnProperty('baselayers')) {
-                    var baselayers = data.baselayers.split(',');
-                    for (var i = 0; i < baselayers.length; i++)
-                        get_config(url, cfg, baselayers[i].trim(), function (data, url, cfg) {
-                            map.layers.base[data.name] = new L.TileLayer(data.url);
-                            map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
+                // load tilelayers
+                if (data.hasOwnProperty('tilelayers')) {
+                    var tilelayers = data.tilelayers.split(',');
+                    for (var i = 0; i < tilelayers.length; i++)
+                        get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
+                            if (data.type === "baselayer") {
+                                map.layers.base[data.name] = new L.TileLayer(data.url);
+                                map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
+                            }
+                            else if (data.type === "overlay") {
+                                map.layers.overlays[data.name] = new L.TileLayer(data.url);
+                                map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
+                            }
                         });
                 }
             }

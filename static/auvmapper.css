@@ -306,3 +306,25 @@ body, html {
 .leaflet-control-attribution {
     display: none;
 }
+
+.bootbox-confirm .modal-dialog {
+    /*margin: 100px auto;*/
+    width: 250px;
+}
+
+.leaflet-control-mouseposition {
+    position: fixed;
+    top: 10px;
+    left: 50px;
+}
+
+.platform-stat {
+    margin-bottom: 5px;
+}
+.progress {
+    height: 12px;
+    margin-bottom: 0px;
+}
+.progress .bat {
+    line-height: 12px;
+}

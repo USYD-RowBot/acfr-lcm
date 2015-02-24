@@ -30,7 +30,7 @@ def init_platformdata_threads():
     FakeAUVThread('0', 0.5).start()
     FakeAUVThread('3', 5).start()
     FakeShipThread('1', 1).start()
-    FakeShipThread('ship2', 1).start()
+    FakeShipThread('usbl', 5).start()
 
 # if you need to do some bookeeping on exit, flesh this out...
 # it is not needed in this case, because we have deamonized threads.

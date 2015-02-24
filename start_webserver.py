@@ -127,6 +127,18 @@ def platformdata():
     # get_platformdata is a function contained in included python script
     return jsonify(get_platformdata(thisplatform))
 
+
+@app.route('/set_waypoint')
+def set_waypoint():
+    # platform as a GET argument
+    thisplatform = request.args.get('platform')
+    # this needs to actually send the waypoint to the platform
+    # TODO: flesh out the code in the appropriate script contained in the /platformdata/ dir
+    print "SEND WAYPOINT TO {} !!!!!!!!!!!!".format(thisplatform)
+
+    return jsonify({"result": "This feature is not implemented yet!", "platform": thisplatform})
+
+
 # Custom static data
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):

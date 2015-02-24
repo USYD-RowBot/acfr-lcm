@@ -46,9 +46,6 @@ function auvmapper () {
             this.layers.base = {
                 "Google": new L.Google('STREETMAP'),
                 "Satellite": new L.Google('HYBRID')
-                //"Ocean": new L.TileLayer('http://services.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}', {maxZoom:10}),
-                //"OSM": new L.TileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                //"ScottBathy": new L.TileLayer("uploads/charts/tiles/Scott2009/{z}/{x}/{y}.png")
             };
             this.map.addLayer(this.layers.base.Satellite); // load default map layer
         }
@@ -67,7 +64,8 @@ function auvmapper () {
             auto_extent ("all", false);
         })
 
-        this.map.addControl(new L.Control.Permalink({useLocation: true}));
+        // Add permalink control
+        //this.map.addControl(new L.Control.Permalink({useLocation: true}));
 
 
         // Add measurement control
@@ -186,8 +184,11 @@ function auvmapper () {
      */
     this.add_posetracker = function(platform, url, usroptions) {
         if (typeof usroptions == "undefined") usroptions = {};
-        var options = {color: 'red', showdash: false, interval: 1000, size: 3};
-        $.extend(options,usroptions);
+        var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false}; // default dispoptions
+        $.extend(dispoptions,usroptions.dispoptions);  // extend to make sure all fields
+        usroptions.dispoptions = dispoptions;  // copy to usroptions
+        var options = {color: 'red', interval: 1000, size: 3};  // default other otpions
+        $.extend(options,usroptions); // extend options
 
         var trackoptions={color: options.color, weight: 1, opacity: 0.4, smoothFactor: 1 },
             markeroptions = {color: options.color, weight: 2, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 100},
@@ -198,28 +199,31 @@ function auvmapper () {
             unclayer = platform+" uncertainty";
 
         // add track layer
-        this.layers.overlays[tracklayer] = new L.Polyline([], trackoptions).addTo(this.map);
-        this.layerctl.addOverlay(this.layers.overlays[tracklayer], tracklayer);
-        this.layers.overlays[unclayer] = new L.circle(this.origin, 1, uncmarkeroptions).addTo(this.map);
-
+        if (options.dispoptions.showtrack) {
+            this.layers.overlays[tracklayer] = new L.Polyline([], trackoptions).addTo(this.map);
+            this.layerctl.addOverlay(this.layers.overlays[tracklayer], tracklayer);
+        }
 
         // if size is an object, then draw a ship, otherwise draw a circle
         if (typeof options.size === "number")
-            this.layers.overlays[platform] = new L.circle(this.origin, options.size, markeroptions).addTo(this.map);
+            this.layers.overlays[platform] = new L.circle(this.origin, options.size, markeroptions);
         else if (typeof options.size === "object") {
-            this.layers.overlays[platform] = new L.polygon([],polyoptions).addTo(this.map);
+            this.layers.overlays[platform] = new L.polygon([],polyoptions);
             this.layers.overlays[platform].poly = new getShipPoly(options.size, this.layers.overlays[platform]);
             this.layers.overlays[platform].poly.setLatLngHdg(0,new L.LatLng(this.origin[0],this.origin[1]));
         }
+        // uncertainty layer
+        this.layers.overlays[unclayer] = new L.circle(this.origin, 1, uncmarkeroptions);
 
-        // add to layer control
-        this.layerctl.addOverlay(this.layers.overlays[platform], platform);
+        // add to layer group (platform & unc) to control
+        var layergroup = new L.layerGroup([this.layers.overlays[platform],this.layers.overlays[unclayer]]);
+        layergroup.addTo(this.map);
+        this.layerctl.addOverlay(layergroup, platform);
 
         // initialise info panel
         this.snap_to_track[platform] = false;
-        this.add_platform_controls(platform, tracklayer, markeroptions.color);
-        if (options.showdash)
-            this.add_platform_dashboard(platform, markeroptions.color);
+        this.add_platform_controls(platform, tracklayer, markeroptions.color, options.dispoptions);
+        this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
         // start position updater
         this.update_posetracker(tracklayer, platform, url, options.interval);
@@ -247,10 +251,12 @@ function auvmapper () {
                         curpos = new L.LatLng(data.pose.lat, data.pose.lon);
 
                     // Add pose to track, but check if track is too long (to avoid memory/performance issues)
-                    _this.layers.overlays[tracklayer].addLatLng(curpos);
-                    var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
-                    if (tracklen > _this.maxposes)
-                        _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - _this.maxposes, tracklen));
+                    if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
+                        _this.layers.overlays[tracklayer].addLatLng(curpos);
+                        var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
+                        if (tracklen > _this.maxposes)
+                            _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - _this.maxposes, tracklen));
+                    }
 
                     // set uncertainty circle
                     var uncertainty = (data.pose.hasOwnProperty('uncertainty')) ?  data.pose.uncertainty : 0.1;
@@ -275,17 +281,22 @@ function auvmapper () {
                     }
                     // update dashboard if it is visible (and exists)
                     if ($(_this.dash[platform]).is(":visible")) {
-                        var pose = data.pose, stat=data.stat, alert=data.alert;
-                        $(_this.dash[platform]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
-                        $(_this.dash[platform]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
-                        $(_this.dash[platform]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
-                        $(_this.dash[platform]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
+                        var pose = data.pose,
+                            stat = data.stat,
+                            alert = data.alert;
+                        if ($(_this.dash[platform]).find(".hdg-rol").length > 0) {  //update roll-pitch-heading widget (if visible)
+                            $(_this.dash[platform]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
+                            $(_this.dash[platform]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
+                            $(_this.dash[platform]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
+                            $(_this.dash[platform]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
+                            delete pose.roll; delete pose.heading; delete pose.pitch;  // remove fields to avoid duplicate displays
+                        }
+                        if ($(_this.dash[platform]).find(".bat").length > 0) {  // update battery widget (if visible)
+                            $(_this.dash[platform]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
+                            delete stat.bat;  // remove fields to avoid duplicate displays
+                        }
 
-                        $(_this.dash[platform]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
-
-                        // remove fields to avoid duplicate displays
-                        delete pose.roll; delete pose.heading; delete pose.pitch;
-                        delete stat.bat;
+                        // Show remaining data on dashboard
                         $(_this.dash[platform]).find(".platform-alerts").html(formatdata(alert, "alerts"));
                         $(_this.dash[platform]).find(".platform-stat").html(formatdata(stat));
                         $(_this.dash[platform]).find(".platform-pose").html(formatdata(pose));
@@ -293,7 +304,7 @@ function auvmapper () {
                     }
                     else {
                         // make info object by joining pose and stat (if stat exists)
-                        var info = (typeof data.stat === "undefined") ? data.pose : $.extend(data.pose, data.stat);
+                        var info = (data.hasOwnProperty("stat")) ? $.extend(data.pose, data.stat) : data.pose;
                         $(_this.info[platform]).html(formatdata(info));
                     }
                 }
@@ -302,6 +313,9 @@ function auvmapper () {
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
                     $(_this.info[platform]).find(".oldmsg").html("<b>LAST MSG: "+((Date.parse(Date())-Date.parse(_this.info[platform].data('msgts')))/1000)+" s ago</b>");
                 }
+                var $flashupd = $(_this.info[platform]).parent().find('.pname');
+                $flashupd.css("color","#777777");
+                setTimeout(function(){$flashupd.css("color","inherit");},100)
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval)},interval);
             },
             error : function (jqXHR, status, desc) {
@@ -359,7 +373,7 @@ function auvmapper () {
      * @param tracklayer
      * @param bgcol
      */
-    this.add_platform_controls = function(platform, tracklayer, bgcol) {
+    this.add_platform_controls = function(platform, tracklayer, bgcol, dispoptions) {
         var ctl = L.Control.extend({
             options: {
                 position: 'bottomleft'
@@ -367,22 +381,23 @@ function auvmapper () {
             onAdd: function (map) {
                 var ctldiv = L.DomUtil.create('div', 'platform-panel');
                 $(ctldiv).prepend(
-                    $("<b style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+"</b>")
+                    $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+"</b>")
                         .click(function(){_this.info[platform].toggle()})
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-bullseye platform-ctrl' id='snap-"+platform+"'></i>")
+                    $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.replace(" ","_")+"'></i>")
                         .click(function(){auto_extent(platform)})
-                        .tooltip({title:"Keep in view",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-tencent-weibo platform-ctrl'></i>")
+                        .tooltip({title:"Keep in view",trigger:"hover",container:"body"})
+                );
+                if (dispoptions.showtrack)
+                    $(ctldiv).prepend($("<i class='fa fa-tencent-weibo platform-ctrl'></i>")
                         .click(function(){_this.layers.overlays[tracklayer].setLatLngs([])})
-                        .tooltip({title:"Clear track history",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-crosshairs platform-ctrl'></i>")
+                        .tooltip({title:"Clear track history",trigger:"hover",container:"body"})
+                    );
+                if (dispoptions.setwaypoint)
+                    $(ctldiv).prepend($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
                         .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
-                );
-                //$("#track-layers").append($("<li><i class='fa fa-crosshairs' id='snap-"+platform+"'>&nbsp&nbsp"+platform+"</i></li>")
-                //        .click(function(){auto_extent(platform)}));
-                //        //.tooltip({title:"Keep in view",trigger:"hover",container:"body"}));
+                    );
                 _this.info[platform] = $("<div class='info'></div>"); // empty div to update with platform info
                 _this.info[platform].data('msgid',NaN); // initialise msgid
                 $(ctldiv).append(_this.info[platform]);
@@ -394,69 +409,64 @@ function auvmapper () {
         this.map.addControl(new ctl());
     }
 
-    function setwaypoint (platform) {
-        if (confirm("Are you sure you want to set a Waypoint for "+platform+"?"))
-            setTimeout(function(){
-                $(".leaflet-container").css("cursor","crosshair");
-                _this.map.on("click",function(e){
-                    alert("You clicked the map at:\nLAT: " + e.latlng.lat + "\nLON: " + e.latlng.lng+"\n\nTODO: send this to "+platform+"!");
-                    _this.map.off("click");
-                    $(".leaflet-container").css("cursor","inherit");
-                });
-            },200);
-    }
 
     /**
      * Add platform dashboard
      * @param platform
      */
-    this.add_platform_dashboard = function(platform, bgcol) {
-        var ctl;
-        ctl = L.Control.extend({
-            options: {
-                position: 'bottomright'
-            },
-            onAdd: function (map) {
-                var ctldiv = L.DomUtil.create('div', 'platform-dash');
-                _this.dash[platform] = ctldiv;
-                var $hdg = $("<input class='knob hdg' data-width='150' data-cursor='10' data-bgColor='#ffffff' data-fgcolor='#428bca' data-thickness='.3'  value='0' data-min='0' data-max='360'>").knob({readOnly:true});
-                var $rol = $("<input class='knob rol' data-width='100' data-cursor='157' data-angleOffset='0' data-bgColor='#cccccc' data-fgcolor='#326594' data-thickness='0.9'  value='0' data-min='-180' data-max='180'>").knob({readOnly:true});
-                var $alerts = $("<div style='display: inline; float: left; width:100px'><div style='font-weight: bold; font-size: 16px'><i class='fa fa-dot-circle-o platform-icon' style='color: " + bgcol + "'></i> " + platform + "</div></div>");
-                var $dials = $("<div style='display: inline; float: left; width:150px'></div>");
+    this.add_platform_dashboard = function(platform, bgcol, dispoptions) {
+        if (dispoptions.showdash) {
+            var ctl;
+            ctl = L.Control.extend({
+                options: {
+                    position: 'bottomright'
+                },
+                onAdd: function (map) {
+                    var ctldiv = L.DomUtil.create('div', 'platform-dash');
+                    _this.dash[platform] = ctldiv;
+                    var $hdg = $("<input class='knob hdg' data-width='150' data-cursor='10' data-bgColor='#ffffff' data-fgcolor='#428bca' data-thickness='.3'  value='0' data-min='0' data-max='360'>").knob({readOnly: true});
+                    var $rol = $("<input class='knob rol' data-width='100' data-cursor='157' data-angleOffset='0' data-bgColor='#cccccc' data-fgcolor='#326594' data-thickness='0.9'  value='0' data-min='-180' data-max='180'>").knob({readOnly: true});
+                    var $alerts = $("<div style='display: inline; float: left; width:100px'><div style='font-weight: bold; font-size: 16px'><i class='fa fa-dot-circle-o platform-icon' style='color: " + bgcol + "'></i> " + platform + "</div></div>");
+                    var $dials = $("<div style='display: inline; float: left; width:150px'></div>");
 
-                $alerts.append(
-                    $("<div class='platform-alerts'></div>"),
-                    $("<div class='platform-stat'></div>"),
-                    $("<div><br>Battery:</div>"),
-                    $("<div class='progress' style='width: 90%;'><div class='progress-bar bat' role='progressbar' aria-valuenow='1' aria-valuemin='0' aria-valuemax='100' style='width: 1%;'>0%</div></div>")
-                );
-                $dials.append(
-                    //$("<div>Heading/roll:</div>"),
-                    $("<div class='hdg-rol'></div>").append(
-                        $("<div class='rol-canvas'></div>").html($rol),
-                        $("<div class='hdg-canvas'></div>").html($hdg),
-                        $("<div class='rph-info'>H:<br>P:<br>R:</div>")
-                    ),
+                    $alerts.append(
+                        $("<div class='platform-alerts'></div>"),
+                        $("<div class='platform-stat'></div>")
+                    );
+                    if (dispoptions.showbatt) {
+                        $alerts.append(
+                            $("<div>Battery:</div>"),
+                            $("<div class='progress' style='width: 90%;'><div class='progress-bar bat' role='progressbar' aria-valuenow='1' aria-valuemin='0' aria-valuemax='100' style='width: 1%;'>0%</div></div>")
+                        );
+                    }
+                    if (dispoptions.showrph) {
+                        $dials.append(
+                            $("<div class='hdg-rol'></div>").append(
+                                $("<div class='rol-canvas'></div>").html($rol),
+                                $("<div class='hdg-canvas'></div>").html($hdg),
+                                $("<div class='rph-info'>H:<br>P:<br>R:</div>")
+                            )
+                        );
+                    }
+                    $dials.append($("<div class='platform-pose'></div>"));
 
-                    $("<div class='platform-pose'></div>")
-                )
+                    $(ctldiv).append($alerts, $dials).width(270);
 
-                $(ctldiv).append($alerts, $dials).width(270);
-
-                // add dashboard icon to info panel
-                $(_this.info[platform]).parent().prepend(
-                    $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform + "'></i>")
-                        .click(function () {
-                            $(_this.dash[platform]).toggle()
-                            if ($(_this.dash[platform]).is(":visible")) $(this).addClass("active");
-                            else $(this).removeClass("active");
-                        })
-                        .tooltip({title: "Show/hide dash", trigger: "hover", container: "body"})
-                );
-                return ctldiv;
-            }
-        });
-        this.map.addControl(new ctl());
+                    // add dashboard icon to info panel
+                    $(_this.info[platform]).parent().prepend(
+                        $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform + "'></i>")
+                            .click(function () {
+                                $(_this.dash[platform]).toggle()
+                                if ($(_this.dash[platform]).is(":visible")) $(this).addClass("active");
+                                else $(this).removeClass("active");
+                            })
+                            .tooltip({title: "Show/hide dash", trigger: "hover", container: "body"})
+                    );
+                    return ctldiv;
+                }
+            });
+            this.map.addControl(new ctl());
+        }
     }
 
     /**
@@ -482,6 +492,38 @@ function auvmapper () {
     }
 
     /**
+     *
+     * @param platform
+     */
+    function setwaypoint (platform) {
+        bootbox.confirm("<div class='alert alert-danger'>You are about to set a waypoint for <b>"+platform+"</b>.</div>Click a location on the map to send the waypoint.", function(result){
+            if (result)
+                setTimeout(function(){
+                    $(".leaflet-container").css("cursor","crosshair");
+                    $(".leaflet-control-mouseposition").css("font-size","30px");
+                    _this.map.on("click",function(e){
+                        $.ajax({
+                            dataType: "jsonp",
+                            url: "set_waypoint",
+                            data: {platform: platform},
+                            success: function (data) {
+                                bootbox.alert("You clicked the map at:<br><br>LAT: " + e.latlng.lat + "<br>LON: " + e.latlng.lng+"<br><br>Platform: "+data.platform+"<br>Response: "+data.result);
+                            },
+                            error : function (jqXHR, status, desc) {
+                                console.log("Cannot load mission: "+filepath,jqXHR);
+                                setTimeout(function(){_this.get_mission(layer, filepath, url, usroptions, origin)},5000); // try again in 5 seconds
+                            }
+                        });
+                        _this.map.off("click");
+                        $(".leaflet-container").css("cursor","inherit");
+                        $(".leaflet-control-mouseposition").css("font-size","inherit");
+                    });
+                },200);
+        });
+    }
+
+
+    /**
      * Zoom to extent of track for a given platform.
      * Toggles tracking if 'forceautotrack' is not specified
      * Cancels any other existing tracker
@@ -497,12 +539,12 @@ function auvmapper () {
         $(platform).each(function(i,p) {
             _this.snap_to_track[p] = autotrack;
             if (autotrack) {
-                $("#snap-" + p).addClass("active");
+                $("#snap-" + p.replace(" ","_")).addClass("active");
                 _this.autotrack_layer.addLayer(_this.layers.overlays[p]);
                 //console.log(p, _this.layers.overlays)
             }
             else {
-                $("#snap-" + p).removeClass("active");
+                $("#snap-" + p.replace(" ","_")).removeClass("active");
                 _this.autotrack_layer.removeLayer(_this.layers.overlays[p]);
                 _this.map.addLayer(_this.layers.overlays[p]);
             }
