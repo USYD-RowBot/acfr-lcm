@@ -314,7 +314,7 @@ function auvmapper () {
                     $(_this.info[platform]).find(".oldmsg").html("<b>LAST MSG: "+((Date.parse(Date())-Date.parse(_this.info[platform].data('msgts')))/1000)+" s ago</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.pname');
-                $flashupd.css("color","#777777");
+                $flashupd.css("color","#999999");
                 setTimeout(function(){$flashupd.css("color","inherit");},100)
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval)},interval);
             },
