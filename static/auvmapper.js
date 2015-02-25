@@ -313,9 +313,8 @@ function auvmapper () {
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
                     $(_this.info[platform]).find(".oldmsg").html("<b>LAST MSG: "+((Date.parse(Date())-Date.parse(_this.info[platform].data('msgts')))/1000)+" s ago</b>");
                 }
-                var $flashupd = $(_this.info[platform]).parent().find('.pname');
-                $flashupd.css("color","#999999");
-                setTimeout(function(){$flashupd.css("color","inherit");},100)
+                var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
+                setTimeout(function(){$flashupd.hide();},250)
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval)},interval);
             },
             error : function (jqXHR, status, desc) {
@@ -381,8 +380,17 @@ function auvmapper () {
             onAdd: function (map) {
                 var ctldiv = L.DomUtil.create('div', 'platform-panel');
                 $(ctldiv).prepend(
-                    $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+"</b>")
-                        .click(function(){_this.info[platform].toggle()})
+                    $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+" <i class='fa fa-circle heartbeat'></i></b>")
+                        .click(function(el){
+                            if ($(_this.info[platform]).is(":visible")) {
+                                $(this).css("color","#999");
+                                $(_this.info[platform]).hide();
+                            }
+                            else {
+                                $(this).css("color", "inherit");
+                                $(_this.info[platform]).show();
+                            }
+                        })
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
                     $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.replace(" ","_")+"'></i>")
                         .click(function(){auto_extent(platform)})

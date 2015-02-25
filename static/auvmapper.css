@@ -352,3 +352,10 @@ body, html {
     font-size: 11px;
     color: red;
 }
+
+.platform-panel .heartbeat {
+    line-height: 16px;
+    font-size: 9px;
+    color: greenyellow;
+    display: none;
+}
