@@ -109,7 +109,19 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
 
     return latlngs, origin
 
+######################################################################
+# Set waypoint
+# TODO: make real
+######################################################################
+def send_waypoint(platform, lat, lon):
 
+    response = "This feature has not been implemented yet!!!"
+    return platform, response
+
+
+######################################################################
+#
+######################################################################
 
 class LcmThread(threading.Thread):
 

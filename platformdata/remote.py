@@ -63,6 +63,16 @@ def parse_mission (filepath, origin=[0, 0]):
 
 
 ######################################################################
+# Set waypoint
+# TODO: make real
+######################################################################
+def send_waypoint(platform, lat, lon):
+
+    response = "This feature has not been implemented yet!!!"
+    return platform, response
+
+
+######################################################################
 # The thread classes below spoof fake random nav data for fake platforms
 # It provides an example of the data structures that are required to feed real updates to the map
 # TODO: create a similar class that fills out the data structure with real data

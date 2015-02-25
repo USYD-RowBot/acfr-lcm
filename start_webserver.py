@@ -132,11 +132,12 @@ def platformdata():
 def set_waypoint():
     # platform as a GET argument
     thisplatform = request.args.get('platform')
-    # this needs to actually send the waypoint to the platform
-    # TODO: flesh out the code in the appropriate script contained in the /platformdata/ dir
-    print "SEND WAYPOINT TO {} !!!!!!!!!!!!".format(thisplatform)
+    lat = request.args.get('lat')
+    lon = request.args.get('lon')
 
-    return jsonify({"result": "This feature is not implemented yet!", "platform": thisplatform})
+    platform, response = send_waypoint(thisplatform, lat, lon)
+
+    return jsonify({"result": response, "platform": platform})
 
 
 # Custom static data
