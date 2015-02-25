@@ -15,6 +15,7 @@
 #include <proj_api.h>
 #include "evologics.hpp"
 #include "perls-common/timestamp.h"
+#include "perls-common/serial.h"
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
@@ -40,14 +41,16 @@ using namespace acfrlcm;
 typedef enum 
 {
     ATT_NOVATEL = 0,
-    ATT_EVOLOGICS
+    ATT_EVOLOGICS,
+    ATT_AUV_STATUS
 } attitude_source_t; 
 
 // GPS source
 typedef enum 
 {
     GPS_NOVATEL = 0,
-    GPS_GPSD
+    GPS_GPSD,
+    GPS_AUV_STATUS
 } gps_source_t; 
 
     
@@ -78,9 +81,18 @@ class Evologics_Usbl
          
         
     private:
-        // usbl tcp config
+        // serial io
+        char *parity;
+        int baud;
+        char *device;
+        bool use_serial_comm;
+        // ip io
+        int open_port();
         char *ip;
         char *inet_port;
+        bool use_ip_comm;
+        char term;
+
         int ahrs_fd;
         int evo_fd;
         int gain;
@@ -95,6 +107,7 @@ class Evologics_Usbl
         char **lcm_channels;
     
        
+        bool has_ahrs;
         attitude_source_t attitude_source;
         gps_source_t gps_source;
             

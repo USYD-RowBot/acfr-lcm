@@ -55,6 +55,7 @@ class Evologics
         int parse_lcm_data(unsigned char *d, int len);
         int parse_modem_data(char *d, int len, int64_t timestamp);
         int clear_modem();
+        int disconnect_modem();
 
         // LCM handlers
         int handle_heartbeat();

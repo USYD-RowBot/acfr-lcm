@@ -63,6 +63,7 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
+cout << "Got LCM message on channel " << channel << endl;
     char dest_channel[64];
     memset(dest_channel, 0, 64);
     strcpy(dest_channel, channel.c_str());
@@ -124,16 +125,19 @@ int Evologics_Usbl::ping_targets()
     // check the state of the link if we are sending data
     //cout << "sending_data=" << state.sending_data << endl;
 //    if(evo->sending_data)
-//        evo->send_command("+++AT?S\n");
+//        evo->send_command("+++AT?S");
     
-    if(ping_counter == ping_period)
+    if (ping_period > -1)
     {
-        ping_counter = 0;
-        for(int i=0; i<num_targets; i++)
-            evo->send_ping(targets[i]);
+        if(ping_counter == ping_period)
+        {
+            ping_counter = 0;
+            for(int i=0; i<num_targets; i++)
+                evo->send_ping(targets[i]);
+        }
+        else
+            ping_counter++;
     }
-    else
-        ping_counter++;
     
     // check to make sure we haven't gotten stuck sending a ping
     // this can happen if we don't get a response, lets wait 10 seconds
@@ -320,11 +324,33 @@ int Evologics_Usbl::load_config(char *program_name)
     char key[128];
     sprintf (rootkey, "sensors.%s", program_name);
 
-    sprintf(key, "%s.ip", rootkey);
-    ip = bot_param_get_str_or_fail(param, key);
+    // check if we are using an serial connection
+    sprintf(key, "%s.device", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        device = bot_param_get_str_or_fail(param, key);
 
-    sprintf(key, "%s.port", rootkey);
-    inet_port = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.baud", rootkey);
+        baud = bot_param_get_int_or_fail(param, key);
+
+        sprintf(key, "%s.parity", rootkey);
+        parity = bot_param_get_str_or_fail(param, key);
+        use_serial_comm = true;
+    }
+
+    // check if we are using an IP connection
+    sprintf(key, "%s.ip", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        ip = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.port", rootkey);
+        inet_port = bot_param_get_str_or_fail(param, key);
+        use_ip_comm = true;
+    }
+    if (use_serial_comm == false && use_ip_comm == false) {
+        cout << "Missing config setting for ip or serial comms" << endl;
+        exit(1);
+    }
     
     // Ping information
     sprintf(key, "%s.targets", rootkey);
@@ -344,6 +370,9 @@ int Evologics_Usbl::load_config(char *program_name)
     
     sprintf(key, "%s.auto_gain", rootkey);
     auto_gain = bot_param_get_boolean_or_fail(param, key);
+
+    sprintf(key, "%s.has_ahrs", rootkey);
+    has_ahrs = bot_param_get_boolean_or_fail(param, key);
     
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
@@ -368,6 +397,8 @@ int Evologics_Usbl::load_config(char *program_name)
         attitude_source = ATT_NOVATEL;
     else if(!strncmp(att_source_str, "EVOLOGICS", 9))
         attitude_source = ATT_EVOLOGICS;
+    else if(!strncmp(att_source_str, "AUV_STATUS", 9))
+        attitude_source = ATT_EVOLOGICS;
     
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);
@@ -376,6 +407,8 @@ int Evologics_Usbl::load_config(char *program_name)
         gps_source = GPS_NOVATEL;
     else if(!strncmp(gps_source_str, "GPSD", 4))
         gps_source = GPS_GPSD;
+    else if(!strncmp(gps_source_str, "AUV_STATUS", 4))
+        gps_source = GPS_AUV_STATUS;
     else
     {
         cerr << "Invalid GPS source: " << gps_source_str << endl;
@@ -418,18 +451,43 @@ int Evologics_Usbl::open_port(const char *port)
     
     int fd;
     
-    struct addrinfo hints, *evo_addr;
+    struct addrinfo hints, *evo_addr, *result;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    getaddrinfo(ip, port, &hints, &evo_addr);
-	fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
-    if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
+    //int s = getaddrinfo(ip, port, &hints, &evo_addr);
+    int s = getaddrinfo(ip, port, &hints, &result);
+    if (s != 0) {
+       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               exit(EXIT_FAILURE);
+    }
+    for (evo_addr = result; evo_addr != NULL; evo_addr = evo_addr->ai_next)
     {
-        printf("Could not connect to %s on port %s\n", ip, inet_port);
-		return -1;
+       fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+       if (fd == -1)
+       {
+           perror("Could not create socket\n");
+           continue;
+       }
+
+       if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) != -1) 
+       {
+           break; // Success
+       }
+       perror("Failed to connect.  Trying next address");
+       close(fd);
     }
     
+    if (evo_addr == NULL)
+    {
+       printf("Could not connect to %s on port %s\n", ip, port);
+       return -1;
+    }
+
+    freeaddrinfo(result);
+
     struct timeval tv;
     tv.tv_sec = 1;  // 1 Secs Timeout 
     tv.tv_usec = 000;  // Not init'ing this can cause strange errors
@@ -452,50 +510,69 @@ int Evologics_Usbl::init()
 {
     // open the ports
 
-    if((evo_fd = open_port(inet_port)) == -1)
-        return 0;
-    if((ahrs_fd = open_port(AHRS_PORT)) == -1)
+    // Open the comm ports
+    char term;
+    char msg[32];
+    if (use_serial_comm)
+    {
+       evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);
+       //serial_set_canonical(state.fd, '\r', '\n');
+       serial_set_noncanonical(evo_fd, 1, 0);
+  
+       tcflush(evo_fd,TCIOFLUSH);
+       term = '\r';
+    } else if (use_ip_comm) {
+       evo_fd = open_port(inet_port);
+       term = '\n';
+    }
+
+    if((has_ahrs == true) && (ahrs_fd = open_port(AHRS_PORT)) == -1)
         return 0;
     
-    evo = new Evologics(evo_fd, '\n', lcm, &fixq, ping_timeout);
+    evo = new Evologics(evo_fd, term, lcm, &fixq, ping_timeout);
 
     
     
     // put the USBL in a known state
-    //send_evologics_command("ATC\n", NULL, 256, &state);
-    evo->send_command("+++ATZ1\n");
+    //send_evologics_command("ATC", NULL, 256, &state);
+    evo->send_command("+++ATZ4");
+    evo->wait_for_commands();
+    evo->send_command("+++ATZ1");
     evo->wait_for_commands();
 
     char cmd[64];
     memset(cmd, 0, 64);
-    sprintf(cmd, "+++AT!L%d\n", source_level);
+    sprintf(cmd, "+++AT!L%d", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d\n", gain);
+    sprintf(cmd, "+++AT!G%d", gain);
     evo->send_command(cmd);
 
     if(auto_gain)
-        evo->send_command("+++AT!LC1\n");
+        evo->send_command("+++AT!LC1");
 
-    //evo->send_command("+++ATH1\n");
-    //evo->send_command("+++ATZ1\n");
+    //evo->send_command("+++ATH1");
+    //evo->send_command("+++ATZ1");
     
     // Get the local address
     evo->wait_for_commands();
-    evo->send_command("+++AT?AL\n");
+    evo->send_command("+++AT?AL");
 
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
     evo->wait_for_commands();
     usleep(1e6);
     
-    evo->send_command("+++ATN\n");      // noise mode
+    evo->send_command("+++ATN");      // noise mode
     evo->wait_for_commands();
     usleep(1e6);
     
-    evo->send_command("+++ATA\n");      // listen state
+    evo->send_command("+++ATA");      // listen state
     evo->wait_for_commands();
-    
+
     usleep(1e6);
+    
+    evo->send_command("+++AT@ZU1");      // request USBL positioning data
+    evo->wait_for_commands();
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
@@ -511,6 +588,7 @@ int Evologics_Usbl::init()
     int i = 0;
     while(lcm_channels[i] != NULL)
     {
+        cout << "Subscribing to LCM channel: " << lcm_channels[i] << endl;
         lcm->subscribeFunction(lcm_channels[i], on_lcm, this);
         i++;
       
@@ -554,7 +632,8 @@ int Evologics_Usbl::process()
         
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
-        FD_SET (ahrs_fd, &rfds);
+        if (has_ahrs)
+           FD_SET (ahrs_fd, &rfds);
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -565,7 +644,7 @@ int Evologics_Usbl::process()
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm->handle();
                         
-            if(FD_ISSET(ahrs_fd, &rfds))
+            if(has_ahrs && FD_ISSET(ahrs_fd, &rfds))
             {
                 // data to be read       
                 memset(buf, 0, MAX_BUF_LEN);
@@ -576,7 +655,6 @@ int Evologics_Usbl::process()
         }
         else
             cout << "select timeout\n";
-        
     }
     delete evo;
     

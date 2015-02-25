@@ -150,7 +150,7 @@ static void *write_thread(void *u)
                     int bytes = write(evo->fd, (*od)->data, (*od)->size);
                     if( bytes == -1)
                     {
-                        cerr << "Failed to send data to modem\n";
+                        perror("Failed to send data to modem:");
                         evo->sending_command = false;
                     }
                     else
@@ -239,7 +239,7 @@ static void *write_thread(void *u)
                     int bytes = write(evo->fd, (*od)->data, (*od)->size);
                     if( bytes == -1)
                     {
-                        cerr << "Failed to send data to modem\n";
+                        perror("Failed to send data to modem:");
                         evo->sending_data = false;
                     }
                     else
@@ -351,6 +351,7 @@ Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm, queue<evologics_usbl_t
 
 Evologics::~Evologics()
 {
+    disconnect_modem();
     thread_exit = 1;
     pthread_join(read_thread_id, NULL);
     pthread_join(write_thread_id, NULL);
@@ -380,7 +381,7 @@ int Evologics::handle_heartbeat()
     
 
     // if we have gotten stuck sending an IM we need to clear the buffer
-    if(im_sent == last_im_sent)
+    if(sending_im == true && im_sent == last_im_sent)
         im_counter++;
     else
     {
@@ -420,7 +421,7 @@ int Evologics::handle_heartbeat()
         command_timeout_counter = 0;
         
     
-    cout << "*************     Sending C: " << sending_command << " Sending IM: " << sending_im << endl; 
+    cout << "************* Sending C: " << sending_command << " Sending IM: " << sending_im << " Sending data: " << sending_data << endl; 
 
     return 1;
 }
@@ -707,6 +708,8 @@ int Evologics::parse_im(char *d)
 
 int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_channel)
 {
+    // first clear the modem of any pending data messages
+    clear_modem();
    
     // we will be adding 9 extra bytes in addition to the name and the name size
     int data_size = strlen(dest_channel) + 10 + size;
@@ -770,13 +773,19 @@ int Evologics::send_data(unsigned char *d, int size, int type, int target, int e
 
 int Evologics::send_command(const char *d)
 {
-    send_data((unsigned char *)d, strlen(d), evo_command, 0, 0);
+    char msg[32];
+    sprintf(msg, "%s%c", d, term);
+cout << "Queuing command " << msg << endl;
+    send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 0);
     return 1;
 }
 
 int Evologics::send_command_front(const char *d)
 {
-    send_data((unsigned char *)d, strlen(d), evo_command, 0, 1);
+    char msg[32];
+    sprintf(msg, "%s%c", d, term);
+cout << "Queing command " << msg << endl;
+    send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 1);
     return 1;
 }
 
@@ -800,6 +809,14 @@ int Evologics::clear_modem()
 {
     char msg[32];
     sprintf(msg, "+++ATZ4%c", term);
+    send_command(msg);
+    return 1;
+}
+
+int Evologics::disconnect_modem()
+{
+    char msg[32];
+    sprintf(msg, "+++ATZ1%c", term);
     send_command(msg);
     return 1;
 }

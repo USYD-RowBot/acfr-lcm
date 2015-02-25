@@ -31,13 +31,23 @@ class Evologics_Modem
         int process();
         int keep_alive();
         int send_status(const auv_status_t *status);
+        int get_usbl_address();
         Evologics *evo;
         
     private:
         
+        // serial io
         char *parity;
         int baud;
         char *device;
+        bool use_serial_comm;
+        // ip io
+        int open_port();
+        char *ip;
+        char *port;
+        bool use_ip_comm;
+        char term;
+
         int evo_fd;
         int keep_alive_count;
         char **lcm_channels;
