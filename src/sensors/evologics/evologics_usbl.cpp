@@ -64,11 +64,14 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
 cout << "Got LCM message on channel " << channel << endl;
+    int channel_pos = channel.find_last_of('.');
+    std::string target_name = channel.substr(channel_pos + 1);
+    int target_index = ev->get_target_index(target_name.c_str());
     char dest_channel[64];
     memset(dest_channel, 0, 64);
     strcpy(dest_channel, channel.c_str());
     //strcat(dest_channel, ".3");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 3, dest_channel);
+    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_index, dest_channel);
 }
     
     
@@ -117,6 +120,9 @@ Evologics_Usbl::Evologics_Usbl()
 Evologics_Usbl::~Evologics_Usbl()
 {
     pthread_join(fix_thread_id, NULL);
+    // free up the resources of the string arrays
+    bot_param_str_array_free(lcm_channels);
+    bot_param_str_array_free(target_names);
 }
 
 
@@ -165,6 +171,36 @@ int Evologics_Usbl::ping_targets()
     return 1;
 }
 
+int Evologics_Usbl::get_target_index(const char *target_name)
+{
+    int target_index = 0;
+    while (target_names != NULL)
+    {
+       if (!strcmp(target_names[target_index], target_name))
+       {
+          break;
+       }
+       target_index++;
+    }
+    if (target_names == NULL)
+    {
+       printf("Target %s not found\n", target_name);
+       return -1;
+    } else {
+       return target_index;
+    }
+}
+
+int Evologics_Usbl::get_target_name(int target_index, char *target_name)
+{
+    if (target_index < num_targets)
+    {
+       strcpy(target_names[target_index], target_name);
+       return 1;
+    } else {
+       return 0;
+    }
+}
 
 // The Evologics reference frame is Y forward, X right, Z down
 int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
@@ -276,24 +312,31 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     
     uf.accuracy += nov_drms;
     
-    lcm->publish("USBL_FIX", &uf);
-    
-    
-    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
-      
     // Get the target index
-    int target_index;
+    int target_index = -1;
+    std::string target_name;
     for(target_index=0; target_index<num_targets; target_index++)
         if(targets[target_index] == ef->remote_id)
             break;
+   
+    if (target_index == num_targets)
+    {
+        printf("USBL_FIX target %d not found\n", ef->remote_id);
+        return 0;
+    }
+    char usbl_fix_channel_name[64]; 
+    sprintf(usbl_fix_channel_name, "USBL_FIX.%s", target_names[target_index]);
+    lcm->publish(usbl_fix_channel_name, &uf);
     
+    printf("%s: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", usbl_fix_channel_name, ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
+      
     // We will limit how often we send the USBL messages through the modem to once every 5 seconds
     if(usbl_send[target_index])
     {    
         // generate the channel name for the targets LCM message
-        char target_channel[10];
+        //char target_channel[10];
         //sprintf(target_channel, "USBL_FIX.%d", remote_id);
-        sprintf(target_channel, "USBL_FIX");
+        //sprintf(target_channel, "USBL_FIX");
         
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
@@ -301,7 +344,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         if(send_fixes)
         {
             cout << "Sending fix of acoustic modem" << endl;
-            evo->send_lcm_data(d, d_size, ef->remote_id, target_channel);
+            evo->send_lcm_data(d, d_size, ef->remote_id, usbl_fix_channel_name);
         }
         free(d);
         
@@ -355,6 +398,10 @@ int Evologics_Usbl::load_config(char *program_name)
     // Ping information
     sprintf(key, "%s.targets", rootkey);
     num_targets = bot_param_get_int_array(param, key, targets, 8);
+
+    sprintf(key, "%s.target_names", rootkey);
+    target_names = NULL;
+    target_names = bot_param_get_str_array_alloc(param, key);
 
     sprintf(key, "%s.ping_period", rootkey);
     ping_period = bot_param_get_int_or_fail(param, key);
@@ -448,6 +495,7 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
 int Evologics_Usbl::open_port(const char *port)
 {
     // In a seperate function so we can reconnect if the pipe breaks    
+    printf("Attemping to connect to %s on port %s\n", ip, port);
     
     int fd;
     
@@ -484,6 +532,8 @@ int Evologics_Usbl::open_port(const char *port)
     {
        printf("Could not connect to %s on port %s\n", ip, port);
        return -1;
+    } else {
+       printf("Successfully connected to %s on port %s\n", ip, port);
     }
 
     freeaddrinfo(result);

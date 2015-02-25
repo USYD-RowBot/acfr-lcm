@@ -66,6 +66,8 @@ class Evologics_Usbl
         int process();
         int calc_position(const evologics_usbl_t *evo);
         int ping_targets();
+        int get_target_index(const char *target_name);
+        int get_target_name(int target_index, char *target_name);
         int parse_ahrs_message(char *buf);
         
         // data holders
@@ -103,6 +105,7 @@ class Evologics_Usbl
         
         // targets
         int targets[MAX_TARGETS];
+        char **target_names;
         int num_targets;
         char **lcm_channels;
     
