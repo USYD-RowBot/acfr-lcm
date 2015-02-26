@@ -158,7 +158,19 @@
                     var iframes = data.iframes.split(',');
                     for (var i = 0; i < iframes.length; i++)
                         get_config(url, cfg, iframes[i].trim(), function (data, url, cfg) {
-                            $("body").append($("<div class='iframe' style='top:"+data.top+"; left:"+data.left+";'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
+                            var iframeid = "iframe-"+ i,
+                                cssclass = "";
+                            map.add_control("<i class='fa fa-video-camera'></i>", function(e){
+                                if($("#"+iframeid).length > 0) {
+                                    $("#"+iframeid).remove();
+                                    $(this).removeClass("active");
+                                }
+                                else {
+                                    $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
+                                    $(this).addClass("active");
+                                }
+                            },"Show: "+data.name,"topright");
+                            if (data.show === "true") $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
                         });
                 }
             }

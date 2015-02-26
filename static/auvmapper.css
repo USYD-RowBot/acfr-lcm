@@ -21,7 +21,8 @@ body, html {
 }
 
 .map-control.active {
-    background-color: #ff0000;
+    background-color: #428bca;
+    color: #fff;
 }
 
 .platform-dash {
@@ -362,8 +363,8 @@ body, html {
 
 .iframe {
     position:absolute !important;
-    top: 50px;
-    left:50px;
+    /*top: 50px;*/
+    /*left:50px;*/
     width:300px;
     background-color: rgba(1,1,1,0.65);;
     padding:0 0 0 0;
