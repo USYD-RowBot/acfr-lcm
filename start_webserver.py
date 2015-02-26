@@ -52,6 +52,7 @@ from osgeo import gdal      # for geotiff reading
 from PIL import Image       # for geotif conversion
 import os
 import sys
+from gevent.wsgi import WSGIServer    # host it properly
 
 
 
@@ -157,11 +158,14 @@ if __name__ == '__main__':
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
     #print app.config
-    app.run(
-        #debug = True,
-        host = "0.0.0.0",
-        port = 8080
-    )
+    # app.run(
+    #     #debug = True,
+    #     host = "0.0.0.0",
+    #     port = 8080
+    # )
+
+    http_server = WSGIServer(('', 8080), app)
+    http_server.serve_forever()
 
     terminate_platformdata_threads()
 
