@@ -1,8 +1,8 @@
 // to compile: g++ test.cpp mission.cpp ZamboniePath.cpp GotoPath.cpp LegPath.cpp SpiralPath.cpp SpiralInwardPath.cpp  -o test `pkg-config --cflags --libs libxml++-2.6`
 
 
-#include "mission.hpp"
-#include "CoveragePath.h"
+#include "acfr-mission/mission.hpp"
+#include "acfr-mission/CoveragePath.h"
 
 int main(int argc, char ** argv)
 {
