@@ -27,18 +27,23 @@ import os
 import pyproj
 
 LCMROOT='/home/auv/git/acfr_lcm'
-SEABEDGUIROOT='/home/auv/git/seabed_gui'
-sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes'.format(LCMROOT, sys.version_info[0], sys.version_info[1]))
-sys.path.append('{0}/build/lib/'.format(LCMROOT))
-sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
+#SEABEDGUIROOT='/home/auv/git/seabed_gui'
+sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes/'.format(LCMROOT, sys.version_info[0], sys.version_info[1]))
+#sys.path.append('{0}/build/lib/'.format(LCMROOT))
+#sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
 
+print sys.path
+
+# TODO: remove try-except statement
 try:
     import missionMP
     import missionXML
-    from acfrlcm import auv_status_t, ship_status_t
-    from senlcm import usbl_fix_t
 except:
     pass
+from acfrlcm import auv_status_t, ship_status_t
+from senlcm import usbl_fix_t
+#except:
+#    pass
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
@@ -151,7 +156,9 @@ class LcmThread(threading.Thread):
 
 
     def auvStatusHandler(self, channel, data):
+        print channel
         msg = auv_status_t.decode(data)
+        print msg
         platform = '{}'.format(msg.target_id)
         msgid = msg.utime
         platformdata[platform] = {

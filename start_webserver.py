@@ -9,11 +9,12 @@
 #   sudo pip install flask-jsonpify     # to support cross domain json calls
 #   sudo pip install Pillow             # (not core) python image lib for geotiff conversion
 #   sudo pip install gdal               # (not core) for handling geotiffs
+#   sudo pip install pyproj             # (not core) for handling projections
 #
 # HOW TO RUN:
 #   python start_webserver.py test
 #               OR
-#   python start_webserver.py acfr
+#   python start_webserver.py acfrauv
 #
 # HOW TO TEST:
 # If you have the UI code, open a web browser and go to:
@@ -53,6 +54,7 @@ import os
 import sys
 
 
+
 app = Flask(__name__)
 
 # automatically work out IP address
@@ -66,7 +68,7 @@ thisserver = "http://%s:8080" % ipaddress
 # import all the worker threads and functions to deal with platform data updates
 mode = sys.argv[1] if len(sys.argv) > 1 else "test"
 exec "from platformdata.{} import *".format(mode)
-
+#from platformdata import acfrlcm as pdata
 
 @app.route('/')
 def home():
@@ -156,6 +158,7 @@ if __name__ == '__main__':
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
     #print app.config
     app.run(
+        #debug = True,
         host = "0.0.0.0",
         port = 8080
     )

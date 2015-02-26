@@ -27,8 +27,8 @@ platformdata = {}
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    FakeAUVThread('0', 0.5).start()
-    FakeAUVThread('3', 5).start()
+    FakeAUVThread('SIRIUS', 0.5).start()
+    FakeAUVThread('IVER', 5).start()
     FakeShipThread('1', 1).start()
     FakeShipThread('usbl', 5).start()
 
