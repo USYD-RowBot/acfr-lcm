@@ -8,10 +8,12 @@
         <link href='/static/leaflet-fullscreen/dist/leaflet.fullscreen.css' rel='stylesheet' />
         <link href='/static/leaflet-mouseposition/src/L.Control.MousePosition.css' rel='stylesheet' />
         <link rel="stylesheet" href="/static/bootstrap-3.2.0-dist/css/bootstrap.min.css">
-        <link href="/static/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet">
+      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.3/themes/smoothness/jquery-ui.css">
+          <link href="/static/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet">
         <link href="/static/auvmapper.css" rel="stylesheet">
 
         <script src="/static/jquery-2.1.0.min.js"></script>
+        <script src="//code.jquery.com/ui/1.11.3/jquery-ui.js"></script>
         <script src="/static/bootstrap-3.2.0-dist/js/bootstrap.min.js"></script>
         <script src="/static/leaflet-0.7.3/leaflet.js"></script>
         <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
@@ -19,6 +21,7 @@
         <script src="http://cdn-geoweb.s3.amazonaws.com/esri-leaflet/1.0.0-rc.5/esri-leaflet.js"></script>
         <script src='/static/leaflet-fullscreen/dist/Leaflet.fullscreen.min.js'></script>
         <script src="/static/leaflet-mouseposition/src/L.Control.MousePosition.js"></script>
+
 
         <script src="/static/leaflet-draw/dist/leaflet.draw.js"></script>
 {#        <script src="/static/leaflet-plugins/control/Permalink.js"></script>#}
@@ -148,6 +151,14 @@
                                 map.layers.overlays[data.name] = new L.TileLayer(data.url);
                                 map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
                             }
+                        });
+                }
+                // load iframes
+                if (data.hasOwnProperty('iframes')) {
+                    var iframes = data.iframes.split(',');
+                    for (var i = 0; i < iframes.length; i++)
+                        get_config(url, cfg, iframes[i].trim(), function (data, url, cfg) {
+                            $("body").append($("<div class='iframe' style='top:"+data.top+"; left:"+data.left+";'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
                         });
                 }
             }

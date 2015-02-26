@@ -103,7 +103,7 @@ def get_config():
 def get_geotiff():
     # This function needs to get a url for a geotiff, compute the bounds and return the rquired variables as json
     url = request.args.get('url')
-    chartdirurl = 'uploads/charts/'
+    chartdirurl = 'uploads/geotiffs/'
 
     ds = gdal.Open(url)
     gt = ds.GetGeoTransform()
