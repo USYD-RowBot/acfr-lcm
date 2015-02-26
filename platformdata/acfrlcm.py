@@ -32,10 +32,13 @@ sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes/'.form
 #sys.path.append('{0}/build/lib/'.format(LCMROOT))
 #sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
 
-#try:
-#import missionMP
-#import missionXML
-from acfrlcm import * #auv_status_t, ship_status_t
+# TODO: remove try-except statement
+try:
+    import missionMP
+    import missionXML
+except:
+    pass
+from acfrlcm import auv_status_t, ship_status_t
 from senlcm import usbl_fix_t
 #except:
 #    pass
@@ -68,12 +71,7 @@ def terminate_platformdata_threads():
 # This function simply reads the output for a specific platform
 ######################################################################
 def get_platformdata(platform):
-    
-    try:
-        data = platformdata[platform]
-    except: 
-        data = {"errormsg":"Invalid platform ID!"}
-    return data
+    return platformdata[platform]
 
 ######################################################################
 # Parse mission file
