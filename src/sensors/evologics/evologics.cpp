@@ -1,5 +1,6 @@
 #include "evologics.hpp"
 
+
 // read thread
 static void *read_thread(void *u)
 {
@@ -150,8 +151,9 @@ static void *write_thread(void *u)
                     int bytes = write(evo->fd, (*od)->data, (*od)->size);
                     if( bytes == -1)
                     {
-                        perror("Failed to send data to modem:");
+                        perror("Failed to send command to modem:");
                         evo->sending_command = false;
+                        evo->reopen_port();
                     }
                     else
                     {
@@ -241,6 +243,7 @@ static void *write_thread(void *u)
                     {
                         perror("Failed to send data to modem:");
                         evo->sending_data = false;
+                        evo->reopen_port();
                     }
                     else
                     {
@@ -319,10 +322,41 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 }
 
 
-Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
-    fd = _fd;
-    term = _term;
+    device = _device;
+    baud = _baud;
+    parity = _parity;
+    use_serial_port = true;
+    use_ip_port = false;
+
+    fd = open_serial_port();
+    term = '\r';
+    init(_lcm, q, _ping_timeout);
+}
+
+Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+{
+    ip = _ip;
+    port = _port;
+    use_serial_port = false;
+    use_ip_port = true;
+
+    fd = open_port(ip.c_str(), port.c_str());
+    term = '\n';
+    init(_lcm, q, _ping_timeout);
+}
+
+Evologics::~Evologics()
+{
+    disconnect_modem();
+    thread_exit = 1;
+    pthread_join(read_thread_id, NULL);
+    pthread_join(write_thread_id, NULL);
+}
+
+int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+{
     lcm = _lcm;
     fixq = q;
     ping_timeout = _ping_timeout;
@@ -346,17 +380,95 @@ Evologics::Evologics(int _fd, char _term, lcm::LCM *_lcm, queue<evologics_usbl_t
 
     pthread_create(&write_thread_id, NULL, write_thread, this);
     pthread_detach(write_thread_id);
-    
+
+    return 1; 
 }
 
-Evologics::~Evologics()
+int Evologics::reopen_port()
 {
-    disconnect_modem();
-    thread_exit = 1;
-    pthread_join(read_thread_id, NULL);
-    pthread_join(write_thread_id, NULL);
+    close(fd);
+
+    if (use_serial_port)
+    {
+       fd = open_serial_port();
+    } else if (use_ip_port) {
+       fd = open_port(ip.c_str(), port.c_str());
+    }
+    return fd;
 }
 
+int Evologics::open_serial_port()
+{
+   int evo_fd = serial_open(device.c_str(), serial_translate_speed(baud), serial_translate_parity(parity.c_str()), 1);
+   serial_set_noncanonical(evo_fd, 1, 0);
+
+   tcflush(evo_fd,TCIOFLUSH);
+
+   return evo_fd;
+}
+
+
+int Evologics::open_port(const char *ip, const char *port)
+{
+    // In a seperate function so we can reconnect if the pipe breaks
+    printf("Attemping to connect to %s on port %s\n", ip, port);
+
+    int evo_fd;
+
+    struct addrinfo hints, *evo_addr, *result;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
+    //int s = getaddrinfo(ip, port, &hints, &evo_addr);
+    int s = getaddrinfo(ip, port, &hints, &result);
+    if (s != 0) {
+       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               exit(EXIT_FAILURE);
+    }
+    for (evo_addr = result; evo_addr != NULL; evo_addr = evo_addr->ai_next)
+    {
+       evo_fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+       if (evo_fd == -1)
+       {
+           perror("Could not create socket\n");
+           continue;
+       }
+
+       if(connect(evo_fd, evo_addr->ai_addr, evo_addr->ai_addrlen) != -1)
+       {
+           break; // Success
+       }
+       perror("Failed to connect.  Trying next address");
+       close(evo_fd);
+    }
+
+    if (evo_addr == NULL)
+    {
+       printf("Could not connect to %s on port %s\n", ip, port);
+       return -1;
+    } else {
+       printf("Successfully connected to %s on port %s\n", ip, port);
+    }
+
+    freeaddrinfo(result);
+
+    struct timeval tv;
+    tv.tv_sec = 1;  // 1 Secs Timeout
+    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
+    setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+    // flush the port
+    int flag = 1;
+    setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+    flag = 0;
+    write(evo_fd, &flag, 1);
+    setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+
+
+    return evo_fd;
+}
 int Evologics::start_handlers()
 {
     // LCM subscriptions
@@ -706,7 +818,7 @@ int Evologics::parse_im(char *d)
     return 1;
 }
 
-int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_channel)
+int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel)
 {
     // first clear the modem of any pending data messages
     clear_modem();
@@ -727,6 +839,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, char *dest_
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
+    cout << "Queuing data for target " << target << " on channel " << dest_channel << endl;
     send_data(dout, data_size, evo_data, target, 0);
     
     return 1;
@@ -775,7 +888,7 @@ int Evologics::send_command(const char *d)
 {
     char msg[32];
     sprintf(msg, "%s%c", d, term);
-cout << "Queuing command " << msg << endl;
+cout << "Queuing command " << msg;
     send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 0);
     return 1;
 }
@@ -784,7 +897,7 @@ int Evologics::send_command_front(const char *d)
 {
     char msg[32];
     sprintf(msg, "%s%c", d, term);
-cout << "Queing command " << msg << endl;
+cout << "Queing command " << msg;
     send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 1);
     return 1;
 }

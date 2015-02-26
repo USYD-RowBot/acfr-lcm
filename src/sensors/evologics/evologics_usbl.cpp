@@ -64,14 +64,15 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
 cout << "Got LCM message on channel " << channel << endl;
+    // extract the platform id
     int channel_pos = channel.find_last_of('.');
     std::string target_name = channel.substr(channel_pos + 1);
-    int target_index = ev->get_target_index(target_name.c_str());
-    char dest_channel[64];
-    memset(dest_channel, 0, 64);
-    strcpy(dest_channel, channel.c_str());
-    //strcat(dest_channel, ".3");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_index, dest_channel);
+    // figure out which channel to send the data on
+    int target_channel = ev->get_target_channel(target_name.c_str());
+    std::string dummy_channel_name = "AUV_TESTING." + target_name;
+    if (target_channel != -1)
+       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, dummy_channel_name.c_str());
+       //ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
 }
     
     
@@ -171,10 +172,10 @@ int Evologics_Usbl::ping_targets()
     return 1;
 }
 
-int Evologics_Usbl::get_target_index(const char *target_name)
+int Evologics_Usbl::get_target_channel(const char *target_name)
 {
     int target_index = 0;
-    while (target_names != NULL)
+    while (target_names[target_index] != NULL)
     {
        if (!strcmp(target_names[target_index], target_name))
        {
@@ -187,19 +188,21 @@ int Evologics_Usbl::get_target_index(const char *target_name)
        printf("Target %s not found\n", target_name);
        return -1;
     } else {
-       return target_index;
+       return targets[target_index];
     }
 }
 
-int Evologics_Usbl::get_target_name(int target_index, char *target_name)
+int Evologics_Usbl::get_target_name(int target_channel, char *target_name)
 {
-    if (target_index < num_targets)
+    for (int target_index = 0; target_index < num_targets; target_index++)
     {
-       strcpy(target_names[target_index], target_name);
-       return 1;
-    } else {
-       return 0;
-    }
+       if (targets[target_index] == target_channel)
+       {
+         strcpy(target_names[target_index], target_name);
+         return 1;
+       }
+    } 
+    return 0;
 }
 
 // The Evologics reference frame is Y forward, X right, Z down
@@ -402,6 +405,19 @@ int Evologics_Usbl::load_config(char *program_name)
     sprintf(key, "%s.target_names", rootkey);
     target_names = NULL;
     target_names = bot_param_get_str_array_alloc(param, key);
+    int i = 0;
+    cout << "Read in target names: ";
+    while (target_names[i] != NULL)
+    {
+        cout << targets[i] << ":" << target_names[i] << "; ";
+        i++;
+    }
+    cout << endl;
+    if (i != num_targets)
+    {
+        cout << "Target IDs and name arrays do not match" << endl;
+        exit(1);
+    }
 
     sprintf(key, "%s.ping_period", rootkey);
     ping_period = bot_param_get_int_or_fail(param, key);
@@ -491,7 +507,7 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         return 0;
 }
         
-
+/*
 int Evologics_Usbl::open_port(const char *port)
 {
     // In a seperate function so we can reconnect if the pipe breaks    
@@ -553,7 +569,7 @@ int Evologics_Usbl::open_port(const char *port)
 
     return fd;
 }
-
+*/
     
 
 int Evologics_Usbl::init()
@@ -565,21 +581,17 @@ int Evologics_Usbl::init()
     char msg[32];
     if (use_serial_comm)
     {
-       evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);
-       //serial_set_canonical(state.fd, '\r', '\n');
-       serial_set_noncanonical(evo_fd, 1, 0);
-  
-       tcflush(evo_fd,TCIOFLUSH);
-       term = '\r';
+       evo = new Evologics(device, baud, parity, lcm, &fixq, ping_timeout);
     } else if (use_ip_comm) {
-       evo_fd = open_port(inet_port);
-       term = '\n';
-    }
+       evo = new Evologics(ip, inet_port, lcm, &fixq, ping_timeout);
+    } else {
+       printf("Unknown communications protocol.  Can't initialise Evologics object.\n");
+       exit(1);
+    } 
 
-    if((has_ahrs == true) && (ahrs_fd = open_port(AHRS_PORT)) == -1)
+    if((has_ahrs == true) && (ahrs_fd = evo->open_port(ip, AHRS_PORT)) == -1)
         return 0;
     
-    evo = new Evologics(evo_fd, term, lcm, &fixq, ping_timeout);
 
     
     
@@ -678,7 +690,7 @@ int Evologics_Usbl::process()
     {
         // check the port status, broekn pipes
         if(pipe_broken)
-            open_port(inet_port);
+            evo->open_port(ip, inet_port);
         
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);

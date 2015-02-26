@@ -7,6 +7,10 @@
 #include <queue>
 #include <vector>
 #include <zlib.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include "perls-common/serial.h"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_angles_t.hpp"
@@ -45,10 +49,15 @@ class Evo_Data_Out
 class Evologics
 {
     public:
-//        Evologics(int _fd, char _term, lcm::LCM *lcm);
-        Evologics(int _fd, char _term, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        Evologics(char *device, int baud, char *parity, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        Evologics(char *ip, char *port, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
         ~Evologics();
-        int send_lcm_data(unsigned char *d, int size, int target, char *dest_channel);
+        int init(lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        int reopen_port();
+        int open_serial_port();
+        int open_port(const char *ip, const char *port);
+
+        int send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel);
         int send_command(const char *d);
         int send_command_front(const char *d);
         int send_ping(int target);
@@ -100,6 +109,15 @@ class Evologics
         
                 
     private:
+        string device;
+        int baud;
+        string parity;
+        bool use_serial_port;
+
+        string ip;
+        string port;
+        bool use_ip_port;
+
         pthread_t read_thread_id;
         pthread_t write_thread_id;
         lcm::LCM *lcm;
