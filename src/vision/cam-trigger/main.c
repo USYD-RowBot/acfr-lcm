@@ -344,6 +344,7 @@ int main(int argc, char **argv) {
 	}
 	serial_set_ctsrts(state.serialFd, 0);
 	
+	state.mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	pthread_mutex_init(state.mutex, NULL);
 	
 	// send the initial settings
