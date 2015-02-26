@@ -1,0 +1,6 @@
+Flask
+flask-jsonpify
+Pillow
+gdal
+pyproj
+gevent

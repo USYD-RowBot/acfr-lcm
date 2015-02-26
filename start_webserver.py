@@ -5,11 +5,7 @@
 #
 # REQUIREMENTS: to run this code make sure you have the following
 # dependencies:
-#   sudo pip install Flask
-#   sudo pip install flask-jsonpify     # to support cross domain json calls
-#   sudo pip install Pillow             # (not core) python image lib for geotiff conversion
-#   sudo pip install gdal               # (not core) for handling geotiffs
-#   sudo pip install pyproj             # (not core) for handling projections
+#   sudo pip install -r requirements.txt
 #
 # HOW TO RUN:
 #   python start_webserver.py test
