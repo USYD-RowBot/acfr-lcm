@@ -9,6 +9,7 @@
 #   sudo pip install flask-jsonpify     # to support cross domain json calls
 #   sudo pip install Pillow             # (not core) python image lib for geotiff conversion
 #   sudo pip install gdal               # (not core) for handling geotiffs
+#   sudo pip install pyproj             # (not core) for handling projections
 #
 # HOW TO RUN:
 #   python start_webserver.py test
@@ -156,6 +157,7 @@ if __name__ == '__main__':
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
     #print app.config
     app.run(
+        #debug = True,
         host = "0.0.0.0",
         port = 8080
     )
