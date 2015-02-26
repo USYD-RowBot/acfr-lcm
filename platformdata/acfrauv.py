@@ -32,6 +32,8 @@ sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes/'.form
 #sys.path.append('{0}/build/lib/'.format(LCMROOT))
 #sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
 
+print sys.path
+
 # TODO: remove try-except statement
 try:
     import missionMP

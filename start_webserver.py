@@ -14,7 +14,7 @@
 # HOW TO RUN:
 #   python start_webserver.py test
 #               OR
-#   python start_webserver.py acfr
+#   python start_webserver.py acfrauv
 #
 # HOW TO TEST:
 # If you have the UI code, open a web browser and go to:
@@ -54,6 +54,7 @@ import os
 import sys
 
 
+
 app = Flask(__name__)
 
 # automatically work out IP address
@@ -67,7 +68,7 @@ thisserver = "http://%s:8080" % ipaddress
 # import all the worker threads and functions to deal with platform data updates
 mode = sys.argv[1] if len(sys.argv) > 1 else "test"
 exec "from platformdata.{} import *".format(mode)
-
+#from platformdata import acfrlcm as pdata
 
 @app.route('/')
 def home():
