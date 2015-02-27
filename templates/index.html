@@ -144,11 +144,11 @@
                     for (var i = 0; i < tilelayers.length; i++)
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
-                                map.layers.base[data.name] = new L.TileLayer(data.url);
+                                map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
                             else if (data.type === "overlay") {
-                                map.layers.overlays[data.name] = new L.TileLayer(data.url);
+                                map.layers.overlays[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
                                 map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
                             }
                         });

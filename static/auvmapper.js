@@ -202,6 +202,11 @@ function auvmapper () {
         if (options.dispoptions.showtrack) {
             this.layers.overlays[tracklayer] = new L.Polyline([], trackoptions).addTo(this.map);
             this.layerctl.addOverlay(this.layers.overlays[tracklayer], tracklayer);
+            console.log(this.layers.overlays[tracklayer]);
+            // Add fancy mid line markers
+            //var markerid = 'circle-'+platform.replace(' ','_');
+            //$(this.layers.overlays[tracklayer]._container).prepend('<marker id="'+markerid+'" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="userSpaceOnUse"><circle cx="3" cy="3" r="3" fill="'+options.color+'"></circle></marker>');
+            //$(this.layers.overlays[tracklayer]._path).attr("marker-mid","url(#"+markerid+")");
         }
 
         // if size is an object, then draw a ship, otherwise draw a circle
