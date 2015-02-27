@@ -1,0 +1,36 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    
+    <desc>
+        This is a 42 x 42m double overlapping zamobni at Horshoe Reef LI
+    </desc>
+    <global>
+        <location lat="-33.9657" lon="151.2533" />
+        <turn_radius m='10' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+
+    <primitive>
+        <goto>
+            <position x="2000" y="-75" z="0.0"/>
+            <heading deg="45" />
+            <timeout t="900" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="2000" y="-50" z="0.0"/>
+            <heading deg="0" />
+            <timeout t="300" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>

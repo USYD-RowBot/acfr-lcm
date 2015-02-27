@@ -51,6 +51,7 @@ addpkg \
     libgtk2.0-dev \
     liblapack-dev \
     libncurses-dev \
+    libproj-dev \
     libsdl1.2-dev \
     libsuitesparse-dev \
     libraw1394-dev \
@@ -63,7 +64,8 @@ addpkg \
     python-dev \
     libsigc++-2.0-dev \
     libglibmm-2.4-dev \
-    libxml++2.6-dev
+    libxml++2.6-dev \
+    sip-dev
 
 #=========================================================================
 # 2) list distribution-specific packages here in alphabetical order

@@ -9,8 +9,8 @@
 #include "perls-lcmtypes++/senlcm/rdi_control_t.hpp"
 #include "perls-common/timestamp.h"
 
-#include "mission.hpp"
-#include "mission_command.hpp"
+#include "acfr-mission/mission.hpp"
+#include "acfr-mission/mission_command.hpp"
 
 #ifndef GlobalPlanner_H
 #define GlobalPlanner_H

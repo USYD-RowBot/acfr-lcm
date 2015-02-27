@@ -16,3 +16,4 @@ perls_add_folder (vis-rawlog-extract "Build ACFR LCM log exporter for VIS RAW lo
 perls_add_folder (lcm2raw "Build ACFR LCM log exporter for RAW logs?" ON)
 #perls_add_folder (mission2kml "Build ACFR XML mission to KML converter?" ON)
 perls_add_folder (acfr-lcm-common "Build ACFR LCM common library?" ON)
+perls_add_folder (acfr-mission "Build ACFR mission library?" ON)

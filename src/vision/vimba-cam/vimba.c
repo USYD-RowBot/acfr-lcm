@@ -50,13 +50,27 @@ typedef struct {
 
     uint8_t is_valid;             // have we ever synced?
 } timestamp_sync_private_state_t;
+
+typedef enum
+{
+    CAMERA_IDLE,
+    CAMERA_OPEN,
+    CAMERA_CLOSE,
+    CAMERA_NONE
+} camera_state_t;
     
 // state structure passed to all functions
 typedef struct 
 {
-    lcm_t *lcm;  
+    lcm_t *lcm;
+    BotParam *params;
+	char root_key[64];
+	  
     char *uid;  
-    char *channel;
+    char *mac;
+    char *channel;  
+    char *camera_name;
+      
     VmbHandle_t camera;
     timestamp_sync_private_state_t tss;
     VmbInt64_t frame_size;
@@ -70,6 +84,9 @@ typedef struct
     int64_t previous_frame_utime;
     int queue_length;
     int image_count;
+    VmbFrame_t frames[BUFFERS];
+    
+    camera_state_t camera_state;
 } state_t;
 
 
@@ -154,7 +171,7 @@ int list_camera_features(state_t *state)
 
 
 // Set the camera attributes based on the LCM config file
-int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
+int set_camera_attributes(state_t *state)
 {
     // get the list of valid attributes from the camera
     VmbFeatureInfo_t *features;
@@ -180,8 +197,9 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
         {
         
             // Look for each keyword in the config file and check to see if the value is valid
-            sprintf(key, "%s.features.%s", root_key, features[i].name);
-            if(bot_param_has_key(params, key))
+            sprintf(key, "%s.features.%s", state->root_key, features[i].name);
+            
+            if(bot_param_has_key(state->params, key))
             {
                 // if the feature is an enum get the valid values for this key from the camera
                 
@@ -200,7 +218,7 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
                     
                         char *key_value;
                         int key_found;
-                        if(bot_param_get_str(params, key, &key_value) == 0)
+                        if(bot_param_get_str(state->params, key, &key_value) == 0)
                         {
                             // check to see that is a valid key value
                             key_found = 0;
@@ -238,7 +256,7 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
                 if(features[i].featureDataType == VmbFeatureDataInt)
                 {
                     int key_value;
-                    if(bot_param_get_int(params, key, &key_value) == 0)
+                    if(bot_param_get_int(state->params, key, &key_value) == 0)
                     {
                         VmbInt64_t value = key_value;
                         err = VmbFeatureIntSet(state->camera, features[i].name, value);
@@ -255,7 +273,7 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
                 if(features[i].featureDataType == VmbFeatureDataFloat)
                 {
                     double key_value;
-                    if(bot_param_get_double(params, key, &key_value) == 0)
+                    if(bot_param_get_double(state->params, key, &key_value) == 0)
                     {
                         err = VmbFeatureFloatSet(state->camera, features[i].name, key_value);
                         if(err != VmbErrorSuccess)
@@ -271,7 +289,7 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
                 if(features[i].featureDataType == VmbFeatureDataString)
                 {
                     char *key_value;
-                    if(bot_param_get_str(params, key, &key_value) == 0)
+                    if(bot_param_get_str(state->params, key, &key_value) == 0)
                     {
                         err = VmbFeatureStringSet(state->camera, features[i].name, key_value);
                         if(err != VmbErrorSuccess)
@@ -289,7 +307,7 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
                 if(features[i].featureDataType == VmbFeatureDataBool)
                 {
                     int key_value;
-                    if(bot_param_get_boolean(params, key, &key_value) == 0)
+                    if(bot_param_get_boolean(state->params, key, &key_value) == 0)
                     {
                         err = VmbFeatureBoolSet(state->camera, features[i].name, (VmbBool_t)key_value);
                         if(err != VmbErrorSuccess)
@@ -307,6 +325,9 @@ int set_camera_attributes(state_t *state, BotParam *params, char *root_key)
         free(features);        
                 
     }
+    else
+        fprintf(stderr, "There was a problem getting the camera feature list, feature count: %d\n", feature_count);
+        
     return ret;
 }
 
@@ -760,8 +781,7 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
         }
     
     if(state->publish)
-        {
-	printf("pub\n");
+    {
         publish_image(state, frame, exposure, gain, frame_utime);
     }
     // If we are writing the data to disk put the frame in the queue
@@ -827,8 +847,138 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
     }
 }
 
-        
 
+int open_camera(state_t *state)
+{
+    VmbError_t err;
+    
+    // Open the camera
+    err = VmbCameraOpen((const char *)state->camera_name, VmbAccessModeFull, &state->camera);    
+    if(err == VmbErrorNotFound)
+    {
+        fprintf(stderr, "There was a problem opening the Camera\n");
+        return 0;
+    }
+    
+    // Adjust the packet size to match the network        
+    if (VmbFeatureCommandRun(state->camera, "GVSPAdjustPacketSize" ) == VmbErrorSuccess)
+    {
+        VmbBool_t bIsCommandDone = 0;
+        do
+        {
+            if (VmbFeatureCommandIsDone(state->camera, "GVSPAdjustPacketSize", &bIsCommandDone ) != VmbErrorSuccess)
+                break;
+        } while (bIsCommandDone == 0);
+    }    
+
+    // set the camera attributes based on the config file
+    if(set_camera_attributes(state) == -1)
+    {
+        fprintf(stderr, "There was a problem programming the Camera\n");
+        return 0;
+    }
+        
+    // Allocate the frames
+    err = VmbFeatureIntGet(state->camera, "PayloadSize", &state->frame_size);
+    for(int i=0; i<BUFFERS; i++)
+    {    
+        state->frames[i].buffer = malloc(state->frame_size);
+        state->frames[i].bufferSize = state->frame_size;
+        state->frames[i].context[0] = state;
+        
+        VmbFrameAnnounce(state->camera, &state->frames[i], sizeof(VmbFrame_t));
+    }
+    
+    // start the capture
+    err = VmbCaptureStart(state->camera);
+    
+    // Queue frames and register callback
+    for(int i=0; i<BUFFERS; i++)
+    {    
+        err = VmbCaptureFrameQueue(state->camera, &state->frames[i], frame_done_callback);
+	    if(err != VmbErrorSuccess)
+            fprintf(stderr, "Frame queue error: %d\n", err);
+    }  
+    
+    // start the acquisition
+    err = VmbFeatureCommandRun(state->camera, "AcquisitionStart");
+    
+    state->camera_state = CAMERA_IDLE;
+    
+    return 1;
+}
+
+int close_camera(state_t *state)
+{
+    // check to see if the camera is open
+    if(state->camera == NULL)
+        return 0;
+
+    VmbError_t err;
+    
+    // stop acquiring images
+    err = VmbFeatureCommandRun(state->camera, "AcquisitionStop");
+    if(err == VmbErrorNotFound)
+        fprintf(stderr, "There was a problem stopping the acquisition\n");
+     
+    err = VmbCaptureEnd(state->camera);
+    if(err == VmbErrorNotFound)
+        fprintf(stderr, "There was a problem ending the capture\n");
+
+    
+    // dequeue the frames
+    VmbFrameRevokeAll(state->camera);
+    
+    // Free the memory
+    for(int i=0; i<BUFFERS; i++)
+    {
+        if(state->frames[i].buffer != NULL)
+            free(state->frames[i].buffer);
+    }
+    
+    VmbCameraClose(state->camera);
+    state->camera_state = CAMERA_NONE;
+    
+    return 1;
+}
+        
+    
+
+// The Camera list just changed, we may need to start up a camera if it is the one we are
+// looking after
+void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* context)
+{
+    state_t *state = (state_t *)context;
+    
+    char camera_name[255];
+
+    VmbFeatureStringGet(handle , "DiscoveryCameraIdent", camera_name, sizeof(camera_name), NULL);
+    printf ("Event was fired by camera %s\n", camera_name);
+    
+    char *event_type = NULL;
+    VmbFeatureEnumGet(handle , "DiscoveryCameraEvent", (const char **)&event_type);
+    printf ("Event type %s\n", event_type);
+    
+    if(strstr(camera_name, state->mac) != NULL)
+    {
+        if(!strcmp(event_type, "Detected"))
+        {
+            // Camera was just attached, lets open it and configure it
+            state->camera_state = CAMERA_OPEN;
+            state->camera_name = malloc(strlen(camera_name));
+            memcpy(state->camera_name, camera_name, strlen(camera_name));
+            
+        }
+        else if(!strcmp(event_type, "Missing"))
+        {
+            state->camera_state = CAMERA_CLOSE;
+            free(state->camera_name);
+        }
+        
+    }    
+    
+    return;   
+}
 
 int main(int argc, char **argv)
 {
@@ -836,8 +986,8 @@ int main(int argc, char **argv)
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
     
-    BotParam *params;
-	char root_key[64];
+    //BotParam *params;
+	//char root_key[64];
 	char key[64];
 	
 	state_t state;
@@ -863,11 +1013,10 @@ int main(int argc, char **argv)
     // read the config file, we base the entry on a command line switch
     char opt;
     int got_key = 0;
-    int list_features = 0;
-    while((opt = getopt(argc, argv, "hlk:")) != -1) {
+    while((opt = getopt(argc, argv, "hk:")) != -1) {
         if(opt == 'k') 
         {
-            strcpy(root_key, optarg);
+            strcpy(state.root_key, optarg);
             got_key = 1;
         }
         if(opt == 'h') 
@@ -875,8 +1024,6 @@ int main(int argc, char **argv)
             fprintf(stderr, "Usage: vimba -k <config key>\n");
             return 0;
         }
-        if(opt == 'l') 
-            list_features = 1;
     }
 
     if(!got_key)
@@ -887,19 +1034,19 @@ int main(int argc, char **argv)
     
     
     state.lcm = lcm_create(NULL);
-    params = bot_param_new_from_server (state.lcm, 1); 
+    state.params = bot_param_new_from_server (state.lcm, 1); 
     
-    sprintf(key, "%s.uid", root_key);
-    state.uid = bot_param_get_str_or_fail(params, key);
+    sprintf(key, "%s.mac", state.root_key);
+    state.mac = bot_param_get_str_or_fail(state.params, key);
     
-    sprintf(key, "%s.channel", root_key);
-    state.channel = bot_param_get_str_or_fail(params, key);
+    sprintf(key, "%s.channel", state.root_key);
+    state.channel = bot_param_get_str_or_fail(state.params, key);
 
-    sprintf(key, "%s.publish", root_key);
-    state.publish = bot_param_get_boolean_or_fail(params, key);
+    sprintf(key, "%s.publish", state.root_key);
+    state.publish = bot_param_get_boolean_or_fail(state.params, key);
 
-    sprintf(key, "%s.scale", root_key);
-    state.image_scale = bot_param_get_int_or_fail(params, key);
+    sprintf(key, "%s.scale", state.root_key);
+    state.image_scale = bot_param_get_int_or_fail(state.params, key);
     if((state.image_scale != 1) && (state.image_scale != 4) && (state.image_scale != 16)) 
     {
         fprintf(stderr, "scale must be 1, 4 or 16\n");
@@ -920,92 +1067,19 @@ int main(int argc, char **argv)
     VmbBool_t gige;
     // We ask Vimba for the presence of a GigE transport layer
     err = VmbFeatureBoolGet(gVimbaHandle, "GeVTLIsPresent", &gige);
-    if(err == VmbErrorSuccess)
+    if(err != VmbErrorSuccess)
     {
-        if (gige)
-        {
-            // We query all network interfaces using the global Vimba handle
-            err = VmbFeatureCommandRun(gVimbaHandle , "GeVDiscoveryAllOnce");
-            // Wait for the discovery packets to return
-            usleep(200000);
-        }
-    }
-    
-    // open the camera
-    err = VmbCameraOpen((const char *)&state.uid[0], VmbAccessModeFull, &state.camera);
-    
-    if(err == VmbErrorNotFound)
-    {
-        // get a list of the cameras that we can see
-        VmbCameraInfo_t *cameras;
-        unsigned int camera_count;
-        if(VmbCamerasList(NULL , 0, &camera_count , sizeof(*cameras)) == VmbErrorSuccess)
-        {
-            cameras = malloc(sizeof(VmbCameraInfo_t) * camera_count);
-            VmbCamerasList(cameras , camera_count , &camera_count , sizeof(*cameras));
-            fprintf(stderr, "Valid cameras are:\n");
-            for(int i=0; i<camera_count; i++)
-                fprintf(stderr, "Name: %s, Model: %s, Serial: %s, Interface %s. ID: %s\n", cameras[i].cameraName, cameras[i].modelName, cameras[i].serialString, cameras[i].interfaceIdString, cameras[i].cameraIdString);
-        }
-        else
-            fprintf(stderr, "could not get list of cameras\n"); 
-        
-        VmbShutdown();
+        printf("Could not access Gigabit transport layer\n");
         return 0;
     }
-    else
-        printf("Opened camera UID: %s\n", state.uid);
-        
 
-    // Adjust the packet size to match the network        
-    if (VmbFeatureCommandRun(state.camera, "GVSPAdjustPacketSize" ) == VmbErrorSuccess)
-    {
-        VmbBool_t bIsCommandDone = 0;
-        do
-        {
-            if (VmbFeatureCommandIsDone(state.camera, "GVSPAdjustPacketSize", &bIsCommandDone ) != VmbErrorSuccess)
-                break;
-        } while (bIsCommandDone == 0);
-    }    
+    printf("Installing detection callback\n");
+    state.camera_state = CAMERA_NONE;
+    // Register the callback to detect cameras
+    VmbFeatureInvalidationRegister(gVimbaHandle, "DiscoveryCameraEvent", camera_plugged , &state);
+    VmbFeatureCommandRun (gVimbaHandle , "GeVDiscoveryAllAuto");
+    
 
-    if(list_features)
-    {
-        list_camera_features(&state);
-        VmbShutdown();
-        return 1;
-    }
-        
-    // get the camera attributes
-    if(set_camera_attributes(&state, params, root_key) == -1)
-    {
-        VmbShutdown();
-        return -1;
-    }
-    
-    // create the camera buffers
-    // first find out the frame size
-    err = VmbFeatureIntGet(state.camera, "PayloadSize", &state.frame_size);
-    
-        
-    VmbFrame_t frames[BUFFERS];
-    for(int i=0; i<BUFFERS; i++)
-    {    
-        frames[i].buffer = malloc(state.frame_size);
-        frames[i].bufferSize = state.frame_size;
-        frames[i].context[0] = &state;
-        
-        VmbFrameAnnounce(state.camera, &frames[i], sizeof(VmbFrame_t));
-    }
-    
-    err = VmbCaptureStart(state.camera);
-    
-    // Queue frames and register callback
-    for(int i=0; i<BUFFERS; i++)
-    {    
-        err = VmbCaptureFrameQueue(state.camera, &frames[i], frame_done_callback);
-	    if(err != VmbErrorSuccess)
-            printf("Frame queue error: %d\n", err);
-    }  
     // start the write thread and detach it
     pthread_t tid;
     pthread_create(&tid, NULL, write_thread, &state);
@@ -1014,8 +1088,7 @@ int main(int argc, char **argv)
     // subscribe to LCM messages
     acfrlcm_auv_camera_control_t_subscribe(state.lcm, "CAMERA_CONTROL", &camera_control_callback, &state);
     
-    // start the capture
-    err = VmbFeatureCommandRun(state.camera, "AcquisitionStart");
+    printf("Main loop\n");
  
     // wait here
     while (!program_exit) {
@@ -1023,11 +1096,24 @@ int main(int argc, char **argv)
         tv.tv_sec = 1;
         tv.tv_usec = 0;
         lcmu_handle_timeout(state.lcm, &tv);
+        
+        // check the camera state
+        if(state.camera_state == CAMERA_OPEN)
+        {
+            printf("Opening camera\n");
+            if(!open_camera(&state))
+                fprintf(stderr, "There was a problem opening the camera\n");
+        }
+        else if(state.camera_state == CAMERA_CLOSE)
+        {
+            printf("closing camera\n");
+            close_camera(&state);
+        }
     }    
     
     VmbShutdown();
-    for(int i=0; i<BUFFERS; i++)
-        free(frames[i].buffer);    
+    //for(int i=0; i<BUFFERS; i++)
+    //    free(frames[i].buffer);    
     
     pthread_join(tid, NULL);
     

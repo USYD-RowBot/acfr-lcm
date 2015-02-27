@@ -1,0 +1,15 @@
+package acfrlcm;
+
+struct ship_status_t
+{
+    int64_t utime;
+    
+    int8_t  ship_id;
+    string name;
+    
+    double heading;   
+    double roll;      
+    double pitch;     
+    double latitude;
+    double longitude;
+}

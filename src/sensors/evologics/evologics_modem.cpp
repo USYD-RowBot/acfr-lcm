@@ -1,3 +1,7 @@
+#include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+
 #include "evologics_modem.hpp"
 
 
@@ -11,17 +15,21 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 void on_auv_status(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_status_t *status, Evologics_Modem* ev) 
 {
+    cout << "Received lcm message on channel " << channel << ".  Sending auv_status to modem on address " << ev->get_usbl_address() << endl;
     ev->send_status(status);    
 }
 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Modem* ev) 
 {
+    cout << "Received lcm message on channel " << channel << ".  Sending to modem on address " << ev->get_usbl_address() << endl;
     char dest_channel[64];
+    char buf[32];
     memset(dest_channel, 0, 64);
     strcpy(dest_channel, channel.c_str());
-    strcat(dest_channel, ".1");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 1, dest_channel);
+    sprintf(buf, ".%d", ev->get_usbl_address()); 
+    strcat(dest_channel, buf);
+    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, ev->get_usbl_address(), dest_channel);
 }
 
 void on_evologics_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const evologics_command_t *ec, Evologics_Modem* ev) 
@@ -34,6 +42,8 @@ void on_evologics_command(const lcm::ReceiveBuffer* rbuf, const std::string& cha
 Evologics_Modem::Evologics_Modem()
 {
     lcm = new lcm::LCM();
+    use_serial_comm = false;
+    use_ip_comm = false;
 }
 
 int Evologics_Modem::keep_alive()
@@ -41,7 +51,7 @@ int Evologics_Modem::keep_alive()
     if(keep_alive_count == 15)
     {
         keep_alive_count = 0;
-        evo->send_command("+++AT?S\r");
+        evo->send_command("+++AT?S");
     }
     else
         keep_alive_count++;
@@ -67,6 +77,7 @@ int Evologics_Modem::send_status(const auv_status_t *status)
 {
     // the message has been decoded so we will need to re encode it
     // we will also update the id field
+
     auv_status_t s;
     memcpy(&s, status, sizeof(auv_status_t));
     
@@ -98,14 +109,33 @@ int Evologics_Modem::load_config(char *program_name)
 
 
     // read the initial config
+    // check if we are using an serial connection
     sprintf(key, "%s.device", rootkey);
-    device = bot_param_get_str_or_fail(param, key);
+    if (bot_param_has_key(param, key))
+    {
+        device = bot_param_get_str_or_fail(param, key);
 
 	sprintf(key, "%s.baud", rootkey);
-    baud = bot_param_get_int_or_fail(param, key);
+        baud = bot_param_get_int_or_fail(param, key);
 
-    sprintf(key, "%s.parity", rootkey);
-    parity = bot_param_get_str_or_fail(param, key);  
+        sprintf(key, "%s.parity", rootkey);
+        parity = bot_param_get_str_or_fail(param, key);  
+        use_serial_comm = true;
+    } 
+
+    // check if we are using an IP connection
+    sprintf(key, "%s.ip", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        ip = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.port", rootkey);
+        port = bot_param_get_str_or_fail(param, key);
+        use_ip_comm = true;
+    }
+    if (use_serial_comm == false && use_ip_comm == false) {
+        cout << "Missing config setting for ip or serial comms" << endl;
+        exit(1);
+    }
     
 	sprintf(key, "%s.usbl_address", rootkey);
     usbl_address = bot_param_get_int_or_fail(param, key);
@@ -147,49 +177,116 @@ int Evologics_Modem::load_config(char *program_name)
     return 1;
 }        
 
+int Evologics_Modem::open_port()
+{
+    // In a seperate function so we can reconnect if the pipe breaks
+
+    int fd;
+   
+    struct addrinfo hints, *evo_addr, *result;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
+    //int s = getaddrinfo(ip, port, &hints, &evo_addr);
+    int s = getaddrinfo(ip, port, &hints, &result);
+    if (s != 0) {
+       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               exit(EXIT_FAILURE);
+    }
+    for (evo_addr = result; evo_addr != NULL; evo_addr = evo_addr->ai_next)
+    {
+       fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+       if (fd == -1)
+       {
+           perror("Could not create socket\n");
+           continue;
+       }
+
+       if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) != -1)
+       {
+           break; // Success
+       }
+       perror("Failed to connect.  Trying next address");
+       close(fd);
+    }
+
+    if (evo_addr == NULL)
+    {
+       printf("Could not connect to %s on port %s\n", ip, port);
+       return -1;
+    }
+
+    freeaddrinfo(result);
+
+    struct timeval tv;
+    tv.tv_sec = 1;  // 1 Secs Timeout
+    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
+    setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+    // flush the port
+    int flag = 1;
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+    flag = 0;
+    write(fd, &flag, 1);
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+
+
+    return fd;
+}
 
 
 int Evologics_Modem::init()
 {
-    // Open the serial port
-    evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
-    //serial_set_canonical(state.fd, '\r', '\n');
-    serial_set_noncanonical(evo_fd, 1, 0);
+    // Open the comm port
+    char term;
+    char msg[32];
+    if (use_serial_comm)
+    {
+       evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
+       //serial_set_canonical(state.fd, '\r', '\n');
+       serial_set_noncanonical(evo_fd, 1, 0);
    
-    tcflush(evo_fd,TCIOFLUSH);
+       tcflush(evo_fd,TCIOFLUSH);
+       term = '\r';
+    } else if (use_ip_comm) {
+       evo_fd = open_port(); 
+       term = '\n';
+    }
     
     // Create the Evologics object
-    evo = new Evologics(evo_fd, '\r', lcm, NULL, ping_timeout);
+    evo = new Evologics(evo_fd, term, lcm, NULL, ping_timeout);
     
     // subscribe to the relevant streams
     
     // put the modem in a known state
-    evo->send_command("+++ATZ1\r");
-    
-    // we need to put in an additonal wait as the modem may just be waking up
+    evo->send_command("+++ATZ4");
+    evo->wait_for_commands();
+    evo->send_command("+++ATZ1");
     evo->wait_for_commands();
     
     char cmd[64];
     memset(cmd, 0, 64);
-    sprintf(cmd, "+++AT!L%d\r", source_level);
+    sprintf(cmd, "+++AT!L%d", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d\r", gain);
+    sprintf(cmd, "+++AT!G%d", gain);
     evo->send_command(cmd);
 
     // Get the local address
-    evo->send_command("+++AT?AL\r");
+    evo->send_command("+++AT?AL");
 
     if(auto_gain)
-        evo->send_command("+++AT!LC1\r");
+        evo->send_command("+++AT!LC1");
     
-    evo->send_command("+++ATZ1\r");
+    evo->send_command("+++ATZ1");
     
     // now to force the settings that require a listen mode
     evo->wait_for_commands();
-    evo->send_command("+++ATN\r");      // noise mode
+    evo->send_command("+++ATN");      // noise mode
     evo->wait_for_commands();
     usleep(3e6);
-    evo->send_command("+++ATA\r");      // listen state
+    evo->send_command("+++ATA");      // listen state
     evo->wait_for_commands();
     
     keep_alive_count = 0;
@@ -211,6 +308,11 @@ int Evologics_Modem::init()
     evo->start_handlers();
     
     return 1;
+}
+
+int Evologics_Modem::get_usbl_address()
+{
+    return usbl_address;
 }
 
 int Evologics_Modem::process()
