@@ -2,6 +2,7 @@
 
 %Include list.sip
 
+
 class WaypointSimple {
 %TypeHeaderCode
 #include "waypoint.hpp"

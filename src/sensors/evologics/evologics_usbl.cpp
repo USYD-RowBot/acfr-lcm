@@ -63,11 +63,14 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
-    char dest_channel[64];
-    memset(dest_channel, 0, 64);
-    strcpy(dest_channel, channel.c_str());
-    //strcat(dest_channel, ".3");
-    ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, 3, dest_channel);
+cout << "Got LCM message on channel " << channel << endl;
+    // extract the platform id
+    int channel_pos = channel.find_last_of('.');
+    std::string target_name = channel.substr(channel_pos + 1);
+    // figure out which channel to send the data on
+    int target_channel = ev->get_target_channel(target_name.c_str());
+    if (target_channel != -1)
+       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
 }
     
     
@@ -116,6 +119,9 @@ Evologics_Usbl::Evologics_Usbl()
 Evologics_Usbl::~Evologics_Usbl()
 {
     pthread_join(fix_thread_id, NULL);
+    // free up the resources of the string arrays
+    bot_param_str_array_free(lcm_channels);
+    bot_param_str_array_free(target_names);
 }
 
 
@@ -124,16 +130,19 @@ int Evologics_Usbl::ping_targets()
     // check the state of the link if we are sending data
     //cout << "sending_data=" << state.sending_data << endl;
 //    if(evo->sending_data)
-//        evo->send_command("+++AT?S\n");
+//        evo->send_command("+++AT?S");
     
-    if(ping_counter == ping_period)
+    if (ping_period > -1)
     {
-        ping_counter = 0;
-        for(int i=0; i<num_targets; i++)
-            evo->send_ping(targets[i]);
+        if(ping_counter == ping_period)
+        {
+            ping_counter = 0;
+            for(int i=0; i<num_targets; i++)
+                evo->send_ping(targets[i]);
+        }
+        else
+            ping_counter++;
     }
-    else
-        ping_counter++;
     
     // check to make sure we haven't gotten stuck sending a ping
     // this can happen if we don't get a response, lets wait 10 seconds
@@ -161,6 +170,38 @@ int Evologics_Usbl::ping_targets()
     return 1;
 }
 
+int Evologics_Usbl::get_target_channel(const char *target_name)
+{
+    int target_index = 0;
+    while (target_names[target_index] != NULL)
+    {
+       if (!strcmp(target_names[target_index], target_name))
+       {
+          break;
+       }
+       target_index++;
+    }
+    if (target_names == NULL)
+    {
+       printf("Target %s not found\n", target_name);
+       return -1;
+    } else {
+       return targets[target_index];
+    }
+}
+
+int Evologics_Usbl::get_target_name(int target_channel, char *target_name)
+{
+    for (int target_index = 0; target_index < num_targets; target_index++)
+    {
+       if (targets[target_index] == target_channel)
+       {
+         strcpy(target_names[target_index], target_name);
+         return 1;
+       }
+    } 
+    return 0;
+}
 
 // The Evologics reference frame is Y forward, X right, Z down
 int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
@@ -272,24 +313,31 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     
     uf.accuracy += nov_drms;
     
-    lcm->publish("USBL_FIX", &uf);
-    
-    
-    printf("USBL FIX: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
-      
     // Get the target index
-    int target_index;
+    int target_index = -1;
+    std::string target_name;
     for(target_index=0; target_index<num_targets; target_index++)
         if(targets[target_index] == ef->remote_id)
             break;
+   
+    if (target_index == num_targets)
+    {
+        printf("USBL_FIX target %d not found\n", ef->remote_id);
+        return 0;
+    }
+    char usbl_fix_channel_name[64]; 
+    sprintf(usbl_fix_channel_name, "USBL_FIX.%s", target_names[target_index]);
+    lcm->publish(usbl_fix_channel_name, &uf);
     
+    printf("%s: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", usbl_fix_channel_name, ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
+      
     // We will limit how often we send the USBL messages through the modem to once every 5 seconds
     if(usbl_send[target_index])
     {    
         // generate the channel name for the targets LCM message
-        char target_channel[10];
+        //char target_channel[10];
         //sprintf(target_channel, "USBL_FIX.%d", remote_id);
-        sprintf(target_channel, "USBL_FIX");
+        //sprintf(target_channel, "USBL_FIX");
         
         int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
@@ -297,7 +345,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         if(send_fixes)
         {
             cout << "Sending fix of acoustic modem" << endl;
-            evo->send_lcm_data(d, d_size, ef->remote_id, target_channel);
+            evo->send_lcm_data(d, d_size, ef->remote_id, usbl_fix_channel_name);
         }
         free(d);
         
@@ -320,15 +368,54 @@ int Evologics_Usbl::load_config(char *program_name)
     char key[128];
     sprintf (rootkey, "sensors.%s", program_name);
 
-    sprintf(key, "%s.ip", rootkey);
-    ip = bot_param_get_str_or_fail(param, key);
+    // check if we are using an serial connection
+    sprintf(key, "%s.device", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        device = bot_param_get_str_or_fail(param, key);
 
-    sprintf(key, "%s.port", rootkey);
-    inet_port = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.baud", rootkey);
+        baud = bot_param_get_int_or_fail(param, key);
+
+        sprintf(key, "%s.parity", rootkey);
+        parity = bot_param_get_str_or_fail(param, key);
+        use_serial_comm = true;
+    }
+
+    // check if we are using an IP connection
+    sprintf(key, "%s.ip", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        ip = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.port", rootkey);
+        inet_port = bot_param_get_str_or_fail(param, key);
+        use_ip_comm = true;
+    }
+    if (use_serial_comm == false && use_ip_comm == false) {
+        cout << "Missing config setting for ip or serial comms" << endl;
+        exit(1);
+    }
     
     // Ping information
     sprintf(key, "%s.targets", rootkey);
     num_targets = bot_param_get_int_array(param, key, targets, 8);
+
+    sprintf(key, "%s.target_names", rootkey);
+    target_names = NULL;
+    target_names = bot_param_get_str_array_alloc(param, key);
+    int i = 0;
+    cout << "Read in target names: ";
+    while (target_names[i] != NULL)
+    {
+        cout << targets[i] << ":" << target_names[i] << "; ";
+        i++;
+    }
+    cout << endl;
+    if (i != num_targets)
+    {
+        cout << "Target IDs and name arrays do not match" << endl;
+        exit(1);
+    }
 
     sprintf(key, "%s.ping_period", rootkey);
     ping_period = bot_param_get_int_or_fail(param, key);
@@ -344,6 +431,9 @@ int Evologics_Usbl::load_config(char *program_name)
     
     sprintf(key, "%s.auto_gain", rootkey);
     auto_gain = bot_param_get_boolean_or_fail(param, key);
+
+    sprintf(key, "%s.has_ahrs", rootkey);
+    has_ahrs = bot_param_get_boolean_or_fail(param, key);
     
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
@@ -368,6 +458,8 @@ int Evologics_Usbl::load_config(char *program_name)
         attitude_source = ATT_NOVATEL;
     else if(!strncmp(att_source_str, "EVOLOGICS", 9))
         attitude_source = ATT_EVOLOGICS;
+    else if(!strncmp(att_source_str, "AUV_STATUS", 9))
+        attitude_source = ATT_EVOLOGICS;
     
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);
@@ -376,6 +468,8 @@ int Evologics_Usbl::load_config(char *program_name)
         gps_source = GPS_NOVATEL;
     else if(!strncmp(gps_source_str, "GPSD", 4))
         gps_source = GPS_GPSD;
+    else if(!strncmp(gps_source_str, "AUV_STATUS", 4))
+        gps_source = GPS_AUV_STATUS;
     else
     {
         cerr << "Invalid GPS source: " << gps_source_str << endl;
@@ -411,25 +505,53 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         return 0;
 }
         
-
+/*
 int Evologics_Usbl::open_port(const char *port)
 {
     // In a seperate function so we can reconnect if the pipe breaks    
+    printf("Attemping to connect to %s on port %s\n", ip, port);
     
     int fd;
     
-    struct addrinfo hints, *evo_addr;
+    struct addrinfo hints, *evo_addr, *result;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    getaddrinfo(ip, port, &hints, &evo_addr);
-	fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
-    if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) < 0) 
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;
+    //int s = getaddrinfo(ip, port, &hints, &evo_addr);
+    int s = getaddrinfo(ip, port, &hints, &result);
+    if (s != 0) {
+       fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+               exit(EXIT_FAILURE);
+    }
+    for (evo_addr = result; evo_addr != NULL; evo_addr = evo_addr->ai_next)
     {
-        printf("Could not connect to %s on port %s\n", ip, inet_port);
-		return -1;
+       fd = socket(evo_addr->ai_family, evo_addr->ai_socktype, evo_addr->ai_protocol);
+       if (fd == -1)
+       {
+           perror("Could not create socket\n");
+           continue;
+       }
+
+       if(connect(fd, evo_addr->ai_addr, evo_addr->ai_addrlen) != -1) 
+       {
+           break; // Success
+       }
+       perror("Failed to connect.  Trying next address");
+       close(fd);
     }
     
+    if (evo_addr == NULL)
+    {
+       printf("Could not connect to %s on port %s\n", ip, port);
+       return -1;
+    } else {
+       printf("Successfully connected to %s on port %s\n", ip, port);
+    }
+
+    freeaddrinfo(result);
+
     struct timeval tv;
     tv.tv_sec = 1;  // 1 Secs Timeout 
     tv.tv_usec = 000;  // Not init'ing this can cause strange errors
@@ -445,57 +567,72 @@ int Evologics_Usbl::open_port(const char *port)
 
     return fd;
 }
-
+*/
     
 
 int Evologics_Usbl::init()
 {
     // open the ports
 
-    if((evo_fd = open_port(inet_port)) == -1)
-        return 0;
-    if((ahrs_fd = open_port(AHRS_PORT)) == -1)
+    // Open the comm ports
+    char term;
+    char msg[32];
+    if (use_serial_comm)
+    {
+       evo = new Evologics(device, baud, parity, lcm, &fixq, ping_timeout);
+    } else if (use_ip_comm) {
+       evo = new Evologics(ip, inet_port, lcm, &fixq, ping_timeout);
+    } else {
+       printf("Unknown communications protocol.  Can't initialise Evologics object.\n");
+       exit(1);
+    } 
+
+    if((has_ahrs == true) && (ahrs_fd = evo->open_port(ip, AHRS_PORT)) == -1)
         return 0;
     
-    evo = new Evologics(evo_fd, '\n', lcm, &fixq, ping_timeout);
 
     
     
     // put the USBL in a known state
-    //send_evologics_command("ATC\n", NULL, 256, &state);
-    evo->send_command("+++ATZ1\n");
+    //send_evologics_command("ATC", NULL, 256, &state);
+    evo->send_command("+++ATZ4");
+    evo->wait_for_commands();
+    evo->send_command("+++ATZ1");
     evo->wait_for_commands();
 
     char cmd[64];
     memset(cmd, 0, 64);
-    sprintf(cmd, "+++AT!L%d\n", source_level);
+    sprintf(cmd, "+++AT!L%d", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d\n", gain);
+    sprintf(cmd, "+++AT!G%d", gain);
     evo->send_command(cmd);
 
     if(auto_gain)
-        evo->send_command("+++AT!LC1\n");
+        evo->send_command("+++AT!LC1");
 
-    //evo->send_command("+++ATH1\n");
-    //evo->send_command("+++ATZ1\n");
+    //evo->send_command("+++ATH1");
+    //evo->send_command("+++ATZ1");
     
     // Get the local address
     evo->wait_for_commands();
-    evo->send_command("+++AT?AL\n");
+    evo->send_command("+++AT?AL");
 
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
     evo->wait_for_commands();
     usleep(1e6);
     
-    evo->send_command("+++ATN\n");      // noise mode
+    evo->send_command("+++ATN");      // noise mode
     evo->wait_for_commands();
     usleep(1e6);
     
-    evo->send_command("+++ATA\n");      // listen state
+    evo->send_command("+++ATA");      // listen state
     evo->wait_for_commands();
-    
+
     usleep(1e6);
+    
+    evo->send_command("+++AT@ZU1");      // request USBL positioning data
+    evo->wait_for_commands();
     
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
@@ -511,6 +648,7 @@ int Evologics_Usbl::init()
     int i = 0;
     while(lcm_channels[i] != NULL)
     {
+        cout << "Subscribing to LCM channel: " << lcm_channels[i] << endl;
         lcm->subscribeFunction(lcm_channels[i], on_lcm, this);
         i++;
       
@@ -550,11 +688,12 @@ int Evologics_Usbl::process()
     {
         // check the port status, broekn pipes
         if(pipe_broken)
-            open_port(inet_port);
+            evo->open_port(ip, inet_port);
         
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
-        FD_SET (ahrs_fd, &rfds);
+        if (has_ahrs)
+           FD_SET (ahrs_fd, &rfds);
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -565,7 +704,7 @@ int Evologics_Usbl::process()
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm->handle();
                         
-            if(FD_ISSET(ahrs_fd, &rfds))
+            if(has_ahrs && FD_ISSET(ahrs_fd, &rfds))
             {
                 // data to be read       
                 memset(buf, 0, MAX_BUF_LEN);
@@ -576,7 +715,6 @@ int Evologics_Usbl::process()
         }
         else
             cout << "select timeout\n";
-        
     }
     delete evo;
     
