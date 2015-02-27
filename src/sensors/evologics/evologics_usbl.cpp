@@ -69,10 +69,8 @@ cout << "Got LCM message on channel " << channel << endl;
     std::string target_name = channel.substr(channel_pos + 1);
     // figure out which channel to send the data on
     int target_channel = ev->get_target_channel(target_name.c_str());
-    std::string dummy_channel_name = "AUV_TESTING." + target_name;
     if (target_channel != -1)
-       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, dummy_channel_name.c_str());
-       //ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
+       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
 }
     
     
