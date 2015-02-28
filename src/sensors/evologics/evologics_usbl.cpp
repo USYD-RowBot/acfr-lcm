@@ -611,17 +611,17 @@ int Evologics_Usbl::init()
         evo->send_command("+++AT!LC1");
 
     //evo->send_command("+++ATH1");
-    //evo->send_command("+++ATZ1");
+    evo->send_command("+++ATZ1");
+    evo->wait_for_commands();
     
     // Get the local address
-    evo->wait_for_commands();
     evo->send_command("+++AT?AL");
+    evo->wait_for_commands();
 
     evo->send_command("+++AT!AR3");
     evo->wait_for_commands();
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
-    evo->wait_for_commands();
     usleep(1e6);
     
     evo->send_command("+++AT@ZU1");      // request USBL positioning data
@@ -629,6 +629,8 @@ int Evologics_Usbl::init()
     evo->send_command("+++AT?ZU");      // request USBL positioning data
     evo->wait_for_commands();
     
+    usleep(1e6);
+
     evo->send_command("+++ATN");      // noise mode
     evo->wait_for_commands();
     usleep(1e6);

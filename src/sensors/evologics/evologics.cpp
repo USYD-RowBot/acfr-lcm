@@ -502,6 +502,7 @@ int Evologics::handle_heartbeat()
     }
     if(im_counter > ping_timeout)
     {
+        printf("Instant message reply timeout\n");
         char msg[16] = {0};
         sprintf(msg, "+++ATZ3%c", term);
         send_command_front(msg);
@@ -639,6 +640,13 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         char *tokens[4];
         if(chop_string(d, tokens) == 4)
             current_target = atoi(tokens[3]);
+        pthread_mutex_lock(&flags_lock);
+        sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
+    }
+    // Request positioning information
+    else if(strstr((const char *)d, "?ZU") != NULL)
+    {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
         pthread_mutex_unlock(&flags_lock);
