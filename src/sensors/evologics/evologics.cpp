@@ -152,6 +152,7 @@ static void *command_thread(void *u)
                         perror("Failed to send command to modem:");
                         evo->sending_command = false;
                         evo->reopen_port();
+                        sleep(1e6);
                     }
                     else
                     {
@@ -264,6 +265,7 @@ static void *data_thread(void *u)
                             perror("Failed to send data to modem:");
                             evo->sending_data = false;
                             evo->reopen_port();
+                            sleep(1e6);
                         }
                         else
                         {
@@ -433,7 +435,7 @@ int Evologics::open_serial_port()
 int Evologics::open_port(const char *ip, const char *port)
 {
     // In a seperate function so we can reconnect if the pipe breaks
-    printf("Attemping to connect to %s on port %s\n", ip, port);
+    printf("Attempting to connect to %s on port %s\n", ip, port);
 
     int evo_fd;
 
@@ -981,6 +983,8 @@ int Evologics::clear_queues()
 
 int Evologics::wait_for_commands()
 {
+sleep(1);
+return 1;
     bool empty = false;
     //while(sending_command && !empty)
     while(!empty || sending_command)
