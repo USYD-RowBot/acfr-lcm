@@ -244,19 +244,21 @@ int Evologics_Modem::init()
     char msg[32];
     if (use_serial_comm)
     {
-       evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
+       evo = new Evologics(device, baud, parity, lcm, NULL, ping_timeout);
+       /*evo_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity(parity), 1);    
        //serial_set_canonical(state.fd, '\r', '\n');
        serial_set_noncanonical(evo_fd, 1, 0);
    
        tcflush(evo_fd,TCIOFLUSH);
        term = '\r';
+       */
     } else if (use_ip_comm) {
-       evo_fd = open_port(); 
-       term = '\n';
+       evo = new Evologics(ip, port, lcm, NULL, ping_timeout);
+       //evo_fd = open_port(); 
+       //term = '\n';
     }
     
     // Create the Evologics object
-    evo = new Evologics(evo_fd, term, lcm, NULL, ping_timeout);
     
     // subscribe to the relevant streams
     

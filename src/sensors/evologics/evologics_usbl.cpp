@@ -617,10 +617,17 @@ int Evologics_Usbl::init()
     evo->wait_for_commands();
     evo->send_command("+++AT?AL");
 
+    evo->send_command("+++AT!AR3");
+    evo->wait_for_commands();
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
     evo->wait_for_commands();
     usleep(1e6);
+    
+    evo->send_command("+++AT@ZU1");      // request USBL positioning data
+    evo->wait_for_commands();
+    evo->send_command("+++AT?ZU");      // request USBL positioning data
+    evo->wait_for_commands();
     
     evo->send_command("+++ATN");      // noise mode
     evo->wait_for_commands();
@@ -631,14 +638,16 @@ int Evologics_Usbl::init()
 
     usleep(1e6);
     
-    evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    evo->wait_for_commands();
-    
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
         
     if((gps_source == GPS_NOVATEL) || (attitude_source == ATT_NOVATEL))
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
+    
+    evo->send_command("+++AT@ZU1");      // request USBL positioning data
+    evo->wait_for_commands();
+    evo->send_command("+++AT?ZU");      // request USBL positioning data
+    evo->wait_for_commands();
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
