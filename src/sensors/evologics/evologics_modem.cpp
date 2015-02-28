@@ -242,6 +242,8 @@ int Evologics_Modem::init()
     // Open the comm port
     char term;
     char msg[32];
+
+    // Create the Evologics object
     if (use_serial_comm)
     {
        evo = new Evologics(device, baud, parity, lcm, NULL, ping_timeout);
@@ -258,7 +260,6 @@ int Evologics_Modem::init()
        //term = '\n';
     }
     
-    // Create the Evologics object
     
     // subscribe to the relevant streams
     

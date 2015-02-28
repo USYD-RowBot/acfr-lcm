@@ -716,6 +716,13 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         }
         pthread_mutex_unlock(&flags_lock);
     }    
+    // Someting went wrong
+    else if(strstr((const char *)d, "ERROR") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
+    }
     else
         cerr << "Unknown modem message: " << d;
     
