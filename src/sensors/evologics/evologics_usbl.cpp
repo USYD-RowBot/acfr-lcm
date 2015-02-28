@@ -596,9 +596,9 @@ int Evologics_Usbl::init()
     // put the USBL in a known state
     //send_evologics_command("ATC", NULL, 256, &state);
     evo->send_command("+++ATZ4");
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     evo->send_command("+++ATZ1");
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
 
     char cmd[64];
     memset(cmd, 0, 64);
@@ -608,35 +608,44 @@ int Evologics_Usbl::init()
     evo->send_command(cmd);
 
     if(auto_gain)
+    {
         evo->send_command("+++AT!LC1");
+    }
 
     //evo->send_command("+++ATH1");
     evo->send_command("+++ATZ1");
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     
     // Get the local address
     evo->send_command("+++AT?AL");
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
 
-    evo->send_command("+++AT!AR3");
-    evo->wait_for_commands();
+    //set up to the first remote address in the list for data communications.  This will be switched when messages arrive.
+    if (num_targets > 0)
+    {
+        memset(cmd, 0, 64);
+        sprintf(cmd, "+++AT!AR%d", targets[0]); 
+        evo->send_command(cmd);
+    }
+    //evo->wait_for_commands();
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
     usleep(1e6);
+    evo->send_command("+++AT?AR");
     
     evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     evo->send_command("+++AT?ZU");      // request USBL positioning data
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     
     usleep(1e6);
 
     evo->send_command("+++ATN");      // noise mode
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     usleep(1e6);
     
     evo->send_command("+++ATA");      // listen state
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
 
     usleep(1e6);
     
@@ -647,9 +656,9 @@ int Evologics_Usbl::init()
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
     
     evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     evo->send_command("+++AT?ZU");      // request USBL positioning data
-    evo->wait_for_commands();
+    //evo->wait_for_commands();
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
