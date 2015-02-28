@@ -72,7 +72,9 @@ class Evologics
         
         // channel flags
         pthread_mutex_t flags_lock;
-        pthread_mutex_t queue_lock;
+        pthread_mutex_t command_queue_lock;
+        pthread_mutex_t data_queue_lock;
+
         bool sending_im;
         bool sending_data;
         bool sending_command;
@@ -119,7 +121,8 @@ class Evologics
         bool use_ip_port;
 
         pthread_t read_thread_id;
-        pthread_t write_thread_id;
+        pthread_t command_thread_id;
+        pthread_t data_thread_id;
         lcm::LCM *lcm;
         
         
