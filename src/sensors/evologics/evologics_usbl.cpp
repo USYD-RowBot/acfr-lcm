@@ -304,6 +304,9 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     uf.ship_roll = (float)ship_roll;
     uf.ship_pitch = (float)ship_pitch;
     uf.ship_heading = (float)ship_heading;
+    uf.target_x = ef->x;
+    uf.target_y = ef->y;
+    uf.target_z = ef->z;
     
     
     // Novatel errors are in meters so we need to convert the standard deviations to a DRMS error so it can be
