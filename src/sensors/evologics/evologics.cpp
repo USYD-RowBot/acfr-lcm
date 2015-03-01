@@ -146,7 +146,9 @@ static void *command_thread(void *u)
                 if(!evo->sending_command && !((*od)->type == evo_im && evo->sending_im))
                 {
                     DEBUG_PRINTF(("Sending command: %.*s, Age: %f\n", (*od)->size - 1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                    pthread_mutex_lock(&(evo->write_lock));
                     int bytes = write(evo->fd, (*od)->data, (*od)->size);
+                    pthread_mutex_unlock(&(evo->write_lock));
                     if( bytes == -1)
                     {
                         perror("Failed to send command to modem:");
@@ -242,12 +244,10 @@ static void *data_thread(void *u)
                         char msg[32];
                         sprintf(msg, "+++AT!AR%d", (*od)->target);
                         evo->send_command(msg);
-                        //sprintf(msg, "+++AT!AR%d%c", (*od)->target, evo->term);
-                        //write(evo->fd, msg, strlen(msg));
+
                         usleep(10e3);
                         evo->send_command("++AT?AR");
-                        //sprintf(msg, "+++AT?AR%c", evo->term); 
-                        //write(evo->fd, msg, strlen(msg));
+
                         retry++;
                     }
                 } 
@@ -260,7 +260,9 @@ static void *data_thread(void *u)
                     pthread_mutex_lock(&evo->flags_lock);
                     if(!evo->sending_data)
                     {
+                        pthread_mutex_lock(&(evo->write_lock));
                         int bytes = write(evo->fd, (*od)->data, (*od)->size);
+                        pthread_mutex_unlock(&(evo->write_lock));
                         if( bytes == -1)
                         {
                             perror("Failed to send data to modem:");
@@ -351,9 +353,9 @@ Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, qu
     use_serial_port = true;
     use_ip_port = false;
 
+    init(_lcm, q, _ping_timeout);
     fd = open_serial_port();
     term = '\r';
-    init(_lcm, q, _ping_timeout);
 }
 
 Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
@@ -363,9 +365,9 @@ Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usb
     use_serial_port = false;
     use_ip_port = true;
 
+    init(_lcm, q, _ping_timeout);
     fd = open_port(ip.c_str(), port.c_str());
     term = '\n';
-    init(_lcm, q, _ping_timeout);
 }
 
 Evologics::~Evologics()
@@ -397,6 +399,7 @@ int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_time
     pthread_mutex_init(&flags_lock, NULL);
     pthread_mutex_init(&command_queue_lock, NULL);
     pthread_mutex_init(&data_queue_lock, NULL);
+    pthread_mutex_init(&write_lock, NULL);
             
     pthread_create(&read_thread_id, NULL, read_thread, this);
     pthread_detach(read_thread_id);
@@ -425,10 +428,12 @@ int Evologics::reopen_port()
 
 int Evologics::open_serial_port()
 {
+   pthread_mutex_lock(&write_lock);
    int evo_fd = serial_open(device.c_str(), serial_translate_speed(baud), serial_translate_parity(parity.c_str()), 1);
    serial_set_noncanonical(evo_fd, 1, 0);
 
    tcflush(evo_fd,TCIOFLUSH);
+   pthread_mutex_unlock(&write_lock);
 
    return evo_fd;
 }
@@ -438,6 +443,7 @@ int Evologics::open_port(const char *ip, const char *port)
 {
     // In a seperate function so we can reconnect if the pipe breaks
     printf("Attempting to connect to %s on port %s\n", ip, port);
+    pthread_mutex_lock(&write_lock);
 
     int evo_fd;
 
@@ -473,26 +479,26 @@ int Evologics::open_port(const char *ip, const char *port)
     if (evo_addr == NULL)
     {
        printf("Could not connect to %s on port %s\n", ip, port);
-       return -1;
     } else {
        printf("Successfully connected to %s on port %s\n", ip, port);
+
+       freeaddrinfo(result);
+
+       struct timeval tv;
+       tv.tv_sec = 1;  // 1 Secs Timeout
+       tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+       setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+       // flush the port
+       int flag = 1;
+       setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+       flag = 0;
+       write(evo_fd, &flag, 1);
+       setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+
+
     }
-
-    freeaddrinfo(result);
-
-    struct timeval tv;
-    tv.tv_sec = 1;  // 1 Secs Timeout
-    tv.tv_usec = 000;  // Not init'ing this can cause strange errors
-    setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
-
-    // flush the port
-    int flag = 1;
-    setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-    flag = 0;
-    write(evo_fd, &flag, 1);
-    setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-
-
+    pthread_mutex_unlock(&write_lock);
     return evo_fd;
 }
 int Evologics::start_handlers()

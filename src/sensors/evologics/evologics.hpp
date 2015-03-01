@@ -74,6 +74,7 @@ class Evologics
         pthread_mutex_t flags_lock;
         pthread_mutex_t command_queue_lock;
         pthread_mutex_t data_queue_lock;
+        pthread_mutex_t write_lock;
 
         bool sending_im;
         bool sending_data;
