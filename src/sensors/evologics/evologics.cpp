@@ -983,11 +983,13 @@ int Evologics::clear_queues()
 
 int Evologics::wait_for_commands()
 {
-sleep(1);
-return 1;
-    bool empty = false;
+//sleep(1);
+//return 1;
+    int64_t timestamp;
+    timestamp = timestamp_now();
+    bool empty = false ;
     //while(sending_command && !empty)
-    while(!empty || sending_command)
+    while((!empty || sending_command) && ((timestamp_now() - timestamp)/1e6 < 0.5))
     {
 	pthread_mutex_lock(&command_queue_lock);
 	empty = command_queue.empty();

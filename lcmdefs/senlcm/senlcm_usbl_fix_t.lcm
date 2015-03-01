@@ -6,6 +6,9 @@ struct usbl_fix_t
     
     int32_t remote_id;
     
+    double target_x;
+    double target_y;
+    double target_z;
     double latitude;
     double longitude;
     double depth;
