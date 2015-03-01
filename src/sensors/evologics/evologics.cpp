@@ -194,6 +194,7 @@ static void *command_thread(void *u)
             // wait for new commands to arrive
             usleep(100e3);  // 100ms
         }
+        usleep(10e3);  // 100ms
     }
     cout << "Command thread exit\n";
     return NULL;   
@@ -309,6 +310,7 @@ static void *data_thread(void *u)
             //cout << "Wait due to empty" << endl;
             usleep(100e3);  // 100ms
         }
+        usleep(10e3);  // 100ms
     }
                            
  
