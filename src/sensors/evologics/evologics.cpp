@@ -347,39 +347,31 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
+    lcm = _lcm;
+    fixq = q;
+    ping_timeout = _ping_timeout;
+    
+    sending_im = false;
+    sending_data = false;
+    sending_command = false;
+    current_target = 0;
+    drop_counter = 0;
+    im_sent = 0;
+    last_im_sent = 0;
+    im_counter = 0;
+    
     device = _device;
     baud = _baud;
     parity = _parity;
     use_serial_port = true;
     use_ip_port = false;
 
-    init(_lcm, q, _ping_timeout);
     fd = open_serial_port();
     term = '\r';
+    init(_lcm, q, _ping_timeout);
 }
 
 Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
-{
-    ip = _ip;
-    port = _port;
-    use_serial_port = false;
-    use_ip_port = true;
-
-    init(_lcm, q, _ping_timeout);
-    fd = open_port(ip.c_str(), port.c_str());
-    term = '\n';
-}
-
-Evologics::~Evologics()
-{
-    disconnect_modem();
-    thread_exit = 1;
-    pthread_join(read_thread_id, NULL);
-    pthread_join(command_thread_id, NULL);
-    pthread_join(data_thread_id, NULL);
-}
-
-int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
     lcm = _lcm;
     fixq = q;
@@ -394,6 +386,27 @@ int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_time
     last_im_sent = 0;
     im_counter = 0;
     
+    ip = _ip;
+    port = _port;
+    use_serial_port = false;
+    use_ip_port = true;
+
+    fd = open_port(ip.c_str(), port.c_str());
+    term = '\n';
+    init(_lcm, q, _ping_timeout);
+}
+
+Evologics::~Evologics()
+{
+    disconnect_modem();
+    thread_exit = 1;
+    pthread_join(read_thread_id, NULL);
+    pthread_join(command_thread_id, NULL);
+    pthread_join(data_thread_id, NULL);
+}
+
+int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+{
     
     thread_exit = 0;
     pthread_mutex_init(&flags_lock, NULL);
@@ -957,7 +970,7 @@ int Evologics::send_ping(int target)
     //if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,4,%d,ack,%d000%c", target, target, term);
+        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
         send_data((unsigned char *)msg, strlen(msg), evo_im, target, 0);
 
         return 1;
