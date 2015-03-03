@@ -53,6 +53,7 @@ class Evologics
         Evologics(char *ip, char *port, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
         ~Evologics();
         int init(lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        int start_threads();
         int reopen_port();
         int open_serial_port();
         int open_port(const char *ip, const char *port);

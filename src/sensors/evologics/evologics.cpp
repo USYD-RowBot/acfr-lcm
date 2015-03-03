@@ -347,53 +347,29 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
-    lcm = _lcm;
-    fixq = q;
-    ping_timeout = _ping_timeout;
-    
-    sending_im = false;
-    sending_data = false;
-    sending_command = false;
-    current_target = 0;
-    drop_counter = 0;
-    im_sent = 0;
-    last_im_sent = 0;
-    im_counter = 0;
-    
     device = _device;
     baud = _baud;
     parity = _parity;
     use_serial_port = true;
     use_ip_port = false;
 
+    init(_lcm, q, _ping_timeout);
     fd = open_serial_port();
     term = '\r';
-    init(_lcm, q, _ping_timeout);
+    start_threads();
 }
 
 Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
-    lcm = _lcm;
-    fixq = q;
-    ping_timeout = _ping_timeout;
-    
-    sending_im = false;
-    sending_data = false;
-    sending_command = false;
-    current_target = 0;
-    drop_counter = 0;
-    im_sent = 0;
-    last_im_sent = 0;
-    im_counter = 0;
-    
     ip = _ip;
     port = _port;
     use_serial_port = false;
     use_ip_port = true;
 
+    init(_lcm, q, _ping_timeout);
     fd = open_port(ip.c_str(), port.c_str());
     term = '\n';
-    init(_lcm, q, _ping_timeout);
+    start_threads();
 }
 
 Evologics::~Evologics()
@@ -407,6 +383,19 @@ Evologics::~Evologics()
 
 int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
 {
+    lcm = _lcm;
+    fixq = q;
+    ping_timeout = _ping_timeout;
+    
+    sending_im = false;
+    sending_data = false;
+    sending_command = false;
+    current_target = 0;
+    drop_counter = 0;
+    im_sent = 0;
+    last_im_sent = 0;
+    im_counter = 0;
+    
     
     thread_exit = 0;
     pthread_mutex_init(&flags_lock, NULL);
@@ -414,6 +403,11 @@ int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_time
     pthread_mutex_init(&data_queue_lock, NULL);
     pthread_mutex_init(&write_lock, NULL);
             
+    return 1; 
+}
+
+int Evologics::start_threads()
+{
     pthread_create(&read_thread_id, NULL, read_thread, this);
     pthread_detach(read_thread_id);
 
@@ -422,8 +416,6 @@ int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_time
 
     pthread_create(&data_thread_id, NULL, data_thread, this);
     pthread_detach(data_thread_id);
-
-    return 1; 
 }
 
 int Evologics::reopen_port()
