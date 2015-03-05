@@ -184,7 +184,7 @@ function auvmapper () {
      */
     this.add_posetracker = function(platform, url, usroptions) {
         if (typeof usroptions == "undefined") usroptions = {};
-        var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false}; // default dispoptions
+        var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false, showasheatmap: false}; // default dispoptions
         $.extend(dispoptions,usroptions.dispoptions);  // extend to make sure all fields
         usroptions.dispoptions = dispoptions;  // copy to usroptions
         var options = {color: 'red', interval: 1000, size: 3};  // default other otpions
@@ -210,8 +210,13 @@ function auvmapper () {
         }
 
         // if size is an object, then draw a ship, otherwise draw a circle
-        if (typeof options.size === "number")
+        if (options.dispoptions.showasheatmap) {
+            this.layers.overlays[platform] = new L.heatLayer([], {radius: options.size,gradient:{0.1: "black", 0.5: "green", 1: options.color}});
+            this.layers.overlays[platform].heatmap = true;
+        }
+        else if (typeof options.size === "number") {
             this.layers.overlays[platform] = new L.circle(this.origin, options.size, markeroptions);
+        }
         else if (typeof options.size === "object") {
             this.layers.overlays[platform] = new L.polygon([],polyoptions);
             this.layers.overlays[platform].poly = new getShipPoly(options.size, this.layers.overlays[platform]);
@@ -268,7 +273,11 @@ function auvmapper () {
                     _this.layers.overlays[platform+" uncertainty"].setLatLng(curpos).setRadius(uncertainty);
 
                     // Update marker / polygon position
-                    if (_this.layers.overlays[platform].hasOwnProperty("poly"))
+                    if (_this.layers.overlays[platform].hasOwnProperty('heatmap')) {
+                        curpos.alt = data.stat.intensity*50;
+                        _this.layers.overlays[platform].addLatLng(curpos);
+                    }
+                    else if (_this.layers.overlays[platform].hasOwnProperty("poly"))
                         _this.layers.overlays[platform].poly.setLatLngHdg(data.pose.heading, curpos);//.bringToFront();
                     else
                         _this.layers.overlays[platform].setLatLng(curpos);

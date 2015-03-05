@@ -31,6 +31,7 @@ def init_platformdata_threads():
     FakeAUVThread('SIRIUS', 5).start()
     FakeShipThread('1', 1).start()
     FakeShipThread('usbl', 5).start()
+    FakeClassifierThread('class1', 1).start()
 
 # if you need to do some bookeeping on exit, flesh this out...
 # it is not needed in this case, because we have deamonized threads.
@@ -157,6 +158,34 @@ class FakeShipThread (threading.Thread):
             }
             time.sleep(self.delay)
 
+
+class FakeClassifierThread (threading.Thread):
+    def __init__(self, platform, delay):
+        threading.Thread.__init__(self)
+        self.platform = platform
+        self.delay = delay
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+        self.radius = randint(30, 70)
+
+    def run (self):
+        o = [-33.84119 , 151.25612]       # fake origin to bounce around
+        i = 0
+
+        while(1) :
+            msgid=time.time()   # timestamp / msgid
+            lat, lon, hdg = FakeCoordOnCircle(i, self.radius, o)
+            i += 1
+            platformdata[self.platform] = {
+                'msgid': msgid,                                 # REQUIRED (number)
+                'pose': {
+                    'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
+                    'lon': round(lon, 10)  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
+                },
+                'stat': {
+                    'intensity': 0.5  #random()
+                }
+            }
+            time.sleep(self.delay)
 
 
 def FakeCoordOnCircle(i, radius, o):

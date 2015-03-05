@@ -21,6 +21,7 @@
         <script src="http://cdn-geoweb.s3.amazonaws.com/esri-leaflet/1.0.0-rc.5/esri-leaflet.js"></script>
         <script src='/static/leaflet-fullscreen/dist/Leaflet.fullscreen.min.js'></script>
         <script src="/static/leaflet-mouseposition/src/L.Control.MousePosition.js"></script>
+{#        <script src="/static/leaflet-heat/dist/leaflet-heat.js"></script>#}
 
 
         <script src="/static/leaflet-draw/dist/leaflet.draw.js"></script>
@@ -148,7 +149,8 @@
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
                             else if (data.type === "overlay") {
-                                map.layers.overlays[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
+                                var opacity =  (data.hasOwnProperty("opacity")) ? data.opacity : 1;
+                                map.layers.overlays[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, opacity: opacity});
                                 map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
                             }
                         });
