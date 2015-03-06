@@ -233,57 +233,66 @@ static void *data_thread(void *u)
             
             if((*od) != NULL && (timestamp - (*od)->timestamp) < MAX_DATA_AGE)
             {
-                if((*od)->target != evo->current_target)
+                // check if we can send this as an instant message
+                if ((*od)->size < 64)
                 {
-                    // we need to change targets, this is the only place we are doing
-                    // out of queue command writes to the modem
-                    //sprintf(msg, "+++ATZ4%c", evo->term);
-                    //usleep(100e3);
-                    //write(evo->fd, msg, strlen(msg));
-                    evo->send_command("+++ATZ4");
-                    
-                    int retry = 0;
-                    //while(evo->current_target != (*od)->target && retry < 5)
-                    {
-                        cout << "Target, current: " << evo->current_target << "   destination: " << (*od)->target << endl;
-                        char msg[32];
-                        sprintf(msg, "+++AT!AR%d", (*od)->target);
-                        evo->send_command(msg);
-
-                        usleep(10e3);
-                        evo->send_command("++AT?AR");
-
-                        retry++;
-                    }
-                } 
-        
-                if((*od)->target != evo->current_target)
-                {
-                    cerr << "Could not change the modem data target\n";
-                    //data_sent = true;
+                    char im_msgbuf[128];
+                    sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,%s",(*od)->size, (*od)->target, (*od)->data);
+                    evo->send_command(im_msgbuf);
+                    data_sent = true;
                 } else {
-                    pthread_mutex_lock(&evo->flags_lock);
-                    if(!evo->sending_data)
+                    if((*od)->target != evo->current_target)
                     {
-                        pthread_mutex_lock(&(evo->write_lock));
-                        int bytes = write(evo->fd, (*od)->data, (*od)->size);
-                        pthread_mutex_unlock(&(evo->write_lock));
-                        if( bytes == -1)
+                        // we need to change targets, this is the only place we are doing
+                        // out of queue command writes to the modem
+                        //sprintf(msg, "+++ATZ4%c", evo->term);
+                        //usleep(100e3);
+                        //write(evo->fd, msg, strlen(msg));
+                        evo->send_command("+++ATZ4");
+                    
+                        int retry = 0;
+                        //while(evo->current_target != (*od)->target && retry < 5)
                         {
-                            perror("Failed to send data to modem:");
-                            evo->sending_data = false;
-                            evo->reopen_port();
-                            sleep(1e6);
+                            cout << "Target, current: " << evo->current_target << "   destination: " << (*od)->target << endl;
+                            char msg[32];
+                            sprintf(msg, "+++AT!AR%d", (*od)->target);
+                            evo->send_command(msg);
+
+                            usleep(10e3);
+                            evo->send_command("++AT?AR");
+
+                            retry++;
                         }
-                        else
+                    }     
+        
+                    if((*od)->target != evo->current_target)
+                    {
+                        cerr << "Could not change the modem data target\n";
+                        //data_sent = true;
+                    } else {
+                        pthread_mutex_lock(&evo->flags_lock);
+                        if(!evo->sending_data)
                         {
-                            DEBUG_PRINTF(("Sending %d bytes of LCM data to channel: %.*s\n", (*od)->size, (*od)->data[3], &(*od)->data[4]));
-                            data_sent = true;
-                            evo->drop_at_send = evo->drop_counter;
-                            //evo->sending_data = true;
+                            pthread_mutex_lock(&(evo->write_lock));
+                            int bytes = write(evo->fd, (*od)->data, (*od)->size);
+                            pthread_mutex_unlock(&(evo->write_lock));
+                            if( bytes == -1)
+                            {
+                                perror("Failed to send data to modem:");
+                                evo->sending_data = false;
+                                evo->reopen_port();
+                                sleep(1e6);
+                            }
+                            else
+                            {
+                                DEBUG_PRINTF(("Sending %d bytes of LCM data to channel: %.*s\n", (*od)->size, (*od)->data[3], &(*od)->data[4]));
+                                data_sent = true;
+                                evo->drop_at_send = evo->drop_counter;
+                                //evo->sending_data = true;
+                            }
                         }
+                        pthread_mutex_unlock(&evo->flags_lock);    
                     }
-                    pthread_mutex_unlock(&evo->flags_lock);    
                 }
             }
             else
