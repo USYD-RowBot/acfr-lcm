@@ -6,7 +6,7 @@ import sys
 import math
 import time
 
-LCMROOT='/home/auv/git/acfr_lcm'
+LCMROOT='/home/stefanw/git/acfr_lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
 from senlcm import novatel_t, usbl_fix_t
@@ -16,6 +16,7 @@ from acfrlcm import auv_status_t
 olon = 151.254255
 olat = -33.839919
 inc = 1.0 / 111128.0
+
 angle = 0.0
 
 rad = 90
@@ -27,6 +28,7 @@ msg = auv_status_t()
 count = 0
 
 while True:
+    angle = 0.0
     msg.utime = int(time.time() * 1000000)
     
     lat = rad * math.cos(math.radians(angle))     

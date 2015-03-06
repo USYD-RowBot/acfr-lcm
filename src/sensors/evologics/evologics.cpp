@@ -103,6 +103,11 @@ static void *read_thread(void *u)
                     evo->parse_lcm_data((unsigned char *)buf, bytes);
                 }
             }
+        } else if (ret == -1) {
+            char buf[64];
+            sprintf(buf, "Select failed on read thread %d", evo->fd);
+            perror(buf);
+            evo->reopen_port();
         }
     }
     cout << "Read thread exit\n";
@@ -171,7 +176,7 @@ static void *command_thread(void *u)
             }
             else
             {
-                DEBUG_PRINTF(("Deleteing command from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                DEBUG_PRINTF(("Deleting command from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
                 command_sent = true;   // Command age timeout
                 pthread_mutex_lock(&evo->flags_lock);
                 evo->sending_command = false;
@@ -196,7 +201,7 @@ static void *command_thread(void *u)
             // wait for new commands to arrive
             usleep(100e3);  // 100ms
         }
-        usleep(10e3);  // 100ms
+        usleep(10e3);  // 10ms
     }
     cout << "Command thread exit\n";
     return NULL;   
@@ -272,7 +277,7 @@ static void *data_thread(void *u)
                         }
                         else
                         {
-                            DEBUG_PRINTF(("Sending LCM data to channel: %.*s\n", (*od)->data[3], &(*od)->data[4]));
+                            DEBUG_PRINTF(("Sending %d bytes of LCM data to channel: %.*s\n", (*od)->size, (*od)->data[3], &(*od)->data[4]));
                             data_sent = true;
                             evo->drop_at_send = evo->drop_counter;
                             //evo->sending_data = true;
@@ -283,7 +288,7 @@ static void *data_thread(void *u)
             }
             else
             {
-                DEBUG_PRINTF(("Deleteing data from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
+                DEBUG_PRINTF(("Deleting data from queue due to age: %.*s, %f\n", (*od)->size-1, (*od)->data, (double)(timestamp - (*od)->timestamp)/1e6));
                 data_sent = true;   // Data age timeout
                 pthread_mutex_lock(&evo->flags_lock);
                 evo->sending_data = false;
@@ -479,6 +484,7 @@ int Evologics::open_port(const char *ip, const char *port)
        }
        perror("Failed to connect.  Trying next address");
        close(evo_fd);
+       evo_fd = -1;
     }
 
     if (evo_addr == NULL)
@@ -500,12 +506,11 @@ int Evologics::open_port(const char *ip, const char *port)
        flag = 0;
        write(evo_fd, &flag, 1);
        setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-
-
     }
     pthread_mutex_unlock(&write_lock);
     return evo_fd;
 }
+
 int Evologics::start_handlers()
 {
     // LCM subscriptions
@@ -941,7 +946,7 @@ int Evologics::send_command(const char *d)
     sprintf(msg, "%s%c", d, term);
 cout << "Queuing command " << msg;
     send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 0);
-    wait_for_commands();
+    wait_for_command_response();
     return 1;
 }
 
@@ -951,7 +956,7 @@ int Evologics::send_command_front(const char *d)
     sprintf(msg, "%s%c", d, term);
 cout << "Queing command " << msg;
     send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 1);
-    wait_for_commands();
+    wait_for_command_response();
     return 1;
 }
 
@@ -994,7 +999,7 @@ int Evologics::clear_queues()
     return 1;
 }
 
-int Evologics::wait_for_commands()
+int Evologics::wait_for_command_response()
 {
 //sleep(1);
 //return 1;
@@ -1007,7 +1012,8 @@ int Evologics::wait_for_commands()
 	pthread_mutex_lock(&command_queue_lock);
 	empty = command_queue.empty();
 	pthread_mutex_unlock(&command_queue_lock);
-        usleep(10e3);
+        usleep(100e3);
+        cout << "Waiting for command reply..." << endl;
     }
     
     return 1;

@@ -63,14 +63,19 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
-cout << "Got LCM message on channel " << channel << endl;
     // extract the platform id
     int channel_pos = channel.find_last_of('.');
     std::string target_name = channel.substr(channel_pos + 1);
     // figure out which channel to send the data on
     int target_channel = ev->get_target_channel(target_name.c_str());
-    if (target_channel != -1)
+    cout << "Got LCM message on channel " << channel;
+    if (target_channel != -1) 
+    {
+       cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
        ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
+    } else {
+       cout << ".  Target " << target_name << " not found in channel list.  Dropping lcm message." << endl;
+    }
 }
     
     
@@ -181,7 +186,7 @@ int Evologics_Usbl::get_target_channel(const char *target_name)
        }
        target_index++;
     }
-    if (target_names == NULL)
+    if (target_names[target_index] == NULL)
     {
        printf("Target %s not found\n", target_name);
        return -1;

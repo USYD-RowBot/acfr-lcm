@@ -100,7 +100,7 @@ class Evologics
         
         // Queue management commands
         int clear_queues();
-        int wait_for_commands();
+        int wait_for_command_response();
 
         // counters
         int drop_counter;
