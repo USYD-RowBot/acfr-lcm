@@ -238,6 +238,7 @@ static void *data_thread(void *u)
                 {
                     char im_msgbuf[128];
                     sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,%s",(*od)->size, (*od)->target, (*od)->data);
+                    cout << im_msgbuf << endl;
                     evo->send_command(im_msgbuf);
                     data_sent = true;
                 } else {
