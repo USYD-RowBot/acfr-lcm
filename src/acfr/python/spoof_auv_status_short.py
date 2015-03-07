@@ -9,8 +9,8 @@ import time
 LCMROOT='/home/auv/git/acfr_lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
-from senlcm import novatel_t, usbl_fix_t
-from acfrlcm import auv_status_t
+from senlcm import novatel_t, usbl_fix_short_t
+from acfrlcm import auv_status_short_t
 
 
 olon = 151.254255
@@ -23,7 +23,7 @@ rad = 90
 
 lc = lcm.LCM()
 
-msg = auv_status_t()
+msg = auv_status_short_t()
 
 count = 0
 
@@ -37,7 +37,7 @@ while True:
     
     msg.latitude = math.radians(olat + lat * inc )
     msg.longitude = math.radians(olon + lon * inc)
-    msg.status = 1<<9;
+    #msg.status = 1<<7;
     msg.target_id = 3;
 
     lc.publish("AUV_STATUS.SIRIUS", msg.encode())

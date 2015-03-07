@@ -1,0 +1,32 @@
+package acfrlcm;
+
+struct auv_status_short_t
+{
+    int64_t utime;
+    
+    int8_t status;
+    /* Status word, binary states
+        bit 0       DVL
+        bit 1       DVL BL
+        bit 2       GPS
+        bit 3       Depth
+        bit 4       Compass
+        bit 5       OAS
+        bit 6       Nav
+        bit 7       Ecopuck
+        bit 8       Aborted
+    */
+    int8_t  target_id;
+    int8_t waypoint;
+    int16_t heading;    /* 0.1 deg */
+    int8_t roll;        /* 0.1 deg */
+    int8_t pitch;       /* 0.1 deg */
+    int16_t depth;      /* 0.1 m */
+    int8_t altitude;    /* 0.1 m */
+    float latitude;
+    float longitude;
+    /*float x;
+    float y;*/
+    int16_t img_count;
+    int8_t charge;
+}
