@@ -234,12 +234,18 @@ static void *data_thread(void *u)
             if((*od) != NULL && (timestamp - (*od)->timestamp) < MAX_DATA_AGE)
             {
                 // check if we can send this as an instant message
-                if ((*od)->size < 64)
-                {
+                if ((*od)->size <= 64)
+                { 
                     char im_msgbuf[128];
-                    sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,%s",(*od)->size, (*od)->target, (*od)->data);
+                    memset(im_msgbuf, 0, 128);
+                    pthread_mutex_lock(&(evo->write_lock));
+                    sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",(*od)->size, (*od)->target);
+                    write(evo->fd, im_msgbuf, strlen(im_msgbuf));
+                    write(evo->fd, (*od)->data, (*od)->size);
+                    write(evo->fd, &evo->term, 1);
+                    pthread_mutex_unlock(&(evo->write_lock));
                     cout << im_msgbuf << endl;
-                    evo->send_command(im_msgbuf);
+                    //evo->send_command(im_msgbuf);
                     data_sent = true;
                 } else {
                     if((*od)->target != evo->current_target)
@@ -903,7 +909,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
     memcpy(&dout[4 + strlen(dest_channel) + size], &crc, 4);                       // CRC
     strncpy((char *)&dout[8 + strlen(dest_channel) + size], "LE", 2);              // Suffix
     
-    cout << "Queuing data for target " << target << " on channel " << dest_channel << endl;
+    cout << "Queuing data of size " << data_size << " for target " << target << " on channel " << dest_channel << endl;
     send_data(dout, data_size, evo_data, target, 0);
     
     return 1;
