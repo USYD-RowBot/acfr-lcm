@@ -40,7 +40,7 @@ if (BUILD_LIBBOT2)
       COMMAND ${ZLIB_CMD}
       COMMAND mkdir -p ${LIBBOT2_DIR}
       COMMAND cp -r ${LIBBOT2_SRC} .
-      COMMAND cd ${LIBBOT_DIR} && svn up
+      COMMAND cd ${LIBBOT2_DIR} && svn up
       #COMMAND svn export --force ${LIBBOT2_SRC} ${LIBBOT2_DIR}
       COMMAND cd ${LIBBOT2_DIR} && sudo make BUILD_PREFIX=${CMAKE_INSTALL_PREFIX}
       COMMAND sudo ldconfig
