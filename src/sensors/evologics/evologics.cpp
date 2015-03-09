@@ -93,7 +93,7 @@ static void *read_thread(void *u)
                 if(data_type == 1)
                 {   
                     // a modem message
-                    cout << "Received modem data: " << bytes << " bytes. " << buf;
+                    cout << "Received modem data: " << bytes << " bytes. " << buf << endl;
                     evo->parse_modem_data(buf, bytes, timestamp);
                 }
                 else if(data_type == 2)
