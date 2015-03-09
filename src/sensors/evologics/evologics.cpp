@@ -636,6 +636,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         last_im_timestamp = timestamp;
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
+        sending_command = false;
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
         //send_command_front("++AT?T");
