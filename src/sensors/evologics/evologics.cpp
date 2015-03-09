@@ -643,7 +643,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
         //send_command_front("++AT?T");
-        send_command("++AT?T");
+        send_command("+++AT?T");
     }
     else if(strstr((const char *)d, "AT?T") != NULL)
     {
@@ -1008,7 +1008,7 @@ int Evologics::send_ping(int target)
     if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d", target, target);
+        sprintf(msg, "+++AT*SENDIM,5,%d,ack,%05d", target, target);
         send_command(msg);
         pthread_mutex_lock(&flags_lock);
         sending_im = true;
