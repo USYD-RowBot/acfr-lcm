@@ -233,21 +233,24 @@ static void *data_thread(void *u)
             
             if((*od) != NULL && (timestamp - (*od)->timestamp) < MAX_DATA_AGE)
             {
+                cout << "Preparing to send data of size " << (*od)->size << " to target " << (*od)->target << endl;
                 // check if we can send this as an instant message
                 if ((*od)->size <= 64)
                 { 
                     char im_msgbuf[128];
                     memset(im_msgbuf, 0, 128);
-                    pthread_mutex_lock(&(evo->write_lock));
                     sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",(*od)->size, (*od)->target);
+                    cout << im_msgbuf << endl;
+                    pthread_mutex_lock(&(evo->write_lock));
                     write(evo->fd, im_msgbuf, strlen(im_msgbuf));
                     write(evo->fd, (*od)->data, (*od)->size);
                     write(evo->fd, &evo->term, 1);
                     pthread_mutex_lock(&evo->flags_lock);
-                    evo->sending_command = false;
+                    evo->sending_command = true;
+                    evo->sending_im = true;
                     pthread_mutex_unlock(&evo->flags_lock);
                     pthread_mutex_unlock(&(evo->write_lock));
-                    cout << im_msgbuf << endl;
+                    
                     //evo->send_command(im_msgbuf);
                     data_sent = true;
                 } else {
@@ -896,12 +899,14 @@ int Evologics::parse_im(char *d)
         return 0;
 
     int size = atoi(tokens[3]);
+    int source = atoi(tokens[4]);
+    int target = atoi(tokens[5]);
     char *data = tokens[11];
 
-    cout << "*** Received instant message of size " << size << " with data " << data << endl;
+    cout << "*** EVOLOGICS modem " << local_address << " received instant message from " << source << " to " << target << " of size " << size << " with data " << data << endl;
     
     // check if the IM data contains LCM data
-    if (!strncmp(data, "LCM", 3))
+    if (!strncmp(data, "LCM", 3) && target == local_address)
        parse_lcm_data((unsigned char *)data, size);
 
     return 1;
