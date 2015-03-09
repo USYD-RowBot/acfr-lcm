@@ -243,6 +243,9 @@ static void *data_thread(void *u)
                     write(evo->fd, im_msgbuf, strlen(im_msgbuf));
                     write(evo->fd, (*od)->data, (*od)->size);
                     write(evo->fd, &evo->term, 1);
+                    pthread_mutex_lock(&evo->flags_lock);
+                    evo->sending_command = false;
+                    pthread_mutex_unlock(&evo->flags_lock);
                     pthread_mutex_unlock(&(evo->write_lock));
                     cout << im_msgbuf << endl;
                     //evo->send_command(im_msgbuf);
@@ -567,9 +570,9 @@ int Evologics::handle_heartbeat()
         // request the size of the current IM queue
         //send_command_front("+++AT?DI");
         send_command("+++AT?DI");
-        /*pthread_mutex_lock(&flags_lock);
+        pthread_mutex_lock(&flags_lock);
         sending_im = false;
-        pthread_mutex_unlock(&flags_lock);*/
+        pthread_mutex_unlock(&flags_lock);
     }
     
     // if we have gotten stuck sending a command then clear the flag
@@ -885,13 +888,29 @@ int Evologics::parse_usblangles(char *d, int64_t timestamp)
 
 int Evologics::parse_im(char *d)
 {
+    char *tokens[12];
+    int ret;
+    ret = chop_string(d, tokens);
+    
+    if(ret != 12)
+        return 0;
+
+    int size = atoi(tokens[3]);
+    char *data = tokens[11];
+
+    cout << "*** Received instant message of size " << size << " with data " << data << endl;
+    
+    // check if the IM data contains LCM data
+    if (!strncmp(data, "LCM", 3))
+       parse_lcm_data((unsigned char *)data, size);
+
     return 1;
 }
 
 int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel)
 {
     // first clear the modem of any pending data messages
-    clear_modem();
+    //clear_modem();
    
     // we will be adding 9 extra bytes in addition to the name and the name size
     int data_size = strlen(dest_channel) + 10 + size;
@@ -980,11 +999,16 @@ cout << "Queing command " << msg;
 int Evologics::send_ping(int target)
 {
     char msg[32];
-    //if(!sending_im)
+    if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
-        send_data((unsigned char *)msg, strlen(msg), evo_im, target, 0);
+        sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d", target, target);
+        send_command(msg);
+        pthread_mutex_lock(&flags_lock);
+        sending_im = true;
+        pthread_mutex_unlock(&flags_lock);
+        //sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
+        //send_data((unsigned char *)msg, strlen(msg), evo_im, target, 0);
 
         return 1;
     }
@@ -1029,7 +1053,6 @@ int Evologics::wait_for_command_response()
 	empty = command_queue.empty();
 	pthread_mutex_unlock(&command_queue_lock);
         usleep(100e3);
-        cout << "Waiting for command reply..." << endl;
     }
     
     return 1;

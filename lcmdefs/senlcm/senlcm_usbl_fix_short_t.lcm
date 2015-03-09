@@ -8,5 +8,6 @@ struct usbl_fix_short_t
     
     double latitude;
     double longitude;
+    float accuracy;
     
 }
