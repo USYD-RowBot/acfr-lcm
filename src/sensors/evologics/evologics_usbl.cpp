@@ -142,6 +142,7 @@ int Evologics_Usbl::ping_targets()
     {
         if(ping_counter == ping_period)
         {
+            cout << "Preparing to ping target " << current_ping_target << " at addres " << targets[current_ping_target] << endl;
             ping_counter = 0;
             evo->send_ping(targets[current_ping_target]);
             if (++current_ping_target >= num_targets)
@@ -632,14 +633,14 @@ int Evologics_Usbl::init()
     }
 
     //evo->send_command("+++ATH1");
-    evo->send_command("+++ATZ1");
+    //evo->send_command("+++ATZ1");
     //evo->wait_for_commands();
     
     // Get the local address
     evo->send_command("+++AT?AL");
     //evo->wait_for_commands();
 
-    //set up to the first remote address in the list for data communications.  This will be switched when messages arrive.
+    //set up to the first remote address in the list for data communications.  This will be switched when messages arrive as necessary.
     if (num_targets > 0)
     {
         memset(cmd, 0, 64);
@@ -673,11 +674,6 @@ int Evologics_Usbl::init()
         
     if((gps_source == GPS_NOVATEL) || (attitude_source == ATT_NOVATEL))
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
-    
-    evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    //evo->wait_for_commands();
-    evo->send_command("+++AT?ZU");      // request USBL positioning data
-    //evo->wait_for_commands();
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);

@@ -212,7 +212,7 @@ static void *data_thread(void *u)
 {
     Evologics *evo = (Evologics *)u;
 
-    cout << "Command thread started\n";
+    cout << "Data thread started\n";
 
 
     // wait for data to appear in the write queue, when it does check to see how old
@@ -995,7 +995,7 @@ int Evologics::send_command_front(const char *d)
 {
     char msg[32];
     sprintf(msg, "%s%c", d, term);
-cout << "Queing command " << msg;
+cout << "Queuing command " << msg;
     send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 1);
     wait_for_command_response();
     return 1;
@@ -1010,9 +1010,9 @@ int Evologics::send_ping(int target)
         memset(msg, 0, 32);
         sprintf(msg, "+++AT*SENDIM,5,%d,ack,%05d", target, target);
         send_command(msg);
-        pthread_mutex_lock(&flags_lock);
-        sending_im = true;
-        pthread_mutex_unlock(&flags_lock);
+        //pthread_mutex_lock(&flags_lock);
+        //sending_im = true;
+        //pthread_mutex_unlock(&flags_lock);
         //sprintf(msg, "+++AT*SENDIM,1,%d,ack,%d%c", target, target, term);
         //send_data((unsigned char *)msg, strlen(msg), evo_im, target, 0);
 
