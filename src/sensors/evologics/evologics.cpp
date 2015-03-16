@@ -746,8 +746,8 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
    { 
        char im_msgbuf[128];
        memset(im_msgbuf, 0, 128);
-       //sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",data_size, target);
-       sprintf(im_msgbuf, "+++AT*SENDPBM,%d,%d,",data_size, target);
+       sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",data_size, target);
+       //sprintf(im_msgbuf, "+++AT*SENDPBM,%d,%d,",data_size, target);
        //cout << im_msgbuf << endl;
        pthread_mutex_lock(&(write_lock));
        write(fd, im_msgbuf, strlen(im_msgbuf));
