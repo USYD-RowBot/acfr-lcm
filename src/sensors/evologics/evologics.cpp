@@ -261,10 +261,10 @@ int Evologics::open_port(const char *ip, const char *port)
 
     struct addrinfo hints, *evo_addr, *result;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = AF_UNSPEC;
+    hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = 0;
-    hints.ai_protocol = 0;
+    hints.ai_protocol = IPPROTO_TCP;
     //int s = getaddrinfo(ip, port, &hints, &evo_addr);
     int s = getaddrinfo(ip, port, &hints, &result);
     if (s != 0) {
@@ -297,17 +297,17 @@ int Evologics::open_port(const char *ip, const char *port)
 
        freeaddrinfo(result);
 
-       struct timeval tv;
-       tv.tv_sec = 1;  // 1 Secs Timeout
-       tv.tv_usec = 0;  // Not init'ing this can cause strange errors
-       setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+       //struct timeval tv;
+       //tv.tv_sec = 1;  // 1 Secs Timeout
+       //tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+       //setsockopt(evo_fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
 
        // flush the port
-       int flag = 1;
-       setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-       flag = 0;
-       write(evo_fd, &flag, 1);
-       setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+       //int flag = 1;
+       //setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+       //flag = 0;
+       //write(evo_fd, &flag, 1);
+       //setsockopt(evo_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
     }
     pthread_mutex_unlock(&write_lock);
     return evo_fd;

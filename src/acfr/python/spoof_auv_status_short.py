@@ -40,8 +40,8 @@ while True:
     #msg.status = 1<<7;
     msg.target_id = 3;
 
-    lc.publish("AUV_STATUS.SIRIUS", msg.encode())
+    lc.publish("STATUS.SIRIUS", msg.encode())
     
     angle = angle + 0.5
     
-    time.sleep(5.0)
+    time.sleep(10.0)
