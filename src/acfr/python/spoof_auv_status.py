@@ -6,7 +6,7 @@ import sys
 import math
 import time
 
-LCMROOT='/home/auv/git/acfr_lcm'
+LCMROOT='/home/stefanw/git/acfr_lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
 from senlcm import novatel_t, usbl_fix_t

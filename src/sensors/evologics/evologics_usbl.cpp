@@ -142,7 +142,7 @@ int Evologics_Usbl::ping_targets()
     {
         if(ping_counter == ping_period)
         {
-            cout << "Preparing to ping target " << current_ping_target << " at addres " << targets[current_ping_target] << endl;
+            cout << "Preparing to ping target " << current_ping_target << " at address " << targets[current_ping_target] << endl;
             ping_counter = 0;
             evo->send_ping(targets[current_ping_target]);
             if (++current_ping_target >= num_targets)
@@ -166,7 +166,8 @@ int Evologics_Usbl::ping_targets()
     
     for(int i=0; i<num_targets; i++)    
     {
-        if(!usbl_send[i] && usbl_send_counter[i] < 5)
+        // limit the usbl transmit rate to the ping period
+        if(!usbl_send[i] && usbl_send_counter[i] < ping_period)
             usbl_send_counter[i]++;
         else
         {
@@ -348,7 +349,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         // setup the short version of the message to be sent over the acoustic link
         usbl_fix_short_t uf_short;
         uf_short.utime = uf.utime;
-        uf_short.remote_id = uf.remote_id;
+        //uf_short.remote_id = uf.remote_id;
         uf_short.latitude = uf.latitude;
         uf_short.longitude = uf.longitude;
         uf_short.accuracy = uf.accuracy;
@@ -364,7 +365,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         uf_short.encode(d, 0, uf_short.getEncodedSize());
         if(send_fixes)
         {
-            cout << "Sending fix of acoustic modem" << endl;
+            cout << "Sending fix of acoustic modem with size " << d_size << " and data " << d << endl;
             evo->send_lcm_data(d, d_size, ef->remote_id, usbl_fix_channel_name);
         }
         free(d);
@@ -509,8 +510,8 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
     // decode the AHRS message
     if(strstr(buf, "AHRS") != NULL)
     {
-        char *tokens[10];
-        if(chop_string(buf, tokens) != 5)
+        char *tokens[5];
+        if(chop_string(buf, tokens, 5) != 5)
             return 0;
 
         ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
@@ -595,8 +596,6 @@ int Evologics_Usbl::init()
     // open the ports
 
     // Open the comm ports
-    char term;
-    char msg[32];
     if (use_serial_comm)
     {
        evo = new Evologics(device, baud, parity, lcm, &fixq, ping_timeout);
@@ -614,11 +613,8 @@ int Evologics_Usbl::init()
     
     
     // put the USBL in a known state
-    //send_evologics_command("ATC", NULL, 256, &state);
     evo->send_command("+++ATZ4");
-    //evo->wait_for_commands();
     evo->send_command("+++ATZ1");
-    //evo->wait_for_commands();
 
     char cmd[64];
     memset(cmd, 0, 64);
@@ -632,13 +628,8 @@ int Evologics_Usbl::init()
         evo->send_command("+++AT!LC1");
     }
 
-    //evo->send_command("+++ATH1");
-    //evo->send_command("+++ATZ1");
-    //evo->wait_for_commands();
-    
     // Get the local address
     evo->send_command("+++AT?AL");
-    //evo->wait_for_commands();
 
     //set up to the first remote address in the list for data communications.  This will be switched when messages arrive as necessary.
     if (num_targets > 0)
@@ -647,25 +638,17 @@ int Evologics_Usbl::init()
         sprintf(cmd, "+++AT!AR%d", targets[0]); 
         evo->send_command(cmd);
     }
-    //evo->wait_for_commands();
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
-    usleep(1e6);
     evo->send_command("+++AT?AR");
     
     evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    //evo->wait_for_commands();
     evo->send_command("+++AT?ZU");      // request USBL positioning data
-    //evo->wait_for_commands();
     
-    usleep(1e6);
-
-    evo->send_command("+++ATN");      // noise mode
-    //evo->wait_for_commands();
-    usleep(1e6);
+    //evo->send_command("+++ATN");      // noise mode
     
     evo->send_command("+++ATA");      // listen state
-    //evo->wait_for_commands();
+    evo->send_command("+++ATD");      // establish an acoustic connection
 
     usleep(1e6);
     

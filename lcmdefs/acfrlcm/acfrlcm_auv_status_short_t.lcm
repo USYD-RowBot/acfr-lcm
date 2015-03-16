@@ -3,19 +3,28 @@ package acfrlcm;
 struct auv_status_short_t
 {
     int64_t utime;
-    
-    int8_t status;
+    int16_t status; 
     /* Status word, binary states
         bit 0       DVL
         bit 1       DVL BL
         bit 2       GPS
         bit 3       Depth
         bit 4       Compass
-        bit 5       OAS
-        bit 6       Nav
-        bit 7       Ecopuck
-        bit 8       Aborted
+        bit 5       IMU
+        bit 6       OAS 
+        bit 7       Nav
+        bit 8       Ecopuck
+        bit 9       Aborted
+        bit 10 
+        bit 11
+        bit 12
+
+      Warning flags  
+        bit 13      Pressure
+        bit 14      Temp
+        bit 15      Leak
     */
+    
     int8_t  target_id;
     int8_t waypoint;
     int16_t heading;    /* 0.1 deg */

@@ -4,8 +4,6 @@ struct usbl_fix_short_t
 {
     int64_t utime;
     
-    int32_t remote_id;
-    
     double latitude;
     double longitude;
     float accuracy;
