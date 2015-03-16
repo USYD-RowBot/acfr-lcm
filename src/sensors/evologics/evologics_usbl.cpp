@@ -63,21 +63,14 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
-    // extract the platform id
-    int channel_pos = channel.find_last_of('.');
-    std::string target_name = channel.substr(channel_pos + 1);
-    // figure out which channel to send the data on
-    int target_channel = ev->get_target_channel(target_name.c_str());
-    cout << "Got LCM message on channel " << channel;
-    if (target_channel != -1) 
-    {
-       cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
-       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
-    } else {
-       cout << ".  Target " << target_name << " not found in channel list.  Dropping lcm message." << endl;
-    }
+    ev->on_lcm_data(rbuf, channel, false);
 }
     
+// a callback with no automatic decoding for messages that should be registered as PiggyBack messages
+void on_lcm_pbm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
+{
+    ev->on_lcm_data(rbuf, channel, true);
+}
     
 
 // Used by the AHRS routine
@@ -126,7 +119,10 @@ Evologics_Usbl::~Evologics_Usbl()
 {
     pthread_join(fix_thread_id, NULL);
     // free up the resources of the string arrays
-    bot_param_str_array_free(lcm_channels);
+    if (lcm_channels != NULL)
+       bot_param_str_array_free(lcm_channels);
+    if (lcm_pbm_channels != NULL)
+       bot_param_str_array_free(lcm_pbm_channels);
     bot_param_str_array_free(target_names);
 }
 
@@ -460,6 +456,10 @@ int Evologics_Usbl::load_config(char *program_name)
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
 
+    sprintf(key, "%s.lcm_pbm", rootkey);
+    lcm_pbm_channels = NULL;
+    lcm_pbm_channels = bot_param_get_str_array_alloc(param, key);
+
     double d[6];
     sprintf(key, "%s.usbl_ins", rootkey);
     bot_param_get_double_array_or_fail(param, key, d, 6);
@@ -526,6 +526,24 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         return 0;
 }
         
+int Evologics_Usbl::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm) 
+{
+    // extract the platform id
+    int channel_pos = channel.find_last_of('.');
+    std::string target_name = channel.substr(channel_pos + 1);
+    // figure out which channel to send the data on
+    int target_channel = get_target_channel(target_name.c_str());
+    cout << "Got LCM message on channel " << channel;
+    if (target_channel != -1) 
+    {
+       cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
+       evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), use_pbm);
+    } else {
+       cout << ".  Target " << target_name << " not found in channel list.  Dropping lcm message." << endl;
+    }
+
+}
+
 /*
 int Evologics_Usbl::open_port(const char *port)
 {
@@ -663,13 +681,20 @@ int Evologics_Usbl::init()
     
     evo->start_handlers();
     
-    int i = 0;
-    while(lcm_channels[i] != NULL)
+    int lcm_channel_ndx = 0;
+    while(lcm_channels != NULL && lcm_channels[lcm_channel_ndx] != NULL)
     {
-        cout << "Subscribing to LCM channel: " << lcm_channels[i] << endl;
-        lcm->subscribeFunction(lcm_channels[i], on_lcm, this);
-        i++;
-      
+        cout << "Subscribing to LCM channel: " << lcm_channels[lcm_channel_ndx] << endl;
+        lcm->subscribeFunction(lcm_channels[lcm_channel_ndx], on_lcm, this);
+        lcm_channel_ndx++;
+    }
+
+    lcm_channel_ndx = 0;
+    while(lcm_pbm_channels != NULL && lcm_pbm_channels[lcm_channel_ndx] != NULL)
+    {
+        cout << "Subscribing to LCM PBM channel: " << lcm_pbm_channels[lcm_channel_ndx] << endl;
+        lcm->subscribeFunction(lcm_pbm_channels[lcm_channel_ndx], on_lcm_pbm, this);
+        lcm_channel_ndx++;
     }
     
     ping_counter = 0;

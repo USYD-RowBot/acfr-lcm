@@ -58,7 +58,7 @@ class Evologics
         int open_serial_port();
         int open_port(const char *ip, const char *port);
 
-        int send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel);
+        int send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm = false);
         int send_command(const char *d);
         //int send_command_front(const char *d);
         int send_ping(int target);

@@ -719,7 +719,7 @@ int Evologics::parse_pbm(char *d)
     return 1;
 }
 
-int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel)
+int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm)
 {
     // first clear the modem of any pending data messages
     //clear_modem();
@@ -746,8 +746,10 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
    { 
        char im_msgbuf[128];
        memset(im_msgbuf, 0, 128);
-       sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",data_size, target);
-       //sprintf(im_msgbuf, "+++AT*SENDPBM,%d,%d,",data_size, target);
+       if (use_pbm == true)
+          sprintf(im_msgbuf, "+++AT*SENDPBM,%d,%d,",data_size, target);
+       else
+          sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",data_size, target);
        //cout << im_msgbuf << endl;
        pthread_mutex_lock(&(write_lock));
        write(fd, im_msgbuf, strlen(im_msgbuf));

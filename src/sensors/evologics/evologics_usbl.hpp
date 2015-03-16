@@ -70,6 +70,7 @@ class Evologics_Usbl
         int get_target_channel(const char *target_name);
         int get_target_name(int target_channel, char *target_name);
         int parse_ahrs_message(char *buf);
+        int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
         // data holders
         gpsd3_t gpsd;
@@ -110,6 +111,7 @@ class Evologics_Usbl
         int num_targets;
         int current_ping_target;
         char **lcm_channels;
+        char **lcm_pbm_channels;
     
        
         bool has_ahrs;
