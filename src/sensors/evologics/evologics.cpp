@@ -775,7 +775,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
                sprintf(msg, "+++AT!AR%d", target);
                send_command(msg);
 
-               send_command("++AT?AR");
+               send_command("+++AT?AR");
 
                retry++;
            }
