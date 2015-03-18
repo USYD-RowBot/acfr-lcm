@@ -146,6 +146,7 @@ int chop_string(char *data, char **tokens, int nTokens)
     token = strtok(data, " ,:*?!");
     while(token != NULL && i < nTokens) 
     {
+cout << "Found token: " << token << endl;
         tokens[i++] = token;            
         token = strtok(NULL, " ,:*?!");            
     }
@@ -688,12 +689,12 @@ int Evologics::parse_im(char *d)
         return 0;
     }
     */
-    vector<string> tokens = chop_string(d, 12);
+    vector<string> tokens = chop_string(d, 10);
 
-    int size = atoi(tokens[3].c_str());
-    int source = atoi(tokens[4].c_str());
-    int target = atoi(tokens[5].c_str());
-    const char *data = strstr(d, tokens[11].c_str()); 
+    int size = atoi(tokens[1].c_str());
+    int source = atoi(tokens[2].c_str());
+    int target = atoi(tokens[3].c_str());
+    const char *data = strstr(d, tokens[9].c_str()); 
 
     cout << "*** EVOLOGICS modem " << local_address << " received instant message from " << source << " to " << target << " of size " << size << " with data " << data << endl;
     
