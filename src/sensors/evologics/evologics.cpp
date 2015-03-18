@@ -34,7 +34,7 @@ static void *read_thread(void *u)
             bytes = 0;
             char *d = &buf[0];
             data_type = 0;
-            
+ /*           
             bytes += read(evo->fd, &d[bytes], 1);
             if(buf[0] != '+' && buf[0] != 'L')
                 continue;
@@ -70,9 +70,9 @@ static void *read_thread(void *u)
                     
                 }
             }
+*/            
             
-            
-            if(!strncmp(buf, "+++", 3) && data_type == 0)
+            //if(!strncmp(buf, "+++", 3) && data_type == 0)
             {
                 while(bytes < (MAX_BUF_LEN))
                 {
@@ -327,7 +327,7 @@ int Evologics::handle_heartbeat()
     // we will send an AT?S one a second until it has completed.
     if(sending_data)
     {
-        send_command("+++AT?S");
+        send_command("AT?S");
     }
     
 
@@ -342,14 +342,14 @@ int Evologics::handle_heartbeat()
     if(im_counter > ping_timeout)
     {
         printf("Instant message reply timeout\n");
-        //send_command_front("+++ATZ3");
-        //send_command("+++ATZ3");
+        //send_command_front("ATZ3");
+        //send_command("ATZ3");
         
         im_counter = 0;
         
         // request the size of the current IM queue
-        //send_command_front("+++AT?DI");
-        //send_command("+++AT?DI");
+        //send_command_front("AT?DI");
+        //send_command("AT?DI");
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
         pthread_mutex_unlock(&flags_lock);
@@ -400,6 +400,9 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     // Received a piggy back IM
     else if(strstr((const char *)d, "RECVPBM") != NULL)
         parse_pbm(d);
+    // Receive a burst data message 
+    else if(strstr((const char *)d, "RECV") != NULL)
+        parse_burst_data(d);
     // Sent IM information    
     else if(strstr((const char *)d, "FAILEDIM") != NULL)
     {
@@ -426,7 +429,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         sending_command = false;
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
-        send_command("+++AT?T");
+        send_command("AT?T");
     }
     else if(strstr((const char *)d, "AT?T") != NULL)
     {
@@ -719,6 +722,25 @@ int Evologics::parse_pbm(char *d)
     return 1;
 }
 
+int Evologics::parse_burst_data(char *d)
+{
+    vector<string> tokens = chop_string(d, 10);
+
+    int size = atoi(tokens[1].c_str());
+    int source = atoi(tokens[2].c_str());
+    int target = atoi(tokens[3].c_str());
+    const char *data = strstr(d, tokens[9].c_str());
+
+    cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with data " << data << endl;
+
+    // check if the IM data contains LCM data
+    if (!strncmp(data, "LCM", 3) && target == local_address)
+       parse_lcm_data((unsigned char *)data, size);
+
+    return 1;
+}
+
+
 int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm)
 {
     // first clear the modem of any pending data messages
@@ -747,9 +769,9 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
        char im_msgbuf[128];
        memset(im_msgbuf, 0, 128);
        if (use_pbm == true)
-          sprintf(im_msgbuf, "+++AT*SENDPBM,%d,%d,",data_size, target);
+          sprintf(im_msgbuf, "AT*SENDPBM,%d,%d,",data_size, target);
        else
-          sprintf(im_msgbuf, "+++AT*SENDIM,%d,%d,ack,",data_size, target);
+          sprintf(im_msgbuf, "AT*SENDIM,%d,%d,ack,",data_size, target);
        //cout << im_msgbuf << endl;
        pthread_mutex_lock(&(write_lock));
        write(fd, im_msgbuf, strlen(im_msgbuf));
@@ -761,21 +783,34 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
        pthread_mutex_unlock(&flags_lock);
        pthread_mutex_unlock(&(write_lock));
    } else {
-       if(target != current_target)
+       char im_msgbuf[128];
+       memset(im_msgbuf, 0, 128);
+       sprintf(im_msgbuf, "AT*SEND,%d,%d,", data_size, target);
+       //cout << im_msgbuf << endl;
+       pthread_mutex_lock(&(write_lock));
+       write(fd, im_msgbuf, strlen(im_msgbuf));
+       write(fd, dout, data_size);
+       write(fd, &term, 1);
+       pthread_mutex_lock(&flags_lock);
+       sending_command = true;
+       sending_im = true;
+       pthread_mutex_unlock(&flags_lock);
+       pthread_mutex_unlock(&(write_lock));
+       /*if(target != current_target)
        {
            // we need to change targets, this is the only place we are doing
            // out of queue command writes to the modem
-           send_command("+++ATZ4");
+           //send_command("ATZ4");
        
            int retry = 0;
            //while(evo->current_target != (*od)->target && retry < 5)
            {
                cout << "Target, current: " << current_target << "   destination: " << target << endl;
                char msg[32];
-               sprintf(msg, "+++AT!AR%d", target);
+               sprintf(msg, "AT!AR%d", target);
                send_command(msg);
 
-               send_command("+++AT?AR");
+               send_command("AT?AR");
 
                retry++;
            }
@@ -805,6 +840,7 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
            }
            pthread_mutex_unlock(&flags_lock);    
        }
+       */
    }
 
    return 1;
@@ -841,7 +877,7 @@ int Evologics::send_ping(int target)
     if(!sending_im)
     {
         memset(msg, 0, 32);
-        sprintf(msg, "+++AT*SENDIM,5,%d,ack,%05d", target, target);
+        sprintf(msg, "AT*SENDIM,5,%d,ack,%05d", target, target);
         send_command(msg);
         pthread_mutex_lock(&flags_lock);
         sending_im = true;
@@ -855,13 +891,13 @@ int Evologics::send_ping(int target)
 
 int Evologics::clear_modem()
 {
-    send_command("+++ATZ4");
+    send_command("ATZ4");
     return 1;
 }
 
 int Evologics::disconnect_modem()
 {
-    send_command("+++ATZ1");
+    send_command("ATZ1");
     return 1;
 }
 

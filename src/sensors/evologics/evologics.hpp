@@ -133,6 +133,7 @@ class Evologics
         int parse_usblangles(char *d, int64_t timestamp);
         int parse_im(char *d);
         int parse_pbm(char *d);
+        int parse_burst_data(char *d);
         
         
         // The queue that we use for fix messages being passed to the USBL code

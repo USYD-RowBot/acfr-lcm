@@ -132,7 +132,7 @@ int Evologics_Usbl::ping_targets()
     // check the state of the link if we are sending data
     //cout << "sending_data=" << state.sending_data << endl;
 //    if(evo->sending_data)
-//        evo->send_command("+++AT?S");
+//        evo->send_command("AT?S");
     
     if (ping_period > -1)
     {
@@ -631,42 +631,46 @@ int Evologics_Usbl::init()
     
     
     // put the USBL in a known state
-    evo->send_command("+++ATZ4");
-    evo->send_command("+++ATZ1");
+    evo->send_command("ATZ4");
+    evo->send_command("ATZ1");
 
     char cmd[64];
     memset(cmd, 0, 64);
-    sprintf(cmd, "+++AT!L%d", source_level);
+    sprintf(cmd, "AT!L%d", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d", gain);
+    sprintf(cmd, "AT!G%d", gain);
     evo->send_command(cmd);
 
     if(auto_gain)
     {
-        evo->send_command("+++AT!LC1");
+        evo->send_command("AT!LC1");
     }
 
     // Get the local address
-    evo->send_command("+++AT?AL");
+    evo->send_command("AT?AL");
 
     //set up to the first remote address in the list for data communications.  This will be switched when messages arrive as necessary.
     if (num_targets > 0)
     {
         memset(cmd, 0, 64);
-        sprintf(cmd, "+++AT!AR%d", targets[0]); 
+        sprintf(cmd, "AT!AR%d", targets[0]); 
         evo->send_command(cmd);
     }
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
-    evo->send_command("+++AT?AR");
+    evo->send_command("AT?AR");
     
-    evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    evo->send_command("+++AT?ZU");      // request USBL positioning data
+    evo->send_command("AT@ZU1");      // request USBL positioning data
+    evo->send_command("AT?ZU");      // request USBL positioning data
     
-    //evo->send_command("+++ATN");      // noise mode
+    //evo->send_command("ATN");      // noise mode
     
-    evo->send_command("+++ATA");      // listen state
-    evo->send_command("+++ATD");      // establish an acoustic connection
+    //evo->send_command("ATA");      // listen state
+    //evo->send_command("ATD");      // establish an acoustic connection
+
+    evo->send_command("AT!RT1");     // set the retry count on burst data
+    evo->send_command("AT!RC500");     // set the retry timeout on burst data
+
 
     usleep(1e6);
     
