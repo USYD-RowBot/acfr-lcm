@@ -146,7 +146,6 @@ int chop_string(char *data, char **tokens, int nTokens)
     token = strtok(data, " ,:*?!");
     while(token != NULL && i < nTokens) 
     {
-cout << "Found token: " << token << endl;
         tokens[i++] = token;            
         token = strtok(NULL, " ,:*?!");            
     }
@@ -417,6 +416,9 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     else if (strstr((const char *)d, "CANCELEDIM") != NULL)
     {
     }
+    else if (strstr((const char *)d, "CANCELEDPBM") != NULL)
+    {
+    }
     // Special case of instant messages, we can get the propagation time
     else if(strstr((const char *)d, "DELIVEREDIM") != NULL)
     {
@@ -516,6 +518,18 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         if(chop_string(d, tokens, 4) == 4)
         {
             local_address = atoi(tokens[3]);
+            cout << "Local address: " << local_address << endl;
+        }
+    }
+    else if(strstr((const char *)d, "Local Address") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_command = false;
+        pthread_mutex_unlock(&flags_lock);
+        char *tokens[3];
+        if(chop_string(d, tokens, 3) == 3)
+        {
+            local_address = atoi(tokens[2]);
             cout << "Local address: " << local_address << endl;
         }
     }
@@ -707,12 +721,12 @@ int Evologics::parse_im(char *d)
 
 int Evologics::parse_pbm(char *d)
 {
-    vector<string> tokens = chop_string(d, 11);
+    vector<string> tokens = chop_string(d, 9);
 
-    int size = atoi(tokens[3].c_str());
-    int source = atoi(tokens[4].c_str());
-    int target = atoi(tokens[5].c_str());
-    const char *data = strstr(d, tokens[10].c_str()); 
+    int size = atoi(tokens[1].c_str());
+    int source = atoi(tokens[2].c_str());
+    int target = atoi(tokens[3].c_str());
+    const char *data = strstr(d, tokens[8].c_str()); 
 
     cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with data " << data << endl;
     
@@ -919,6 +933,7 @@ int Evologics::wait_for_command_response()
     if ((timestamp_now() - timestamp)/1e6 >= 1.0)
     {
         cout << "Timed out waiting for command response" << endl;
+        return 0;
     }
 
     return 1;

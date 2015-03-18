@@ -627,9 +627,6 @@ int Evologics_Usbl::init()
     if((has_ahrs == true) && (ahrs_fd = evo->open_port(ip, AHRS_PORT)) == -1)
         return 0;
     
-
-    
-    
     // put the USBL in a known state
     evo->send_command("ATZ4");
     evo->send_command("ATZ1");
@@ -647,7 +644,8 @@ int Evologics_Usbl::init()
     }
 
     // Get the local address
-    evo->send_command("AT?AL");
+    //evo->send_command("AT?AL");
+    evo->send_command("AT?S");
 
     //set up to the first remote address in the list for data communications.  This will be switched when messages arrive as necessary.
     if (num_targets > 0)
@@ -668,8 +666,8 @@ int Evologics_Usbl::init()
     //evo->send_command("ATA");      // listen state
     //evo->send_command("ATD");      // establish an acoustic connection
 
-    evo->send_command("AT!RT1");     // set the retry count on burst data
-    evo->send_command("AT!RC500");     // set the retry timeout on burst data
+    evo->send_command("AT!RT500");     // set the retry count on burst data
+    evo->send_command("AT!RC1");     // set the retry timeout on burst data
 
 
     usleep(1e6);
