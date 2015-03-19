@@ -275,8 +275,8 @@ int HealthMonitor::loadConfig(char *program_name)
 
 int HealthMonitor::checkStatus(int64_t hbTime)
 {
-	acfrlcm::auv_status_t status;
-	memset(&status, 0, sizeof(acfrlcm::auv_status_t));
+	acfrlcm::auv_status_short_t status;
+	memset(&status, 0, sizeof(acfrlcm::auv_status_short_t));
 	status.utime = timestamp_now();
 
 	// check the age of the sensor data
@@ -352,7 +352,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	status.heading = (short)(nav.heading * 10.0);
 	status.img_count = image_count;
 
-	lcm.publish("AUV_HEALTH", &status);
+	lcm.publish("AUV_STAT.IVERSYD", &status);
 
 	return 1;
 }

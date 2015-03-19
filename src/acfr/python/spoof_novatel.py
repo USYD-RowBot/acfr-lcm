@@ -58,13 +58,13 @@ while True:
     msg3.status = 1<<9;
 
     lc.publish("NOVATEL", msg.encode())
-    lc.publish("USBL_FIX", msg2.encode())
+    #lc.publish("USBL_FIX", msg2.encode())
     
-    if count == 20:
-        lc.publish("AUV_STATUS.IVER", msg3.encode())
-        count = 0
-    else:
-        count = count + 1
+    #if count == 20:
+    #    lc.publish("AUV_STATUS.IVER", msg3.encode())
+    #    count = 0
+    #else:
+    #    count = count + 1
     
     angle = angle + 0.5
     

@@ -3,10 +3,7 @@ package acfrlcm;
 struct classified_t
 {
     int64_t utime;
-    
-    int16_t bio;
-    int16_t phys;
-    int16_t kelp;
-    int16_t sand;
-    
+
+    int8_t sqid[8];
+    int8_t pct_cover[8];
 }

@@ -265,9 +265,9 @@ int Evologics_Modem::init()
     
     // put the modem in a known state
     evo->send_command("+++ATZ4");
-    evo->wait_for_commands();
+    evo->wait_for_command_response();
     evo->send_command("+++ATZ1");
-    evo->wait_for_commands();
+    evo->wait_for_command_response();
     
     char cmd[64];
     memset(cmd, 0, 64);
@@ -285,12 +285,12 @@ int Evologics_Modem::init()
     evo->send_command("+++ATZ1");
     
     // now to force the settings that require a listen mode
-    evo->wait_for_commands();
+    evo->wait_for_command_response();
     evo->send_command("+++ATN");      // noise mode
-    evo->wait_for_commands();
+    evo->wait_for_command_response();
     usleep(3e6);
     evo->send_command("+++ATA");      // listen state
-    evo->wait_for_commands();
+    evo->wait_for_command_response();
     
     keep_alive_count = 0;
     ping_counter = 0;
