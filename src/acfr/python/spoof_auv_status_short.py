@@ -40,7 +40,7 @@ while True:
     #msg.status = 1<<7;
     msg.target_id = 3;
 
-    lc.publish("STATUS.SIRIUS", msg.encode())
+    lc.publish("AUV_STAT.SIRIUS", msg.encode())
     
     angle = angle + 0.5
     
