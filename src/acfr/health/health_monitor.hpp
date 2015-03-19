@@ -22,7 +22,7 @@
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/leak_t.hpp"
 
-#include "perls-lcmtypes++/acfrlcm/auv_status_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_status_short_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 
 

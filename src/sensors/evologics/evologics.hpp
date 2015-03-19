@@ -32,7 +32,7 @@ using namespace std;
 #define MAX_BUF_LEN 1024
 #define MAX_DATA_AGE 5e6
 
-int chop_string(char *data, char **tokens);
+int chop_string(char *data, char **tokens, int nTokens);
 
 enum {evo_command, evo_data, evo_im};
 
@@ -58,9 +58,9 @@ class Evologics
         int open_serial_port();
         int open_port(const char *ip, const char *port);
 
-        int send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel);
+        int send_lcm_data(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm = false);
         int send_command(const char *d);
-        int send_command_front(const char *d);
+        //int send_command_front(const char *d);
         int send_ping(int target);
         int parse_lcm_data(unsigned char *d, int len);
         int parse_modem_data(char *d, int len, int64_t timestamp);
@@ -73,8 +73,8 @@ class Evologics
         
         // channel flags
         pthread_mutex_t flags_lock;
-        pthread_mutex_t command_queue_lock;
-        pthread_mutex_t data_queue_lock;
+        //pthread_mutex_t command_queue_lock;
+        //pthread_mutex_t data_queue_lock;
         pthread_mutex_t write_lock;
 
         bool sending_im;
@@ -93,14 +93,14 @@ class Evologics
         char term;
         
         // Out data FIFO
-        vector<Evo_Data_Out *> command_queue;
-        vector<Evo_Data_Out *> data_queue;
+        //vector<Evo_Data_Out *> command_queue;
+        //vector<Evo_Data_Out *> data_queue;
         queue<evologics_usbl_t *> *fixq;
-        int send_data(unsigned char *d, int size, int type, int target, int end);
+        //int send_data(unsigned char *d, int size, int type, int target, int push_data_front);
         
         // Queue management commands
         int clear_queues();
-        int wait_for_commands();
+        int wait_for_command_response();
 
         // counters
         int drop_counter;
@@ -132,6 +132,8 @@ class Evologics
         int parse_usbllong(char *d, int64_t timestamp);
         int parse_usblangles(char *d, int64_t timestamp);
         int parse_im(char *d);
+        int parse_pbm(char *d);
+        int parse_burst_data(char *d);
         
         
         // The queue that we use for fix messages being passed to the USBL code
