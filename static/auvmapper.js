@@ -187,7 +187,7 @@ function auvmapper () {
         var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false, showasheatmap: false}; // default dispoptions
         $.extend(dispoptions,usroptions.dispoptions);  // extend to make sure all fields
         usroptions.dispoptions = dispoptions;  // copy to usroptions
-        var options = {color: 'red', interval: 1000, size: 3};  // default other otpions
+        var options = {color: 'red', interval: 1000, size: 3, maxtracklen: 100};  // default other otpions
         $.extend(options,usroptions); // extend options
 
         var trackoptions={color: options.color, weight: 1, opacity: 0.4, smoothFactor: 1 },
@@ -236,7 +236,7 @@ function auvmapper () {
         this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
         // start position updater
-        this.update_posetracker(tracklayer, platform, url, options.interval);
+        this.update_posetracker(tracklayer, platform, url, options.interval, options.maxtracklen);
     }
 
     /**
@@ -247,7 +247,7 @@ function auvmapper () {
      * @param url
      * @param interval
      */
-    this.update_posetracker = function( tracklayer, platform, url, interval) {
+    this.update_posetracker = function( tracklayer, platform, url, interval, maxtracklen) {
         $.ajax({
             dataType: "jsonp",
             url: url,
@@ -264,8 +264,8 @@ function auvmapper () {
                     if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
                         _this.layers.overlays[tracklayer].addLatLng(curpos);
                         var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
-                        if (tracklen > _this.maxposes)
-                            _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - _this.maxposes, tracklen));
+                        if (tracklen > maxtracklen)
+                            _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
                     }
 
                     // set uncertainty circle
@@ -329,7 +329,7 @@ function auvmapper () {
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
-                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval)},interval);
+                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},interval);
             },
             error : function (jqXHR, status, desc) {
                 console.log("Cannot update position: "+platform,jqXHR);
@@ -337,7 +337,7 @@ function auvmapper () {
                     $(_this.info[platform]).append("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
                 $(_this.info[platform]).find(".errmsg").html("SERVER ERROR! ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
-                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval)},5000); // try again in 5 seconds if error
+                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
         });
     }
