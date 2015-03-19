@@ -391,6 +391,6 @@ body, html {
 }
 
 .leaflet-control-layers-expanded label {
-    float: left;
+    display: inline-block;
     width: 120px;
 }

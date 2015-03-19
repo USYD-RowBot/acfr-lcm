@@ -54,18 +54,22 @@ from gevent.wsgi import WSGIServer    # host it properly
 
 app = Flask(__name__)
 
+
+
+# import all the worker threads and functions to deal with platform data updates
+mode = sys.argv[1] if len(sys.argv) > 1 else "test"
+port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
+exec "from platformdata.{} import *".format(mode)
+#from platformdata import acfrlcm as pdata
+
 # automatically work out IP address
 ipaddress = "%s.local" % socket.gethostname()
 try:
     ipaddress = socket.gethostbyname(ipaddress)
 except:
     pass
-thisserver = "http://%s:8080" % ipaddress
+thisserver = "http://{}:{}".format(ipaddress, port)
 
-# import all the worker threads and functions to deal with platform data updates
-mode = sys.argv[1] if len(sys.argv) > 1 else "test"
-exec "from platformdata.{} import *".format(mode)
-#from platformdata import acfrlcm as pdata
 
 @app.route('/')
 def home():
@@ -160,7 +164,7 @@ if __name__ == '__main__':
     #     port = 8080
     # )
 
-    http_server = WSGIServer(('', 8080), app)
+    http_server = WSGIServer(('', port), app)
     http_server.serve_forever()
 
     terminate_platformdata_threads()
