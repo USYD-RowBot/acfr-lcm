@@ -342,6 +342,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     // We will limit how often we send the USBL messages through the modem to once every 5 seconds
     if(usbl_send[target_index])
     {    
+        /* With the burst data now on a message, send the full USBL fix
         // setup the short version of the message to be sent over the acoustic link
         usbl_fix_short_t uf_short;
         uf_short.utime = uf.utime;
@@ -349,16 +350,16 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         uf_short.latitude = uf.latitude;
         uf_short.longitude = uf.longitude;
         uf_short.accuracy = uf.accuracy;
-    
+        */ 
         
         // generate the channel name for the targets LCM message
         //char target_channel[10];
         //sprintf(target_channel, "USBL_FIX.%d", remote_id);
         //sprintf(target_channel, "USBL_FIX");
         
-        int d_size = uf_short.getEncodedSize();
+        int d_size = uf.getEncodedSize();
         unsigned char *d = (unsigned char *)malloc(d_size);
-        uf_short.encode(d, 0, uf_short.getEncodedSize());
+        uf.encode(d, 0, uf.getEncodedSize());
         if(send_fixes)
         {
             cout << "Sending fix of acoustic modem with size " << d_size << " and data " << d << endl;
