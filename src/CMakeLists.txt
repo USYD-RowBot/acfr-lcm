@@ -27,10 +27,10 @@ mark_as_advanced (CMAKE_Java_ARCHIVE CMAKE_Java_RUNTIME)
 
 set (CLASSPATH)
 perls_java_find_library (lcm.jar)
-perls_java_find_library (bot2-lcmgl.jar)
+#perls_java_find_library (bot2-lcmgl.jar)
 perls_java_find_library (lcmspy_plugins_bot2.jar)
 perls_java_find_library (lcmtypes_bot2-core.jar)
-perls_java_find_library (lcmtypes_bot2-frames.jar)
+#perls_java_find_library (lcmtypes_bot2-frames.jar)
 perls_java_find_library (lcmtypes_bot2-param.jar)
 perls_java_find_library (lcmtypes_bot2-procman.jar)
 

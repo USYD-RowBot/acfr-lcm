@@ -1,13 +1,13 @@
 option (BUILD_LIBBOT2 "Build and install third-party libbot2?" ON)
 if (BUILD_LIBBOT2)
   # requires gtkdocize
-  find_program (GTKDOCIZE gtkdocize
-    DOC "Fullpath to gtkdocize exe.")
-  if (GTKDOCIZE)
-    mark_as_advanced (GTKDOCIZE)
-  else ()
-    message (SEND_ERROR "on ubuntu `sudo apt-get install gtk-doc-tools`")
-  endif ()
+#  find_program (GTKDOCIZE gtkdocize
+#    DOC "Fullpath to gtkdocize exe.")
+#  if (GTKDOCIZE)
+#    mark_as_advanced (GTKDOCIZE)
+#  else ()
+#    message (SEND_ERROR "on ubuntu `sudo apt-get install gtk-doc-tools`")
+#  endif ()
   
   # requires opencv
 #  find_package (OpenCV)
