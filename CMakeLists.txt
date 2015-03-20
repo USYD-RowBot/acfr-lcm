@@ -112,7 +112,7 @@ set (THIRD_PARTY_DIR "${PROJECT_SOURCE_DIR}/third-party")
 #========================================================================
 set (FIRST_PASS_COMPLETE FALSE CACHE INTERNAL "First time?")
 add_subdirectory (src)
-add_subdirectory (doxygen)
+#add_subdirectory (doxygen)
 set (FIRST_PASS_COMPLETE TRUE CACHE INTERNAL "First time?")
 
 # CONFIG STUFF
