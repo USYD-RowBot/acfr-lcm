@@ -63,16 +63,14 @@ void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
 // a callback with no automatic decoding
 void on_lcm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
 {
-cout << "Got LCM message on channel " << channel << endl;
-    // extract the platform id
-    int channel_pos = channel.find_last_of('.');
-    std::string target_name = channel.substr(channel_pos + 1);
-    // figure out which channel to send the data on
-    int target_channel = ev->get_target_channel(target_name.c_str());
-    if (target_channel != -1)
-       ev->evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str());
+    ev->on_lcm_data(rbuf, channel, false);
 }
     
+// a callback with no automatic decoding for messages that should be registered as PiggyBack messages
+void on_lcm_pbm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evologics_Usbl* ev) 
+{
+    ev->on_lcm_data(rbuf, channel, true);
+}
     
 
 // Used by the AHRS routine
@@ -112,6 +110,7 @@ static void *fix_thread(void *u)
 Evologics_Usbl::Evologics_Usbl()
 {
     lcm = new lcm::LCM();
+    current_ping_target = 0;
 //    pthread_create(&fix_thread_id, NULL, fix_thread, this);
 //    pthread_detach(fix_thread_id);
 }
@@ -120,7 +119,10 @@ Evologics_Usbl::~Evologics_Usbl()
 {
     pthread_join(fix_thread_id, NULL);
     // free up the resources of the string arrays
-    bot_param_str_array_free(lcm_channels);
+    if (lcm_channels != NULL)
+       bot_param_str_array_free(lcm_channels);
+    if (lcm_pbm_channels != NULL)
+       bot_param_str_array_free(lcm_pbm_channels);
     bot_param_str_array_free(target_names);
 }
 
@@ -130,15 +132,17 @@ int Evologics_Usbl::ping_targets()
     // check the state of the link if we are sending data
     //cout << "sending_data=" << state.sending_data << endl;
 //    if(evo->sending_data)
-//        evo->send_command("+++AT?S");
+//        evo->send_command("AT?S");
     
     if (ping_period > -1)
     {
         if(ping_counter == ping_period)
         {
+            cout << "Preparing to ping target " << current_ping_target << " at address " << targets[current_ping_target] << endl;
             ping_counter = 0;
-            for(int i=0; i<num_targets; i++)
-                evo->send_ping(targets[i]);
+            evo->send_ping(targets[current_ping_target]);
+            if (++current_ping_target >= num_targets)
+                current_ping_target = 0;
         }
         else
             ping_counter++;
@@ -158,7 +162,8 @@ int Evologics_Usbl::ping_targets()
     
     for(int i=0; i<num_targets; i++)    
     {
-        if(!usbl_send[i] && usbl_send_counter[i] < 5)
+        // limit the usbl transmit rate to the ping period
+        if(!usbl_send[i] && usbl_send_counter[i] < ping_period)
             usbl_send_counter[i]++;
         else
         {
@@ -181,7 +186,7 @@ int Evologics_Usbl::get_target_channel(const char *target_name)
        }
        target_index++;
     }
-    if (target_names == NULL)
+    if (target_names[target_index] == NULL)
     {
        printf("Target %s not found\n", target_name);
        return -1;
@@ -337,6 +342,16 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     // We will limit how often we send the USBL messages through the modem to once every 5 seconds
     if(usbl_send[target_index])
     {    
+        /* With the burst data now on a message, send the full USBL fix
+        // setup the short version of the message to be sent over the acoustic link
+        usbl_fix_short_t uf_short;
+        uf_short.utime = uf.utime;
+        //uf_short.remote_id = uf.remote_id;
+        uf_short.latitude = uf.latitude;
+        uf_short.longitude = uf.longitude;
+        uf_short.accuracy = uf.accuracy;
+        */ 
+        
         // generate the channel name for the targets LCM message
         //char target_channel[10];
         //sprintf(target_channel, "USBL_FIX.%d", remote_id);
@@ -347,7 +362,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
         uf.encode(d, 0, uf.getEncodedSize());
         if(send_fixes)
         {
-            cout << "Sending fix of acoustic modem" << endl;
+            cout << "Sending fix of acoustic modem with size " << d_size << " and data " << d << endl;
             evo->send_lcm_data(d, d_size, ef->remote_id, usbl_fix_channel_name);
         }
         free(d);
@@ -442,6 +457,10 @@ int Evologics_Usbl::load_config(char *program_name)
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
 
+    sprintf(key, "%s.lcm_pbm", rootkey);
+    lcm_pbm_channels = NULL;
+    lcm_pbm_channels = bot_param_get_str_array_alloc(param, key);
+
     double d[6];
     sprintf(key, "%s.usbl_ins", rootkey);
     bot_param_get_double_array_or_fail(param, key, d, 6);
@@ -492,8 +511,8 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
     // decode the AHRS message
     if(strstr(buf, "AHRS") != NULL)
     {
-        char *tokens[10];
-        if(chop_string(buf, tokens) != 5)
+        char *tokens[5];
+        if(chop_string(buf, tokens, 5) != 5)
             return 0;
 
         ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
@@ -508,6 +527,24 @@ int Evologics_Usbl::parse_ahrs_message(char *buf)
         return 0;
 }
         
+int Evologics_Usbl::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm) 
+{
+    // extract the platform id
+    int channel_pos = channel.find_last_of('.');
+    std::string target_name = channel.substr(channel_pos + 1);
+    // figure out which channel to send the data on
+    int target_channel = get_target_channel(target_name.c_str());
+    cout << "Got LCM message on channel " << channel;
+    if (target_channel != -1) 
+    {
+       cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
+       evo->send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), use_pbm);
+    } else {
+       cout << ".  Target " << target_name << " not found in channel list.  Dropping lcm message." << endl;
+    }
+
+}
+
 /*
 int Evologics_Usbl::open_port(const char *port)
 {
@@ -578,8 +615,6 @@ int Evologics_Usbl::init()
     // open the ports
 
     // Open the comm ports
-    char term;
-    char msg[32];
     if (use_serial_comm)
     {
        evo = new Evologics(device, baud, parity, lcm, &fixq, ping_timeout);
@@ -593,62 +628,48 @@ int Evologics_Usbl::init()
     if((has_ahrs == true) && (ahrs_fd = evo->open_port(ip, AHRS_PORT)) == -1)
         return 0;
     
-
-    
-    
     // put the USBL in a known state
-    //send_evologics_command("ATC", NULL, 256, &state);
-    evo->send_command("+++ATZ4");
-    //evo->wait_for_commands();
-    evo->send_command("+++ATZ1");
-    //evo->wait_for_commands();
+    evo->send_command("ATZ4");
+    evo->send_command("ATZ1");
 
     char cmd[64];
     memset(cmd, 0, 64);
-    sprintf(cmd, "+++AT!L%d", source_level);
+    sprintf(cmd, "AT!L%d", source_level);
     evo->send_command(cmd);
-    sprintf(cmd, "+++AT!G%d", gain);
+    sprintf(cmd, "AT!G%d", gain);
     evo->send_command(cmd);
 
     if(auto_gain)
     {
-        evo->send_command("+++AT!LC1");
+        evo->send_command("AT!LC1");
     }
 
-    //evo->send_command("+++ATH1");
-    evo->send_command("+++ATZ1");
-    //evo->wait_for_commands();
-    
     // Get the local address
-    evo->send_command("+++AT?AL");
-    //evo->wait_for_commands();
+    //evo->send_command("AT?AL");
+    evo->send_command("AT?S");
 
-    //set up to the first remote address in the list for data communications.  This will be switched when messages arrive.
+    //set up to the first remote address in the list for data communications.  This will be switched when messages arrive as necessary.
     if (num_targets > 0)
     {
         memset(cmd, 0, 64);
-        sprintf(cmd, "+++AT!AR%d", targets[0]); 
+        sprintf(cmd, "AT!AR%d", targets[0]); 
         evo->send_command(cmd);
     }
-    //evo->wait_for_commands();
     // now to force the settings that require a listen mode
     // we need to wait for the modem to catch up before the next two commands
-    usleep(1e6);
-    evo->send_command("+++AT?AR");
+    evo->send_command("AT?AR");
     
-    evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    //evo->wait_for_commands();
-    evo->send_command("+++AT?ZU");      // request USBL positioning data
-    //evo->wait_for_commands();
+    evo->send_command("AT@ZU1");      // request USBL positioning data
+    evo->send_command("AT?ZU");      // request USBL positioning data
     
-    usleep(1e6);
+    //evo->send_command("ATN");      // noise mode
+    
+    //evo->send_command("ATA");      // listen state
+    //evo->send_command("ATD");      // establish an acoustic connection
 
-    evo->send_command("+++ATN");      // noise mode
-    //evo->wait_for_commands();
-    usleep(1e6);
-    
-    evo->send_command("+++ATA");      // listen state
-    //evo->wait_for_commands();
+    evo->send_command("AT!RT500");     // set the retry count on burst data
+    evo->send_command("AT!RC1");     // set the retry timeout on burst data
+
 
     usleep(1e6);
     
@@ -658,23 +679,25 @@ int Evologics_Usbl::init()
     if((gps_source == GPS_NOVATEL) || (attitude_source == ATT_NOVATEL))
         lcm->subscribeFunction("NOVATEL", on_novatel, this);
     
-    evo->send_command("+++AT@ZU1");      // request USBL positioning data
-    //evo->wait_for_commands();
-    evo->send_command("+++AT?ZU");      // request USBL positioning data
-    //evo->wait_for_commands();
-    
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
     
     evo->start_handlers();
     
-    int i = 0;
-    while(lcm_channels[i] != NULL)
+    int lcm_channel_ndx = 0;
+    while(lcm_channels != NULL && lcm_channels[lcm_channel_ndx] != NULL)
     {
-        cout << "Subscribing to LCM channel: " << lcm_channels[i] << endl;
-        lcm->subscribeFunction(lcm_channels[i], on_lcm, this);
-        i++;
-      
+        cout << "Subscribing to LCM channel: " << lcm_channels[lcm_channel_ndx] << endl;
+        lcm->subscribeFunction(lcm_channels[lcm_channel_ndx], on_lcm, this);
+        lcm_channel_ndx++;
+    }
+
+    lcm_channel_ndx = 0;
+    while(lcm_pbm_channels != NULL && lcm_pbm_channels[lcm_channel_ndx] != NULL)
+    {
+        cout << "Subscribing to LCM PBM channel: " << lcm_pbm_channels[lcm_channel_ndx] << endl;
+        lcm->subscribeFunction(lcm_pbm_channels[lcm_channel_ndx], on_lcm_pbm, this);
+        lcm_channel_ndx++;
     }
     
     ping_counter = 0;

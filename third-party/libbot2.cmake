@@ -1,13 +1,13 @@
 option (BUILD_LIBBOT2 "Build and install third-party libbot2?" ON)
 if (BUILD_LIBBOT2)
   # requires gtkdocize
-  find_program (GTKDOCIZE gtkdocize
-    DOC "Fullpath to gtkdocize exe.")
-  if (GTKDOCIZE)
-    mark_as_advanced (GTKDOCIZE)
-  else ()
-    message (SEND_ERROR "on ubuntu `sudo apt-get install gtk-doc-tools`")
-  endif ()
+#  find_program (GTKDOCIZE gtkdocize
+#    DOC "Fullpath to gtkdocize exe.")
+#  if (GTKDOCIZE)
+#    mark_as_advanced (GTKDOCIZE)
+#  else ()
+#    message (SEND_ERROR "on ubuntu `sudo apt-get install gtk-doc-tools`")
+#  endif ()
   
   # requires opencv
 #  find_package (OpenCV)
@@ -40,7 +40,7 @@ if (BUILD_LIBBOT2)
       COMMAND ${ZLIB_CMD}
       COMMAND mkdir -p ${LIBBOT2_DIR}
       COMMAND cp -r ${LIBBOT2_SRC} .
-      COMMAND cd ${LIBBOT_DIR} && svn up
+      COMMAND cd ${LIBBOT2_DIR} && svn up
       #COMMAND svn export --force ${LIBBOT2_SRC} ${LIBBOT2_DIR}
       COMMAND cd ${LIBBOT2_DIR} && sudo make BUILD_PREFIX=${CMAKE_INSTALL_PREFIX}
       COMMAND sudo ldconfig

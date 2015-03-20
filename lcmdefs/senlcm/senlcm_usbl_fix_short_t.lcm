@@ -1,0 +1,11 @@
+package senlcm;
+
+struct usbl_fix_short_t
+{
+    int64_t utime;
+    
+    double latitude;
+    double longitude;
+    float accuracy;
+    
+}
