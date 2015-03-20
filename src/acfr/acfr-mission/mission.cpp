@@ -42,54 +42,75 @@
     parser.parse_file(filename);
     if(parser)
     {
-        //Walk the tree:
-        const xmlpp::Node* root_node = parser.get_document()->get_root_node(); //deleted by DomParser.
-        xmlpp::Node::NodeList list = root_node->get_children();
+       return parseMission(parser);
+    }
+
+    return 0;
+}
+
+int Mission::parseMissionString(string missionStr)
+{
+    // empty out the list
+    waypoints.clear();
+
+    xmlpp::DomParser parser;
+    parser.parse_memory(missionStr);
+    if(parser)
+    {
+       return parseMission(parser);
+    }
+
+    return 0;
+}
+
+int Mission::parseMission(xmlpp::DomParser &parser)
+{
+    //Walk the tree:
+    const xmlpp::Node* root_node = parser.get_document()->get_root_node(); //deleted by DomParser.
+    xmlpp::Node::NodeList list = root_node->get_children();
+    
+    if(root_node->get_name() != "mission")
+    {
+        cerr << "root tag is not mission" << endl;
+        return 0;
+    }
+    
+    xmlpp::Node::NodeList xml_other;
+    xmlpp::Node::NodeList xml_primitives;
+    xmlpp::Node::NodeList xml_globals;
+    for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
+    {
+        if((*iter)->get_name().lowercase() == "primitive")
+            xml_primitives.push_back(*iter);
+        else if((*iter)->get_name().lowercase() == "global")
+            xml_globals.push_back(*iter);            
+        else if((*iter)->get_name() != "text")
+            xml_other.push_back(*iter);
+    }
+    
+    // extract the description, globals and location
+    parseGlobals(xml_globals);
+    
+    // extract the actual mission
+    for(xmlpp::Node::NodeList::iterator iter = xml_primitives.begin(); iter != xml_primitives.end(); ++iter)
+    {
+        xmlpp::Node::NodeList primitive_list = (*iter)->get_children();
         
-        if(root_node->get_name() != "mission")
+        
+        for(xmlpp::Node::NodeList::iterator i = primitive_list.begin(); i != primitive_list.end(); ++i)
         {
-            cerr << "root tag is not mission" << endl;
-            return 0;
-        }
-        
-        xmlpp::Node::NodeList xml_other;
-        xmlpp::Node::NodeList xml_primitives;
-        xmlpp::Node::NodeList xml_globals;
-        for(xmlpp::Node::NodeList::iterator iter = list.begin(); iter != list.end(); ++iter)
-        {
-            if((*iter)->get_name().lowercase() == "primitive")
-                xml_primitives.push_back(*iter);
-            else if((*iter)->get_name().lowercase() == "global")
-                xml_globals.push_back(*iter);            
-            else if((*iter)->get_name() != "text")
-                xml_other.push_back(*iter);
-        }
-        
-        // extract the description, globals and location
-        parseGlobals(xml_globals);
-        
-        // extract the actual mission
-        for(xmlpp::Node::NodeList::iterator iter = xml_primitives.begin(); iter != xml_primitives.end(); ++iter)
-        {
-            xmlpp::Node::NodeList primitive_list = (*iter)->get_children();
-            
-            
-            for(xmlpp::Node::NodeList::iterator i = primitive_list.begin(); i != primitive_list.end(); ++i)
-            {
-                Glib::ustring tag = (*i)->get_name().lowercase(); 
-                if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
-						|| tag == "zambonie" || tag == "spiral"
-						|| tag == "spiralinward" || tag == "coverage" || tag == "command")
-					parsePrimitive(*i);
-				else if((*i)->get_name().lowercase() != "text")
-                    cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
-            }     
+            Glib::ustring tag = (*i)->get_name().lowercase(); 
+            if (tag == "goto" || tag == "gotoandcircle" || tag == "leg"
+		|| tag == "zambonie" || tag == "spiral"
+		|| tag == "spiralinward" || tag == "coverage" || tag == "command")
+	parsePrimitive(*i);
+else if((*i)->get_name().lowercase() != "text")
+                cerr << "Unknown mission primitive " << (*i)->get_name() << endl;
+        }     
 			
                 
-        }
     }
     return 1;
-    
 }
 
 // Read the global variables
