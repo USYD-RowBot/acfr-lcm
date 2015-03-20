@@ -142,27 +142,33 @@
                 // load tilelayers
                 if (data.hasOwnProperty('tilelayers')) {
                     var tilelayers = data.tilelayers.split(',');
-                    for (var i = 0; i < tilelayers.length; i++)
+                    for (var i = 0; i < tilelayers.length; i++) {
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
                                 map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
                             else if (data.type === "overlay") {
-                                var opacity =  (data.hasOwnProperty("opacity")) ? data.opacity : 1;
+                                var opacity = (data.hasOwnProperty("opacity")) ? data.opacity : 1;
                                 map.layers.overlays[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, opacity: opacity});
                                 map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
                             }
+                            else if (data.type === "google-baselayer") {
+                                map.layers.base[data.name] = new L.Google(data.url);
+                                map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
+                            }
                         });
+                    }
+                    // activate first base layer
+                    map.layers.base[Object.keys(map.layers.base)[0]].addTo(map.map);
                 }
                 // load iframes
                 if (data.hasOwnProperty('iframes')) {
                     var iframes = data.iframes.split(',');
                     for (var i = 0; i < iframes.length; i++)
                         get_config(url, cfg, iframes[i].trim(), function (data, url, cfg) {
-                            var iframeid = "iframe-"+ i,
-                                cssclass = "";
-                            map.add_control("<i class='fa fa-video-camera'></i>", function(e){
+                            var iframeid = "iframe-"+ i, obj;
+                            obj = map.add_control("<i class='fa fa-video-camera'></i>", function(e){
                                 if($("#"+iframeid).length > 0) {
                                     $("#"+iframeid).remove();
                                     $(this).removeClass("active");
@@ -171,7 +177,7 @@
                                     $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
                                     $(this).addClass("active");
                                 }
-                            },"Show: "+data.name,"topright");
+                            },data.name,"topright");
                             if (data.show === "true") $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
                         });
                 }

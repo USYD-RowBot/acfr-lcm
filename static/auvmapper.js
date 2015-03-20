@@ -42,17 +42,17 @@ function auvmapper () {
             fullscreenControl: true
         });
         // Add base layers
-        try {
-            this.layers.base = {
-                "Google": new L.Google('STREETMAP'),
-                "Satellite": new L.Google('HYBRID')
-            };
-            this.map.addLayer(this.layers.base.Satellite); // load default map layer
-        }
-        catch(err) {
-            console.log(err);
-            this.layers.base = {};
-        }
+//        try {
+//            this.layers.base = {
+//                "Google": new L.Google('STREETMAP'),
+//                "Satellite": new L.Google('HYBRID')
+//            };
+//            //this.map.addLayer(this.layers.base.Satellite); // load default map layer
+//        }
+//        catch(err) {
+//            console.log(err);
+//            this.layers.base = {};
+//        }
 
 
         // Add layer control
