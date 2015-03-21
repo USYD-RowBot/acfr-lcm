@@ -214,6 +214,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     SMALL::Vector3D target;
     target = ef->y, ef->x, ef->z;
     
+    cout << "Evologics_Usbl got local fix " << ef->y << " " << ef->x << " " << ef->z << endl;
     
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
@@ -224,6 +225,11 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     int nov_index = 0;
     if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
     {
+	if (novatelq.size() < 1)
+	{
+	    cout << "WARNING: Evologics_Usbl expecting Novatel data.  Not found." << endl;
+	    return 0;
+	}
         // find the closest novatel message in the queue
         int time_diff;
         for(unsigned int i=0; i<novatelq.size(); i++)
@@ -237,6 +243,7 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
             nov_index = i;
         }
     }
+    cout << "nov_index:" << nov_index << endl;
     printf("ET: %ld, NT: %ld, %d\n", ef->utime, novatelq[nov_index]->utime, nov_index);  
     
     if(attitude_source == ATT_NOVATEL)
