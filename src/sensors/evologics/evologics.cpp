@@ -606,16 +606,16 @@ int Evologics::parse_lcm_data(unsigned char *d, int size)
 
 int Evologics::parse_usbllong(char *d, int64_t timestamp)
 {
-    char *tokens[19];
+    char *tokens[17];
     int ret;
-    ret = chop_string(d, tokens, 19);
+    ret = chop_string(d, tokens, 17);
     
-    if(ret != 19)
+    if(ret != 17)
         return 0;
     
     // Work out the actual time that the measurment was taken
-    double measurement_time = atof(tokens[4]);
-    double current_time = atof(tokens[3]);
+    double measurement_time = atof(tokens[2]);
+    double current_time = atof(tokens[1]);
     
     // we will correct the time as it may not be sync'd with the computer running this code
     //double time_diff = current_time - measurement_time;
@@ -624,20 +624,20 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
     ud.ctime = (int64_t)(current_time * 1e6);
-    ud.remote_id = atoi(tokens[5]);
-    ud.x = atof(tokens[6]);
-    ud.y = atof(tokens[7]);
-    ud.z = atof(tokens[8]);
-    ud.e = atof(tokens[9]);
-    ud.n = atof(tokens[10]);
-    ud.u = atof(tokens[11]);
-    ud.r = atof(tokens[12]);
-    ud.p = atof(tokens[13]);
-    ud.h = atof(tokens[14]);
-    ud.prop_time = atof(tokens[15]);
-    ud.rssi = atoi(tokens[16]);
-    ud.integrity = atoi(tokens[17]);
-    ud.accuracy = atof(tokens[18]);
+    ud.remote_id = atoi(tokens[3]);
+    ud.x = atof(tokens[4]);
+    ud.y = atof(tokens[5]);
+    ud.z = atof(tokens[6]);
+    ud.e = atof(tokens[7]);
+    ud.n = atof(tokens[8]);
+    ud.u = atof(tokens[9]);
+    ud.r = atof(tokens[10]);
+    ud.p = atof(tokens[11]);
+    ud.h = atof(tokens[12]);
+    ud.prop_time = atof(tokens[13]);
+    ud.rssi = atoi(tokens[14]);
+    ud.integrity = atoi(tokens[15]);
+    ud.accuracy = atof(tokens[16]);
     
     lcm->publish("EVOLOGICS_USBL", &ud);
     
@@ -655,16 +655,16 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
 
 int Evologics::parse_usblangles(char *d, int64_t timestamp)
 {
-    char *tokens[16];
+    char *tokens[14];
     int ret;
-    ret = chop_string(d, tokens, 16);
+    ret = chop_string(d, tokens, 14);
     
-    if(ret != 16)
+    if(ret != 14)
         return 0;
     
     // Work out the actual time that the measurment was taken
-    double measurement_time = atof(tokens[4]);
-    double current_time = atof(tokens[3]);
+    double measurement_time = atof(tokens[2]);
+    double current_time = atof(tokens[1]);
     
     // we will correct the time as it may not be sync'd with the computer running this code
     //double time_diff = current_time - measurement_time;
@@ -673,17 +673,17 @@ int Evologics::parse_usblangles(char *d, int64_t timestamp)
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
     ud.ctime = (int64_t)(current_time * 1e6);
-    ud.remote_id = atoi(tokens[5]);
-    ud.lbearing = atof(tokens[6]);
-    ud.lelevation = atof(tokens[7]);
-    ud.bearing = atof(tokens[8]);
-    ud.elevation = atof(tokens[9]);
-    ud.r = atof(tokens[10]);
-    ud.p = atof(tokens[11]);
-    ud.h = atof(tokens[12]);
-    ud.rssi = atoi(tokens[13]);
-    ud.integrity = atoi(tokens[14]);
-    ud.accuracy = atof(tokens[15]);
+    ud.remote_id = atoi(tokens[3]);
+    ud.lbearing = atof(tokens[4]);
+    ud.lelevation = atof(tokens[5]);
+    ud.bearing = atof(tokens[6]);
+    ud.elevation = atof(tokens[7]);
+    ud.r = atof(tokens[8]);
+    ud.p = atof(tokens[9]);
+    ud.h = atof(tokens[10]);
+    ud.rssi = atoi(tokens[11]);
+    ud.integrity = atoi(tokens[12]);
+    ud.accuracy = atof(tokens[13]);
 
     lcm->publish("EVOLOGICS_USBL_ANGLES", &ud);
     
