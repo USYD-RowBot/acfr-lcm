@@ -225,8 +225,11 @@ function auvmapper () {
         // uncertainty layer
         this.layers.overlays[unclayer] = new L.circle(this.origin, 1, uncmarkeroptions);
 
+        // Add popup
+        this.layers.overlays[platform].bindPopup(platform);
+
         // add to layer group (platform & unc) to control
-        var layergroup = new L.layerGroup([this.layers.overlays[platform],this.layers.overlays[unclayer]]);
+        var layergroup = new L.layerGroup([this.layers.overlays[unclayer],this.layers.overlays[platform]]);
         layergroup.addTo(this.map);
         this.layerctl.addOverlay(layergroup, platform);
 
