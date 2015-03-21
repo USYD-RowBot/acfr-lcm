@@ -223,6 +223,8 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
     double ship_heading;
     
     int nov_index = 0;
+    SMALL::Vector3D target_world;
+
     if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
     {
 	if (novatelq.size() < 1)
@@ -242,38 +244,45 @@ int Evologics_Usbl::calc_position(const evologics_usbl_t *ef)
             }
             nov_index = i;
         }
-    }
-    cout << "nov_index:" << nov_index << endl;
-    printf("ET: %ld, NT: %ld, %d\n", ef->utime, novatelq[nov_index]->utime, nov_index);  
-    
-    if(attitude_source == ATT_NOVATEL)
-    {
+        cout << "nov_index:" << nov_index << endl;
+        printf("ET: %ld, NT: %ld, %d\n", ef->utime, novatelq[nov_index]->utime, nov_index);  
+        
+        if(attitude_source == ATT_NOVATEL)
+        {
             
-        ship_roll = novatelq[nov_index]->roll;
-        ship_pitch = novatelq[nov_index]->pitch;
-        ship_heading = novatelq[nov_index]->heading;
+            ship_roll = novatelq[nov_index]->roll;
+            ship_pitch = novatelq[nov_index]->pitch;
+            ship_heading = novatelq[nov_index]->heading;
 
+        }
+        else if (attitude_source == ATT_EVOLOGICS_AHRS)
+        {
+            ship_roll = ahrs.roll;
+            ship_pitch = ahrs.pitch;
+            ship_heading = ahrs.heading;
+        }
+        ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
+    
+    
+        cout << "ship attitude" <<  ship.getAxisAngle() * RTOD << endl;
+        cout << "target xyz (sensor)" << target << endl;
+        
+    
+        SMALL::Vector3D target_ship = usbl_ins_pose.transformFrom(target);
+        cout << "target xyz (ship)" << target_ship << endl;
+    
+    
+        SMALL::Vector3D target_world = ship.transformFrom(target_ship);
+        cout << "target xyz (world)" << target_world << endl;
+    
+    } else if ( attitude_source == ATT_EVOLOGICS_COMPENSATED) {
+        // use the internally compensated evologics northing/easting positions
+        target_world[0] = ef->e;
+        target_world[1] = ef->n;
+    } else {
+        cout << "WARNING: Evologics_Usbl attitude_source not set." << endl;
+        return 0;
     }
-    else if (attitude_source == ATT_EVOLOGICS)
-    {
-        ship_roll = ahrs.roll;
-        ship_pitch = ahrs.pitch;
-        ship_heading = ahrs.heading;
-    }
-    ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
-    
-    
-    cout << "ship attitude" <<  ship.getAxisAngle() * RTOD << endl;
-    cout << "target xyz (sensor)" << target << endl;
-    
-    
-    SMALL::Vector3D target_ship = usbl_ins_pose.transformFrom(target);
-    cout << "target xyz (ship)" << target_ship << endl;
-    
-    
-    SMALL::Vector3D target_world = ship.transformFrom(target_ship);
-    cout << "target xyz (world)" << target_world << endl;
-    
     
     // set up the coordinate reprojection
     char proj_str[64];
@@ -486,9 +495,11 @@ int Evologics_Usbl::load_config(char *program_name)
     if(!strncmp(att_source_str, "NOVATEL", 4))
         attitude_source = ATT_NOVATEL;
     else if(!strncmp(att_source_str, "EVOLOGICS", 9))
-        attitude_source = ATT_EVOLOGICS;
+        attitude_source = ATT_EVOLOGICS_AHRS;
+    else if(!strncmp(att_source_str, "EVOLOGICS_COMPENSATED", 21))
+        attitude_source = ATT_EVOLOGICS_COMPENSATED;
     else if(!strncmp(att_source_str, "AUV_STATUS", 9))
-        attitude_source = ATT_EVOLOGICS;
+        attitude_source = ATT_AUV_STATUS;
     
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);

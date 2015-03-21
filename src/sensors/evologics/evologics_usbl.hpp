@@ -42,7 +42,8 @@ using namespace acfrlcm;
 typedef enum 
 {
     ATT_NOVATEL = 0,
-    ATT_EVOLOGICS,
+    ATT_EVOLOGICS_AHRS,
+    ATT_EVOLOGICS_COMPENSATED,
     ATT_AUV_STATUS
 } attitude_source_t; 
 
