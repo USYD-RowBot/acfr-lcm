@@ -57,6 +57,7 @@ function auvmapper () {
 
         // Add layer control
         this.layerctl = new L.control.layers(this.layers.base, this.layers.overlays, {autoZIndex: true}).addTo(this.map);
+        L.control.scale({imperial:false}).addTo(this.map);
 
 
         // Deactivate auto-extent on map drag
