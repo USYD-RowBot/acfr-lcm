@@ -394,3 +394,7 @@ body, html {
     display: inline-block;
     width: 120px;
 }
+
+.leaflet-top {
+    z-index: 1001;
+}
