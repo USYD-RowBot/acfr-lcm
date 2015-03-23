@@ -208,7 +208,7 @@ class LcmThread(threading.Thread):
     def run(self):
         self.lc = lcm.LCM()
         self.lc.subscribe("AUV_STATUS.*", self.auvStatusHandler)
-        self.lc.subscribe("SHIP_STATUS", self.shipStatusHandler)
+        self.lc.subscribe("SHIP_STATUS.*", self.shipStatusHandler)
         self.lc.subscribe("USBL_FIX", self.usblFixHandler)
 
         timeout = 1  # amount of time to wait, in seconds
