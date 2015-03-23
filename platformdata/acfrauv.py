@@ -90,14 +90,17 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
     # filepath will contain the filepath to the mission file
 
     # from the filename we need to work out which mission parser to use
-    fileName, fileExtension = os.path.splitext(filepath)
-    if fileExtension.lower() == '.xml':
-        mission = missionXML.Mission()
-    elif fileExtension.lower() == '.mp':
-        mission = missionMP.Mission()
-    else:
-        print 'Incorrect mission type'
-        return
+    try:
+        fileName, fileExtension = os.path.splitext(filepath)
+        if fileExtension.lower() == '.xml':
+            mission = missionXML.Mission()
+        elif fileExtension.lower() == '.mp':
+            mission = missionMP.Mission()
+        else:
+            print 'Incorrect mission type'
+            return
+    except:
+        print "Unable to open mission!!!"
 
     mission.load(filepath)
     origin = [mission.getOriginLat(), mission.getOriginLon()]
