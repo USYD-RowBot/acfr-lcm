@@ -151,7 +151,8 @@ class LcmThread(threading.Thread):
     def shipStatusHandler(self, channel, data):
         msg = ship_status_t.decode(data)
         msgid = msg.utime
-        platform = '{}'.format(msg.ship_id)
+        #platform = '{}'.format(msg.ship_id)
+        platform = msg.name
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
