@@ -101,6 +101,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
             return
     except:
         print "Unable to open mission!!!"
+        return
 
     mission.load(filepath)
     origin = [mission.getOriginLat(), mission.getOriginLon()]
@@ -169,6 +170,7 @@ class LcmThread(threading.Thread):
         platform = '{}'.format(msg.target_id)
         msgid = msg.utime
         platformdata[platform] = {
+            'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
                 'lat': math.degrees(msg.latitude),                  # REQUIRED (decimal degrees)
                 'lon': math.degrees(msg.longitude),                 # REQUIRED (decimal degrees)
