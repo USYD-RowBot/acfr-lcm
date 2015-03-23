@@ -151,7 +151,8 @@ class LcmThread(threading.Thread):
     def shipStatusHandler(self, channel, data):
         msg = ship_status_t.decode(data)
         msgid = msg.utime
-        platform = '{}'.format(msg.ship_id)
+        #platform = '{}'.format(msg.ship_id)
+        platform = msg.name
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
@@ -218,6 +219,7 @@ class LcmThread(threading.Thread):
 
         timeout = 1  # amount of time to wait, in seconds
         while not self.exitFlag:
+            print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             rfds, wfds, efds = select.select([self.lc.fileno()], [], [], timeout)
             if rfds:
                 self.lc.handle()
