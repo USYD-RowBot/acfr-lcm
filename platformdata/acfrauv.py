@@ -218,6 +218,7 @@ class LcmThread(threading.Thread):
 
         timeout = 1  # amount of time to wait, in seconds
         while not self.exitFlag:
+            print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             rfds, wfds, efds = select.select([self.lc.fileno()], [], [], timeout)
             if rfds:
                 self.lc.handle()
