@@ -115,6 +115,7 @@ function auvmapper () {
                 _this.layers.overlays[layer] = new L.Polyline(data.latlngs, options).addTo(_this.map);
                 _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
                 _this.layerctl.addOverlay(_this.layers.overlays[layer], layer);
+                _this.layers.overlays[layer].bindPopup(layer);
 
                 // set origin
                 _this.origin = data.origin;
