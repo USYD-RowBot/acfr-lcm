@@ -158,8 +158,8 @@ class LcmThread(threading.Thread):
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
-                'lat': math.degrees(msg.latitude),          # REQUIRED (decimal degrees)
-                'lon': math.degrees(msg.longitude),         # REQUIRED (decimal degrees)
+                'lat': msg.latitude,          # REQUIRED (decimal degrees)
+                'lon': msg.longitude,         # REQUIRED (decimal degrees)
                 'heading': math.degrees(msg.heading)        # REQUIRED (degrees)
             }
         }
