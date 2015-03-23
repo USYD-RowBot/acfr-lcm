@@ -141,6 +141,8 @@ class LcmThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.exitFlag = False
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+
 
     def usblFixHandler(self, channel, data):
         msg = usbl_fix_t.decode(data)
@@ -219,7 +221,6 @@ class LcmThread(threading.Thread):
 
         timeout = 1  # amount of time to wait, in seconds
         while not self.exitFlag:
-            print "!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
             rfds, wfds, efds = select.select([self.lc.fileno()], [], [], timeout)
             if rfds:
                 self.lc.handle()
