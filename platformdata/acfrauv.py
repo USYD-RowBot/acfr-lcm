@@ -32,14 +32,18 @@ sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes/'.form
 #sys.path.append('{0}/build/lib/'.format(LCMROOT))
 #sys.path.append('{0}/lib/'.format(SEABEDGUIROOT))
 
-print sys.path
 
 # TODO: remove try-except statement
 try:
     import missionMP
+except:
+    print "Unable to load missionMP (Sirius)"
+try:
     import missionXML
 except:
-    pass
+    print "Unable to load missionXML (Iver)"
+
+
 from acfrlcm import auv_status_t, ship_status_t
 from senlcm import usbl_fix_t
 #except:
