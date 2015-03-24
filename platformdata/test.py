@@ -30,14 +30,10 @@ origin = [-14.11493 , 121.86207]
 def init_platformdata_threads():
     FakeAUVThread('IVER', 0.5).start()
     FakeAUVThread('SIRIUS', 5).start()
-    FakeShipThread('1', 1).start()
+    FakeShipThread('FALKOR', 1).start()
     FakeShipThread('usbl', 5).start()
     FakeClassifierThread('class1', 1).start()
 
-# if you need to do some bookeeping on exit, flesh this out...
-# it is not needed in this case, because we have deamonized threads.
-def terminate_platformdata_threads():
-    return 0
 
 ######################################################################
 # Get data for a specific platform

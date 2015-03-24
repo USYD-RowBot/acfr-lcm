@@ -57,7 +57,7 @@
         <script type='text/javascript'>
 
             // Create the map object - subscribe to an address
-            var server = "{{ server }}"; // server from template address
+            var cfgfile = "config/{{ hostname }}.ini"; // server from template address
             var map = new auvmapper();
 
             $(window).resize(function () {
@@ -75,7 +75,7 @@
                 $("#track-layers").parent().addClass("hover-expand");
 
                 // Load layers from config file
-                loadlayersfromcfg("/get_config","platformdata_cfg.ini");
+                loadlayersfromcfg("/get_config",cfgfile);
 
             });
 

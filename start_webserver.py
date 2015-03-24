@@ -48,6 +48,7 @@ from osgeo import gdal      # for geotiff reading
 from PIL import Image       # for geotif conversion
 import os
 import sys
+import shutil
 from gevent.wsgi import WSGIServer    # host it properly
 
 
@@ -59,11 +60,11 @@ app = Flask(__name__)
 # import all the worker threads and functions to deal with platform data updates
 mode = sys.argv[1] if len(sys.argv) > 1 else "test"
 port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
-exec "from platformdata.{} import *".format(mode)
+exec "import platformdata.{} as pd".format(mode)
 #from platformdata import acfrlcm as pdata
 
 # automatically work out IP address
-ipaddress = "%s.local" % socket.gethostname()
+ipaddress = "%s" % socket.gethostname()
 try:
     ipaddress = socket.gethostbyname(ipaddress)
 except:
@@ -73,7 +74,7 @@ thisserver = "http://{}:{}".format(ipaddress, port)
 
 @app.route('/')
 def home():
-    return render_template('index.html', server=thisserver)
+    return render_template('index.html', hostname=socket.gethostname())
     #return render_template('index.html', server="http://localhost:8080")  # server is this machine
 
 @app.route('/get_mission')
@@ -82,7 +83,7 @@ def get_mission():
     olat = request.args.get('olat')  #
     olon = request.args.get('olon')  #
 
-    latlngs, origin = parse_mission(filepath, [olat, olon])
+    latlngs, origin = pd.parse_mission(filepath, [olat, olon])
 
     return jsonify({"latlngs": latlngs, "origin": origin})
 
@@ -91,9 +92,18 @@ def get_mission():
 def get_config():
     cfg = request.args.get('cfg')
     sec = request.args.get('sec')
+
+    if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
+        shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
+
     config = ConfigParser.ConfigParser()
     config.read(cfg)
     if sec is None:
+        file = open(cfg, 'r')
+        cfgtext = file.read()
+        file.close()
+        return cfgtext
+    elif sec == "all":
         return jsonify(config.sections())
     else:
         dict = {}
@@ -128,7 +138,7 @@ def platformdata():
     # platform as a GET argument
     thisplatform = request.args.get('platform')
     # get_platformdata is a function contained in included python script
-    return jsonify(get_platformdata(thisplatform))
+    return jsonify(pd.get_platformdata(thisplatform))
 
 
 @app.route('/set_waypoint')
@@ -138,7 +148,7 @@ def set_waypoint():
     lat = request.args.get('lat')
     lon = request.args.get('lon')
 
-    platform, response = send_waypoint(thisplatform, lat, lon)
+    platform, response = pd.send_waypoint(thisplatform, lat, lon)
 
     return jsonify({"result": response, "platform": platform})
 
@@ -153,7 +163,7 @@ if __name__ == '__main__':
 
     # Start threads that do update vehicle data
     print "Starting data threads..."
-    init_platformdata_threads()
+    pd.init_platformdata_threads()
 
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
@@ -166,8 +176,4 @@ if __name__ == '__main__':
 
     http_server = WSGIServer(('', port), app)
     http_server.serve_forever()
-
-    terminate_platformdata_threads()
-
-    exitFlag = 1
 
