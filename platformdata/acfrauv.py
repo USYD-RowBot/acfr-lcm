@@ -52,7 +52,6 @@ from senlcm import usbl_fix_t
 # This global dictionary stores all the platform information updates
 platformdata = {}
 
-threads = []
 
 ######################################################################
 # Start threads for platform updates
@@ -60,16 +59,8 @@ threads = []
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    thread_list = [LcmThread()]
-    for t in thread_list:
-        tid = t
-        threads.append(t)
-        t.start()
+    LcmThread().start()
 
-
-def terminate_platformdata_threads():
-    for t in threads:
-        t.terminate()
 
 ######################################################################
 # Get data for a specific platform
@@ -99,27 +90,27 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
         else:
             print 'Incorrect mission type'
             return
+
+        mission.load(filepath)
+        origin = [mission.getOriginLat(), mission.getOriginLon()]
+        if origin[0] == 0 or origin[1] == 0:
+            origin = cfgorigin
+
+        waypoints = mission.dumpSimple()
+
+        # convert the waypoints to latitude and longitude
+        projStr = '+proj=tmerc +lon_0={} +lat_0={} +units=m'.format(origin[1], origin[0])
+        p = pyproj.Proj(projStr)
+
+        latlngs = []
+        for wpt in waypoints:
+            ll = p(wpt.y, wpt.x, inverse=True)
+            latlng = [ll[1], ll[0]]
+            latlngs.append(latlng)
+
     except:
-        print "Unable to open mission!!!"
+        print "Unable to parse mission!!!"
         return
-
-    mission.load(filepath)
-    origin = [mission.getOriginLat(), mission.getOriginLon()]
-    if origin[0] == 0 or origin[1] == 0:
-        origin = cfgorigin
-
-    waypoints = mission.dumpSimple()
-
-    # convert the waypoints to latitude and longitude
-    projStr = '+proj=tmerc +lon_0={} +lat_0={} +units=m'.format(origin[1], origin[0])
-    p = pyproj.Proj(projStr)
-
-    latlngs = []
-    for wpt in waypoints:
-        ll = p(wpt.y, wpt.x, inverse=True)
-        latlng = [ll[1], ll[0]]
-        latlngs.append(latlng)
-
     return latlngs, origin
 
 ######################################################################
@@ -211,8 +202,6 @@ class LcmThread(threading.Thread):
             }
         }
 
-    def terminate(self):
-        self.exitFlag = True
 
 
     def run(self):

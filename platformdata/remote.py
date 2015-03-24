@@ -31,10 +31,6 @@ remoteserver = ["http://144.6.227.28:8080"]
 def init_platformdata_threads():
     getRemoteDataThread(1).start()
 
-# if you need to do some bookeeping on exit, flesh this out...
-# it is not needed in this case, because we have deamonized threads.
-def terminate_platformdata_threads():
-    return 0
 
 ######################################################################
 # Get data for a specific platform
