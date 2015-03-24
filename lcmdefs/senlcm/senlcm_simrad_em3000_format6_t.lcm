@@ -1,0 +1,16 @@
+package senlcm;
+
+struct simrad_em3000_format6_t
+{
+    int64_t utime;
+    
+    int32_t data_time;
+
+	float r;
+	float p;
+	float h; /* 16 bit uint, so 32 bit signed int */
+	float heave;
+
+}
+
+
