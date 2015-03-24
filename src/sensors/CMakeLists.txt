@@ -18,7 +18,8 @@ perls_add_folder (tritech-es "Build Tritech Micron Echo Sounder DST driver?" OFF
 perls_add_folder (velodyne "Build Velodyne HDL driver (supports 64 and 32)?" OFF)
 perls_add_folder (xbox-controller "Build Microsoft Xbox controller driver?" OFF)
 
-
+perls_add_folder (seapath320_bf3 "Build seapth320_bf3 driver?" ON)
+perls_add_folder (simrad_em3000_format6 "Build simrad_em3000_format6 driver?" ON)
 perls_add_folder (novatel "Build Novatel driver?" ON)
 perls_add_folder (deltaT "Build DeltaT driver?" ON)
 perls_add_folder (os-power-system "Build OS power system driver?" ON)
