@@ -160,7 +160,9 @@ class LcmThread(threading.Thread):
             'pose': {
                 'lat': msg.latitude,          # REQUIRED (decimal degrees)
                 'lon': msg.longitude,         # REQUIRED (decimal degrees)
-                'heading': math.degrees(msg.heading)        # REQUIRED (degrees)
+                'heading': math.degrees(msg.heading),        # REQUIRED (degrees)
+                'roll': math.degrees(msg.roll),        # REQUIRED (degrees)
+                'pitch': math.degrees(msg.pitch)        # REQUIRED (degrees)
             }
         }
 
