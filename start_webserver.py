@@ -40,7 +40,7 @@
 #
 ######################################################################
 
-from flask import Flask, Response, request, render_template, url_for, send_from_directory #, jsonify
+from flask import Flask, Response, request, render_template, url_for, send_from_directory, redirect #, jsonify
 from flask.ext.jsonpify import jsonify   # allow cross-domain jsonp messages (for use across the network)
 import socket  # to get local hostname and ip address easily
 import ConfigParser
@@ -88,28 +88,34 @@ def get_mission():
     return jsonify({"latlngs": latlngs, "origin": origin})
 
 
-@app.route('/get_config')
+@app.route('/get_config', methods=['GET', 'POST'])
 def get_config():
     cfg = request.args.get('cfg')
-    sec = request.args.get('sec')
-
-    if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
-        shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
-
-    config = ConfigParser.ConfigParser()
-    config.read(cfg)
-    if sec is None:
-        file = open(cfg, 'r')
-        cfgtext = file.read()
-        file.close()
-        return cfgtext
-    elif sec == "all":
-        return jsonify(config.sections())
+    if request.method == 'POST':
+        cfgtext = request.form.get('cfgtxt')
+        f = open(cfg, 'w')
+        f.write(cfgtext)
+        f.close()
+        return redirect("/")
     else:
-        dict = {}
-        for opt in config.options(sec):
-            dict[opt] = config.get(sec, opt)
-        return jsonify(dict)
+        sec = request.args.get('sec')
+        if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
+            shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
+
+        config = ConfigParser.ConfigParser()
+        config.read(cfg)
+        if sec is None:
+            f = open(cfg, 'r')
+            cfgtext = f.read()
+            f.close()
+            return cfgtext
+        elif sec == "all":
+            return jsonify(config.sections())
+        else:
+            dict = {}
+            for opt in config.options(sec):
+                dict[opt] = config.get(sec, opt)
+            return jsonify(dict)
 
 
 @app.route('/get_geotiff')
