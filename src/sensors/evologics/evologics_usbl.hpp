@@ -13,12 +13,10 @@
 #include <netdb.h>
 #include <bot_param/param_client.h>
 #include <proj_api.h>
-#include "evologics.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-common/serial.h"
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
-//#include "perls-lcmtypes++/senlcm/usbl_fix_short_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
@@ -66,55 +64,22 @@ class Evologics_Usbl
         int load_config(char *program_name);
         int init();
         int process();
-        int calc_position(const evologics_usbl_t *evo);
-        int ping_targets();
-        int get_target_channel(const char *target_name);
-        int get_target_name(int target_channel, char *target_name);
-        int parse_ahrs_message(char *buf);
+        int process_usblfix(const std::string& channel, const evologics_usbl_t *evo);
+//        int ping_targets();
+//        int get_target_channel(const char *target_name);
+//        int get_target_name(int target_channel, char *target_name);
+//        int parse_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
         // data holders
         gpsd3_t gpsd;
         deque<novatel_t *> novatelq;
-        queue<evologics_usbl_t *> fixq;
         novatel_t novatel;
         ahrs_t ahrs;
         
-        Evologics *evo;
-        
         bool send_fixes;
-         
-        
-    private:
-        // serial io
-        char *parity;
-        int baud;
-        char *device;
-        bool use_serial_comm;
-        // ip io
-        int open_port();
-        char *ip;
-        char *inet_port;
-        bool use_ip_comm;
-        char term;
 
-        int ahrs_fd;
-        int evo_fd;
-        int gain;
-        int source_level;
-        bool auto_gain;
-        
-        //int open_port(const char *port);
-        
-        // targets
-        int targets[MAX_TARGETS];
-        char **target_names;
-        int num_targets;
-        int current_ping_target;
-        char **lcm_channels;
-        char **lcm_pbm_channels;
-    
-       
+    private:
         bool has_ahrs;
         attitude_source_t attitude_source;
         gps_source_t gps_source;
@@ -128,16 +93,8 @@ class Evologics_Usbl
         // Proj4 lat lon projection
         projPJ pj_latlong;
         
-        int ping_period;
-        int ping_counter; 
-        int ping_time;
-        int ping_timeout;
+//        int usbl_send_counter[MAX_TARGETS];    
+//        int usbl_send[MAX_TARGETS]; 
         
-        int usbl_send_counter[MAX_TARGETS];    
-        int usbl_send[MAX_TARGETS]; 
-        
-        pthread_t fix_thread_id;
-        
-       
 };
          

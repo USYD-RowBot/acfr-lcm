@@ -48,10 +48,10 @@ class Evo_Data_Out
 class Evologics
 {
     public:
-        Evologics(char *device, int baud, char *parity, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
-        Evologics(char *ip, char *port, lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        Evologics(char *device, int baud, char *parity, lcm::LCM *lcm, int _ping_timeout);
+        Evologics(char *ip, char *port, lcm::LCM *lcm, int _ping_timeout);
         ~Evologics();
-        int init(lcm::LCM *lcm, queue<evologics_usbl_t *> *q, int _ping_timeout);
+        int init(lcm::LCM *lcm, int _ping_timeout);
         int start_threads();
         int reopen_port();
         int open_serial_port();
@@ -95,7 +95,7 @@ class Evologics
         // Out data FIFO
         //vector<Evo_Data_Out *> command_queue;
         //vector<Evo_Data_Out *> data_queue;
-        queue<evologics_usbl_t *> *fixq;
+        //queue<evologics_usbl_t *> *fixq;
         //int send_data(unsigned char *d, int size, int type, int target, int push_data_front);
         
         // Queue management commands

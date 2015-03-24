@@ -159,7 +159,7 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 }
 
 
-Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, int _ping_timeout)
 {
     device = _device;
     baud = _baud;
@@ -167,20 +167,20 @@ Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, qu
     use_serial_port = true;
     use_ip_port = false;
 
-    init(_lcm, q, _ping_timeout);
+    init(_lcm, _ping_timeout);
     fd = open_serial_port();
     term = '\r';
     start_threads();
 }
 
-Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, int _ping_timeout)
 {
     ip = _ip;
     port = _port;
     use_serial_port = false;
     use_ip_port = true;
 
-    init(_lcm, q, _ping_timeout);
+    init(_lcm, _ping_timeout);
     fd = open_port(ip.c_str(), port.c_str());
     term = '\n';
     start_threads();
@@ -193,10 +193,10 @@ Evologics::~Evologics()
     pthread_join(read_thread_id, NULL);
 }
 
-int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+int Evologics::init(lcm::LCM *_lcm, int _ping_timeout)
 {
     lcm = _lcm;
-    fixq = q;
+    //fixq = q;
     ping_timeout = _ping_timeout;
     
     sending_im = false;
@@ -671,12 +671,12 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     
     // put it in the queue for position calculation
     
-    if(fixq != NULL)
+    /*if(fixq != NULL)
     {
         evologics_usbl_t *fq = new evologics_usbl_t;
         memcpy(fq, &ud, sizeof(evologics_usbl_t));
         fixq->push(fq);
-    }
+    }*/
     
     return 1;
 }
@@ -839,51 +839,6 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
        sending_im = true;
        pthread_mutex_unlock(&flags_lock);
        pthread_mutex_unlock(&(write_lock));
-       /*if(target != current_target)
-       {
-           // we need to change targets, this is the only place we are doing
-           // out of queue command writes to the modem
-           //send_command("ATZ4");
-       
-           int retry = 0;
-           //while(evo->current_target != (*od)->target && retry < 5)
-           {
-               cout << "Target, current: " << current_target << "   destination: " << target << endl;
-               char msg[32];
-               sprintf(msg, "AT!AR%d", target);
-               send_command(msg);
-
-               send_command("AT?AR");
-
-               retry++;
-           }
-       }     
-
-       if(target != current_target)
-       {
-           cerr << "Could not change the modem data target\n";
-       } else {
-           pthread_mutex_lock(&flags_lock);
-           if(!sending_data)
-           {
-               pthread_mutex_lock(&(write_lock));
-               int bytes = write(fd, dout, size);
-               pthread_mutex_unlock(&(write_lock));
-               if( bytes == -1)
-               {
-                   perror("Failed to send data to modem:");
-                   sending_data = false;
-                   reopen_port();
-               }
-               else
-               {
-                   DEBUG_PRINTF(("Sending %d bytes of LCM data to channel: %.*s\n", data_size, dout[3], &dout[4]));
-                   drop_at_send = drop_counter;
-               }
-           }
-           pthread_mutex_unlock(&flags_lock);    
-       }
-       */
    }
 
    return 1;
