@@ -48,7 +48,13 @@
             <div class="modal-content">
               <div class="modal-body">
                 <a href="javascript:void(0)" class="pull-right close" data-dismiss="modal"><i class="fa fa-times"></i></a>
-                <i class="fa fa-gears"></i> This modal will contain settings and allow you to configure data server URLs, and platform layers
+                <div><b><i class="fa fa-gears"></i> Config File Editor</b></div>
+                <form id="cfgform" method="post" action="get_config">
+                    <input name="cfgfile" id="cfgfile" style="width: 100%; border: none; background-color: #EEE; margin-bottom: 2px;" value="filename" disabled>
+                    <textarea name="cfgtxt" id="cfgtxt" style='width: 100%; border: none; height: 450px; background-color: #EEE; font: 11px "Courier New", courier, monospace;'></textarea>
+                    <button class="btn btn-primary pull-right" type="submit" title="Update">Update</button>
+                    <button class="btn btn-primary" type="button" title="Cancel" data-dismiss="modal">Cancel</button>
+                </form>
               </div>
             </div>
           </div>
@@ -59,6 +65,12 @@
             // Create the map object - subscribe to an address
             var cfgfile = "config/{{ hostname }}.ini"; // server from template address
             var map = new auvmapper();
+
+            $("#settings").on('shown.bs.modal', function () {
+                $("#cfgform").attr("action","get_config?cfg="+cfgfile);
+                $("#cfgfile").attr("value",cfgfile);
+                $("#cfgtxt").load("get_config?cfg="+cfgfile);
+            });
 
             $(window).resize(function () {
                 map.fullsize();
