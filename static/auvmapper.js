@@ -332,8 +332,8 @@ function auvmapper () {
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
                     $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: "+((Date.parse(Date())-Date.parse(_this.info[platform].data('msgts')))/1000)+" s ago</b>");
                 }
-                var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
-                setTimeout(function(){$flashupd.hide();},250)
+                var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show(100);
+                setTimeout(function(){$flashupd.hide(100);},250);
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},interval);
             },
             error : function (jqXHR, status, desc) {
