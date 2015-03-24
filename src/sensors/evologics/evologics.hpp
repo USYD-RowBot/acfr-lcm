@@ -1,6 +1,5 @@
+#include <iostream>
 #include <lcm/lcm-cpp.hpp>
-#include <small/Pose3D.hh>
-//#include <proj_api.h>
 #include <pthread.h>
 #include <unistd.h>
 #include <deque>
@@ -80,6 +79,7 @@ class Evologics
         bool sending_im;
         bool sending_data;
         bool sending_command;
+	string command_sent;
         int current_target;
         
         // Variables for ranging

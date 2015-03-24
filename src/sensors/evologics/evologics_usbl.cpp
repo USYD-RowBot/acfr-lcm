@@ -752,7 +752,11 @@ int Evologics_Usbl::process()
     {
         // check the port status, broekn pipes
         if(pipe_broken)
-            evo->open_port(ip, inet_port);
+        {
+            cout << "Evologics_Usbl: process found pipe_broken.  Reconnecting." << endl;
+            if (evo->open_port(ip, inet_port) > 0)
+	        pipe_broken = false;
+        }
         
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
@@ -777,8 +781,8 @@ int Evologics_Usbl::process()
             }
                 
         }
-        else
-            cout << "select timeout\n";
+        //else
+        //    cout << "select timeout\n";
     }
     delete evo;
     
@@ -787,6 +791,7 @@ int Evologics_Usbl::process()
 
 void signal_handler(int sig)
 {
+    cout << "WARNING: Caught signal: " << sig << endl;
     if(sig == SIGPIPE)
         // the connection to the Evologics has failed for some reason,
         // we will just reconnect it
@@ -800,8 +805,11 @@ int main(int argc, char **argv)
 {
     // install the exit handler
     loop_exit = 0;
-    signal(SIGINT, signal_handler);
-    signal(SIGPIPE, signal_handler);
+    if (signal(SIGINT, signal_handler) == SIG_ERR)
+         perror("ERROR: Can't register signal_handler for SIGINT");
+    //if (signal(SIGPIPE, signal_handler) == SIG_ERR)
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+         perror("ERROR: Can't register signal_handler for SIGPIPE");
     Evologics_Usbl *usbl = new Evologics_Usbl;
     usbl->load_config(basename((argv[0])));
     usbl->init();

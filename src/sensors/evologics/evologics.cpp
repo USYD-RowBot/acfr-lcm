@@ -202,6 +202,7 @@ int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_time
     sending_im = false;
     sending_data = false;
     sending_command = false;
+    command_sent = "";
     current_target = 0;
     drop_counter = 0;
     im_sent = 0;
@@ -289,13 +290,14 @@ int Evologics::open_port(const char *ip, const char *port)
        evo_fd = -1;
     }
 
+    freeaddrinfo(result);
+
     if (evo_addr == NULL)
     {
        printf("Could not connect to %s on port %s\n", ip, port);
     } else {
        printf("Successfully connected to %s on port %s\n", ip, port);
 
-       freeaddrinfo(result);
 
        //struct timeval tv;
        //tv.tv_sec = 1;  // 1 Secs Timeout
@@ -362,6 +364,7 @@ int Evologics::handle_heartbeat()
         {
             pthread_mutex_lock(&flags_lock);
             sending_command = false;
+            command_sent = "";
             pthread_mutex_unlock(&flags_lock);
             command_timeout_counter = 0;
             cout << "Sending command timed out." << endl;
@@ -409,6 +412,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
     }
@@ -430,23 +434,33 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
         send_command("AT?T");
     }
-    else if(strstr((const char *)d, "AT?T") != NULL)
+    else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {
-        sending_command = false;
+        cout << "Evologics: Received AT?T reply " << d << endl;
         char *tokens[4];
+        evologics_range_t er;
         if(chop_string(d, tokens, 4) == 4)
         {
-            evologics_range_t er;
             er.time = atoi(tokens[3]);
-            er.target = last_im_target;
-            er.source = local_address;
-            er.utime = last_im_timestamp;
-            lcm->publish("EVOLOGICS_RANGE", &er);
+        } else if(chop_string(d, tokens, 1) == 1) {
+            er.time = atoi(tokens[0]);
+        } else {
+            return 0;
         }
+        er.target = last_im_target;
+        er.source = local_address;
+        er.utime = last_im_timestamp;
+        lcm->publish("EVOLOGICS_RANGE", &er);
+        
+        pthread_mutex_lock(&flags_lock);
+        sending_command = false;
+        command_sent = "";
+        pthread_mutex_unlock(&flags_lock);
     }
     // Data sent, channel ready
     else if((strstr((const char *)d, "LISTEN") != NULL) ||
@@ -462,6 +476,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         }
             
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "ONLINE") != NULL) 
@@ -469,6 +484,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_data = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Command response
@@ -476,6 +492,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Command response
@@ -483,6 +500,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Target change
@@ -493,6 +511,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
             current_target = atoi(tokens[3]);
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Request positioning information
@@ -500,12 +519,14 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "OUT_OF_CONTEXT") != NULL)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Get the local address
@@ -513,6 +534,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
@@ -525,6 +547,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[3];
         if(chop_string(d, tokens, 3) == 3)
@@ -538,6 +561,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
@@ -550,6 +574,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
         {
@@ -565,10 +590,13 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else
+    {
         cerr << "Unknown modem message: " << d;
+    }
     
     //pthread_mutex_unlock(&flags_lock);
     return 1;   
@@ -879,8 +907,8 @@ int Evologics::send_command(const char *d)
     }
     else
     {
-        //command_sent = true;
-        sending_command= true;
+        sending_command = true;
+        command_sent = *d;
     }
     wait_for_command_response();
     return 1;
