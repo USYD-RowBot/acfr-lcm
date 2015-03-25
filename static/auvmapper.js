@@ -420,7 +420,7 @@ function auvmapper () {
                         .click(function(){_this.layers.overlays[tracklayer].setLatLngs([])})
                         .tooltip({title:"Clear track history",trigger:"hover",container:"body"})
                     );
-                if (dispoptions.setwaypoint)
+                if (dispoptions.setwaypoint && window.location.hash !== "#display")
                     $(ctldiv).prepend($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
                         .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
@@ -531,10 +531,11 @@ function auvmapper () {
                     _this.map.on("click",function(e){
                         $.ajax({
                             dataType: "jsonp",
-                            url: "set_waypoint",
-                            data: {platform: platform},
+                            method: "POST",
+                            url: "send_to_platform",
+                            data: {platform: platform, lat:e.latlng.lat, lon: e.latlng.lng},
                             success: function (data) {
-                                bootbox.alert("You clicked the map at:<br><br>LAT: " + e.latlng.lat + "<br>LON: " + e.latlng.lng+"<br><br>Platform: "+data.platform+"<br>Response: "+data.result);
+                                bootbox.alert(data.platform+"<br>Response: "+data.result);
                             },
                             error : function (jqXHR, status, desc) {
                                 console.log("Cannot load mission: "+filepath,jqXHR);

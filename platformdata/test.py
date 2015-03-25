@@ -66,10 +66,13 @@ def parse_mission (filepath, orig=[0, 0]):
 # Set waypoint
 # TODO: make real
 ######################################################################
-def send_waypoint(platform, lat, lon):
+def send_to_platform(args):
 
-    response = "This feature has not been implemented yet!!!"
-    return platform, response
+    response = "This feature has not been implemented yet!!!<br>You provided the following arguments:"
+    for k in args:
+        response += "<br>{}: {}".format(k, args[k])
+
+    return args['platform'], response
 
 
 ######################################################################
@@ -124,6 +127,7 @@ class FakeAUVThread (threading.Thread):
                     'state': randint(0, 1),
                     'coms': randint(0, 1),
                     'status': randint(0, 1),
+                    'new':1,
                     'lag':0
                 }
             }

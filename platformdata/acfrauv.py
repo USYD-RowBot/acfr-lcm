@@ -117,7 +117,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
 # Set waypoint
 # TODO: make real
 ######################################################################
-def send_waypoint(platform, lat, lon):
+def send_to_platform(platform, lat, lon):
 
     response = "This feature has not been implemented yet!!!"
     return platform, response
@@ -191,13 +191,13 @@ class LcmThread(threading.Thread):
                 'dvl_bl': not msg.status & (1 << 1),
                 'gps': not msg.status & (1 << 2),
                 'depth': not msg.status & (1 << 3),
-                'compass': not msg.status & (1 << 4),
+                'comp': not msg.status & (1 << 4),
                 'imu': not msg.status & (1 << 5),
                 'oas': not msg.status & (1 << 6),
                 'nav': not msg.status & (1 << 7),
-                'ecopuck': not msg.status & (1 << 8),
+                'epuck': not msg.status & (1 << 8),
                 'abort': not msg.status & (1 << 9),
-                'pressure': not msg.status & (1 << 13),
+                'presr': not msg.status & (1 << 13),
                 'leak': not msg.status & (1 << 15)
             }
         }

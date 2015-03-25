@@ -62,7 +62,7 @@ def parse_mission (filepath, origin=[0, 0]):
 # Set waypoint
 # TODO: make real
 ######################################################################
-def send_waypoint(platform, lat, lon):
+def send_to_platform(platform, lat, lon):
 
     response = "This feature has not been implemented yet!!!"
     return platform, response
