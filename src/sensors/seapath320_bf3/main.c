@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -89,8 +90,8 @@ static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status
     int32_t raw_lat = ntohl(*(uint32_t *)(buf + 7));
     int32_t raw_lon = ntohl(*(uint32_t *)(buf + 11));
 
-    status->latitude = 180.0 * fixed_double(raw_lat);
-    status->longitude = 180.0 * fixed_double(raw_lon);
+    status->latitude = M_PI * fixed_double(raw_lat);
+    status->longitude = M_PI * fixed_double(raw_lon);
 
     status->ship_id = (int8_t)1;
     status->name = (char *)"FALKOR";
