@@ -44,7 +44,7 @@ except:
     print "Unable to load missionXML (Iver)"
 
 
-from acfrlcm import auv_status_t, ship_status_t
+from acfrlcm import auv_status_short_t, ship_status_t
 from senlcm import usbl_fix_t
 #except:
 #    pass
@@ -161,7 +161,7 @@ class LcmThread(threading.Thread):
 
     def auvStatusHandler(self, channel, data):
         print channel
-        msg = auv_status_t.decode(data)
+        msg = auv_status_short_t.decode(data)
         print msg
         platform = '{}'.format(msg.target_id)
         msgid = msg.utime
@@ -206,7 +206,7 @@ class LcmThread(threading.Thread):
 
     def run(self):
         self.lc = lcm.LCM()
-        self.lc.subscribe("AUV_STATUS.*", self.auvStatusHandler)
+        self.lc.subscribe("AUVSTAT.*", self.auvStatusHandler)
         self.lc.subscribe("SHIP_STATUS.*", self.shipStatusHandler)
         self.lc.subscribe("USBL_FIX", self.usblFixHandler)
 
