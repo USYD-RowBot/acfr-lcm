@@ -366,10 +366,10 @@ function auvmapper () {
         else if (format == "alerts") {
             for (var key in data) {
                 if (data[key] == 1)
-                    datastr += "<div class='alert alert-success'>" + key + "</div>";
+                    datastr += "<div class='alert alert-danger'>" + key + "</div>";
                     //datastr += "<div class='alert alert-success'>" + key + ": <b>OK</b></div>";
                 else
-                    datastr += "<div class='alert alert-danger'>" + key + "</div>";
+                    datastr += "<div class='alert alert-success'>" + key + "</div>";
                     //datastr += "<div class='alert alert-danger'>" + key;// + ":<br><small>" + data[key] + "</small></div>";
             }
         }
