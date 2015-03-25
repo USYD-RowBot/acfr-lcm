@@ -93,9 +93,6 @@ static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status
     status->latitude = M_PI * fixed_double(raw_lat);
     status->longitude = M_PI * fixed_double(raw_lon);
 
-    status->ship_id = (int8_t)1;
-    status->name = (char *)"FALKOR";
-
     uint8_t sum = 0;
     int i = 0;
     for (i = 2;i<51;++i) {
