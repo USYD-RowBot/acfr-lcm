@@ -149,11 +149,11 @@ class LcmThread(threading.Thread):
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
-                'lat': round(msg.latitude,8),          # REQUIRED (decimal degrees)
-                'lon': round(msg.longitude,8),         # REQUIRED (decimal degrees)
-                'heading': round(math.degrees(msg.heading),2),        # REQUIRED (degrees)
-                'roll': round(math.degrees(msg.roll),2),        # REQUIRED (degrees)
-                'pitch': round(math.degrees(msg.pitch),2)        # REQUIRED (degrees)
+                'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
+                'lon': round(math.degrees(msg.longitude), 8),         # REQUIRED (decimal degrees)
+                'heading': round(math.degrees(msg.heading), 2),        # REQUIRED (degrees)
+                'roll': round(math.degrees(msg.roll), 2),        # REQUIRED (degrees)
+                'pitch': round(math.degrees(msg.pitch), 2)        # REQUIRED (degrees)
             }
         }
 
@@ -168,8 +168,8 @@ class LcmThread(threading.Thread):
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
-                'lat': math.degrees(msg.latitude),                  # REQUIRED (decimal degrees)
-                'lon': math.degrees(msg.longitude),                 # REQUIRED (decimal degrees)
+                'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)
+                'lon': round(math.degrees(msg.longitude), 8),                 # REQUIRED (decimal degrees)
                 'heading': round(msg.heading/10.0,1), # REQUIRED (degrees)
                 'alt': msg.altitude/10.0,                           # OPTIONAL (m)
                 'depth': msg.depth/10.0,                            # OPTIONAL (m)
