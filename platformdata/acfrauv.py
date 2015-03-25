@@ -175,13 +175,15 @@ class LcmThread(threading.Thread):
                 'depth': msg.depth/10.0,                            # OPTIONAL (m)
                 'roll': round(msg.roll/10.0,1),       # OPTIONAL / REQUIRED for dashboard (degrees)
                 'pitch': round(msg.pitch/10.0,1)      # OPTIONAL / REQUIRED for dashboard (degrees)
+                #'uncertainty': 1
             },
             'stat': {
                 # You can add whatever custom status messages you like here
                 # NB: 'bat' has a special display widget
                 # Any others, just get displayed normally
                 'bat': msg.charge,                     # REQUIRED for dashboard (int 0-100)
-                'waypt': msg.waypoint
+                'waypt': msg.waypoint,
+                '#imgs': msg.img_count
                 #'state': 'OK'
             },
             'alert': {
