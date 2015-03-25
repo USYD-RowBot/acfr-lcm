@@ -186,19 +186,19 @@ class LcmThread(threading.Thread):
             },
             'alert': {
                 # You can add whatever custom alerts you like here.
-                # Must return 1 for OK, anything else shows as error.
-                'dvl': msg.status & (1 << 0),
-                'dvl_bl': msg.status & (1 << 1),
-                'gps': msg.status & (1 << 2),
-                'depth': msg.status & (1 << 3),
-                'compass': msg.status & (1 << 4),
-                'imu': msg.status & (1 << 5),
-                'oas': msg.status & (1 << 6),
-                'nav': msg.status & (1 << 7),
-                'ecopuck': msg.status & (1 << 8),
-                'abort': msg.status & (1 << 9),
-                'pressure': msg.status & (1 << 13),
-                'leak': msg.status & (1 << 15)
+                # Must return 1 for error, 0, for OK.
+                'dvl': not msg.status & (1 << 0),
+                'dvl_bl': not msg.status & (1 << 1),
+                'gps': not msg.status & (1 << 2),
+                'depth': not msg.status & (1 << 3),
+                'compass': not msg.status & (1 << 4),
+                'imu': not msg.status & (1 << 5),
+                'oas': not msg.status & (1 << 6),
+                'nav': not msg.status & (1 << 7),
+                'ecopuck': not msg.status & (1 << 8),
+                'abort': not msg.status & (1 << 9),
+                'pressure': not msg.status & (1 << 13),
+                'leak': not msg.status & (1 << 15)
             }
         }
 
