@@ -116,12 +116,13 @@ int Evologics_Modem::ping_targets()
     return 1;
 }
 
-int Evologics_Modem::get_target_channel(const char *target_name)
+int Evologics_Modem::get_target_channel(const string target_name)
 {
     int target_index = 0;
     while (target_names[target_index] != NULL)
     {
-       if (!strcmp(target_names[target_index], target_name))
+       //if (!strcmp(target_names[target_index], target_name.c_str()))
+       if (target_name == target_names[target_index])
        {
           break;
        }
@@ -129,20 +130,20 @@ int Evologics_Modem::get_target_channel(const char *target_name)
     }
     if (target_names[target_index] == NULL)
     {
-       printf("Target %s not found\n", target_name);
+       cout << "Target " << target_name << " not found" << endl;
        return -1;
     } else {
        return targets[target_index];
     }
 }
 
-int Evologics_Modem::get_target_name(int target_channel, char *target_name)
+int Evologics_Modem::get_target_name(const int target_channel, string &target_name)
 {
     for (int target_index = 0; target_index < num_targets; target_index++)
     {
        if (targets[target_index] == target_channel)
        {
-         strcpy(target_names[target_index], target_name);
+         target_name = target_names[target_index];
          return 1;
        }
     } 
@@ -357,7 +358,7 @@ int Evologics_Modem::init()
     //send_command("ATA");      // listen state
     //send_command("ATD");      // establish an acoustic connection
 
-    send_command("AT!RT500");     // set the retry count on burst data
+    send_command("AT!RT1500");     // set the retry count on burst data
     send_command("AT!RC1");     // set the retry timeout on burst data
 
 
@@ -819,9 +820,9 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
     else if(strstr((const char *)d, "DELIVEREDIM") != NULL)
     {
         // Find out who the target was
-        char *tokens[4];
-        if(chop_string(d, tokens, 4) == 4)
-            last_im_target = atoi(tokens[3]);
+        char *tokens[2];
+        if(chop_string(d, tokens, 2) == 2)
+            last_im_target = atoi(tokens[1]);
         last_im_timestamp = timestamp;
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
@@ -847,7 +848,12 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
         er.target = last_im_target;
         er.source = local_address;
         er.utime = last_im_timestamp;
-        lcm->publish("EVO_RANGE", &er);
+
+        string target_name;
+        char usbl_range_channel_name[64];
+        get_target_name(er.target, target_name);
+        sprintf(usbl_range_channel_name, "EVO_RANGE.%s", target_name.c_str());
+        lcm->publish(usbl_range_channel_name, &er);
         
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
@@ -1059,10 +1065,10 @@ int Evologics_Modem::parse_usbllong(char *d, int64_t timestamp)
     ud.integrity = atoi(tokens[15]);
     ud.accuracy = atof(tokens[16]);
     
-    char target_name[64];
+    string target_name;
     char usbl_fix_channel_name[64];
     get_target_name(ud.remote_id, target_name);
-    sprintf(usbl_fix_channel_name, "EVO_USBLFIX.%s", target_name);
+    sprintf(usbl_fix_channel_name, "EVO_USBLFIX.%s", target_name.c_str());
 
     lcm->publish(usbl_fix_channel_name, &ud);
     
@@ -1260,7 +1266,8 @@ int Evologics_Modem::send_command(const char *d)
     else
     {
         sending_command = true;
-        command_sent = *d;
+        command_sent = d;
+        cout << "Evologics_Modem: send_command sent command " << command_sent << ". Waiting for response." << endl;
     }
     wait_for_command_response();
     return 1;

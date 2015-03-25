@@ -49,8 +49,8 @@ class Evologics_Modem
         int process();
         //int calc_position(const evologics_usbl_t *evo);
         int ping_targets();
-        int get_target_channel(const char *target_name);
-        int get_target_name(int target_channel, char *target_name);
+        int get_target_channel(const string target_name);
+        int get_target_name(const int target_channel, string &target_name);
         int parse_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
