@@ -21,26 +21,26 @@ void on_gpsd(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const g
 	}
 }
 
-void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const novatel_t *nov, Evologics_Usbl* ev) 
+void on_ship_status(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ship_status_t *nov, Evologics_Usbl* ev) 
 {
 	// Accept GPS only under the following conditions:
 	// nov->status is INS_SOLUTION_GOOD 
 
     //if(nov->status == "INS_SOLUTION_GOOD" || nov->status == "INS_ALIGNMENT_COMPLETE")
     {
-        //cout << "nov size " << ev->novatelq.size() << endl;
+        //cout << "nov size " << ev->ship_statusq.size() << endl;
         
-        novatel_t *n = (novatel_t *)malloc(sizeof(novatel_t));
-        memcpy(n, nov, sizeof(novatel_t));
-        ev->novatelq.push_front(n);        
+        ship_status_t *n = (ship_status_t *)malloc(sizeof(ship_status_t));
+        memcpy(n, nov, sizeof(ship_status_t));
+        ev->ship_statusq.push_front(n);        
         
-        if(ev->novatelq.size() > 40)
+        if(ev->ship_statusq.size() > 40)
         {
-            free(ev->novatelq.back());
-            ev->novatelq.pop_back();
+            free(ev->ship_statusq.back());
+            ev->ship_statusq.pop_back();
         }
         
-    memcpy(&ev->novatel, nov, sizeof(novatel_t));
+    memcpy(&ev->ship_status, nov, sizeof(ship_status_t));
 	}
 }
 
@@ -89,18 +89,18 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     int nov_index = 0;
     SMALL::Vector3D target_world;
 
-    if(attitude_source == ATT_NOVATEL || gps_source == GPS_NOVATEL)
+    if(attitude_source == ATT_SHIP_STATUS || gps_source == GPS_SHIP_STATUS)
     {
-	if (novatelq.size() < 1)
+	if (ship_statusq.size() < 1)
 	{
 	    cout << "WARNING: Evologics_Usbl expecting Novatel data.  Not found." << endl;
 	    return 0;
 	}
-        // find the closest novatel message in the queue
+        // find the closest ship_status message in the queue
         int time_diff;
-        for(unsigned int i=0; i<novatelq.size(); i++)
+        for(unsigned int i=0; i<ship_statusq.size(); i++)
         {
-            time_diff = ef->utime - novatelq[i]->utime;
+            time_diff = ef->utime - ship_statusq[i]->utime;
             if(time_diff > 0)
             {
                 nov_index = i;
@@ -109,14 +109,14 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
             nov_index = i;
         }
         cout << "nov_index:" << nov_index << endl;
-        printf("ET: %ld, NT: %ld, %d\n", ef->utime, novatelq[nov_index]->utime, nov_index);  
+        printf("ET: %ld, NT: %ld, %d\n", ef->utime, ship_statusq[nov_index]->utime, nov_index);  
         
-        if(attitude_source == ATT_NOVATEL)
+        if(attitude_source == ATT_SHIP_STATUS)
         {
             
-            ship_roll = novatelq[nov_index]->roll;
-            ship_pitch = novatelq[nov_index]->pitch;
-            ship_heading = novatelq[nov_index]->heading;
+            ship_roll = ship_statusq[nov_index]->roll;
+            ship_pitch = ship_statusq[nov_index]->pitch;
+            ship_heading = ship_statusq[nov_index]->heading;
 
         }
         else if (attitude_source == ATT_EVOLOGICS_AHRS)
@@ -152,11 +152,11 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     char proj_str[64];
     double ship_latitude;
     double ship_longitude;
-    if(gps_source == GPS_NOVATEL)
+    if(gps_source == GPS_SHIP_STATUS)
     {
     
-        ship_latitude = novatelq[nov_index]->latitude * RTOD;
-        ship_longitude = novatelq[nov_index]->longitude * RTOD;
+        ship_latitude = ship_statusq[nov_index]->latitude * RTOD;
+        ship_longitude = ship_statusq[nov_index]->longitude * RTOD;
     } 
     else if(gps_source == GPS_GPSD)
     {
@@ -196,10 +196,11 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     
     // Novatel errors are in meters so we need to convert the standard deviations to a DRMS error so it can be
     // added to the Evologics error.
-    double nov_drms = sqrt(novatelq[nov_index]->latitude_sd * novatelq[nov_index]->latitude_sd + novatelq[nov_index]->longitude_sd * novatelq[nov_index]->longitude_sd);
-    printf("Nov error: %f, %f, DRMS: %f\n", novatelq[nov_index]->latitude_sd, novatelq[nov_index]->longitude_sd, nov_drms);
+    /*double nov_drms = sqrt(ship_statusq[nov_index]->latitude_sd * ship_statusq[nov_index]->latitude_sd + ship_statusq[nov_index]->longitude_sd * ship_statusq[nov_index]->longitude_sd);
+    printf("Nov error: %f, %f, DRMS: %f\n", ship_statusq[nov_index]->latitude_sd, ship_statusq[nov_index]->longitude_sd, nov_drms);
     
     uf.accuracy += nov_drms;
+    */
     
     // extract the platform id from the received channel name
     int channel_pos = channel.find_last_of('.');
@@ -255,8 +256,8 @@ int Evologics_Usbl::load_config(char *program_name)
     // Attitude source
     sprintf(key, "%s.attitude_source", rootkey);
     char *att_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strncmp(att_source_str, "NOVATEL", 4))
-        attitude_source = ATT_NOVATEL;
+    if(!strncmp(att_source_str, "SHIP_STATUS", 11))
+        attitude_source = ATT_SHIP_STATUS;
     else if(!strncmp(att_source_str, "EVOLOGICS", 9))
         attitude_source = ATT_EVOLOGICS_AHRS;
     else if(!strncmp(att_source_str, "EVO_COMPENSATED", 21))
@@ -267,8 +268,8 @@ int Evologics_Usbl::load_config(char *program_name)
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);
     char *gps_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strncmp(gps_source_str, "NOVATEL", 7))
-        gps_source = GPS_NOVATEL;
+    if(!strncmp(gps_source_str, "SHIP_STATUS", 11))
+        gps_source = GPS_SHIP_STATUS;
     else if(!strncmp(gps_source_str, "GPSD", 4))
         gps_source = GPS_GPSD;
     else if(!strncmp(gps_source_str, "AUV_STATUS", 4))
@@ -317,9 +318,9 @@ int Evologics_Usbl::init()
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
         
-    if((gps_source == GPS_NOVATEL) || (attitude_source == ATT_NOVATEL))
-        lcm->subscribeFunction("NOVATEL", on_novatel, this);
-    
+    if((gps_source == GPS_SHIP_STATUS) || (attitude_source == ATT_SHIP_STATUS))
+        lcm->subscribeFunction("SHIP_STATUS.*", on_ship_status, this);
+
     lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
     
     send_fixes = true;

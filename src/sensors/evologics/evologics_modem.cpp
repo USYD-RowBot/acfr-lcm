@@ -401,8 +401,6 @@ static void *read_thread(void *u)
     fd_set rfds;
     char buf[MAX_BUF_LEN];
     int bytes;
-    int data_type;
-    bool data_good;
     int64_t timestamp;
     
     while(!evo->thread_exit)
@@ -413,86 +411,40 @@ static void *read_thread(void *u)
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
         memset(buf, 0, MAX_BUF_LEN);
-        data_good = false;
         
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         timestamp = timestamp_now();
         if(ret > 0)
         {
             // we need to do single character reads as the termination character can change
-            // this minimum return is going to be 3 characters
             bytes = 0;
-            //char *d = &buf[0];
-            data_type = 0;
- /*           
-            bytes += read(fd, &d[bytes], 1);
-            if(buf[0] != '+' && buf[0] != 'L')
-                continue;
-            
-            
-            while(bytes < 3)
-                bytes += read(fd, &buf[bytes], 3-bytes); 
-                 
-            // check for the preamble, either +++ or LCM
-            if(!strncmp(buf, "LCM", 3))
+            while(bytes < (MAX_BUF_LEN))
             {
-                while(bytes < MAX_BUF_LEN)
-                {
-                    bytes += read(fd, &buf[bytes], 1);
-                    if((buf[bytes-2] == 'L') && (buf[bytes-1] == 'E'))
-                    {
-                        data_good = true;
-                        data_type = 2;
-                        break;
-                    }
-                    
-                    // for the strange case where we do not see the termination due to error
-                    // but we do get a +++, copy the first 3 bytes of the message, set the counter to 3
-                    // and continue
-                    if((buf[bytes-3] == '+') && (buf[bytes-2] == '+') && (buf[bytes-1] == '+'))
-                    {
-                        memcpy(buf, &buf[bytes-3], 3);
-                        memset(&buf[3], 0, MAX_BUF_LEN-3);
-                        bytes = 3;
-                        cout << "***** Found a +++ in the LCM data\n";
-                        break;
-                    }
-                    
-                }
-            }
-*/            
-            
-            //if(!strncmp(buf, "+++", 3) && data_type == 0)
-            {
-                while(bytes < (MAX_BUF_LEN))
-                {
-                    bytes += read(evo->fd, &buf[bytes], 1);
-                    if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
-                        break;
-                    
-                    data_good = true;
-                    data_type = 1;
-                }
-            }    
+               bytes += read(evo->fd, &buf[bytes], 1);
+               if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
+               {
+                  // a potential modem message
+                  cout << "Received potential modem data: " << bytes << " bytes. " << buf << endl;
 
-            
-            // only proceed if the data is good and we have more then just the header
-            if(data_good && bytes > 3)
-            {
-            
-                if(data_type == 1)
-                {   
-                    // a modem message
-                    cout << "Received modem data: " << bytes << " bytes. " << buf << endl;
-                    evo->parse_modem_data(buf, bytes, timestamp);
-                }
-                else if(data_type == 2)
-                {
-                    // LCM data
-                    cout << "Received LCM data: " << bytes << " bytes" << endl;
-                    evo->parse_lcm_data((unsigned char *)buf, bytes);
-                }
+                  // check if we've received an LCM message in the string
+                  if(strstr((const char *)buf, "RECV") != NULL &&
+                     strstr((const char *)buf, "LCM") != NULL)
+                  {
+                     if (buf[bytes-4] == 0x4C && buf[bytes-3] == 0x45)
+                     {
+                        if (evo->parse_modem_data(buf, bytes, timestamp))
+                           break;
+                     } else {
+                        cout << "Failed to find LE at end of potential LCM message.  Continuing to look for end of line character." << endl;
+                     }
+                  } else {
+                     // otherwise let's try to parse the message
+                     if (evo->parse_modem_data(buf, bytes, timestamp))
+                        break;
+                  }
+               }
             }
+            
         } else if (ret == -1) {
             char buf[64];
             sprintf(buf, "Select failed on read thread %d", evo->fd);
@@ -777,27 +729,27 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
     // USBL message
     if(strstr((const char *)d, "USBLLONG") != NULL)
     {
-        parse_usbllong(d, timestamp);
+        return parse_usbllong(d, timestamp);
     }
     // Short USBL message
     else if(strstr((const char *)d, "USBLANGLES") != NULL)
     {
-        parse_usblangles(d, timestamp);
+        return parse_usblangles(d, timestamp);
     }    
     // Received an IM
     else if(strstr((const char *)d, "RECVIM") != NULL)
     {
-        parse_im(d);
+        return parse_im(d);
     }
     // Received a piggy back IM
     else if(strstr((const char *)d, "RECVPBM") != NULL)
     {
-        parse_pbm(d);
+        return parse_pbm(d);
     }
     // Receive a burst data message 
     else if(strstr((const char *)d, "RECV") != NULL)
     {
-        parse_burst_data(d);
+        return parse_burst_data(d);
     }
     // Sent IM information    
     else if(strstr((const char *)d, "FAILEDIM") != NULL)
@@ -1124,17 +1076,9 @@ int Evologics_Modem::parse_usblangles(char *d, int64_t timestamp)
 
 int Evologics_Modem::parse_im(char *d)
 {
-    /*char *tokens[12];
-    int ret;
-    ret = chop_string(d, tokens, 12);
-    
-    if(ret != 12)
-    {
-        cout << "*** EVOLOGICS modem got IM with " << ret << " fields.  Expecting 12." << endl;
-        return 0;
-    }
-    */
     vector<string> tokens = chop_string(d, 10);
+    if (tokens.size() != 10)
+       return 0;
 
     int size = atoi(tokens[1].c_str());
     int source = atoi(tokens[2].c_str());
@@ -1153,13 +1097,15 @@ int Evologics_Modem::parse_im(char *d)
 int Evologics_Modem::parse_pbm(char *d)
 {
     vector<string> tokens = chop_string(d, 9);
+    if (tokens.size() != 9)
+       return 0;
 
     int size = atoi(tokens[1].c_str());
     int source = atoi(tokens[2].c_str());
     int target = atoi(tokens[3].c_str());
     const char *data = strstr(d, tokens[8].c_str()); 
 
-    cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with data " << data << endl;
+    cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with " << tokens[8].length() << " bytes of data " << data << endl;
     
     // check if the IM data contains LCM data
     if (!strncmp(data, "LCM", 3) && target == local_address)
@@ -1171,6 +1117,8 @@ int Evologics_Modem::parse_pbm(char *d)
 int Evologics_Modem::parse_burst_data(char *d)
 {
     vector<string> tokens = chop_string(d, 10);
+    if (tokens.size() != 10)
+       return 0;
 
     int size = atoi(tokens[1].c_str());
     int source = atoi(tokens[2].c_str());
