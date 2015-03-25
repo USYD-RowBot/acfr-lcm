@@ -80,7 +80,8 @@
                 map.init("map");
 
                 // Add settings modal control
-                map.add_control("<i class='fa fa-gear'></i>", function(){$("#settings").modal("show")},"Settings","topright");
+                //if (window.location.hash == "#su")
+                    map.add_control("<i class='fa fa-gear'></i>", function () {$("#settings").modal("show")}, "Settings", "topright");
 
                 // Add settings modal control
                 map.add_control("<i class='fa fa-crosshairs'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
