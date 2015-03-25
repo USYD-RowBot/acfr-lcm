@@ -58,10 +58,10 @@ app = Flask(__name__)
 
 
 # import all the worker threads and functions to deal with platform data updates
-mode = sys.argv[1] if len(sys.argv) > 1 else "test"
+module = sys.argv[1] if len(sys.argv) > 1 else "test"
 port = int(sys.argv[2]) if len(sys.argv) > 2 else 8080
-exec "import platformdata.{} as pd".format(mode)
-#from platformdata import acfrlcm as pdata
+pd = __import__("platformdata.{}".format(module))
+pd = getattr(pd, module)
 
 # automatically work out IP address
 ipaddress = "%s" % socket.gethostname()
