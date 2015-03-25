@@ -181,8 +181,8 @@ class LcmThread(threading.Thread):
                 # NB: 'bat' has a special display widget
                 # Any others, just get displayed normally
                 'bat': msg.charge,                     # REQUIRED for dashboard (int 0-100)
-                'waypt': msg.waypoint,
-                'state': 'OK'
+                'waypt': msg.waypoint
+                #'state': 'OK'
             },
             'alert': {
                 # You can add whatever custom alerts you like here.
@@ -197,7 +197,7 @@ class LcmThread(threading.Thread):
                 'nav': not msg.status & (1 << 7),
                 'epuck': not msg.status & (1 << 8),
                 'abort': not msg.status & (1 << 9),
-                'presr': not msg.status & (1 << 13),
+                'press': not msg.status & (1 << 13),
                 'leak': not msg.status & (1 << 15)
             }
         }
