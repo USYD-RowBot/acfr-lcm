@@ -172,7 +172,8 @@ def send_to_platform():
 
     return jsonify({"result": response, "platform": platform})
 
-def get_platform_cmd_form (platform):
+
+def get_platform_cmd_form(platform):
     return '<div><b><i class="fa fa-gears"></i> Config File Editor</b></div>Command options for: '+platform
 
 

@@ -192,7 +192,7 @@ function auvmapper () {
         var options = {color: 'red', interval: 1000, size: 3, maxtracklen: 100};  // default other otpions
         $.extend(options,usroptions); // extend options
 
-        var trackoptions={color: options.color, weight: 1, opacity: 0.4, smoothFactor: 1 },
+        var trackoptions={color: options.color, weight: 1, opacity: 0.9, smoothFactor: 1 },
             markeroptions = {color: options.color, weight: 2, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 100},
             polyoptions = {color: options.color,weight:2,fillColor:"white",fillOpacity:0.5,opacity:1},
             uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 1, zIndexOffset: 100};
