@@ -88,36 +88,6 @@ def get_mission():
     return jsonify({"latlngs": latlngs, "origin": origin})
 
 
-@app.route('/get_config', methods=['GET', 'POST'])
-def get_config():
-    cfg = request.args.get('cfg')
-    if request.method == 'POST':
-        cfgtext = request.form.get('cfgtxt')
-        f = open(cfg, 'w')
-        f.write(cfgtext)
-        f.close()
-        return redirect("/")
-    else:
-        sec = request.args.get('sec')
-        if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
-            shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
-
-        config = ConfigParser.ConfigParser()
-        config.read(cfg)
-        if sec is None:
-            f = open(cfg, 'r')
-            cfgtext = f.read()
-            f.close()
-            return cfgtext
-        elif sec == "all":
-            return jsonify(config.sections())
-        else:
-            dict = {}
-            for opt in config.options(sec):
-                dict[opt] = config.get(sec, opt)
-            return jsonify(dict)
-
-
 @app.route('/get_geotiff')
 def get_geotiff():
     # This function needs to get a url for a geotiff, compute the bounds and return the rquired variables as json
@@ -140,29 +110,70 @@ def get_geotiff():
 
 
 @app.route('/get_platformdata')
-def platformdata():
+def get_platformdata():
     # platform as a GET argument
     thisplatform = request.args.get('platform')
     # get_platformdata is a function contained in included python script
     return jsonify(pd.get_platformdata(thisplatform))
 
-
-@app.route('/set_waypoint')
-def set_waypoint():
-    # platform as a GET argument
-    thisplatform = request.args.get('platform')
-    lat = request.args.get('lat')
-    lon = request.args.get('lon')
-
-    platform, response = pd.send_waypoint(thisplatform, lat, lon)
-
-    return jsonify({"result": response, "platform": platform})
-
-
 # Custom static data
 @app.route('/uploads/<path:filename>')
 def serve_uploads(filename):
     return send_from_directory('uploads', filename)
+
+
+
+@app.route('/get_config', methods=['GET', 'POST'])
+def get_config():
+    cfg = request.args.get('cfg')
+    if request.method == 'POST':
+        cfgtext = request.form.get('cfgtxt')
+        f = open(cfg, 'w')
+        f.write(cfgtext)
+        f.close()
+        return redirect("/")
+    else:
+        sec = request.args.get('sec')
+        if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
+            shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
+
+        config = ConfigParser.ConfigParser()
+        config.read(cfg)
+        if sec is None:
+            return get_config_form(cfg)
+        elif sec == "all":
+            return jsonify(config.sections())
+        else:
+            dict = {}
+            for opt in config.options(sec):
+                dict[opt] = config.get(sec, opt)
+            return jsonify(dict)
+
+
+def get_config_form (cfg) :
+    f = open(cfg, 'r')
+    cfgtext = f.read()
+    f.close()
+    form = '<form id="modalform" method="post" action="get_config?cfg={0}"><div><b><i class="fa fa-gears"></i> Config File Editor</b></div>'\
+        +'<input name="cfgfile" id="cfgfile" style="width: 100%; border: none; background-color: #EEE; margin-bottom: 2px;" value="{0}" disabled>'\
+        +'<textarea name="cfgtxt" id="cfgtxt" style="width: 100%; border: none; height: 450px; background-color: #EEE; font: 11px \'Courier New\', courier, monospace;">{1}</textarea>'\
+        +'<button class="btn btn-primary pull-right" type="submit" title="Update">Update</button>'\
+        +'<button class="btn btn-primary" type="button" title="Cancel" data-dismiss="modal">Cancel</button></form>'
+
+    return form.format(cfg, cfgtext)
+
+
+@app.route('/send_to_platform', methods=["POST"])
+def send_to_platform():
+    # platform as a GET argument
+    #thisplatform = request.args.get('platform')
+    args = dict(request.form)
+    platform, response = pd.send_to_platform(args)
+
+    return jsonify({"result": response, "platform": platform})
+
+def get_platform_cmd_form (platform):
+    return '<div><b><i class="fa fa-gears"></i> Config File Editor</b></div>Command options for: '+platform
 
 
 if __name__ == '__main__':

@@ -43,18 +43,12 @@
         </div>
 
         <!-- Modal -->
-        <div class="modal" id="settings" tabindex="-1" role="dialog" aria-hidden="true" >
+        <div class="modal" id="modal" tabindex="-1" role="dialog" aria-hidden="true" >
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-body">
                 <a href="javascript:void(0)" class="pull-right close" data-dismiss="modal"><i class="fa fa-times"></i></a>
-                <div><b><i class="fa fa-gears"></i> Config File Editor</b></div>
-                <form id="cfgform" method="post" action="get_config">
-                    <input name="cfgfile" id="cfgfile" style="width: 100%; border: none; background-color: #EEE; margin-bottom: 2px;" value="filename" disabled>
-                    <textarea name="cfgtxt" id="cfgtxt" style='width: 100%; border: none; height: 450px; background-color: #EEE; font: 11px "Courier New", courier, monospace;'></textarea>
-                    <button class="btn btn-primary pull-right" type="submit" title="Update">Update</button>
-                    <button class="btn btn-primary" type="button" title="Cancel" data-dismiss="modal">Cancel</button>
-                </form>
+                <div id="modalcontent"></div>
               </div>
             </div>
           </div>
@@ -66,11 +60,7 @@
             var cfgfile = "config/{{ hostname }}.ini"; // server from template address
             var map = new auvmapper();
 
-            $("#settings").on('shown.bs.modal', function () {
-                $("#cfgform").attr("action","get_config?cfg="+cfgfile);
-                $("#cfgfile").attr("value",cfgfile);
-                $("#cfgtxt").load("get_config?cfg="+cfgfile);
-            });
+
 
             $(window).resize(function () {
                 map.fullsize();
@@ -80,8 +70,9 @@
                 map.init("map");
 
                 // Add settings modal control
-                //if (window.location.hash == "#su")
-                    map.add_control("<i class='fa fa-gear'></i>", function () {$("#settings").modal("show")}, "Settings", "topright");
+                if (window.location.hash !== "#display")
+                    map.add_control("<i class='fa fa-gear'></i>", function () {show_modalform ("/get_config?cfg="+cfgfile) }, "Settings", "topright");
+                    //map.add_control("<i class='fa fa-gear'></i>", function () {$("#modalform-modal").modal("show")}, "Settings", "topright");
 
                 // Add settings modal control
                 map.add_control("<i class='fa fa-crosshairs'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
@@ -210,6 +201,12 @@
                         console.log("Cannot load config for: "+cfg+">"+sec+" "+desc);
                     }
                 });
+            }
+
+            function show_modalform (htmlurl) {
+                $("#modalcontent").load(htmlurl,function(){
+                    $("#modal").modal("show");
+                })
             }
 
         </script>
