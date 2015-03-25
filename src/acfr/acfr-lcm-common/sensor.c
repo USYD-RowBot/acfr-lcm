@@ -132,7 +132,38 @@ int acfr_sensor_open(acfr_sensor_t *s)
         s->port_open = 1;
     
     }
-    //TODO: UDP   
+    else if(s->io_type == io_udp)
+    {
+        memset(&hints, 0, sizeof hints);
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_flags = AI_PASSIVE;
+        getaddrinfo(0, s->inet_port, &hints, &spec_addr);
+    	s->fd = socket(spec_addr->ai_family, spec_addr->ai_socktype, spec_addr->ai_protocol);
+        if(bind(s->fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0) 
+        {
+	        printf("Could not bind to udp on port %s\n", s->inet_port);
+    		return 0;
+        }
+
+		// set a 1 second timeout on socket reads		
+		struct timeval tv;
+		tv.tv_sec = 1;  // 1 Secs Timeout 
+		tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+		setsockopt(s->fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
+
+		// set a 1 second timeout on socket writes		
+		tv.tv_sec = 1;  // 1 Secs Timeout 
+		tv.tv_usec = 0;  // Not init'ing this can cause strange errors
+		setsockopt(s->fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, sizeof(struct timeval));
+		
+		//set output buffer size so that send blocks
+		int buffersize = 2;
+		setsockopt(s->fd, SOL_SOCKET, SO_SNDBUF, &buffersize, 4);
+
+        s->port_open = 1;
+    
+    }
     return 1;
 }
 
