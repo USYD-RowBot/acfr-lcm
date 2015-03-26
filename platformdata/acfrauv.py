@@ -179,8 +179,8 @@ class LcmThread(threading.Thread):
                 'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),                 # REQUIRED (decimal degrees)
                 'heading': round(msg.heading/10.0,1), # REQUIRED (degrees)
-                'alt': msg.altitude/10.0,                           # OPTIONAL (m)
-                'depth': msg.depth/10.0,                            # OPTIONAL (m)
+                'alt': float(msg.altitude)/10.0,                           # OPTIONAL (m)
+                'depth': float(msg.depth)/10.0,                            # OPTIONAL (m)
                 'roll': round(msg.roll/10.0,1),       # OPTIONAL / REQUIRED for dashboard (degrees)
                 'pitch': round(msg.pitch/10.0,1)      # OPTIONAL / REQUIRED for dashboard (degrees)
                 #'uncertainty': 1
