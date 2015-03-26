@@ -139,6 +139,14 @@ class LcmThread(threading.Thread):
         msg = usbl_fix_t.decode(data)
         msgid = msg.utime
         platform = '{}'.format(msg.remote_id)
+        platformdata[platform] = {
+            'msgid': msgid,                                 # REQUIRED (number)
+            'pose': {
+                'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
+                'lon': round(math.degrees(msg.longitude), 8)          # REQUIRED (decimal degrees)
+            }
+        }
+
 
 
     def shipStatusHandler(self, channel, data):
@@ -210,7 +218,7 @@ class LcmThread(threading.Thread):
         self.lc = lcm.LCM()
         self.lc.subscribe("AUVSTAT.*", self.auvStatusHandler)
         self.lc.subscribe("SHIP_STATUS.*", self.shipStatusHandler)
-        self.lc.subscribe("USBL_FIX", self.usblFixHandler)
+        self.lc.subscribe("USBL_FIX.*", self.usblFixHandler)
 
         timeout = 1  # amount of time to wait, in seconds
         while not self.exitFlag:
