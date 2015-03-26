@@ -798,7 +798,7 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_data = false;
-        pthread_mutex_lock(&flags_lock);
+        pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {
