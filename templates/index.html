@@ -172,7 +172,7 @@
                     for (var i = 0; i < iframes.length; i++)
                         get_config(url, cfg, iframes[i].trim(), function (data, url, cfg) {
                             var iframeid = "iframe-"+ i, obj;
-                            obj = map.add_control("<i class='fa fa-video-camera'></i>", function(e){
+                            obj = map.add_control("<i class='fa fa-desktop'></i>", function(e){
                                 if($("#"+iframeid).length > 0) {
                                     $("#"+iframeid).remove();
                                     $(this).removeClass("active");
