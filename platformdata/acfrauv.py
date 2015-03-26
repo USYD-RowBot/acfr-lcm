@@ -208,7 +208,8 @@ class LcmThread(threading.Thread):
                 'epuck':  msg.status & (1 << 8),
                 'abort':  msg.status & (1 << 9),
                 'press':  msg.status & (1 << 13),
-                'leak':  msg.status & (1 << 15)
+                'leak':  msg.status & (1 << 15),
+                '<4m': 0 if float(msg.depth)/10.0 > 4 else 1
             }
         }
 
