@@ -81,9 +81,13 @@ int Evologics_Modem::ping_targets()
         {
             cout << "Preparing to ping target " << current_ping_target << " at address " << targets[current_ping_target] << endl;
             ping_counter = 0;
-            send_ping(targets[current_ping_target]);
-            if (++current_ping_target >= num_targets)
-                current_ping_target = 0;
+            // try to ping the current target.  If we are already waiting for
+            // a ping reply don't change target.
+            if (send_ping(targets[current_ping_target]) == 1)
+            {
+                if (++current_ping_target >= num_targets)
+                    current_ping_target = 0;
+            }
         }
         else
             ping_counter++;
@@ -761,6 +765,12 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
     }
+    else if(strstr((const char *)d, "FAILED") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_data = false;
+        pthread_mutex_unlock(&flags_lock);
+    }
     // Received a cancellation notice for an IM.  This happens if we send beforethe last message was finished sending. The message may still have been received.
     else if (strstr((const char *)d, "CANCELEDIM") != NULL)
     {
@@ -782,7 +792,13 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
         command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
-        send_command("AT?T");
+        //send_command("AT?T");
+    }
+    else if(strstr((const char *)d, "DELIVERED") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_data = false;
+        pthread_mutex_lock(&flags_lock);
     }
     else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {

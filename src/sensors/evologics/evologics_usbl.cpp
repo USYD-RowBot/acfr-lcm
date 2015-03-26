@@ -136,9 +136,8 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
         cout << "target xyz (ship)" << target_ship << endl;
     
     
-        SMALL::Vector3D target_world = ship.transformFrom(target_ship);
+        target_world = ship.transformFrom(target_ship);
         cout << "target xyz (world)" << target_world << endl;
-    
     } else if ( attitude_source == ATT_EVOLOGICS_COMPENSATED) {
         // use the internally compensated evologics northing/easting positions
         target_world[0] = ef->e;
@@ -148,13 +147,13 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
         return 0;
     }
     
+        cout << "target_world[0]: " << target_world[0] << " [1]: " << target_world[1] << endl;
     // set up the coordinate reprojection
     char proj_str[64];
     double ship_latitude;
     double ship_longitude;
     if(gps_source == GPS_SHIP_STATUS)
     {
-    
         ship_latitude = ship_statusq[nov_index]->latitude * RTOD;
         ship_longitude = ship_statusq[nov_index]->longitude * RTOD;
     } 
@@ -173,15 +172,15 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
        return 0;
     }
     
-    double x = target_world[1]; 
-    double y = target_world[0];           
+    double x = (double)target_world[1]; 
+    double y = (double)target_world[0];           
     pj_transform(pj_tmerc, pj_latlong, 1, 1, &x, &y, NULL);
-    
+
     usbl_fix_t uf;
     uf.utime = timestamp_now();
     uf.remote_id = ef->remote_id;
-    uf.latitude = y;
-    uf.longitude = x;
+    uf.latitude = y * DTOR;
+    uf.longitude = x * DTOR;
     uf.depth = target_world[2];
     uf.accuracy = ef->accuracy;
     uf.ship_longitude = ship_longitude * DTOR;
