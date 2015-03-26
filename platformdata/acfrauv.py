@@ -208,12 +208,12 @@ class LcmThread(threading.Thread):
                 'epuck':  msg.status & (1 << 8),
                 'abort':  msg.status & (1 << 9),
                 'press':  msg.status & (1 << 13),
-                'leak':  msg.status & (1 << 15),
-                '<4m': 0 if float(msg.depth)/10.0 > 4 else 1
+                'leak':  msg.status & (1 << 15)
             }
         }
-
-
+        # Alert if AUV > 6 m
+        if platformdata[platform]['pose']['depth'] < 6:
+            platformdata[platform]['alert']['DEP<6'] = 1
 
     def run(self):
         self.lc = lcm.LCM()
