@@ -70,25 +70,37 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESET:
-			// Stop the currently running mission
-			gp->globalPlannerMessage = globalPlannerReset;
-			break;
+		// Stop the currently running mission
+		gp->globalPlannerMessage = globalPlannerReset;
+		break;
 
 	case acfrlcm::auv_global_planner_t::SKIP:
 		// Skip the current waypoint
 		gp->skipWaypoint = true;
 		break;
 
+	// We have received a task command. Parse the xml mission string 
 	case acfrlcm::auv_global_planner_t::GOTO:
-		break;
 	case acfrlcm::auv_global_planner_t::LEG:
-		break;
 	case acfrlcm::auv_global_planner_t::GRID:
-		break;
 	case acfrlcm::auv_global_planner_t::SPIRAL:
-		break;
 	case acfrlcm::auv_global_planner_t::ZAMBONIE:
-		break;
+		if( !gp->mis.parseMissionString(gm->str) )
+		{
+			cerr << "Could not load mission file " << gm->str
+					<< ". Stopping execution" << endl;
+			gp->globalPlannerMessage = globalPlannerStop;
+		}
+		else
+		{
+			cout << "\tLoaded new mission received as a task command" << endl;
+			if( gp->getCurrentState() == globalPlannerFsmRun ) {
+				gp->globalPlannerMessage = globalPlannerStop;
+				gp->clock();
+			}
+			gp->globalPlannerMessage = globalPlannerRun;
+		}	break;
+		
 	}
 
 	gp->clock();
@@ -100,7 +112,7 @@ GlobalPlanner::GlobalPlanner() :
 {
 
 	// subscribe to the relevant LCM messages
-	lcm.subscribeFunction("TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
+	lcm.subscribeFunction("TASK_PLANNER_COMMAND.*", onGlobalPlannerCommand, this);
 	lcm.subscribeFunction("PATH_RESPONSE", onPathResponse, this);
 
 	// set default values

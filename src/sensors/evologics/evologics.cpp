@@ -159,7 +159,7 @@ void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 }
 
 
-Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, int _ping_timeout)
 {
     device = _device;
     baud = _baud;
@@ -167,20 +167,20 @@ Evologics::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_lcm, qu
     use_serial_port = true;
     use_ip_port = false;
 
-    init(_lcm, q, _ping_timeout);
+    init(_lcm, _ping_timeout);
     fd = open_serial_port();
     term = '\r';
     start_threads();
 }
 
-Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+Evologics::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, int _ping_timeout)
 {
     ip = _ip;
     port = _port;
     use_serial_port = false;
     use_ip_port = true;
 
-    init(_lcm, q, _ping_timeout);
+    init(_lcm, _ping_timeout);
     fd = open_port(ip.c_str(), port.c_str());
     term = '\n';
     start_threads();
@@ -193,15 +193,16 @@ Evologics::~Evologics()
     pthread_join(read_thread_id, NULL);
 }
 
-int Evologics::init(lcm::LCM *_lcm, queue<evologics_usbl_t *> *q, int _ping_timeout)
+int Evologics::init(lcm::LCM *_lcm, int _ping_timeout)
 {
     lcm = _lcm;
-    fixq = q;
+    //fixq = q;
     ping_timeout = _ping_timeout;
     
     sending_im = false;
     sending_data = false;
     sending_command = false;
+    command_sent = "";
     current_target = 0;
     drop_counter = 0;
     im_sent = 0;
@@ -289,13 +290,14 @@ int Evologics::open_port(const char *ip, const char *port)
        evo_fd = -1;
     }
 
+    freeaddrinfo(result);
+
     if (evo_addr == NULL)
     {
        printf("Could not connect to %s on port %s\n", ip, port);
     } else {
        printf("Successfully connected to %s on port %s\n", ip, port);
 
-       freeaddrinfo(result);
 
        //struct timeval tv;
        //tv.tv_sec = 1;  // 1 Secs Timeout
@@ -362,6 +364,7 @@ int Evologics::handle_heartbeat()
         {
             pthread_mutex_lock(&flags_lock);
             sending_command = false;
+            command_sent = "";
             pthread_mutex_unlock(&flags_lock);
             command_timeout_counter = 0;
             cout << "Sending command timed out." << endl;
@@ -409,6 +412,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
     }
@@ -430,23 +434,33 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_im = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
         send_command("AT?T");
     }
-    else if(strstr((const char *)d, "AT?T") != NULL)
+    else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {
-        sending_command = false;
+        cout << "Evologics: Received AT?T reply " << d << endl;
         char *tokens[4];
+        evologics_range_t er;
         if(chop_string(d, tokens, 4) == 4)
         {
-            evologics_range_t er;
             er.time = atoi(tokens[3]);
-            er.target = last_im_target;
-            er.source = local_address;
-            er.utime = last_im_timestamp;
-            lcm->publish("EVOLOGICS_RANGE", &er);
+        } else if(chop_string(d, tokens, 1) == 1) {
+            er.time = atoi(tokens[0]);
+        } else {
+            return 0;
         }
+        er.target = last_im_target;
+        er.source = local_address;
+        er.utime = last_im_timestamp;
+        lcm->publish("EVOLOGICS_RANGE", &er);
+        
+        pthread_mutex_lock(&flags_lock);
+        sending_command = false;
+        command_sent = "";
+        pthread_mutex_unlock(&flags_lock);
     }
     // Data sent, channel ready
     else if((strstr((const char *)d, "LISTEN") != NULL) ||
@@ -462,6 +476,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         }
             
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "ONLINE") != NULL) 
@@ -469,6 +484,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
         pthread_mutex_lock(&flags_lock);
         sending_data = false;
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Command response
@@ -476,6 +492,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Command response
@@ -483,6 +500,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Target change
@@ -493,6 +511,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
             current_target = atoi(tokens[3]);
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Request positioning information
@@ -500,12 +519,14 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "OUT_OF_CONTEXT") != NULL)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     // Get the local address
@@ -513,6 +534,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
@@ -525,6 +547,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[3];
         if(chop_string(d, tokens, 3) == 3)
@@ -538,6 +561,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
@@ -550,6 +574,7 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         char *tokens[4];
         if(chop_string(d, tokens, 4) == 4)
         {
@@ -565,10 +590,13 @@ int Evologics::parse_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_command = false;
+        command_sent = "";
         pthread_mutex_unlock(&flags_lock);
     }
     else
+    {
         cerr << "Unknown modem message: " << d;
+    }
     
     //pthread_mutex_unlock(&flags_lock);
     return 1;   
@@ -606,16 +634,16 @@ int Evologics::parse_lcm_data(unsigned char *d, int size)
 
 int Evologics::parse_usbllong(char *d, int64_t timestamp)
 {
-    char *tokens[19];
+    char *tokens[17];
     int ret;
-    ret = chop_string(d, tokens, 19);
+    ret = chop_string(d, tokens, 17);
     
-    if(ret != 19)
+    if(ret != 17)
         return 0;
     
     // Work out the actual time that the measurment was taken
-    double measurement_time = atof(tokens[4]);
-    double current_time = atof(tokens[3]);
+    double measurement_time = atof(tokens[2]);
+    double current_time = atof(tokens[1]);
     
     // we will correct the time as it may not be sync'd with the computer running this code
     //double time_diff = current_time - measurement_time;
@@ -624,47 +652,47 @@ int Evologics::parse_usbllong(char *d, int64_t timestamp)
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
     ud.ctime = (int64_t)(current_time * 1e6);
-    ud.remote_id = atoi(tokens[5]);
-    ud.x = atof(tokens[6]);
-    ud.y = atof(tokens[7]);
-    ud.z = atof(tokens[8]);
-    ud.e = atof(tokens[9]);
-    ud.n = atof(tokens[10]);
-    ud.u = atof(tokens[11]);
-    ud.r = atof(tokens[12]);
-    ud.p = atof(tokens[13]);
-    ud.h = atof(tokens[14]);
-    ud.prop_time = atof(tokens[15]);
-    ud.rssi = atoi(tokens[16]);
-    ud.integrity = atoi(tokens[17]);
-    ud.accuracy = atof(tokens[18]);
+    ud.remote_id = atoi(tokens[3]);
+    ud.x = atof(tokens[4]);
+    ud.y = atof(tokens[5]);
+    ud.z = atof(tokens[6]);
+    ud.e = atof(tokens[7]);
+    ud.n = atof(tokens[8]);
+    ud.u = atof(tokens[9]);
+    ud.r = atof(tokens[10]);
+    ud.p = atof(tokens[11]);
+    ud.h = atof(tokens[12]);
+    ud.prop_time = atof(tokens[13]);
+    ud.rssi = atoi(tokens[14]);
+    ud.integrity = atoi(tokens[15]);
+    ud.accuracy = atof(tokens[16]);
     
     lcm->publish("EVOLOGICS_USBL", &ud);
     
     // put it in the queue for position calculation
     
-    if(fixq != NULL)
+    /*if(fixq != NULL)
     {
         evologics_usbl_t *fq = new evologics_usbl_t;
         memcpy(fq, &ud, sizeof(evologics_usbl_t));
         fixq->push(fq);
-    }
+    }*/
     
     return 1;
 }
 
 int Evologics::parse_usblangles(char *d, int64_t timestamp)
 {
-    char *tokens[16];
+    char *tokens[14];
     int ret;
-    ret = chop_string(d, tokens, 16);
+    ret = chop_string(d, tokens, 14);
     
-    if(ret != 16)
+    if(ret != 14)
         return 0;
     
     // Work out the actual time that the measurment was taken
-    double measurement_time = atof(tokens[4]);
-    double current_time = atof(tokens[3]);
+    double measurement_time = atof(tokens[2]);
+    double current_time = atof(tokens[1]);
     
     // we will correct the time as it may not be sync'd with the computer running this code
     //double time_diff = current_time - measurement_time;
@@ -673,17 +701,17 @@ int Evologics::parse_usblangles(char *d, int64_t timestamp)
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
     ud.ctime = (int64_t)(current_time * 1e6);
-    ud.remote_id = atoi(tokens[5]);
-    ud.lbearing = atof(tokens[6]);
-    ud.lelevation = atof(tokens[7]);
-    ud.bearing = atof(tokens[8]);
-    ud.elevation = atof(tokens[9]);
-    ud.r = atof(tokens[10]);
-    ud.p = atof(tokens[11]);
-    ud.h = atof(tokens[12]);
-    ud.rssi = atoi(tokens[13]);
-    ud.integrity = atoi(tokens[14]);
-    ud.accuracy = atof(tokens[15]);
+    ud.remote_id = atoi(tokens[3]);
+    ud.lbearing = atof(tokens[4]);
+    ud.lelevation = atof(tokens[5]);
+    ud.bearing = atof(tokens[6]);
+    ud.elevation = atof(tokens[7]);
+    ud.r = atof(tokens[8]);
+    ud.p = atof(tokens[9]);
+    ud.h = atof(tokens[10]);
+    ud.rssi = atoi(tokens[11]);
+    ud.integrity = atoi(tokens[12]);
+    ud.accuracy = atof(tokens[13]);
 
     lcm->publish("EVOLOGICS_USBL_ANGLES", &ud);
     
@@ -811,51 +839,6 @@ int Evologics::send_lcm_data(unsigned char *d, int size, int target, const char 
        sending_im = true;
        pthread_mutex_unlock(&flags_lock);
        pthread_mutex_unlock(&(write_lock));
-       /*if(target != current_target)
-       {
-           // we need to change targets, this is the only place we are doing
-           // out of queue command writes to the modem
-           //send_command("ATZ4");
-       
-           int retry = 0;
-           //while(evo->current_target != (*od)->target && retry < 5)
-           {
-               cout << "Target, current: " << current_target << "   destination: " << target << endl;
-               char msg[32];
-               sprintf(msg, "AT!AR%d", target);
-               send_command(msg);
-
-               send_command("AT?AR");
-
-               retry++;
-           }
-       }     
-
-       if(target != current_target)
-       {
-           cerr << "Could not change the modem data target\n";
-       } else {
-           pthread_mutex_lock(&flags_lock);
-           if(!sending_data)
-           {
-               pthread_mutex_lock(&(write_lock));
-               int bytes = write(fd, dout, size);
-               pthread_mutex_unlock(&(write_lock));
-               if( bytes == -1)
-               {
-                   perror("Failed to send data to modem:");
-                   sending_data = false;
-                   reopen_port();
-               }
-               else
-               {
-                   DEBUG_PRINTF(("Sending %d bytes of LCM data to channel: %.*s\n", data_size, dout[3], &dout[4]));
-                   drop_at_send = drop_counter;
-               }
-           }
-           pthread_mutex_unlock(&flags_lock);    
-       }
-       */
    }
 
    return 1;
@@ -879,8 +862,8 @@ int Evologics::send_command(const char *d)
     }
     else
     {
-        //command_sent = true;
-        sending_command= true;
+        sending_command = true;
+        command_sent = *d;
     }
     wait_for_command_response();
     return 1;

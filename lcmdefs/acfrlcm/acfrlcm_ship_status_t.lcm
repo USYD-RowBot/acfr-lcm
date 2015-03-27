@@ -7,6 +7,8 @@ struct ship_status_t
     int8_t  ship_id;
     string name;
     
+    // all in radians (including lat/lon) for consistency with other sensor
+    // data types
     double heading;   
     double roll;      
     double pitch;     

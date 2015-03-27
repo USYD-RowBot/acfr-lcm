@@ -34,6 +34,7 @@ class Mission
         ~Mission();
         
         int load(string filename);
+        int parseMissionString(string missionStr);
         
         int dump();
         void dumpMatlab(string filename="matlab_plot.m");
@@ -50,6 +51,7 @@ class Mission
     private:
         string filename;
         int load();
+        int parseMission(xmlpp::DomParser &parser);
         
         // helper functions
         int grid_to_points();
