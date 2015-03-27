@@ -100,6 +100,20 @@
              */
             function load_layers(data, url, cfg) {
 
+                // load targets
+                if (data.hasOwnProperty('targets')) {
+                    var targets = data.targets.split(',');
+                    var size, inputoptions, dispoptions, maxtracklen;
+                    for (var i = 0; i < targets.length; i++)
+                        get_config(url, cfg, targets[i].trim(), function (data, url, cfg) {
+                            inputoptions = data.options.split(',');
+                            dispoptions = {};
+                            for (var i = 0; i < inputoptions.length; i++) dispoptions[inputoptions[i].trim()] = true;
+                            size = (data.hasOwnProperty("size")) ? parseInt(data.size) : {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)};
+                            maxtracklen = (data.hasOwnProperty("maxtracklen")) ? parseInt(data.maxtracklen) : 100;
+                            map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size, maxtracklen: maxtracklen});
+                        });
+                }
                 // load geotiffs
                 if (data.hasOwnProperty('geotiffs')) {
                     var geotiffs = data.geotiffs.split(',');
@@ -154,20 +168,7 @@
                     map.layers.base[Object.keys(map.layers.base)[0]].addTo(map.map);
                 }
 
-                // load targets
-                if (data.hasOwnProperty('targets')) {
-                    var targets = data.targets.split(',');
-                    var size, inputoptions, dispoptions, maxtracklen;
-                    for (var i = 0; i < targets.length; i++)
-                        get_config(url, cfg, targets[i].trim(), function (data, url, cfg) {
-                            inputoptions = data.options.split(',');
-                            dispoptions = {};
-                            for (var i = 0; i < inputoptions.length; i++) dispoptions[inputoptions[i].trim()] = true;
-                            size = (data.hasOwnProperty("size")) ? parseInt(data.size) : {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)};
-                            maxtracklen = (data.hasOwnProperty("maxtracklen")) ? parseInt(data.maxtracklen) : 100;
-                            map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size, maxtracklen: maxtracklen});
-                        });
-                }
+
 
                 // load iframes
                 if (data.hasOwnProperty('iframes')) {

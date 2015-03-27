@@ -99,8 +99,13 @@ function auvmapper () {
     this.get_mission = function(layer, filepath, url, usroptions, origin){
         if (typeof usroptions == "undefined") usroptions = {};
         if (typeof origin == "undefined") origin = [0,0];
-        var options = { color: 'red', weight: 3, opacity: 1.0, smoothFactor: 1 };
+        var options = { color: 'red', weight: 1, opacity: 1.0, smoothFactor: 1};
         $.extend(options,usroptions);
+
+        // set mission
+        _this.layers.overlays[layer] = new L.Polyline([], options).addTo(_this.map);
+        _this.layerctl.addOverlay(_this.layers.overlays[layer], layer);
+        _this.layers.overlays[layer].bindPopup(layer);
 
         $.ajax({
             dataType: "jsonp",
@@ -112,10 +117,8 @@ function auvmapper () {
                     _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
                 }));
                 // set mission
-                _this.layers.overlays[layer] = new L.Polyline(data.latlngs, options).addTo(_this.map);
+                _this.layers.overlays[layer].setLatLngs(data.latlngs);
                 _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
-                _this.layerctl.addOverlay(_this.layers.overlays[layer], layer);
-                _this.layers.overlays[layer].bindPopup(layer);
 
                 // set origin
                 _this.origin = data.origin;
@@ -193,9 +196,9 @@ function auvmapper () {
         $.extend(options,usroptions); // extend options
 
         var trackoptions={color: options.color, weight: 1, opacity: 0.9, smoothFactor: 1 },
-            markeroptions = {color: options.color, weight: 2, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 100},
+            markeroptions = {color: options.color, weight: 2, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 1000},
             polyoptions = {color: options.color,weight:2,fillColor:"white",fillOpacity:0.5,opacity:1},
-            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 1, zIndexOffset: 100};
+            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 1, zIndexOffset: 1000};
 
         var tracklayer = platform+" track",
             unclayer = platform+" uncertainty";

@@ -105,7 +105,7 @@ class FakeAUVThread (threading.Thread):
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'heading': round(hdg, 1),  # randint(0, 360),                 # REQUIRED (degrees)
                     'alt': round(random()*10, 2),               # OPTIONAL (m)
-                    'depth': round(random()*1000, 2),           # OPTIONAL (m)
+                    'depth': round(random()*100, 2),           # OPTIONAL (m)
                     'roll': randint(-20, 20),                   # OPTIONAL / REQUIRED for dashboard (degrees)
                     'pitch': randint(-45, 45),                  # OPTIONAL / REQUIRED for dashboard (degrees)
                     'uncertainty': randint(1, 20)
@@ -131,6 +131,10 @@ class FakeAUVThread (threading.Thread):
                     'lag':0
                 }
             }
+            # Alert if AUV > 6 m
+            if platformdata[self.platform]['pose']['depth'] < 6:
+                platformdata[self.platform]['alert']['DEP<6'] = 1
+
             time.sleep(self.delay)
 
 
