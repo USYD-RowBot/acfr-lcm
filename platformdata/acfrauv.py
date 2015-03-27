@@ -138,7 +138,7 @@ class LcmThread(threading.Thread):
     def usblFixHandler(self, channel, data):
         msg = usbl_fix_t.decode(data)
         msgid = msg.utime
-        platform = '{}'.format(msg.remote_id)
+        platform = 'usbl{}'.format(msg.remote_id)
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'pose': {
@@ -171,7 +171,7 @@ class LcmThread(threading.Thread):
         print channel
         msg = auv_status_short_t.decode(data)
         print msg
-        platform = '{}'.format(msg.target_id)
+        platform = 'auv{}'.format(msg.target_id)
         msgid = msg.utime
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
