@@ -41,6 +41,9 @@ function auvmapper () {
             maxNativeZoom: 17,
             fullscreenControl: true
         });
+
+        // add blank tile layer
+        this.layers.base = {'None': L.tileLayer('')},
         // Add base layers
 //        try {
 //            this.layers.base = {
@@ -99,7 +102,7 @@ function auvmapper () {
     this.get_mission = function(layer, filepath, url, usroptions, origin){
         if (typeof usroptions == "undefined") usroptions = {};
         if (typeof origin == "undefined") origin = [0,0];
-        var options = { color: 'red', weight: 1, opacity: 1.0, smoothFactor: 1};
+        var options = { color: 'red', weight: 1, opacity: 0.7, smoothFactor: 1};
         $.extend(options,usroptions);
 
         // set mission

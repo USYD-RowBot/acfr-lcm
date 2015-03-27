@@ -147,9 +147,11 @@
                 // load tilelayers
                 if (data.hasOwnProperty('tilelayers')) {
                     var tilelayers = data.tilelayers.split(',');
+                    var defaultbase = "";
                     for (var i = 0; i < tilelayers.length; i++) {
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
+                                if (defaultbase == "") defaultbase = data.name;
                                 map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
@@ -165,7 +167,7 @@
                         });
                     }
                     // activate first base layer
-                    map.layers.base[Object.keys(map.layers.base)[0]].addTo(map.map);
+                    map.layers.base[defaultbase].addTo(map.map);
                 }
 
 
