@@ -179,8 +179,8 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     usbl_fix_t uf;
     uf.utime = timestamp_now();
     uf.remote_id = ef->remote_id;
-    uf.latitude = y * DTOR;
-    uf.longitude = x * DTOR;
+    uf.latitude = y ;
+    uf.longitude = x ;
     uf.depth = target_world[2];
     uf.accuracy = ef->accuracy;
     uf.ship_longitude = ship_longitude * DTOR;
