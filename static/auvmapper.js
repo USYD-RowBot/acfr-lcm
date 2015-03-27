@@ -65,8 +65,8 @@ function auvmapper () {
 
         // Deactivate auto-extent on map drag
         this.map.on("dragstart",function(){
-            auto_extent ("all", false);
-        })
+            _this.auto_extent ("all", false);
+        });
 
         // Add permalink control
         this.map.addControl(new L.Control.Permalink({useLocation: true}));
@@ -116,12 +116,12 @@ function auvmapper () {
             data: {filepath: filepath, olat: origin[0], olon: origin[1]},
             success: function (data) {
                 $("#track-layers").prepend($("<li><i class='fa fa-slack'> Mission: "+layer+"</i></li>").click(function(){
-                    auto_extent ("all", false);
+                    _this.auto_extent ("all", false);
                     _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
                 }));
                 // set mission
                 _this.layers.overlays[layer].setLatLngs(data.latlngs);
-                _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
+                //_this.map.fitBounds(_this.layers.overlays[layer].getBounds());
 
                 // set origin
                 _this.origin = data.origin;
@@ -146,11 +146,11 @@ function auvmapper () {
             data: {url: imgurl},
             success: function (data) {
                 $("#track-layers").prepend($("<li><i class='fa fa-picture-o'> Img: "+layer+"</i></li>").click(function(){
-                    auto_extent ("all", false);
+                    _this.auto_extent ("all", false);
                     _this.map.fitBounds(L.latLngBounds(data.bounds));
                 }));
 //                _this.add_control ("<i class='fa fa-picture-o'></i>", function(){
-//                    auto_extent ("all", false);
+//                    _this.auto_extent ("all", false);
 //                    _this.map.fitBounds(L.latLngBounds(data.bounds));
 //                }, "Reset zoom image ("+layer+")");
                 // set geotiff
@@ -172,7 +172,7 @@ function auvmapper () {
         _this.layers.overlays[layer] = new L.KML(filepath, {async: true});
         _this.layers.overlays[layer].addTo(this.map).on("loaded", function(e) {
             $("#track-layers").prepend($("<li><i class='fa fa-file-image-o'> KML: "+layer+"</i></li>").click(function(){
-                auto_extent ("all", false);
+                _this.auto_extent ("all", false);
                 _this.map.fitBounds(e.target.getBounds());
             }));
             _this.layerctl.addOverlay(_this.layers.overlays[layer].bringToBack(), layer);
@@ -266,7 +266,7 @@ function auvmapper () {
             success: function (data) {
                 if (_this.info[platform].data('msgid') != data.msgid) {
                     _this.info[platform].data('msgid',data.msgid);
-                    _this.info[platform].data('msgts',Date());
+                    _this.info[platform].data('msgts',data.msgts);
                     var curpos = new L.LatLng(0, 0);
                     if ((data.pose.lat != NaN) || (data.pose.lon != NaN))
                         curpos = new L.LatLng(data.pose.lat, data.pose.lon);
@@ -336,7 +336,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0)
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: "+((Date.parse(Date())-Date.parse(_this.info[platform].data('msgts')))/1000)+" s ago</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: "+Math.round(data.curts - data.msgts)+" s ago</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
@@ -418,7 +418,7 @@ function auvmapper () {
                         })
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
                     $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.replace(" ","_")+"'></i>")
-                        .click(function(){auto_extent(platform)})
+                        .click(function(){_this.auto_extent(platform)})
                         .tooltip({title:"Keep in view",trigger:"hover",container:"body"})
                 );
                 if (dispoptions.showtrack)
@@ -564,7 +564,7 @@ function auvmapper () {
      * @param platform
      * @param forceautotrack: true = enable autotrack, false = disable
      */
-    function auto_extent (platform, forceautotrack) {
+    this.auto_extent = function (platform, forceautotrack) {
         var autotrack =  (typeof forceautotrack === "undefined") ? ! _this.snap_to_track[platform] : forceautotrack;
 
         if (platform == "all" && autotrack == false) platform = Object.keys(_this.snap_to_track);

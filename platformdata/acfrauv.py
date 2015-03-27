@@ -68,7 +68,9 @@ def init_platformdata_threads():
 # This function simply reads the output for a specific platform
 ######################################################################
 def get_platformdata(platform):
-    return platformdata[platform]
+    data = platformdata[platform]  # get data
+    data['curts'] = time.time()    # add curr ts
+    return data
 
 ######################################################################
 # Parse mission file
@@ -141,6 +143,7 @@ class LcmThread(threading.Thread):
         platform = channel  # 'usbl{}'.format(msg.remote_id)
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'msgts': time.time(),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8)          # REQUIRED (decimal degrees)
@@ -156,6 +159,7 @@ class LcmThread(threading.Thread):
         platform = msg.name
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'msgts': time.time(),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),         # REQUIRED (decimal degrees)
@@ -175,6 +179,7 @@ class LcmThread(threading.Thread):
         msgid = msg.utime
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'msgts': time.time(),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),                 # REQUIRED (decimal degrees)

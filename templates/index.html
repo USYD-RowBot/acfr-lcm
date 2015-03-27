@@ -112,6 +112,7 @@
                             size = (data.hasOwnProperty("size")) ? parseInt(data.size) : {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)};
                             maxtracklen = (data.hasOwnProperty("maxtracklen")) ? parseInt(data.maxtracklen) : 100;
                             map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size, maxtracklen: maxtracklen});
+                            if (dispoptions.hasOwnProperty("autotrack")) map.auto_extent(data.name, true);
                         });
                 }
                 // load geotiffs

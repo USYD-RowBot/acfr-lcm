@@ -29,7 +29,7 @@ origin = [-14.11493 , 121.86207]
 ######################################################################
 def init_platformdata_threads():
     FakeAUVThread('IVER', 0.5).start()
-    FakeAUVThread('SIRIUS', 5).start()
+    FakeAUVThread('SIRIUS', 30).start()
     FakeShipThread('FALKOR', 1).start()
     FakeShipThread('usbl', 5).start()
     FakeClassifierThread('class1', 1).start()
@@ -41,7 +41,9 @@ def init_platformdata_threads():
 # This function simply reads the output for a specific platform
 ######################################################################
 def get_platformdata(platform):
-    return platformdata[platform]
+    data = platformdata[platform]  # get data
+    data['curts'] = time.time()    # add curr ts
+    return data
 
 ######################################################################
 # Parse mission file
@@ -100,6 +102,7 @@ class FakeAUVThread (threading.Thread):
 
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'msgts': time.time(),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -157,6 +160,7 @@ class FakeShipThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'msgts': time.time(),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -185,6 +189,7 @@ class FakeClassifierThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'msgts': time.time(),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10)  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
