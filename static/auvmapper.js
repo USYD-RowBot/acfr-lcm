@@ -69,7 +69,7 @@ function auvmapper () {
         })
 
         // Add permalink control
-        //this.map.addControl(new L.Control.Permalink({useLocation: true}));
+        this.map.addControl(new L.Control.Permalink({useLocation: true}));
 
 
         // Add measurement control
