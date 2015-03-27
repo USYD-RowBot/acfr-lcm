@@ -104,6 +104,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     acfrlcm_auv_path_response_t_subscribe(lcm, "PATH_RESPONSE", &acfrlcm_auv_path_response_t_handler, lle);
     acfrlcm_auv_iver_motor_command_t_subscribe(lcm, "IVER_MOTOR", &acfrlcm_auv_iver_motor_command_t_handler, lle);
     acfrlcm_auv_global_planner_t_subscribe(lcm, "TASK_PLANNER_COMMAND", &acfrlcm_auv_global_planner_t_handler, lle);
+    acfrlcm_ship_status_t_subscribe(lcm, "SHIP_STATUS", &acfrlcm_ship_status_t_handler, lle);
 }
 
 int

@@ -148,3 +148,24 @@ acfrlcm_auv_global_planner_t_handler (const lcm_recv_buf_t *rbuf, const char *ch
 */    TEXTREAD_ADD_FIELD (tr, "str",    "%s", msg->str);   
     textread_stop (tr);
 }
+
+void
+acfrlcm_ship_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+                             const acfrlcm_ship_status_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "ship_id", "%d",      msg->ship_id);
+    TEXTREAD_ADD_FIELD (tr, "name", "%s",      msg->name);
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
+    TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
+    TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
+    TEXTREAD_ADD_FIELD (tr, "latitude","%f",      msg->latitude);
+    TEXTREAD_ADD_FIELD (tr, "longitude","%f",      msg->longitude);
+    textread_stop (tr);
+}
+
+
