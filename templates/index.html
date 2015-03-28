@@ -58,6 +58,8 @@
 
             // Create the map object - subscribe to an address
             var cfgfile = "{{ configfile }}"; // server from template address
+            var allowadmin = {{ allowadmin }}
+            if (allowadmin && window.location.hash !== "#display") allowadmin = false
             var map = new auvmapper();
 
 
@@ -70,7 +72,7 @@
                 map.init("map");
 
                 // Add settings modal control
-                if (window.location.hash !== "#display")
+                if (allowadmin)
                     map.add_control("<i class='fa fa-gear'></i>", function () {show_modalform ("/get_config?cfg="+cfgfile) }, "Settings", "topright");
                     //map.add_control("<i class='fa fa-gear'></i>", function () {$("#modalform-modal").modal("show")}, "Settings", "topright");
 
@@ -111,7 +113,7 @@
                             for (var i = 0; i < inputoptions.length; i++) dispoptions[inputoptions[i].trim()] = true;
                             size = (data.hasOwnProperty("size")) ? parseInt(data.size) : {width: parseInt(data.width), length: parseInt(data.length), loffset: parseInt(data.loffset)};
                             maxtracklen = (data.hasOwnProperty("maxtracklen")) ? parseInt(data.maxtracklen) : 100;
-                            map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size, maxtracklen: maxtracklen});
+                            map.add_posetracker(data.name, data.url, {color: data.color, dispoptions: dispoptions, interval: parseInt(data.interval), size: size, maxtracklen: maxtracklen}, allowadmin);
                             if (dispoptions.hasOwnProperty("autotrack")) map.auto_extent(data.name, true);
                         });
                 }

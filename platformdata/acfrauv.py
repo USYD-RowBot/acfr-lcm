@@ -72,6 +72,8 @@ def init_push_data(configfile):
         remotesec = cfg.get('layers', 'remotepush')
         url = cfg.get(remotesec, 'url')
         targets = cfg.get(remotesec, 'targets').split(',')
+
+
         upddelay = float(cfg.get(remotesec, 'upddelay'))
 
         sendRemoteDataThread(upddelay, targets, url).start()

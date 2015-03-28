@@ -49,8 +49,9 @@ def setall_platformdata(data):
     global platformdata
     # platformdata = data
     # print data
-    # print json.loads(data)
+    print json.loads(data)
     platformdata = json.loads(data)
+    return
 
 
 ######################################################################
@@ -64,7 +65,7 @@ def parse_mission (filepath, origin=[0, 0]):
     # filepath will contain the filepath to the mission file
     url = "{}/get_mission?filepath={}&olat={}&olon={}".format(sourceserver[0],filepath, origin[0], origin[1])
     data = json.loads(requests.get(url=url).text)
-    print data
+    #print data
     latlngs = data["latlngs"]
     origin = data["origin"]
 
