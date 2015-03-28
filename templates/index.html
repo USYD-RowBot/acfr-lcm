@@ -76,6 +76,8 @@
                     map.add_control("<i class='fa fa-gear'></i>", function () {show_modalform ("/get_config?cfg="+cfgfile) }, "Settings", "topright");
                     //map.add_control("<i class='fa fa-gear'></i>", function () {$("#modalform-modal").modal("show")}, "Settings", "topright");
 
+                map.add_control("<i class='fa fa-info-circle'></i>", function() {show_modalform('static/html-snippets/systeminfo.html')}, "Info", "topright");
+
                 // Add settings modal control
                 map.add_control("<i class='fa fa-crosshairs'></i><ul id='track-layers'></ul>", function(){return 0},"Move in to view","topleft");
                 $("#track-layers").parent().addClass("hover-expand");
