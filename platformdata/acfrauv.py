@@ -262,10 +262,17 @@ class sendRemoteDataThread (threading.Thread):
         while(1) :
             sendplatforms = {}
             for key in self.targets:
-                sendplatforms[key] = platformdata[key]
+                try:
+                    print "Getting {}".format(key)
+                    sendplatforms[key] = platformdata[key]
+                except:
+                    print "ERROR!!!   Unable to read {}".format(key)
 
-            print "Sending data to {}".format(self.destserver)
-            payload = {'platformdata': json.dumps(sendplatforms)}
-            r = requests.post(self.destserver, data=payload)
+            try:
+                print "Sending data to {}".format(self.destserver)
+                payload = {'platformdata': json.dumps(sendplatforms)}
+                r = requests.post(self.destserver, data=payload)
+            except:
+                print "ERROR!!!   Unable to send data to {}".format(self.destserver)
 
             time.sleep(self.delay)
