@@ -4,3 +4,4 @@ Pillow
 gdal
 pyproj
 gevent
+request
