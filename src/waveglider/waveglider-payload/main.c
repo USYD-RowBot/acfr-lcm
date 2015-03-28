@@ -39,6 +39,7 @@ void channel_init(message_channel_t *channel) {
     channel->message = 0;
     channel->length = 0;
     channel->last_time = 0;
+    pthread_mutex_init(&channel->lock, 0);
 }
 
 typedef struct
@@ -200,6 +201,7 @@ bool read_packet(state_t *state) {
 
     while (state->data_end < 6) {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
+        printf("Read bytes... %d\n", ret);
         // any error, bail out
         if (ret <= 0) return false;
         state->data_end += ret; // add bytes read
@@ -286,6 +288,7 @@ int
 main(int argc, char **argv)
 {
     state_t state;
+    pthread_mutex_init(&state.queue_lock, 0);
 
     // install the signal handler
 	program_exit = 0;
@@ -296,19 +299,19 @@ main(int argc, char **argv)
     char rootkey[64];
     sprintf(rootkey, "acfr.%s", basename(argv[0]));
 
-    acfr_sensor_t *sensor = acfr_sensor_create(state.lcm, rootkey);
-    if (sensor == NULL)
+    state.sensor = acfr_sensor_create(state.lcm, rootkey);
+    if (state.sensor == NULL)
         return 0;
 
     char key[64];
     // vertical thruster info
     /*char *device;
     sprintf(key, "%s.device", rootkey);
-    device = bot_param_get_str_or_fail(sensor->param, key);
+    device = bot_param_get_str_or_fail(state.sensor->param, key);
 
     int baud;
     sprintf(key, "%s.baud", rootkey);
-    baud = bot_param_get_int_or_fail(sensor->param, key);*/
+    baud = bot_param_get_int_or_fail(state.sensor->param, key);*/
 
     // lets start LCM
     senlcm_usbl_fix_short_t_subscribe(state.lcm, "USBL_FIX.*", &usbl_callback, &state.queue[0]);
