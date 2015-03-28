@@ -21,11 +21,11 @@
 #include "perls-lcmtypes/acfrlcm_ship_status_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 
-#ifndef BOT_CONF_DIR
+/*#ifndef BOT_CONF_DIR
 #define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
 #else
 #define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
-#endif
+#endif*/
 
 typedef struct
 {
@@ -48,12 +48,12 @@ ahrs_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_ahrs_t *a
 {
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    //pthread_mutex_lock(&state->data_lock);
     state->ahrs_utime = ahrs->utime;
     state->status.roll = ahrs->roll;
     state->status.pitch = ahrs->pitch;
     state->status.heading = ahrs->heading;
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 void
@@ -61,11 +61,11 @@ gpsd_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_gpsd3_t *
 {
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    //pthread_mutex_lock(&state->data_lock);
     state->gpsd_utime = gps->utime;
     state->status.latitude = gps->fix.latitude;
     state->status.longitude = gps->fix.longitude;
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 void
@@ -73,7 +73,7 @@ heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_hear
 {
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    //pthread_mutex_lock(&state->data_lock);
     if (state->gpsd_utime > state->last_utime || state->ahrs_utime > state->last_utime)
     {
         state->status.utime = timestamp_now();
@@ -83,7 +83,7 @@ heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_hear
         acfrlcm_ship_status_t_publish(state->lcm, state->output_channel, &state->status);
 
     }
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 int program_exit;
@@ -104,20 +104,18 @@ main(int argc, char **argv)
     signal(SIGINT, signal_handler);
 
     // read the config file
-    BotParam *cfg;
 	char rootkey[64];
 	char key[64];
 
-	char *path = getenv ("BOT_CONF_PATH");
-    if (!path)
-        path = DEFAULT_BOT_CONF_PATH;
-    cfg = bot_param_new_from_file(path);
-    if(cfg == NULL) {
-        printf("cound not open config file\n");
-        return 0;
-    }
+    state.lcm = lcm_create(NULL);
 
-    sprintf(rootkey, "acfr.%s", basename(argv[0]));
+    BotParam *cfg = NULL;
+    cfg = bot_param_new_from_server (state.lcm, 1);
+    if(cfg == NULL)
+        return 0;
+
+
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
 	char *ahrs_target;
 	sprintf(key, "%s.ahrs_channel", rootkey);
@@ -141,11 +139,11 @@ main(int argc, char **argv)
 	state.status.ship_id = bot_param_get_int_or_fail(cfg, key);
 
 	// lets start LCM
-	state.lcm = lcm_create(NULL);
     senlcm_gpsd3_t_subscribe(state.lcm, gpsd_target, &gpsd_callback, &state);
     senlcm_ahrs_t_subscribe(state.lcm, ahrs_target, &ahrs_callback, &state);
     perllcm_heartbeat_t_subscribe(state.lcm, heartbeat_target, &heartbeat_handler, &state);
 
+        //pthread_mutex_init(&state->data_lock);
 	int lcm_fd = lcm_get_fileno(state.lcm);
 	fd_set rfds;
 

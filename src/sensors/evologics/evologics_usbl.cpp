@@ -93,7 +93,7 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     {
 	if (ship_statusq.size() < 1)
 	{
-	    cout << "WARNING: Evologics_Usbl expecting Novatel data.  Not found." << endl;
+	    cout << "WARNING: Evologics_Usbl expecting ship_status data.  Not found." << endl;
 	    return 0;
 	}
         // find the closest ship_status message in the queue
