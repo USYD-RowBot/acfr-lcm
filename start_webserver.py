@@ -50,6 +50,7 @@ import os
 import sys
 import shutil
 from gevent.wsgi import WSGIServer    # host it properly
+import json
 
 
 
@@ -71,10 +72,11 @@ except:
     pass
 thisserver = "http://{}:{}".format(ipaddress, port)
 
+configfile = "config/{}.ini".format(socket.gethostname())
 
 @app.route('/')
 def home():
-    return render_template('index.html', hostname=socket.gethostname())
+    return render_template('index.html', configfile=configfile)
     #return render_template('index.html', server="http://localhost:8080")  # server is this machine
 
 @app.route('/get_mission')
@@ -107,6 +109,12 @@ def get_geotiff():
         Image.open(url).save(imgurl)
 
     return jsonify({'bounds': bounds, 'imgurl': imgurl})
+
+
+@app.route('/setall_platformdata', methods=['POST'])
+def setall_platformdata():
+    data = request.form.get('platformdata')
+    pd.setall_platformdata(data)
 
 
 @app.route('/get_platformdata')
@@ -182,6 +190,7 @@ if __name__ == '__main__':
     # Start threads that do update vehicle data
     print "Starting data threads..."
     pd.init_platformdata_threads()
+    pd.init_push_data(configfile)
 
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
