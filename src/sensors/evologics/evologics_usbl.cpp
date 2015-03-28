@@ -78,7 +78,7 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     SMALL::Vector3D target;
     target = ef->y, ef->x, ef->z;
     
-    cout << "Evologics_Usbl got local fix " << ef->y << " " << ef->x << " " << ef->z << endl;
+    cout << "Evologics_Usbl got local fix: x:" << ef->x << " y: " << ef->y << " z: " << ef->z << " n:" << ef->n << " e:" << ef->e << " r:" << ef->r << " p:" << ef->p << " h:" << ef->h << endl;
     
     SMALL::Pose3D ship;
     ship.setPosition(0, 0, 0);
@@ -93,7 +93,7 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     {
 	if (ship_statusq.size() < 1)
 	{
-	    cout << "WARNING: Evologics_Usbl expecting Novatel data.  Not found." << endl;
+	    cout << "WARNING: Evologics_Usbl expecting ship_status data.  Not found." << endl;
 	    return 0;
 	}
         // find the closest ship_status message in the queue
@@ -136,9 +136,8 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
         cout << "target xyz (ship)" << target_ship << endl;
     
     
-        SMALL::Vector3D target_world = ship.transformFrom(target_ship);
+        target_world = ship.transformFrom(target_ship);
         cout << "target xyz (world)" << target_world << endl;
-    
     } else if ( attitude_source == ATT_EVOLOGICS_COMPENSATED) {
         // use the internally compensated evologics northing/easting positions
         target_world[0] = ef->e;
@@ -148,20 +147,20 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
         return 0;
     }
     
+        cout << "target_world[0]: " << target_world[0] << " [1]: " << target_world[1] << endl;
     // set up the coordinate reprojection
     char proj_str[64];
     double ship_latitude;
     double ship_longitude;
     if(gps_source == GPS_SHIP_STATUS)
     {
-    
         ship_latitude = ship_statusq[nov_index]->latitude * RTOD;
         ship_longitude = ship_statusq[nov_index]->longitude * RTOD;
     } 
     else if(gps_source == GPS_GPSD)
     {
-        ship_latitude = gpsd.fix.latitude;
-        ship_longitude = gpsd.fix.longitude;
+        ship_latitude = gpsd.fix.latitude * RTOD;
+        ship_longitude = gpsd.fix.longitude * RTOD;
     } 
      
     sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", ship_longitude, ship_latitude);
@@ -173,15 +172,18 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
        return 0;
     }
     
-    double x = target_world[1]; 
-    double y = target_world[0];           
+    double x = (double)target_world[1]; 
+    double y = (double)target_world[0];           
     pj_transform(pj_tmerc, pj_latlong, 1, 1, &x, &y, NULL);
-    
+
+cout << "Ship lat: " << ship_latitude << " lon:" << ship_longitude << endl;
+cout << "Target lat: " << y << " lon:" << x << endl;
+
     usbl_fix_t uf;
     uf.utime = timestamp_now();
     uf.remote_id = ef->remote_id;
-    uf.latitude = y;
-    uf.longitude = x;
+    uf.latitude = y ;
+    uf.longitude = x ;
     uf.depth = target_world[2];
     uf.accuracy = ef->accuracy;
     uf.ship_longitude = ship_longitude * DTOR;

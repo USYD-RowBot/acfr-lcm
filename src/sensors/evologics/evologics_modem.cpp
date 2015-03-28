@@ -81,25 +81,17 @@ int Evologics_Modem::ping_targets()
         {
             cout << "Preparing to ping target " << current_ping_target << " at address " << targets[current_ping_target] << endl;
             ping_counter = 0;
-            send_ping(targets[current_ping_target]);
-            if (++current_ping_target >= num_targets)
-                current_ping_target = 0;
+            // try to ping the current target.  If we are already waiting for
+            // a ping reply don't change target.
+            if (send_ping(targets[current_ping_target]) == 1)
+            {
+                if (++current_ping_target >= num_targets)
+                    current_ping_target = 0;
+            }
         }
         else
             ping_counter++;
     }
-    
-    // check to make sure we haven't gotten stuck sending a ping
-    // this can happen if we don't get a response, lets wait 10 seconds
-    //if(sending_im && ping_time == 10)
-    //    sending_im = false;
-        
-    if(sending_im && ping_time < 10)
-        ping_time++;
-        
-    if(!sending_im)
-        ping_time = 0;
-        
     
     for(int i=0; i<num_targets; i++)    
     {
@@ -240,7 +232,7 @@ int Evologics_Modem::load_config(char *program_name)
 
 }
 
-int Evologics_Modem::parse_ahrs_message(char *buf)
+int Evologics_Modem::process_ahrs_message(char *buf)
 {
     // decode the AHRS message
     if(strstr(buf, "AHRS") != NULL)
@@ -387,6 +379,7 @@ int Evologics_Modem::init()
     
     ping_counter = 0;
     send_fixes = true;
+    sent_usbl_fix = false;
     
     return 1;       
 }
@@ -430,16 +423,17 @@ static void *read_thread(void *u)
                   if(strstr((const char *)buf, "RECV") != NULL &&
                      strstr((const char *)buf, "LCM") != NULL)
                   {
+                     // check for the 'LE' characters at the end of the string
                      if (buf[bytes-4] == 0x4C && buf[bytes-3] == 0x45)
                      {
-                        if (evo->parse_modem_data(buf, bytes, timestamp))
+                        if (evo->process_modem_data(buf, bytes, timestamp))
                            break;
                      } else {
                         cout << "Failed to find LE at end of potential LCM message.  Continuing to look for end of line character." << endl;
                      }
                   } else {
-                     // otherwise let's try to parse the message
-                     if (evo->parse_modem_data(buf, bytes, timestamp))
+                     // otherwise let's try to process the message
+                     if (evo->process_modem_data(buf, bytes, timestamp))
                         break;
                   }
                }
@@ -715,12 +709,12 @@ int Evologics_Modem::handle_heartbeat()
     // ping the targets
     ping_targets();
     
-    cout << "************* Sending C: " << sending_command << " Sending IM: " << sending_im << " Sending data: " << sending_data << endl; 
+    cout << "************* Sending C: " << sending_command << " Sending IM: " << sending_im << " Sending data: " << sending_data << " sent usbl fix: " << sent_usbl_fix << endl; 
 
     return 1;
 }
 
-int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
+int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
 {
     // if we got this far then the first three charaters are +++
     //pthread_mutex_lock(&flags_lock);
@@ -729,27 +723,27 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
     // USBL message
     if(strstr((const char *)d, "USBLLONG") != NULL)
     {
-        return parse_usbllong(d, timestamp);
+        return process_usbllong(d, timestamp);
     }
     // Short USBL message
     else if(strstr((const char *)d, "USBLANGLES") != NULL)
     {
-        return parse_usblangles(d, timestamp);
+        return process_usblangles(d, timestamp);
     }    
     // Received an IM
     else if(strstr((const char *)d, "RECVIM") != NULL)
     {
-        return parse_im(d);
+        return process_im(d);
     }
     // Received a piggy back IM
     else if(strstr((const char *)d, "RECVPBM") != NULL)
     {
-        return parse_pbm(d);
+        return process_pbm(d);
     }
     // Receive a burst data message 
     else if(strstr((const char *)d, "RECV") != NULL)
     {
-        return parse_burst_data(d);
+        return process_burst_data(d);
     }
     // Sent IM information    
     else if(strstr((const char *)d, "FAILEDIM") != NULL)
@@ -760,6 +754,12 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
         command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
+    }
+    else if(strstr((const char *)d, "FAILED") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_data = false;
+        pthread_mutex_unlock(&flags_lock);
     }
     // Received a cancellation notice for an IM.  This happens if we send beforethe last message was finished sending. The message may still have been received.
     else if (strstr((const char *)d, "CANCELEDIM") != NULL)
@@ -782,7 +782,16 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
         command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
-        send_command("AT?T");
+        //send_command("AT?T");
+    }
+    else if(strstr((const char *)d, "DELIVERED") != NULL)
+    {
+        pthread_mutex_lock(&flags_lock);
+        sending_data = false;
+        // reset the ping counter to avoid sending too soon after burst data exchange
+        cout << "RECEIVED Burst data reply.  Resetting ping counter." << endl;
+        ping_counter = 0;
+        pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {
@@ -952,7 +961,7 @@ int Evologics_Modem::parse_modem_data(char *d, int len, int64_t timestamp)
     return 1;   
 }
 
-int Evologics_Modem::parse_lcm_data(unsigned char *d, int size)
+int Evologics_Modem::process_lcm_data(unsigned char *d, int size)
 {
     // first chack the crc
     unsigned long crc = crc32(0, &d[3], size - 9);
@@ -982,7 +991,7 @@ int Evologics_Modem::parse_lcm_data(unsigned char *d, int size)
     return 1;
 }
 
-int Evologics_Modem::parse_usbllong(char *d, int64_t timestamp)
+int Evologics_Modem::process_usbllong(char *d, int64_t timestamp)
 {
     char *tokens[17];
     int ret;
@@ -1036,7 +1045,7 @@ int Evologics_Modem::parse_usbllong(char *d, int64_t timestamp)
     return 1;
 }
 
-int Evologics_Modem::parse_usblangles(char *d, int64_t timestamp)
+int Evologics_Modem::process_usblangles(char *d, int64_t timestamp)
 {
     char *tokens[14];
     int ret;
@@ -1074,7 +1083,7 @@ int Evologics_Modem::parse_usblangles(char *d, int64_t timestamp)
 }
 
 
-int Evologics_Modem::parse_im(char *d)
+int Evologics_Modem::process_im(char *d)
 {
     vector<string> tokens = chop_string(d, 10);
     if (tokens.size() != 10)
@@ -1089,12 +1098,12 @@ int Evologics_Modem::parse_im(char *d)
     
     // check if the IM data contains LCM data
     if (!strncmp(data, "LCM", 3) && target == local_address)
-       parse_lcm_data((unsigned char *)data, size);
+       process_lcm_data((unsigned char *)data, size);
 
     return 1;
 }
 
-int Evologics_Modem::parse_pbm(char *d)
+int Evologics_Modem::process_pbm(char *d)
 {
     vector<string> tokens = chop_string(d, 9);
     if (tokens.size() != 9)
@@ -1109,12 +1118,12 @@ int Evologics_Modem::parse_pbm(char *d)
     
     // check if the IM data contains LCM data
     if (!strncmp(data, "LCM", 3) && target == local_address)
-       parse_lcm_data((unsigned char *)data, size);
+       process_lcm_data((unsigned char *)data, size);
 
     return 1;
 }
 
-int Evologics_Modem::parse_burst_data(char *d)
+int Evologics_Modem::process_burst_data(char *d)
 {
     vector<string> tokens = chop_string(d, 10);
     if (tokens.size() != 10)
@@ -1129,7 +1138,7 @@ int Evologics_Modem::parse_burst_data(char *d)
 
     // check if the IM data contains LCM data
     if (!strncmp(data, "LCM", 3) && target == local_address)
-       parse_lcm_data((unsigned char *)data, size);
+       process_lcm_data((unsigned char *)data, size);
 
     return 1;
 }
@@ -1177,19 +1186,29 @@ int Evologics_Modem::send_lcm_data(unsigned char *d, int size, int target, const
        pthread_mutex_unlock(&flags_lock);
        pthread_mutex_unlock(&(write_lock));
    } else {
-       char im_msgbuf[128];
-       memset(im_msgbuf, 0, 128);
-       sprintf(im_msgbuf, "AT*SEND,%d,%d,", data_size, target);
-       //cout << im_msgbuf << endl;
-       pthread_mutex_lock(&(write_lock));
-       write(fd, im_msgbuf, strlen(im_msgbuf));
-       write(fd, dout, data_size);
-       write(fd, &term, 1);
-       pthread_mutex_lock(&flags_lock);
-       sending_command = true;
-       sending_im = true;
-       pthread_mutex_unlock(&flags_lock);
-       pthread_mutex_unlock(&(write_lock));
+       // FIXME: Lock out sending of more than one USBL_FIX per IM ping.  This
+       //        could be more elegantly handled with a state machine or
+       //        some other mechanism.
+       if(strstr(dest_channel, "USBL_FIX") == NULL || sent_usbl_fix == false)
+       {
+           char im_msgbuf[128];
+           memset(im_msgbuf, 0, 128);
+           sprintf(im_msgbuf, "AT*SEND,%d,%d,", data_size, target);
+           //cout << im_msgbuf << endl;
+           pthread_mutex_lock(&(write_lock));
+           write(fd, im_msgbuf, strlen(im_msgbuf));
+           write(fd, dout, data_size);
+           write(fd, &term, 1);
+           pthread_mutex_lock(&flags_lock);
+           sending_command = true;
+           sending_data = true;
+           if (strstr(dest_channel, "USBL_FIX") != NULL)
+               sent_usbl_fix = true;
+           pthread_mutex_unlock(&flags_lock);
+           pthread_mutex_unlock(&(write_lock));
+       } else {
+           cout << "Not sending USBL_FIX" << endl;
+       }
    }
 
    return 1;
@@ -1231,6 +1250,7 @@ int Evologics_Modem::send_ping(int target)
         send_command(msg);
         pthread_mutex_lock(&flags_lock);
         sending_im = true;
+        sent_usbl_fix = false;
         pthread_mutex_unlock(&flags_lock);
 
         return 1;
@@ -1305,7 +1325,7 @@ int Evologics_Modem::process()
                 // data to be read       
                 memset(buf, 0, MAX_BUF_LEN);
                 readline(ahrs_fd, buf, MAX_BUF_LEN);
-                parse_ahrs_message(buf);
+                process_ahrs_message(buf);
             }
                 
         }
