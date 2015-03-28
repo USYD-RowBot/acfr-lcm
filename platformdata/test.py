@@ -38,17 +38,6 @@ def init_platformdata_threads():
     FakeClassifierThread('class1', 1).start()
 
 
-def init_push_data(configfile):
-    cfg = ConfigParser.ConfigParser()
-    cfg.read(configfile)
-    remotesec = cfg.get('layers', 'remotepush')
-    url = cfg.get(remotesec, 'url')
-    targets = cfg.get(remotesec, 'targets').split(',')
-    upddelay = float(cfg.get(remotesec, 'upddelay'))
-
-    sendRemoteDataThread(upddelay, targets, url).start()
-    return
-
 ######################################################################
 # Get data for a specific platform
 # The global variable platformdata is updated by another process/thread.
@@ -228,32 +217,3 @@ def FakeCoordOnCircle(i, radius, o):
     return lat, lon, hdg
 
 
-class sendRemoteDataThread (threading.Thread):
-    def __init__(self, delay, targets, destserver):
-        threading.Thread.__init__(self)
-        self.delay = delay
-        self.targets = targets
-        self.destserver = destserver
-        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
-
-    def run(self):
-
-        while(1) :
-            sendplatforms = {}
-            for key in self.targets:
-                key = key.strip()
-                try:
-                    print "Getting {}".format(key)
-                    sendplatforms[key] = get_platformdata(key)
-
-                except:
-                    print "ERROR!!!   Unable to read {}".format(key)
-
-            try:
-                print "Sending data to {}".format(self.destserver)
-                payload = {'platformdata': json.dumps(sendplatforms)}
-                r = requests.post(self.destserver, data=payload)
-            except:
-                print "ERROR!!!   Unable to send data to {}".format(self.destserver)
-
-            time.sleep(self.delay)

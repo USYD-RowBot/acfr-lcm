@@ -190,7 +190,7 @@ function auvmapper () {
      * @param markeroptions
      * @param showdash
      */
-    this.add_posetracker = function(platform, url, usroptions) {
+    this.add_posetracker = function(platform, url, usroptions, allowcontrol) {
         if (typeof usroptions == "undefined") usroptions = {};
         var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false, showasheatmap: false}; // default dispoptions
         $.extend(dispoptions,usroptions.dispoptions);  // extend to make sure all fields
@@ -243,7 +243,7 @@ function auvmapper () {
 
         // initialise info panel
         this.snap_to_track[platform] = false;
-        this.add_platform_controls(platform, tracklayer, markeroptions.color, options.dispoptions);
+        this.add_platform_controls(platform, tracklayer, markeroptions.color, options.dispoptions, allowcontrol);
         this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
         // start position updater
@@ -396,7 +396,7 @@ function auvmapper () {
      * @param tracklayer
      * @param bgcol
      */
-    this.add_platform_controls = function(platform, tracklayer, bgcol, dispoptions) {
+    this.add_platform_controls = function(platform, tracklayer, bgcol, dispoptions, allowcontrol) {
         var ctl = L.Control.extend({
             options: {
                 position: 'bottomleft'
@@ -425,7 +425,7 @@ function auvmapper () {
                         .click(function(){_this.layers.overlays[tracklayer].setLatLngs([])})
                         .tooltip({title:"Clear track history",trigger:"hover",container:"body"})
                     );
-                if (dispoptions.setwaypoint && window.location.hash !== "#display")
+                if (dispoptions.setwaypoint && allowadmin)
                     $(ctldiv).prepend($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
                         .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})

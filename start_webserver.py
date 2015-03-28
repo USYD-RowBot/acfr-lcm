@@ -51,8 +51,9 @@ import sys
 import shutil
 from gevent.wsgi import WSGIServer    # host it properly
 import json
-
-
+import time
+import requests
+import threading
 
 app = Flask(__name__)
 
@@ -72,11 +73,12 @@ except:
     pass
 thisserver = "http://{}:{}".format(ipaddress, port)
 
-configfile = "config/{}.ini".format(socket.gethostname())
+configfile = "config/{}-{}.ini".format(socket.gethostname(),module)
+allowadmin = "false"
 
 @app.route('/')
 def home():
-    return render_template('index.html', configfile=configfile)
+    return render_template('index.html', configfile=configfile, allowadmin=allowadmin)
     #return render_template('index.html', server="http://localhost:8080")  # server is this machine
 
 @app.route('/get_mission')
@@ -115,7 +117,7 @@ def get_geotiff():
 def setall_platformdata():
     data = request.form.get('platformdata')
     pd.setall_platformdata(data)
-
+    jsonify({"result": "ok"})
 
 @app.route('/get_platformdata')
 def get_platformdata():
@@ -158,6 +160,16 @@ def get_config():
             return jsonify(dict)
 
 
+@app.route('/send_to_platform', methods=["POST"])
+def send_to_platform():
+    # platform as a GET argument
+    #thisplatform = request.args.get('platform')
+    args = dict(request.form)
+    platform, response = pd.send_to_platform(args)
+
+    return jsonify({"result": response, "platform": platform})
+
+
 def get_config_form (cfg) :
     f = open(cfg, 'r')
     cfgtext = f.read()
@@ -171,26 +183,76 @@ def get_config_form (cfg) :
     return form.format(cfg, cfgtext)
 
 
-@app.route('/send_to_platform', methods=["POST"])
-def send_to_platform():
-    # platform as a GET argument
-    #thisplatform = request.args.get('platform')
-    args = dict(request.form)
-    platform, response = pd.send_to_platform(args)
-
-    return jsonify({"result": response, "platform": platform})
-
-
 def get_platform_cmd_form(platform):
     return '<div><b><i class="fa fa-gears"></i> Config File Editor</b></div>Command options for: '+platform
 
 
-if __name__ == '__main__':
 
+class sendRemoteDataThread (threading.Thread):
+    def __init__(self, delay, targets, destserver):
+        threading.Thread.__init__(self)
+        self.delay = delay
+        self.targets = targets
+        self.destserver = destserver
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+
+    def run(self):
+
+        while(1) :
+            sendplatforms = {}
+            for key in self.targets:
+                try:
+                    print 'Getting data for {}'.format(key)
+                    r = requests.get(url=self.targets[key])
+                    if r.status_code == 200:
+                        sendplatforms[key] = json.loads(r.text)
+                    print "Received data for: {}".format(self.targets[key])
+                except:
+                    print "ERROR!!!   Cannot get data for: {}".format(self.targets[key])
+
+            try:
+                print "Sending data to {}".format(self.destserver)
+                payload = {'platformdata': json.dumps(sendplatforms)}
+                r = requests.post(self.destserver, data=payload)
+            except:
+                print "ERROR!!!   Unable to send data to {}".format(self.destserver)
+
+            time.sleep(self.delay)
+
+
+def run_server_cfg(configfile):
+    cfg = ConfigParser.ConfigParser()
+    cfg.read(configfile)
+    if (cfg.has_option('server', 'remotepush')):
+        remotesec = cfg.get('server', 'remotepush')
+        url = cfg.get(remotesec, 'url')
+        localdomain = cfg.get(remotesec, 'localdomain')
+
+        targets = {}
+        for k in cfg.get(remotesec, 'targets').split(','):
+            targets[k] = cfg.get(k, 'url')
+            if targets[k].find('http://') <= 0:
+                targets[k] = "{}/{}".format(localdomain, targets[k])
+
+        print targets
+        upddelay = float(cfg.get(remotesec, 'upddelay'))
+
+        sendRemoteDataThread(upddelay, targets, url).start()
+
+    admin = cfg.get('server', 'allowadmin') if (cfg.has_option('server', 'allowadmin')) else "false"
+
+    return admin
+
+
+
+
+
+if __name__ == '__main__':
+    global allowadmin
     # Start threads that do update vehicle data
     print "Starting data threads..."
     pd.init_platformdata_threads()
-    pd.init_push_data(configfile)
+    allowadmin = run_server_cfg(configfile)
 
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
@@ -203,4 +265,13 @@ if __name__ == '__main__':
 
     http_server = WSGIServer(('', port), app)
     http_server.serve_forever()
+
+
+
+
+
+
+
+
+
 
