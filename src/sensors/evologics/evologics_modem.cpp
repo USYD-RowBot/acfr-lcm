@@ -423,6 +423,7 @@ static void *read_thread(void *u)
                   if(strstr((const char *)buf, "RECV") != NULL &&
                      strstr((const char *)buf, "LCM") != NULL)
                   {
+                     // check for the 'LE' characters at the end of the string
                      if (buf[bytes-4] == 0x4C && buf[bytes-3] == 0x45)
                      {
                         if (evo->process_modem_data(buf, bytes, timestamp))
@@ -787,6 +788,9 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
     {
         pthread_mutex_lock(&flags_lock);
         sending_data = false;
+        // reset the ping counter to avoid sending too soon after burst data exchange
+        cout << "RECEIVED Burst data reply.  Resetting ping counter." << endl;
+        ping_counter = 0;
         pthread_mutex_unlock(&flags_lock);
     }
     else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
