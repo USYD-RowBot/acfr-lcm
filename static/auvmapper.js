@@ -282,7 +282,9 @@ function auvmapper () {
                     var uncertainty = (data.pose.hasOwnProperty('uncertainty')) ?  data.pose.uncertainty : 0.1;
                     _this.layers.overlays[platform+" uncertainty"].setLatLng(curpos).setRadius(uncertainty);
 
+
                     // Update marker / polygon position
+
                     if (_this.layers.overlays[platform].hasOwnProperty('heatmap')) {
                         curpos.alt = data.stat.intensity*50;
                         _this.layers.overlays[platform].addLatLng(curpos);
@@ -335,7 +337,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0)
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LASTMSG: <br>"+Math.round(data.curts - data.msgts)+" s</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'><small>Last upd: </small><br>"+Math.round(data.curts - data.msgts)+" s</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
@@ -346,7 +348,8 @@ function auvmapper () {
                 if ($(_this.info[platform]).find(".errmsg").length <= 0)
                     $(_this.info[platform]).append("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
-                $(_this.info[platform]).find(".errmsg").html("SERVER <br>ERROR! ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
+                $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
+
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
         });
