@@ -192,7 +192,7 @@ function auvmapper () {
      */
     this.add_posetracker = function(platform, url, usroptions, allowcontrol) {
         if (typeof usroptions == "undefined") usroptions = {};
-        var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false, showasheatmap: false}; // default dispoptions
+        var dispoptions = {showdash: false, showrph: false, showbatt: false, showtrack: false, setwaypoint: false}; // default dispoptions
         $.extend(dispoptions,usroptions.dispoptions);  // extend to make sure all fields
         usroptions.dispoptions = dispoptions;  // copy to usroptions
         var options = {color: 'red', interval: 1000, size: 3, maxtracklen: 100};  // default other otpions
@@ -218,11 +218,7 @@ function auvmapper () {
         }
 
         // if size is an object, then draw a ship, otherwise draw a circle
-        if (options.dispoptions.showasheatmap) {
-            this.layers.overlays[platform] = new L.heatLayer([], {radius: options.size,gradient:{0.1: "black", 0.5: "green", 1: options.color}});
-            this.layers.overlays[platform].heatmap = true;
-        }
-        else if (typeof options.size === "number") {
+        if (typeof options.size === "number") {
             this.layers.overlays[platform] = new L.circle(this.origin, options.size, markeroptions);
         }
         else if (typeof options.size === "object") {
@@ -247,7 +243,7 @@ function auvmapper () {
         this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
         // start position updater
-        this.update_posetracker(tracklayer, platform, url, options.interval, options.maxtracklen);
+        this.update_posetracker(tracklayer, unclayer, platform, url, options.interval, options.maxtracklen);
     }
 
     /**
@@ -258,7 +254,7 @@ function auvmapper () {
      * @param url
      * @param interval
      */
-    this.update_posetracker = function( tracklayer, platform, url, interval, maxtracklen) {
+    this.update_posetracker = function( tracklayer, unclayer,  platform, url, interval, maxtracklen) {
         $.ajax({
             dataType: "jsonp",
             url: url,
@@ -266,34 +262,8 @@ function auvmapper () {
             success: function (data) {
                 if (_this.info[platform].data('msgid') != data.msgid) {
                     _this.info[platform].data('msgid',data.msgid);
-                    var curpos = new L.LatLng(0, 0);
-                    if ((data.pose.lat != NaN) || (data.pose.lon != NaN))
-                        curpos = new L.LatLng(data.pose.lat, data.pose.lon);
 
-                    // Add pose to track, but check if track is too long (to avoid memory/performance issues)
-                    if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
-                        _this.layers.overlays[tracklayer].addLatLng(curpos);
-                        var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
-                        if (tracklen > maxtracklen)
-                            _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
-                    }
-
-                    // set uncertainty circle
-                    var uncertainty = (data.pose.hasOwnProperty('uncertainty')) ?  data.pose.uncertainty : 0.1;
-                    _this.layers.overlays[platform+" uncertainty"].setLatLng(curpos).setRadius(uncertainty);
-
-
-                    // Update marker / polygon position
-
-                    if (_this.layers.overlays[platform].hasOwnProperty('heatmap')) {
-                        curpos.alt = data.stat.intensity*50;
-                        _this.layers.overlays[platform].addLatLng(curpos);
-                    }
-                    else if (_this.layers.overlays[platform].hasOwnProperty("poly"))
-                        _this.layers.overlays[platform].poly.setLatLngHdg(data.pose.heading, curpos);//.bringToFront();
-                    else
-                        _this.layers.overlays[platform].setLatLng(curpos);
-
+                    set_pose(platform, tracklayer, unclayer, maxtracklen, data.pose)
 
                     // If we are tracking, check bounds and move map to track items
                     if (_this.autotrack_layer.getLayers().length > 0) {
@@ -341,18 +311,44 @@ function auvmapper () {
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
-                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},interval);
+                setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},interval);
             },
             error : function (jqXHR, status, desc) {
                 console.log("Cannot update position: "+platform,jqXHR);
                 if ($(_this.info[platform]).find(".errmsg").length <= 0)
-                    $(_this.info[platform]).append("<div class='error errmsg' data-count='0'></div>");
+                    $(_this.info[platform]).html("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
                 $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
 
-                setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
+                setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
         });
+    }
+
+    function set_pose(platform, tracklayer, unclayer, maxtracklen, pose) {
+        var curpos = [];
+        if ((pose.lat != NaN) || (pose.lon != NaN)) {
+            curpos = new L.LatLng(pose.lat, pose.lon);
+
+            // Add pose to track, but check if track is too long (to avoid memory/performance issues)
+            if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
+                _this.layers.overlays[tracklayer].addLatLng(curpos);
+                var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
+                if (tracklen > maxtracklen)
+                    _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
+            }
+
+            // set uncertainty circle
+            var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
+            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
+
+
+            // Update marker / polygon position
+            if (_this.layers.overlays[platform].hasOwnProperty("poly"))
+                _this.layers.overlays[platform].poly.setLatLngHdg(pose.heading, curpos);//.bringToFront();
+            else
+                _this.layers.overlays[platform].setLatLng(curpos);
+        }
     }
 
     /**
