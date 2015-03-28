@@ -17,6 +17,7 @@ from random import random, randint
 import time
 import threading
 import math
+import ConfigParser
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
@@ -36,6 +37,14 @@ def init_platformdata_threads():
 
 
 def init_push_data(configfile):
+    cfg = ConfigParser.ConfigParser()
+    cfg.read(configfile)
+    remotesec = cfg.get('layers', 'remotepush')
+    url = cfg.get(remotesec, 'url')
+    targets = cfg.get(remotesec, 'targets').split(',')
+    upddelay = float(cfg.get(remotesec, 'upddelay'))
+
+    sendRemoteDataThread(upddelay, targets, url).start()
     return
 
 ######################################################################
@@ -215,3 +224,34 @@ def FakeCoordOnCircle(i, radius, o):
     hdg = (- math.atan2((lat-o[0]), (lon-o[1]))*180/math.pi + 360) % 360
 
     return lat, lon, hdg
+
+
+class sendRemoteDataThread (threading.Thread):
+    def __init__(self, delay, targets, destserver):
+        threading.Thread.__init__(self)
+        self.delay = delay
+        self.targets = targets
+        self.destserver = destserver
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+
+    def run(self):
+
+        while(1) :
+            sendplatforms = {}
+            for key in self.targets:
+                key = key.strip()
+                try:
+                    print "Getting {}".format(key)
+                    sendplatforms[key] = get_platformdata(key)
+
+                except:
+                    print "ERROR!!!   Unable to read {}".format(key)
+
+            try:
+                print "Sending data to {}".format(self.destserver)
+                payload = {'platformdata': json.dumps(sendplatforms)}
+                r = requests.post(self.destserver, data=payload)
+            except:
+                print "ERROR!!!   Unable to send data to {}".format(self.destserver)
+
+            time.sleep(self.delay)

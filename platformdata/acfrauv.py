@@ -68,12 +68,13 @@ def init_platformdata_threads():
 def init_push_data(configfile):
     cfg = ConfigParser.ConfigParser()
     cfg.read(configfile)
-    remotesec = cfg.get('layers', 'remotepush')
-    url = cfg.get(remotesec, 'url')
-    targets = cfg.get(remotesec, 'targets').split(',')
-    upddelay = float(cfg.get(remotesec, 'upddelay'))
+    if (cfg.has_option('layers', 'remotepush')):
+        remotesec = cfg.get('layers', 'remotepush')
+        url = cfg.get(remotesec, 'url')
+        targets = cfg.get(remotesec, 'targets').split(',')
+        upddelay = float(cfg.get(remotesec, 'upddelay'))
 
-    sendRemoteDataThread(upddelay, targets, url).start()
+        sendRemoteDataThread(upddelay, targets, url).start()
 
     return
 
@@ -257,14 +258,16 @@ class sendRemoteDataThread (threading.Thread):
         self.destserver = destserver
         self.daemon = True  # run in daemon mode to allow for ctrl+C exit
 
-    def run (self):
+    def run(self):
 
         while(1) :
             sendplatforms = {}
             for key in self.targets:
+                key = key.strip()
                 try:
                     print "Getting {}".format(key)
                     sendplatforms[key] = get_platformdata(key)
+
                 except:
                     print "ERROR!!!   Unable to read {}".format(key)
 
