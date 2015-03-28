@@ -52,6 +52,7 @@ def setall_platformdata(data):
     # print json.loads(data)
     platformdata = json.loads(data)
 
+
 ######################################################################
 # Parse mission file
 # This platform
