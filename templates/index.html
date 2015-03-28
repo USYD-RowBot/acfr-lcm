@@ -59,7 +59,7 @@
             // Create the map object - subscribe to an address
             var cfgfile = "{{ configfile }}"; // server from template address
             var allowadmin = {{ allowadmin }}
-            if (allowadmin && window.location.hash !== "#display") allowadmin = false
+            if (allowadmin && window.location.hash == "#display") allowadmin = false
             var map = new auvmapper();
 
 
