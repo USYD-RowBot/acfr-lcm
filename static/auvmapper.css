@@ -264,6 +264,7 @@ body, html {
     font-weight: bold;
     float: right;
     text-align: left;
+    text-transform: none;
     position: absolute;
     width: 100px;
     right: -105px;
