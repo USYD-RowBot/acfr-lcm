@@ -119,12 +119,6 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
             ship_heading = ship_statusq[nov_index]->heading;
 
         }
-        else if (attitude_source == ATT_EVOLOGICS_AHRS)
-        {
-            ship_roll = ahrs.roll;
-            ship_pitch = ahrs.pitch;
-            ship_heading = ahrs.heading;
-        }
         ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
     
     
