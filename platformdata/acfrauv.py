@@ -67,6 +67,7 @@ def init_platformdata_threads():
 
 def init_push_data(configfile):
     cfg = ConfigParser.ConfigParser()
+    cfg.read(configfile)
     remotesec = cfg.get('layers', 'remotepush')
     url = cfg.get(remotesec,'url')
     targets = cfg.get(remotesec,'targets').split(',')
