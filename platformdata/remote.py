@@ -38,7 +38,13 @@ def init_platformdata_threads():
 # This function simply reads the output for a specific platform
 ######################################################################
 def get_platformdata(platform):
-    return platformdata[platform]
+    data = platformdata[platform]  # get data
+    data['curts'] = time.time()    # add curr ts
+    return data
+
+
+def set_all_platformdata(data):
+    platformdata = data
 
 ######################################################################
 # Parse mission file

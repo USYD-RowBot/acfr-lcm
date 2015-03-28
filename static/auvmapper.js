@@ -266,7 +266,6 @@ function auvmapper () {
             success: function (data) {
                 if (_this.info[platform].data('msgid') != data.msgid) {
                     _this.info[platform].data('msgid',data.msgid);
-                    _this.info[platform].data('msgts',data.msgts);
                     var curpos = new L.LatLng(0, 0);
                     if ((data.pose.lat != NaN) || (data.pose.lon != NaN))
                         curpos = new L.LatLng(data.pose.lat, data.pose.lon);
@@ -336,7 +335,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0)
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: <br>"+Math.round(data.curts - data.msgts)+" s ago</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LASTMSG: <br>"+Math.round(data.curts - data.msgts)+" s ago</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
