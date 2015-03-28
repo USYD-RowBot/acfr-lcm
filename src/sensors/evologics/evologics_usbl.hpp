@@ -65,22 +65,16 @@ class Evologics_Usbl
         int init();
         int process();
         int process_usblfix(const std::string& channel, const evologics_usbl_t *evo);
-//        int ping_targets();
-//        int get_target_channel(const char *target_name);
-//        int get_target_name(int target_channel, char *target_name);
-//        int parse_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
         // data holders
         gpsd3_t gpsd;
         deque<ship_status_t *> ship_statusq;
         ship_status_t ship_status;
-        ahrs_t ahrs;
         
         bool send_fixes;
 
     private:
-        bool has_ahrs;
         attitude_source_t attitude_source;
         gps_source_t gps_source;
             
@@ -92,9 +86,5 @@ class Evologics_Usbl
         
         // Proj4 lat lon projection
         projPJ pj_latlong;
-        
-//        int usbl_send_counter[MAX_TARGETS];    
-//        int usbl_send[MAX_TARGETS]; 
-        
 };
          

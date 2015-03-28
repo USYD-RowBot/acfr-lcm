@@ -290,29 +290,6 @@ int Evologics_Usbl::load_config(char *program_name)
 
 }
 
-/*
-int Evologics_Usbl::parse_ahrs_message(char *buf)
-{
-    // decode the AHRS message
-    if(strstr(buf, "AHRS") != NULL)
-    {
-        char *tokens[5];
-        if(chop_string(buf, tokens, 5) != 5)
-            return 0;
-
-        ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
-        ahrs.utime = timestamp_now();
-        ahrs.roll = atof(tokens[3]) * DTOR;
-        ahrs.pitch = atof(tokens[2]) * DTOR;
-        ahrs.heading = atof(tokens[4]) * DTOR;
-        lcm->publish("AHRS", &ahrs);
-        return 1;
-    }
-    else
-        return 0;
-}
-*/
-        
 int Evologics_Usbl::init()
 {
     usleep(1e6);
