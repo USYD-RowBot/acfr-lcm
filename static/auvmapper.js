@@ -335,7 +335,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0)
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LASTMSG: <br>"+Math.round(data.curts - data.msgts)+" s ago</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LASTMSG: <br>"+Math.round(data.curts - data.msgts)+" s</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)

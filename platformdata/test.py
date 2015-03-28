@@ -35,6 +35,9 @@ def init_platformdata_threads():
     FakeClassifierThread('class1', 1).start()
 
 
+def init_push_data(configfile):
+    return
+
 ######################################################################
 # Get data for a specific platform
 # The global variable platformdata is updated by another process/thread.
@@ -42,7 +45,7 @@ def init_platformdata_threads():
 ######################################################################
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
-    data['curts'] = time.time()    # add curr ts
+    data['curts'] = int(time.time())    # add curr ts
     return data
 
 ######################################################################
@@ -102,7 +105,7 @@ class FakeAUVThread (threading.Thread):
 
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
-                'msgts': time.time(),
+                'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -160,7 +163,7 @@ class FakeShipThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
-                'msgts': time.time(),
+                'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -189,7 +192,7 @@ class FakeClassifierThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
-                'msgts': time.time(),
+                'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10)  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)

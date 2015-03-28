@@ -25,6 +25,9 @@ import select
 import string
 import os
 import pyproj
+import json
+import requests
+
 
 LCMROOT='/home/auv/git/acfr_lcm'
 #SEABEDGUIROOT='/home/auv/git/seabed_gui'
@@ -62,6 +65,18 @@ def init_platformdata_threads():
     LcmThread().start()
 
 
+def init_push_data(configfile):
+    cfg = ConfigParser.ConfigParser()
+    remotesec = cfg.get('layers', 'remotepush')
+    url = cfg.get(remotesec,'url')
+    targets = cfg.get(remotesec,'targets').split(',')
+    upddelay = cfg.get(remotesec,'upddelay')
+
+    sendRemoteDataThread(upddelay, targets, url).start()
+
+    return
+
+
 ######################################################################
 # Get data for a specific platform
 # The global variable platformdata is updated by another process/thread.
@@ -69,7 +84,7 @@ def init_platformdata_threads():
 ######################################################################
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
-    data['curts'] = time.time()    # add curr ts
+    data['curts'] = int(time.time())    # add curr ts
     return data
 
 ######################################################################
@@ -143,7 +158,7 @@ class LcmThread(threading.Thread):
         platform = channel  # 'usbl{}'.format(msg.remote_id)
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
-            'msgts': time.time(),
+            'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8)          # REQUIRED (decimal degrees)
@@ -159,7 +174,7 @@ class LcmThread(threading.Thread):
         platform = msg.name
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
-            'msgts': time.time(),
+            'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),         # REQUIRED (decimal degrees)
@@ -179,7 +194,7 @@ class LcmThread(threading.Thread):
         msgid = msg.utime
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
-            'msgts': time.time(),
+            'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),                 # REQUIRED (decimal degrees)
@@ -231,3 +246,25 @@ class LcmThread(threading.Thread):
             rfds, wfds, efds = select.select([self.lc.fileno()], [], [], timeout)
             if rfds:
                 self.lc.handle()
+
+
+class sendRemoteDataThread (threading.Thread):
+    def __init__(self, delay, targets, destserver):
+        threading.Thread.__init__(self)
+        self.delay = delay
+        self.targets = targets
+        self.destserver = destserver
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+
+    def run (self):
+
+        while(1) :
+            sendplatforms = {}
+            for key in self.targets:
+                sendplatforms[key] = platformdata[key]
+
+            print "Sending data to {}".format(self.destserver)
+            payload = {'platformdata': json.dumps(sendplatforms)}
+            r = requests.post(self.destserver, data=payload)
+
+            time.sleep(self.delay)

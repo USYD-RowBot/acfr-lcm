@@ -21,7 +21,9 @@ import json, requests
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
-remoteserver = ["http://144.6.227.28:8080"]
+sourceserver = ["http://10.23.9.211:8080"]
+#destserver = "http://tracker.marine.acfr.usyd.edu.au/"
+destserver = "http://10.23.9.164:8083/setall_platformdata"
 
 ######################################################################
 # Start threads for platform updates
@@ -29,7 +31,7 @@ remoteserver = ["http://144.6.227.28:8080"]
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    getRemoteDataThread(1).start()
+    sendRemoteDataThread(5).start()
 
 
 ######################################################################
@@ -43,7 +45,7 @@ def get_platformdata(platform):
     return data
 
 
-def set_all_platformdata(data):
+def setall_platformdata(data):
     platformdata = data
 
 ######################################################################
@@ -55,7 +57,7 @@ def set_all_platformdata(data):
 def parse_mission (filepath, origin=[0, 0]):
     # TODO: parse mission file and origin and return in LAT/LON
     # filepath will contain the filepath to the mission file
-    url = "{}/get_mission?filepath={}&olat={}&olon={}".format(remoteserver[0],filepath, origin[0], origin[1])
+    url = "{}/get_mission?filepath={}&olat={}&olon={}".format(sourceserver[0],filepath, origin[0], origin[1])
     data = json.loads(requests.get(url=url).text)
     print data
     latlngs = data["latlngs"]
@@ -79,17 +81,17 @@ def send_to_platform(platform, lat, lon):
 # It provides an example of the data structures that are required to feed real updates to the map
 # TODO: create a similar class that fills out the data structure with real data
 # It may be cleaner to keep the class another file that is imported into this one
-class getRemoteDataThread (threading.Thread):
-    def __init__(self, delay):
+class sendRemoteDataThread (threading.Thread):
+    def __init__(self, delay, targets=['AUVSTAT.SIRIUS', 'FALKOR', 'USBL_FIX.SIRIUS']):
         threading.Thread.__init__(self)
         self.delay = delay
         self.daemon = True  # run in daemon mode to allow for ctrl+C exit
 
     def run (self):
         platforms = {
-            "0": "{}/get_platformdata?platform=0".format(remoteserver[0]),
-            "1": "{}/get_platformdata?platform=1".format(remoteserver[0]),
-            "3": "{}/get_platformdata?platform=3".format(remoteserver[0])
+            "AUVSTAT.SIRIUS": "{}/get_platformdata?platform=AUVSTAT.SIRIUS".format(sourceserver[0]),
+            "FALKOR": "{}/get_platformdata?platform=FALKOR".format(sourceserver[0]),
+            "USBL_FIX.SIRIUS": "{}/get_platformdata?platform=USBL_FIX.SIRIUS".format(sourceserver[0])
         }
 
         while(1) :
@@ -98,5 +100,11 @@ class getRemoteDataThread (threading.Thread):
                     platformdata[key] = json.loads(requests.get(url=platforms[key]).text)
                     print "Received data for: {}".format(platforms[key])
                 except:
-                    print "Error getting data for: {}".format(platforms[key])
+                    print "ERROR!!! getting data for: {}".format(platforms[key])
+
+            print "Sending data to {}".format(destserver)
+            payload = {'platformdata': json.dumps(platformdata)}
+            #payload = {'platformdata': platformdata}
+            r = requests.post(destserver, data=payload)
+
             time.sleep(self.delay)
