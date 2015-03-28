@@ -263,12 +263,13 @@ body, html {
     color: red;
     font-weight: bold;
     float: right;
+    text-align: left;
     position: absolute;
-    width: 150px;
-    right: -155px;
+    width: 100px;
+    right: -105px;
     top: 3px;
-    line-height: 10px;
-    font-size:10px;
+    line-height: 13px;
+    font-size:13px;
     text-shadow:1px 1px 0 #000,
         -1px -1px 0 #000,
         1px -1px 0 #000,

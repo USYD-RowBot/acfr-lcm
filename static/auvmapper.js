@@ -69,7 +69,7 @@ function auvmapper () {
         });
 
         // Add permalink control
-        this.map.addControl(new L.Control.Permalink({useLocation: true}));
+        //this.map.addControl(new L.Control.Permalink({useLocation: true}));
 
 
         // Add measurement control
@@ -336,7 +336,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0)
                         $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: "+Math.round(data.curts - data.msgts)+" s ago</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'>LAST MSG: <br>"+Math.round(data.curts - data.msgts)+" s ago</b>");
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
@@ -347,7 +347,7 @@ function auvmapper () {
                 if ($(_this.info[platform]).find(".errmsg").length <= 0)
                     $(_this.info[platform]).append("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
-                $(_this.info[platform]).find(".errmsg").html("SERVER ERROR! ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
+                $(_this.info[platform]).find(".errmsg").html("SERVER <br>ERROR! ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
                 setTimeout(function(){_this.update_posetracker(tracklayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
         });
