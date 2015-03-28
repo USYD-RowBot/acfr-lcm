@@ -10,10 +10,12 @@
         <link rel="stylesheet" href="/static/bootstrap-3.2.0-dist/css/bootstrap.min.css">
       <link rel="stylesheet" href="/static/jquery-ui.1.11.3.css">
           <link href="/static/font-awesome-4.1.0/css/font-awesome.min.css" rel="stylesheet">
+        <link href="/static/pnotify2.0/pnotify.custom.min.css" rel="stylesheet">
         <link href="/static/auvmapper.css" rel="stylesheet">
 
         <script src="/static/jquery-2.1.0.min.js"></script>
         <script src="/static/jquery-ui.1.11.3.js"></script>
+        <script src="/static/pnotify2.0/pnotify.custom.min.js"></script>
         <script src="/static/bootstrap-3.2.0-dist/js/bootstrap.min.js"></script>
         <script src="/static/leaflet-0.7.3/leaflet.js"></script>
         <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
@@ -38,6 +40,11 @@
         <script src="/static/auvmapper.js"></script>
     </head>
     <body>
+        <div id="notify" class="alert alert-info alert-dismissible" role="alert" style="position: absolute; z-index: 1000; margin: 10px 20%; display: none;">
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+          <div id="notify-text"></div>
+
+        </div>
         <div style="width:500px; height:500px; background: #387486" id="map">
             <!--This is the div that contains all the magic-->
         </div>
@@ -71,6 +78,7 @@
                 // initialise map
                 map.init("map");
 
+
                 // Add settings modal control
                 if (allowadmin)
                     map.add_control("<i class='fa fa-gear'></i>", function () {show_modalform ("/get_config?cfg="+cfgfile) }, "Settings", "topright");
@@ -85,7 +93,25 @@
                 // Load layers from config file
                 loadlayersfromcfg("/get_config",cfgfile);
 
+
+                show_notify('{{ welcomenote }}');
+                /*
+                new PNotify({
+                    title: 'Welcome!',
+                    text: 'On this page you can see robots in action collecting underwater images! <b><a href="http://helpscience.marine.acfr.usyd.edu.au" target="_blank">Click here to help label the images!</a></b>',
+                    hide: false
+                });
+                */
+
             });
+
+
+            function show_notify(fileurl) {
+                if (fileurl != "") {
+                    $("#notify-text").load(fileurl);
+                    $("#notify").show(1000);
+                }
+            }
 
             /**
              * Get the list of layers from the config file
@@ -95,6 +121,7 @@
             function loadlayersfromcfg (url, cfg) {
                 get_config(url, cfg, 'layers', load_layers);
             }
+
 
             /**
              * Load the layers from the config file for each of the layer types
@@ -157,7 +184,7 @@
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
                                 if (defaultbase == "") defaultbase = data.name;
-                                var attribution = (data.hasOwnProperty('attribution')) ? "Basemap from "+data.attribution : ""
+                                var attribution = (data.hasOwnProperty('attribution')) ? data.attribution : ""
                                 map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, attribution: attribution});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }

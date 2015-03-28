@@ -75,10 +75,11 @@ thisserver = "http://{}:{}".format(ipaddress, port)
 
 configfile = "config/{}-{}.ini".format(socket.gethostname(),module)
 allowadmin = "false"
+welcomenote = ""
 
 @app.route('/')
 def home():
-    return render_template('index.html', configfile=configfile, allowadmin=allowadmin)
+    return render_template('index.html', configfile=configfile, allowadmin=allowadmin, welcomenote=welcomenote)
     #return render_template('index.html', server="http://localhost:8080")  # server is this machine
 
 @app.route('/get_mission')
@@ -221,6 +222,7 @@ class sendRemoteDataThread (threading.Thread):
 
 
 def run_server_cfg(configfile):
+    global allowadmin, welcomenote
     cfg = ConfigParser.ConfigParser()
     cfg.read(configfile)
     if (cfg.has_option('server', 'remotepush')):
@@ -239,20 +241,21 @@ def run_server_cfg(configfile):
 
         sendRemoteDataThread(upddelay, targets, url).start()
 
-    admin = cfg.get('server', 'allowadmin') if (cfg.has_option('server', 'allowadmin')) else "false"
+    welcomenote = cfg.get('server','welcomenote') if cfg.has_option('server','welcomenote') else ""
 
-    return admin
+    allowadmin = cfg.get('server', 'allowadmin') if (cfg.has_option('server', 'allowadmin')) else "false"
+
+    return
 
 
 
 
 
 if __name__ == '__main__':
-    global allowadmin
     # Start threads that do update vehicle data
     print "Starting data threads..."
     pd.init_platformdata_threads()
-    allowadmin = run_server_cfg(configfile)
+    run_server_cfg(configfile)
 
     print "Starting webserver..."
     print "To connect to this server from another machine on the network, open a browser and go to: \n\n    {}\n".format(thisserver)
