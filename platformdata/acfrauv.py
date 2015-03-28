@@ -69,9 +69,9 @@ def init_push_data(configfile):
     cfg = ConfigParser.ConfigParser()
     cfg.read(configfile)
     remotesec = cfg.get('layers', 'remotepush')
-    url = cfg.get(remotesec,'url')
-    targets = cfg.get(remotesec,'targets').split(',')
-    upddelay = cfg.get(remotesec,'upddelay')
+    url = cfg.get(remotesec, 'url')
+    targets = cfg.get(remotesec, 'targets').split(',')
+    upddelay = float(cfg.get(remotesec, 'upddelay'))
 
     sendRemoteDataThread(upddelay, targets, url).start()
 
