@@ -155,7 +155,8 @@
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
                                 if (defaultbase == "") defaultbase = data.name;
-                                map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom});
+                                var attribution = (data.hasOwnProperty('attribution')) ? "Basemap from "+data.attribution : ""
+                                map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, attribution: attribution});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
                             else if (data.type === "overlay") {
