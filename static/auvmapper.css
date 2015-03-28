@@ -264,21 +264,21 @@ body, html {
     font-weight: bold;
     float: right;
     text-align: left;
-    text-transform: none;
+    text-transform: none !important;
     position: absolute;
     width: 100px;
     right: -105px;
     top: 3px;
     line-height: 13px;
     font-size:13px;
-    text-shadow:2px 2px 0 #000,
-        -2px -2px 0 #000,
-        2px -2px 0 #000,
-        -2px 2px 0 #000,
-        0px 2px 0 #000,
-        2px 0px 0 #000,
-        0px -2px 0 #000,
-        -2px 0px 0 #000;
+    text-shadow:2px 2px 0 #fff,
+        -2px -2px 0 #fff,
+        2px -2px 0 #fff,
+        -2px 2px 0 #fff,
+        0px 2px 0 #fff,
+        2px 0px 0 #fff,
+        0px -2px 0 #fff,
+        -2px 0px 0 #fff;
 }
 
 .hover-expand:hover>i {
