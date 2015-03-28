@@ -18,6 +18,8 @@ import time
 import threading
 import math
 import ConfigParser
+import requests
+import json
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
@@ -29,10 +31,10 @@ origin = [-14.11493 , 121.86207]
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    FakeAUVThread('IVER', 0.5).start()
-    FakeAUVThread('SIRIUS', 30).start()
+    FakeAUVThread('AUVSTAT.IVER', 0.5).start()
+    FakeAUVThread('AUVSTAT.SIRIUS', 5).start()
     FakeShipThread('FALKOR', 1).start()
-    FakeShipThread('usbl', 5).start()
+    FakeShipThread('USBL_FIX.SIRIUS', 5).start()
     FakeClassifierThread('class1', 1).start()
 
 
