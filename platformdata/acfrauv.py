@@ -264,7 +264,7 @@ class sendRemoteDataThread (threading.Thread):
             for key in self.targets:
                 try:
                     print "Getting {}".format(key)
-                    sendplatforms[key] = platformdata[key]
+                    sendplatforms[key] = get_platformdata(key)
                 except:
                     print "ERROR!!!   Unable to read {}".format(key)
 
