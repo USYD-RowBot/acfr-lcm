@@ -51,7 +51,7 @@ class Evologics_Modem
         int ping_targets();
         int get_target_channel(const string target_name);
         int get_target_name(const int target_channel, string &target_name);
-        int parse_ahrs_message(char *buf);
+        int process_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
         // data holders
@@ -64,6 +64,7 @@ class Evologics_Modem
         //Evologics *evo;
         
         bool send_fixes;
+        bool sent_usbl_fix;
          
         int start_threads();
         int reopen_port();
@@ -74,8 +75,8 @@ class Evologics_Modem
         int send_command(const char *d);
         //int send_command_front(const char *d);
         int send_ping(int target);
-        int parse_lcm_data(unsigned char *d, int len);
-        int parse_modem_data(char *d, int len, int64_t timestamp);
+        int process_lcm_data(unsigned char *d, int len);
+        int process_modem_data(char *d, int len, int64_t timestamp);
         int clear_modem();
         int disconnect_modem();
 
@@ -180,12 +181,12 @@ class Evologics_Modem
         lcm::LCM *lcm;
         
         
-        // message parsers
-        int parse_usbllong(char *d, int64_t timestamp);
-        int parse_usblangles(char *d, int64_t timestamp);
-        int parse_im(char *d);
-        int parse_pbm(char *d);
-        int parse_burst_data(char *d);
+        // message processrs
+        int process_usbllong(char *d, int64_t timestamp);
+        int process_usblangles(char *d, int64_t timestamp);
+        int process_im(char *d);
+        int process_pbm(char *d);
+        int process_burst_data(char *d);
        
         int chop_string(char *data, char **tokens, int nTokens);
         vector<string> chop_string(char *data, int nTokens);
