@@ -224,7 +224,9 @@
                                     $(this).addClass("active");
                                 }
                             },data.name,"topright");
-                            if (data.show === "true") $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
+                            //if (data.show === "true") {
+                            //    $("body").append($("<div id='"+iframeid+"' class='iframe' style='"+data.css+"'><div class=iframe-title><i class='fa fa-plus-square'></i> "+data.name+"</div><iframe src='"+data.url+"'></iframe></div>").draggable({containment: "#map", scroll: false}));
+                            //}
                         });
                 }
             }
