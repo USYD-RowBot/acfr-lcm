@@ -39,6 +39,7 @@ void channel_init(message_channel_t *channel) {
     channel->message = 0;
     channel->length = 0;
     channel->last_time = 0;
+    pthread_mutex_init(&channel->lock, 0);
 }
 
 typedef struct
@@ -59,6 +60,124 @@ typedef struct
 
 
 } state_t;
+
+uint16_t checksum_next(uint16_t crc, char c) {
+
+    uint8_t ii;
+
+    crc ^= c;
+
+    for (ii=0;ii<8;++ii) {
+        if ((crc & 1) == 1) {
+            crc = (crc >> 1) ^ 0xA001;
+        } else {
+            crc = (crc >> 1);
+        }
+    }
+
+    return crc;
+}
+
+uint16_t checksum(char *buffer, size_t length, uint16_t seed) {
+    uint16_t crc = seed;
+
+    size_t ii;
+    for (ii = 0; ii < length; ++ii) {
+        crc = checksum_next(crc, buffer[ii]);
+    }
+
+    return crc;
+}
+
+void enumerate_response(state_t *state, char *enumeration_request)
+{
+    char device_info[50];
+
+    // version
+    device_info[0] = 1;
+    device_info[1] = 0;
+    
+    //device type
+    device_info[2] = 0x13;
+    device_info[3] = 0x37;
+
+    // address
+    device_info[4] = 0x34;
+    device_info[5] = 0x32;
+
+    // next 6 bytes == serial number
+    
+    // localtion/port must be 0
+    device_info[12] = 0x0;
+
+    // polling period (in seconds, little endian)
+    device_info[13] = 0x05;
+    device_info[14] = 0x0;
+    device_info[15] = 0x0;
+    device_info[16] = 0x0;
+
+    // info flags
+    device_info[17] = 0x00; // no telemetry, power, event, ack/nak
+
+    // firmware major then minor, then 2 byte revision
+    device_info[18] = 0x00;
+    device_info[19] = 0x00;
+    device_info[20] = 0x00;
+    device_info[21] = 0x00;
+
+    // 20 more bytes... description in ASCII, pad with space characters
+    // description[22] 
+    
+    // and 8 more unknown characters???
+
+    // need to wrap the device info with other stuff
+    // total raw size is this...
+    char raw_message[69];
+
+    //////////// HEADER
+    // SOF cha
+    raw_message[0] = 0x7E;
+
+    // length
+    raw_message[1] = 68;
+    raw_message[2] = 0;
+
+    // destination address
+    raw_message[3] = 0x0;
+    raw_message[4] = 0x0;
+
+    // source address
+    raw_message[5] = 0x0;
+    raw_message[6] = 0x0;
+
+    // transacation ID
+    raw_message[7] = 0x12;
+    raw_message[8] = 0x34;
+    //////////// END HEADER
+
+    // msg type
+    raw_message[9] = 0x01;
+    raw_message[10] = 0x00;
+
+    // msg type
+    raw_message[11] = 0x01;
+    raw_message[12] = 0x00;
+
+    // devices responding
+    raw_message[13] = 0x01;
+    raw_message[14] = 0x00;
+
+    // devices responding now
+    raw_message[15] = 0x01;
+    raw_message[16] = 0x00;
+
+    memcpy(raw_message + 17, device_info, 50);
+    *((uint16_t *)(raw_message + 67)) = checksum(raw_message + 1, 66, 0);
+
+    printf("Sending message.\n");
+    acfr_sensor_write(state->sensor, raw_message, 69);
+    printf("Sent message.\n");
+}
 
 void
 send_motor_command(state_t *state, double vertical, double port, double starboard)
@@ -125,33 +244,6 @@ signal_handler(int sigNum)
     program_exit = 1;
 }
 
-uint16_t checksum_next(uint16_t crc, char c) {
-
-    uint8_t ii;
-
-    crc ^= c;
-
-    for (ii=0;ii<8;++ii) {
-        if ((crc & 1) == 1) {
-            crc = (crc >> 1) ^ 0xA001;
-        } else {
-            crc = (crc >> 1);
-        }
-    }
-
-    return crc;
-}
-
-uint16_t checksum(char *buffer, size_t length, uint16_t seed) {
-    uint16_t crc = seed;
-
-    size_t ii;
-    for (ii = 0; ii < length; ++ii) {
-        crc = checksum_next(crc, buffer[ii]);
-    }
-
-    return crc;
-}
 
 
 size_t cleanse_next(state_t *state) {
@@ -200,6 +292,7 @@ bool read_packet(state_t *state) {
 
     while (state->data_end < 6) {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
+        printf("Read bytes... %d\n", ret);
         // any error, bail out
         if (ret <= 0) return false;
         state->data_end += ret; // add bytes read
@@ -286,6 +379,7 @@ int
 main(int argc, char **argv)
 {
     state_t state;
+    pthread_mutex_init(&state.queue_lock, 0);
 
     // install the signal handler
 	program_exit = 0;
@@ -296,19 +390,20 @@ main(int argc, char **argv)
     char rootkey[64];
     sprintf(rootkey, "acfr.%s", basename(argv[0]));
 
-    acfr_sensor_t *sensor = acfr_sensor_create(state.lcm, rootkey);
-    if (sensor == NULL)
+    state.sensor = acfr_sensor_create(state.lcm, rootkey);
+    if (state.sensor == NULL)
         return 0;
 
+    acfr_sensor_noncanonical(state.sensor, 0, 1);
+
     char key[64];
-    // vertical thruster info
     /*char *device;
     sprintf(key, "%s.device", rootkey);
-    device = bot_param_get_str_or_fail(sensor->param, key);
+    device = bot_param_get_str_or_fail(state.sensor->param, key);
 
     int baud;
     sprintf(key, "%s.baud", rootkey);
-    baud = bot_param_get_int_or_fail(sensor->param, key);*/
+    baud = bot_param_get_int_or_fail(state.sensor->param, key);*/
 
     // lets start LCM
     senlcm_usbl_fix_short_t_subscribe(state.lcm, "USBL_FIX.*", &usbl_callback, &state.queue[0]);
@@ -322,6 +417,8 @@ main(int argc, char **argv)
 
 	int lcm_fd = lcm_get_fileno(state.lcm);
 	fd_set rfds;
+
+    enumerate_response(&state, 0);
 
 	// listen to LCM, serial has been delegated
 	while(!program_exit)

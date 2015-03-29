@@ -36,24 +36,6 @@ using namespace acfrlcm;
 
 #define MAX_TARGETS 8
 
-// Attitude source
-typedef enum 
-{
-    ATT_SHIP_STATUS = 0,
-    ATT_EVOLOGICS_AHRS,
-    ATT_EVOLOGICS_COMPENSATED,
-    ATT_AUV_STATUS
-} attitude_source_t; 
-
-// GPS source
-typedef enum 
-{
-    GPS_SHIP_STATUS = 0,
-    GPS_GPSD,
-    GPS_AUV_STATUS
-} gps_source_t; 
-
-    
 
 class Evologics_Usbl
 {
@@ -65,25 +47,15 @@ class Evologics_Usbl
         int init();
         int process();
         int process_usblfix(const std::string& channel, const evologics_usbl_t *evo);
-//        int ping_targets();
-//        int get_target_channel(const char *target_name);
-//        int get_target_name(int target_channel, char *target_name);
-//        int parse_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
         
         // data holders
-        gpsd3_t gpsd;
         deque<ship_status_t *> ship_statusq;
         ship_status_t ship_status;
-        ahrs_t ahrs;
         
         bool send_fixes;
 
     private:
-        bool has_ahrs;
-        attitude_source_t attitude_source;
-        gps_source_t gps_source;
-            
         // pose of the usbl to ins
         SMALL::Pose3D usbl_ins_pose;
         
@@ -92,9 +64,7 @@ class Evologics_Usbl
         
         // Proj4 lat lon projection
         projPJ pj_latlong;
-        
-//        int usbl_send_counter[MAX_TARGETS];    
-//        int usbl_send[MAX_TARGETS]; 
-        
+
+        char *ship_status_channel_str;
 };
          

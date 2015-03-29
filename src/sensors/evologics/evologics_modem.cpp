@@ -33,18 +33,6 @@ void on_lcm_pbm(const lcm::ReceiveBuffer* rbuf, const std::string& channel, Evol
 }
     
 
-// Used by the AHRS routine
-int readline(int fd, char *buf, int max_len)
-{
-    int i=0;
-    do
-    {
-        if(recv(fd, &buf[i++], 1, 0) == -1)
-            break;
-    } while((buf[i-2] != 0x0D) && (buf[i-1] != 0x0A));
-    return i;
-}
-
 Evologics_Modem::Evologics_Modem()
 {
     lcm = new lcm::LCM();
@@ -217,9 +205,6 @@ int Evologics_Modem::load_config(char *program_name)
     sprintf(key, "%s.auto_gain", rootkey);
     auto_gain = bot_param_get_boolean_or_fail(param, key);
 
-    sprintf(key, "%s.has_ahrs", rootkey);
-    has_ahrs = bot_param_get_boolean_or_fail(param, key);
-    
     sprintf(key, "%s.lcm", rootkey);
     lcm_channels = NULL;
     lcm_channels = bot_param_get_str_array_alloc(param, key);
@@ -232,27 +217,6 @@ int Evologics_Modem::load_config(char *program_name)
 
 }
 
-int Evologics_Modem::process_ahrs_message(char *buf)
-{
-    // decode the AHRS message
-    if(strstr(buf, "AHRS") != NULL)
-    {
-        char *tokens[5];
-        if(chop_string(buf, tokens, 5) != 5)
-            return 0;
-
-        ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
-        ahrs.utime = timestamp_now();
-        ahrs.roll = atof(tokens[3]) * DTOR;
-        ahrs.pitch = atof(tokens[2]) * DTOR;
-        ahrs.heading = atof(tokens[4]) * DTOR;
-        lcm->publish("AHRS", &ahrs);
-        return 1;
-    }
-    else
-        return 0;
-}
-        
 int Evologics_Modem::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm) 
 {
     // extract the platform id
@@ -302,9 +266,6 @@ int Evologics_Modem::init()
        exit(1);
     } 
 
-    if((has_ahrs == true) && (ahrs_fd = open_port(ip, AHRS_PORT)) == -1)
-        return 0;
-    
     thread_exit = 0;
     pthread_mutex_init(&flags_lock, NULL);
     pthread_mutex_init(&write_lock, NULL);
@@ -1308,8 +1269,6 @@ int Evologics_Modem::process()
         
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
-        if (has_ahrs)
-           FD_SET (ahrs_fd, &rfds);
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
@@ -1319,15 +1278,6 @@ int Evologics_Modem::process()
         {
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm->handle();
-                        
-            if(has_ahrs && FD_ISSET(ahrs_fd, &rfds))
-            {
-                // data to be read       
-                memset(buf, 0, MAX_BUF_LEN);
-                readline(ahrs_fd, buf, MAX_BUF_LEN);
-                process_ahrs_message(buf);
-            }
-                
         }
         //else
         //    cout << "select timeout\n";

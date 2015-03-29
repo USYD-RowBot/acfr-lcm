@@ -23,7 +23,6 @@
 #include "perls-lcmtypes++/senlcm/evologics_usbl_angles_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_range_t.hpp"
-#include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 //#include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
 
@@ -51,17 +50,7 @@ class Evologics_Modem
         int ping_targets();
         int get_target_channel(const string target_name);
         int get_target_name(const int target_channel, string &target_name);
-        int process_ahrs_message(char *buf);
         int on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string& channel, bool use_pbm = false);
-        
-        // data holders
-        //gpsd3_t gpsd;
-        //deque<novatel_t *> novatelq;
-        //queue<evologics_usbl_t *> fixq;
-        //novatel_t novatel;
-        ahrs_t ahrs;
-        
-        //Evologics *evo;
         
         bool send_fixes;
         bool sent_usbl_fix;
@@ -102,8 +91,6 @@ class Evologics_Modem
         int local_address;
         
         int fd;
-        int ahrs_fd;
-        //int evo_fd;
         
         int thread_exit;
         
@@ -152,19 +139,6 @@ class Evologics_Modem
         char **lcm_pbm_channels;
     
        
-        bool has_ahrs;
-        //attitude_source_t attitude_source;
-        //gps_source_t gps_source;
-            
-        // pose of the usbl to ins
-        //SMALL::Pose3D usbl_ins_pose;
-        
-        //pose of the ins to ship center
-        //SMALL::Pose3D ins_ship_pose;
-        
-        // Proj4 lat lon projection
-        //projPJ pj_latlong;
-        
         int ping_period;
         int ping_counter; 
         int ping_time;
@@ -173,11 +147,7 @@ class Evologics_Modem
         int usbl_send_counter[MAX_TARGETS];    
         int usbl_send[MAX_TARGETS]; 
         
-        //pthread_t fix_thread_id;
-        
         pthread_t read_thread_id;
-        //pthread_t command_thread_id;
-        //pthread_t data_thread_id;
         lcm::LCM *lcm;
         
         
