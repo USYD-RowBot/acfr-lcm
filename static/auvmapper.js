@@ -260,8 +260,8 @@ function auvmapper () {
             url: url,
             timeout: 10000, // sets timeout to 10 seconds
             success: function (data) {
-                if (_this.info[platform].data('msgid') != data.msgid) {
-                    _this.info[platform].data('msgid',data.msgid);
+                if (parseInt(_this.info[platform].data('msgts')) < parseInt(data.msgts)) {
+                    _this.info[platform].data('msgts',data.msgts);
 
                     set_pose(platform, tracklayer, unclayer, maxtracklen, data.pose)
 
@@ -430,7 +430,7 @@ function auvmapper () {
                         .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
                     );
                 _this.info[platform] = $("<div class='info'></div>"); // empty div to update with platform info
-                _this.info[platform].data('msgid',NaN); // initialise msgid
+                _this.info[platform].data('msgts',NaN); // initialise msgid
                 $(ctldiv).append(_this.info[platform]);
                 //$(ctldiv).css("background-color",bgcol);
 

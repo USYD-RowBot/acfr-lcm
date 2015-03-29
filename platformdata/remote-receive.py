@@ -41,7 +41,7 @@ def init_push_data(configfile):
 ######################################################################
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
-    data['curts'] = time.time()    # add curr ts
+    data['curts'] = int(time.time())    # gets curts from remote post
     return data
 
 
