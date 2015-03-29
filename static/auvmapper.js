@@ -430,7 +430,7 @@ function auvmapper () {
                         .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
                     );
                 _this.info[platform] = $("<div class='info'></div>"); // empty div to update with platform info
-                _this.info[platform].data('msgts',NaN); // initialise msgid
+                _this.info[platform].data('msgts',0); // initialise msgid
                 $(ctldiv).append(_this.info[platform]);
                 //$(ctldiv).css("background-color",bgcol);
 
