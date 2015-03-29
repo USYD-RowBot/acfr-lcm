@@ -3,45 +3,21 @@
 int loop_exit;
 int pipe_broken;
 
-// Handle a GPS message, this will only work for Version 3 of the GPSD software
-// which everything should run by now
-void on_gpsd(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gpsd3_t *gps, Evologics_Usbl* ev) 
-{
-	// Accept GPS only under the following conditions:
-	// 1) Status is good (1=GPS; 2=DGPS)
-	// 2) Mode is >= 2 (2D or 3D fix).  
-	// 3) Satellites used >= 3. 
-	// (2) and (3) are redundant but are generated 
-	// asynchronously --- a mode 2 fix may still be reported after
-	// the number of satellites has dropped to 0.
-
-    if((gps->status >= 1) && (gps->fix.mode >= 2)) // & (gps->satellites_used >= 3 ))
-    {
-        memcpy(&ev->gpsd, gps, sizeof(gpsd3_t));
-	}
-}
-
 void on_ship_status(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ship_status_t *nov, Evologics_Usbl* ev) 
 {
-	// Accept GPS only under the following conditions:
-	// nov->status is INS_SOLUTION_GOOD 
-
-    //if(nov->status == "INS_SOLUTION_GOOD" || nov->status == "INS_ALIGNMENT_COMPLETE")
+    //cout << "nov size " << ev->ship_statusq.size() << endl;
+        
+    ship_status_t *n = (ship_status_t *)malloc(sizeof(ship_status_t));
+    memcpy(n, nov, sizeof(ship_status_t));
+    ev->ship_statusq.push_front(n);        
+    
+    if(ev->ship_statusq.size() > 40)
     {
-        //cout << "nov size " << ev->ship_statusq.size() << endl;
-        
-        ship_status_t *n = (ship_status_t *)malloc(sizeof(ship_status_t));
-        memcpy(n, nov, sizeof(ship_status_t));
-        ev->ship_statusq.push_front(n);        
-        
-        if(ev->ship_statusq.size() > 40)
-        {
-            free(ev->ship_statusq.back());
-            ev->ship_statusq.pop_back();
-        }
+        free(ev->ship_statusq.back());
+        ev->ship_statusq.pop_back();
+    }
         
     memcpy(&ev->ship_status, nov, sizeof(ship_status_t));
-	}
 }
 
 // Used by the AHRS routine
@@ -86,40 +62,33 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     double ship_pitch;
     double ship_heading;
     
-    int nov_index = 0;
+    int ship_index = 0;
     SMALL::Vector3D target_world;
 
-    if(attitude_source == ATT_SHIP_STATUS || gps_source == GPS_SHIP_STATUS)
+    if (ship_statusq.size() < 1)
     {
-	if (ship_statusq.size() < 1)
-	{
-	    cout << "WARNING: Evologics_Usbl expecting ship_status data.  Not found." << endl;
-	    return 0;
-	}
-        // find the closest ship_status message in the queue
-        int time_diff;
-        for(unsigned int i=0; i<ship_statusq.size(); i++)
+        cout << "WARNING: Evologics_Usbl expecting ship_status data.  Not found." << endl;
+        return 0;
+    }
+    // find the closest ship_status message in the queue
+    int time_diff;
+    for(unsigned int i=0; i<ship_statusq.size(); i++)
+    {
+        time_diff = ef->utime - ship_statusq[i]->utime;
+        if(time_diff > 0)
         {
-            time_diff = ef->utime - ship_statusq[i]->utime;
-            if(time_diff > 0)
-            {
-                nov_index = i;
-                break;
-            }
-            nov_index = i;
+            ship_index = i;
+            break;
         }
-        cout << "nov_index:" << nov_index << endl;
-        printf("ET: %ld, NT: %ld, %d\n", ef->utime, ship_statusq[nov_index]->utime, nov_index);  
+        ship_index = i;
+    }
+    cout << "ship_index:" << ship_index << endl;
+    printf("ET: %ld, NT: %ld, %d\n", ef->utime, ship_statusq[ship_index]->utime, ship_index);  
         
-        if(attitude_source == ATT_SHIP_STATUS)
-        {
-            
-            ship_roll = ship_statusq[nov_index]->roll;
-            ship_pitch = ship_statusq[nov_index]->pitch;
-            ship_heading = ship_statusq[nov_index]->heading;
-
-        }
-        ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
+    ship_roll = ship_statusq[ship_index]->roll;
+    ship_pitch = ship_statusq[ship_index]->pitch;
+    ship_heading = ship_statusq[ship_index]->heading;
+    ship.setRollPitchYawRad(ship_roll, ship_pitch, ship_heading);
     
     
         cout << "ship attitude" <<  ship.getAxisAngle() * RTOD << endl;
@@ -132,30 +101,14 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
     
         target_world = ship.transformFrom(target_ship);
         cout << "target xyz (world)" << target_world << endl;
-    } else if ( attitude_source == ATT_EVOLOGICS_COMPENSATED) {
-        // use the internally compensated evologics northing/easting positions
-        target_world[0] = ef->e;
-        target_world[1] = ef->n;
-    } else {
-        cout << "WARNING: Evologics_Usbl attitude_source not set." << endl;
-        return 0;
-    }
     
         cout << "target_world[0]: " << target_world[0] << " [1]: " << target_world[1] << endl;
     // set up the coordinate reprojection
     char proj_str[64];
     double ship_latitude;
     double ship_longitude;
-    if(gps_source == GPS_SHIP_STATUS)
-    {
-        ship_latitude = ship_statusq[nov_index]->latitude * RTOD;
-        ship_longitude = ship_statusq[nov_index]->longitude * RTOD;
-    } 
-    else if(gps_source == GPS_GPSD)
-    {
-        ship_latitude = gpsd.fix.latitude * RTOD;
-        ship_longitude = gpsd.fix.longitude * RTOD;
-    } 
+    ship_latitude = ship_statusq[ship_index]->latitude * RTOD;
+    ship_longitude = ship_statusq[ship_index]->longitude * RTOD;
      
     sprintf(proj_str, "+proj=tmerc +lon_0=%f +lat_0=%f +units=m", ship_longitude, ship_latitude);
         
@@ -192,10 +145,10 @@ cout << "Target lat: " << y << " lon:" << x << endl;
     
     // Novatel errors are in meters so we need to convert the standard deviations to a DRMS error so it can be
     // added to the Evologics error.
-    /*double nov_drms = sqrt(ship_statusq[nov_index]->latitude_sd * ship_statusq[nov_index]->latitude_sd + ship_statusq[nov_index]->longitude_sd * ship_statusq[nov_index]->longitude_sd);
-    printf("Nov error: %f, %f, DRMS: %f\n", ship_statusq[nov_index]->latitude_sd, ship_statusq[nov_index]->longitude_sd, nov_drms);
+    /*double ship_drms = sqrt(ship_statusq[ship_index]->latitude_sd * ship_statusq[ship_index]->latitude_sd + ship_statusq[ship_index]->longitude_sd * ship_statusq[ship_index]->longitude_sd);
+    printf("Nov error: %f, %f, DRMS: %f\n", ship_statusq[ship_index]->latitude_sd, ship_statusq[ship_index]->longitude_sd, ship_drms);
     
-    uf.accuracy += nov_drms;
+    uf.accuracy += ship_drms;
     */
     
     // extract the platform id from the received channel name
@@ -249,36 +202,9 @@ int Evologics_Usbl::load_config(char *program_name)
     ins_ship_pose.setRollPitchYawRad(d[3], d[4], d[5]);
 
 
-    // Attitude source
-    sprintf(key, "%s.attitude_source", rootkey);
-    char *att_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strncmp(att_source_str, "SHIP_STATUS", 11))
-        attitude_source = ATT_SHIP_STATUS;
-    else if(!strncmp(att_source_str, "EVOLOGICS", 9))
-        attitude_source = ATT_EVOLOGICS_AHRS;
-    else if(!strncmp(att_source_str, "EVO_COMPENSATED", 21))
-        attitude_source = ATT_EVOLOGICS_COMPENSATED;
-    else if(!strncmp(att_source_str, "AUV_STATUS", 9))
-        attitude_source = ATT_AUV_STATUS;
-    
-    // GPS source
-    sprintf(key, "%s.gps_source", rootkey);
-    char *gps_source_str = bot_param_get_str_or_fail(param, key);
-    if(!strncmp(gps_source_str, "SHIP_STATUS", 11))
-        gps_source = GPS_SHIP_STATUS;
-    else if(!strncmp(gps_source_str, "GPSD", 4))
-        gps_source = GPS_GPSD;
-    else if(!strncmp(gps_source_str, "AUV_STATUS", 4))
-        gps_source = GPS_AUV_STATUS;
-    else
-    {
-        cerr << "Invalid GPS source: " << gps_source_str << endl;
-        return 0;
-    }
-        
-    cout << "GPS source: " << gps_source << endl;
-        
-    
+    // ship status source
+    sprintf(key, "%s.ship_status_channel", rootkey);
+    ship_status_channel_str = bot_param_get_str_or_fail(param, key);
         
     return 1;    
 
@@ -288,11 +214,7 @@ int Evologics_Usbl::init()
 {
     usleep(1e6);
     
-    if(gps_source == GPS_GPSD)
-        lcm->subscribeFunction("GPSD_CLIENT", on_gpsd, this);
-        
-    if((gps_source == GPS_SHIP_STATUS) || (attitude_source == ATT_SHIP_STATUS))
-        lcm->subscribeFunction("SHIP_STATUS.*", on_ship_status, this);
+    lcm->subscribeFunction("SHIP_STATUS", on_ship_status, this);
 
     lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
     
