@@ -358,8 +358,9 @@ function auvmapper () {
 
 
     function set_uncertainty(unclayer, pose) {
+        var curpos = [];
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
-            curpos = new L.LatLng(pose.lat, pose.lon);
+            var curpos = new L.LatLng(pose.lat, pose.lon);
 
             // set uncertainty circle
             var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
