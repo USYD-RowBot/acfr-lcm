@@ -309,7 +309,7 @@ function auvmapper () {
                     var msgage = Math.round(data.curts - data.msgts);
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0) $(_this.info[platform]).append("<div class='error oldmsg'></div>");
                     $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'><small>Last update: </small><br>"+msgage+" s ago</b>");
-                    if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FF9999');
+                    if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
                     else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
                     //setTimeout(function(){$(_this.info[platform]).parent().css('background-color','white')}, 250);
                 }
@@ -323,7 +323,7 @@ function auvmapper () {
                     $(_this.info[platform]).html("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
                 $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
-                $(_this.info[platform]).parent().css('background-color','#999');
+                $(_this.info[platform]).parent().css('background-color','#808080');
 
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
