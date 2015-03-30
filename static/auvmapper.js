@@ -323,6 +323,7 @@ function auvmapper () {
                     $(_this.info[platform]).html("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
                 $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
+                $(_this.info[platform]).parent().css('background-color','#999');
 
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
