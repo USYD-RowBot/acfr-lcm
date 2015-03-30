@@ -40,18 +40,20 @@ def init_push_data(configfile):
 # This function simply reads the output for a specific platform
 ######################################################################
 def get_platformdata(platform):
+    global platformdata
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # gets curts from remote post
     return data
 
 
-def setall_platformdata(data):
+def set_platformdata(platform=None, data={}):
     global platformdata
-    # platformdata = data
-    # print data
-    print json.loads(data)
-    platformdata = json.loads(data)
+    if platform is None:
+        platformdata = json.loads(data)
+    else:
+        platformdata[platform] = json.loads(data)
     return
+
 
 
 ######################################################################
