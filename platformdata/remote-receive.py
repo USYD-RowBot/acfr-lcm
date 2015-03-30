@@ -43,6 +43,8 @@ def get_platformdata(platform):
     global platformdata
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # gets curts from remote post
+    if (data['curts']-data['msgts']) > 30:
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*0.5
     return data
 
 
