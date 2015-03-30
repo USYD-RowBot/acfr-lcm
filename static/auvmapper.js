@@ -262,6 +262,7 @@ function auvmapper () {
             success: function (data) {
                 if (parseInt(_this.info[platform].data('msgts')) < parseInt(data.msgts)) {
                     _this.info[platform].data('msgts',data.msgts);
+                    $(_this.info[platform]).parent().css('background-color','#FFF')
 
                     set_pose(platform, tracklayer, unclayer, maxtracklen, data.pose)
 
@@ -305,9 +306,12 @@ function auvmapper () {
                     }
                 }
                 else { // if old msg id, show message age
-                    if ($(_this.info[platform]).find(".oldmsg").length <= 0)
-                        $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'><small>Last update: </small><br>"+Math.round(data.curts - data.msgts)+" s ago</b>");
+                    var msgage = Math.round(data.curts - data.msgts);
+                    if ($(_this.info[platform]).find(".oldmsg").length <= 0) $(_this.info[platform]).append("<div class='error oldmsg'></div>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:orange'><small>Last update: </small><br>"+msgage+" s ago</b>");
+                    if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FF9999');
+                    else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
+                    //setTimeout(function(){$(_this.info[platform]).parent().css('background-color','white')}, 250);
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
