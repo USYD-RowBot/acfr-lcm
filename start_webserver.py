@@ -222,7 +222,10 @@ class sendRemoteDataThread (threading.Thread):
             try:
                 print "Sending data to {}".format(self.destserver)
                 payload = {'platformdata': json.dumps(sendplatforms)}
-                filename = "logs/{}-{}.json".format(module, int(time.time()))
+                dirname = "logs/{}".format(time.strftime("%Y/%m/%d"))
+                filename = "{}/{}-{}.json".format(dirname, module, int(time.time()))
+                if not os.path.exists(dirname):
+                    os.makedirs(dirname)
                 f = open(filename, 'w')
                 f.write(payload['platformdata'])
                 f.close()
