@@ -17,7 +17,9 @@ from random import random, randint
 import time
 import threading
 import math
-import json, requests
+import json
+import requests
+import os
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
@@ -52,6 +54,13 @@ def set_platformdata(platform=None, data={}):
     global platformdata
     if platform is None:
         platformdata = json.loads(data)
+        dirname = "logs/{}".format(time.strftime("%Y/%m/%d"))
+        filename = "{}/{}-{}.json".format(dirname, os.path.basename(__file__), int(time.time()))
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        f = open(filename, 'w')
+        f.write(data)
+        f.close()
     else:
         platformdata[platform] = json.loads(data)
     return
