@@ -90,7 +90,8 @@ def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
     if (data['curts']-data['msgts']) > 30:
-        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*0.5
+        speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
     return data
 
 
@@ -194,7 +195,7 @@ class LcmThread(threading.Thread):
                 'depth': round(msg.depth, 1),
                 'XYZ': "{}, {}, {}".format(round(msg.target_x, 1), round(msg.target_y, 1), round(msg.target_z, 1)),
                 'uncertainty': round(msg.accuracy, 2),
-                'vel': 0.5
+                'speed': 0.5
             }
         }
 
@@ -215,7 +216,7 @@ class LcmThread(threading.Thread):
                 'heading': round(math.degrees(msg.heading), 2),        # REQUIRED (degrees)
                 'roll': round(math.degrees(msg.roll), 2),        # REQUIRED (degrees)
                 'pitch': round(math.degrees(msg.pitch), 2),        # REQUIRED (degrees)
-                'vel': 1
+                'speed': 1
             }
         }
 
@@ -239,7 +240,7 @@ class LcmThread(threading.Thread):
                 'depth': float(msg.depth)/10.0,                            # OPTIONAL (m)
                 'roll': round(msg.roll/10.0,1),       # OPTIONAL / REQUIRED for dashboard (degrees)
                 'pitch': round(msg.pitch/10.0,1),      # OPTIONAL / REQUIRED for dashboard (degrees)
-                'vel': 0.5
+                'speed': 0.5
                 #'uncertainty': 1
             },
             'stat': {

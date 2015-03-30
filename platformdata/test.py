@@ -48,8 +48,8 @@ def get_platformdata(platform):
     data['curts'] = int(time.time())    # add curr ts
     #print "\n!!!!!!!!!!!!!!{}\n".format(data['curts']-data['msgts'])
     if (data['curts']-data['msgts']) > 30:
-        vel = data['pose']['vel'] if 'vel' in data['pose'] else 0.5
-        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*vel
+        speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
     return data
 
 def set_platformdata(platform=None, data={}):
@@ -128,7 +128,7 @@ class FakeAUVThread (threading.Thread):
                     'roll': randint(-20, 20),                   # OPTIONAL / REQUIRED for dashboard (degrees)
                     'pitch': randint(-45, 45),                  # OPTIONAL / REQUIRED for dashboard (degrees)
                     'uncertainty': randint(1, 20),
-                    'vel': 0.5
+                    'speed': 0.5
                 },
                 'stat': {
                     # You can add whatever custom status messages you like here
@@ -184,7 +184,7 @@ class FakeShipThread (threading.Thread):
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'heading': round(hdg, 1),  # randint(0, 360)                  # REQUIRED (degrees)
                     'uncertainty': 5,
-                    'vel': 0.5
+                    'speed': 0.5
                 }
             }
             time.sleep(self.delay)
@@ -214,7 +214,7 @@ class FakeClassifierThread (threading.Thread):
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
-                    'vel': 0.5
+                    'speed': 0.5
                 },
                 'stat': {
                     'intensity': 0.5  #random()

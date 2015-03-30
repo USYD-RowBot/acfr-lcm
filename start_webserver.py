@@ -222,6 +222,10 @@ class sendRemoteDataThread (threading.Thread):
             try:
                 print "Sending data to {}".format(self.destserver)
                 payload = {'platformdata': json.dumps(sendplatforms)}
+                filename = "logs/{}-{}.json".format(module, int(time.time()))
+                f = open(filename, 'w')
+                f.write(payload['platformdata'])
+                f.close()
                 r = requests.post(self.destserver, data=payload)
             except:
                 print "ERROR!!!   Unable to send data to {}".format(self.destserver)
