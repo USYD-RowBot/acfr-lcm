@@ -180,9 +180,7 @@ class LcmThread(threading.Thread):
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
                 'lon': round(math.degrees(msg.longitude), 8),          # REQUIRED (decimal degrees)
                 'depth': msg.depth,
-                'x': msg.target_x,
-                'y': msg.target_y,
-                'z': msg.target_z,
+                'XYZ': "{},{},{}".format(msg.target_x, msg.target_y, msg.target_z),
                 'uncertainty': msg.accuracy
             }
         }
