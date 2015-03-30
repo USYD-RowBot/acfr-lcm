@@ -177,7 +177,8 @@ class FakeShipThread (threading.Thread):
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
-                    'heading': round(hdg, 1)  # randint(0, 360)                  # REQUIRED (degrees)
+                    'heading': round(hdg, 1),  # randint(0, 360)                  # REQUIRED (degrees)
+                    'uncertainty': 5
                 }
             }
             time.sleep(self.delay)

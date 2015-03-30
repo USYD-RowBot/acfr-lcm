@@ -345,8 +345,10 @@ function auvmapper () {
                     _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
             }
 
-            set_uncertainty(platform, unclayer, pose);
-
+            // set uncertainty circle
+            set_uncertainty(unclayer, pose);
+//            var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
+//            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
 
             // Update marker / polygon position
             if (_this.layers.overlays[platform].hasOwnProperty("poly"))
@@ -359,7 +361,9 @@ function auvmapper () {
 
     function set_uncertainty(unclayer, pose) {
         var curpos = [];
+        //console.log(pose)
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
+            //console.log("SETTING UNC!!!");
             var curpos = new L.LatLng(pose.lat, pose.lon);
 
             // set uncertainty circle
