@@ -233,7 +233,7 @@ def run_server_cfg(configfile):
         for k in cfg.get(remotesec, 'targets').split(','):
             targets[k] = cfg.get(k, 'url')
             if targets[k].find('http://') <= 0:
-                targets[k] = "http://localhost/{}".format(port, targets[k])
+                targets[k] = "http://localhost:{}/{}".format(port, targets[k])
 
         print targets
         upddelay = float(cfg.get(remotesec, 'upddelay'))
