@@ -228,13 +228,12 @@ def run_server_cfg(configfile):
     if (cfg.has_option('server', 'remotepush')):
         remotesec = cfg.get('server', 'remotepush')
         url = cfg.get(remotesec, 'url')
-        localdomain = cfg.get(remotesec, 'localdomain')
 
         targets = {}
         for k in cfg.get(remotesec, 'targets').split(','):
             targets[k] = cfg.get(k, 'url')
             if targets[k].find('http://') <= 0:
-                targets[k] = "{}/{}".format(localdomain, targets[k])
+                targets[k] = "http://localhost/{}".format(port, targets[k])
 
         print targets
         upddelay = float(cfg.get(remotesec, 'upddelay'))
