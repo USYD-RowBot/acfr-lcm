@@ -308,7 +308,7 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     var msgage = Math.round(data.curts - data.msgts);
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0) $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:rgb(197, 135, 0)'>LASTUPD: "+msgage+" s</b>");
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:rgb(197, 135, 0)'><small>LASTUPD:</small><br><big>"+msgage+"</big> s</b>");
                     //if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
                     //else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
                     if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
