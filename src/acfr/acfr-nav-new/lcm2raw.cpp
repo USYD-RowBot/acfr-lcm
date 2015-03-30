@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
         state.lcm->subscribeFunction("IMU", on_imu, &state);
         state.lcm->subscribeFunction("LQ_MODEM", on_lq_modem, &state);
         state.lcm->subscribeFunction("ACFR_AUV_VIS_RAWLOG", on_vis, &state);
-        state.lcm->subscribeFunction("USBL_FIX", on_evologics, &state);
+        state.lcm->subscribeFunction("USBL_FIX.*", on_evologics, &state);
         
         
         while(!state.lcm->handle());

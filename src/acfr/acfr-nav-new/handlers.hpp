@@ -26,6 +26,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_vis_rawlog_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
+#include "perls-lcmtypes++/senlcm/usbl_fix_short_t.hpp"
 
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
 #define DTOR (UNITS_DEGREE_TO_RADIAN)

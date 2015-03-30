@@ -4,9 +4,6 @@
     Lachlan Toohey
     ACFR
     25-3-15
-
-    Based on siris_motors
-    by Christian Lees
 */
 
 #include <stdio.h>
@@ -23,6 +20,8 @@
 #include "perls-lcmtypes/acfrlcm_ship_status_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_status_short_t.h"
 #include "acfr-common/sensor.h"
+
+#include "checksum.h"
 
 // this should be the largest chunk of data *BEFORE* including
 // escaped characters
@@ -60,34 +59,6 @@ typedef struct
 
 
 } state_t;
-
-uint16_t checksum_next(uint16_t crc, char c) {
-
-    uint8_t ii;
-
-    crc ^= c;
-
-    for (ii=0;ii<8;++ii) {
-        if ((crc & 1) == 1) {
-            crc = (crc >> 1) ^ 0xA001;
-        } else {
-            crc = (crc >> 1);
-        }
-    }
-
-    return crc;
-}
-
-uint16_t checksum(char *buffer, size_t length, uint16_t seed) {
-    uint16_t crc = seed;
-
-    size_t ii;
-    for (ii = 0; ii < length; ++ii) {
-        crc = checksum_next(crc, buffer[ii]);
-    }
-
-    return crc;
-}
 
 void enumerate_response(state_t *state, char *enumeration_request)
 {
@@ -147,8 +118,8 @@ void enumerate_response(state_t *state, char *enumeration_request)
     raw_message[4] = 0x0;
 
     // source address
-    raw_message[5] = 0x0;
-    raw_message[6] = 0x0;
+    raw_message[5] = device_info[4];
+    raw_message[6] = device_info[5];
 
     // transacation ID
     raw_message[7] = 0x12;
@@ -159,9 +130,9 @@ void enumerate_response(state_t *state, char *enumeration_request)
     raw_message[9] = 0x01;
     raw_message[10] = 0x00;
 
-    // msg type
+    // src msg type
     raw_message[11] = 0x01;
-    raw_message[12] = 0x00;
+    raw_message[12] = 0x00 | 0x80; // we have more messages
 
     // devices responding
     raw_message[13] = 0x01;
@@ -172,7 +143,7 @@ void enumerate_response(state_t *state, char *enumeration_request)
     raw_message[16] = 0x00;
 
     memcpy(raw_message + 17, device_info, 50);
-    *((uint16_t *)(raw_message + 67)) = checksum(raw_message + 1, 66, 0);
+    *((uint16_t *)(raw_message + 67)) = gen_crc16(raw_message + 1, 66, 0);
 
     printf("Sending message.\n");
     acfr_sensor_write(state->sensor, raw_message, 69);
@@ -264,11 +235,11 @@ size_t cleanse_next(state_t *state) {
                     return 0;
                 }
             }
-            // read the next character (it may
-            if (state->read_buffer[1] == 0x5D) {
-                state->write_buffer[0] = 0x7D;
-            } else if (state->read_buffer[1] == 0x5E) {
-                state->write_buffer[0] = 0x7E;
+            char next = state->read_buffer[state->read_cursor+1];
+            if (next == 0x5D) {
+                state->write_buffer[state->write_cursor] = 0x7D;
+            } else if (next == 0x5E) {
+                state->write_buffer[state->write_cursor] = 0x7E;
             } else {
                 return 0;
             }
@@ -278,23 +249,23 @@ size_t cleanse_next(state_t *state) {
 
             return 2;
         default:
-            state->write_buffer[0] = state->read_buffer[0];
+            state->write_buffer[state->write_cursor] = state->read_buffer[state->read_cursor];
             state->read_cursor += 1;
             state->write_cursor += 1;
             return 1;
     }
 }
 
-bool read_packet(state_t *state) {
+int read_packet(state_t *state) {
     // now get the size, need to read enough bytes to make sure
 
     ssize_t ret;
 
     while (state->data_end < 6) {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
-        printf("Read bytes... %d\n", ret);
+        printf("Read bytes... %ld\n", ret);
         // any error, bail out
-        if (ret <= 0) return false;
+        if (ret <= 0) return 0;
         state->data_end += ret; // add bytes read
     }
 
@@ -302,36 +273,52 @@ bool read_packet(state_t *state) {
 
     // check that packet starts with what we want it to
     if (state->read_buffer[0] != 0x7E) {
-        return false;
+        return 0;
     }
 
-    if (cleanse_next(state) == 0) return false;
+    // in case we have already read some data
+    if (state->read_cursor == 0) {
+        state->read_cursor = 1;
+    }
+
+    if (state->write_cursor == 0) {
+        state->write_cursor = 1;
+        state->write_buffer[0] = 0x7E;
+    }
+
+    // cleanse the length bytes
+    if (cleanse_next(state) == 0) return 0;
+    if (cleanse_next(state) == 0) return 0;
 
     printf("Cleansing header characters\n");
 
     // lets get to it,
-    uint16_t length = *(uint16_t *)(state->read_buffer + 1);
+    uint16_t length = *(uint16_t *)(state->write_buffer + 1);
 
     printf("Packet length: %d\n", length);
 
     while (state->write_cursor < length + 1) {
-        size_t next_read = length + 1 - state->data_end;
+        size_t next_read = 1 + length - state->write_cursor - state->data_end + state->read_cursor;
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, next_read);
+        state->data_end += ret;
 
         while (state->read_cursor < state->data_end) {
-            if (cleanse_next(state) == 0) return false;
+            if (cleanse_next(state) == 0) return 0;
         }
     }
 
     // at this point we should have a valid packet
     // check the checksum...
-    uint16_t crc = checksum(state->write_buffer + 1, state->write_cursor - 3, 0x0000);
-    uint16_t packet_crc = *((uint16_t *)(state->write_buffer + length - 2));
+    uint16_t crc = gen_crc16(state->write_buffer + 1, state->write_cursor - 1);
 
-    if (crc != packet_crc) return false;
+    if (crc != 0)
+    {
+        printf("CRC failure\n");
+        return 0;
+    }
 
     // ran the gauntlet and made it - valid packet has been found
-    return true;
+    return 1;
 }
 
 
