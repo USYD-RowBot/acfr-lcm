@@ -334,7 +334,7 @@ function auvmapper () {
 
     function set_pose(platform, tracklayer, unclayer, maxtracklen, pose) {
         var curpos = [];
-        if ((pose.lat != NaN) || (pose.lon != NaN)) {
+        if ((pose.lat != NaN) && (pose.lon != NaN)) {
             curpos = new L.LatLng(pose.lat, pose.lon);
 
             // Add pose to track, but check if track is too long (to avoid memory/performance issues)
@@ -358,7 +358,7 @@ function auvmapper () {
 
 
     function set_uncertainty(unclayer, pose) {
-        if ((pose.lat != NaN) || (pose.lon != NaN)) {
+        if ((pose.lat != NaN) && (pose.lon != NaN)) {
             curpos = new L.LatLng(pose.lat, pose.lon);
 
             // set uncertainty circle
