@@ -308,9 +308,10 @@ function auvmapper () {
                 else { // if old msg id, show message age
                     var msgage = Math.round(data.curts - data.msgts);
                     if ($(_this.info[platform]).find(".oldmsg").length <= 0) $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:rgb(197, 135, 0)'><small>Last update: </small><br>"+msgage+" s ago</b>");
-                    if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
-                    else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
+                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:rgb(197, 135, 0)'>LASTUPD: "+msgage+" s</b>");
+                    //if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
+                    //else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
+                    if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
                     //setTimeout(function(){$(_this.info[platform]).parent().css('background-color','white')}, 250);
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
@@ -323,7 +324,7 @@ function auvmapper () {
                     $(_this.info[platform]).html("<div class='error errmsg' data-count='0'></div>");
                 $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
                 $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
-                $(_this.info[platform]).parent().css('background-color','#808080');
+                $(_this.info[platform]).parent().css('background-color','#CCC');
 
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
             }
