@@ -117,8 +117,16 @@ def get_geotiff():
 @app.route('/setall_platformdata', methods=['POST'])
 def setall_platformdata():
     data = request.form.get('platformdata')
-    pd.setall_platformdata(data)
-    jsonify({"result": "ok"})
+    pd.set_platformdata(data=data)
+    return jsonify({"result": "ok"})
+
+@app.route('/set_platformdata', methods=['POST'])
+def set_platformdata():
+    platform = request.args.get('platform')
+    data = request.form.get('platformdata')
+    pd.set_platformdata(platform=platform, data=data)
+    return jsonify({"result": "ok"})
+
 
 @app.route('/get_platformdata')
 def get_platformdata():

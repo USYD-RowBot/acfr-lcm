@@ -89,7 +89,18 @@ def init_push_data(configfile):
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
+    if data['msgts']+10 < data['curts']:
+        data['uncertainty'] = (data['curts']-data['msgts'])*0.5
     return data
+
+
+def set_platformdata(platform=None, data={}):
+    global platformdata
+    if platform is None:
+        platformdata = json.loads(data)
+    else:
+        platformdata[platform] = json.loads(data)
+    return
 
 ######################################################################
 # Parse mission file
@@ -175,6 +186,7 @@ class LcmThread(threading.Thread):
         # float ship_heading;
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'state': 'online',
             'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
@@ -194,6 +206,7 @@ class LcmThread(threading.Thread):
         platform = msg.name
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'state': 'online',
             'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
@@ -214,6 +227,7 @@ class LcmThread(threading.Thread):
         msgid = msg.utime
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
+            'state': 'online',
             'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)

@@ -48,6 +48,14 @@ def get_platformdata(platform):
     data['curts'] = int(time.time())    # add curr ts
     return data
 
+def set_platformdata(platform=None, data={}):
+    global platformdata
+    if platform is None:
+        platformdata = json.loads(data)
+    else:
+        platformdata[platform] = json.loads(data)
+    return
+
 ######################################################################
 # Parse mission file
 # This platform
@@ -105,6 +113,7 @@ class FakeAUVThread (threading.Thread):
 
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'state': 'online',
                 'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -163,6 +172,7 @@ class FakeShipThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'state': 'online',
                 'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
@@ -192,6 +202,7 @@ class FakeClassifierThread (threading.Thread):
             i += 1
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
+                'state': 'online',
                 'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)

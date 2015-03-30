@@ -312,6 +312,7 @@ function auvmapper () {
                     //if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
                     //else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
                     if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
+                    set_uncertainty(unclayer, data.pose);
                     //setTimeout(function(){$(_this.info[platform]).parent().css('background-color','white')}, 250);
                 }
                 var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
@@ -344,9 +345,7 @@ function auvmapper () {
                     _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
             }
 
-            // set uncertainty circle
-            var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
-            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
+            set_uncertainty(platform, unclayer, pose);
 
 
             // Update marker / polygon position
@@ -355,6 +354,15 @@ function auvmapper () {
             else
                 _this.layers.overlays[platform].setLatLng(curpos);
         }
+    }
+
+
+    function set_uncertainty(unclayer, pose) {
+        var curpos = new L.LatLng(pose.lat, pose.lon);
+
+        // set uncertainty circle
+        var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
+        _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
     }
 
     /**
