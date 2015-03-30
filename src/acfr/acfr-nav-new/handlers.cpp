@@ -380,4 +380,3 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     
 }
 
-

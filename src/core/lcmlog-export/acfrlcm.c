@@ -16,8 +16,8 @@ acfrlcm_auv_acfr_nav_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
-    TEXTREAD_ADD_FIELD (tr, "latitude", "%f",      msg->latitude);
-    TEXTREAD_ADD_FIELD (tr, "longitude", "%f",      msg->longitude);
+    TEXTREAD_ADD_FIELD (tr, "latitude", "%15.12f",      msg->latitude);
+    TEXTREAD_ADD_FIELD (tr, "longitude", "%15.12f",      msg->longitude);
     TEXTREAD_ADD_FIELD (tr, "depth", "%f",      msg->depth);
     TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
@@ -163,8 +163,8 @@ acfrlcm_ship_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
     TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
-    TEXTREAD_ADD_FIELD (tr, "latitude","%f",      msg->latitude);
-    TEXTREAD_ADD_FIELD (tr, "longitude","%f",      msg->longitude);
+    TEXTREAD_ADD_FIELD (tr, "latitude","%15.12f",      msg->latitude);
+    TEXTREAD_ADD_FIELD (tr, "longitude","%15.12f",      msg->longitude);
     textread_stop (tr);
 }
 
