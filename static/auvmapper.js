@@ -201,7 +201,7 @@ function auvmapper () {
         var trackoptions={color: options.color, weight: 1, opacity: 0.9, smoothFactor: 1 },
             markeroptions = {color: options.color, weight: 2.5, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 1000},
             polyoptions = {color: options.color,weight:2.5,fillColor:"white",fillOpacity:0.5,opacity:1},
-            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 1, zIndexOffset: 1000};
+            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 0.4, zIndexOffset: 1000};
 
         var tracklayer = platform+" track",
             unclayer = platform+" uncertainty";
@@ -345,8 +345,10 @@ function auvmapper () {
                     _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
             }
 
-            set_uncertainty(platform, unclayer, pose);
-
+            // set uncertainty circle
+            set_uncertainty(unclayer, pose);
+//            var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
+//            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
 
             // Update marker / polygon position
             if (_this.layers.overlays[platform].hasOwnProperty("poly"))
@@ -359,7 +361,7 @@ function auvmapper () {
 
     function set_uncertainty(unclayer, pose) {
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
-            curpos = new L.LatLng(pose.lat, pose.lon);
+            var curpos = new L.LatLng(pose.lat, pose.lon);
 
             // set uncertainty circle
             var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;

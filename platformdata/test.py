@@ -32,7 +32,7 @@ origin = [-14.11493 , 121.86207]
 ######################################################################
 def init_platformdata_threads():
     FakeAUVThread('AUVSTAT.IVER', 0.5).start()
-    FakeAUVThread('AUVSTAT.SIRIUS', 3.5*60).start()
+    FakeAUVThread('AUVSTAT.SIRIUS', 3*60).start()
     FakeShipThread('FALKOR', 1).start()
     FakeShipThread('USBL_FIX.SIRIUS', 5).start()
     FakeClassifierThread('class1', 1).start()
@@ -46,6 +46,10 @@ def init_platformdata_threads():
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
+    #print "\n!!!!!!!!!!!!!!{}\n".format(data['curts']-data['msgts'])
+    if (data['curts']-data['msgts']) > 30:
+        speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
     return data
 
 def set_platformdata(platform=None, data={}):
@@ -123,7 +127,8 @@ class FakeAUVThread (threading.Thread):
                     'depth': round(random()*100, 2),           # OPTIONAL (m)
                     'roll': randint(-20, 20),                   # OPTIONAL / REQUIRED for dashboard (degrees)
                     'pitch': randint(-45, 45),                  # OPTIONAL / REQUIRED for dashboard (degrees)
-                    'uncertainty': randint(1, 20)
+                    'uncertainty': randint(1, 20),
+                    'speed': 0.5
                 },
                 'stat': {
                     # You can add whatever custom status messages you like here
@@ -177,7 +182,9 @@ class FakeShipThread (threading.Thread):
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
                     'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
-                    'heading': round(hdg, 1)  # randint(0, 360)                  # REQUIRED (degrees)
+                    'heading': round(hdg, 1),  # randint(0, 360)                  # REQUIRED (degrees)
+                    'uncertainty': 5,
+                    'speed': 0.5
                 }
             }
             time.sleep(self.delay)
@@ -206,7 +213,8 @@ class FakeClassifierThread (threading.Thread):
                 'msgts': int(time.time()),
                 'pose': {
                     'lat': round(lat, 10),  # round(o[0]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
-                    'lon': round(lon, 10)  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
+                    'lon': round(lon, 10),  # round(o[1]+(random()-0.5)/600, 12),  # REQUIRED (decimal degrees)
+                    'speed': 0.5
                 },
                 'stat': {
                     'intensity': 0.5  #random()

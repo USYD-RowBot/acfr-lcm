@@ -89,8 +89,9 @@ def init_push_data(configfile):
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
-    if data['msgts']+10 < data['curts']:
-        data['uncertainty'] = (data['curts']-data['msgts'])*0.5
+    if (data['curts']-data['msgts']) > 30:
+        speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
     return data
 
 
@@ -193,7 +194,8 @@ class LcmThread(threading.Thread):
                 'lon': round(math.degrees(msg.longitude), 8),          # REQUIRED (decimal degrees)
                 'depth': round(msg.depth, 1),
                 'XYZ': "{}, {}, {}".format(round(msg.target_x, 1), round(msg.target_y, 1), round(msg.target_z, 1)),
-                'uncertainty': round(msg.accuracy, 2)
+                'uncertainty': round(msg.accuracy, 2),
+                'speed': 0.5
             }
         }
 
@@ -213,7 +215,8 @@ class LcmThread(threading.Thread):
                 'lon': round(math.degrees(msg.longitude), 8),         # REQUIRED (decimal degrees)
                 'heading': round(math.degrees(msg.heading), 2),        # REQUIRED (degrees)
                 'roll': round(math.degrees(msg.roll), 2),        # REQUIRED (degrees)
-                'pitch': round(math.degrees(msg.pitch), 2)        # REQUIRED (degrees)
+                'pitch': round(math.degrees(msg.pitch), 2),        # REQUIRED (degrees)
+                'speed': 1
             }
         }
 
@@ -236,7 +239,8 @@ class LcmThread(threading.Thread):
                 'alt': float(msg.altitude)/10.0,                           # OPTIONAL (m)
                 'depth': float(msg.depth)/10.0,                            # OPTIONAL (m)
                 'roll': round(msg.roll/10.0,1),       # OPTIONAL / REQUIRED for dashboard (degrees)
-                'pitch': round(msg.pitch/10.0,1)      # OPTIONAL / REQUIRED for dashboard (degrees)
+                'pitch': round(msg.pitch/10.0,1),      # OPTIONAL / REQUIRED for dashboard (degrees)
+                'speed': 0.5
                 #'uncertainty': 1
             },
             'stat': {
