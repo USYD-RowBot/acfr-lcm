@@ -71,7 +71,6 @@ class Evologics_Modem
 
         // LCM handlers
         int handle_heartbeat();
-        int start_handlers();
         
         // channel flags
         pthread_mutex_t flags_lock;
