@@ -183,7 +183,7 @@ class LcmThread(threading.Thread):
                 'x': msg.target_x,
                 'y': msg.target_y,
                 'z': msg.target_z,
-                'uncertainty': msg.acc
+                'uncertainty': msg.accuracy
             }
         }
 
