@@ -258,7 +258,7 @@ function auvmapper () {
         $.ajax({
             dataType: "jsonp",
             url: url,
-            timeout: 10000, // sets timeout to 10 seconds
+            timeout: 20000, // sets timeout to 20 seconds
             success: function (data) {
                 if (parseInt(_this.info[platform].data('msgts')) < parseInt(data.msgts)) {
                     _this.info[platform].data('msgts',data.msgts);
@@ -326,7 +326,7 @@ function auvmapper () {
                 $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
                 $(_this.info[platform]).parent().css('background-color','#CCC');
 
-                setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},5000); // try again in 5 seconds if error
+                setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},20000); // try again in 20 seconds if error
             }
         });
     }
