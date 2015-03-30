@@ -160,12 +160,30 @@ class LcmThread(threading.Thread):
         msg = usbl_fix_t.decode(data)
         msgid = msg.utime
         platform = channel  # 'usbl{}'.format(msg.remote_id)
+        # double target_x;
+        # double target_y;
+        # double target_z;
+        # double latitude;
+        # double longitude;
+        # double depth;
+        # double accuracy;
+        #
+        # double ship_latitude;
+        # double ship_longitude;
+        # float ship_roll;
+        # float ship_pitch;
+        # float ship_heading;
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'msgts': int(time.time()),
             'pose': {
                 'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
-                'lon': round(math.degrees(msg.longitude), 8)          # REQUIRED (decimal degrees)
+                'lon': round(math.degrees(msg.longitude), 8),          # REQUIRED (decimal degrees)
+                'depth': msg.depth,
+                'x': msg.target_x,
+                'y': msg.target_y,
+                'z': msg.target_z,
+                'uncertainty': msg.acc
             }
         }
 
