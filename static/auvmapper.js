@@ -358,11 +358,13 @@ function auvmapper () {
 
 
     function set_uncertainty(unclayer, pose) {
-        var curpos = new L.LatLng(pose.lat, pose.lon);
+        if ((pose.lat != NaN) || (pose.lon != NaN)) {
+            curpos = new L.LatLng(pose.lat, pose.lon);
 
-        // set uncertainty circle
-        var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
-        _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
+            // set uncertainty circle
+            var uncertainty = (pose.hasOwnProperty('uncertainty')) ? pose.uncertainty : 0.1;
+            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
+        }
     }
 
     /**
