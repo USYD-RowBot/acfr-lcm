@@ -89,8 +89,8 @@ def init_push_data(configfile):
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
-    if data['msgts']+10 < data['curts']:
-        data['uncertainty'] = (data['curts']-data['msgts'])*0.5
+    if (data['curts']-data['msgts']) > 30:
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*0.5
     return data
 
 

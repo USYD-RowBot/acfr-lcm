@@ -46,6 +46,9 @@ def init_platformdata_threads():
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
+    #print "\n!!!!!!!!!!!!!!{}\n".format(data['curts']-data['msgts'])
+    if (data['curts']-data['msgts']) > 30:
+        data['pose']['uncertainty'] = (data['curts']-data['msgts'])*0.5
     return data
 
 def set_platformdata(platform=None, data={}):

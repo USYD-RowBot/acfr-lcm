@@ -201,7 +201,7 @@ function auvmapper () {
         var trackoptions={color: options.color, weight: 1, opacity: 0.9, smoothFactor: 1 },
             markeroptions = {color: options.color, weight: 2.5, fillColor: "black", fillOpacity: 0.5, opacity: 1, zIndexOffset: 1000},
             polyoptions = {color: options.color,weight:2.5,fillColor:"white",fillOpacity:0.5,opacity:1},
-            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 1, zIndexOffset: 1000};
+            uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 0.4, zIndexOffset: 1000};
 
         var tracklayer = platform+" track",
             unclayer = platform+" uncertainty";
@@ -360,10 +360,7 @@ function auvmapper () {
 
 
     function set_uncertainty(unclayer, pose) {
-        var curpos = [];
-        //console.log(pose)
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
-            //console.log("SETTING UNC!!!");
             var curpos = new L.LatLng(pose.lat, pose.lon);
 
             // set uncertainty circle
