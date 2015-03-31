@@ -31,7 +31,7 @@ origin = [-14.11493 , 121.86207]
 # poses. TODO: Make them real or replace them with something similar!
 ######################################################################
 def init_platformdata_threads():
-    FakeAUVThread('AUVSTAT.IVER', 0.5).start()
+    #FakeAUVThread('AUVSTAT.IVER', 0.5).start()
     FakeAUVThread('AUVSTAT.SIRIUS', 3*60).start()
     FakeShipThread('FALKOR', 1).start()
     FakeShipThread('USBL_FIX.SIRIUS', 5).start()
@@ -46,11 +46,17 @@ def init_platformdata_threads():
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
-    #print "\n!!!!!!!!!!!!!!{}\n".format(data['curts']-data['msgts'])
-    if (data['curts']-data['msgts']) > 30:
+    if data['state'] == 'follow':
+        data['pose'] = platformdata[data['follow']]['pose']
+        data['msgts'] = platformdata[data['follow']]['msgts']
+    elif (data['state'] == 'stationary'):
+        data['msgts'] = data['curts']
+    elif (data['curts']-data['msgts']) > 30:
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
         data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
+
     return data
+
 
 def set_platformdata(platform=None, data={}):
     global platformdata
@@ -84,12 +90,31 @@ def parse_mission (filepath, orig=[0, 0]):
 # TODO: make real
 ######################################################################
 def send_to_platform(args):
-
-    response = "This feature has not been implemented yet!!!<br>You provided the following arguments:"
     for k in args:
-        response += "<br>{}: {}".format(k, args[k])
+        args[k] = args[k][0]
+        #response += "<br>{}: {}".format(k, args[k][0])
+    #{'auvstateplatform': u'Iver', 'auvstate': u'online', 'auvstatedesc': u'', 'auvstatefollow': u'FALKOR', 'auvstatelon': u'', 'auvstatelat': u''}
+    platform = str(args['auvstateplatform'])
+    data = {
+        'state': str(args['auvstate']),
+        'statemsg': str(args['auvstatemsg'])
+    }
 
-    return args['platform'], response
+    if args['auvstate'] == 'follow':
+        data['follow'] = str(args['auvstatefollow'])
+    elif args['auvstate'] == 'stationary':
+        data['pose'] = {
+            'lat': float(args['auvstatelat']),
+            'lon': float(args['auvstatelon']),
+            'uncertainty': 0.2,
+            'speed': 0
+        }
+
+    print data
+    platformdata[platform] = data
+    #set_platformdata(platform=platform, data=json.dumps(data))
+
+    return 0
 
 
 ######################################################################
