@@ -121,7 +121,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
             startind = 0
         elif fileExtension.lower() == '.mp':
             mission = missionMP.Mission()
-            startind = 1
+            startind = 2
         else:
             print 'Incorrect mission type'
             return
