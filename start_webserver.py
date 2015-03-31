@@ -146,16 +146,16 @@ def serve_uploads(filename):
 def get_config():
     cfg = request.args.get('cfg')
     if request.method == 'POST':
-        cfgtext = request.form.get('cfgtxt')
-        f = open(cfg, 'w')
-        f.write(cfgtext)
-        f.close()
+        if allowadmin == "true":
+            cfgtext = request.form.get('cfgtxt')
+            f = open(cfg, 'w')
+            f.write(cfgtext)
+            f.close()
         return redirect("/")
     else:
         sec = request.args.get('sec')
         if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
             shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
-
         config = ConfigParser.ConfigParser()
         config.read(cfg)
         if sec is None:

@@ -118,8 +118,10 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
         fileName, fileExtension = os.path.splitext(filepath)
         if fileExtension.lower() == '.xml':
             mission = missionXML.Mission()
+            startind = 0
         elif fileExtension.lower() == '.mp':
             mission = missionMP.Mission()
+            startind = 1
         else:
             print 'Incorrect mission type'
             return
@@ -131,6 +133,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
 
         waypoints = mission.dumpSimple()
 
+
         # convert the waypoints to latitude and longitude
         projStr = '+proj=tmerc +lon_0={} +lat_0={} +units=m'.format(origin[1], origin[0])
         p = pyproj.Proj(projStr)
@@ -140,6 +143,8 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
             ll = p(wpt.y, wpt.x, inverse=True)
             latlng = [ll[1], ll[0]]
             latlngs.append(latlng)
+
+        latlngs = latlngs[startind:]
 
     except:
         print "Unable to parse mission!!!"
