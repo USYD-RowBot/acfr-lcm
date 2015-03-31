@@ -106,7 +106,6 @@ int Evologics_AHRS::process_ahrs_message(char *buf)
         ahrs.roll = atof(tokens[3]) * DTOR;
         ahrs.pitch = atof(tokens[2]) * DTOR;
         ahrs.heading = atof(tokens[4]) * DTOR;
-        lcm->publish("AHRS", &ahrs);
         return 1;
     }
     else
@@ -124,8 +123,8 @@ int Evologics_AHRS::init()
     
     thread_exit = 0;
    
-    //lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
-    
+    start_handlers();
+ 
     return 1;       
 }
 
@@ -193,13 +192,14 @@ int Evologics_AHRS::open_port(const char *ip, const char *port)
 int Evologics_AHRS::start_handlers()
 {
     // LCM subscriptions
-    lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
+    lcm->subscribeFunction("HEARTBEAT_5HZ", on_heartbeat, this);
     
     return 1;
 }
 
 int Evologics_AHRS::handle_heartbeat()
 {
+    lcm->publish("AHRS", &ahrs);
     return 1;
 }
 
@@ -242,7 +242,12 @@ int Evologics_AHRS::process()
                 
         }
         else
+        {
             cout << "select timeout with return: " << ret << endl;
+            if (reopen_port() > 0)
+	        pipe_broken = false;
+            sleep(1);
+        }
     }
     //delete evo;
     

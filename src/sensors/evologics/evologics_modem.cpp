@@ -67,7 +67,9 @@ int Evologics_Modem::ping_targets()
     {
         if(ping_counter == ping_period)
         {
-            cout << "Preparing to ping target " << current_ping_target << " at address " << targets[current_ping_target] << endl;
+            string targetName;
+            get_target_name(targets[current_ping_target], targetName);
+            cout << "Preparing to ping target " << targetName << " at address " << targets[current_ping_target] << endl;
             ping_counter = 0;
             // try to ping the current target.  If we are already waiting for
             // a ping reply don't change target.
@@ -319,8 +321,6 @@ int Evologics_Modem::init()
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
     lcm->subscribeFunction("EVO_CONTROL", on_evo_control, this);
-    
-    start_handlers();
     
     int lcm_channel_ndx = 0;
     while(lcm_channels != NULL && lcm_channels[lcm_channel_ndx] != NULL)
@@ -607,13 +607,6 @@ int Evologics_Modem::open_port(const char *ip, const char *port)
     return evo_fd;
 }
 
-int Evologics_Modem::start_handlers()
-{
-    // LCM subscriptions
-    lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
-    
-    return 1;
-}
 
 int Evologics_Modem::handle_heartbeat()
 {

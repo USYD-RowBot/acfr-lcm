@@ -22,6 +22,7 @@
 #include "acfr-common/sensor.h"
 
 #include "checksum.h"
+#include "messages.h"
 
 // this should be the largest chunk of data *BEFORE* including
 // escaped characters
@@ -50,6 +51,8 @@ typedef struct
     size_t data_end;
     size_t read_cursor;
     size_t write_cursor;
+
+    glider_state_t *glider;
 
     pthread_mutex_t queue_lock;
     message_channel_t queue[3];
@@ -103,7 +106,7 @@ void enumerate_response(state_t *state, char *enumeration_request)
 
     // need to wrap the device info with other stuff
     // total raw size is this...
-    char raw_message[69];
+    uint8_t raw_message[69];
 
     //////////// HEADER
     // SOF cha
@@ -143,7 +146,7 @@ void enumerate_response(state_t *state, char *enumeration_request)
     raw_message[16] = 0x00;
 
     memcpy(raw_message + 17, device_info, 50);
-    *((uint16_t *)(raw_message + 67)) = gen_crc16(raw_message + 1, 66, 0);
+    *((uint16_t *)(raw_message + 67)) = gen_crc16(raw_message + 1, 66);
 
     printf("Sending message.\n");
     acfr_sensor_write(state->sensor, raw_message, 69);
@@ -333,12 +336,17 @@ void *serial_listen_thread(void *u)
     while(!program_exit)
     {
         printf("Looking for packet...\n");
+        // always reread from the start
+        // but there may alreadt be data in the read buffer
+        // so don't discard it
         state->read_cursor = 0;
         state->write_cursor = 0;
 
         if (read_packet(state)) {
             // deal with the packet now
             printf("Got a packet!\n");
+            handle_packet(state->glider, state->write_buffer, state->write_cursor);
+            state->data_end = 0; // reset to start of buffer
         } else {
             printf("Failed to read packet!\n");
             // failed to get a packet...
