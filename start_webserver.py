@@ -151,7 +151,7 @@ def get_config():
             f = open(cfg, 'w')
             f.write(cfgtext)
             f.close()
-        return redirect("/")
+        return redirect("/?msg=Config+file+has+been+updated")
     else:
         sec = request.args.get('sec')
         if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
@@ -174,9 +174,13 @@ def send_to_platform():
     # platform as a GET argument
     #thisplatform = request.args.get('platform')
     args = dict(request.form)
-    platform, response = pd.send_to_platform(args)
+    response = pd.send_to_platform(args)
 
-    return jsonify({"result": response, "platform": platform})
+    if response == 0 :
+        return redirect("/?msg=Platform+state+has+been+updated")
+        #return redirect("/sweet")
+    else:
+        return redirect("/error")
 
 
 def get_config_form (cfg) :

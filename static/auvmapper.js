@@ -203,8 +203,8 @@ function auvmapper () {
             polyoptions = {color: options.color,weight:2.5,fillColor:"white",fillOpacity:0.5,opacity:1},
             uncmarkeroptions = {color: options.color, weight: 0.4, fillColor: options.color, fillOpacity: 0.2, opacity: 0.4, zIndexOffset: 1000};
 
-        var tracklayer = platform+" track",
-            unclayer = platform+" uncertainty";
+        var tracklayer = platform.key+" track",
+            unclayer = platform.key+" uncertainty";
 
         // add track layer
         if (options.dispoptions.showtrack) {
@@ -212,33 +212,33 @@ function auvmapper () {
             this.layerctl.addOverlay(this.layers.overlays[tracklayer], tracklayer);
             console.log(this.layers.overlays[tracklayer]);
             // Add fancy mid line markers
-            //var markerid = 'circle-'+platform.replace(' ','_');
+            //var markerid = 'circle-'+platform.key.replace(' ','_');
             //$(this.layers.overlays[tracklayer]._container).prepend('<marker id="'+markerid+'" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="userSpaceOnUse"><circle cx="3" cy="3" r="3" fill="'+options.color+'"></circle></marker>');
             //$(this.layers.overlays[tracklayer]._path).attr("marker-mid","url(#"+markerid+")");
         }
 
         // if size is an object, then draw a ship, otherwise draw a circle
         if (typeof options.size === "number") {
-            this.layers.overlays[platform] = new L.circle(this.origin, options.size, markeroptions);
+            this.layers.overlays[platform.key] = new L.circle(this.origin, options.size, markeroptions);
         }
         else if (typeof options.size === "object") {
-            this.layers.overlays[platform] = new L.polygon([],polyoptions);
-            this.layers.overlays[platform].poly = new getShipPoly(options.size, this.layers.overlays[platform]);
-            this.layers.overlays[platform].poly.setLatLngHdg(0,new L.LatLng(this.origin[0],this.origin[1]));
+            this.layers.overlays[platform.key] = new L.polygon([],polyoptions);
+            this.layers.overlays[platform.key].poly = new getShipPoly(options.size, this.layers.overlays[platform.key]);
+            this.layers.overlays[platform.key].poly.setLatLngHdg(0,new L.LatLng(this.origin[0],this.origin[1]));
         }
         // uncertainty layer
         this.layers.overlays[unclayer] = new L.circle(this.origin, 1, uncmarkeroptions);
 
         // Add popup
-        this.layers.overlays[platform].bindPopup(platform);
+        this.layers.overlays[platform.key].bindPopup(platform.name);
 
-        // add to layer group (platform & unc) to control
-        var layergroup = new L.layerGroup([this.layers.overlays[unclayer],this.layers.overlays[platform]]);
+        // add to layer group (platform.key & unc) to control
+        var layergroup = new L.layerGroup([this.layers.overlays[unclayer],this.layers.overlays[platform.key]]);
         layergroup.addTo(this.map);
-        this.layerctl.addOverlay(layergroup, platform);
+        this.layerctl.addOverlay(layergroup, platform.key);
 
         // initialise info panel
-        this.snap_to_track[platform] = false;
+        this.snap_to_track[platform.key] = false;
         this.add_platform_controls(platform, tracklayer, markeroptions.color, options.dispoptions, allowcontrol);
         this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
@@ -260,11 +260,12 @@ function auvmapper () {
             url: url,
             timeout: 20000, // sets timeout to 20 seconds
             success: function (data) {
-                if (parseInt(_this.info[platform].data('msgts')) < parseInt(data.msgts)) {
-                    _this.info[platform].data('msgts',data.msgts);
-                    $(_this.info[platform]).parent().css('background-color','#FFF')
+                //console.log(data.statemsg);
+                if (parseInt(_this.info[platform.key].data('msgts')) < parseInt(data.msgts)) {
+                    _this.info[platform.key].data('msgts',data.msgts);
+                    $(_this.info[platform.key]).parent().css('background-color','#FFF')
 
-                    set_pose(platform, tracklayer, unclayer, maxtracklen, data.pose)
+                    set_pose(platform, tracklayer, unclayer, maxtracklen, data);
 
                     // If we are tracking, check bounds and move map to track items
                     if (_this.autotrack_layer.getLayers().length > 0) {
@@ -277,72 +278,83 @@ function auvmapper () {
                         }
                     }
                     // update dashboard if it is visible (and exists)
-                    if ($(_this.dash[platform]).is(":visible")) {
+                    if ($(_this.dash[platform.key]).is(":visible")) {
                         var pose = data.pose,
                             stat = data.stat,
                             alert = data.alert;
-                        if ($(_this.dash[platform]).find(".hdg-rol").length > 0) {  //update roll-pitch-heading widget (if visible)
-                            $(_this.dash[platform]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
-                            $(_this.dash[platform]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
-                            $(_this.dash[platform]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
-                            $(_this.dash[platform]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
+                        if ($(_this.dash[platform.key]).find(".hdg-rol").length > 0 && data.hasOwnProperty('pose')) {  //update roll-pitch-heading widget (if visible)
+                            $(_this.dash[platform.key]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
+                            $(_this.dash[platform.key]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
+                            $(_this.dash[platform.key]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
+                            $(_this.dash[platform.key]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
                             delete pose.roll; delete pose.heading; delete pose.pitch;  // remove fields to avoid duplicate displays
                         }
-                        if ($(_this.dash[platform]).find(".bat").length > 0) {  // update battery widget (if visible)
-                            $(_this.dash[platform]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
-                            delete stat.bat;  // remove fields to avoid duplicate displays
+                        if ($(_this.dash[platform.key]).find(".bat").length > 0 && data.hasOwnProperty('stat')) {  // update battery widget (if visible)
+                            if (stat.hasOwnProperty('bat')) {
+                                $(_this.dash[platform.key]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
+                                delete stat.bat;  // remove fields to avoid duplicate displays
+                            }
                         }
 
                         // Show remaining data on dashboard
-                        $(_this.dash[platform]).find(".platform-alerts").html(formatdata(alert, "alerts"));
-                        $(_this.dash[platform]).find(".platform-stat").html(formatdata(stat));
-                        $(_this.dash[platform]).find(".platform-pose").html(formatdata(pose));
-                        $(_this.info[platform]).html(""); // clear info panel
+                        $(_this.dash[platform.key]).find(".platform-alerts").html(formatdata(alert, "alerts"));
+                        $(_this.dash[platform.key]).find(".platform-stat").html(formatdata(stat));
+                        $(_this.dash[platform.key]).find(".platform-pose").html(formatdata(pose));
+                        $(_this.info[platform.key]).html(""); // clear info panel
                     }
                     else {
                         // make info object by joining pose and stat (if stat exists)
                         var info = (data.hasOwnProperty("stat")) ? $.extend(data.pose, data.stat) : data.pose;
-                        $(_this.info[platform]).html(formatdata(info));
+                        $(_this.info[platform.key]).html(formatdata(info));
+                    }
+                    if (data.hasOwnProperty('statemsg')) {
+                        if ($(_this.info[platform.key]).find(".errmsg").length <= 0) $(_this.info[platform.key]).append("<div class='error errmsg'></div>");
+                        $(_this.info[platform.key]).find(".errmsg").html("<b style='color:#333'>" + data.statemsg + "</b>");
                     }
                 }
                 else { // if old msg id, show message age
                     var msgage = Math.round(data.curts - data.msgts);
-                    if ($(_this.info[platform]).find(".oldmsg").length <= 0) $(_this.info[platform]).append("<div class='error oldmsg'></div>");
-                    $(_this.info[platform]).find(".oldmsg").html("<b style='color:rgb(197, 135, 0)'><small>LASTUPD:</small><br><big>"+msgage+"</big> s</b>");
-                    //if (msgage > 3*60) $(_this.info[platform]).parent().css('background-color','#FFCCCC');
-                    //else if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
-                    if (msgage > 30) $(_this.info[platform]).parent().css('background-color','#CCC');
+                    if ($(_this.info[platform.key]).find(".errmsg").length <= 0) $(_this.info[platform.key]).append("<div class='error errmsg'></div>");
+                    $(_this.info[platform.key]).find(".errmsg").html("<b style='color:rgb(197, 135, 0)'><small>LASTUPD:</small><br><big>"+msgage+"</big> s</b>");
+                    //if (msgage > 3*60) $(_this.info[platform.key]).parent().css('background-color','#FFCCCC');
+                    //else if (msgage > 30) $(_this.info[platform.key]).parent().css('background-color','#CCC');
+                    if (msgage > 30) $(_this.info[platform.key]).parent().css('background-color','#CCC');
                     set_uncertainty(unclayer, data.pose);
-                    //setTimeout(function(){$(_this.info[platform]).parent().css('background-color','white')}, 250);
+                    //setTimeout(function(){$(_this.info[platform.key]).parent().css('background-color','white')}, 250);
                 }
-                var $flashupd = $(_this.info[platform]).parent().find('.heartbeat').show();
+                var $flashupd = $(_this.info[platform.key]).parent().find('.heartbeat').show();
                 setTimeout(function(){$flashupd.hide();},250)
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},interval);
             },
             error : function (jqXHR, status, desc) {
-                console.log("Cannot update position: "+platform,jqXHR);
-                if ($(_this.info[platform]).find(".errmsg").length <= 0)
-                    $(_this.info[platform]).html("<div class='error errmsg' data-count='0'></div>");
-                $(_this.info[platform]).find(".errmsg").data('count',$(_this.info[platform]).find(".errmsg").data('count')+1);
-                $(_this.info[platform]).find(".errmsg").html("Offline ("+$(_this.info[platform]).find(".errmsg").data('count')+")");
-                $(_this.info[platform]).parent().css('background-color','#CCC');
+                console.log("Cannot update position: "+platform.key,jqXHR);
+                if ($(_this.info[platform.key]).find(".errmsg").length <= 0) $(_this.info[platform.key]).html("<div class='error errmsg' data-count='0'></div>");
+                $(_this.info[platform.key]).find(".errmsg").data('count',$(_this.info[platform.key]).find(".errmsg").data('count')+1);
+                $(_this.info[platform.key]).find(".errmsg").html("Offline ("+$(_this.info[platform.key]).find(".errmsg").data('count')+")");
+                $(_this.info[platform.key]).parent().css('background-color','#CCC');
 
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},20000); // try again in 20 seconds if error
             }
         });
     }
 
-    function set_pose(platform, tracklayer, unclayer, maxtracklen, pose) {
+    function set_pose(platform, tracklayer, unclayer, maxtracklen, data) {
+        var pose = data.pose;
         var curpos = [];
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
             curpos = new L.LatLng(pose.lat, pose.lon);
 
             // Add pose to track, but check if track is too long (to avoid memory/performance issues)
-            if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
-                _this.layers.overlays[tracklayer].addLatLng(curpos);
-                var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
-                if (tracklen > maxtracklen)
-                    _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
+            if (data.state == "online") {
+                if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
+                    _this.layers.overlays[tracklayer].addLatLng(curpos);
+                    var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
+                    if (tracklen > maxtracklen)
+                        _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
+                }
+            }
+            else {
+                _this.layers.overlays[tracklayer].setLatLngs([]);
             }
 
             // set uncertainty circle
@@ -351,10 +363,10 @@ function auvmapper () {
 //            _this.layers.overlays[unclayer].setLatLng(curpos).setRadius(uncertainty);
 
             // Update marker / polygon position
-            if (_this.layers.overlays[platform].hasOwnProperty("poly"))
-                _this.layers.overlays[platform].poly.setLatLngHdg(pose.heading, curpos);//.bringToFront();
+            if (_this.layers.overlays[platform.key].hasOwnProperty("poly"))
+                _this.layers.overlays[platform.key].poly.setLatLngHdg(pose.heading, curpos);//.bringToFront();
             else
-                _this.layers.overlays[platform].setLatLng(curpos);
+                _this.layers.overlays[platform.key].setLatLng(curpos);
         }
     }
 
@@ -421,20 +433,20 @@ function auvmapper () {
             onAdd: function (map) {
                 var ctldiv = L.DomUtil.create('div', 'platform-panel');
                 $(ctldiv).prepend(
-                    $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform+" <i class='fa fa-circle heartbeat'></i></b>")
+                    $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform.name+" <i class='fa fa-circle heartbeat'></i></b>")
                         .click(function(el){
-                            if ($(_this.info[platform]).is(":visible")) {
+                            if ($(_this.info[platform.key]).is(":visible")) {
                                 $(this).css("color","#999");
-                                $(_this.info[platform]).hide();
+                                $(_this.info[platform.key]).hide();
                             }
                             else {
                                 $(this).css("color", "inherit");
-                                $(_this.info[platform]).show();
+                                $(_this.info[platform.key]).show();
                             }
                         })
                         .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.replace(" ","_")+"'></i>")
-                        .click(function(){_this.auto_extent(platform)})
+                    $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.key.replace(" ","_")+"'></i>")
+                        .click(function(){_this.auto_extent(platform.key)})
                         .tooltip({title:"Keep in view",trigger:"hover",container:"body"})
                 );
                 if (dispoptions.showtrack)
@@ -445,11 +457,11 @@ function auvmapper () {
                 if (dispoptions.setwaypoint && allowadmin)
                     $(ctldiv).prepend($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
-                        .tooltip({title:"Set waypoint",trigger:"hover",container:"body"})
+                        .tooltip({title:"Set position",trigger:"hover",container:"body"})
                     );
-                _this.info[platform] = $("<div class='info'></div>"); // empty div to update with platform info
-                _this.info[platform].data('msgts',0); // initialise msgid
-                $(ctldiv).append(_this.info[platform]);
+                _this.info[platform.key] = $("<div class='info'></div>"); // empty div to update with platform info
+                _this.info[platform.key].data('msgts',0); // initialise msgid
+                $(ctldiv).append(_this.info[platform.key]);
                 //$(ctldiv).css("background-color",bgcol);
 
                 return ctldiv;
@@ -472,10 +484,10 @@ function auvmapper () {
                 },
                 onAdd: function (map) {
                     var ctldiv = L.DomUtil.create('div', 'platform-dash');
-                    _this.dash[platform] = ctldiv;
+                    _this.dash[platform.key] = ctldiv;
                     var $hdg = $("<input class='knob hdg' data-width='150' data-cursor='10' data-bgColor='#ffffff' data-fgcolor='#428bca' data-thickness='.3'  value='0' data-min='0' data-max='360'>").knob({readOnly: true});
                     var $rol = $("<input class='knob rol' data-width='100' data-cursor='157' data-angleOffset='0' data-bgColor='#cccccc' data-fgcolor='#326594' data-thickness='0.9'  value='0' data-min='-180' data-max='180'>").knob({readOnly: true});
-                    var $alerts = $("<div style='display: inline; float: left; width:100px'><div style='font-weight: bold; font-size: 16px'><i class='fa fa-dot-circle-o platform-icon' style='color: " + bgcol + "'></i> " + platform + "</div></div>");
+                    var $alerts = $("<div style='display: inline; float: left; width:100px'><div style='font-weight: bold; font-size: 16px'><i class='fa fa-dot-circle-o platform-icon' style='color: " + bgcol + "'></i> " + platform.name + "</div></div>");
                     var $dials = $("<div style='display: inline; float: left; width:150px'></div>");
 
                     $alerts.append(
@@ -502,11 +514,11 @@ function auvmapper () {
                     $(ctldiv).append($alerts, $dials).width(270);
 
                     // add dashboard icon to info panel
-                    $(_this.info[platform]).parent().prepend(
-                        $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform + "'></i>")
+                    $(_this.info[platform.key]).parent().prepend(
+                        $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform.key + "'></i>")
                             .click(function () {
                                 $(_this.dash[platform]).toggle()
-                                if ($(_this.dash[platform]).is(":visible")) $(this).addClass("active");
+                                if ($(_this.dash[platform.key]).is(":visible")) $(this).addClass("active");
                                 else $(this).removeClass("active");
                             })
                             .tooltip({title: "Show/hide dash", trigger: "hover", container: "body"})
@@ -545,6 +557,10 @@ function auvmapper () {
      * @param platform
      */
     function setwaypoint (platform) {
+        //console.log("!!!!!!!!!!!!!!!",platform)
+        platform_modal("static/html-snippets/platform-command.html", platform.urlparam);
+
+        /*
         bootbox.confirm("<div class='alert alert-danger'>You are about to set a waypoint for <b>"+platform+"</b>.</div>Click a location on the map to send the waypoint.", function(result){
             if (result)
                 setTimeout(function(){
@@ -570,6 +586,14 @@ function auvmapper () {
                     });
                 },200);
         });
+        */
+    }
+
+    function platform_modal (htmlurl, platform) {
+        $("#modalcontent").load(htmlurl,function(){
+            $("#auvstateplatform").val(platform);
+            $("#modal").modal("show");
+        })
     }
 
 

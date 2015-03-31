@@ -89,19 +89,42 @@ def init_push_data(configfile):
 def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
-    if (data['curts']-data['msgts']) > 30:
+    if data['state'] == 'follow':
+        data['pose'] = platformdata[data['follow']]['pose']
+        data['msgts'] = platformdata[data['follow']]['msgts']
+    elif (data['state'] == 'stationary'):
+        data['msgts'] = data['curts']
+    elif (data['curts']-data['msgts']) > 30:
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
         data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
+
+
     return data
 
 
-def set_platformdata(platform=None, data={}):
+def set_platformdata(args):
     global platformdata
-    if platform is None:
-        platformdata = json.loads(data)
-    else:
-        platformdata[platform] = json.loads(data)
-    return
+    for k in args:
+        args[k] = args[k][0]
+        #response += "<br>{}: {}".format(k, args[k][0])
+    #{'auvstateplatform': u'Iver', 'auvstate': u'online', 'auvstatedesc': u'', 'auvstatefollow': u'FALKOR', 'auvstatelon': u'', 'auvstatelat': u''}
+    platform = str(args['auvstateplatform'])
+    data = {
+        'state': str(args['auvstate']),
+        'statemsg': str(args['auvstatemsg'])
+    }
+
+    if args['auvstate'] == 'follow':
+        data['follow'] = str(args['auvstatefollow'])
+    elif args['auvstate'] == 'stationary':
+        data['pose'] = {
+            'lat': float(args['auvstatelat']),
+            'lon': float(args['auvstatelon']),
+            'uncertainty': 0.2,
+            'speed': 0
+        }
+
+    platformdata[platform] = data
 
 ######################################################################
 # Parse mission file
@@ -155,7 +178,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
 # Set waypoint
 # TODO: make real
 ######################################################################
-def send_to_platform(platform, lat, lon):
+def send_to_platform(args):
 
     response = "This feature has not been implemented yet!!!"
     return platform, response
