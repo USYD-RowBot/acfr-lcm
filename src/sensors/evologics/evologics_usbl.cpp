@@ -150,6 +150,11 @@ cout << "Target lat: " << y << " lon:" << x << endl;
     
     uf.accuracy += ship_drms;
     */
+
+    // Add uncertainty proporitional to the reported range. Assume a 1 degree
+    // accuracy in the fix. FIXME: do a better job of estimating uncertainty.
+    double range = sqrt(ef->x*ef->x + ef->y*ef->y + ef->z*ef->z);  
+    uf.accuracy += 2*range*sin(0.5*DTOR);
     
     // extract the platform id from the received channel name
     int channel_pos = channel.find_last_of('.');
