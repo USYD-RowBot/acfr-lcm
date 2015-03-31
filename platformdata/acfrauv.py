@@ -116,7 +116,6 @@ def send_to_platform(args):
         args[k] = args[k][0]
         #response += "<br>{}: {}".format(k, args[k][0])
     #{'auvstateplatform': u'Iver', 'auvstate': u'online', 'auvstatedesc': u'', 'auvstatefollow': u'FALKOR', 'auvstatelon': u'', 'auvstatelat': u''}
-    print "\n\n\n\n\n", args, "\n\n\n\n\n"
     platform = str(args['auvstateplatform'])
     data = {
         'state': str(args['auvstate']),
@@ -186,14 +185,7 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
         return
     return latlngs, origin
 
-######################################################################
-# Set waypoint
-# TODO: make real
-######################################################################
-def send_to_platform(args):
 
-    response = "This feature has not been implemented yet!!!"
-    return platform, response
 
 
 ######################################################################
