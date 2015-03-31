@@ -174,6 +174,7 @@ def send_to_platform():
     # platform as a GET argument
     #thisplatform = request.args.get('platform')
     args = dict(request.form)
+    print "\n\n\n\n\n", args, "\n\n\n\n\n"
     response = pd.send_to_platform(args)
 
     if response == 0 :
