@@ -102,8 +102,16 @@ def get_platformdata(platform):
     return data
 
 
-def set_platformdata(args):
+def set_platformdata(platform=None, data={}):
     global platformdata
+    if platform is None:
+        platformdata = json.loads(data)
+    else:
+        platformdata[platform] = json.loads(data)
+    return
+
+
+def send_to_platform(args):
     for k in args:
         args[k] = args[k][0]
         #response += "<br>{}: {}".format(k, args[k][0])
@@ -124,8 +132,11 @@ def set_platformdata(args):
             'speed': 0
         }
 
+    print data
     platformdata[platform] = data
+    #set_platformdata(platform=platform, data=json.dumps(data))
 
+    return 0
 ######################################################################
 # Parse mission file
 # This platform
