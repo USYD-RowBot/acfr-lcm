@@ -86,12 +86,15 @@ int program_ysi(acfr_sensor_t *s)
 	
 	// Send an escape and wait for the prompt
 	char buf;
-	sprintf(&buf, "%c", 27 );
+	sprintf(&buf, "%c\r\n", 27 );
     acfr_sensor_write(s, &buf, 1); 
+    printf("Sent escape character. ");
 	
 	do
 	{
+        printf("Waiting for command prompt.");
 		acfr_sensor_read(s, &buf, 1);
+        printf("Read in character %c.\n", buf);
 	}
 	while (buf != '#');
 	

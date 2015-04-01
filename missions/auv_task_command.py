@@ -12,8 +12,8 @@ lc = lcm.LCM();
 
 msg = auv_global_planner_t()
 msg.command = auv_global_planner_t.LOAD
-msg.str = sys.argv[1]
+msg.str = sys.argv[2]
     
     
-lc.publish('TASK_PLANNER_COMMAND.SIRIUS', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND'+sys.argv[1], msg.encode())
 
