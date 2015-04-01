@@ -610,6 +610,7 @@ function auvmapper () {
 
     function platform_modal (htmlurl, platform) {
         $("#modalcontent").load(htmlurl,function(){
+            $("#auvstatetitle").html(platform);
             $("#auvstateplatform").val(platform);
             $("#modal").modal("show");
         })
