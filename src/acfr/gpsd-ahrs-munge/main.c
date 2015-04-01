@@ -74,7 +74,7 @@ heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_hear
     state_t *state = (state_t *)u;
 
     pthread_mutex_lock(&state->data_lock);
-    if (state->gpsd_utime > state->last_utime || state->ahrs_utime > state->last_utime)
+    if (state->gpsd_utime > state->last_utime && state->ahrs_utime > state->last_utime)
     {
         state->status.utime = timestamp_now();
         //state->status.utime = max(state->gps_utime, state->ahrs_utime);

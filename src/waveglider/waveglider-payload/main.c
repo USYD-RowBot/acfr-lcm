@@ -120,7 +120,7 @@ auv_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
 }
 
 void
-ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
+ship_status_callback_new(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
 {
     message_channel_t *channel = (message_channel_t *)u;
 
@@ -151,7 +151,7 @@ ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_s
 }
 
 void
-ship_status_callback_old(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
+ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
 {
     message_channel_t *channel = (message_channel_t *)u;
 

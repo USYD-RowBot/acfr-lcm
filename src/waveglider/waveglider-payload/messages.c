@@ -208,8 +208,8 @@ void handle_request_queued(glider_state_t *glider, request_queued_message_t *req
 
     response_header->header.sof = 0x7e;
     response_header->header.length = length - 1; // exclude sof char
-    response_header->header.destination_task = 0x04;
-    response_header->header.destination_board = 0x00;
+    response_header->header.destination_task = 0x00;
+    response_header->header.destination_board = 0x02;
     response_header->header.source_task = glider->task_id;
     response_header->header.source_board = glider->board_id;
     response_header->header.transaction_id = request->header.transaction_id;

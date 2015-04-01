@@ -1,2 +1,2 @@
 #!/bin/bash
-killall bot-procman-deputy
+pkill bot-procman-deputy
