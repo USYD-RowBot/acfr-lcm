@@ -65,7 +65,7 @@ platformdata = {}
 ######################################################################
 def init_platformdata_threads():
     LcmThread().start()
-    WaveGliderWGMSThread('WGMS.WGLIDER', 5*60).start()
+    WaveGliderWGMSThread('WGMS.WGLIDER', 20).start()
 
 
 def init_push_data(configfile):
