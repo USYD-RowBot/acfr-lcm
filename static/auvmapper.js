@@ -451,7 +451,9 @@ function auvmapper () {
             },
             onAdd: function (map) {
                 var ctldiv = L.DomUtil.create('div', 'platform-panel');
+                var $ctrlbtns = $("<div class='pbtns'><i class='fa fa-chevron-circle-left pbtn-hover platform-ctrl'></i></div>");
                 $(ctldiv).prepend(
+                    $("<div class='pbtns-cont'></div>").append($ctrlbtns),
                     $("<b class='pname' style='cursor: pointer; cursor: hand;'><i class='fa fa-dot-circle-o platform-icon' style='color: "+bgcol+"'></i> "+platform.name+" <i class='fa fa-circle heartbeat'></i></b>")
                         .click(function(el){
                             if ($(_this.info[platform.key]).is(":visible")) {
@@ -463,18 +465,18 @@ function auvmapper () {
                                 $(_this.info[platform.key]).show();
                             }
                         })
-                        .tooltip({title:"Show/hide info",trigger:"hover",container:"body"}),
-                    $("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.key.replace(" ","_")+"'></i>")
-                        .click(function(){_this.auto_extent(platform.key)})
-                        .tooltip({title:"Keep in view",trigger:"hover",container:"body"})
+                        .tooltip({title:"Show/hide info",trigger:"hover",container:"body"})
                 );
+                $ctrlbtns.append($("<i class='fa fa-crosshairs platform-ctrl' id='snap-"+platform.key.replace(" ","_")+"'></i>")
+                        .click(function(){_this.auto_extent(platform.key)})
+                        .tooltip({title:"Keep in view",trigger:"hover",container:"body"}));
                 if (dispoptions.showtrack)
-                    $(ctldiv).prepend($("<i class='fa fa-tencent-weibo platform-ctrl'></i>")
+                    $ctrlbtns.append($("<i class='fa fa-tencent-weibo platform-ctrl'></i>")
                         .click(function(){_this.layers.overlays[tracklayer].setLatLngs([])})
                         .tooltip({title:"Clear track history",trigger:"hover",container:"body"})
                     );
-                if (dispoptions.setwaypoint && allowadmin)
-                    $(ctldiv).prepend($("<i class='fa fa-external-link-square platform-ctrl'></i>")
+                if (dispoptions.setwaypoint && allowcontrol)
+                    $ctrlbtns.append($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
                         .tooltip({title:"Set position",trigger:"hover",container:"body"})
                     );
@@ -533,7 +535,7 @@ function auvmapper () {
                     $(ctldiv).append($alerts, $dials).width(270);
 
                     // add dashboard icon to info panel
-                    $(_this.info[platform.key]).parent().prepend(
+                    $(_this.info[platform.key]).parent().find('.pbtns').append(
                         $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform.key + "'></i>")
                             .click(function () {
                                 $(_this.dash[platform.key]).toggle();
