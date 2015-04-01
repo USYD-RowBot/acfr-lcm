@@ -36,7 +36,7 @@ function auvmapper () {
         this.fullsize();
         this.map = new L.Map(mapid, {
             center: new L.LatLng(this.origin[0],this.origin[1]),
-            zoom: 18,
+            zoom: 16,
             maxZoom: 25,  // max zoom is more than native zoom - leads to pixelated tiles
             maxNativeZoom: 17,
             fullscreenControl: true
