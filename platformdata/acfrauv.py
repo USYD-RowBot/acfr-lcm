@@ -415,7 +415,7 @@ class WaveGliderWGMSThread (threading.Thread):
                         }
                     }
             except:
-                print "ERROR!!! Unable to get WGMS data"
+                print "\n\n\n\nERROR!!! Unable to get WGMS data\n\n\n\n"
 
 
             time.sleep(self.delay)
