@@ -39,7 +39,17 @@ typedef struct {
     int32_t latitude;
     int32_t longitude;
     uint32_t timestamp;
-} telemetry_header_t;
+} __attribute__ ((packed)) telemetry_header_t;
+
+typedef struct {
+    uint8_t type; // ==0x91
+    uint32_t transaction_id;
+    uint16_t response_size;
+    uint8_t type_id;
+    uint8_t board_id;
+    uint8_t function;
+    uint16_t data_size;
+} __attribute__ ((packed)) console_write_t;
 
 typedef struct {
     pthread_mutex_t lock;
@@ -83,6 +93,7 @@ typedef struct
 void
 send_message(state_t *state)
 {
+    printf("%ld: transmitting %d bytes.\n", time(0), state->transmit_length);
     acfr_sensor_write(state->sensor, state->transmit_buffer, state->transmit_length);
 }
 
@@ -113,6 +124,37 @@ ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_s
 {
     message_channel_t *channel = (message_channel_t *)u;
 
+    char *data = "TEST MESSAGE";
+
+    size_t data_length = strlen(data);
+
+    channel->message = malloc(MAX_MESSAGE_SIZE);
+
+    console_write_t *header = (console_write_t *)channel->message;
+
+    header->type = 0x91;
+    header->transaction_id = 0;
+    header->type_id = 0x13;
+    header->board_id = 0x37;
+    header->function = 0x1;
+
+    memcpy(channel->message + sizeof(console_write_t), data, data_length);
+
+    header->response_size = data_length + 5;
+    header->data_size = data_length;
+
+    size_t final_length = header->response_size + 9;
+    uint16_t *checksum = ((uint16_t *)(channel->message + final_length - 2));
+
+    channel->length = final_length;
+
+}
+
+void
+ship_status_callback_old(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
+{
+    message_channel_t *channel = (message_channel_t *)u;
+
     // calculate the string to send here
     size_t data_length = sizeof(acfrlcm_ship_status_t) + sizeof(telemetry_header_t) + 2; // add the CRC
     size_t data_chunk = sizeof(acfrlcm_ship_status_t) + 12 + 4 + 4;
@@ -140,6 +182,8 @@ ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_s
     header->timestamp = time(NULL);
 
     *checksum = gen_crc16(channel->message, data_length - 2);
+
+    channel->length = data_length;
 
     pthread_mutex_unlock(&channel->lock);
 }
@@ -226,13 +270,11 @@ int read_packet(state_t *state) {
 
     while (state->data_end < 6) {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
-        printf("Read bytes... %ld\n", ret);
         // any error, bail out
         if (ret <= 0) return 0;
         state->data_end += ret; // add bytes read
     }
 
-    printf("Checking for SOF character\n");
 
     // check that packet starts with what we want it to
     if (state->read_buffer[0] != 0x7E) {
@@ -253,12 +295,10 @@ int read_packet(state_t *state) {
     if (cleanse_next(state) == 0) return 0;
     if (cleanse_next(state) == 0) return 0;
 
-    printf("Cleansing header characters\n");
-
     // lets get to it,
     uint16_t length = *(uint16_t *)(state->write_buffer + 1);
 
-    printf("Packet length: %d\n", length);
+    printf("%ld: received packet length: %d\n", time(0), length);
 
     while (state->write_cursor < length + 1) {
         size_t next_read = 1 + length - state->write_cursor - state->data_end + state->read_cursor;
@@ -276,7 +316,7 @@ int read_packet(state_t *state) {
 
     if (crc != 0)
     {
-        printf("CRC failure\n");
+        printf("%ld: CRC failure\n", time(0));
         return 0;
     }
 
@@ -295,7 +335,8 @@ void *serial_listen_thread(void *u)
     // denote how far has been parsed in the message and where they are getting read from
     while(!program_exit)
     {
-        printf("Looking for packet...\n");
+        printf("=================================================\n");
+        printf("%ld: waiting for packet...\n", time(0));
         // always reread from the start
         // but there may alreadt be data in the read buffer
         // so don't discard it
@@ -304,24 +345,40 @@ void *serial_listen_thread(void *u)
 
         if (read_packet(state)) {
             // deal with the packet now
-            printf("Got a packet!\n");
+            // check if there is something in the queue
+            // will also have to make this section smarter to rotate through the information types
+            // that come from all the source types
+            // don't want the information to become stale as well...
+            int i;
+            for (i=0;i<3;++i)
+            {
+                if (state->queue[i].length > 0)
+                {
+                    state->glider.pending_data_length = state->queue[i].length;
+                    memcpy(state->glider.pending_data, state->queue[i].message, state->queue[i].length);
+                    free(state->queue[i].message);
+                    state->queue[i].message = 0;
+                    state->queue[i].length = 0;
+                    break;
+                }
+            }
             handle_packet(&state->glider, state->write_buffer, state->write_cursor);
-            if (state->glider.reply_length > 0)
+            if (state->glider.output_length > 0)
             {
                 // we have a message to send
-                escape_packet(state, state->glider.buffer, state->glider.reply_length);
+                escape_packet(state, state->glider.output_data, state->glider.output_length);
                 send_message(state);
             }
             state->data_end = 0; // reset to start of buffer
         } else {
-            printf("Failed to read packet!\n");
+            printf("%ld: failed to read packet!\n", time(0));
             // failed to get a packet...
             // go through leftover data and see if we have a new frame
             // either way discard any data before at SOF character.
             while (state->read_cursor < state->data_end) {
 
                 if (state->read_buffer[state->read_cursor] == 0x7E) {
-                    printf("Found unexpected SOF character\n");
+                    printf("%ld: found unexpected SOF character\n", time(0));
                     memmove(state->read_buffer, state->read_buffer + state->read_cursor, state->data_end - state->read_cursor);
                     break;
                 }
@@ -342,6 +399,12 @@ main(int argc, char **argv)
     state_t state;
     glider_state_init(&state.glider);
     pthread_mutex_init(&state.queue_lock, 0);
+
+    int i;
+    for (i=0;i<3;++i)
+    {
+        channel_init(&state.queue[i]);
+    }
 
     // install the signal handler
 	program_exit = 0;
