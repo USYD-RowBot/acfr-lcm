@@ -26,7 +26,20 @@
 
 // this should be the largest chunk of data *BEFORE* including
 // escaped characters
-#define MAX_MESSAGE_SIZE 557
+
+typedef struct {
+    uint8_t type; // ==0x91
+    uint32_t transaction_id;
+    uint16_t size;
+    uint32_t payload_type;
+    uint8_t board_id;
+    uint8_t type_id;
+    uint8_t flags;
+    uint8_t repeats;
+    int32_t latitude;
+    int32_t longitude;
+    uint32_t timestamp;
+} telemetry_header_t;
 
 typedef struct {
     pthread_mutex_t lock;
@@ -52,7 +65,10 @@ typedef struct
     size_t read_cursor;
     size_t write_cursor;
 
-    glider_state_t *glider;
+    char transmit_buffer[MAX_MESSAGE_SIZE*2];
+    size_t transmit_length;
+
+    glider_state_t glider;
 
     pthread_mutex_t queue_lock;
     message_channel_t queue[3];
@@ -63,118 +79,11 @@ typedef struct
 
 } state_t;
 
-void enumerate_response(state_t *state, char *enumeration_request)
-{
-    char device_info[50];
-
-    // version
-    device_info[0] = 1;
-    device_info[1] = 0;
-    
-    //device type
-    device_info[2] = 0x13;
-    device_info[3] = 0x37;
-
-    // address
-    device_info[4] = 0x34;
-    device_info[5] = 0x32;
-
-    // next 6 bytes == serial number
-    
-    // localtion/port must be 0
-    device_info[12] = 0x0;
-
-    // polling period (in seconds, little endian)
-    device_info[13] = 0x05;
-    device_info[14] = 0x0;
-    device_info[15] = 0x0;
-    device_info[16] = 0x0;
-
-    // info flags
-    device_info[17] = 0x00; // no telemetry, power, event, ack/nak
-
-    // firmware major then minor, then 2 byte revision
-    device_info[18] = 0x00;
-    device_info[19] = 0x00;
-    device_info[20] = 0x00;
-    device_info[21] = 0x00;
-
-    // 20 more bytes... description in ASCII, pad with space characters
-    // description[22] 
-    
-    // and 8 more unknown characters???
-
-    // need to wrap the device info with other stuff
-    // total raw size is this...
-    uint8_t raw_message[69];
-
-    //////////// HEADER
-    // SOF cha
-    raw_message[0] = 0x7E;
-
-    // length
-    raw_message[1] = 68;
-    raw_message[2] = 0;
-
-    // destination address
-    raw_message[3] = 0x0;
-    raw_message[4] = 0x0;
-
-    // source address
-    raw_message[5] = device_info[4];
-    raw_message[6] = device_info[5];
-
-    // transacation ID
-    raw_message[7] = 0x12;
-    raw_message[8] = 0x34;
-    //////////// END HEADER
-
-    // msg type
-    raw_message[9] = 0x01;
-    raw_message[10] = 0x00;
-
-    // src msg type
-    raw_message[11] = 0x01;
-    raw_message[12] = 0x00 | 0x80; // we have more messages
-
-    // devices responding
-    raw_message[13] = 0x01;
-    raw_message[14] = 0x00;
-
-    // devices responding now
-    raw_message[15] = 0x01;
-    raw_message[16] = 0x00;
-
-    memcpy(raw_message + 17, device_info, 50);
-    *((uint16_t *)(raw_message + 67)) = gen_crc16(raw_message + 1, 66);
-
-    printf("Sending message.\n");
-    acfr_sensor_write(state->sensor, raw_message, 69);
-    printf("Sent message.\n");
-}
 
 void
-send_motor_command(state_t *state, double vertical, double port, double starboard)
+send_message(state_t *state)
 {
-   // send a command to the motors
-    char animatics_str[MAX_MESSAGE_SIZE];
-    int thr_ref, len;
-
-    // from animatics user manual p46
-    // the 32212 is for the motor, 32.5 is for the gear box, 60 is from RPM to Hz
-    // compose animatics command string for velocity mode
-    /*
-    thr_ref = (int)(vertical * 32212.0 * 32.5 / 60.0);
-    len = sprintf(animatics_str, "MV A=800 V=%i G t=0\n",thr_ref);
-    write(state->vert_fd, animatics_str, len);
-
-
-    usleep(5000);
-    write(state->vert_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    write(state->port_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    write(state->starb_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    */
-
+    acfr_sensor_write(state->sensor, state->transmit_buffer, state->transmit_length);
 }
 
 void
@@ -205,8 +114,33 @@ ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_s
     message_channel_t *channel = (message_channel_t *)u;
 
     // calculate the string to send here
+    size_t data_length = sizeof(acfrlcm_ship_status_t) + sizeof(telemetry_header_t) + 2; // add the CRC
+    size_t data_chunk = sizeof(acfrlcm_ship_status_t) + 12 + 4 + 4;
 
     pthread_mutex_lock(&channel->lock);
+    channel->message = malloc(data_length);
+
+    // get the header data
+    telemetry_header_t *header = (telemetry_header_t *)channel->message;
+    // get the actual data we care about
+    memcpy(channel->message + sizeof(telemetry_header_t), status, sizeof(acfrlcm_ship_status_t));
+    // and finally the checksum location
+    uint16_t *checksum = ((uint16_t *)(channel->message + data_length));
+
+    header->type = 0x91;
+    header->transaction_id = 0;
+    header->size = data_length - 7;
+    header->payload_type = 0; // NFI what is going on here
+    header->board_id = 0x37;
+    header->type_id = 0x13;
+    header->flags = 0x00;
+    header->repeats = 1;
+    header->latitude = (uint32_t)(status->latitude * 600000);
+    header->longitude = (uint32_t)(status->longitude * 600000);
+    header->timestamp = time(NULL);
+
+    *checksum = gen_crc16(channel->message, data_length - 2);
+
     pthread_mutex_unlock(&channel->lock);
 }
 
@@ -218,6 +152,32 @@ signal_handler(int sigNum)
     program_exit = 1;
 }
 
+void escape_packet(state_t *state, char *buffer, size_t length) {
+    size_t rc = 1;
+    size_t wc = 1;
+
+    state->transmit_buffer[0] = buffer[0];
+    // == 0x7E;
+
+    for (; rc < length;++rc)
+    {
+        switch (buffer[rc])
+        {
+        case 0x7E:
+            state->transmit_buffer[wc++] = 0x7D;
+            state->transmit_buffer[wc++] = 0x5E;
+            break;
+        case 0x7D:
+            state->transmit_buffer[wc++] = 0x7D;
+            state->transmit_buffer[wc++] = 0x5D;
+            break;
+        default:
+            state->transmit_buffer[wc++] = buffer[rc];
+
+        }
+    }
+    state->transmit_length = wc;
+}
 
 
 size_t cleanse_next(state_t *state) {
@@ -345,7 +305,13 @@ void *serial_listen_thread(void *u)
         if (read_packet(state)) {
             // deal with the packet now
             printf("Got a packet!\n");
-            handle_packet(state->glider, state->write_buffer, state->write_cursor);
+            handle_packet(&state->glider, state->write_buffer, state->write_cursor);
+            if (state->glider.reply_length > 0)
+            {
+                // we have a message to send
+                escape_packet(state, state->glider.buffer, state->glider.reply_length);
+                send_message(state);
+            }
             state->data_end = 0; // reset to start of buffer
         } else {
             printf("Failed to read packet!\n");
@@ -374,6 +340,7 @@ int
 main(int argc, char **argv)
 {
     state_t state;
+    glider_state_init(&state.glider);
     pthread_mutex_init(&state.queue_lock, 0);
 
     // install the signal handler
@@ -403,7 +370,7 @@ main(int argc, char **argv)
     // lets start LCM
     senlcm_usbl_fix_short_t_subscribe(state.lcm, "USBL_FIX.*", &usbl_callback, &state.queue[0]);
     acfrlcm_auv_status_short_t_subscribe(state.lcm, "AUVSTAT.*", &auv_status_callback, &state.queue[1]);
-    acfrlcm_ship_status_t_subscribe(state.lcm, "SHIP_STATUS.*", &ship_status_callback, &state.queue[2]);
+    acfrlcm_ship_status_t_subscribe(state.lcm, "SHIP_STATUS.W.*", &ship_status_callback, &state.queue[2]);
 
     // start the listen threads
     pthread_t tid_cc;
@@ -412,8 +379,6 @@ main(int argc, char **argv)
 
 	int lcm_fd = lcm_get_fileno(state.lcm);
 	fd_set rfds;
-
-    enumerate_response(&state, 0);
 
 	// listen to LCM, serial has been delegated
 	while(!program_exit)
@@ -430,14 +395,11 @@ main(int argc, char **argv)
             perror("Select failure: ");
         else if(ret != 0)
             lcm_handle(state.lcm);
-
-
 	}
 
     pthread_join(tid_cc, NULL);
 
     acfr_sensor_destroy(state.sensor);
-
 
 	return 0;
 }

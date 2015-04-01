@@ -2,13 +2,30 @@
 #define __MESSAGES_H__
 
 #include <inttypes.h>
+#include <stdlib.h>
+
+#define MAX_MESSAGE_SIZE 557
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct _glider_state glider_state_t;
+typedef struct {
+    char queued_message_buffer[MAX_MESSAGE_SIZE*2];
+    size_t queued_message_length;
+    uint8_t task_id;
+    uint8_t board_id;
+    uint16_t device_type;
+    uint32_t poll_period;
+    size_t reply_length;
+    char buffer[MAX_MESSAGE_SIZE];
+} glider_state_t;
 
+void glider_state_init(glider_state_t *glider);
+
+void handle_packet(glider_state_t *glider, char *message, size_t length);
+
+// basic header (they don't include message type... but seriously?)
 typedef struct {
     uint8_t sof;
     uint16_t length;
@@ -20,6 +37,32 @@ typedef struct {
     uint16_t message_type;
 } header_t;
 
+// NAK 0x0000
+// followed by nak details/data and checksum
+typedef struct {
+    header_t header;
+    uint16_t source_message_type;
+    uint8_t message_code;
+} general_nak_t;
+
+// NAK message_code == 4
+typedef struct {
+    uint8_t download_reason;
+    uint16_t expected_crc;
+    uint16_t actual_crc;
+    uint8_t md5_expected[16];
+    uint8_t md5_calculated[16];
+    uint16_t failed_starts;
+    uint8_t program_loaded;
+} program_download_nak_t;
+
+// ACK 0x0001
+typedef struct {
+    header_t header;
+    uint16_t source_message_type;
+    uint16_t command_format;
+} general_ack_t;
+
 // Enumerate 0x0010
 typedef struct {
     header_t header;
@@ -27,42 +70,30 @@ typedef struct {
     uint16_t command_formats;
 } enumerate_t;
 
-// ACK 0x0001
+// ACK 0x0001 in response to enumerate
+// // ACK 0x0001 in response to enumerate
 typedef struct {
     header_t header;
     uint16_t source_message_type;
-    uint16_t responses_total;
-    uint16_t responses_present;
-} general_ack_t;
+    uint16_t responding_devices;
+    uint16_t devices_present;
+} enumeration_ack_t;
 
 typedef struct {
     uint16_t format;
     uint16_t type;
-    uint16_t device_address;
+    uint8_t task_id;
+    uint8_t board_id;
     uint8_t serial[6];
     uint8_t port;
     uint32_t poll_period; // seconds
     uint8_t info_flags;
     uint8_t firmware_major;
-    uint8_t firmware_mainor;
+    uint8_t firmware_minor;
     uint16_t firmware_revision;
-    uint8_t desciption[20];
+    uint8_t description[20];
     uint8_t padding[8]; // set to zero ?!? not actually used.
 } device_info_block_t;
-
-
-// version and address must be real, but all else can be 0's.
-typedef struct {
-    uint16_t version;
-    uint16_t device_address;
-    uint16_t alarm_flags;
-    uint8_t leak_sensor1;
-    uint8_t leak_sensor2;
-    uint8_t temperature_humidity; // \deg C from humidity sensor
-    uint8_t humidity; // per cent
-    uint8_t temperature_pressure; // \deg C from pressure sensor
-    uint8_t pressue; // kPa
-} status_block_t;
 
 
 // request queued message 0x0040
@@ -85,7 +116,8 @@ typedef struct {
 typedef struct {
     header_t header;
     uint16_t source_message_type;
-} ack_queued_message;
+    uint16_t message_format;
+} ack_queued_message_t;
 
 // ACK/NAK Queued Message 0x0041
 // immediately followed by response message (may be none)
@@ -115,6 +147,27 @@ typedef struct {
     uint32_t longitude; // decimal minutes
     uint8_t fix_valid; // 'Y' or 'N' depending on GPS validity
 } request_status_t;
+
+typedef struct {
+    header_t header;
+    uint16_t source_message_type;
+    uint16_t total_responses; // these two must be 1
+    uint16_t responses_present;
+} status_ack_t;
+
+// version and address must be real, but all else can be 0's.
+typedef struct {
+    uint16_t version;
+    uint8_t task_id;
+    uint8_t board_id;
+    uint16_t alarm_flags;
+    uint8_t leak_sensor1;
+    uint8_t leak_sensor2;
+    uint8_t temperature_humidity; // \deg C from humidity sensor
+    uint8_t humidity; // per cent
+    uint8_t temperature_pressure; // \deg C from pressure sensor
+    uint8_t pressue; // kPa
+} status_block_t;
 
 // Send/forward message 0x0024
 // followed by date (<= 541 bytes) and checksum
