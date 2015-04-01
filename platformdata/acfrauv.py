@@ -65,7 +65,7 @@ platformdata = {}
 ######################################################################
 def init_platformdata_threads():
     LcmThread().start()
-    WaveGliderWGMSThread('WGMS.WGLIDER', 5*60).start()
+    WaveGliderWGMSThread('WGMS.WGLIDER', 60).start()
 
 
 def init_push_data(configfile):
@@ -368,6 +368,7 @@ class WaveGliderWGMSThread (threading.Thread):
         # authentication info
         self.auth_url = 'https://gliders.wgms.com/webservices/entityapi.asmx'
         self.auth_xml = '/home/oshirojk/Documents/waveglider/loginsoap.xml'
+        self.oldmsgid = 0
 
         # data retrieve url
         self.export_url = 'http://uh.wgms.com/pages/exportPage.aspx?viewid=36113&entitytype=42'
@@ -392,23 +393,25 @@ class WaveGliderWGMSThread (threading.Thread):
                 # for i in range(len(headers)):
                 # 	print '{}) {}: {}'.format(i, headers[i],data[i])
 
-                platformdata[self.platform] = {
-                    'msgid': data[0],
-                    'state': 'online',
-                    'msgts': int(time.time()),
-                    'headings': 'F:{}, S:{}'.format(data[5],data[4]),
-                    'pose': {
-                        'lat': float(data[11]),
-                        'lon': float(data[12]),
-                        'heading': float(data[3]),
-                        'speed': float(data[1])*0.514444444
-                    },
-                    'stat': {
-                        'bat': round(float(data[8])/6.6,1),
-                        'ftemp': int(data[6]),
-                        'pressure': int(data[7])
+                msgid = int(time.mktime(time.strptime(data[0], "%m/%d/%Y  %I:%M %p")))
+                if platformdata[self.platform]['msgid'] != msgid:
+                    platformdata[self.platform] = {
+                        'msgid': msgid,
+                        'state': 'online',
+                        'msgts': int(time.time()),
+                        'headings': 'F:{}, S:{}'.format(data[5],data[4]),
+                        'pose': {
+                            'lat': float(data[11]),
+                            'lon': float(data[12]),
+                            'heading': float(data[3]),
+                            'speed': float(data[1])*0.514444444
+                        },
+                        'stat': {
+                            'bat': round(float(data[8])/6.6,1),
+                            'ftemp': int(data[6]),
+                            'pressure': int(data[7])
+                        }
                     }
-                }
             except:
                 print "ERROR!!! Unable to get WGMS data"
 
