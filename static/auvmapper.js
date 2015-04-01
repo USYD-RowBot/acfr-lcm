@@ -280,10 +280,14 @@ function auvmapper () {
                         }
                     }
                     // check state and show/hide dashboard
-                    if (!$(_this.dash[platform.key]).data().hasOwnProperty('oldstate'))
-                        $(_this.dash[platform.key]).data('oldstate', data.state);
-                    else if ($(_this.dash[platform.key]).data('oldstate') != data.state)
-                        (data.state == 'online') ? $(_this.dash[platform.key]).show() : $(_this.dash[platform.key]).hide();
+                    if (data.state !== 'online')  // if not online, then autohide
+                        if (!$(_this.dash[platform.key]).data().hasOwnProperty('oldstate')) {
+                            $(_this.dash[platform.key]).data('autohide', true);
+                            $(_this.dash[platform.key]).hide();
+                        }
+                        // if autohidden then reshow when it comes back online
+                    else if ($(_this.dash[platform.key]).data('autohide') && !$(_this.dash[platform.key]).is(":visible"))
+                        $(_this.dash[platform.key]).show();
 
                     // update dashboard if it is visible (and exists)
                     if ($(_this.dash[platform.key]).is(":visible")) {
