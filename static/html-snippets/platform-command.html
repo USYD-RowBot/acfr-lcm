@@ -11,22 +11,24 @@
         </div>
     </div>
     <div class="form-group">
-        <label for="auvstatepos" class="col-sm-3 control-label">Recovered</label>
+        <label for="auvstatepos" class="col-sm-3 control-label" >Recovered</label>
 
         <div class="col-sm-6">
-            <label class="radio-inline">
+            <label class="radio-inline" onclick="$('.auvstate').hide();$('#auvstate-follow').show();">
                 <input type="radio" name="auvstate" id="auvstate3" value="follow"> On Deck (follow ship)
             </label>
-            <select class="form-control" id="auvstatefollow" name="auvstatefollow">
+            <select id="auvstate-follow" class="auvstate form-control"  style="display: none;" id="auvstatefollow" name="auvstatefollow">
                 <option value="FALKOR">Falkor</option>
             </select>
 
-
-            <label class="radio-inline">
+            <br>
+            <label class="radio-inline"  onclick="$('.auvstate').hide();$('#auvstate-stationary').show();">
                 <input type="radio" name="auvstate" id="auvstate2" value="stationary"> Offline (stationary)
             </label>
-            <input type="text" class="form-control" id="auvstatelat" name="auvstatelat" placeholder="Latitude">
-            <input type="text" class="form-control" id="auvstatelon" name="auvstatelon" placeholder="Longitude">
+            <div id="auvstate-stationary" class="auvstate" style="display: none;">
+                <input type="text" class="form-control" id="auvstatelat" name="auvstatelat" placeholder="Latitude">
+                <input type="text" class="form-control" id="auvstatelon" name="auvstatelon" placeholder="Longitude">
+            </div>
         </div>
     </div>
     <div class="form-group">

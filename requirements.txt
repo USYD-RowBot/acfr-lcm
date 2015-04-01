@@ -5,3 +5,4 @@ gdal
 pyproj
 gevent
 requests
+pycurl
