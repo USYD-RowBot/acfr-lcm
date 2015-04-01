@@ -29,6 +29,8 @@ import json
 import requests
 
 
+
+
 LCMROOT='/home/auv/git/acfr_lcm'
 #SEABEDGUIROOT='/home/auv/git/seabed_gui'
 sys.path.append('{0}/build/lib/python{1}.{2}/dist-packages/perls/lcmtypes/'.format(LCMROOT, sys.version_info[0], sys.version_info[1]))
@@ -63,6 +65,7 @@ platformdata = {}
 ######################################################################
 def init_platformdata_threads():
     LcmThread().start()
+    WaveGliderWGMSThread('WGMS.WGLIDER', 5*60).start()
 
 
 def init_push_data(configfile):
@@ -346,4 +349,64 @@ class sendRemoteDataThread (threading.Thread):
             except:
                 print "ERROR!!!   Unable to send data to {}".format(self.destserver)
 
+            time.sleep(self.delay)
+
+
+# For waveglider
+import pycurl
+import cStringIO
+
+class WaveGliderWGMSThread (threading.Thread):
+    #convert the following:
+    #curl -k -H "Content-Type: text/xml; charset=utf-8" --dump-header headers -H "SOAPAction:" -d @Documents/waveglider/loginsoap.xml -X POST https://gliders.wgms.com/webservices/entityapi.asmx
+    #curl -b headers "http://uh.wgms.com/pages/exportPage.aspx?viewid=36113&entitytype=42"
+    def __init__(self, platform, delay):
+        threading.Thread.__init__(self)
+        self.platform = platform
+        self.delay = delay
+        self.daemon = True  # run in daemon mode to allow for ctrl+C exit
+        # authentication info
+        self.auth_url = 'https://gliders.wgms.com/webservices/entityapi.asmx'
+        self.auth_xml = '/home/oshirojk/Documents/waveglider/loginsoap.xml'
+
+        # data retrieve url
+        self.export_url = 'http://uh.wgms.com/pages/exportPage.aspx?viewid=36113&entitytype=42'
+
+    def run (self):
+        while(1) :
+            msgts=time.time()   # timestamp / msgid
+            # get data
+            buf = cStringIO.StringIO()
+            c = pycurl.Curl()
+            c.setopt(pycurl.URL, self.export_url)
+            c.setopt(pycurl.COOKIEFILE, 'datatools/waveglider_header')
+            c.setopt(pycurl.WRITEFUNCTION, buf.write)
+            c.setopt(pycurl.VERBOSE, True)
+            c.perform()
+            curldata = buf.getvalue().split('\n')
+            buf.close()
+
+
+            # headers = curldata[0].split(',')
+            data = curldata[1].split(',')
+            # for i in range(len(headers)):
+            # 	print '{}) {}: {}'.format(i, headers[i],data[i])
+
+            platformdata[self.platform] = {
+                'msgid': data[0],
+                'state': 'online',
+                'msgts': int(time.time()),
+                'headings': 'F:{}, S:{}'.format(data[5],data[4]),
+                'pose': {
+                    'lat': float(data[11]),
+                    'lon': float(data[12]),
+                    'heading': float(data[3]),
+                    'speed': float(data[1])
+                },
+                'stat': {
+                    'bat': round(float(data[8])/6.6,1),
+                    'ftemp': int(data[6]),
+                    'pressure': int(data[7])
+                }
+            }
             time.sleep(self.delay)
