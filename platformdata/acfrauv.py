@@ -374,6 +374,8 @@ class WaveGliderWGMSThread (threading.Thread):
         self.export_url = 'http://uh.wgms.com/pages/exportPage.aspx?viewid=36113&entitytype=42'
 
     def run (self):
+        global platformdata
+
         while(1) :
             try:
                 # get data
@@ -404,7 +406,7 @@ class WaveGliderWGMSThread (threading.Thread):
                             'lat': float(data[11]),
                             'lon': float(data[12]),
                             'heading': float(data[3]),
-                            'speed': float(data[1])*0.514444444
+                            'speed': float(data[1])*0.51
                         },
                         'stat': {
                             'bat': round(float(data[8])/6.6,1),
