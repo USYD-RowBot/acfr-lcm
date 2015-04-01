@@ -253,16 +253,11 @@ def run_server_cfg(configfile):
             targets[k] = cfg.get(k, 'url')
             if targets[k].find('http://') < 0:
                 targets[k] = "http://localhost:{}/{}".format(port, targets[k])
-
         print targets
         upddelay = float(cfg.get(remotesec, 'upddelay'))
-
         sendRemoteDataThread(upddelay, targets, url).start()
-
     welcomenote = cfg.get('server','welcomenote') if cfg.has_option('server','welcomenote') else ""
-
     allowadmin = cfg.get('server', 'allowadmin') if (cfg.has_option('server', 'allowadmin')) else "false"
-
     return
 
 
