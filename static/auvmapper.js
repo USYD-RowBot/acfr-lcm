@@ -265,7 +265,6 @@ function auvmapper () {
                 //console.log(data.statemsg);
                 if (parseInt(_this.info[platform.key].data('msgts')) < parseInt(data.msgts)) {
                     _this.info[platform.key].data('msgts',data.msgts);
-                    $(_this.info[platform.key]).parent().css('background-color','#FFF')
 
                     set_pose(platform, tracklayer, unclayer, maxtracklen, data);
 
@@ -279,40 +278,45 @@ function auvmapper () {
                             else _this.map.panTo(_this.autotrack_layer.getLayers()[0].getLatLng());
                         }
                     }
-                    // check state and show/hide dashboard
-                    if (data.state !== 'online')  // if not online, then autohide
-                        if (!$(_this.dash[platform.key]).data().hasOwnProperty('oldstate')) {
+
+
+                    // if autohidden then reshow when it comes back online
+                    if (data.state == 'online' && $(_this.dash[platform.key]).data('autohide')) {
+                        $(_this.dash[platform.key]).show();
+                        $(_this.dash[platform.key]).data('autohide', false);
+                    }
+                    // update dashboard if it is visible (and exists)
+                    if ($(_this.dash[platform.key]).is(":visible")) {
+                        if (data.state != 'online') {
                             $(_this.dash[platform.key]).data('autohide', true);
                             $(_this.dash[platform.key]).hide();
                         }
-                        // if autohidden then reshow when it comes back online
-                    else if ($(_this.dash[platform.key]).data('autohide') && !$(_this.dash[platform.key]).is(":visible"))
-                        $(_this.dash[platform.key]).show();
-
-                    // update dashboard if it is visible (and exists)
-                    if ($(_this.dash[platform.key]).is(":visible")) {
-                        var pose = data.pose,
-                            stat = data.stat,
-                            alert = data.alert;
-                        if ($(_this.dash[platform.key]).find(".hdg-rol").length > 0 && data.hasOwnProperty('pose')) {  //update roll-pitch-heading widget (if visible)
-                            $(_this.dash[platform.key]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
-                            $(_this.dash[platform.key]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
-                            $(_this.dash[platform.key]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
-                            $(_this.dash[platform.key]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
-                            delete pose.roll; delete pose.heading; delete pose.pitch;  // remove fields to avoid duplicate displays
-                        }
-                        if ($(_this.dash[platform.key]).find(".bat").length > 0 && data.hasOwnProperty('stat')) {  // update battery widget (if visible)
-                            if (stat.hasOwnProperty('bat')) {
-                                $(_this.dash[platform.key]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
-                                delete stat.bat;  // remove fields to avoid duplicate displays
+                        else {
+                            var pose = data.pose,
+                                stat = data.stat,
+                                alert = data.alert;
+                            if ($(_this.dash[platform.key]).find(".hdg-rol").length > 0 && data.hasOwnProperty('pose')) {  //update roll-pitch-heading widget (if visible)
+                                $(_this.dash[platform.key]).find(".hdg").val(pose.heading).trigger('change'); // update heading vis
+                                $(_this.dash[platform.key]).find(".rol").val(pose.roll).trigger('change'); // update roll vis
+                                $(_this.dash[platform.key]).find(".rol-canvas").css("top", 25 - pose.pitch * 50 / 100); // update pitch vis
+                                $(_this.dash[platform.key]).find(".rph-info").html(formatdata({HDG: pose.heading, PITCH: pose.pitch, ROLL: pose.roll}));
+                                delete pose.roll;
+                                delete pose.heading;
+                                delete pose.pitch;  // remove fields to avoid duplicate displays
                             }
-                        }
+                            if ($(_this.dash[platform.key]).find(".bat").length > 0 && data.hasOwnProperty('stat')) {  // update battery widget (if visible)
+                                if (stat.hasOwnProperty('bat')) {
+                                    $(_this.dash[platform.key]).find(".bat").css("width", stat.bat + "%").html(stat.bat + "%");
+                                    delete stat.bat;  // remove fields to avoid duplicate displays
+                                }
+                            }
 
-                        // Show remaining data on dashboard
-                        $(_this.dash[platform.key]).find(".platform-alerts").html(formatdata(alert, "alerts"));
-                        $(_this.dash[platform.key]).find(".platform-stat").html(formatdata(stat));
-                        $(_this.dash[platform.key]).find(".platform-pose").html(formatdata(pose));
-                        $(_this.info[platform.key]).html(""); // clear info panel
+                            // Show remaining data on dashboard
+                            $(_this.dash[platform.key]).find(".platform-alerts").html(formatdata(alert, "alerts"));
+                            $(_this.dash[platform.key]).find(".platform-stat").html(formatdata(stat));
+                            $(_this.dash[platform.key]).find(".platform-pose").html(formatdata(pose));
+                            $(_this.info[platform.key]).html(""); // clear info panel
+                        }
                     }
                     else {
                         // make info object by joining pose and stat (if stat exists)
@@ -358,6 +362,7 @@ function auvmapper () {
 
             // Add pose to track, but check if track is too long (to avoid memory/performance issues)
             if (data.state == "online") {
+                $(_this.info[platform.key]).parent().css('background-color','#FFF');
                 if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
                     _this.layers.overlays[tracklayer].addLatLng(curpos);
                     var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
@@ -366,6 +371,7 @@ function auvmapper () {
                 }
             }
             else {
+                $(_this.info[platform.key]).parent().css('background-color','#CCC');
                 _this.layers.overlays[tracklayer].setLatLngs([]);
             }
 
@@ -530,7 +536,7 @@ function auvmapper () {
                     $(_this.info[platform.key]).parent().prepend(
                         $("<i class='fa fa-dashboard platform-ctrl active' id='dash-" + platform.key + "'></i>")
                             .click(function () {
-                                $(_this.dash[platform]).toggle()
+                                $(_this.dash[platform.key]).toggle();
                                 if ($(_this.dash[platform.key]).is(":visible")) $(this).addClass("active");
                                 else $(this).removeClass("active");
                             })
