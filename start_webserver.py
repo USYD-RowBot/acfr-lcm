@@ -251,7 +251,7 @@ def run_server_cfg(configfile):
         targets = {}
         for k in cfg.get(remotesec, 'targets').split(','):
             targets[k] = cfg.get(k, 'url')
-            if targets[k].find('http://') <= 0:
+            if targets[k].find('http://') < 0:
                 targets[k] = "http://localhost:{}/{}".format(port, targets[k])
 
         print targets
