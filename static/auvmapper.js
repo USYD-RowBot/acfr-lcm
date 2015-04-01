@@ -105,16 +105,17 @@ function auvmapper () {
         var options = { color: 'red', weight: 1, opacity: 0.3, smoothFactor: 1};
         $.extend(options,usroptions);
 
-        // set mission
-        _this.layers.overlays[layer] = new L.Polyline([], options).addTo(_this.map);
-        _this.layerctl.addOverlay(_this.layers.overlays[layer], layer);
-        _this.layers.overlays[layer].bindPopup(layer);
 
         $.ajax({
             dataType: "jsonp",
             url: url,
             data: {filepath: filepath, olat: origin[0], olon: origin[1]},
             success: function (data) {
+                // set mission
+                _this.layers.overlays[layer] = new L.Polyline([], options).addTo(_this.map);
+                _this.layerctl.addOverlay(_this.layers.overlays[layer], layer);
+                _this.layers.overlays[layer].bindPopup(layer);
+
                 $("#track-layers").prepend($("<li><i class='fa fa-slack'> Mission: "+layer+"</i></li>").click(function(){
                     _this.auto_extent ("all", false);
                     _this.map.fitBounds(_this.layers.overlays[layer].getBounds());
@@ -125,6 +126,7 @@ function auvmapper () {
 
                 // set origin
                 _this.origin = data.origin;
+
             },
             error : function (jqXHR, status, desc) {
                 console.log("Cannot load mission: "+filepath,jqXHR);

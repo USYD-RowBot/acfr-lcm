@@ -40,11 +40,22 @@
         <script src="/static/auvmapper.js"></script>
     </head>
     <body>
+        <!-- Facebook -->
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+          var js, fjs = d.getElementsByTagName(s)[0];
+          if (d.getElementById(id)) return;
+          js = d.createElement(s); js.id = id;
+          js.src = "//connect.facebook.net/en_GB/sdk.js#xfbml=1&version=v2.3";
+          fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));</script>
+
+        <!-- Welcome note -->
         <div id="notify" class="alert alert-info alert-dismissible" role="alert" style="position: absolute; z-index: 1000; margin: 10px 20%; display: none;">
           <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
           <div id="notify-text"></div>
-
         </div>
+
         <div style="width:500px; height:500px; background: #387486" id="map">
             <!--This is the div that contains all the magic-->
         </div>
@@ -102,6 +113,8 @@
                     hide: false
                 });
                 */
+                //if (!allowadmin)
+                $('body').append('<div class="fb-like" style="position:fixed; left:50px; top: 40px;" data-href="http://tracker.marine.acfr.usyd.edu.au/" data-width="100" data-layout="box_count" data-action="like" data-show-faces="true" data-share="true"></div>');
 
             });
 
