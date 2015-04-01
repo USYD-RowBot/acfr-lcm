@@ -374,39 +374,43 @@ class WaveGliderWGMSThread (threading.Thread):
 
     def run (self):
         while(1) :
-            msgts=time.time()   # timestamp / msgid
-            # get data
-            buf = cStringIO.StringIO()
-            c = pycurl.Curl()
-            c.setopt(pycurl.URL, self.export_url)
-            c.setopt(pycurl.COOKIEFILE, 'datatools/waveglider_header')
-            c.setopt(pycurl.WRITEFUNCTION, buf.write)
-            c.setopt(pycurl.VERBOSE, True)
-            c.perform()
-            curldata = buf.getvalue().split('\n')
-            buf.close()
+            try:
+                # get data
+                buf = cStringIO.StringIO()
+                c = pycurl.Curl()
+                c.setopt(pycurl.URL, self.export_url)
+                c.setopt(pycurl.COOKIEFILE, 'datatools/waveglider_header')
+                c.setopt(pycurl.WRITEFUNCTION, buf.write)
+                c.setopt(pycurl.VERBOSE, True)
+                c.perform()
+                curldata = buf.getvalue().split('\n')
+                buf.close()
 
 
-            # headers = curldata[0].split(',')
-            data = curldata[1].split(',')
-            # for i in range(len(headers)):
-            # 	print '{}) {}: {}'.format(i, headers[i],data[i])
+                # headers = curldata[0].split(',')
+                data = curldata[1].split(',')
+                # for i in range(len(headers)):
+                # 	print '{}) {}: {}'.format(i, headers[i],data[i])
 
-            platformdata[self.platform] = {
-                'msgid': data[0],
-                'state': 'online',
-                'msgts': int(time.time()),
-                'headings': 'F:{}, S:{}'.format(data[5],data[4]),
-                'pose': {
-                    'lat': float(data[11]),
-                    'lon': float(data[12]),
-                    'heading': float(data[3]),
-                    'speed': float(data[1])
-                },
-                'stat': {
-                    'bat': round(float(data[8])/6.6,1),
-                    'ftemp': int(data[6]),
-                    'pressure': int(data[7])
+                platformdata[self.platform] = {
+                    'msgid': data[0],
+                    'state': 'online',
+                    'msgts': int(time.time()),
+                    'headings': 'F:{}, S:{}'.format(data[5],data[4]),
+                    'pose': {
+                        'lat': float(data[11]),
+                        'lon': float(data[12]),
+                        'heading': float(data[3]),
+                        'speed': float(data[1])
+                    },
+                    'stat': {
+                        'bat': round(float(data[8])/6.6,1),
+                        'ftemp': int(data[6]),
+                        'pressure': int(data[7])
+                    }
                 }
-            }
+            except:
+                print "ERROR!!! Unable to get WGMS data"
+
+
             time.sleep(self.delay)
