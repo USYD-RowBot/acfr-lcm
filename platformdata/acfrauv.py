@@ -396,9 +396,9 @@ class WaveGliderWGMSThread (threading.Thread):
                 # 	print '{}) {}: {}'.format(i, headers[i],data[i])
 
                 msgid = int(time.mktime(time.strptime(data[0], "%m/%d/%Y  %I:%M %p")))
-                print "\n\n\n",msgid
                 #msgid = data[0]
-                if platformdata[self.platform]['msgid'] < msgid:
+                if self.oldmsgid < msgid:
+                    self.oldmsgid = msgid
                     platformdata[self.platform] = {
                         'msgid': msgid,
                         'state': 'online',
