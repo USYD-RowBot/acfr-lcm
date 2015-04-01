@@ -279,6 +279,12 @@ function auvmapper () {
                             else _this.map.panTo(_this.autotrack_layer.getLayers()[0].getLatLng());
                         }
                     }
+                    // check state and show/hide dashboard
+                    if (!$(_this.dash[platform.key]).data().hasOwnProperty('oldstate'))
+                        $(_this.dash[platform.key]).data('oldstate', data.state);
+                    else if ($(_this.dash[platform.key]).data('oldstate') != data.state)
+                        (data.state == 'online') ? $(_this.dash[platform.key]).show() : $(_this.dash[platform.key]).hide();
+
                     // update dashboard if it is visible (and exists)
                     if ($(_this.dash[platform.key]).is(":visible")) {
                         var pose = data.pose,
@@ -358,6 +364,7 @@ function auvmapper () {
             else {
                 _this.layers.overlays[tracklayer].setLatLngs([]);
             }
+
 
             // set uncertainty circle
             set_uncertainty(unclayer, pose);
