@@ -478,7 +478,7 @@ function auvmapper () {
                 if (dispoptions.setwaypoint && allowcontrol)
                     $ctrlbtns.append($("<i class='fa fa-external-link-square platform-ctrl'></i>")
                         .click(function(){setwaypoint(platform)})
-                        .tooltip({title:"Set position",trigger:"hover",container:"body"})
+                        .tooltip({title:"Set STATE",trigger:"hover",container:"body"})
                     );
                 _this.info[platform.key] = $("<div class='info'></div>"); // empty div to update with platform info
                 _this.info[platform.key].data('msgts',0); // initialise msgid
