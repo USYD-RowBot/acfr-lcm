@@ -211,7 +211,7 @@ function auvmapper () {
         // add track layer
         if (options.dispoptions.showtrack) {
             this.layers.overlays[tracklayer] = new L.Polyline([], trackoptions).addTo(this.map);
-            this.layerctl.addOverlay(this.layers.overlays[tracklayer], tracklayer);
+            this.layerctl.addOverlay(this.layers.overlays[tracklayer], platform.name+" track");
             console.log(this.layers.overlays[tracklayer]);
             // Add fancy mid line markers
             //var markerid = 'circle-'+platform.key.replace(' ','_');
@@ -237,7 +237,7 @@ function auvmapper () {
         // add to layer group (platform.key & unc) to control
         var layergroup = new L.layerGroup([this.layers.overlays[unclayer],this.layers.overlays[platform.key]]);
         layergroup.addTo(this.map);
-        this.layerctl.addOverlay(layergroup, platform.key);
+        this.layerctl.addOverlay(layergroup, platform.name);
 
         // initialise info panel
         this.snap_to_track[platform.key] = false;
