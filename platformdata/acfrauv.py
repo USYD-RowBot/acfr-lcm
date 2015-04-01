@@ -403,7 +403,6 @@ class WaveGliderWGMSThread (threading.Thread):
                         'msgid': msgid,
                         'state': 'online',
                         'msgts': int(time.time()),
-                        'headings': 'F:{}, S:{}'.format(data[5],data[4]),
                         'pose': {
                             'lat': float(data[11]),
                             'lon': float(data[12]),
@@ -411,8 +410,9 @@ class WaveGliderWGMSThread (threading.Thread):
                             'speed': float(data[1])*0.51
                         },
                         'stat': {
-                            'bat': round(float(data[8])/6.6,1),
+                            'bat': round(float(data[8])/6.6, 1),
                             'ftemp': int(data[6]),
+                            'headings': 'F:{}, S:{}'.format(data[5],data[4]),
                             'pressure': int(data[7])
                         }
                     }
