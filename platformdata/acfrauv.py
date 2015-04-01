@@ -99,7 +99,7 @@ def get_platformdata(platform):
         data['msgts'] = data['curts']
     elif (data['curts']-data['msgts']) > 30:
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
-        data['pose']['uncertainty'] = round((data['curts']-data['msgts'])*speed, 2)
+        data['pose']['uncertainty'] = min(round((data['curts']-data['msgts'])*speed, 2), 10000)  # uncertainty, max of 10km
 
 
     return data
