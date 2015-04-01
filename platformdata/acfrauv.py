@@ -90,7 +90,7 @@ def get_platformdata(platform):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
     if data['state'] == 'follow':
-        data['pose'] = platformdata[data['follow']]['pose']
+        data['pose'] = dict((k, platformdata[data['follow']]['pose'][k]) for k in ('lat', 'lon'))  #platformdata[data['follow']]['pose']
         data['msgts'] = platformdata[data['follow']]['msgts']
     elif (data['state'] == 'stationary'):
         data['msgts'] = data['curts']
