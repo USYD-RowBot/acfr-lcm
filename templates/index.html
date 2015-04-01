@@ -202,7 +202,8 @@
                         get_config(url, cfg, tilelayers[i].trim(), function (data, url, cfg) {
                             if (data.type === "baselayer") {
                                 if (defaultbase == "") defaultbase = data.name;
-                                var attribution = (data.hasOwnProperty('attribution')) ? data.attribution : ""
+                                var attribution = (data.hasOwnProperty('attribution')) ? data.attribution+" | " : "";
+                                attribution += "Made by <a href='http://www-personal.acfr.usyd.edu.au/ariell.friedman/' target='_blank'>Ariell Friedman</a>";
                                 map.layers.base[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, attribution: attribution});
                                 map.layerctl.addBaseLayer(map.layers.base[data.name], data.name);
                             }
