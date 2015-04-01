@@ -401,7 +401,7 @@ class WaveGliderWGMSThread (threading.Thread):
                         'lat': float(data[11]),
                         'lon': float(data[12]),
                         'heading': float(data[3]),
-                        'speed': float(data[1])
+                        'speed': float(data[1])*0.514444444
                     },
                     'stat': {
                         'bat': round(float(data[8])/6.6,1),
