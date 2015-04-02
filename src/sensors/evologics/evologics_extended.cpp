@@ -25,6 +25,7 @@ int Evologics_Extended::load_config(char *program_name)
 
     sprintf(key, "%s.complete", rootkey);
     complete = bot_param_get_boolean_or_fail(param, key);
+    cout << "Logging complete output." << endl;
 
     // check if we are using an serial connection
     sprintf(key, "%s.device", rootkey);
@@ -174,22 +175,27 @@ int Evologics_Extended::process()
         timestamp = timestamp_now();
         if(ret > 0)
         {
-            // for now - just grab the whole packet, it can be parsed later
+            buf.clear();
             bytes = 0;
-            char byte;
-            bytes += read(this->fd, &byte, 1);
-            buf.push_back(byte);
-            // presumably hit the end of the message - this may not be the case
-            // if the data is binary, or the content contains a new line pairing...
-            if((buf[bytes-2] == 0x0D) && (buf[bytes-1] == 0x0A))
-            {
-                // if we are taking complete logs, then publish it, else only do so for SEND and RECV
-                if (complete || strncmp((char *)buf.data(), "SEND", 4) == 0 || strncmp((char *)buf.data(), "RECV", 4) == 0) {
-                    evologics_modem_t msg;
-                    msg.utime = timestamp;
-                    msg.size = bytes;
-                    msg.data = buf;
-                    lcm->publish("EVOLOGICS_LOG", &msg);
+            while (true) {
+                // for now - just grab the whole packet, it can be parsed later
+                char byte;
+                bytes += read(this->fd, &byte, 1);
+                buf.push_back(byte);
+                // presumably hit the end of the message - this may not be the case
+                // if the data is binary, or the content contains a new line pairing...
+                if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
+                {
+                    // if we are taking complete logs, then publish it, else only do so for SEND and RECV
+                    if (complete || strncmp((char *)buf.data(), "SEND", 4) == 0 || strncmp((char *)buf.data(), "RECV", 4) == 0) {
+                        cout << "Logging message: " << string((char *)buf.data(), 4) << endl;
+                        evologics_modem_t msg;
+                        msg.utime = timestamp;
+                        msg.size = bytes;
+                        msg.data = buf;
+                        lcm->publish("EVOLOGICS_LOG", &msg);
+                    }
+                    break;
                 }
             }
         } else if (ret == -1) {
