@@ -48,24 +48,26 @@ ahrs_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_ahrs_t *a
 {
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    printf("Received AHRS data with timestamp %f\n", ahrs->utime/1e6);
+    //pthread_mutex_lock(&state->data_lock);
     state->ahrs_utime = ahrs->utime;
     state->status.roll = ahrs->roll;
     state->status.pitch = ahrs->pitch;
     state->status.heading = ahrs->heading;
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 void
 gpsd_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_gpsd3_t *gps, void *u)
 {
+    printf("Received GPSD data with timestamp %f\n", gps->utime/1e6);
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    //pthread_mutex_lock(&state->data_lock);
     state->gpsd_utime = gps->utime;
     state->status.latitude = gps->fix.latitude;
     state->status.longitude = gps->fix.longitude;
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 void
@@ -73,7 +75,7 @@ heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_hear
 {
     state_t *state = (state_t *)u;
 
-    pthread_mutex_lock(&state->data_lock);
+    //pthread_mutex_lock(&state->data_lock);
     if (state->gpsd_utime > state->last_utime && state->ahrs_utime > state->last_utime)
     {
         state->status.utime = timestamp_now();
@@ -82,8 +84,10 @@ heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_hear
 
         acfrlcm_ship_status_t_publish(state->lcm, state->output_channel, &state->status);
 
+    } else {
+        printf("Stale ship_status data\n");
     }
-    pthread_mutex_unlock(&state->data_lock);
+    //pthread_mutex_unlock(&state->data_lock);
 }
 
 int program_exit;
@@ -138,12 +142,30 @@ main(int argc, char **argv)
 	sprintf(key, "%s.ship_id", rootkey);
 	state.status.ship_id = bot_param_get_int_or_fail(cfg, key);
 
+    // read in the attitude offsets to be applied to the ins data
+    sprintf(key, "%s.attitude_offset", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        double attoff[3];
+        bot_param_double_array_or_fail(param, key, attoff, 3);
+        attitude_offset.setRollPitchYawRad(attoff[0], attoff[1], attoff[2]);
+    }
+
+    // read in the position offsets to be applied to the gps data
+    sprintf(key, "%s.gps_offset", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+        double gpsoff[3];
+        bot_param_double_array_or_fail(param, key, gpsoff, 3);
+        attitude_offset.setRollPitchYawRad(gpsoff[0], gpsoff[1], gpsoff[2]);
+    }
+
 	// lets start LCM
     senlcm_gpsd3_t_subscribe(state.lcm, gpsd_target, &gpsd_callback, &state);
     senlcm_ahrs_t_subscribe(state.lcm, ahrs_target, &ahrs_callback, &state);
     perllcm_heartbeat_t_subscribe(state.lcm, heartbeat_target, &heartbeat_handler, &state);
 
-        pthread_mutex_init(&(state.data_lock), NULL);
+    //pthread_mutex_init(&(state.data_lock), NULL);
 	int lcm_fd = lcm_get_fileno(state.lcm);
 	fd_set rfds;
 
