@@ -249,17 +249,19 @@ def run_server_cfg(configfile):
     cfg = ConfigParser.ConfigParser()
     cfg.read(configfile)
     if (cfg.has_option('server', 'remotepush')):
-        remotesec = cfg.get('server', 'remotepush')
-        url = cfg.get(remotesec, 'url')
+        remotesecs = cfg.get('server', 'remotepush')
+        for remotesec in remotesecs.split(','):
+            remotesec = remotesec.strip()
+            url = cfg.get(remotesec, 'url')
+            targets = {}
+            for k in cfg.get(remotesec, 'targets').split(','):
+                targets[k] = cfg.get(k, 'url')
+                if targets[k].find('http://') < 0:
+                    targets[k] = "http://localhost:{}/{}".format(port, targets[k])
+            #print targets
+            upddelay = float(cfg.get(remotesec, 'upddelay'))
+            sendRemoteDataThread(upddelay, targets, url).start()
 
-        targets = {}
-        for k in cfg.get(remotesec, 'targets').split(','):
-            targets[k] = cfg.get(k, 'url')
-            if targets[k].find('http://') < 0:
-                targets[k] = "http://localhost:{}/{}".format(port, targets[k])
-        print targets
-        upddelay = float(cfg.get(remotesec, 'upddelay'))
-        sendRemoteDataThread(upddelay, targets, url).start()
     welcomenote = cfg.get('server','welcomenote') if cfg.has_option('server','welcomenote') else ""
     allowadmin = cfg.get('server', 'allowadmin') if (cfg.has_option('server', 'allowadmin')) else "false"
     return
