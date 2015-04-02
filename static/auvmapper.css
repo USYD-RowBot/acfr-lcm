@@ -208,6 +208,10 @@ body, html {
 .platform-panel .pbtns:hover .pbtn-hover {
     display: none;
 }
+.platform-panel .pbtns .active {
+    display: block;
+}
+
 
 
 .leaflet-zoom-animated {
