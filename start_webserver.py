@@ -159,7 +159,11 @@ def get_config():
         config = ConfigParser.ConfigParser()
         config.read(cfg)
         if sec is None:
-            return get_config_form(cfg)
+            action = request.args.get('action')
+            if action == "getmtime":
+                return jsonify({'mtime': os.path.getmtime(cfg)})
+            else:
+                return get_config_form(cfg)
         elif sec == "all":
             return jsonify(config.sections())
         else:
