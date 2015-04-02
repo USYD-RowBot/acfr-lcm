@@ -219,7 +219,7 @@ int Evologics_Usbl::init()
 {
     usleep(1e6);
     
-    lcm->subscribeFunction("SHIP_STATUS", on_ship_status, this);
+    lcm->subscribeFunction("SHIP_STATUS.*", on_ship_status, this);
 
     lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
     
