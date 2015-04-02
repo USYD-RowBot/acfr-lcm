@@ -12,6 +12,7 @@
 #include <libgen.h>
 #include <pthread.h>
 #include <sys/select.h>
+#include <small/Pose3D.hh>
 
 #include <bot_param/param_client.h>
 
@@ -40,6 +41,9 @@ typedef struct
     char *output_channel;
 
     lcm_t *lcm;
+
+    SMALL::Pose3D attitude_offset;
+    SMALL::Pose3D gps_offset;
 } state_t;
 
 
@@ -48,13 +52,18 @@ ahrs_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_ahrs_t *a
 {
     state_t *state = (state_t *)u;
 
-    printf("Received AHRS data with timestamp %f\n", ahrs->utime/1e6);
-    //pthread_mutex_lock(&state->data_lock);
+    SMALL::Pose3D raw_attitude, transformed_attitude;
+    raw_attitude.setRollPitchYawRad(ahrs->roll, ahrs->pitch, ahrs->heading);
+    
+    transformed_attitude = state->attitude_offset.compose(raw_attitude);
+
+    pthread_mutex_lock(&state->data_lock);
     state->ahrs_utime = ahrs->utime;
-    state->status.roll = ahrs->roll;
-    state->status.pitch = ahrs->pitch;
-    state->status.heading = ahrs->heading;
-    //pthread_mutex_unlock(&state->data_lock);
+    transformed_attitude.getRollPitchYawRad(state->status.roll, state->status.pitch, state->status.heading);
+    //state->status.roll = ahrs->roll;
+    //state->status.pitch = ahrs->pitch;
+    //state->status.heading = ahrs->heading;
+    pthread_mutex_unlock(&state->data_lock);
 }
 
 void
@@ -142,28 +151,30 @@ main(int argc, char **argv)
 	sprintf(key, "%s.ship_id", rootkey);
 	state.status.ship_id = bot_param_get_int_or_fail(cfg, key);
 
-    // read in the attitude offsets to be applied to the ins data
-    sprintf(key, "%s.attitude_offset", rootkey);
-    if (bot_param_has_key(param, key))
-    {
-        double attoff[3];
-        bot_param_double_array_or_fail(param, key, attoff, 3);
-        attitude_offset.setRollPitchYawRad(attoff[0], attoff[1], attoff[2]);
-    }
-
-    // read in the position offsets to be applied to the gps data
-    sprintf(key, "%s.gps_offset", rootkey);
-    if (bot_param_has_key(param, key))
-    {
-        double gpsoff[3];
-        bot_param_double_array_or_fail(param, key, gpsoff, 3);
-        attitude_offset.setRollPitchYawRad(gpsoff[0], gpsoff[1], gpsoff[2]);
-    }
+       // read in the attitude offsets to be applied to the ins data
+        sprintf(key, "%s.attitude_offset", rootkey);
+        if (bot_param_has_key(cfg, key))
+        {
+            double attoff[6];
+            bot_param_get_double_array_or_fail(cfg, key, attoff, 6);
+            state.attitude_offset.setPosition(attoff[0], attoff[1], attoff[2]);
+            state.attitude_offset.setRollPitchYawRad(attoff[3], attoff[4], attoff[5]);
+        }
+    
+        // read in the position offsets to be applied to the gps data
+        sprintf(key, "%s.gps_offset", rootkey);
+        if (bot_param_has_key(cfg, key))
+        {
+            double gpsoff[6];
+            bot_param_get_double_array_or_fail(cfg, key, gpsoff, 6);
+            state.gps_offset.setPosition(gpsoff[0], gpsoff[1], gpsoff[2]);
+            state.gps_offset.setPosition(gpsoff[3], gpsoff[4], gpsoff[5]);
+        }
 
 	// lets start LCM
-    senlcm_gpsd3_t_subscribe(state.lcm, gpsd_target, &gpsd_callback, &state);
-    senlcm_ahrs_t_subscribe(state.lcm, ahrs_target, &ahrs_callback, &state);
-    perllcm_heartbeat_t_subscribe(state.lcm, heartbeat_target, &heartbeat_handler, &state);
+        senlcm_gpsd3_t_subscribe(state.lcm, gpsd_target, &gpsd_callback, &state);
+        senlcm_ahrs_t_subscribe(state.lcm, ahrs_target, &ahrs_callback, &state);
+        perllcm_heartbeat_t_subscribe(state.lcm, heartbeat_target, &heartbeat_handler, &state);
 
     //pthread_mutex_init(&(state.data_lock), NULL);
 	int lcm_fd = lcm_get_fileno(state.lcm);

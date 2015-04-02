@@ -58,15 +58,6 @@ int Evologics_AHRS::load_config(char *program_name)
         port = bot_param_get_str_or_fail(param, key);
     }
 
-    // read in the attitude offsets to be applied
-    sprintf(key, "%s.attitude_offset", rootkey);
-    if (bot_param_has_key(param, key))
-    {
-        double off[3];
-        bot_param_double_array_or_fail(param, key, d, 3);
-        attitude_offset.setRollPitchYawRad(d[0], d[1], d[2]);
-    }
-    
     return 1;    
 
 }

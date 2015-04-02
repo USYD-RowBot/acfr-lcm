@@ -13,7 +13,6 @@
 #include <netdb.h>
 #include <zlib.h>
 #include <bot_param/param_client.h>
-#include <small/Pose3D.hh>
 //#include "evologics.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
@@ -77,7 +76,5 @@ class Evologics_AHRS
         char term;
 
         lcm::LCM *lcm;
-
-        SMALL:Pose3d attitude_offset;
 };
          
