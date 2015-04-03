@@ -48,7 +48,7 @@
           <div id="notify-text"></div>
         </div>
 
-        <div style="width:500px; height:500px; background: #387486" id="map">
+        <div style="width:500px; height:500px; background: #618dc0" id="map">
             <!--This is the div that contains all the magic-->
         </div>
 
@@ -202,6 +202,7 @@
                                 var opacity = (data.hasOwnProperty("opacity")) ? data.opacity : 1;
                                 map.layers.overlays[data.name] = new L.TileLayer(data.url, {maxNativeZoom: data.maxzoom, maxZoom: map.map.maxZoom, opacity: opacity});
                                 map.layerctl.addOverlay(map.layers.overlays[data.name], data.name);
+                                map.layers.overlays[data.name].addTo(map.map);
                             }
                             else if (data.type === "google-baselayer") {
                                 map.layers.base[data.name] = new L.Google(data.url);

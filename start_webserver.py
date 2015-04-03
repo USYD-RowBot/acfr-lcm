@@ -202,6 +202,8 @@ def get_config_form (cfg) :
     return form.format(cfg, cfgtext)
 
 
+
+
 def get_platform_cmd_form(platform):
     return '<div><b><i class="fa fa-gears"></i> Config File Editor</b></div>Command options for: '+platform
 

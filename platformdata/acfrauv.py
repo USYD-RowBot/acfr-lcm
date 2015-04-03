@@ -473,7 +473,7 @@ class WaveGliderWGMSThread (threading.Thread):
                         'stat': {
                             'bat': round(float(data[8])/6.6, 1),
                             'ftemp': int(data[6]),
-                            'headings': 'F:{}, S:{}'.format(data[5],data[4]),
+                            'HDG': 'F:{}, S:{}'.format(data[5],data[4]),
                             'pressure': int(data[7])
                         }
                     }

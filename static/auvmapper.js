@@ -76,7 +76,7 @@ function auvmapper () {
         L.Control.measureControl().addTo(this.map);
         $(".leaflet-control-fullscreen-button").tooltip({placement:"right",trigger:"hover",container:"body"});
         // Add mouse position
-        L.control.mousePosition().addTo(this.map);
+        L.control.mousePosition({numDigits: 8}).addTo(this.map);
         $(".leaflet-control-draw-measure").tooltip({placement:"right",trigger:"hover",container:"body"});
 
 
