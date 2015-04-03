@@ -20,10 +20,13 @@ import math
 import ConfigParser
 import requests
 import json
+import collections
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
-origin = [-14.11493 , 121.86207]
+platformtrackhistory = {}
+
+origin = [-14.11493, 121.86207]
 
 ######################################################################
 # Start threads for platform updates
@@ -32,7 +35,7 @@ origin = [-14.11493 , 121.86207]
 ######################################################################
 def init_platformdata_threads():
     #FakeAUVThread('AUVSTAT.IVER', 0.5).start()
-    FakeAUVThread('AUVSTAT.SIRIUS', 30).start()
+    FakeAUVThread('AUVSTAT.SIRIUS', 1).start()
     FakeShipThread('FALKOR', 1).start()
     FakeShipThread('USBL_FIX.SIRIUS', 5).start()
     FakeClassifierThread('class1', 1).start()
@@ -43,7 +46,7 @@ def init_platformdata_threads():
 # The global variable platformdata is updated by another process/thread.
 # This function simply reads the output for a specific platform
 ######################################################################
-def get_platformdata(platform):
+def get_platformdata(platform, gethistory=False):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
     if data['state'] == 'follow':
@@ -54,6 +57,10 @@ def get_platformdata(platform):
     elif (data['curts']-data['msgts']) > 30:
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
         data['pose']['uncertainty'] = (data['curts']-data['msgts'])*speed
+    else:
+        if gethistory and platform in platformtrackhistory:
+            data['pose']['lat'] = list(platformtrackhistory[platform]['lat'])
+            data['pose']['lon'] = list(platformtrackhistory[platform]['lon'])
 
     return data
 
@@ -134,12 +141,19 @@ class FakeAUVThread (threading.Thread):
         #o = [-33.84119 , 151.25612]       # fake origin to bounce around
         o = origin
         i = 0
+        platformtrackhistory[self.platform] = {
+            'lat': collections.deque([], 100),
+            'lon': collections.deque([], 100)
+        }
 
         while(1) :
             msgid=time.time()  # timestamp / msgid
             lat, lon, hdg = FakeCoordOnCircle(i, self.radius, o)
             i += 1
 
+            platformtrackhistory[self.platform]['lat'].appendleft(round(lat, 10))
+            platformtrackhistory[self.platform]['lon'].appendleft(round(lon, 10))
+            #print platformtrackhistory[self.platform]
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
                 'state': 'online',
@@ -195,11 +209,17 @@ class FakeShipThread (threading.Thread):
         #o = [-33.84119 , 151.25612]       # fake origin to bounce around
         o = origin
         i = 0
+        platformtrackhistory[self.platform] = {
+            'lat': collections.deque([], 100),
+            'lon': collections.deque([], 100)
+        }
 
         while(1) :
             msgid=time.time()   # timestamp / msgid
             lat, lon, hdg = FakeCoordOnCircle(i, self.radius, o)
             i += 1
+            platformtrackhistory[self.platform]['lat'].appendleft(round(lat, 10))
+            platformtrackhistory[self.platform]['lon'].appendleft(round(lon, 10))
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
                 'state': 'online',
@@ -227,11 +247,17 @@ class FakeClassifierThread (threading.Thread):
         #o = [-33.84119 , 151.25612]       # fake origin to bounce around
         o = origin
         i = 0
+        platformtrackhistory[self.platform] = {
+            'lat': collections.deque([], 100),
+            'lon': collections.deque([], 100)
+        }
 
         while(1) :
             msgid=time.time()   # timestamp / msgid
             lat, lon, hdg = FakeCoordOnCircle(i, self.radius, o)
             i += 1
+            platformtrackhistory[self.platform]['lat'].appendleft(round(lat, 10))
+            platformtrackhistory[self.platform]['lon'].appendleft(round(lon, 10))
             platformdata[self.platform] = {
                 'msgid': msgid,                                 # REQUIRED (number)
                 'state': 'online',

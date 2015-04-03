@@ -132,8 +132,9 @@ def set_platformdata():
 def get_platformdata():
     # platform as a GET argument
     thisplatform = request.args.get('platform')
+    gethistory = True if request.args.get('gethistory') == "true" else False
     # get_platformdata is a function contained in included python script
-    return jsonify(pd.get_platformdata(thisplatform))
+    return jsonify(pd.get_platformdata(thisplatform, gethistory))
 
 # Custom static data
 @app.route('/uploads/<path:filename>')

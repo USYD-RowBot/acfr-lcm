@@ -27,6 +27,7 @@ import os
 import pyproj
 import json
 import requests
+import collections
 
 
 
@@ -56,6 +57,8 @@ from senlcm import usbl_fix_t
 
 # This global dictionary stores all the platform information updates
 platformdata = {}
+platformtrackhistory = {}
+
 
 
 ######################################################################
@@ -89,7 +92,7 @@ def init_push_data(configfile):
 # The global variable platformdata is updated by another process/thread.
 # This function simply reads the output for a specific platform
 ######################################################################
-def get_platformdata(platform):
+def get_platformdata(platform, gethistory=False):
     data = platformdata[platform]  # get data
     data['curts'] = int(time.time())    # add curr ts
     if data['state'] == 'follow':
@@ -100,7 +103,10 @@ def get_platformdata(platform):
     elif (data['curts']-data['msgts']) > 30:
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
         data['pose']['uncertainty'] = min(round((data['curts']-data['msgts'])*speed, 2), 10000)  # uncertainty, max of 10km
-
+    else:
+         if gethistory and platform in platformtrackhistory:
+            data['pose']['lat'] = list(platformtrackhistory[platform]['lat'])
+            data['pose']['lon'] = list(platformtrackhistory[platform]['lon'])
 
     return data
 
@@ -212,6 +218,13 @@ class LcmThread(threading.Thread):
         msg = usbl_fix_t.decode(data)
         msgid = msg.utime
         platform = channel  # 'usbl{}'.format(msg.remote_id)
+
+        if not platform in platformtrackhistory:
+            platformtrackhistory[platform] = {
+                'lat': collections.deque([], 100),
+                'lon': collections.deque([], 100)
+            }
+
         # double target_x;
         # double target_y;
         # double target_z;
@@ -225,13 +238,19 @@ class LcmThread(threading.Thread):
         # float ship_roll;
         # float ship_pitch;
         # float ship_heading;
+        lat = round(math.degrees(msg.latitude), 8)
+        lon = round(math.degrees(msg.longitude), 8)
+
+        platformtrackhistory[self.platform]['lat'].appendleft(lat)
+        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'state': 'online',
             'msgts': int(time.time()),
             'pose': {
-                'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
-                'lon': round(math.degrees(msg.longitude), 8),          # REQUIRED (decimal degrees)
+                'lat': lat,          # REQUIRED (decimal degrees)
+                'lon': lon,          # REQUIRED (decimal degrees)
                 'depth': round(msg.depth, 1),
                 'XYZ': "{}, {}, {}".format(round(msg.target_x, 1), round(msg.target_y, 1), round(msg.target_z, 1)),
                 'uncertainty': round(msg.accuracy, 2),
@@ -246,13 +265,26 @@ class LcmThread(threading.Thread):
         msgid = msg.utime
         #platform = '{}'.format(msg.ship_id)
         platform = msg.name
+
+        if not platform in platformtrackhistory:
+            platformtrackhistory[platform] = {
+                'lat': collections.deque([], 100),
+                'lon': collections.deque([], 100)
+            }
+
+        lat = round(math.degrees(msg.latitude), 8)
+        lon = round(math.degrees(msg.longitude), 8)
+
+        platformtrackhistory[self.platform]['lat'].appendleft(lat)
+        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'state': 'online',
             'msgts': int(time.time()),
             'pose': {
-                'lat': round(math.degrees(msg.latitude), 8),          # REQUIRED (decimal degrees)
-                'lon': round(math.degrees(msg.longitude), 8),         # REQUIRED (decimal degrees)
+                'lat': lat,          # REQUIRED (decimal degrees)
+                'lon': lon,         # REQUIRED (decimal degrees)
                 'heading': round(math.degrees(msg.heading), 2),        # REQUIRED (degrees)
                 'roll': round(math.degrees(msg.roll), 2),        # REQUIRED (degrees)
                 'pitch': round(math.degrees(msg.pitch), 2),        # REQUIRED (degrees)
@@ -267,14 +299,27 @@ class LcmThread(threading.Thread):
         msg = auv_status_short_t.decode(data)
         print msg
         platform = channel #'auv{}'.format(msg.target_id)
+
+        if not platform in platformtrackhistory:
+            platformtrackhistory[platform] = {
+                'lat': collections.deque([], 100),
+                'lon': collections.deque([], 100)
+            }
+
+        lat = round(math.degrees(msg.latitude), 8)
+        lon = round(math.degrees(msg.longitude), 8)
+
+        platformtrackhistory[self.platform]['lat'].appendleft(lat)
+        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+
         msgid = msg.utime
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
             'state': 'online',
             'msgts': int(time.time()),
             'pose': {
-                'lat': round(math.degrees(msg.latitude), 8),                  # REQUIRED (decimal degrees)
-                'lon': round(math.degrees(msg.longitude), 8),                 # REQUIRED (decimal degrees)
+                'lat': lat,                  # REQUIRED (decimal degrees)
+                'lon': lon,                 # REQUIRED (decimal degrees)
                 'heading': round(msg.heading/10.0,1), # REQUIRED (degrees)
                 'alt': float(msg.altitude)/10.0,                           # OPTIONAL (m)
                 'depth': float(msg.depth)/10.0,                            # OPTIONAL (m)
