@@ -253,8 +253,7 @@
                             if (oldcfgmtime != data.mtime)
                                 if (oldcfgmtime != null)
                                     bootbox.confirm("The config file has been updated on the server. "+
-                                        "You need to reload the page. Click OK to reload now or CANCEL to reload manually later. "+
-                                        "<br>NOTE: you will loose the target track history...",
+                                        "You need to reload the page. Click OK to reload now or CANCEL to reload manually later. ",
                                         function(result) {if (result) location.reload();}
                                     );
                                 oldcfgmtime = data.mtime;
