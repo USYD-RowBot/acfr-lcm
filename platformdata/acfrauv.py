@@ -163,7 +163,12 @@ def parse_mission (filepath, cfgorigin=[0, 0]):
             print 'Incorrect mission type'
             return
 
-        mission.load(filepath)
+        if os.path.exists(filepath):
+            mission.load(filepath)
+        else:
+            print "Mission does not exist."
+            return
+        
         origin = [mission.getOriginLat(), mission.getOriginLon()]
         if origin[0] == 0 or origin[1] == 0:
             origin = cfgorigin
