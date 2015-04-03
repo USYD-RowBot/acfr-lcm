@@ -242,8 +242,8 @@ class LcmThread(threading.Thread):
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
 
-        platformtrackhistory[platform]['lat'].appendleft(lat)
-        platformtrackhistory[platform]['lon'].appendleft(lon)
+        #platformtrackhistory[platform]['lat'].appendleft(lat)
+        #platformtrackhistory[platform]['lon'].appendleft(lon)
 
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
@@ -258,6 +258,8 @@ class LcmThread(threading.Thread):
                 'speed': 0.5
             }
         }
+        platformtrackhistory[platform]['lat'].appendleft(platformdata[platform]['pose']['lat'])
+        platformtrackhistory[platform]['lon'].appendleft(platformdata[platform]['pose']['lon'])
 
 
 
@@ -276,8 +278,8 @@ class LcmThread(threading.Thread):
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
 
-        platformtrackhistory[platform]['lat'].appendleft(lat)
-        platformtrackhistory[platform]['lon'].appendleft(lon)
+        #platformtrackhistory[platform]['lat'].appendleft(lat)
+        #platformtrackhistory[platform]['lon'].appendleft(lon)
 
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
@@ -292,6 +294,8 @@ class LcmThread(threading.Thread):
                 'speed': 1
             }
         }
+        platformtrackhistory[platform]['lat'].appendleft(platformdata[platform]['pose']['lat'])
+        platformtrackhistory[platform]['lon'].appendleft(platformdata[platform]['pose']['lon'])
 
 
 
@@ -309,9 +313,6 @@ class LcmThread(threading.Thread):
 
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
-
-        platformtrackhistory[platform]['lat'].appendleft(lat)
-        platformtrackhistory[platform]['lon'].appendleft(lon)
 
         msgid = msg.utime
         platformdata[platform] = {
@@ -355,6 +356,9 @@ class LcmThread(threading.Thread):
                 'leak':  msg.status & (1 << 15)
             }
         }
+        platformtrackhistory[platform]['lat'].appendleft(platformdata[platform]['pose']['lat'])
+        platformtrackhistory[platform]['lon'].appendleft(platformdata[platform]['pose']['lon'])
+
         # Alert if AUV > 6 m
         if platformdata[platform]['pose']['depth'] < 6:
             platformdata[platform]['alert']['DEP<6'] = 1
@@ -425,7 +429,13 @@ class WaveGliderWGMSThread (threading.Thread):
         self.export_url = 'http://uh.wgms.com/pages/exportPage.aspx?viewid=36113&entitytype=42'
 
     def run (self):
-        global platformdata
+        global platformdata, platformtrackhistory
+
+        if not self.platform in platformtrackhistory:
+            platformtrackhistory[self.platform] = {
+                'lat': collections.deque([], 100),
+                'lon': collections.deque([], 100)
+            }
 
         while(1) :
             try:
@@ -467,6 +477,8 @@ class WaveGliderWGMSThread (threading.Thread):
                             'pressure': int(data[7])
                         }
                     }
+                    platformtrackhistory[self.platform]['lat'].appendleft(platformdata[self.platform]['pose']['lat'])
+                    platformtrackhistory[self.platform]['lon'].appendleft(platformdata[self.platform]['pose']['lon'])
             except:
                 print "\n\n\n\nERROR!!! Unable to get WGMS data\n\n\n\n"
 
