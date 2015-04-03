@@ -212,7 +212,7 @@ function auvmapper () {
         if (options.dispoptions.showtrack) {
             this.layers.overlays[tracklayer] = new L.Polyline([], trackoptions).addTo(this.map);
             this.layerctl.addOverlay(this.layers.overlays[tracklayer], platform.name+" track");
-            console.log(this.layers.overlays[tracklayer]);
+            //console.log(this.layers.overlays[tracklayer]);
             // Add fancy mid line markers
             //var markerid = 'circle-'+platform.key.replace(' ','_');
             //$(this.layers.overlays[tracklayer]._container).prepend('<marker id="'+markerid+'" markerWidth="6" markerHeight="6" refX="3" refY="3" markerUnits="userSpaceOnUse"><circle cx="3" cy="3" r="3" fill="'+options.color+'"></circle></marker>');
@@ -245,6 +245,8 @@ function auvmapper () {
         this.add_platform_dashboard(platform, markeroptions.color, options.dispoptions);
 
         // start position updater
+        // get track history for first update
+        url += (url.indexOf('?') == -1 ? '?' : '&') + "gethistory=true";
         this.update_posetracker(tracklayer, unclayer, platform, url, options.interval, options.maxtracklen);
     }
 
@@ -266,7 +268,7 @@ function auvmapper () {
                 if (parseInt(_this.info[platform.key].data('msgts')) < parseInt(data.msgts)) {
                     _this.info[platform.key].data('msgts',data.msgts);
 
-                    set_pose(platform, tracklayer, unclayer, maxtracklen, data);
+                    data.pose = set_pose(platform, tracklayer, unclayer, maxtracklen, data);
 
                     // If we are tracking, check bounds and move map to track items
                     if (_this.autotrack_layer.getLayers().length > 0) {
@@ -339,7 +341,8 @@ function auvmapper () {
                     //setTimeout(function(){$(_this.info[platform.key]).parent().css('background-color','white')}, 250);
                 }
                 var $flashupd = $(_this.info[platform.key]).parent().find('.heartbeat').show();
-                setTimeout(function(){$flashupd.hide();},250)
+                setTimeout(function(){$flashupd.hide();},250);
+                if (url.indexOf("gethistory") > 0) url=url.substring(0, url.indexOf("gethistory")-1);
                 setTimeout(function(){_this.update_posetracker(tracklayer, unclayer, platform, url, interval, maxtracklen)},interval);
             },
             error : function (jqXHR, status, desc) {
@@ -356,18 +359,31 @@ function auvmapper () {
 
     function set_pose(platform, tracklayer, unclayer, maxtracklen, data) {
         var pose = data.pose;
-        var curpos = [];
+        var curpos = [], path = [];
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
+            if (pose.lat.length > 1 && pose.lon.length > 1) {
+                for (var i = pose.lat.length-1 ; i >= 0  ; i--) path.push(new L.LatLng(pose.lat[i], pose.lon[i]));
+                pose.lat = pose.lat[pose.lat.length - 1];
+                pose.lon = pose.lon[pose.lon.length - 1];
+            }
+            else {
+                path = new L.LatLng(pose.lat, pose.lon);
+            }
             curpos = new L.LatLng(pose.lat, pose.lon);
 
             // Add pose to track, but check if track is too long (to avoid memory/performance issues)
             if (data.state == "online") {
                 $(_this.info[platform.key]).parent().css('background-color','#FFF');
                 if (_this.layers.overlays.hasOwnProperty(tracklayer)) {
-                    _this.layers.overlays[tracklayer].addLatLng(curpos);
-                    var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
-                    if (tracklen > maxtracklen)
-                        _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
+                    if (Array.isArray(path)) {
+                        _this.layers.overlays[tracklayer].setLatLngs(path);
+                    }
+                    else {
+                        _this.layers.overlays[tracklayer].addLatLng(curpos);
+                        var tracklen = _this.layers.overlays[tracklayer].getLatLngs().length;
+                        if (tracklen > maxtracklen)
+                            _this.layers.overlays[tracklayer].setLatLngs(_this.layers.overlays[tracklayer].getLatLngs().slice(tracklen - maxtracklen, tracklen));
+                    }
                 }
             }
             else {
@@ -385,8 +401,9 @@ function auvmapper () {
             if (_this.layers.overlays[platform.key].hasOwnProperty("poly"))
                 _this.layers.overlays[platform.key].poly.setLatLngHdg(pose.heading, curpos);//.bringToFront();
             else
-                _this.layers.overlays[platform.key].setLatLng(curpos);
+                _this.layers.overlays[platform.key].setLatLng(curpos)
         }
+        return pose;
     }
 
 
