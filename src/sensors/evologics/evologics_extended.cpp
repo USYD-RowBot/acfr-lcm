@@ -27,6 +27,10 @@ int Evologics_Extended::load_config(char *program_name)
     complete = bot_param_get_boolean_or_fail(param, key);
     cout << "Logging complete output." << endl;
 
+    sprintf(key, "%s.vehicle_name", rootkey);
+    vehicle_name = bot_param_get_str_or_fail(param, key);
+    cout << "Logging to EVOLOGICS_LOG." << vehicle_name << " output." << endl;
+
     // check if we are using an serial connection
     sprintf(key, "%s.device", rootkey);
     if (bot_param_has_key(param, key))
@@ -193,7 +197,9 @@ int Evologics_Extended::process()
                         msg.utime = timestamp;
                         msg.size = bytes;
                         msg.data = buf;
-                        lcm->publish("EVOLOGICS_LOG", &msg);
+                        char channel_name[128];
+                        snprintf(channel_name, 128, "EVOLOGICS_LOG.%s", vehicle_name);
+                        lcm->publish(channel_name, &msg);
                     }
                     break;
                 }

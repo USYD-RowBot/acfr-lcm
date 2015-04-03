@@ -75,6 +75,7 @@ class Evologics_Extended
         lcm::LCM *lcm;
 
         // log all lines, or just SEND/RECV lines?
+        char *vehicle_name;
         int complete;
 
 };

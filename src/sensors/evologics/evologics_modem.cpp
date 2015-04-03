@@ -170,6 +170,18 @@ int Evologics_Modem::load_config(char *program_name)
         cout << "Missing config setting for ip or serial comms" << endl;
         exit(1);
     }
+
+    // check if we are using an IP connection
+    sprintf(key, "%s.logging_level", rootkey);
+    received_logging = 0; // set default to off
+    if (bot_param_has_key(param, key))
+    {
+       received_logging =  bot_param_get_int_or_fail(param, key);
+        if (received_logging > 0) {
+            sprintf(key, "%s.vehicle_name", rootkey);
+            vehicle_name = bot_param_get_str_or_fail(param, key);
+        }
+    }
     
     // Ping information
     sprintf(key, "%s.targets", rootkey);
@@ -345,6 +357,27 @@ int Evologics_Modem::init()
     return 1;       
 }
 
+void Evologics_Modem::publish_modem_response(int64_t timestamp, vector<unsigned char> buf)
+{
+    switch (received_logging) {
+        case 0:
+            return;
+        case 1:
+            if (strncmp((const char *)buf.data(), "RECV", 4) != 0) return;
+    }
+
+    cout << "Logging message:\n>" << string((char *)buf.data(), buf.size() - 3) << endl;
+    cout << "Message complete." << endl;
+    evologics_modem_t msg;
+    msg.utime = timestamp;
+    msg.size = buf.size() - 1;
+    msg.data = buf;
+
+    char channel_name[128];
+    snprintf(channel_name, 128, "EVOLOGICS_LOG.%s", vehicle_name);
+    this->lcm->publish(channel_name, &msg);
+}
+
 // read thread
 static void *read_thread(void *u)
 {
@@ -353,7 +386,8 @@ static void *read_thread(void *u)
     cout << "Read thread started\n";
     
     fd_set rfds;
-    char buf[MAX_BUF_LEN];
+    vector<unsigned char> buf;
+    //buf.reserve(1024);
     int bytes;
     int64_t timestamp;
     
@@ -364,7 +398,6 @@ static void *read_thread(void *u)
         struct timeval timeout;
         timeout.tv_sec = 1;
         timeout.tv_usec = 0;
-        memset(buf, 0, MAX_BUF_LEN);
         
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         timestamp = timestamp_now();
@@ -372,38 +405,48 @@ static void *read_thread(void *u)
         {
             // we need to do single character reads as the termination character can change
             bytes = 0;
-            while(bytes < (MAX_BUF_LEN))
+            buf.clear();
+            while(true)
             {
-               bytes += read(evo->fd, &buf[bytes], 1);
-               if((buf[bytes-2] == 0x0D) || (buf[bytes-1] == 0x0A))
+               char byte;
+               bytes += read(evo->fd, &byte, 1);
+               buf.push_back(byte);
+               if(bytes > 1 && ((buf[bytes-2] == 0x0D) && (buf[bytes-1] == 0x0A)))
                {
                   // a potential modem message
-                  cout << "Received potential modem data: " << bytes << " bytes. " << buf << endl;
+                  char *ptr = reinterpret_cast<char *>(buf.data());
+                  cout << "Received potential modem data: " << bytes << " bytes:\n>" << string(ptr, bytes-2) << endl;
+                  cout << "End of message." << endl;
 
+                  buf.push_back(0); // add null termination
                   // check if we've received an LCM message in the string
-                  if(strstr((const char *)buf, "RECV") != NULL &&
-                     strstr((const char *)buf, "LCM") != NULL)
+                  if(strstr(ptr, "RECV") != NULL &&
+                     strstr(ptr, "LCM") != NULL)
                   {
                      // check for the 'LE' characters at the end of the string
                      if (buf[bytes-4] == 0x4C && buf[bytes-3] == 0x45)
                      {
-                        if (evo->process_modem_data(buf, bytes, timestamp))
+                        evo->publish_modem_response(timestamp, buf);
+                        if (evo->process_modem_data(ptr, bytes, timestamp))
                            break;
                      } else {
                         cout << "Failed to find LE at end of potential LCM message.  Continuing to look for end of line character." << endl;
                      }
                   } else {
                      // otherwise let's try to process the message
-                     if (evo->process_modem_data(buf, bytes, timestamp))
+                     evo->publish_modem_response(timestamp, buf);
+                     if (evo->process_modem_data(ptr, bytes, timestamp))
                         break;
                   }
+                  // wasn't the end of a packet... drop the null char
+                  buf.pop_back();
                }
             }
             
         } else if (ret == -1) {
-            char buf[64];
-            sprintf(buf, "Select failed on read thread %d", evo->fd);
-            perror(buf);
+            char tmpbuf[64];
+            sprintf(tmpbuf, "Select failed on read thread %d", evo->fd);
+            perror(tmpbuf);
             evo->reopen_port();
         }
     }
