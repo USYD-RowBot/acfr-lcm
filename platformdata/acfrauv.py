@@ -94,6 +94,7 @@ def init_push_data(configfile):
 ######################################################################
 def get_platformdata(platform, gethistory=False):
     data = platformdata[platform]  # get data
+    print data, platform, gethistory
     data['curts'] = int(time.time())    # add curr ts
     if data['state'] == 'follow':
         data['pose'] = dict((k, platformdata[data['follow']]['pose'][k]) for k in ('lat', 'lon'))  #platformdata[data['follow']]['pose']
@@ -104,7 +105,7 @@ def get_platformdata(platform, gethistory=False):
         speed = data['pose']['speed'] if 'speed' in data['pose'] else 0.5
         data['pose']['uncertainty'] = min(round((data['curts']-data['msgts'])*speed, 2), 10000)  # uncertainty, max of 10km
     else:
-         if gethistory and platform in platformtrackhistory:
+        if gethistory and platform in platformtrackhistory:
             data['pose']['lat'] = list(platformtrackhistory[platform]['lat'])
             data['pose']['lon'] = list(platformtrackhistory[platform]['lon'])
 
@@ -241,8 +242,8 @@ class LcmThread(threading.Thread):
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
 
-        platformtrackhistory[self.platform]['lat'].appendleft(lat)
-        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+        platformtrackhistory[platform]['lat'].appendleft(lat)
+        platformtrackhistory[platform]['lon'].appendleft(lon)
 
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
@@ -275,8 +276,8 @@ class LcmThread(threading.Thread):
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
 
-        platformtrackhistory[self.platform]['lat'].appendleft(lat)
-        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+        platformtrackhistory[platform]['lat'].appendleft(lat)
+        platformtrackhistory[platform]['lon'].appendleft(lon)
 
         platformdata[platform] = {
             'msgid': msgid,                                 # REQUIRED (number)
@@ -295,9 +296,9 @@ class LcmThread(threading.Thread):
 
 
     def auvStatusHandler(self, channel, data):
-        print channel
+        #print channel
         msg = auv_status_short_t.decode(data)
-        print msg
+        #print msg
         platform = channel #'auv{}'.format(msg.target_id)
 
         if not platform in platformtrackhistory:
@@ -309,8 +310,8 @@ class LcmThread(threading.Thread):
         lat = round(math.degrees(msg.latitude), 8)
         lon = round(math.degrees(msg.longitude), 8)
 
-        platformtrackhistory[self.platform]['lat'].appendleft(lat)
-        platformtrackhistory[self.platform]['lon'].appendleft(lon)
+        platformtrackhistory[platform]['lat'].appendleft(lat)
+        platformtrackhistory[platform]['lon'].appendleft(lon)
 
         msgid = msg.utime
         platformdata[platform] = {

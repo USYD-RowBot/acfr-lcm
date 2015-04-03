@@ -134,6 +134,7 @@ def get_platformdata():
     thisplatform = request.args.get('platform')
     gethistory = True if request.args.get('gethistory') == "true" else False
     # get_platformdata is a function contained in included python script
+    #print thisplatform, gethistory
     return jsonify(pd.get_platformdata(thisplatform, gethistory))
 
 # Custom static data
