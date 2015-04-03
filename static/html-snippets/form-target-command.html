@@ -45,3 +45,27 @@
         </div>
     </div>
 </form>
+
+<script>
+//callback handler for form submit
+$("#auvstateform").submit(function(e)
+{
+    var $form = $(this);
+    var postData = $form.serializeArray();
+    var formURL = $form.attr("action");
+    $.ajax(
+    {
+        url : formURL,
+        type: "POST",
+        data : postData,
+        success:function(data, textStatus, jqXHR){
+            $form.html(data.msg);
+        },
+        error: function(jqXHR, textStatus, errorThrown){
+            $form.html("ERROR!  "+errorThrown);
+        }
+    });
+    e.preventDefault(); //STOP default action
+    e.unbind(); //unbind. to stop multiple form submit.
+});
+</script>

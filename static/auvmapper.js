@@ -596,7 +596,7 @@ function auvmapper () {
      */
     function setwaypoint (platform) {
         //console.log("!!!!!!!!!!!!!!!",platform)
-        platform_modal("static/html-snippets/platform-command.html", platform.urlparam);
+        platform_modal("static/html-snippets/form-target-command.html", platform.urlparam);
 
         /*
         bootbox.confirm("<div class='alert alert-danger'>You are about to set a waypoint for <b>"+platform+"</b>.</div>Click a location on the map to send the waypoint.", function(result){

@@ -150,29 +150,39 @@ def get_config():
     if request.method == 'POST':
         if allowadmin == "true":
             cfgtext = request.form.get('cfgtxt')
-            f = open(cfg, 'w')
-            f.write(cfgtext)
-            f.close()
+            open(cfg, 'w').write(cfgtext)
         return redirect("/?msg=Config+file+has+been+updated")
     else:
         sec = request.args.get('sec')
         if (not os.path.isfile(cfg)):  # copy default config if it doesn't exist
             shutil.copy2('{}/template.ini'.format(os.path.dirname(cfg)), cfg)
-        config = ConfigParser.ConfigParser()
-        config.read(cfg)
+
         if sec is None:
             action = request.args.get('action')
             if action == "getmtime":
                 return jsonify({'mtime': os.path.getmtime(cfg)})
             else:
-                return get_config_form(cfg)
-        elif sec == "all":
-            return jsonify(config.sections())
+                cfgtext = open(cfg, 'r').read()
+                form = open('static/html-snippets/form-config.html').read().format(cfg, cfgtext)
+                return form
         else:
-            dict = {}
-            for opt in config.options(sec):
-                dict[opt] = config.get(sec, opt)
-            return jsonify(dict)
+            config = ConfigParser.ConfigParser()
+            config.read(cfg)
+            if sec == "all":
+                return jsonify(config.sections())
+            else:
+                dict = {}
+                for opt in config.options(sec):
+                    dict[opt] = config.get(sec, opt)
+                return jsonify(dict)
+
+
+
+@app.route('/add_comment', methods=["POST"])
+def add_comment():
+    args = dict(request.form)
+    return
+
 
 
 @app.route('/send_to_platform', methods=["POST"])
@@ -182,24 +192,12 @@ def send_to_platform():
     args = dict(request.form)
     response = pd.send_to_platform(args)
 
-    if response == 0 :
-        return redirect("/?msg=Platform+state+has+been+updated")
+    if response == 0:
+        return jsonify({'response': 'success', 'msg': 'State was set successfully!'})
         #return redirect("/sweet")
     else:
-        return redirect("/error")
+        return redirect({'response': 'error', 'msg': 'There was an error updating the vehicle state file...'})
 
-
-def get_config_form (cfg) :
-    f = open(cfg, 'r')
-    cfgtext = f.read()
-    f.close()
-    form = '<form id="modalform" method="post" action="get_config?cfg={0}"><div><b><i class="fa fa-gears"></i> Config File Editor</b></div>'\
-        +'<input name="cfgfile" id="cfgfile" style="width: 100%; border: none; background-color: #EEE; margin-bottom: 2px;" value="{0}" disabled>'\
-        +'<textarea name="cfgtxt" id="cfgtxt" style="width: 100%; border: none; height: 450px; background-color: #EEE; font: 11px \'Courier New\', courier, monospace;">{1}</textarea>'\
-        +'<button class="btn btn-primary pull-right" type="submit" title="Update">Update</button>'\
-        +'<button class="btn btn-primary" type="button" title="Cancel" data-dismiss="modal">Cancel</button></form>'
-
-    return form.format(cfg, cfgtext)
 
 
 

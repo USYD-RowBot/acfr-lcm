@@ -35,7 +35,7 @@ origin = [-14.11493, 121.86207]
 ######################################################################
 def init_platformdata_threads():
     #FakeAUVThread('AUVSTAT.IVER', 0.5).start()
-    FakeAUVThread('AUVSTAT.SIRIUS', 1).start()
+    FakeAUVThread('AUVSTAT.SIRIUS', 20).start()
     FakeShipThread('FALKOR', 1).start()
     FakeShipThread('USBL_FIX.SIRIUS', 5).start()
     FakeClassifierThread('class1', 1).start()
