@@ -405,6 +405,8 @@ static void *read_thread(void *u)
             sprintf(buf, "Select failed on read thread %d", evo->fd);
             perror(buf);
             evo->reopen_port();
+        } else {
+            printf("Select timeout\n");
         }
     }
     cout << "Read thread exit\n";
