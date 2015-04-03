@@ -363,8 +363,8 @@ function auvmapper () {
         if ((pose.lat != NaN) && (pose.lon != NaN)) {
             if (pose.lat.length > 1 && pose.lon.length > 1) {
                 for (var i = pose.lat.length-1 ; i >= 0  ; i--) path.push(new L.LatLng(pose.lat[i], pose.lon[i]));
-                pose.lat = path[0].lat;
-                pose.lon = path[0].lon;
+                pose.lat = pose.lat[0];
+                pose.lon = pose.lon[0];
             }
             else {
                 path = new L.LatLng(pose.lat, pose.lon);
