@@ -352,7 +352,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	status.heading = (short)(nav.heading * 10.0);
 	status.img_count = image_count;
 
-	lcm.publish("AUVSTAT.IVERSYD", &status);
+	lcm.publish("AUVSTAT.IVERACFR", &status);
 
 	return 1;
 }

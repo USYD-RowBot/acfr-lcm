@@ -15,5 +15,5 @@ msg.command = auv_global_planner_t.RESET
 #msg.str = sys.argv[1]
     
     
-lc.publish('TASK_PLANNER_COMMAND', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND'+sys.argv[1], msg.encode())
 
