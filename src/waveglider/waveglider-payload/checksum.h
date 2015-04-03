@@ -13,7 +13,7 @@ extern "C" {
  * If wanting to verify and the crc values follow the data directly
  * increase the size by two and a return value of 0 indicates success.
  */
-uint16_t gen_crc16(const uint8_t *data, uint16_t size);
+uint16_t gen_crc16(const char *data, uint16_t size);
 
 
 #ifdef __cplusplus

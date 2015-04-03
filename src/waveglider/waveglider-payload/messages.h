@@ -11,14 +11,14 @@ extern "C" {
 #endif
 
 typedef struct {
-    char queued_message_buffer[MAX_MESSAGE_SIZE*2];
-    size_t queued_message_length;
+    char pending_data[MAX_MESSAGE_SIZE];
+    size_t pending_data_length;
     uint8_t task_id;
     uint8_t board_id;
     uint16_t device_type;
     uint32_t poll_period;
-    size_t reply_length;
-    char buffer[MAX_MESSAGE_SIZE];
+    size_t output_length;
+    char output_data[MAX_MESSAGE_SIZE];
 } glider_state_t;
 
 void glider_state_init(glider_state_t *glider);
@@ -35,7 +35,7 @@ typedef struct {
     uint8_t source_board;
     uint16_t transaction_id;
     uint16_t message_type;
-} header_t;
+} __attribute__ ((packed)) header_t;
 
 // NAK 0x0000
 // followed by nak details/data and checksum
@@ -43,7 +43,7 @@ typedef struct {
     header_t header;
     uint16_t source_message_type;
     uint8_t message_code;
-} general_nak_t;
+} __attribute__ ((packed)) general_nak_t;
 
 // NAK message_code == 4
 typedef struct {
@@ -54,21 +54,21 @@ typedef struct {
     uint8_t md5_calculated[16];
     uint16_t failed_starts;
     uint8_t program_loaded;
-} program_download_nak_t;
+} __attribute__ ((packed))  program_download_nak_t;
 
 // ACK 0x0001
 typedef struct {
     header_t header;
     uint16_t source_message_type;
     uint16_t command_format;
-} general_ack_t;
+} __attribute__ ((packed))  general_ack_t;
 
 // Enumerate 0x0010
 typedef struct {
     header_t header;
     uint16_t protocols;
     uint16_t command_formats;
-} enumerate_t;
+} __attribute__ ((packed))  enumerate_t;
 
 // ACK 0x0001 in response to enumerate
 // // ACK 0x0001 in response to enumerate
@@ -77,7 +77,7 @@ typedef struct {
     uint16_t source_message_type;
     uint16_t responding_devices;
     uint16_t devices_present;
-} enumeration_ack_t;
+} __attribute__ ((packed))  enumeration_ack_t;
 
 typedef struct {
     uint16_t format;
@@ -93,13 +93,13 @@ typedef struct {
     uint16_t firmware_revision;
     uint8_t description[20];
     uint8_t padding[8]; // set to zero ?!? not actually used.
-} device_info_block_t;
+} __attribute__ ((packed))  device_info_block_t;
 
 
 // request queued message 0x0040
 typedef struct {
     header_t header;
-} request_queued_message_t;
+} __attribute__ ((packed))  request_queued_message_t;
 
 // nak response to request queued message
 // ie the data disappeared...
@@ -109,7 +109,7 @@ typedef struct {
     uint8_t invalid_flag; // == 0x02
     uint16_t length; // == 0x0000
     uint16_t checksum;
-} nak_queued_message_t;
+} __attribute__ ((packed))  nak_queued_message_t;
 
 // ack response to request queued message
 // follow directly with data & checksum
@@ -117,7 +117,7 @@ typedef struct {
     header_t header;
     uint16_t source_message_type;
     uint16_t message_format;
-} ack_queued_message_t;
+} __attribute__ ((packed))  ack_queued_message_t;
 
 // ACK/NAK Queued Message 0x0041
 // immediately followed by response message (may be none)
@@ -130,14 +130,14 @@ typedef struct {
     // 2 = invalid data
     // 3 = unable to complete
     // 4 = unknown format
-} response_queued_message_t;
+} __attribute__ ((packed))  response_queued_message_t;
 
 // C&C telemetry 0x0015
 // followed by at most 544 bytes and then checksum
 typedef struct {
     header_t header;
     uint8_t structure_id;
-} telemetry_t;
+} __attribute__ ((packed))  telemetry_t;
 
 // Request Status 0x0022
 typedef struct {
@@ -146,14 +146,14 @@ typedef struct {
     uint32_t latitude; // decimal minutes
     uint32_t longitude; // decimal minutes
     uint8_t fix_valid; // 'Y' or 'N' depending on GPS validity
-} request_status_t;
+} __attribute__ ((packed))  request_status_t;
 
 typedef struct {
     header_t header;
     uint16_t source_message_type;
     uint16_t total_responses; // these two must be 1
     uint16_t responses_present;
-} status_ack_t;
+} __attribute__ ((packed))  status_ack_t;
 
 // version and address must be real, but all else can be 0's.
 typedef struct {
@@ -167,7 +167,7 @@ typedef struct {
     uint8_t humidity; // per cent
     uint8_t temperature_pressure; // \deg C from pressure sensor
     uint8_t pressue; // kPa
-} status_block_t;
+} __attribute__ ((packed))  status_block_t;
 
 // Send/forward message 0x0024
 // followed by date (<= 541 bytes) and checksum
@@ -175,7 +175,7 @@ typedef struct {
     header_t header;
     uint8_t flag; // 0 = forward, 1 = send
     uint16_t command_format; // 1 = vehicle to remote
-} sendforward_message_t;
+} __attribute__ ((packed))  sendforward_message_t;
 
 #ifdef __cplusplus
 };

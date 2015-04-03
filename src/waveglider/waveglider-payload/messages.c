@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 void glider_state_init(glider_state_t *glider)
 {
@@ -11,7 +12,7 @@ void glider_state_init(glider_state_t *glider)
     glider->task_id = 0x13;
     glider->board_id = 0x37;
     glider->device_type = 0x3412;
-    glider->poll_period = 60;
+    glider->poll_period = 30;
 }
 
 #define ACK_REQUIRED 0x8000
@@ -29,11 +30,6 @@ void handle_packet(glider_state_t *glider, char *message, size_t length)
 
     int8_t suppress_ack = 0;
 
-    if (glider->reply_length > 0)
-    {
-        printf("Should have already send reply to glider.\n");
-    }
-
     if (header->message_type & ACK_REQUIRED)
     {
         suppress_ack = 1;
@@ -41,22 +37,27 @@ void handle_packet(glider_state_t *glider, char *message, size_t length)
         header->message_type &= ~ACK_REQUIRED;
     }
 
+    FILE *f = fopen("/tmp/messagelog.bin", "ab");
+    fwrite(message, 1, length, f);
+    fclose(f);
+
+    printf("%d: Packet Type (0x%X)\n", time(0), header->message_type);
     switch (header->message_type)
     {
         case 0x0010:
             // request id/enumerate (broadcast)
-            printf("Received enumeration request\n");
+            printf("%d: received enumeration request\n", time(0));
             enumerate_t *enumeration = (enumerate_t *)message;
             handle_enumerate(glider, enumeration, suppress_ack);
             break;
         case 0x0015:
             // telemetry (broadcast)
-            printf("Received telemetry notifcation\n");
+            printf("%d: received telemetry notifcation\n", time(0));
             telemetry_t *telemetry = (telemetry_t *)message;
             break;
         case 0x0022:
             // request status
-            printf("Received status request\n");
+            printf("%d: received status request\n", time(0));
             request_status_t *request_status = (request_status_t *)message;
             handle_status(glider, request_status, suppress_ack);
             break;
@@ -66,37 +67,41 @@ void handle_packet(glider_state_t *glider, char *message, size_t length)
             break;
         case 0x0030:
             // power status and control (broadcast)
-            printf("Received power status message\n");
+            printf("%d: received power status message\n", time(0));
             break;
         case 0x0040:
             // request queued message
-            printf("Request queued message\n");
+            printf("%d: request for queued message\n", time(0));
             request_queued_message_t *request = (request_queued_message_t *)message;
             handle_request_queued(glider, request, suppress_ack);
             break;
         case 0x0041:
             // ack/nak queued message
-            printf("Response to queued message\n");
+            printf("%d: received response to queued message\n", time(0));
             response_queued_message_t *response = (response_queued_message_t *)message;
             handle_queued_response(glider, response, suppress_ack);
             break;
         default:
             // no idea what type of message this is
+            printf("%d: unknown message type.\n", time(0));
             break;
     }
 
 
-    // now check if we are sending a message
-    if (glider->reply_length > 0)
+    // now check if we are sending a message, and if there is another message to send
+    if (glider->pending_data_length > 0 && glider->output_length)
     {
+        printf("%d: Indicated presence of queued message to C&C\n", time(0));
         // flag that there is a message pending
-        glider->buffer[12] |= 0x80;
+        glider->output_data[12] |= 0x80;
+        // and recalculate the checksum
+        *((uint16_t *)(glider->output_data + glider->output_length-2)) = gen_crc16(glider->output_data + 1, glider->output_length - 3);
     }
 }
 
 void handle_enumerate(glider_state_t *glider, enumerate_t *enumeration, int8_t suppress_ack)
 {
-    char *next_chunk = glider->buffer;
+    char *next_chunk = glider->output_data;
 
     enumeration_ack_t *response_header = (enumeration_ack_t *)next_chunk;
     next_chunk += sizeof(enumeration_ack_t);
@@ -107,7 +112,7 @@ void handle_enumerate(glider_state_t *glider, enumerate_t *enumeration, int8_t s
     uint16_t *checksum = (uint16_t *)next_chunk;
     next_chunk += sizeof(uint16_t);
 
-    ssize_t length = next_chunk - glider->buffer;
+    ssize_t length = next_chunk - glider->output_data;
 
     response_header->header.sof = 0x7e;
     response_header->header.length = length - 1; // exclude sof char
@@ -124,7 +129,7 @@ void handle_enumerate(glider_state_t *glider, enumerate_t *enumeration, int8_t s
 
     // device info
     uint8_t serial[] = {1, 1, 2, 3, 5, 8};
-    char *description = "ACFR Payload WGlider";
+    char *description = "ACFR                ";
 
     device_info->format = 1;
     device_info->type = glider->device_type;
@@ -142,14 +147,14 @@ void handle_enumerate(glider_state_t *glider, enumerate_t *enumeration, int8_t s
 
 
     // finally, the checksum
-    *checksum = gen_crc16(glider->buffer + 1, length - 3);
+    *checksum = gen_crc16(glider->output_data + 1, length - 3);
 
-    glider->reply_length = length;
+    glider->output_length = length;
 }
 
 void handle_status(glider_state_t *glider, request_status_t *request_status, int8_t suppress_ack)
 {
-    char *next_chunk = glider->buffer;
+    char *next_chunk = glider->output_data;
 
     status_ack_t *response_header = (status_ack_t *)next_chunk;
     next_chunk += sizeof(status_ack_t);
@@ -160,7 +165,7 @@ void handle_status(glider_state_t *glider, request_status_t *request_status, int
     uint16_t *checksum = (uint16_t *)next_chunk;
     next_chunk += sizeof(uint16_t);
 
-    ssize_t length = next_chunk - glider->buffer;
+    ssize_t length = next_chunk - glider->output_data;
 
     response_header->header.sof = 0x7e;
     response_header->header.length = length - 1; // exclude sof char
@@ -180,30 +185,31 @@ void handle_status(glider_state_t *glider, request_status_t *request_status, int
     status->board_id = glider->board_id;
     memset(&status->alarm_flags, 0, sizeof(status_block_t) - 4);
 
-    *checksum = gen_crc16(glider->buffer + 1, length - 3);
+    *checksum = gen_crc16(glider->output_data + 1, length - 3);
 
-    glider->reply_length = length;
+    glider->output_length = length;
 }
 
 void handle_request_queued(glider_state_t *glider, request_queued_message_t *request, int8_t suppress_ack)
 {
-    char *next_chunk = glider->buffer;
+    char *next_chunk = glider->output_data;
 
     ack_queued_message_t *response_header = (ack_queued_message_t *)next_chunk;
     next_chunk += sizeof(ack_queued_message_t);
 
-    memcpy(next_chunk, glider->queued_message_buffer, glider->queued_message_length); 
-    next_chunk += glider->queued_message_length;
+    memcpy(next_chunk, glider->pending_data, glider->pending_data_length); 
+    next_chunk += glider->pending_data_length;
+    glider->pending_data_length = 0;
 
     uint16_t *checksum = (uint16_t *)next_chunk;
     next_chunk += sizeof(uint16_t);
 
-    ssize_t length = next_chunk - glider->buffer;
+    ssize_t length = next_chunk - glider->output_data;
 
     response_header->header.sof = 0x7e;
     response_header->header.length = length - 1; // exclude sof char
-    response_header->header.destination_task = 0x04;
-    response_header->header.destination_board = 0x00;
+    response_header->header.destination_task = 0x00;
+    response_header->header.destination_board = 0x02;
     response_header->header.source_task = glider->task_id;
     response_header->header.source_board = glider->board_id;
     response_header->header.transaction_id = request->header.transaction_id;
@@ -214,16 +220,16 @@ void handle_request_queued(glider_state_t *glider, request_queued_message_t *req
 
     // already copied in the message
 
-    *checksum = gen_crc16(glider->buffer + 1, length - 3);
+    *checksum = gen_crc16(glider->output_data + 1, length - 3);
 
-    glider->reply_length = length;
+    glider->output_length = length;
 }
 
 
 // we only ever talk to the iridium/ XBee
 void handle_queued_response(glider_state_t* glider, response_queued_message_t *response, int8_t suppress_ack)
 {
-    char *next_chunk = glider->buffer;
+    char *next_chunk = glider->output_data;
 
     general_ack_t *response_header = (general_ack_t *)next_chunk;
     next_chunk += sizeof(ack_queued_message_t);
@@ -231,7 +237,7 @@ void handle_queued_response(glider_state_t* glider, response_queued_message_t *r
     uint16_t *checksum = (uint16_t *)next_chunk;
     next_chunk += sizeof(uint16_t);
 
-    ssize_t length = next_chunk - glider->buffer;
+    ssize_t length = next_chunk - glider->output_data;
 
     response_header->header.sof = 0x7e;
     response_header->header.length = length - 1; // exclude sof char
@@ -247,7 +253,7 @@ void handle_queued_response(glider_state_t* glider, response_queued_message_t *r
 
     // already copied in the message
 
-    *checksum = gen_crc16(glider->buffer + 1, length - 3);
+    *checksum = gen_crc16(glider->output_data + 1, length - 3);
 
-    glider->reply_length = length;
+    glider->output_length = length;
 }
