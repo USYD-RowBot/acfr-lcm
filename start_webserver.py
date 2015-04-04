@@ -184,22 +184,26 @@ def add_comment():
     return
 
 
-
 @app.route('/send_to_platform', methods=["POST"])
 def send_to_platform():
     # platform as a GET argument
     #thisplatform = request.args.get('platform')
     args = dict(request.form)
     response = pd.send_to_platform(args)
-
     if response == 0:
         return jsonify({'response': 'success', 'msg': 'State was set successfully!'})
-        #return redirect("/sweet")
     else:
         return redirect({'response': 'error', 'msg': 'There was an error updating the vehicle state file...'})
 
 
-
+@app.route('/send_platform_command', methods=["POST"])
+def send_platform_command():
+    args = dict(request.form)
+    response = pd.send_platform_command(args)
+    if response == 0:
+        return jsonify({'response': 'success', 'msg': 'State was set successfully!'})
+    else:
+        return redirect({'response': 'error', 'msg': 'There was an error updating the vehicle state file...'})
 
 
 def get_platform_cmd_form(platform):

@@ -631,6 +631,7 @@ function auvmapper () {
         $("#modalcontent").load(htmlurl,function(){
             $("#auvstatetitle").html(platform);
             $("#auvstateplatform").val(platform);
+            $("#auvcmdplatform").val(platform);
             $("#modal").modal("show");
         })
     }

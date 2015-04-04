@@ -124,6 +124,16 @@ def send_to_platform(args):
     return 0
 
 
+
+def send_platform_command(args):
+    for k in args:
+        args[k] = args[k][0]
+    platform = str(args['auvcmdplatform'])
+
+    print "\n\n\n\n\n\n", args, "\n\n\n\n\n\n"
+
+    return 0
+
 ######################################################################
 # The thread classes below spoof fake random nav data for fake platforms
 # It provides an example of the data structures that are required to feed real updates to the map
