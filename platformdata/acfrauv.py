@@ -201,7 +201,7 @@ def send_platform_command(args):
         msg.timeout = float(sys.argv[7])
         msg.command = auv_global_planner_t.GOTO
         # DO GOTO
-        print 'Sending goto ({}, {}, {})'.format(msg.point2_x, msg.point2_y, msg.point2_z)
+        print '\n\n\n\nSending goto ({}, {}, {})\n\n\n\n'.format(msg.point2_x, msg.point2_y, msg.point2_z)
         lc.publish('TASK_PLANNER_COMMAND.'+platform, msg.encode())
 
     elif cmd == "abort":
