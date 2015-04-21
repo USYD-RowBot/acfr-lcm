@@ -178,8 +178,22 @@ int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout)
 	if(!s->port_open)
 		acfr_sensor_open(s);
 	
-	if(s->io_type == io_serial && s->canonical)
-		return read(s->fd, d, len);
+	if(s->io_type == io_serial && s->canonical && timeout > 0)
+	{
+    	fd_set rfds;
+	    struct timeval tv;
+	    tv.tv_sec = timeout;
+	    tv.tv_usec = 0;
+	    FD_ZERO(&rfds);
+        FD_SET(s->fd, &rfds);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret > 0)
+            return read(s->fd, d, len);
+        else
+            return -1;    
+    }
+    else if(s->io_type == io_serial && s->canonical && timeout == -1)
+        return read(s->fd, d, len);
 	else if((s->io_type == io_tcp || s->io_type == io_udp) && s->canonical)
 	{
 		// We have a global read timeout set on the socket of 1 second
