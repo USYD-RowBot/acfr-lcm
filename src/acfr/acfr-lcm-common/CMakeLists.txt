@@ -3,6 +3,7 @@ set (SRC
     serial.c    serial.h
                 error.h
 	timestamp.c	timestamp.h
+	nmea.c		nmea.h
 )
 
 
