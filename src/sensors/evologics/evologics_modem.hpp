@@ -19,6 +19,7 @@
 //#include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 //#include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 //#include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_modem_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_angles_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
@@ -69,9 +70,10 @@ class Evologics_Modem
         int clear_modem();
         int disconnect_modem();
 
+        void publish_modem_response(int64_t timestamp, vector<unsigned char> buf);
+
         // LCM handlers
         int handle_heartbeat();
-        int start_handlers();
         
         // channel flags
         pthread_mutex_t flags_lock;
@@ -123,6 +125,10 @@ class Evologics_Modem
         char *port;
         bool use_ip_comm;
         char term;
+
+        // logging of received modem data
+        int received_logging; // 0 == off, 1 == RECV*, 2 == all
+        char *vehicle_name;
 
         int gain;
         int source_level;

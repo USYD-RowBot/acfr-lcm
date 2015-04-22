@@ -150,6 +150,11 @@ cout << "Target lat: " << y << " lon:" << x << endl;
     
     uf.accuracy += ship_drms;
     */
+
+    // Add uncertainty proporitional to the reported range. Assume a 1 degree
+    // accuracy in the fix. FIXME: do a better job of estimating uncertainty.
+    double range = sqrt(ef->x*ef->x + ef->y*ef->y + ef->z*ef->z);  
+    uf.accuracy += 2*range*sin(0.5*DTOR);
     
     // extract the platform id from the received channel name
     int channel_pos = channel.find_last_of('.');
@@ -214,7 +219,7 @@ int Evologics_Usbl::init()
 {
     usleep(1e6);
     
-    lcm->subscribeFunction("SHIP_STATUS", on_ship_status, this);
+    lcm->subscribeFunction(ship_status_channel_str, on_ship_status, this);
 
     lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
     

@@ -117,7 +117,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     servo_command[2] = plane_starboard;
 
     servo_command[4] = 0x01 + SERVO_RANGE;
-    servo_command[5] = rudder_top;
+    servo_command[5] = -rudder_top; //FIXME: inverted sign for WHOI tail
         
     servo_command[7] = 0x02 + SERVO_RANGE;
     servo_command[8] = rudder_bottom;

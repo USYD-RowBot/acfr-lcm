@@ -345,14 +345,14 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 
 	status.latitude = (float)nav.latitude;	
 	status.longitude = (float)nav.longitude;
-	status.altitude = (char)(nav.altitude * 10.0);
+	status.altitude = (unsigned char)(nav.altitude * 10.0);
 	status.depth = (short)(nav.depth * 10.0);
 	status.roll = (char)(nav.roll * 10.0);
 	status.pitch = (char)(nav.pitch * 10.0);
 	status.heading = (short)(nav.heading * 10.0);
 	status.img_count = image_count;
 
-	lcm.publish("AUV_STAT.IVERSYD", &status);
+	lcm.publish("AUVSTAT.IVERACFR", &status);
 
 	return 1;
 }

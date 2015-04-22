@@ -8,3 +8,6 @@ perls_target_link_libraries (evologics-modem perls-lcmtypes perls-common z pthre
 
 perls_add_executable (evologics-ahrs evologics_ahrs.cpp )
 perls_target_link_libraries (evologics-ahrs perls-lcmtypes perls-common)
+
+perls_add_executable (evologics-extended evologics_extended.cpp )
+perls_target_link_libraries (evologics-extended perls-lcmtypes perls-common z pthread)

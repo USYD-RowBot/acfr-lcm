@@ -4,9 +4,6 @@
     Lachlan Toohey
     ACFR
     25-3-15
-
-    Based on siris_motors
-    by Christian Lees
 */
 
 #include <stdio.h>
@@ -24,9 +21,35 @@
 #include "perls-lcmtypes/acfrlcm_auv_status_short_t.h"
 #include "acfr-common/sensor.h"
 
+#include "checksum.h"
+#include "messages.h"
+
 // this should be the largest chunk of data *BEFORE* including
 // escaped characters
-#define MAX_MESSAGE_SIZE 557
+
+typedef struct {
+    uint8_t type; // ==0x91
+    uint32_t transaction_id;
+    uint16_t size;
+    uint32_t payload_type;
+    uint8_t board_id;
+    uint8_t type_id;
+    uint8_t flags;
+    uint8_t repeats;
+    int32_t latitude;
+    int32_t longitude;
+    uint32_t timestamp;
+} __attribute__ ((packed)) telemetry_header_t;
+
+typedef struct {
+    uint8_t type; // ==0x91
+    uint32_t transaction_id;
+    uint16_t response_size;
+    uint8_t type_id;
+    uint8_t board_id;
+    uint8_t function;
+    uint16_t data_size;
+} __attribute__ ((packed)) console_write_t;
 
 typedef struct {
     pthread_mutex_t lock;
@@ -52,6 +75,11 @@ typedef struct
     size_t read_cursor;
     size_t write_cursor;
 
+    char transmit_buffer[MAX_MESSAGE_SIZE*2];
+    size_t transmit_length;
+
+    glider_state_t glider;
+
     pthread_mutex_t queue_lock;
     message_channel_t queue[3];
 
@@ -61,146 +89,12 @@ typedef struct
 
 } state_t;
 
-uint16_t checksum_next(uint16_t crc, char c) {
-
-    uint8_t ii;
-
-    crc ^= c;
-
-    for (ii=0;ii<8;++ii) {
-        if ((crc & 1) == 1) {
-            crc = (crc >> 1) ^ 0xA001;
-        } else {
-            crc = (crc >> 1);
-        }
-    }
-
-    return crc;
-}
-
-uint16_t checksum(char *buffer, size_t length, uint16_t seed) {
-    uint16_t crc = seed;
-
-    size_t ii;
-    for (ii = 0; ii < length; ++ii) {
-        crc = checksum_next(crc, buffer[ii]);
-    }
-
-    return crc;
-}
-
-void enumerate_response(state_t *state, char *enumeration_request)
-{
-    char device_info[50];
-
-    // version
-    device_info[0] = 1;
-    device_info[1] = 0;
-    
-    //device type
-    device_info[2] = 0x13;
-    device_info[3] = 0x37;
-
-    // address
-    device_info[4] = 0x34;
-    device_info[5] = 0x32;
-
-    // next 6 bytes == serial number
-    
-    // localtion/port must be 0
-    device_info[12] = 0x0;
-
-    // polling period (in seconds, little endian)
-    device_info[13] = 0x05;
-    device_info[14] = 0x0;
-    device_info[15] = 0x0;
-    device_info[16] = 0x0;
-
-    // info flags
-    device_info[17] = 0x00; // no telemetry, power, event, ack/nak
-
-    // firmware major then minor, then 2 byte revision
-    device_info[18] = 0x00;
-    device_info[19] = 0x00;
-    device_info[20] = 0x00;
-    device_info[21] = 0x00;
-
-    // 20 more bytes... description in ASCII, pad with space characters
-    // description[22] 
-    
-    // and 8 more unknown characters???
-
-    // need to wrap the device info with other stuff
-    // total raw size is this...
-    char raw_message[69];
-
-    //////////// HEADER
-    // SOF cha
-    raw_message[0] = 0x7E;
-
-    // length
-    raw_message[1] = 68;
-    raw_message[2] = 0;
-
-    // destination address
-    raw_message[3] = 0x0;
-    raw_message[4] = 0x0;
-
-    // source address
-    raw_message[5] = 0x0;
-    raw_message[6] = 0x0;
-
-    // transacation ID
-    raw_message[7] = 0x12;
-    raw_message[8] = 0x34;
-    //////////// END HEADER
-
-    // msg type
-    raw_message[9] = 0x01;
-    raw_message[10] = 0x00;
-
-    // msg type
-    raw_message[11] = 0x01;
-    raw_message[12] = 0x00;
-
-    // devices responding
-    raw_message[13] = 0x01;
-    raw_message[14] = 0x00;
-
-    // devices responding now
-    raw_message[15] = 0x01;
-    raw_message[16] = 0x00;
-
-    memcpy(raw_message + 17, device_info, 50);
-    *((uint16_t *)(raw_message + 67)) = checksum(raw_message + 1, 66, 0);
-
-    printf("Sending message.\n");
-    acfr_sensor_write(state->sensor, raw_message, 69);
-    printf("Sent message.\n");
-}
 
 void
-send_motor_command(state_t *state, double vertical, double port, double starboard)
+send_message(state_t *state)
 {
-   // send a command to the motors
-    char animatics_str[MAX_MESSAGE_SIZE];
-    int thr_ref, len;
-
-    // from animatics user manual p46
-    // the 32212 is for the motor, 32.5 is for the gear box, 60 is from RPM to Hz
-    // compose animatics command string for velocity mode
-    /*
-    thr_ref = (int)(vertical * 32212.0 * 32.5 / 60.0);
-    len = sprintf(animatics_str, "MV A=800 V=%i G t=0\n",thr_ref);
-    write(state->vert_fd, animatics_str, len);
-
-
-    usleep(5000);
-    write(state->vert_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    write(state->port_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    write(state->starb_fd, ANIMATICS_PRINT_STRING, strlen(ANIMATICS_PRINT_STRING));
-    */
-
+    printf("%ld: transmitting %d bytes.\n", time(0), state->transmit_length);
+    acfr_sensor_write(state->sensor, state->transmit_buffer, state->transmit_length);
 }
 
 void
@@ -226,13 +120,71 @@ auv_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_au
 }
 
 void
+ship_status_callback_new(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
+{
+    message_channel_t *channel = (message_channel_t *)u;
+
+    char *data = "TEST MESSAGE";
+
+    size_t data_length = strlen(data);
+
+    channel->message = malloc(MAX_MESSAGE_SIZE);
+
+    console_write_t *header = (console_write_t *)channel->message;
+
+    header->type = 0x91;
+    header->transaction_id = 0;
+    header->type_id = 0x13;
+    header->board_id = 0x37;
+    header->function = 0x1;
+
+    memcpy(channel->message + sizeof(console_write_t), data, data_length);
+
+    header->response_size = data_length + 5;
+    header->data_size = data_length;
+
+    size_t final_length = header->response_size + 9;
+    uint16_t *checksum = ((uint16_t *)(channel->message + final_length - 2));
+
+    channel->length = final_length;
+
+}
+
+void
 ship_status_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_ship_status_t *status, void *u)
 {
     message_channel_t *channel = (message_channel_t *)u;
 
     // calculate the string to send here
+    size_t data_length = sizeof(acfrlcm_ship_status_t) + sizeof(telemetry_header_t) + 2; // add the CRC
+    size_t data_chunk = sizeof(acfrlcm_ship_status_t) + 12 + 4 + 4;
 
     pthread_mutex_lock(&channel->lock);
+    channel->message = malloc(data_length);
+
+    // get the header data
+    telemetry_header_t *header = (telemetry_header_t *)channel->message;
+    // get the actual data we care about
+    memcpy(channel->message + sizeof(telemetry_header_t), status, sizeof(acfrlcm_ship_status_t));
+    // and finally the checksum location
+    uint16_t *checksum = ((uint16_t *)(channel->message + data_length));
+
+    header->type = 0x91;
+    header->transaction_id = 0;
+    header->size = data_length - 7;
+    header->payload_type = 0; // NFI what is going on here
+    header->board_id = 0x37;
+    header->type_id = 0x13;
+    header->flags = 0x00;
+    header->repeats = 1;
+    header->latitude = (uint32_t)(status->latitude * 600000);
+    header->longitude = (uint32_t)(status->longitude * 600000);
+    header->timestamp = time(NULL);
+
+    *checksum = gen_crc16(channel->message, data_length - 2);
+
+    channel->length = data_length;
+
     pthread_mutex_unlock(&channel->lock);
 }
 
@@ -244,6 +196,32 @@ signal_handler(int sigNum)
     program_exit = 1;
 }
 
+void escape_packet(state_t *state, char *buffer, size_t length) {
+    size_t rc = 1;
+    size_t wc = 1;
+
+    state->transmit_buffer[0] = buffer[0];
+    // == 0x7E;
+
+    for (; rc < length;++rc)
+    {
+        switch (buffer[rc])
+        {
+        case 0x7E:
+            state->transmit_buffer[wc++] = 0x7D;
+            state->transmit_buffer[wc++] = 0x5E;
+            break;
+        case 0x7D:
+            state->transmit_buffer[wc++] = 0x7D;
+            state->transmit_buffer[wc++] = 0x5D;
+            break;
+        default:
+            state->transmit_buffer[wc++] = buffer[rc];
+
+        }
+    }
+    state->transmit_length = wc;
+}
 
 
 size_t cleanse_next(state_t *state) {
@@ -264,11 +242,11 @@ size_t cleanse_next(state_t *state) {
                     return 0;
                 }
             }
-            // read the next character (it may
-            if (state->read_buffer[1] == 0x5D) {
-                state->write_buffer[0] = 0x7D;
-            } else if (state->read_buffer[1] == 0x5E) {
-                state->write_buffer[0] = 0x7E;
+            char next = state->read_buffer[state->read_cursor+1];
+            if (next == 0x5D) {
+                state->write_buffer[state->write_cursor] = 0x7D;
+            } else if (next == 0x5E) {
+                state->write_buffer[state->write_cursor] = 0x7E;
             } else {
                 return 0;
             }
@@ -278,60 +256,72 @@ size_t cleanse_next(state_t *state) {
 
             return 2;
         default:
-            state->write_buffer[0] = state->read_buffer[0];
+            state->write_buffer[state->write_cursor] = state->read_buffer[state->read_cursor];
             state->read_cursor += 1;
             state->write_cursor += 1;
             return 1;
     }
 }
 
-bool read_packet(state_t *state) {
+int read_packet(state_t *state) {
     // now get the size, need to read enough bytes to make sure
 
     ssize_t ret;
 
     while (state->data_end < 6) {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
-        printf("Read bytes... %d\n", ret);
         // any error, bail out
-        if (ret <= 0) return false;
+        if (ret <= 0) return 0;
         state->data_end += ret; // add bytes read
     }
 
-    printf("Checking for SOF character\n");
 
     // check that packet starts with what we want it to
     if (state->read_buffer[0] != 0x7E) {
-        return false;
+        return 0;
     }
 
-    if (cleanse_next(state) == 0) return false;
+    // in case we have already read some data
+    if (state->read_cursor == 0) {
+        state->read_cursor = 1;
+    }
 
-    printf("Cleansing header characters\n");
+    if (state->write_cursor == 0) {
+        state->write_cursor = 1;
+        state->write_buffer[0] = 0x7E;
+    }
+
+    // cleanse the length bytes
+    if (cleanse_next(state) == 0) return 0;
+    if (cleanse_next(state) == 0) return 0;
 
     // lets get to it,
-    uint16_t length = *(uint16_t *)(state->read_buffer + 1);
+    uint16_t length = *(uint16_t *)(state->write_buffer + 1);
 
-    printf("Packet length: %d\n", length);
+    printf("%ld: received packet length: %d\n", time(0), length);
 
     while (state->write_cursor < length + 1) {
-        size_t next_read = length + 1 - state->data_end;
+        size_t next_read = 1 + length - state->write_cursor - state->data_end + state->read_cursor;
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, next_read);
+        state->data_end += ret;
 
         while (state->read_cursor < state->data_end) {
-            if (cleanse_next(state) == 0) return false;
+            if (cleanse_next(state) == 0) return 0;
         }
     }
 
     // at this point we should have a valid packet
     // check the checksum...
-    uint16_t crc = checksum(state->write_buffer + 1, state->write_cursor - 3, 0x0000);
-    uint16_t packet_crc = *((uint16_t *)(state->write_buffer + length - 2));
+    uint16_t crc = gen_crc16(state->write_buffer + 1, state->write_cursor - 1);
 
-    if (crc != packet_crc) return false;
+    if (crc != 0)
+    {
+        printf("%ld: CRC failure\n", time(0));
+        return 0;
+    }
 
     // ran the gauntlet and made it - valid packet has been found
-    return true;
+    return 1;
 }
 
 
@@ -345,22 +335,50 @@ void *serial_listen_thread(void *u)
     // denote how far has been parsed in the message and where they are getting read from
     while(!program_exit)
     {
-        printf("Looking for packet...\n");
+        printf("=================================================\n");
+        printf("%ld: waiting for packet...\n", time(0));
+        // always reread from the start
+        // but there may alreadt be data in the read buffer
+        // so don't discard it
         state->read_cursor = 0;
         state->write_cursor = 0;
 
         if (read_packet(state)) {
             // deal with the packet now
-            printf("Got a packet!\n");
+            // check if there is something in the queue
+            // will also have to make this section smarter to rotate through the information types
+            // that come from all the source types
+            // don't want the information to become stale as well...
+            int i;
+            for (i=0;i<3;++i)
+            {
+                if (state->queue[i].length > 0)
+                {
+                    state->glider.pending_data_length = state->queue[i].length;
+                    memcpy(state->glider.pending_data, state->queue[i].message, state->queue[i].length);
+                    free(state->queue[i].message);
+                    state->queue[i].message = 0;
+                    state->queue[i].length = 0;
+                    break;
+                }
+            }
+            handle_packet(&state->glider, state->write_buffer, state->write_cursor);
+            if (state->glider.output_length > 0)
+            {
+                // we have a message to send
+                escape_packet(state, state->glider.output_data, state->glider.output_length);
+                send_message(state);
+            }
+            state->data_end = 0; // reset to start of buffer
         } else {
-            printf("Failed to read packet!\n");
+            printf("%ld: failed to read packet!\n", time(0));
             // failed to get a packet...
             // go through leftover data and see if we have a new frame
             // either way discard any data before at SOF character.
             while (state->read_cursor < state->data_end) {
 
                 if (state->read_buffer[state->read_cursor] == 0x7E) {
-                    printf("Found unexpected SOF character\n");
+                    printf("%ld: found unexpected SOF character\n", time(0));
                     memmove(state->read_buffer, state->read_buffer + state->read_cursor, state->data_end - state->read_cursor);
                     break;
                 }
@@ -379,7 +397,14 @@ int
 main(int argc, char **argv)
 {
     state_t state;
+    glider_state_init(&state.glider);
     pthread_mutex_init(&state.queue_lock, 0);
+
+    int i;
+    for (i=0;i<3;++i)
+    {
+        channel_init(&state.queue[i]);
+    }
 
     // install the signal handler
 	program_exit = 0;
@@ -408,7 +433,7 @@ main(int argc, char **argv)
     // lets start LCM
     senlcm_usbl_fix_short_t_subscribe(state.lcm, "USBL_FIX.*", &usbl_callback, &state.queue[0]);
     acfrlcm_auv_status_short_t_subscribe(state.lcm, "AUVSTAT.*", &auv_status_callback, &state.queue[1]);
-    acfrlcm_ship_status_t_subscribe(state.lcm, "SHIP_STATUS.*", &ship_status_callback, &state.queue[2]);
+    acfrlcm_ship_status_t_subscribe(state.lcm, "SHIP_STATUS.W.*", &ship_status_callback, &state.queue[2]);
 
     // start the listen threads
     pthread_t tid_cc;
@@ -417,8 +442,6 @@ main(int argc, char **argv)
 
 	int lcm_fd = lcm_get_fileno(state.lcm);
 	fd_set rfds;
-
-    enumerate_response(&state, 0);
 
 	// listen to LCM, serial has been delegated
 	while(!program_exit)
@@ -435,14 +458,11 @@ main(int argc, char **argv)
             perror("Select failure: ");
         else if(ret != 0)
             lcm_handle(state.lcm);
-
-
 	}
 
     pthread_join(tid_cc, NULL);
 
     acfr_sensor_destroy(state.sensor);
-
 
 	return 0;
 }

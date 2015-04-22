@@ -1,0 +1,8 @@
+The protocol is documented in Chapter 8 of the liquid robotics handbook (ICD SV2 REV C was the source used here).
+
+Issues with explanations in the handbook:
+  - the Request ID is sent repeatedly... every N seconds (where N is configurable)
+    as yet unsure whether it continues until a reply is given or just indefinitely
+  - the checksum algorithm they use is CRC16-IBM/ANSI. The algorithm they supply appears
+    to not work with a direct copy from C# to C/C++. Copies online that work can be found
+    and may use the 0x8005 polynomial instead of the reversed 0xA001 from their algorithm.
