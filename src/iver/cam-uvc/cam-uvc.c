@@ -15,6 +15,7 @@
 #include "acfr-common/nmea.h"
 #include "acfr-common/sensor.h"
 #include "perls-lcmtypes/acfrlcm_auv_camera_trigger_t.h"
+#include "perls-lcmtypes/perllcm_heartbeat_t.h"
 
 typedef struct
 {
@@ -41,7 +42,7 @@ int parse_msg(state_t *state, char *buf) {
     if(!strncmp(buf, "$VSTART", 6)) {
     	// start the camera
     	ct.enabled = 1;
-		state.enabled = 1;
+		state->enabled = 1;
     	nmea_sprintf(outBuf, "$ACKVID,STA,1*");
    	    acfr_sensor_write(state->sensor, outBuf, strlen(outBuf));
    	    acfrlcm_auv_camera_trigger_t_publish(state->lcm, "CAMERA_TRIGGER", &ct);
@@ -50,7 +51,7 @@ int parse_msg(state_t *state, char *buf) {
     if(!strncmp(buf, "$VSTOP", 6)) {
     	// start the camera
     	ct.enabled = 0;
-		state.enabled = 0;
+		state->enabled = 0;
     	nmea_sprintf(outBuf, "$ACKVID,STP,1*");
    	    acfr_sensor_write(state->sensor, outBuf, strlen(outBuf));
    	    acfrlcm_auv_camera_trigger_t_publish(state->lcm, "CAMERA_TRIGGER", &ct);
@@ -107,14 +108,29 @@ int main (int argc, char *argv[]) {
     if(sensor == NULL)
         return 0;
 
-	perllcm_heartbeat_t_subscribe(state.gsd->lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
 
 	char buf[128];
+	fd_set rfds;
+    struct timeval tv;
+	int lcm_fd = lcm_get_fileno(state.lcm);
 
 	while(!program_exit)
-	{
-		if(acfr_sensor_read_timeout(sensor, buf, sizeof(buf), 1) < 0)
-			parse_msg(&state, buf);
+	{		
+	    tv.tv_sec = 1;
+	    tv.tv_usec = 0;
+	    FD_ZERO(&rfds);
+        FD_SET(state.sensor->fd, &rfds);
+		FD_SET(lcm_fd, &rfds);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+		if(ret > 0)
+		{
+			if(FD_ISSET(lcm_fd, &rfds))
+				lcm_handle(state.lcm);
+			if(FD_ISSET(state.sensor->fd, &rfds))
+				if(acfr_sensor_read_timeout(sensor, buf, sizeof(buf), 1) < 0)
+					parse_msg(&state, buf);
+		}
 	}
 
 	return 0;
