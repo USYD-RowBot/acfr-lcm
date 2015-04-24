@@ -87,6 +87,8 @@ typedef struct
     VmbFrame_t frames[BUFFERS];
     
     camera_state_t camera_state;
+	int camera_state_change;
+	pthread_mutex_t camera_lock;
 } state_t;
 
 
@@ -851,12 +853,13 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
 int open_camera(state_t *state)
 {
     VmbError_t err;
-    
+    printf("Camera_name: %s\n", state->camera_name);
+
     // Open the camera
     err = VmbCameraOpen((const char *)state->camera_name, VmbAccessModeFull, &state->camera);    
     if(err == VmbErrorNotFound)
     {
-        fprintf(stderr, "There was a problem opening the Camera\n");
+        fprintf(stderr, "There was a problem opening the Camera (open_camera)\n");
         return 0;
     }
     
@@ -874,7 +877,7 @@ int open_camera(state_t *state)
     // set the camera attributes based on the config file
     if(set_camera_attributes(state) == -1)
     {
-        fprintf(stderr, "There was a problem programming the Camera\n");
+        fprintf(stderr, "There was a problem programming the Camera (open_camera)\n");
         return 0;
     }
         
@@ -964,14 +967,20 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
         if(!strcmp(event_type, "Detected"))
         {
             // Camera was just attached, lets open it and configure it
+			pthread_mutex_lock(&state->camera_lock);
+			state->camera_state_change = 1;
             state->camera_state = CAMERA_OPEN;
+			pthread_mutex_unlock(&state->camera_lock);
             state->camera_name = malloc(strlen(camera_name));
             memcpy(state->camera_name, camera_name, strlen(camera_name));
             
         }
         else if(!strcmp(event_type, "Missing"))
         {
+			pthread_mutex_lock(&state->camera_lock);
+			state->camera_state_change = 1;
             state->camera_state = CAMERA_CLOSE;
+			pthread_mutex_unlock(&state->camera_lock);
             free(state->camera_name);
         }
         
@@ -1075,6 +1084,8 @@ int main(int argc, char **argv)
 
     printf("Installing detection callback\n");
     state.camera_state = CAMERA_NONE;
+	state.camera_state_change = 0;
+	pthread_mutex_init(&state.camera_lock, 0);
     // Register the callback to detect cameras
     VmbFeatureInvalidationRegister(gVimbaHandle, "DiscoveryCameraEvent", camera_plugged , &state);
     VmbFeatureCommandRun (gVimbaHandle , "GeVDiscoveryAllAuto");
@@ -1098,17 +1109,23 @@ int main(int argc, char **argv)
         lcmu_handle_timeout(state.lcm, &tv);
         
         // check the camera state
-        if(state.camera_state == CAMERA_OPEN)
-        {
-            printf("Opening camera\n");
-            if(!open_camera(&state))
-                fprintf(stderr, "There was a problem opening the camera\n");
-        }
-        else if(state.camera_state == CAMERA_CLOSE)
-        {
-            printf("closing camera\n");
-            close_camera(&state);
-        }
+		pthread_mutex_lock(&state.camera_lock);
+		if(state.camera_state_change)
+		{
+			if(state.camera_state == CAMERA_OPEN)
+			{
+				printf("Opening camera\n");
+				if(!open_camera(&state))
+					fprintf(stderr, "There was a problem opening the camera (main)\n");
+			}
+			else if(state.camera_state == CAMERA_CLOSE)
+			{
+				printf("closing camera\n");
+				close_camera(&state);
+			}
+			state.camera_state_change = 0;
+		}
+		pthread_mutex_unlock(&state.camera_lock);
     }    
     
     VmbShutdown();
