@@ -1,4 +1,4 @@
-/* Interface between UVC and LCM for controlling the Ivr and getting the vehicle state.
+/* Interface between UVC and LCM for controlling the Iver and getting the vehicle state.
  *
  *	Christian Lees
  *	ACFR
@@ -36,7 +36,57 @@ typedef struct
     lcm_t *lcm;
     acfr_sensor_t *sensor;
 	udp_info_t gps_udp_info;
+	int osi_mode;
+	char *base_path;
 } state_t;
+
+int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
+{
+	
+	// We need to detect when a mission has stopped so we can stop the logger
+	if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
+	{
+		system("killall -9 lcm-logger");	
+	}
+	else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
+	{
+		// Generate a file path for the mission		
+		char path_name[256] = {'\0'};
+		strcpy(path_name, state->base_path);
+		if(path_name[strlen(path_name) - 1] != '/')
+                strcat(path_name, "/");
+
+		struct timeval tv;
+		timestamp_to_timeval(osi->utime, &tv);
+		struct tm tm;
+		localtime_r (&tv.tv_sec, &tm);
+		char mission_date_name[64];
+		memset(mission_date_name, 0, sizeof(mission_date_name));
+		
+		char acfr_format_r[32] = "r%Y%m%d_%H%M%S_";
+		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
+		strcat(path_name, mission_date_name);
+		strcat(path_name, osi->mission_name);
+
+		char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";		 
+		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
+		strcat(path_name, mission_date_name);
+		
+		char cmd_str[256];
+		sprintf(cmd_str, "mkdir -p %s\n", path_name);
+		system(cmd_str);
+
+		
+		sprintf(cmd_str, "mkdir -p %s\n", path_name);
+		system(cmd_str);
+		sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
+		system(cmd_str);
+	}
+
+	state->osi_mode = osi->mode;
+
+	return 1;
+}
 
 /* returns 1 for successfully classifying and publishing uvc to
  * backseat driver messages */
@@ -145,6 +195,14 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 11, &magnetic_dec))
             ERROR ("unable to parse OSI magnetic_dec");
 
+		char mission_name[128] ={'\0'};
+		if (!nmea_arg (msg, 12, mission_name))
+            ERROR ("unable to parse current mission name");
+
+		double mission_time_remaining = 0;
+        if (!nmea_argf (msg, 13, &mission_time_remaining))
+            ERROR ("unable to parse mission time remaining");
+
         senlcm_uvc_osi_t data =
         {
             .utime          = timestamp,
@@ -163,8 +221,14 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             .altimeter      = UNITS_FEET_TO_METER * altimeter,
             .park_time      = park_time,
             .magnetic_dec   = magnetic_dec,
+			.mission_name	= mission_name,
+			.mission_time_remaining = mission_time_remaining,
         };
         senlcm_uvc_osi_t_publish (state->lcm, "UVC_OSI", &data);
+
+		// start or stop the logger
+		start_lcm_logger(&data, state);
+
         return 1;
     }
 
@@ -390,12 +454,17 @@ int main (int argc, char *argv[])
     state_t state;
     state.lcm = lcm_create(NULL);
 
-    char rootkey[64];
+    char rootkey[64], key[128];
     sprintf(rootkey, "iver.%s", basename(argv[0]));
 
     state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
         return 0;
+
+	// get the base image path
+	sprintf(key, "%s.base_path", rootkey);
+	state.base_path = bot_param_get_str_or_fail(state.sensor->param, key); 
+	state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
