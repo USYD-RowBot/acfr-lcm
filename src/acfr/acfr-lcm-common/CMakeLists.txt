@@ -4,6 +4,7 @@ set (SRC
                 error.h
 	timestamp.c	timestamp.h
 	nmea.c		nmea.h
+	socket.c	socket.h
 )
 
 
