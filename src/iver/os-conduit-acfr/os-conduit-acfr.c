@@ -15,22 +15,27 @@
 
 #include "acfr-common/nmea.h"
 #include "acfr-common/sensor.h"
+#include "acfr-common/socket.h"
 
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 #include "perls-lcmtypes/senlcm_uvc_ack_t.h"
 #include "perls-lcmtypes/senlcm_uvc_opi_t.h"
 #include "perls-lcmtypes/senlcm_uvc_osi_t.h"
 #include "perls-lcmtypes/senlcm_uvc_rphtd_t.h"
+#include "perls-lcmtypes/senlcm_uvc_dvl_t.h"
+#include "perls-lcmtypes/senlcm_gpsd3_t.h"
 
 #define DTOR M_PI/180
 #define UNITS_KNOT_TO_METER_PER_SEC (0.514444444)
 #define UNITS_FEET_TO_METER          (0.3048)
 
+#define GPS_PORT 10066
 
 typedef struct
 {
     lcm_t *lcm;
     acfr_sensor_t *sensor;
+	udp_info_t gps_udp_info;
 } state_t;
 
 /* returns 1 for successfully classifying and publishing uvc to
@@ -39,7 +44,8 @@ static int
 parse_msg(state_t *state, const char *msg, const int64_t timestamp)
 {
     // $OSI -- vehicle state data
-    if (0==strncmp (msg, "$OSI", 4)) {
+    if (0==strncmp (msg, "$OSI", 4))
+    {
         char hex[128] = {'\0'};
         if (!nmea_arg (msg, 1, hex))
             ERROR ("unable to extract OSI hex");
@@ -128,7 +134,8 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 9, &altimeter))
             ERROR ("unable to parse OSI altimeter");
 
-        char park[128]; double park_time = 0;
+        char park[128];
+        double park_time = 0;
         if (!nmea_arg (msg, 10, park))
             ERROR ("unable to parse OSI park");
         else
@@ -138,13 +145,14 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 11, &magnetic_dec))
             ERROR ("unable to parse OSI magnetic_dec");
 
-        senlcm_uvc_osi_t data = {
+        senlcm_uvc_osi_t data =
+        {
             .utime          = timestamp,
             .yaw_top        = yt,
             .yaw_bot        = yb,
             .pitch_left     = pl,
             .pitch_right    = pr,
-            .motor          = mot, 
+            .motor          = mot,
             .mode           = mode,
             .nextwp         = nextwp + 1,  // to match match vector map indexing
             .latitude       = DTOR * latitude,
@@ -156,12 +164,13 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             .park_time      = park_time,
             .magnetic_dec   = magnetic_dec,
         };
-        senlcm_uvc_osi_t_publish (state->lcm, "UVC_OSI", &data); 
+        senlcm_uvc_osi_t_publish (state->lcm, "UVC_OSI", &data);
         return 1;
     }
 
     // $OPI -- vehicle power data
-    else if (0==strncmp (msg,"$OPI",4)) {
+    else if (0==strncmp (msg,"$OPI",4))
+    {
         double percent = 0;
         if (!nmea_argf (msg, 1, &percent))
             ERROR ("unable to parse OPI percent");
@@ -191,47 +200,52 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             ERROR ("unable to parse OPI bs");
 
         int batt_state = 0;
-        switch (bs) {
-            case 'C':
-                batt_state = SENLCM_UVC_OPI_T_BS_CHARGING;
-                break;
-            case 'D':
-                batt_state = SENLCM_UVC_OPI_T_BS_DISCHARGING;
-                break;
-            case 'F':
-                batt_state = SENLCM_UVC_OPI_T_BS_FAULT;
-                break;
-            default:
-                ERROR ("unable to parse OPI batt_state");
+        switch (bs)
+        {
+        case 'C':
+            batt_state = SENLCM_UVC_OPI_T_BS_CHARGING;
+            break;
+        case 'D':
+            batt_state = SENLCM_UVC_OPI_T_BS_DISCHARGING;
+            break;
+        case 'F':
+            batt_state = SENLCM_UVC_OPI_T_BS_FAULT;
+            break;
+        default:
+            ERROR ("unable to parse OPI batt_state");
         }
 
         int leak = 0;
         if (!nmea_argi (msg, 8, &leak))
             ERROR ("unable to parse OPI leak");
 
-        senlcm_uvc_opi_t data = {
+        senlcm_uvc_opi_t data =
+        {
             .utime         = timestamp,
             .percent       = percent,
             .remaining_cap = remaining_cap,
             .pwr           = pwr,
             .volts         = volts,
             .current       = current,
-            .time_til      = time_til,	    
+            .time_til      = time_til,
             .batt_state    = batt_state,
             .leak          = leak,
         };
         senlcm_uvc_opi_t_publish (state->lcm, "UVC_OPI", &data);
         return 1;
-    }  
+    }
 
     // $C#P#R#T#D# -- uvc to host compass string
-    else if (0==strncmp (msg, "$C", 2)) {
+    else if (0==strncmp (msg, "$C", 2))
+    {
         double heading, pitch, roll, temp, depth = 0;
-        if (5!=sscanf (msg, "$C%lfP%lfR%lfT%lfD%lf", &heading, &pitch, &roll, &temp, &depth)) {
+        if (5!=sscanf (msg, "$C%lfP%lfR%lfT%lfD%lf", &heading, &pitch, &roll, &temp, &depth))
+        {
             ERROR ("unable to parse UVC Compass string!");
         }
-        
-        senlcm_uvc_rphtd_t data = {
+
+        senlcm_uvc_rphtd_t data =
+        {
             .utime         = timestamp,
             .rph           = {roll*DTOR, pitch*DTOR, heading*DTOR},
             .T             = temp,
@@ -240,9 +254,61 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         senlcm_uvc_rphtd_t_publish (state->lcm, "UVC_RPH", &data);
         return 1;
     }
+	// $DVL -- uvc to host DVL string
+    else if (0==strncmp (msg, "$DVL", 4))
+    {
 
+        double vx = 0;
+        if (!nmea_argf (msg, 1, &vx))
+            ERROR ("unable to parse DVL vx");
+
+        double vy = 0;
+        if (!nmea_argf (msg, 2, &vy))
+            ERROR ("unable to parse DVL vy");
+
+        double vz = 0;
+        if (!nmea_argf (msg, 3, &vz))
+            ERROR ("unable to parse DVL vz");
+
+        double xdist = 0;
+        if (!nmea_argf (msg, 4, &xdist))
+            ERROR ("unable to parse DVL xdist");
+
+        double ydist = 0;
+        if (!nmea_argf (msg, 5, &ydist))
+            ERROR ("unable to parse DVL ydist");
+
+        double dfs = 0;
+        if (!nmea_argf (msg, 6, &dfs))
+            ERROR ("unable to parse DVL dfs");
+
+        double alt = 0;
+        if (!nmea_argf (msg, 7, &alt))
+            ERROR ("unable to parse DVL alt");
+
+        senlcm_uvc_dvl_t data =
+        {
+            .utime = timestamp,
+            .vx = vx,
+            .vy = vy,
+            .vz = vz,
+            .xdist = xdist,
+            .ydist = ydist,
+            .dfs = dfs,
+            .alt = alt
+        };
+        senlcm_uvc_dvl_t_publish (state->lcm, "UVC_DVL", &data);
+        return 1;
+    }
+	// $GPRMC -- uvc to host GPS string
+    else if (0==strncmp (msg, "$GPRMC", 6))
+    {
+		// we will be rebroadcasting the RMC message so that gpsd can be run
+		send_udp(&state->gps_udp_info, msg, strlen(msg));
+	}
     // $ACK -- uvc ack of backseat driver cmd
-    else if (0==strncmp (msg,"$ACK",4)) {
+    else if (0==strncmp (msg,"$ACK",4))
+    {
         int msg_type = 0;
         if (!nmea_argi (msg, 1, &msg_type))
             ERROR ("unable to parse ACK msg_type");
@@ -258,7 +324,8 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         char usrset[128] = {'\0'};
         int usrnum = 0;
         char usrval[128] = {'\0'};
-        if (msg_type == SENLCM_UVC_ACK_T_ACK_ORWSET) {
+        if (msg_type == SENLCM_UVC_ACK_T_ACK_ORWSET)
+        {
             if (!nmea_arg (msg, 4, usrset))
                 ERROR ("unable to parse ACK usrset");
 
@@ -269,7 +336,8 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
                 ERROR ("unable to parse ACK usrval");
         }
 
-        senlcm_uvc_ack_t data = {
+        senlcm_uvc_ack_t data =
+        {
             .utime    = timestamp,
             .msg_type = msg_type,
             .status   = status,
@@ -278,7 +346,7 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             .usrnum   = usrnum,
             .usrval   = usrval,
         };
-        senlcm_uvc_ack_t_publish (state->lcm, "UVC_ACK", &data); 
+        senlcm_uvc_ack_t_publish (state->lcm, "UVC_ACK", &data);
         return 1;
     }
 
@@ -292,7 +360,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
     state_t *state = (state_t *)u;
     char msg[64];
-	nmea_sprintf (msg, "$OSD,G,C,S,P,Y,*");
+    nmea_sprintf (msg, "$OSD,G,C,S,P,Y,D,*");
 
     acfr_sensor_write(state->sensor, msg, strlen(msg));
 }
@@ -332,6 +400,9 @@ int main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
 
+	// create a UDP socket to send the GPRMC message out on
+	create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);
+
     char buf[128];
     fd_set rfds;
     struct timeval tv;
@@ -347,7 +418,7 @@ int main (int argc, char *argv[])
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret > 0)
         {
-			int64_t timestamp = timestamp_now();
+            int64_t timestamp = timestamp_now();
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm_handle(state.lcm);
             if(FD_ISSET(state.sensor->fd, &rfds))
@@ -355,7 +426,6 @@ int main (int argc, char *argv[])
                 memset(buf, 0, sizeof(buf));
                 int ret = acfr_sensor_read(state.sensor, buf, sizeof(buf));
                 {
-                    printf("Got data: %d: %s", ret, buf);
                     if(ret > 0)
                         parse_msg(&state, buf, timestamp);
                 }

@@ -453,7 +453,7 @@ main(int argc, char **argv)
 {
     // generic sensor driver
     state_t state;
-    state.gsd = gsd_create (argc, argv, "remote-helm.os-conduit-acfr", &myopts);
+    state.gsd = gsd_create (argc, argv, "os-conduit-acfr", &myopts);
     gsd_canonical (state.gsd, '\r','\n');
     gsd_launch (state.gsd);
     
