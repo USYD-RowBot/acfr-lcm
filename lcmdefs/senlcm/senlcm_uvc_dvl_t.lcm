@@ -1,0 +1,14 @@
+package senlcm;
+
+struct uvc_dvl_t
+{
+    int64_t utime;
+	
+    double vx; 
+    double vy; 
+    double vz; 
+    double xdist; 
+    double ydist; 
+    double dfs; 
+    double alt; 
+}
