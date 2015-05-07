@@ -104,11 +104,35 @@ int acfr_sensor_open(acfr_sensor_t *s)
         hints.ai_socktype = SOCK_STREAM;
         getaddrinfo(s->ip, s->inet_port, &hints, &spec_addr);
     	s->fd = socket(spec_addr->ai_family, spec_addr->ai_socktype, spec_addr->ai_protocol);
-        if(connect(s->fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0) 
+        
+//		if(connect(s->fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0) 
+//        {
+//	        printf("Could not connect to %s on port %s\n", s->ip, s->inet_port);
+//    		return 0;
+//        }
+		
+		int retry_count = 0;
+		int ret;
+		int i = 0;
+		while(retry_count < 180)
+		{
+			ret = connect(s->fd, spec_addr->ai_addr, spec_addr->ai_addrlen);
+			if(ret > -1)
+				break;
+			else
+			{
+				printf("Could not connect to %s on port %s, attempt %d\n", s->ip, s->inet_port, i++);
+				usleep(1e6);
+				retry_count++;
+			}
+		}
+
+		if(ret < 0)
         {
 	        printf("Could not connect to %s on port %s\n", s->ip, s->inet_port);
     		return 0;
         }
+		
 
 		// set the socket keepalive flag
 		int optval = 1;

@@ -16,6 +16,7 @@
 #include "acfr-common/nmea.h"
 #include "acfr-common/sensor.h"
 #include "acfr-common/socket.h"
+#include "acfr-common/units.h"
 
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 #include "perls-lcmtypes/senlcm_uvc_ack_t.h"
@@ -24,10 +25,10 @@
 #include "perls-lcmtypes/senlcm_uvc_rphtd_t.h"
 #include "perls-lcmtypes/senlcm_uvc_dvl_t.h"
 #include "perls-lcmtypes/senlcm_gpsd3_t.h"
+#include "perls-lcmtypes/senlcm_usbl_fix_t.h"
+#include "perls-lcmtypes/senlcm_uvc_omstart_t.h"
+#include "perls-lcmtypes/senlcm_uvc_omstop_t.h"
 
-#define DTOR M_PI/180
-#define UNITS_KNOT_TO_METER_PER_SEC (0.514444444)
-#define UNITS_FEET_TO_METER          (0.3048)
 
 #define GPS_PORT 10066
 
@@ -35,57 +36,61 @@ typedef struct
 {
     lcm_t *lcm;
     acfr_sensor_t *sensor;
-	udp_info_t gps_udp_info;
-	int osi_mode;
-	char *base_path;
+    udp_info_t gps_udp_info;
+    int osi_mode;
+    char *base_path;
+	int send_opos;
+	double vx_knots;
 } state_t;
+
+
 
 int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
 {
-	
-	// We need to detect when a mission has stopped so we can stop the logger
-	if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
-	{
-		system("killall -9 lcm-logger");	
-	}
-	else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
-	{
-		// Generate a file path for the mission		
-		char path_name[256] = {'\0'};
-		strcpy(path_name, state->base_path);
-		if(path_name[strlen(path_name) - 1] != '/')
-                strcat(path_name, "/");
 
-		struct timeval tv;
-		timestamp_to_timeval(osi->utime, &tv);
-		struct tm tm;
-		localtime_r (&tv.tv_sec, &tm);
-		char mission_date_name[64];
-		memset(mission_date_name, 0, sizeof(mission_date_name));
-		
-		char acfr_format_r[32] = "r%Y%m%d_%H%M%S_";
-		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
-		strcat(path_name, mission_date_name);
-		strcat(path_name, osi->mission_name);
+    // We need to detect when a mission has stopped so we can stop the logger
+    if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
+    {
+        system("killall -9 lcm-logger");
+    }
+    else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
+    {
+        // Generate a file path for the mission
+        char path_name[256] = {'\0'};
+        strcpy(path_name, state->base_path);
+        if(path_name[strlen(path_name) - 1] != '/')
+            strcat(path_name, "/");
 
-		char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";		 
-		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
-		strcat(path_name, mission_date_name);
-		
-		char cmd_str[256];
-		sprintf(cmd_str, "mkdir -p %s\n", path_name);
-		system(cmd_str);
+        struct timeval tv;
+        timestamp_to_timeval(osi->utime, &tv);
+        struct tm tm;
+        localtime_r (&tv.tv_sec, &tm);
+        char mission_date_name[64];
+        memset(mission_date_name, 0, sizeof(mission_date_name));
 
-		
-		sprintf(cmd_str, "mkdir -p %s\n", path_name);
-		system(cmd_str);
-		sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
-		system(cmd_str);
-	}
+        char acfr_format_r[32] = "r%Y%m%d_%H%M%S_";
+        strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
+        strcat(path_name, mission_date_name);
+        strcat(path_name, osi->mission_name);
 
-	state->osi_mode = osi->mode;
+        char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";
+        strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
+        strcat(path_name, mission_date_name);
 
-	return 1;
+        char cmd_str[256];
+        sprintf(cmd_str, "mkdir -p %s\n", path_name);
+        system(cmd_str);
+
+
+        sprintf(cmd_str, "mkdir -p %s\n", path_name);
+        system(cmd_str);
+        sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
+        system(cmd_str);
+    }
+
+    state->osi_mode = osi->mode;
+
+    return 1;
 }
 
 /* returns 1 for successfully classifying and publishing uvc to
@@ -195,11 +200,11 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 11, &magnetic_dec))
             ERROR ("unable to parse OSI magnetic_dec");
 
-		char mission_name[128] ={'\0'};
-		if (!nmea_arg (msg, 12, mission_name))
+        char mission_name[128] = {'\0'};
+        if (!nmea_arg (msg, 12, mission_name))
             ERROR ("unable to parse current mission name");
 
-		double mission_time_remaining = 0;
+        double mission_time_remaining = 0;
         if (!nmea_argf (msg, 13, &mission_time_remaining))
             ERROR ("unable to parse mission time remaining");
 
@@ -221,13 +226,17 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             .altimeter      = UNITS_FEET_TO_METER * altimeter,
             .park_time      = park_time,
             .magnetic_dec   = magnetic_dec,
-			.mission_name	= mission_name,
-			.mission_time_remaining = mission_time_remaining,
+            .mission_name	= mission_name,
+            .mission_time_remaining = mission_time_remaining,
         };
+		
         senlcm_uvc_osi_t_publish (state->lcm, "UVC_OSI", &data);
 
-		// start or stop the logger
-		start_lcm_logger(&data, state);
+        // start or stop the logger
+        start_lcm_logger(&data, state);
+
+		// Save this for later		
+		state->vx_knots = speed;
 
         return 1;
     }
@@ -318,7 +327,7 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         senlcm_uvc_rphtd_t_publish (state->lcm, "UVC_RPH", &data);
         return 1;
     }
-	// $DVL -- uvc to host DVL string
+    // $DVL -- uvc to host DVL string
     else if (0==strncmp (msg, "$DVL", 4))
     {
 
@@ -364,12 +373,12 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         senlcm_uvc_dvl_t_publish (state->lcm, "UVC_DVL", &data);
         return 1;
     }
-	// $GPRMC -- uvc to host GPS string
+    // $GPRMC -- uvc to host GPS string
     else if (0==strncmp (msg, "$GPRMC", 6))
     {
-		// we will be rebroadcasting the RMC message so that gpsd can be run
-		send_udp(&state->gps_udp_info, msg, strlen(msg));
-	}
+        // we will be rebroadcasting the RMC message so that gpsd can be run
+        send_udp(&state->gps_udp_info, msg, strlen(msg));
+    }
     // $ACK -- uvc ack of backseat driver cmd
     else if (0==strncmp (msg,"$ACK",4))
     {
@@ -418,6 +427,64 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
 }
 
 
+void omstart_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                  const senlcm_uvc_omstart_t *cmd, void *user)
+{
+    state_t *state = user;
+    char msg[256];
+	if(strlen(cmd->srp_name) == 0)
+		nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s*",
+                  cmd->msg_flag_gps,
+                  cmd->msg_flag_sounder,
+                  cmd->msg_flag_cal_pressure,
+                  cmd->mission_type,
+                  cmd->mission_name);
+	else
+		nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s,%s*",
+                  cmd->msg_flag_gps,
+                  cmd->msg_flag_sounder,
+                  cmd->msg_flag_cal_pressure,
+                  cmd->mission_type,
+                  cmd->mission_name,
+				  cmd->srp_name);
+printf("OMSTART msg: %s\n", msg);
+    acfr_sensor_write(state->sensor, msg, strlen(msg));
+
+	if(cmd->msg_flag_gps)
+		state->send_opos = 1;
+}
+
+void omstop_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                 const senlcm_uvc_omstop_t *cmd, void *user)
+{
+    state_t *state = user;
+
+    char msg[256];
+    nmea_sprintf (msg, "$OMSTOP,%d*", cmd->msg_flag);
+
+    acfr_sensor_write(state->sensor, msg, strlen(msg));
+}
+
+
+
+void usbl_fix_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_usbl_fix_t *uf, void *u)
+{
+    // We have loaded a mission whilst under water so we need to send an OPOS message
+    state_t *state = (state_t *)u;
+	char msg[256];
+	if(state->send_opos)
+	{
+		nmea_sprintf (msg, "$OPOS,%3.7f,%3.7f,%3.7f,0,20,*",
+						uf->latitude * RTOD,
+						uf->longitude * RTOD,
+						state->vx_knots);
+		acfr_sensor_write(state->sensor, msg, strlen(msg));
+
+		state->send_opos = 0;
+	}
+}
+
+
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     // need to send a message once a second to UVC to ask for the state information
@@ -461,16 +528,20 @@ int main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
 
-	// get the base image path
-	sprintf(key, "%s.base_path", rootkey);
-	state.base_path = bot_param_get_str_or_fail(state.sensor->param, key); 
-	state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
+    // get the base image path
+    sprintf(key, "%s.base_path", rootkey);
+    state.base_path = bot_param_get_str_or_fail(state.sensor->param, key);
+    state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
+	state.send_opos = 0;
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+	senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART", &omstart_handler, &state);
+	senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP", &omstop_handler, &state);
+	senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX", &usbl_fix_handler, &state);
 
-	// create a UDP socket to send the GPRMC message out on
-	create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);
+    // create a UDP socket to send the GPRMC message out on
+    create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);
 
     char buf[128];
     fd_set rfds;

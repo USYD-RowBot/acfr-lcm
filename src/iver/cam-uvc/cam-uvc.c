@@ -33,6 +33,8 @@ typedef struct
 int parse_msg(state_t *state, char *buf)
 {
 
+	printf("%s", buf);
+
     // check to see what the message is
     if(!nmea_validate_checksum(buf))
         return 0;
