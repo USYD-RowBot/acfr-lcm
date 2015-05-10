@@ -33,8 +33,6 @@ typedef struct
 int parse_msg(state_t *state, char *buf)
 {
 
-	printf("%s", buf);
-
     // check to see what the message is
     if(!nmea_validate_checksum(buf))
         return 0;
@@ -91,20 +89,21 @@ void uvc_osi_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_uv
 {
 	state_t *state = (state_t *)u;
 	acfrlcm_auv_camera_control_t cc;
-	memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
+	char path_name[256];
 	// We need to detect when a mission has stopped so we can clear the path for the logger
 	if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
 	{	
+		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
 		cc.utime = timestamp_now();
 		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_STOP;
-		char path = '\0';
-		cc.path = &path;
+		memset(path_name, 0, sizeof(path_name));
+		sprintf(path_name, " ");
+		cc.path = path_name;
 		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
 	}
 	else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
 	{
-		// Generate a file path for the mission		
-		char path_name[256] = {'\0'};
+		// Generate a file path for the mission				
 		strcpy(path_name, state->base_path);
 		if(path_name[strlen(path_name) - 1] != '/')
                 strcat(path_name, "/");
@@ -127,13 +126,20 @@ void uvc_osi_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_uv
 		char cmd_str[256];
 		sprintf(cmd_str, "mkdir -p %s\n", path_name);
 		system(cmd_str);
-			
+
+		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
 		cc.utime = timestamp_now();
 		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_SET_PATH;
 		cc.path = path_name;
 		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
 
+		usleep(500000);
+
+		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
 		cc.utime = timestamp_now();
+		memset(path_name, 0, sizeof(path_name));
+		sprintf(path_name, " ");
+		cc.path = path_name;
 		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START;
 		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
 
