@@ -380,3 +380,84 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     
 }
 
+void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_dvl_t *dvl, state_c* state)
+{
+    auv_data_tools::Evologics_Fix_Data usbl_data;
+
+    const double bad_value = 999.99;
+
+	/*
+	 * Check the status of the bottom tracking
+	 * - If the values are close to bad value or
+	 * - If we have no bottom lock (status != 0)
+	 */
+	bool btv_ok = true;
+	if( (fabs(dvl->vx - bad_value) < 1e-3) ||
+		(fabs(dvl->vy - bad_value) < 1e-3) ||
+		(fabs(dvl->vz - bad_value) < 1e-3) ||
+		(fabs(dvl->alt - bad_value) < 1e-3))
+	{
+		btv_ok = false;
+
+	}
+
+	state->bottomLock = btv_ok;
+
+	if( btv_ok )
+	{
+	    auv_data_tools::RDI_Data rdi_data;
+	    rdi_data.set_raw_timestamp((double)dvl->utime/1e6);
+	    rdi_data.alt = dvl->alt;
+	    rdi_data.r1 = 0.0;
+	    rdi_data.r2 = 0.0;
+	    rdi_data.r3 = 0.0;
+	    rdi_data.r4 = 0.0;
+	    rdi_data.h = 0.0;
+	    rdi_data.p = 0.0;
+	    rdi_data.r = 0.0;
+	    rdi_data.nx = 0.0;
+	    rdi_data.ny = 0.0;
+	    rdi_data.nz = 0.0;
+	    rdi_data.vx = dvl->vx;
+	    rdi_data.vy = dvl->vy;
+	    rdi_data.vz = dvl->vz;
+	    rdi_data.COG = 0;   // FIXME
+	    rdi_data.SOG = 0;   // FIXME
+	    rdi_data.bt_status = 0;
+	    rdi_data.h_true = 0;   // FIXME
+	    rdi_data.p_gimbal = 0;   // FIXME
+	    rdi_data.sv = 1500;
+	    rdi_data.depth_rate = 0;   // FIXME
+        
+
+        if(state->mode == NAV)
+    		state->slam->handle_dvl_data(rdi_data);
+        else if(state->mode == RAW)
+        {
+            rdi_data.print(state->raw_out);
+	        state->raw_out << endl;
+	    }
+    }
+}
+
+void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state)
+{
+    auv_data_tools::OS_Compass_Data osc_data;
+    osc_data.roll = osc->rph[0];
+    osc_data.pitch = osc->rph[1];
+    osc_data.heading = osc->rph[2];
+    
+    // The handler in seabed interface assumes the depth of this message is in feet.
+    osc_data.depth = osc->rph[4] / UNITS_FEET_TO_METER;
+    
+    osc_data.set_raw_timestamp((double)osc->utime/1e6);
+
+    if(state->mode == NAV)
+       	state->slam->handle_OS_compass_data(osc_data);
+    else if(state->mode == RAW)
+    {
+        osc_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+}
+
