@@ -718,8 +718,6 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
 // Vimba frame callback, called for every frame that is sent from the camera            
 void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_frame)   
 {
-	printf("*");
-	return;
 
     state_t *state = in_frame->context[0];
     int64_t utime = timestamp_now();

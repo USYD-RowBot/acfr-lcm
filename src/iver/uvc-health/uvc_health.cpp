@@ -140,8 +140,8 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     //if(global_state.state == 0)
     //    status.status |= ABORT_BIT;
 
-	status.latitude = (float)(uvc_osi.latitude * RTOD);	
-	status.longitude = (float)(uvc_osi.longitude * RTOD);
+	status.latitude = (float)(uvc_osi.latitude);	
+	status.longitude = (float)(uvc_osi.longitude);
 	status.altitude = (unsigned char)(uvc_dvl.alt * 10.0);
 	status.depth = (short)(uvc_rph.depth * 10.0);
 	status.roll = (char)((uvc_rph.rph[0] * RTOD) * 10.0);
