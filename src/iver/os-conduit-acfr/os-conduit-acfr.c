@@ -73,14 +73,11 @@ int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
         strcat(path_name, mission_date_name);
         strcat(path_name, osi->mission_name);
 
-        char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";
-        strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
-        strcat(path_name, mission_date_name);
+        //char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";
+        //strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
+        //strcat(path_name, mission_date_name);
 
         char cmd_str[256];
-        sprintf(cmd_str, "mkdir -p %s\n", path_name);
-        system(cmd_str);
-
 
         sprintf(cmd_str, "mkdir -p %s\n", path_name);
         system(cmd_str);
