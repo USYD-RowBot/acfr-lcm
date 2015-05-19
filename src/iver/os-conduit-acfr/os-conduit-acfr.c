@@ -73,15 +73,18 @@ int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
         strcat(path_name, mission_date_name);
         strcat(path_name, osi->mission_name);
 
-        //char acfr_format_d[64] = "/d%Y%m%d_%H%M%S/lcm_%Y%m%d_%H%M%S";
-        //strftime(mission_date_name, sizeof(mission_date_name), acfr_format_d, &tm);
+        //char acfr_format_d[64] = "/%Y%m%d_%H%M%S";
+        char lcm_file_name[64];
+        char acfr_format_d[64] = "%s.lcm";
+        strftime(lcm_file_name, sizeof(lcm_file_name), acfr_format_d, mission_date_name);
         //strcat(path_name, mission_date_name);
 
         char cmd_str[256];
 
         sprintf(cmd_str, "mkdir -p %s\n", path_name);
         system(cmd_str);
-        sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
+        //sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
+        sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 %s/%s &\n", path_name, lcm_file_name);
         system(cmd_str);
     }
 

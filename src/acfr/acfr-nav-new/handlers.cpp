@@ -42,7 +42,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 	// asynchronously --- a mode 2 fix may still be reported after
 	// the number of satellites has dropped to 0.
 
-    if((gps->status >= 1) && (gps->fix.mode >= 2) && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
+    if((gps->status >= 1) && (gps->fix.mode >= 2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
     {
         if(state->mode == NAV)
         {
