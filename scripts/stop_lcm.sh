@@ -1,7 +1,4 @@
 #!/bin/bash
-<<<<<<< HEAD
-pkill bot-procman-dep
-=======
 
 pkill bot-procman-de
 
@@ -14,4 +11,3 @@ elif [ $result -eq 0 ]; then
 else
     echo "Unknown output of pkill ($result)"
 fi
->>>>>>> 42476afddd2fd5d78707f598a8883364747d4174

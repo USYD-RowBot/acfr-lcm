@@ -44,4 +44,6 @@ struct uvc_osi_t
     double  altimeter;      // meters
     int32_t  park_time;      // secs
     double magnetic_dec;
+	string mission_name;
+	double mission_time_remaining;
 }
