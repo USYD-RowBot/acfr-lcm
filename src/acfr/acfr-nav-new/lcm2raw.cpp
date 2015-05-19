@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
        if(argc != 3)
         {
             cout << "Usage: lcm2raw [lcm log file] [raw file]" << endl;
-            return 0;
+            return 1;
         }
     
         char url[256];
@@ -81,5 +81,5 @@ int main(int argc, char **argv) {
         delete state.lcm;
 //    }
 
-    return 1;
+    return 0;
 }

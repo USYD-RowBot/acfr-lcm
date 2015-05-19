@@ -1,0 +1,433 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.map-control {
+    background-color: #fff;
+    width: 27px;
+    height: 27px;
+    border-radius: 4px;
+    color: #000;
+    font-size: 18px;
+    line-height: 27px;
+    text-align: center;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    cursor: pointer; cursor: hand;
+}
+.map-control:hover {
+    background-color: #e0e0e0;
+}
+
+.map-control.active {
+    background-color: #428bca;
+    color: #fff;
+}
+
+.platform-dash {
+    background-color: rgba(0,0,0,0.5);
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    border-radius: 4px;
+    opacity: 0.9;
+    filter: alpha(opacity=90);
+    text-align: left;
+    padding: 10px;
+    /*display: none;*/
+    /*font-weight: bold;*/
+    color: #ffffff;
+    width: 170px;
+}
+.platform-dash .platform-alerts {
+    padding-right: 10px;
+    text-align: left;
+    display: block;
+}
+.platform-dash .platform-alerts .alert {
+    margin-bottom: 5px;
+    padding: 2px 4px 2px 4px;
+    border-radius: 9px;
+    text-transform: uppercase;
+    line-height: normal;
+    display: inline-block;
+    font-size: 9px;
+    width: 43px;
+    text-align: center;
+    margin: 0 2px 2px 0;
+}
+.platform-dash .platform-alerts .alert small {
+    font-size: 9px;
+    text-transform: none;
+}
+.platform-dash .platform-alerts .alert-success {
+    background-color: #89aa00;
+    color: #ffffff;
+}
+.platform-dash .platform-alerts .alert-danger {
+    background-color: #ff0000;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.platform-dash .hdg-rol {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    overflow: hidden;
+}
+.platform-dash .hdg-rol input {
+    display: none;
+}
+/*
+.platform-dash .hdg-rol input {
+    margin-top: 0px !important;
+    font-size: 12px !important;
+    text-shadow:1px 1px 0 #fff,
+        -1px -1px 0 #fff,
+        1px -1px 0 #fff,
+        -1px 1px 0 #fff,
+        0px 1px 0 #fff,
+        1px 0px 0 #fff,
+        0px -1px 0 #fff,
+        -1px 0px 0 #fff;
+}
+.platform-dash .hdg-rol input.knob.hdg {
+    margin-top: -12px !important;
+}
+.platform-dash .hdg-rol input.knob.hdg::before {
+    content: "H:" !important;
+}
+.platform-dash .hdg-rol input.knob.rol::before {
+    content: "R:";
+}
+*/
+
+.platform-dash .hdg-rol .hdg-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+.platform-dash .hdg-rol .rol-canvas {
+    position: absolute;
+    top: 25px;
+    left: 25px;
+}
+
+.platform-dash .rph-info {
+    font-size: 13px;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #fff;
+    position: relative;
+    width: 150px;
+    top: 40px;
+    right: 0px;
+    text-align: center;
+    text-shadow:1px 1px 0 #326594,
+        -1px -1px 0 #326594,
+        1px -1px 0 #326594,
+        -1px 1px 0 #326594,
+        0px 1px 0 #326594,
+        1px 0px 0 #326594,
+        0px -1px 0 #326594,
+        -1px 0px 0 #326594;
+}
+
+.platform-dash .platform-stat, .platform-dash .platform-pose {
+    text-transform: capitalize;
+}
+
+.platform-panel {
+    background-color: #fff;
+    width: 200px;
+    /*min-height: 50px;*/
+    border-radius: 4px;
+    padding: 4px;
+    color: #000;
+    font-size: 16px;
+    text-align: left;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    opacity: 0.8;
+    filter: alpha(opacity=80);
+    white-space: normal;
+}
+
+.platform-panel .info {
+    font-size: 12px;
+    color: #262626;
+    /*display: none;*/
+}
+.platform-panel .info b {
+    text-transform: capitalize;
+}
+
+.platform-panel .platform-ctrl {
+    background-color: #ffffff;
+    color: #000000;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    font-size: 16px;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    cursor: pointer; cursor: hand;
+    float: right;
+    margin-left: 3px;
+}
+.platform-panel .platform-ctrl:hover {
+    background-color: #d1d1d1;
+    color: #000;
+}
+.platform-panel .platform-ctrl.active {
+    background-color: #428bca;
+    color: #fff;
+}
+.platform-panel .platform-icon {
+    text-shadow: 0 1px 5px #000,
+				 0 -1px 5px #000,
+				 1px 0 5px #000,
+				 -1px 0 5px #000;
+}
+
+.platform-panel  .pbtns {
+    position: absolute;
+    display: inline-block;
+    right: 3px;
+    top: 3px;
+}
+.platform-panel .pbtns .platform-ctrl {
+    display: none;
+}
+.platform-panel .pbtns .pbtn-hover {
+    display: block;
+}
+.platform-panel .pbtns:hover .platform-ctrl {
+    display: block;
+}
+.platform-panel .pbtns:hover .pbtn-hover {
+    display: none;
+}
+.platform-panel .pbtns .active {
+    display: block;
+}
+
+
+
+.leaflet-zoom-animated {
+    z-index: 5;
+}
+.leaflet-image-layer {
+    z-index: 4;
+}
+
+.platform-dash .rph ul {
+    width: 0px;
+    margin: 0 auto;
+    padding: 0px;
+    list-style: none;
+    text-align: left;
+    font-size: 27px;
+    text-shadow:1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        0px 1px 0 #000,
+        1px 0px 0 #000,
+        0px -1px 0 #000,
+        -1px 0px 0 #000;
+
+    padding-left: 25px;
+    font-family: 'BebasNeueRegular', Arial, Helvetica, sans-serif;
+}
+
+.platform-dash .rph ul li {
+    display: inline;
+    text-align: center;
+    font-size: 11px;
+}
+
+.platform-dash .count ul {
+    width: 0px;
+    margin: 0 auto;
+    padding: 0px;
+    list-style: none;
+    text-align: left;
+    font-size: 18px;
+    text-shadow:1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        0px 1px 0 #000,
+        1px 0px 0 #000,
+        0px -1px 0 #000,
+        -1px 0px 0 #000;
+    padding-left: 0px;
+    font-family: 'BebasNeueRegular', Arial, Helvetica, sans-serif;
+}
+
+.platform-dash .count ul li {
+    display: inline;
+    text-align: center;
+}
+
+.platform-dash .progress-bar {
+    min-width: 1px;
+    text-shadow:1px 1px 0 #000,
+        -1px -1px 0 #000,
+        1px -1px 0 #000,
+        -1px 1px 0 #000,
+        0px 1px 0 #000,
+        1px 0px 0 #000,
+        0px -1px 0 #000,
+        -1px 0px 0 #000;
+}
+
+.platform-panel .error {
+    color: red;
+    font-weight: bold;
+    float: right;
+    text-align: left;
+    text-transform: none !important;
+    position: absolute;
+    width: 100px;
+    right: -105px;
+    top: 3px;
+    line-height: 13px;
+    font-size:13px;
+    text-shadow:2px 2px 0 #fff,
+        -2px -2px 0 #fff,
+        2px -2px 0 #fff,
+        -2px 2px 0 #fff,
+        0px 2px 0 #fff,
+        2px 0px 0 #fff,
+        0px -2px 0 #fff,
+        -2px 0px 0 #fff;
+}
+
+.hover-expand:hover>i {
+    /*display: none;*/
+    float: left;
+    padding: 5px;
+}
+.hover-expand:hover {
+    width: auto;
+    height: auto;
+}
+.hover-expand #track-layers {
+    display: none;
+    text-align: left;
+    font-size: 14px;
+    min-width: 100px;
+    padding: 5px;
+    /*line-height: 1.5;*/
+    margin: 0;
+    float: right;
+}
+.hover-expand:hover #track-layers {
+    display: block;
+}
+.hover-expand:hover #track-layers i {
+    display: block;
+    margin: 4px;
+}
+.hover-expand:hover #track-layers i.active {
+    font-weight: bold;
+    color: #428bca;
+}
+.hover-expand #track-layers li {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+/*.hover-expand #track-layers li i {*/
+    /*padding-right: 5px;*/
+    /*float: left;*/
+/*}*/
+
+/*
+.leaflet-control-attribution {
+    display: none;
+}
+*/
+
+.bootbox-confirm .modal-dialog {
+    /*margin: 100px auto;*/
+    width: 250px;
+}
+
+.leaflet-control-mouseposition {
+    position: fixed;
+    top: 10px;
+    left: 50px;
+}
+
+.platform-stat {
+    margin-bottom: 5px;
+}
+.progress {
+    height: 12px;
+    margin-bottom: 0px;
+}
+.progress .bat {
+    line-height: 12px;
+}
+.platform-panel .popover.fade.in {
+    opacity: 0.6;
+    /*margin-top: -10px;*/
+}
+.platform-panel .popover-content {
+    padding: 4px 8px;
+    font-size: 11px;
+    color: red;
+}
+
+.platform-panel .heartbeat {
+    line-height: 16px;
+    font-size: 9px;
+    color: greenyellow;
+    display: none;
+}
+
+.iframe {
+    position:absolute !important;
+    /*top: 50px;*/
+    /*left:50px;*/
+    width:300px;
+    background-color: rgba(1,1,1,0.65);;
+    padding:0 0 0 0;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.iframe .iframe-title {
+    color: #fff;
+    font-weight: bold;
+    padding: 4px 0 3px 5px;
+    cursor: pointer; cursor: move;
+}
+
+.iframe iframe {
+    border:0;
+    width:100%;
+    /*height:400px;*/
+    overflow: scroll;
+    padding:0;
+    margin: 0;
+}
+
+.leaflet-control-layers-expanded {
+    width: 270px;
+}
+
+.leaflet-control-layers-expanded label {
+    display: inline-block;
+    width: 120px;
+    height: 20px;
+    overflow: hidden;
+    padding: 0 0 2px 2px;
+}
+
+.leaflet-top {
+    z-index: 1001;
+}

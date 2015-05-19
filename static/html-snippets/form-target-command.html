@@ -1,0 +1,149 @@
+<b><i class="fa fa-external-link-square"></i> Set platform state: "<span id="auvstatetitle"></span>"</b><br>
+
+
+<br><br>
+<div role="tabpanel" id="auvstatemodal">
+
+  <!-- Nav tabs -->
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#auvstateform" aria-controls="auvstateform" role="tab" data-toggle="tab">SET STATE</a></li>
+    <li role="presentation"><a href="#auvcommandform" aria-controls="auvcommandform" role="tab" data-toggle="tab">SEND COMMAND</a></li>
+  </ul>
+
+
+
+<hr>
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div  role="tabpanel" class="tab-pane active"  id="auvstateform">
+        <form class="form-horizontal auvform" action="send_to_platform" method="POST">
+            <div class="form-group">
+                <label for="auvstate" class="col-sm-3 control-label">Online</label>
+
+                <div class="col-sm-6">
+                    <label class="radio" onclick="$('.auvstate').hide();">
+                        <input type="radio" name="auvstate" id="auvstate1" value="online" checked> Online
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auvstatepos" class="col-sm-3 control-label" >Recovered</label>
+
+                <div class="col-sm-6">
+                    <label class="radio" onclick="$('.auvstate').hide();$('#auvstate-follow').show();">
+                        <input type="radio" name="auvstate" id="auvstate3" value="follow"> On Deck (follow ship)
+                    </label>
+                    <select id="auvstate-follow" class="auvstate form-control"  style="display: none;" id="auvstatefollow" name="auvstatefollow">
+                        <option value="FALKOR">Falkor</option>
+                    </select>
+
+                    <label class="radio"  onclick="$('.auvstate').hide();$('#auvstate-stationary').show();">
+                        <input type="radio" name="auvstate" id="auvstate2" value="stationary"> Offline (stationary)
+                    </label>
+                    <div id="auvstate-stationary" class="auvstate" style="display: none;">
+                        <div style="width: 20%; float: right; text-align: right;">
+                            <a class="btn btn-primary" href="javascript:void(0)" onclick="getLatLon($('#auvstatelat'), $('#auvstatelon'))"><i class="fa fa-crosshairs"></i></a>
+                        </div>
+                        <div style="width: 80%; display: inline-block;">
+                            <input type="text" class="form-control" id="auvstatelat" name="auvstatelat" placeholder="Latitude">
+                            <input type="text" class="form-control" id="auvstatelon" name="auvstatelon" placeholder="Longitude">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="auvstatepos" class="col-sm-3 control-label">Description</label>
+
+                <div class="col-sm-6">
+                     <input type="text" class="form-control" id="auvstatemsg" name="auvstatemsg" placeholder="Next deployment / comment">
+                </div>
+            </div>
+            <input type="hidden" id="auvstateplatform" name="auvstateplatform">
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-6">
+                    <button type="submit" class="btn btn-success">Update State</button>
+                </div>
+            </div>
+        </form>
+        </div>
+
+        <div  role="tabpanel" class="tab-pane"  id="auvcommandform">
+        <form class="auvform form-horizontal" action="send_platform_command" method="POST">
+            <div class="form-group">
+                <label for="auvcmdpos" class="col-sm-3 control-label" >Command</label>
+
+                <div class="col-sm-6">
+                    <label class="radio" onclick="$('.auvcmd').hide();$('#auvcmd-abort').show();">
+                        <input type="radio" name="auvcmd" id="auvcmd3" value="abort"> Abort
+                    </label>
+                    <div id="auvcmd-abort" class="auvcmd"  style="display: none;">
+                        abort
+                    </div>
+
+                    <label class="radio"  onclick="$('.auvcmd').hide();$('#auvcmd-goto').show();">
+                        <input type="radio" name="auvcmd" id="auvcmd2" value="goto"> GoTo
+                    </label>
+                    <div id="auvcmd-goto" class="auvcmd" style="display: none;">
+                        <div style="width: 20%; float: right; text-align: right;">
+                            <a class="btn btn-primary" href="javascript:void(0)" onclick="getLatLon($('#auvcmdlat'), $('#auvcmdlon'))"><i class="fa fa-crosshairs"></i></a>
+                        </div>
+                        <div style="width: 80%; display: inline-block;">
+                            <input type="text" class="form-control" id="auvcmdlat" name="auvcmdlat" placeholder="Latitude">
+                            <input type="text" class="form-control" id="auvcmdlon" name="auvcmdlon" placeholder="Longitude">
+                            <input type="text" class="form-control" id="auvcmddep" name="auvcmddep" placeholder="Depth">
+                            <input type="text" class="form-control" id="auvcmdvel" name="auvcmdvel" placeholder="Velocity">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="auvcmdplatform" name="auvcmdplatform">
+            <div class="form-group">
+                <div class="col-sm-offset-3 col-sm-6">
+                    <button type="submit" class="btn btn-success">Send Command</button>
+                </div>
+            </div>
+        </form>
+        </div>
+    </div>
+    <hr>
+</div>
+
+
+
+<script>
+//callback handler for form submit
+$(".auvform").submit(function(e) {
+    var $form = $(this);
+    var postData = $form.serializeArray();
+    var formURL = $form.attr("action");
+    $.ajax(
+    {
+        url : formURL,
+        type: "POST",
+        data : postData,
+        success:function(data, textStatus, jqXHR){
+            $("#auvstatemodal").html(data.msg);
+        },
+        error: function(jqXHR, textStatus, errorThrown){
+            $("#auvstatemodal").html("ERROR!  "+errorThrown);
+        }
+    });
+    e.preventDefault(); //STOP default action
+    e.unbind(); //unbind. to stop multiple form submit.
+});
+
+
+function getLatLon($lat, $lon) {
+    $("#modal").modal("hide");
+    $(".leaflet-container").css("cursor","crosshair");
+    $(".leaflet-control-mouseposition").css("font-size","30px");
+    map.map.on("click",function(e){
+        $lat.val(e.latlng.lat);
+        $lon.val(e.latlng.lng);
+        map.map.off("click");
+        $(".leaflet-container").css("cursor","inherit");
+        $(".leaflet-control-mouseposition").css("font-size","inherit");
+        $("#modal").modal("show");
+    });
+}
+</script>
