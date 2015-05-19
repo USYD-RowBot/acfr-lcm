@@ -667,6 +667,24 @@ senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+        const senlcm_uvc_rphtd_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",            "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "roll",          "%f",       msg->rph[0]);
+    TEXTREAD_ADD_FIELD (tr, "pitch",          "%f",       msg->rph[1]);
+    TEXTREAD_ADD_FIELD (tr, "heading",          "%f",       msg->rph[2]);
+    TEXTREAD_ADD_FIELD (tr, "temperature",          "%f",       msg->T);
+    TEXTREAD_ADD_FIELD (tr, "depth",       "%f",       msg->depth);
+    textread_stop (tr);
+}
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Additional handlers added by ACFR

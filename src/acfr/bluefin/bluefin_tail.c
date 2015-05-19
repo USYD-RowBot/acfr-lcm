@@ -20,7 +20,6 @@
 int set_rts(int fd, int level)
 {
     int status;
-
     if (ioctl(fd, TIOCMGET, &status) == -1) {
         perror("setRTS(): TIOCMGET");
         return 0;
@@ -40,14 +39,14 @@ int bluefin_write(acfr_sensor_t *sensor, char *d)
 {
 #ifdef RS485_SEALEVEL
     // set the RTS pin to enable sending
-    set_rts(sensor->fd, 1);
+//	set_rts(sensor->fd, 1);
 #endif
 
      int ret = acfr_sensor_write(sensor, d, strlen(d));
      
 #ifdef RS485_SEALEVEL
     // clear the RTS pin to enable receiving
-    set_rts(sensor->fd, 0);
+//    set_rts(sensor->fd, 0);
 #endif
 
     return ret;
@@ -83,14 +82,18 @@ int main (int argc, char *argv[]) {
 
     // get the bluefin version numbers and print them out, we need to get three lines back
     char msg[64];
-    bluefin_write(sensor, "#00!?\n");
+	memset(msg, 0, sizeof(msg));
+	sprintf(msg, "#00!?\n");
+    bluefin_write(sensor, msg);
     int line_count = 0;
     for(int i = 0; i<3; i++)
     {
         int ret = acfr_sensor_read_timeout(sensor, msg, sizeof(msg), 1);
         if(ret > 0)
+		{
             line_count++;
-        printf("%s", msg);
+        	printf("%s", msg);
+		}
     }
     if(line_count != 3)
     {

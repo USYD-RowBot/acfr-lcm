@@ -41,6 +41,8 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_rdi_pd5_t_subscribe (lcm, "^.*RDI$", &senlcm_rdi_pd5_t_handler, lle);
     senlcm_tritech_es_t_subscribe (lcm, "^.*TRITECH_ES$", &senlcm_tritech_es_t_handler, lle);
     senlcm_uvc_osi_t_subscribe (lcm, "^.*OS_CONDUIT_OSI$", &senlcm_uvc_osi_t_handler, lle);
+    senlcm_uvc_osi_t_subscribe (lcm, "^.*UVC_OSI$", &senlcm_uvc_osi_t_handler, lle);
+    senlcm_uvc_rphtd_t_subscribe (lcm, "^.*UVC_RPH$", &senlcm_uvc_rphtd_t_handler, lle);
     // senlcm added by ACFR
     senlcm_ecopuck_t_subscribe (lcm, "ECOPUCK", &senlcm_ecopuck_t_handler, lle);
 	senlcm_oas_t_subscribe (lcm, "OAS", &senlcm_oas_t_handler, lle);
