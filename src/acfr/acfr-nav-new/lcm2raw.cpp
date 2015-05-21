@@ -44,12 +44,12 @@ int parseArguments(int argc, char **argv, char *logFileName) {
 
 int main(int argc, char **argv) {
 
-    char *logFileName;
+    //char *logFileName;
 //    if(parseArguments(argc, argv, logFileName)) {
        if(argc != 3)
         {
             cout << "Usage: lcm2raw [lcm log file] [raw file]" << endl;
-            return 0;
+            return 1;
         }
     
         char url[256];
@@ -73,11 +73,13 @@ int main(int argc, char **argv) {
         state.lcm->subscribeFunction("LQ_MODEM", on_lq_modem, &state);
         state.lcm->subscribeFunction("ACFR_AUV_VIS_RAWLOG", on_vis, &state);
         state.lcm->subscribeFunction("USBL_FIX.*", on_evologics, &state);
+        state.lcm->subscribeFunction("UVC_DVL", on_uvc_dvl, &state);
+        state.lcm->subscribeFunction("UVC_RPH", on_uvc_rph, &state);
         
         
         while(!state.lcm->handle());
         delete state.lcm;
 //    }
 
-    return 1;
+    return 0;
 }

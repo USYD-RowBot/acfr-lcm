@@ -401,6 +401,20 @@ main (int argc, char *argv[])
     // main gps read loop
     gps_stream (state->gpsdata, FLAGS, NULL);
     while (!state->gsd->done) {
+        if (gps_waiting (state->gpsdata, TIMEOUT_MICROSEC)) {
+			    
+			if (gps_read (state->gpsdata) == -1) {
+				ERROR ("gps_read error");
+            
+			}
+			else {
+            parse_gpsdata (state); 
+			}
+		}
+
+
+
+		/*
         if (!gps_waiting (state->gpsdata, TIMEOUT_MICROSEC)) {
             ERROR ("gpsd-client timed out waiting for data");
             exit (EXIT_FAILURE);
@@ -412,6 +426,7 @@ main (int argc, char *argv[])
         else {
             parse_gpsdata (state); 
         }
+		*/
     }
 
     state_destroy (state);

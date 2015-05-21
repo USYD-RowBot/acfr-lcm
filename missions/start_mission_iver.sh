@@ -23,7 +23,7 @@ killall -q acfr-cam-logger
 # copy the curent config file into the data directory
 cp /home/auv/git/acfr_lcm/config/iverACFR.cfg $LOGDIR
 cp /home/auv/git/acfr_lcm/config/slam_iver.cfg $LOGDIR
-cp /tmp/mission.cfg $LOGDIR
+cp /home/auv/mission.cfg $LOGDIR
 
 
 $LCMBINDIR/acfr-cam-logger -c "PROSILICA_..16" -o $IMAGE_LOGDIR > /dev/null 2> /dev/null &

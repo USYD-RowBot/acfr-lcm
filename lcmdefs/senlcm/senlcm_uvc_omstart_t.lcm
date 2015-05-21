@@ -11,4 +11,5 @@ struct uvc_omstart_t
     int32_t mission_type;
 
     string mission_name;
+	string srp_name;
 }

@@ -12,20 +12,15 @@
 #include <vimba/VimbaC.h>
 #include <pthread.h>
 #include <semaphore.h>
-
-#include <opencv2/core/core_c.h>
-#include <opencv2/imgproc/imgproc_c.h>
-//#include <opencv2/highgui/highgui_c.h>
+#include <tiffio.h>
 
 #include <bot_param/param_client.h>
-#include "perls-common/lcm_util.h"
-#include "perls-common/timestamp.h"
-#include "perls-vision/botimage.h"
+//#include "perls-common/lcm_util.h"
+#include "acfr-common/timestamp.h"
 #include "perls-lcmtypes/bot_core_image_t.h"
 #include "perls-lcmtypes/senlcm_prosilica_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_camera_control_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_vis_rawlog_t.h"
-
 
 #define BUFFERS 4
 
@@ -87,6 +82,8 @@ typedef struct
     VmbFrame_t frames[BUFFERS];
     
     camera_state_t camera_state;
+	int camera_state_change;
+	pthread_mutex_t camera_lock;
 } state_t;
 
 
@@ -721,6 +718,7 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
 // Vimba frame callback, called for every frame that is sent from the camera            
 void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_frame)   
 {
+
     state_t *state = in_frame->context[0];
     int64_t utime = timestamp_now();
     VmbError_t err;    
@@ -822,6 +820,7 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
 void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_camera_control_t *cc, void *u)
 {
     state_t *state = (state_t *)u;
+	
     switch(cc->command)
     {
         case ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START:
@@ -836,8 +835,9 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
             break;
             
         case ACFRLCM_AUV_CAMERA_CONTROL_T_SET_PATH:
-            state->path = realloc(state->path, strlen(cc->path) + 1);
-            memset(state->path, 0, strlen(cc->path) + 1);
+			printf("Path: %s, Length: %d\n", cc->path, strlen(cc->path));
+            state->path = realloc(state->path, strlen(cc->path) + 2);
+            memset(state->path, 0, strlen(cc->path) + 2);
             memcpy(state->path, cc->path, strlen(cc->path));
             // make sure the last charater is a '/', if not add one
             if(state->path[strlen(state->path) - 1] != '/')
@@ -851,12 +851,13 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
 int open_camera(state_t *state)
 {
     VmbError_t err;
-    
+    printf("Camera_name: %s\n", state->camera_name);
+
     // Open the camera
     err = VmbCameraOpen((const char *)state->camera_name, VmbAccessModeFull, &state->camera);    
     if(err == VmbErrorNotFound)
     {
-        fprintf(stderr, "There was a problem opening the Camera\n");
+        fprintf(stderr, "There was a problem opening the Camera (open_camera)\n");
         return 0;
     }
     
@@ -874,7 +875,7 @@ int open_camera(state_t *state)
     // set the camera attributes based on the config file
     if(set_camera_attributes(state) == -1)
     {
-        fprintf(stderr, "There was a problem programming the Camera\n");
+        fprintf(stderr, "There was a problem programming the Camera (open_camera)\n");
         return 0;
     }
         
@@ -951,8 +952,9 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
     state_t *state = (state_t *)context;
     
     char camera_name[255];
+	memset(camera_name, 0, sizeof(camera_name));
 
-    VmbFeatureStringGet(handle , "DiscoveryCameraIdent", camera_name, sizeof(camera_name), NULL);
+	VmbFeatureStringGet(handle , "DiscoveryCameraIdent", camera_name, sizeof(camera_name), NULL);
     printf ("Event was fired by camera %s\n", camera_name);
     
     char *event_type = NULL;
@@ -964,15 +966,22 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
         if(!strcmp(event_type, "Detected"))
         {
             // Camera was just attached, lets open it and configure it
-            state->camera_state = CAMERA_OPEN;
-            state->camera_name = malloc(strlen(camera_name));
-            memcpy(state->camera_name, camera_name, strlen(camera_name));
+			pthread_mutex_lock(&state->camera_lock);
+			state->camera_state_change = 1;
+            state->camera_state = CAMERA_OPEN;			
+            state->camera_name = malloc(strlen(camera_name) + 1);
+			memset(state->camera_name, 0, sizeof(state->camera_name));
+            strcpy(state->camera_name, camera_name);
+			pthread_mutex_unlock(&state->camera_lock);
             
         }
         else if(!strcmp(event_type, "Missing"))
         {
+			pthread_mutex_lock(&state->camera_lock);
+			state->camera_state_change = 1;
             state->camera_state = CAMERA_CLOSE;
             free(state->camera_name);
+			pthread_mutex_unlock(&state->camera_lock);
         }
         
     }    
@@ -1075,6 +1084,8 @@ int main(int argc, char **argv)
 
     printf("Installing detection callback\n");
     state.camera_state = CAMERA_NONE;
+	state.camera_state_change = 0;
+	pthread_mutex_init(&state.camera_lock, 0);
     // Register the callback to detect cameras
     VmbFeatureInvalidationRegister(gVimbaHandle, "DiscoveryCameraEvent", camera_plugged , &state);
     VmbFeatureCommandRun (gVimbaHandle , "GeVDiscoveryAllAuto");
@@ -1092,23 +1103,26 @@ int main(int argc, char **argv)
  
     // wait here
     while (!program_exit) {
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        lcmu_handle_timeout(state.lcm, &tv);
+        lcm_handle_timeout(state.lcm, 1000);
         
         // check the camera state
-        if(state.camera_state == CAMERA_OPEN)
-        {
-            printf("Opening camera\n");
-            if(!open_camera(&state))
-                fprintf(stderr, "There was a problem opening the camera\n");
-        }
-        else if(state.camera_state == CAMERA_CLOSE)
-        {
-            printf("closing camera\n");
-            close_camera(&state);
-        }
+		pthread_mutex_lock(&state.camera_lock);
+		if(state.camera_state_change)
+		{
+			if(state.camera_state == CAMERA_OPEN)
+			{
+				printf("Opening camera\n");
+				if(!open_camera(&state))
+					fprintf(stderr, "There was a problem opening the camera (main)\n");
+			}
+			else if(state.camera_state == CAMERA_CLOSE)
+			{
+				printf("closing camera\n");
+				close_camera(&state);
+			}
+			state.camera_state_change = 0;
+		}
+		pthread_mutex_unlock(&state.camera_lock);
     }    
     
     VmbShutdown();
