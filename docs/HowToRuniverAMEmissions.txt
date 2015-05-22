@@ -1,0 +1,48 @@
+* start vmware (xp)
+* start Ocean Server/VectorMap
+* plan mission
+* explorer to //192.168.154.80
+* copy new missions and srp to Missions directory on vehicle
+
+* rdesktop 192.168.154.80
+
+* click on 'ACFR stereo linux shell' terra term
+* should automatically log into our linux box
+* test cameras 
+    - cam-test
+    - > e1 (starts trigger)
+    - > e0 (stops trigger)
+    - > q (quit)
+
+* start UVC
+* verify instrumentshttp://www.linuxmint.com/start/maya
+* check manual control
+    
+* > ssh -YC 172.16.154.206 (to yellowbox)
+* > ~/start_lcm
+* > bot-procman-sheriff
+* > cd git/maptracker
+* > ./start_webserver.py acfrauv
+
+* Check connection to server from Collins
+* Firefox to 172.16.154.206:8080
+    
+ABORT MISSION
+* > git/acfr_lcm/mission/uvc_stop.py *should* send a stop message to the vehicle.  This should work if a tunnel is set up but should also work over the acoustic link.  This has not been tested
+    
+DOWNLOAD and PROCESSING
+* ~/git/scripts/lcmdata/getlcmdata.sh
+* ~/git/scripts/lcmdata/processlcmdata.sh
+*   - lcm2raw (can also run lcmlog-export -m /media/data/RAW_DATA/<campaign>/<dive>/r*.lcm to generate csv files that can be loaded into Matlab)
+*   - images_pixel
+*   - slam
+*   - mesh
+    
+DEBUG TOOLS
+* > cd git/acfr_lcm/buil
+* > bin/perls-core-spy
+* > bot-procmas-sheriff
+* Set up  tunnel through Windows machine to get lcm-tunnel set up over wifi
+p0     
+* > bot-lcm-tunnel 192.168.154.80 -r "AUVSTAT.*" -s ""
+
