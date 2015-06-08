@@ -68,16 +68,14 @@ int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
         char mission_date_name[64];
         memset(mission_date_name, 0, sizeof(mission_date_name));
 
-        char acfr_format_r[32] = "r%Y%m%d_%H%M%S_";
+        char acfr_format_r[64] = "r%Y%m%d_%H%M%S_";
         strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
+        strcat(mission_date_name, osi->mission_name);
         strcat(path_name, mission_date_name);
-        strcat(path_name, osi->mission_name);
+        //strcat(path_name, osi->mission_name);
 
-        //char acfr_format_d[64] = "/%Y%m%d_%H%M%S";
         char lcm_file_name[64];
-        char acfr_format_d[64] = "%s.lcm";
-        strftime(lcm_file_name, sizeof(lcm_file_name), acfr_format_d, mission_date_name);
-        //strcat(path_name, mission_date_name);
+        sprintf(lcm_file_name, "%s.lcm", mission_date_name);
 
         char cmd_str[256];
 
