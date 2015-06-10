@@ -1,6 +1,6 @@
 package senlcm;
 
-struct seabotix_vlbv_t
+struct seabotix_sensors_t
 {
     int64_t utime;
     

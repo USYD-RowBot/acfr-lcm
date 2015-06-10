@@ -10,12 +10,14 @@
 #include "perls-common/units.h"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes/senlcm_rt3202_t.h"
+#include "perls-lcmtypes/acfrlcm_ship_status_t.h"
 
 
 typedef struct 
 {
     lcm_t *lcm;
     senlcm_rt3202_t rt;
+    acfrlcm_ship_status_t ss;
     int count;
 } state_t;
 
@@ -138,11 +140,19 @@ int parse_ncom(unsigned char *d, state_t *state, int64_t timestamp)
     state->rt.p = (double)(get_24b_int(&d[55])) * 1e-6;
     state->rt.r = (double)(get_24b_int(&d[58])) * 1e-6;
     
+    state->ss.utime = timestamp;
+    state->ss.latitude = state->rt.lat;
+    state->ss.longitude = state->rt.lon;
+    state->ss.roll = state->rt.r;
+    state->ss.pitch = state->rt.p;
+    state->ss.heading = state->rt.h;
+    
     //if(d[62] == 0)
     //    parse_ncom_channel_0(&d[63], state);
     if(state->count == 9)
     {     
         senlcm_rt3202_t_publish(state->lcm, "RT3202", &state->rt);
+        acfrlcm_ship_status_t_publish(state->lcm, "SHIP_STATUS.RT3202", &state->ss);
         state->count = 0;
     }
     else
@@ -248,6 +258,11 @@ int main (int argc, char *argv[]) {
         setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, sizeof(struct timeval));
         
     }
+    
+    char ship_name[] = "Poseidon";
+    state.ss.name = ship_name;
+    state.ss.ship_id = 0;
+    
     int bytes_read;
     unsigned char buf[128];
     fd_set rfds;
