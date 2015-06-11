@@ -20,7 +20,7 @@
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 #include "acfr-common/timestamp.h"
-#include "perls-lcmtypes/senlcm_seabotix_vlbv_t.h"
+#include "perls-lcmtypes/senlcm_seabotix_sensors_t.h"
 
 // libpcap network filter
 #define NET_FILTER "host 230.0.0.0"
@@ -50,8 +50,8 @@ signal_handler(int sig_num)
 
 int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
 {
-    senlcm_seabotix_vlbv_t rov;
-    memset(&rov, 0, sizeof(senlcm_seabotix_vlbv_t));
+    senlcm_seabotix_sensors_t rov;
+    memset(&rov, 0, sizeof(senlcm_seabotix_sensors_t));
     
     rov.utime = timestamp;
     rov.heading = d2f(&d[8]);
@@ -92,7 +92,7 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
     rov.SV_speed = d2speed(d[58]);
     rov.SV_temperature = d[59];
 
-    senlcm_seabotix_vlbv_t_publish(lcm, "SEABOTIX_STATS", &rov);
+    senlcm_seabotix_sensors_t_publish(lcm, "SEABOTIX_SENSORS", &rov);
     
     return 1;
 }
@@ -101,30 +101,31 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
 void packet_callback(u_char *u,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
     state_t *state = (state_t *)u;
-    
+       
     if(program_exit)
         pcap_breakloop(state->descr);
-    
+ 
+        
     // check to see what port the data is on
     const struct ip *ip;
-    ip = (struct ip*)(packet + sizeof(struct ether_header));
+    ip = (struct ip*)(packet + 14);
     
     // We are only interested if the packet protocol is UDP
     if(ip->ip_p != IPPROTO_UDP)
         return;
         
     const struct udphdr *udp;
-    udp = (struct udphdr *)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+    udp = (struct udphdr *)(packet + 14 + sizeof(struct ip));
     
     // check the destination port
-    if(udp->dest != AHRS_PORT)
+    if(ntohs(udp->dest) != AHRS_PORT)
         return;
     
     // get a pointer to the payload data
-    const unsigned char *payload = (unsigned char *)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct udphdr));
+    const unsigned char *payload = (unsigned char *)(packet + 14 + sizeof(struct ip) + sizeof(struct udphdr));
             
     // check to see if the packet is correct
-    if(payload[0] == 0x69 && payload[1] == 0x54)
+    if(payload[0] == 0x69 && payload[1] == 0x45)
         parse_vlbv(payload, state->lcm, timestamp_now());       
        
 }

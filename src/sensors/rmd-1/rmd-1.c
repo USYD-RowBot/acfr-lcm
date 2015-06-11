@@ -56,7 +56,7 @@ main (int argc, char *argv[])
         else if(ret != 0)
         {
             rmd.utime = timestamp_now();
-            if(acfr_sensor_read(sensor, buf, sizeof(buf)) > 0)
+            if(acfr_sensor_read(sensor, buf, sizeof(buf) - 1) > 0)
             {
                 // parse out the voltage value leaving the mV off then end
                 memset(value, 0, sizeof(value));
