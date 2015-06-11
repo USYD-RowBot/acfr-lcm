@@ -2,15 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-//#include <turbojpeg.h>
 #include <jpeglib.h>
-//#include <opencv2/core/core_c.h>
-//#include <opencv2/imgproc/imgproc_c.h>
-//#include <opencv2/highgui/highgui_c.h>
 #include "perls-lcmtypes/bot_core_image_t.h"
-#include "perls-vision/botimage.h"
 #include "perls-common/lcm_util.h"
 #include "perls-lcmtypes/acfrlcm_compressed_image_t.h"
+#include "bayer.h"
 
 typedef struct
 {
@@ -36,85 +32,61 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 //        printf("Image: W=%d H=%d RS=%d PF=%d S=%d\n", image->width, image->height, image->row_stride, image->pixelformat, image->size);
     
          acfrlcm_compressed_image_t cimage;     // the structure to send
-         int step = 4;
+         int step = 1;
          int output_width = image->width / step; 
          int output_height =image->height / step;
          short *image_buffer;
-         unsigned char *image_8bit;
+         unsigned char *image_8bit, *image_8bit_rgb, *image_8bit_out;
          unsigned char *output_buffer = NULL;
             unsigned long output_size;
+			int stride;
 
          // Using libjpeg
         struct jpeg_compress_struct cinfo = {0};
         struct jpeg_error_mgr jerr;
-            
-//         tjhandle jhandle = tjInitCompress();
-//         if(jhandle == NULL) 
-//            printf("Error creating Turbo JPEG compressor\n");
-//         else
-/*         {
-            // first if its a bayer camera we want to turn it into an RGB image first
-            short *image_buffer;
-            unsigned char *image_8bit;
-            unsigned char *output_buffer = NULL;
-            unsigned long output_size;
-            int output_width = 640, output_height = 480;
-            
-            IplImage *img = cvCreateImageHeader(cvSize(image->width, image->height), IPL_DEPTH_16U, 1);
-            cvSetData(img, image->data, CV_AUTOSTEP);
-            IplImage *img_resized;
-*/
-            
+        
+		// Convert to 8bit
+		image_buffer = (short *)image->data;
+		image_8bit = (unsigned char *)malloc(output_width * output_height);
+		int count = 0;
+		for(int i=0; i<image->height; i+=step)
+			for(int j=0; j<image->width; j+=step)
+				image_8bit[count++] = image_buffer[j + i * image->width] >> 8;
 
-/*            
-            if(state->is_bayer)
-            {
+            
+        if(state->is_bayer)
+        {
+			printf("Is bayer\n");
                // Convert to RGB
-               IplImage *img_rgb = cvCreateImage(cvSize(image->width, image->height), IPL_DEPTH_16U, 3);
-               cvCvtColor(img, img_rgb, CV_BayerBG2RGB);
-               // Resize to 640 x 480
-               img_resized = cvCreateImage(cvSize(output_width, output_height), IPL_DEPTH_16U, 3);
-               cvResize(img_rgb, img_resized, CV_INTER_LINEAR);
-               image_buffer = (short *)img_resized->imageData;                             // pointer to the first element
-               image_8bit = (unsigned char *)malloc(output_width * output_height * 3);     // array for 8 bit version
-               for(int i=0; i<(output_width * output_height * 3); i++)
-                  image_8bit[i] = image_buffer[i] >> 8;
+			   image_8bit_rgb = (unsigned char *)malloc(output_width * output_height * 3);
+			gp_bayer_decode(image_8bit, output_width, output_height, image_8bit_rgb, BAYER_TILE_RGGB);
 
                // Using libjpeg
                cinfo.in_color_space = JCS_RGB;
-                 
-//               int ret = tjCompress2(jhandle, image_8bit, output_width, output_width * 3, output_height, TJPF_RGB, &output_buffer, &output_size, TJSAMP_422, state->quality, 0);  
-//               if(ret == -1)
-//                  printf("Error: %s\n", tjGetErrorStr());
-                    
-               cimage.is_rgb = 1;
-               cvReleaseImage(&img_rgb);
-                
-            }
-            else
-            {    
-               img_resized = cvCreateImage(cvSize(output_width, output_height), IPL_DEPTH_16U, 1);
-               cvResize(img, img_resized, CV_INTER_LINEAR);
-               // first convert the image to 8-bit as all jpegs are 8-bit
-*/               image_buffer = (short *)image->data;
-             //image_buffer = (short *)img_resized->imageData;
-               image_8bit = (unsigned char *)malloc(output_width * output_height);
-               //for(int i=0; i<(output_width * output_height); i++)
-               //   image_8bit[i] = image_buffer[i] >> 8;
-               int count = 0;
-                for(int i=0; i<image->height; i+=step)
-                    for(int j=0; j<image->width; j+=step)
-                        image_8bit[count++] = image_buffer[j + i * image->width] >> 8;
-               
+			   cimage.is_rgb = 1;
+			   image_8bit_out = image_8bit_rgb;
+			   stride = 3;
 
-               
-               // Using turbojpeg            
-//               int ret = tjCompress2(jhandle, image_8bit, output_width, output_width, output_height, TJPF_GRAY, &output_buffer, &output_size, TJSAMP_GRAY, state->quality, 0);  
-//               if(ret == -1)
-//                  printf("Error: %s\n", tjGetErrorStr());
-                    
+			   bot_core_image_t ti;
+			   memset(&ti, 0, sizeof(bot_core_image_t));
+			   ti.utime = image->utime;
+			   ti.width = output_width;
+			   ti.height = output_height;
+			   ti.row_stride = output_width * 3;
+			   ti.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
+			   ti.size = output_width * output_height * 3;
+			   ti.data = image_8bit_rgb;
+			   bot_core_image_t_publish(state->lcm, "TEST_IMG", &ti);
+
+		}         
+            
+		else
+            {    
+                cinfo.in_color_space = JCS_GRAYSCALE;
                cimage.is_rgb = 0;
-            //}
+			   image_8bit_out = image_8bit;
+			   stride = 1;
+            }
 
             // compress the 8 bit image usinf libjpeg
             JSAMPROW row_ptr[1];
@@ -130,10 +102,10 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
             jpeg_set_defaults(&cinfo);
             jpeg_set_quality(&cinfo, state->quality, 1);
             jpeg_start_compress(&cinfo, 1);
-            row_stride = output_width; //img_resized->width * img_resized->nChannels;
+            row_stride = output_width * stride; //img_resized->width * img_resized->nChannels;
 
             while (cinfo.next_scanline < cinfo.image_height) {
-                row_ptr[0] = &image_8bit[cinfo.next_scanline * row_stride];
+                row_ptr[0] = &image_8bit_out[cinfo.next_scanline * row_stride];
                 jpeg_write_scanlines(&cinfo, row_ptr, 1);
             }
 
@@ -148,13 +120,7 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
             cimage.image = output_buffer;
             acfrlcm_compressed_image_t_publish(state->lcm, state->out_channel, &cimage);
             
-            // Clean up
-//            tjFree(output_buffer);
-//            tjDestroy(jhandle);
             free(image_8bit);
-//            cvReleaseImage(&img_resized);
-//            cvReleaseImageHeader(&img);
-//       } 
 
         state->count = 0;      
     }

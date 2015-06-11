@@ -49,7 +49,7 @@ int create_udp_listen(char *port)
     return sockfd;
 }
 
-// Create a UDP listen socket
+// Create a UDP send socket
 int create_udp_send(udp_info_t *info, char *hostname, int port)
 {    
     
@@ -97,4 +97,62 @@ void get_localhost_sockaddr(struct sockaddr_in *servaddr, int port)
    servaddr->sin_port=htons(port);
 
 }
+
+
+int create_udp_multicast_listen(char *group, int port)
+{
+    int sockfd;
+    struct sockaddr_in addr;
+    struct ip_mreq mreq;
+    unsigned int yes;
+    
+    // Create a UDP socket
+    if((sockfd=socket(AF_INET,SOCK_DGRAM,0)) < 0) 
+    {
+	  perror("socket");
+	  return -1;
+    }
+    
+    // Set address reuse
+    if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) 
+    {
+       perror("Reusing ADDR failed");
+       return -1;
+    } 
+
+    // Set recieve errors
+    if(setsockopt(sockfd, SOL_SOCKET, IP_RECVERR, &yes, sizeof(yes)) < 0) 
+    {
+       perror("IP_RECVERR failed");
+       return -1;
+    } 
+
+    // Set up the address
+    memset(&addr,0,sizeof(addr));
+    addr.sin_family=AF_INET;
+    addr.sin_addr.s_addr=htonl(INADDR_ANY);
+    addr.sin_port=htons(port);
+
+    // Bind
+    if(bind(sockfd,(struct sockaddr *) &addr,sizeof(addr)) < 0) 
+    {
+        perror("bind");
+        return -1;
+    }
+
+    // Set multicast
+    mreq.imr_multiaddr.s_addr=inet_addr(group);
+    mreq.imr_interface.s_addr=htonl(INADDR_ANY);
+    //mreq.imr_interface.s_addr=inet_addr("192.168.2.10");
+    if (setsockopt(sockfd,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq)) < 0) 
+    {
+        perror("setsockopt");
+        return -1;
+    }
+
+    printf("UDP multicast listen socket open on group %s using port %d\n", group, port);
+    
+    return sockfd;
+}
+
 

@@ -21,6 +21,7 @@ int create_udp_listen(char *port);
 int create_udp_send(udp_info_t *info, char *hostname, int port);
 int send_udp(udp_info_t *info, const char *d, int len);
 void get_localhost_sockaddr(struct sockaddr_in *servaddr, int port);
+int create_udp_multicast_listen(char *group, int port);
 
 
 #endif // _ACFR_SOCKET_H
