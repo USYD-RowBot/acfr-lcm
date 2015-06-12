@@ -680,7 +680,6 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
         }
 
         unsigned char *img_resized = malloc(frame->width * frame->height * bpp / scale);
-        unsigned short *img_resized_16 = (unsigned short *)img_resized;
 
         // do the fast loop rescale
         int count = 0;
@@ -840,7 +839,7 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
         break;
 
     case ACFRLCM_AUV_CAMERA_CONTROL_T_SET_PATH:
-        printf("Path: %s, Length: %d\n", cc->path, strlen(cc->path));
+        printf("Path: %s, Length: %d\n", cc->path, (int)strlen(cc->path));
         state->path = realloc(state->path, strlen(cc->path) + 2);
         memset(state->path, 0, strlen(cc->path) + 2);
         memcpy(state->path, cc->path, strlen(cc->path));
@@ -976,7 +975,7 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
             state->camera_state_change = 1;
             state->camera_state = CAMERA_OPEN;
             state->camera_name = malloc(strlen(camera_name) + 1);
-            memset(state->camera_name, 0, sizeof(state->camera_name));
+            memset(state->camera_name, 0, strlen(state->camera_name));
             strcpy(state->camera_name, camera_name);
             pthread_mutex_unlock(&state->camera_lock);
 
