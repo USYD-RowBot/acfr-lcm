@@ -14,7 +14,8 @@
 
 #define UT_POOL_THREADS_MAX 1
 
-typedef struct ThreadDataRae {
+typedef struct ThreadDataRae
+{
     gsl_matrix *u1_dist;
     gsl_matrix *u2_dist;
     gsl_vector *x21;
@@ -24,7 +25,8 @@ typedef struct ThreadDataRae {
 } ThreadDataRae;
 
 
-typedef struct ThreadDataH {
+typedef struct ThreadDataH
+{
     gsl_matrix *u1_dist;
     gsl_matrix *u2_dist;
     gsl_vector *x21;
@@ -38,7 +40,8 @@ typedef struct ThreadDataH {
                                  * point */
 } ThreadDataH;
 
-typedef struct CommonData {
+typedef struct CommonData
+{
     gsl_matrix *sbaOutputs;
     GMutex *mutex;
     GMutex *sbaMutex;
@@ -70,7 +73,7 @@ static gsl_vector *
 stackCalibAlloc (const gsl_matrix *K, const gsl_vector *distCoeffs)
 {
     gsl_vector *stacked = gsl_vector_calloc (9);
-    
+
     double fx, fy, cx, cy, k1, k2, p1, p2, k3;
 
     /* get the values from K */
@@ -179,7 +182,7 @@ hauvDump (const gsl_vector *params, int npts, const gsl_matrix *u1, const gsl_ma
     }
 
     free (s);
-    
+
 }
 
 static void
@@ -203,7 +206,7 @@ threadFuncRae (gpointer data, gpointer user_data)
     gsl_matrix_set (K, 0, 2, gsl_vector_get (sigmaPoint, 2));
     gsl_matrix_set (K, 1, 2, gsl_vector_get (sigmaPoint, 3));
     gsl_matrix_set (K, 2, 2, 1);
-    
+
     /* enforce triangulation constraint */
     gsl_matrix *u1_dist_triconst, *u2_dist_triconst;
     gsl_vector *rel_pose21 = gsl_vector_alloc (5);
@@ -217,17 +220,17 @@ threadFuncRae (gpointer data, gpointer user_data)
     /* gslu_matrix_printf (u1_dist, "u1"); */
     /* gslu_matrix_printf (u2_dist, "u2"); */
     /* gslu_matrix_printf (K, "K"); */
-    
+
     vis_sba_2v_rae_enforce_tri_const_alloc (K, x21, u1_dist, u2_dist,
                                             tri_min_dist, tri_max_dist, &u1_dist_triconst, &u2_dist_triconst);
 
     gsl_matrix *X1_plot = NULL;
     vis_sba_2v_rae_nonlin_from_model_with_tri (K, &distCoeffs.vector,
-                                               x21, u1_dist_triconst, u2_dist_triconst,
-                                               10, FALSE,
-                                               tri_min_dist, tri_max_dist,
-                                               rel_pose21, rel_pose_cov21, NULL, FALSE,
-                                               &X1_plot, commonData->sbaMutex, NULL, NULL);
+            x21, u1_dist_triconst, u2_dist_triconst,
+            10, FALSE,
+            tri_min_dist, tri_max_dist,
+            rel_pose21, rel_pose_cov21, NULL, FALSE,
+            &X1_plot, commonData->sbaMutex, NULL, NULL);
     gsl_matrix_free (X1_plot);
 
     /* add to running total to compute sample covariance */
@@ -277,7 +280,7 @@ threadFuncH (gpointer data, gpointer user_data)
     gsl_matrix *rel_pose_cov21 = gsl_matrix_alloc (5,5);
 
     /* gslu_vector_printf (x21, "x21"); */
-    vis_sba_2v_h_nonlin_from_model (H, &distCoeffs.vector, u1_dist, u2_dist, K, fi, 
+    vis_sba_2v_h_nonlin_from_model (H, &distCoeffs.vector, u1_dist, u2_dist, K, fi,
                                     x21, rel_pose21, rel_pose_cov21, NULL, FALSE, commonData->sbaMutex, NULL, NULL);
 
     /* add to running total to compute sample covariance */
@@ -305,7 +308,7 @@ void
 vis_sba_ut_cov_2v_H (const gsl_matrix *sigmaCalib,
                      const gsl_vector *params, const gsl_matrix *H, const gsl_matrix *u1_dist,
                      const gsl_matrix *u2_dist, const gsl_matrix *K,
-                     const gsl_vector *distCoeffs, const perllcm_van_feature_t *fi, 
+                     const gsl_vector *distCoeffs, const perllcm_van_feature_t *fi,
                      const gsl_vector *featscalei, const gsl_vector *featscalej,
                      GMutex *sbaMutex, gsl_matrix *rel_pose_cov)
 {
@@ -339,8 +342,9 @@ vis_sba_ut_cov_2v_H (const gsl_matrix *sigmaCalib,
     GThreadPool *pool = g_thread_pool_new (threadFuncH, user_data, UT_POOL_THREADS_MAX, TRUE, NULL);
 
     /* For each sigma point, kick off new thread */
-    for (int i=0; i<sigmaPoints->size2; i++) {
-        
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
+
         gsl_vector_const_view ithSigmaPoint = gsl_matrix_const_column (sigmaPoints, i);
 
         /* Create the thread data */
@@ -362,7 +366,7 @@ vis_sba_ut_cov_2v_H (const gsl_matrix *sigmaCalib,
         gsl_vector_memcpy (threadData->featscalei, featscalei);
         gsl_vector_memcpy (threadData->featscalej, featscalej);
         threadData->fi = fi;
-        
+
         gsl_vector_view x21_t = gsl_vector_subvector (threadData->x21, 0, 3);
         gsl_vector_view x21_rph = gsl_vector_subvector (threadData->x21, 3, 3);
         gsl_vector_const_view x21_ae = gsl_vector_const_subvector (params, 8, 2);
@@ -395,7 +399,8 @@ vis_sba_ut_cov_2v_H (const gsl_matrix *sigmaCalib,
     /* gslu_vector_printf (meanWeights, "meanWeights"); */
     /* gslu_vector_printf (covWeights, "covWeights"); */
 
-    for (int i=0; i<sigmaPoints->size2; i++) {
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
         /* muPrime = muPrime + meanWeights(i)*y(:,i) */
         gsl_vector_const_view ithColumn = gsl_matrix_const_column (user_data->sbaOutputs, i);
         gsl_vector *ithColumnScaled = gsl_vector_calloc (ithColumn.vector.size);
@@ -405,7 +410,8 @@ vis_sba_ut_cov_2v_H (const gsl_matrix *sigmaCalib,
         gsl_vector_free (ithColumnScaled);
     }
 
-    for (int i=0; i<sigmaPoints->size2; i++) {
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
         /* sigmaPrime = sigmaPrime + covWeight(i)*(y(:,i) - muPrime)*(y(:,i) - muPrime)' */
         gsl_vector_const_view ithColumn = gsl_matrix_const_column (user_data->sbaOutputs, i);
         gsl_vector *v = gsl_vector_calloc (5);
@@ -436,7 +442,7 @@ void
 vis_sba_ut_cov_2v_Rae (const gsl_matrix *sigmaCalib,
                        const gsl_vector *params, const gsl_matrix *u1_dist,
                        const gsl_matrix *u2_dist, const gsl_matrix *K,
-                       const gsl_vector *distCoeffs, 
+                       const gsl_vector *distCoeffs,
                        const gsl_vector *featscalei, const gsl_vector *featscalej,
                        GMutex *sbaMutex, gsl_matrix *rel_pose_cov)
 {
@@ -470,8 +476,9 @@ vis_sba_ut_cov_2v_Rae (const gsl_matrix *sigmaCalib,
     GThreadPool *pool = g_thread_pool_new (threadFuncRae, user_data, UT_POOL_THREADS_MAX, TRUE, NULL);
 
     /* For each sigma point, kick off new thread */
-    for (int i=0; i<sigmaPoints->size2; i++) {
-        
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
+
         gsl_vector_const_view ithSigmaPoint = gsl_matrix_const_column (sigmaPoints, i);
 
         /* Create the thread data */
@@ -486,7 +493,7 @@ vis_sba_ut_cov_2v_Rae (const gsl_matrix *sigmaCalib,
         gsl_matrix_memcpy (threadData->u1_dist, u1_dist);
         gsl_matrix_memcpy (threadData->u2_dist, u2_dist);
         gsl_vector_memcpy (threadData->sigmaPoint, &(ithSigmaPoint.vector));
-        
+
         gsl_vector_view x21_t = gsl_vector_subvector (threadData->x21, 0, 3);
         gsl_vector_view x21_rph = gsl_vector_subvector (threadData->x21, 3, 3);
         gsl_vector_const_view x21_ae = gsl_vector_const_subvector (params, 5, 2);
@@ -519,7 +526,8 @@ vis_sba_ut_cov_2v_Rae (const gsl_matrix *sigmaCalib,
     /* gslu_vector_printf (meanWeights, "meanWeights"); */
     /* gslu_vector_printf (covWeights, "covWeights"); */
 
-    for (int i=0; i<sigmaPoints->size2; i++) {
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
         /* muPrime = muPrime + meanWeights(i)*y(:,i) */
         gsl_vector_const_view ithColumn = gsl_matrix_const_column (user_data->sbaOutputs, i);
         gsl_vector *ithColumnScaled = gsl_vector_calloc (ithColumn.vector.size);
@@ -529,7 +537,8 @@ vis_sba_ut_cov_2v_Rae (const gsl_matrix *sigmaCalib,
         gsl_vector_free (ithColumnScaled);
     }
 
-    for (int i=0; i<sigmaPoints->size2; i++) {
+    for (int i=0; i<sigmaPoints->size2; i++)
+    {
         /* sigmaPrime = sigmaPrime + covWeight(i)*(y(:,i) - muPrime)*(y(:,i) - muPrime)' */
         gsl_vector_const_view ithColumn = gsl_matrix_const_column (user_data->sbaOutputs, i);
         gsl_vector *v = gsl_vector_calloc (5);

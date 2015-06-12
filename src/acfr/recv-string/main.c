@@ -27,27 +27,27 @@ int main(int argc, char **argv)
     state_t state;
     state.got_string = 0;
     long long start_time;
-    
+
     int timeout = atoi(argv[2]);
     lcm_t *lcm = lcm_create(NULL);
     senlcm_raw_ascii_t_subscribe(lcm, argv[1], &callback, &state);
-    
+
     while(!(state.got_string) && (timeout > 0))
     {
         struct timeval tv;
-	    tv.tv_sec = timeout / 1000000;
-	    tv.tv_usec = timeout % 1000000;
+        tv.tv_sec = timeout / 1000000;
+        tv.tv_usec = timeout % 1000000;
         start_time = timestamp_now();
         lcmu_handle_timeout(lcm, &tv);
         timeout -= (timestamp_now() - start_time);
     }
-    
+
     if(state.got_string)
         printf("%s", state.return_string);
-        
+
     lcm_destroy(lcm);
-    
+
     return 1;
 }
-    
-    
+
+

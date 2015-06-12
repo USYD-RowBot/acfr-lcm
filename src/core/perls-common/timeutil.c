@@ -10,7 +10,8 @@
 #include "timestamp.h"
 #include "timeutil.h"
 
-struct timer_thread_context {
+struct timer_thread_context
+{
     struct timespec spec;
     timeutil_timer_callback callback;
     void *user;
@@ -31,7 +32,8 @@ timer_thread (void *arg)
     free (_ttc);
 
     signal (SIGUSR1, timer_thread_sighandler);
-    while (ttc.callback (ttc.user)) {
+    while (ttc.callback (ttc.user))
+    {
         struct timespec req=ttc.spec, rem;
         timeutil_nanosleep_fully (&req, &rem);
     }
@@ -74,11 +76,13 @@ int
 timeutil_nanosleep_fully (const struct timespec *req, struct timespec *rem)
 {
     if (nanosleep (req, rem) < 0)
-        if (errno == EINTR) {
+        if (errno == EINTR)
+        {
             struct timespec temp_rem;
             return timeutil_nanosleep_fully (rem, &temp_rem);
         }
-        else {
+        else
+        {
             PERROR ("timeutil_nanosleep_fully()");
             return -1;
         }
@@ -90,7 +94,8 @@ int
 timeutil_nsleep (int64_t nsec)
 {
     struct timespec rem;
-    struct timespec req = {
+    struct timespec req =
+    {
         .tv_sec = nsec / 1000000000,
         .tv_nsec = nsec % 1000000000,
     };
@@ -109,16 +114,19 @@ timeutil_strftime (char *s, size_t max, const char *format, int64_t utime)
 
     const char *formatend = format + strlen (format);
     char format2[1024], tmp[1024];
-    
+
     // handle %i arg if present
     char *istr = strstr (format, "%i");
-    if (istr != NULL) {
-        if (istr > format) {
+    if (istr != NULL)
+    {
+        if (istr > format)
+        {
             memset (tmp, '\0', sizeof (tmp));
             strncpy (tmp, format, istr - format);
             sprintf (format2, "%s%06ld%s", tmp, tv.tv_usec, istr+2 < formatend ? istr+2 : "");
         }
-        else {
+        else
+        {
             sprintf (format2, "%06ld%s", tv.tv_usec, format+2);
         }
     }

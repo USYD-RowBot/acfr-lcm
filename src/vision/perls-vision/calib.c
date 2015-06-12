@@ -19,7 +19,8 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
 {
     perllcm_van_calib_t calib = {0};
 
-    if (!bot_param_has_key (param, rootkey)) {
+    if (!bot_param_has_key (param, rootkey))
+    {
         ERROR ("unable to find key `%s or %s.calib`", rootkey, rootkey);
         exit (-1);
     };
@@ -29,7 +30,8 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     // matlab calibration file
     char mykey[1024];
     snprintf (mykey, sizeof mykey, "%s.mfile", rootkey);
-    if (bot_param_has_key (param, mykey)) {
+    if (bot_param_has_key (param, mykey))
+    {
         char *mfile;
         bot_param_get_str (param, mykey, &mfile);
         printf ("mfile=%s\n", mfile);
@@ -48,12 +50,14 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     snprintf (mykey, sizeof mykey, "%s.fc", rootkey);
     if (bot_param_has_key (param, mykey))
         bot_param_get_double_array (param, mykey, calib.fc, 2);
-    else {
+    else
+    {
         ERROR ("[%s] unable to parse focal length: fc\n", rootkey);
         exit (EXIT_FAILURE);
     }
     snprintf (mykey, sizeof mykey, "%s.fc_error", rootkey);
-    if (bot_param_has_key (param, mykey)) {
+    if (bot_param_has_key (param, mykey))
+    {
         bot_param_get_double_array (param, mykey, calib.fc_std, 2);
         calib.fc_std[0] /= 3;
         calib.fc_std[1] /= 3;
@@ -65,12 +69,14 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     snprintf (mykey, sizeof mykey, "%s.cc", rootkey);
     if (bot_param_has_key (param, mykey))
         bot_param_get_double_array (param, mykey, calib.cc, 2);
-    else {
+    else
+    {
         ERROR ("[%s] unable to parse principal point: cc\n", rootkey);
         exit (EXIT_FAILURE);
     }
     snprintf (mykey, sizeof mykey, "%s.cc_error", rootkey);
-    if (bot_param_has_key (param, mykey)) {
+    if (bot_param_has_key (param, mykey))
+    {
         bot_param_get_double_array (param, mykey, calib.cc_std, 2);
         calib.cc_std[0] /= 3;
         calib.cc_std[1] /= 3;
@@ -95,9 +101,11 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     int len = 0;
     int n_kc = sizeof (calib.kc) / sizeof (calib.kc[0]);
     snprintf (mykey, sizeof mykey, "%s.kc", rootkey);
-    if (bot_param_has_key (param, mykey)) {
+    if (bot_param_has_key (param, mykey))
+    {
         len = bot_param_get_array_len (param, mykey);
-        if (len > n_kc) {
+        if (len > n_kc)
+        {
             ERROR ("[%s], too many distortion coeffs (len=%d>n_kc=%d)", rootkey, len, n_kc);
             exit (EXIT_FAILURE);
         }
@@ -106,7 +114,8 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     else
         ERROR ("[%s] unable to parse distortion coeff: assuming kc=0.0\n", rootkey);
     snprintf (mykey, sizeof mykey, "%s.kc_error", rootkey);
-    if (bot_param_has_key (param, mykey)) {
+    if (bot_param_has_key (param, mykey))
+    {
         bot_param_get_double_array (param, mykey, calib.kc_std, len);
         for (int i=0; i<len; i++)
             calib.kc_std[i] /= 3;
@@ -120,7 +129,8 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
     snprintf (mykey, sizeof mykey, "%s.kc_model", rootkey);
     if (bot_param_has_key (param, mykey))
         kc_model = bot_param_get_str_or_fail (param, mykey);
-    else {
+    else
+    {
         ERROR ("[%s] unable to parse distortion model: assuming kc_model=\"radtan\"\n", rootkey);
         kc_model = botu_param_get_str_or_default (param, mykey, "radtan");
     }
@@ -132,15 +142,22 @@ vis_calib_load_config (BotParam *param, const char *rootkey)
         calib.kc_model = PERLLCM_VAN_CALIB_T_KC_MODEL_SPHERICAL;
     else if (0 == strcasecmp (kc_model, "full_map"))
         calib.kc_model = PERLLCM_VAN_CALIB_T_KC_MODEL_FULL_MAP;
-    else {
+    else
+    {
         ERROR ("[%s] unknown distortion model: kc_model=%s\n", rootkey, kc_model);
         exit (EXIT_FAILURE);
     }
 
     //-----------------DERIVED QUANTITIES-------------------------------//
-    calib.K[0] = calib.fc[0]; calib.K[1] = calib.alpha_c; calib.K[2] = calib.cc[0];
-    calib.K[3] = 0.0;         calib.K[4] = calib.fc[1];   calib.K[5] = calib.cc[1];
-    calib.K[6] = 0.0;         calib.K[7] = 0.0;           calib.K[8] = 1.0;
+    calib.K[0] = calib.fc[0];
+    calib.K[1] = calib.alpha_c;
+    calib.K[2] = calib.cc[0];
+    calib.K[3] = 0.0;
+    calib.K[4] = calib.fc[1];
+    calib.K[5] = calib.cc[1];
+    calib.K[6] = 0.0;
+    calib.K[7] = 0.0;
+    calib.K[8] = 1.0;
 
     gsl_matrix_view K = gsl_matrix_view_array (calib.K, 3, 3);
     gsl_matrix_view Kinv = gsl_matrix_view_array (calib.Kinv, 3, 3);
@@ -172,7 +189,8 @@ vis_calib_view_cv (perllcm_van_calib_t *calib)
     gsl_vector_view kc = gsl_vector_view_array (calib->kc, n_kc);
     gsl_matrix_view K = gsl_matrix_view_array (calib->K, 3, 3);
     gsl_matrix_view Kinv = gsl_matrix_view_array (calib->Kinv, 3, 3);
-    vis_calib_view_cv_t cv = {
+    vis_calib_view_cv_t cv =
+    {
         .imageSize.width = calib->width,
         .imageSize.height = calib->height,
         .K = vis_cvu_gsl_matrix_to_cvmat_view (&K.matrix),
@@ -189,7 +207,8 @@ vis_calib_const_view_cv (const perllcm_van_calib_t *calib)
     gsl_vector_const_view kc = gsl_vector_const_view_array (calib->kc, n_kc);
     gsl_matrix_const_view K = gsl_matrix_const_view_array (calib->K, 3, 3);
     gsl_matrix_const_view Kinv = gsl_matrix_const_view_array (calib->Kinv, 3, 3);
-    vis_calib_const_view_cv_t cv = {
+    vis_calib_const_view_cv_t cv =
+    {
         .imageSize.width = calib->width,
         .imageSize.height = calib->height,
         .K = vis_cvu_gsl_matrix_to_cvmat_view (&K.matrix),
@@ -204,7 +223,8 @@ vis_calib_view_gsl_t
 vis_calib_view_gsl (perllcm_van_calib_t *calib)
 {
     int n_kc = sizeof (calib->kc) / sizeof (calib->kc[0]);
-    vis_calib_view_gsl_t gsl = {
+    vis_calib_view_gsl_t gsl =
+    {
         .imageSize = {calib->width, calib->height},
         .K = gsl_matrix_view_array (calib->K, 3, 3),
         .Kinv = gsl_matrix_view_array (calib->Kinv, 3, 3),
@@ -217,7 +237,8 @@ vis_calib_const_view_gsl_t
 vis_calib_const_view_gsl (const perllcm_van_calib_t *calib)
 {
     int n_kc = sizeof (calib->kc) / sizeof (calib->kc[0]);
-    vis_calib_const_view_gsl_t gsl = {
+    vis_calib_const_view_gsl_t gsl =
+    {
         .imageSize = {calib->width, calib->height},
         .K = gsl_matrix_const_view_array (calib->K, 3, 3),
         .Kinv = gsl_matrix_const_view_array (calib->Kinv, 3, 3),

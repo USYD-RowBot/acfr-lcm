@@ -12,7 +12,7 @@ gslu_array_printf (const double data[], size_t size1, size_t size2, const char *
 }
 
 void
-gslu_array_printfc (const double data[], size_t size1, size_t size2, const char *name, 
+gslu_array_printfc (const double data[], size_t size1, size_t size2, const char *name,
                     const char *fmt, CBLAS_TRANSPOSE_t trans)
 {
     gsl_matrix_const_view A = gsl_matrix_const_view_array (data, size1, size2);

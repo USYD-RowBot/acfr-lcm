@@ -32,14 +32,16 @@ _pose_from_Rt_alloc (const gsl_matrix *R, const gsl_vector *t)
 /* returns number of inliers */
 static int
 _get_correspondence_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,
-                          gsl_matrix **uv1Inliers, gsl_matrix **uv2Inliers, int method)
+                           gsl_matrix **uv1Inliers, gsl_matrix **uv2Inliers, int method)
 {
     gslu_index *inliers;
     int n_inliers;
 
     /* correspondence will depend on which method is passed */
-    switch (method) {
-    case PERLS_HAUV_CORRESP_H: {
+    switch (method)
+    {
+    case PERLS_HAUV_CORRESP_H:
+    {
         gsl_matrix *H = gsl_matrix_calloc (3, 3);
         n_inliers = vis_modelfit_H_ocv (uv1, uv2, H, &inliers, VIS_MODELFIT_RANSAC);
         gsl_matrix_free (H);
@@ -48,7 +50,8 @@ _get_correspondence_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,
     case PERLS_HAUV_CORRESP_E:
         printf ("Essential matrix not yet supported\n");
         break;
-    case PERLS_HAUV_CORRESP_F: {
+    case PERLS_HAUV_CORRESP_F:
+    {
         gsl_matrix *F = gsl_matrix_calloc (3, 3);
         n_inliers = vis_modelfit_F_ocv (uv1, uv2, F, &inliers, VIS_MODELFIT_RANSAC);
         gsl_matrix_free (F);
@@ -59,7 +62,8 @@ _get_correspondence_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,
         return EXIT_FAILURE;
     }
 
-    if (n_inliers) {
+    if (n_inliers)
+    {
         *uv1Inliers = gslu_matrix_selcol_alloc (uv1, inliers);
         *uv2Inliers = gslu_matrix_selcol_alloc (uv2, inliers);
     }
@@ -76,8 +80,10 @@ _get_pose_guess_alloc (gsl_matrix *uv1, gsl_matrix *uv2, gsl_matrix ***RMats, gs
     int numGuesses = 0;
     gslu_index *inliers;
 
-    switch (method) {
-    case PERLS_HAUV_CORRESP_H: {
+    switch (method)
+    {
+    case PERLS_HAUV_CORRESP_H:
+    {
         gsl_matrix *H = gsl_matrix_calloc (3, 3);
         vis_modelfit_H_ocv (uv1, uv2, H, &inliers, VIS_MODELFIT_RANSAC);
         gsl_vector **NVecs;
@@ -87,11 +93,13 @@ _get_pose_guess_alloc (gsl_matrix *uv1, gsl_matrix *uv2, gsl_matrix ***RMats, gs
         numGuesses = VIS_HOMOG_NUM_POSES_FROM_H;
         break;
     }
-    case PERLS_HAUV_CORRESP_E: {
+    case PERLS_HAUV_CORRESP_E:
+    {
         printf ("Essential matrix not yet supported\n");
         break;
     }
-    case PERLS_HAUV_CORRESP_F: {
+    case PERLS_HAUV_CORRESP_F:
+    {
         gsl_matrix *F = gsl_matrix_calloc (3, 3);
         vis_modelfit_F_ocv (uv1, uv2, F, &inliers, VIS_MODELFIT_RANSAC);
         gsl_matrix_free (F);
@@ -108,13 +116,13 @@ _get_pose_guess_alloc (gsl_matrix *uv1, gsl_matrix *uv2, gsl_matrix ***RMats, gs
     /* Normalize translation in case decomposition doesn't do it for you */
     for (int i=0; i<numGuesses; i++)
         gslu_vector_normalize ((*tVecs)[i]);
-        
+
     return numGuesses;
 }
 
 gsl_vector *
-perls_hauv_tv_register_images (IplImage *img1, IplImage *img2, 
-                               perls_hauv_tv_camera_params_t *camera,  
+perls_hauv_tv_register_images (IplImage *img1, IplImage *img2,
+                               perls_hauv_tv_camera_params_t *camera,
                                perls_hauv_tv_reg_opts_t *opts)
 {
     char *host = "127.0.0.1";
@@ -151,7 +159,8 @@ perls_hauv_tv_register_images (IplImage *img1, IplImage *img2,
     gsl_matrix *K = &calib.K.matrix;
 
     /* For each of the possible poses, pass to bundle adjustment framework */
-    for (int i=0; i<numGuesses; i++) {
+    for (int i=0; i<numGuesses; i++)
+    {
 
         if (x21)
             gsl_vector_free (x21);
@@ -173,9 +182,9 @@ perls_hauv_tv_register_images (IplImage *img1, IplImage *img2,
 
         /* run sba */
         int ret_sba = vis_sba_2v_rae_from_model_with_tri (K, x21, uv1Inliers, uv2Inliers,
-                                                          10, 0, 0, 10.0, 
-                                                          x21Est, relPoseCov21, NULL, 
-                                                          1, NULL, NULL, NULL, NULL);
+                      10, 0, 0, 10.0,
+                      x21Est, relPoseCov21, NULL,
+                      1, NULL, NULL, NULL, NULL);
 
         /* Some guesses will inevitably fail */
         if (ret_sba == -1 || ret_sba == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
@@ -185,7 +194,8 @@ perls_hauv_tv_register_images (IplImage *img1, IplImage *img2,
     }
 
     /* clean up */
-    switch (opts->corresp_method) {
+    switch (opts->corresp_method)
+    {
     case PERLS_HAUV_CORRESP_H:
         vis_homog_pose_decomp_free (RMats, tVecs, NULL);
         break;

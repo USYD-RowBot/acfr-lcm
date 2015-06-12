@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// opencv 
+// opencv
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv/cxcore.h>
@@ -52,7 +52,8 @@ void toc()
 double
 _matrix_compare (gsl_matrix *mat1, gsl_matrix *mat2)
 {
-    if (mat1->size1 != mat2->size1 || mat1->size2 != mat2->size2) {
+    if (mat1->size1 != mat2->size1 || mat1->size2 != mat2->size2)
+    {
         printf ("size should be the same!\n");
         return GSL_POSINF;
     }
@@ -64,11 +65,12 @@ _matrix_compare (gsl_matrix *mat1, gsl_matrix *mat2)
     gsl_matrix *err_mat = gslu_matrix_clone (mat1);
     gsl_matrix_sub (err_mat, mat2);
 
-    for (size_t i=0; i<ncol; i++) {
+    for (size_t i=0; i<ncol; i++)
+    {
         gsl_vector_view col = gsl_matrix_column (err_mat, i);
         err = err + gslu_vector_norm (&col.vector);
     }
-    
+
     gslu_matrix_free (err_mat);
     return err;
 }
@@ -76,7 +78,8 @@ _matrix_compare (gsl_matrix *mat1, gsl_matrix *mat2)
 double
 _matrix_complex_compare (gsl_matrix *mat1_real, gsl_matrix *mat1_imag, gsl_matrix_complex *mat2)
 {
-    if (mat1_real->size1 != mat2->size1 || mat1_real->size2 != mat2->size2) {
+    if (mat1_real->size1 != mat2->size1 || mat1_real->size2 != mat2->size2)
+    {
         printf ("size should be the same!\n");
         return GSL_POSINF;
     }
@@ -86,7 +89,8 @@ _matrix_complex_compare (gsl_matrix *mat1_real, gsl_matrix *mat1_imag, gsl_matri
     gsl_vector *err_vec = gsl_vector_alloc (mat1_real->size1);
 
     size_t ncol = mat1_real->size2;
-    for (size_t i=0; i<ncol; i++) {
+    for (size_t i=0; i<ncol; i++)
+    {
         gsl_vector_view col_real1 = gsl_matrix_column (mat1_real, i);
         gsl_vector_view col_imag1 = gsl_matrix_column (mat1_imag, i);
 
@@ -118,13 +122,15 @@ int main(int argc, char** argv)
 
     // read param from matlab result
     gsl_vector *ans_info = gsl_vector_alloc (5);
-    FILE *finfo = fopen ("_test_zernike_files/zernike_ans_info.txt", "rb");  
-    if (!finfo) {
+    FILE *finfo = fopen ("_test_zernike_files/zernike_ans_info.txt", "rb");
+    if (!finfo)
+    {
         printf ("Did you run matlab test_zernike ? e.g. test_zernike (128, 32)\n");
         return -1;
     }
 
-    gsl_vector_fscanf (finfo, ans_info);  fclose(finfo);
+    gsl_vector_fscanf (finfo, ans_info);
+    fclose(finfo);
     size_t t_nsamp = (size_t) gsl_vector_get (ans_info, 0);
     size_t r_nsamp = (size_t) gsl_vector_get (ans_info, 1);
     size_t moment_order = (size_t) gsl_vector_get (ans_info, 2);
@@ -140,9 +146,15 @@ int main(int argc, char** argv)
     gsl_vector *x12 = gsl_vector_alloc(6);
     gsl_matrix *K = gsl_matrix_alloc(3,3);
     gsl_matrix *uv = gsl_matrix_alloc (2, nfeat);
-    FILE *fx12 = fopen ("_test_corr_files/x12.txt", "rb");  gsl_vector_fscanf (fx12, x12);  fclose(fx12);
-    FILE *fk = fopen ("_test_corr_files/k.txt", "rb");  gsl_matrix_fscanf (fk, K); fclose(fk);
-    FILE *fuv = fopen ("_test_corr_files/harris_uv.txt", "rb"); gsl_matrix_fscanf (fuv, uv);  fclose(fuv);
+    FILE *fx12 = fopen ("_test_corr_files/x12.txt", "rb");
+    gsl_vector_fscanf (fx12, x12);
+    fclose(fx12);
+    FILE *fk = fopen ("_test_corr_files/k.txt", "rb");
+    gsl_matrix_fscanf (fk, K);
+    fclose(fk);
+    FILE *fuv = fopen ("_test_corr_files/harris_uv.txt", "rb");
+    gsl_matrix_fscanf (fuv, uv);
+    fclose(fuv);
 
     tic();
     vis_zernike_params_t zernike_params = vis_zernike_init (w, r_nsamp, t_nsamp, moment_order);
@@ -151,14 +163,20 @@ int main(int argc, char** argv)
     // check Init step: sampler & Vnm
     size_t nsamp = t_nsamp*r_nsamp;
     gsl_matrix *ans_sampler = gsl_matrix_alloc (2,nsamp);
-    FILE *fsampler = fopen ("_test_zernike_files/sampler.txt", "rb"); gsl_matrix_fscanf (fsampler, ans_sampler);  fclose(fsampler);
+    FILE *fsampler = fopen ("_test_zernike_files/sampler.txt", "rb");
+    gsl_matrix_fscanf (fsampler, ans_sampler);
+    fclose(fsampler);
 
     gsl_matrix *ans_vnm_real = gsl_matrix_alloc (nsamp,zernike_params.repetition);
     gsl_matrix *ans_vnm_imag = gsl_matrix_alloc (nsamp,zernike_params.repetition);
 
-    FILE *fvnm_r = fopen ("_test_zernike_files/vnm_real.txt", "rb"); gsl_matrix_fscanf (fvnm_r, ans_vnm_real);  fclose(fvnm_r);
-    FILE *fvnm_i = fopen ("_test_zernike_files/vnm_imag.txt", "rb"); gsl_matrix_fscanf (fvnm_i, ans_vnm_imag);  fclose(fvnm_i);
-        
+    FILE *fvnm_r = fopen ("_test_zernike_files/vnm_real.txt", "rb");
+    gsl_matrix_fscanf (fvnm_r, ans_vnm_real);
+    fclose(fvnm_r);
+    FILE *fvnm_i = fopen ("_test_zernike_files/vnm_imag.txt", "rb");
+    gsl_matrix_fscanf (fvnm_i, ans_vnm_imag);
+    fclose(fvnm_i);
+
     double err1 = _matrix_compare (ans_sampler, zernike_params.sampler);
     double err2 = _matrix_complex_compare (ans_vnm_real, ans_vnm_imag, zernike_params.V_nm);
 
@@ -180,13 +198,14 @@ int main(int argc, char** argv)
     gsl_vector *workspace = gsl_vector_alloc (nsamp);
 
     tic();
-    for (size_t i=0; i < nfeat; i++) {
+    for (size_t i=0; i < nfeat; i++)
+    {
         // store keypoint pixel location
         double u = gsl_matrix_get (uv, 0, i);
         double v = gsl_matrix_get (uv, 1, i);
         gsl_vector_complex_view patch_col = gsl_matrix_complex_column (patch_complexview, i);
         vis_zernike_polarpatch (img, u, v, &Hinf.matrix, zernike_params, workspace, &patch_col.vector);
-    }    
+    }
     toc();
 
     tic();
@@ -198,9 +217,13 @@ int main(int argc, char** argv)
     gsl_matrix *ans_anm_real = gsl_matrix_alloc (zernike_params.repetition, nfeat);
     gsl_matrix *ans_anm_imag = gsl_matrix_alloc (zernike_params.repetition, nfeat);
 
-    FILE *fanm_r = fopen ("_test_zernike_files/anm_real.txt", "rb"); gsl_matrix_fscanf (fanm_r, ans_anm_real);  fclose(fanm_r);
-    FILE *fanm_i = fopen ("_test_zernike_files/anm_imag.txt", "rb"); gsl_matrix_fscanf (fanm_i, ans_anm_imag);  fclose(fanm_i);
-        
+    FILE *fanm_r = fopen ("_test_zernike_files/anm_real.txt", "rb");
+    gsl_matrix_fscanf (fanm_r, ans_anm_real);
+    fclose(fanm_r);
+    FILE *fanm_i = fopen ("_test_zernike_files/anm_imag.txt", "rb");
+    gsl_matrix_fscanf (fanm_i, ans_anm_imag);
+    fclose(fanm_i);
+
     err = _matrix_complex_compare (ans_anm_real, ans_anm_imag, A_nm);
 
     if (err < thresh)

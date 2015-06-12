@@ -26,10 +26,14 @@ main (int argc, char *argv[])
     // have limited scope
     GSLU_VECTOR_VIEW (x, 4);
     // these are equivlent
-    x.data[0] = 0;  gsl_vector_set (&x.vector, 0, 0);
-    x.data[1] = 0;  gsl_vector_set (&x.vector, 1, 0);
-    x.data[2] = 1;  gsl_vector_set (&x.vector, 2, 1);
-    x.data[3] = 0;  gsl_vector_set (&x.vector, 3, 0);
+    x.data[0] = 0;
+    gsl_vector_set (&x.vector, 0, 0);
+    x.data[1] = 0;
+    gsl_vector_set (&x.vector, 1, 0);
+    x.data[2] = 1;
+    gsl_vector_set (&x.vector, 2, 1);
+    x.data[3] = 0;
+    gsl_vector_set (&x.vector, 3, 0);
     gslu_vector_printf (&x.vector, "x");
 
     // and here's another syntax that allows you to create and simultaneously initialize
@@ -58,12 +62,14 @@ main (int argc, char *argv[])
     // dist
     GSLU_VECTOR_VIEW (xi, 5, {1, 2, 3*M_PI, 4*M_PI, 5});
     GSLU_VECTOR_VIEW (yi, 5, {0, 0, 0, 0, 0});
-    GSLU_MATRIX_VIEW (Si, 5, 5, 
-                      { 1, 0,  0,  0, 0,
-                        0, 1,  0,  0, 0,
-                        0, 0,  1,  0, 0,
-                        0, 0,  0,  1, 0,
-                        0, 0,  0,  0, 1 });
+    GSLU_MATRIX_VIEW (Si, 5, 5,
+    {
+        1, 0,  0,  0, 0,
+        0, 1,  0,  0, 0,
+        0, 0,  1,  0, 0,
+        0, 0,  0,  1, 0,
+        0, 0,  0,  0, 1
+    });
     GSLU_INDEX_VIEW (ci, 2, {2, 3});
     double dist = gslu_vector_dist (&xi.vector, &yi.vector);
     double distc = gslu_vector_circ_dist (&xi.vector, &yi.vector, &ci.vector);
@@ -74,7 +80,7 @@ main (int argc, char *argv[])
     double mahal_distc = gslu_vector_mahal_circ_dist (&xi.vector, &yi.vector, &Si.matrix, &ci.vector);
     printf ("\nmahal_dist = %g\tmahal_distc=%g\n", mahal_dist, mahal_distc);
 
-    
+
     // cross
     {
         GSLU_VECTOR_VIEW (a, 3, {1, 2, 3});
@@ -82,7 +88,7 @@ main (int argc, char *argv[])
 
         gsl_vector *c = gslu_vector_cross_alloc (&a.vector, &b.vector);
         gslu_vector_printf (c, "c");
-        
+
         // scalar triple prod
         double stp = gslu_vector_scalar_triple_prod (&a.vector, &b.vector, c);
         printf ("\nstp=%g\n", stp);
@@ -98,29 +104,35 @@ main (int argc, char *argv[])
     /*
      * gsl_util_matrix.h
      */
-    GSLU_MATRIX_VIEW (B_static, 4, 4, 
-                      {  9, 1, 8, 2,
-                        10, 3, 2, 3,
-                         5, 8, 9, 6,
-                         1, 3, 3, 5 });
+    GSLU_MATRIX_VIEW (B_static, 4, 4,
+    {
+        9, 1, 8, 2,
+        10, 3, 2, 3,
+        5, 8, 9, 6,
+        1, 3, 3, 5
+    });
     gsl_matrix *B = &B_static.matrix;
 
 
-    GSLU_MATRIX_VIEW (C_static, 4, 4, 
-                      {0,   1,  2,  3,
-                       4,   5,  6,  7,
-                       8,   9, 10, 11,
-                       12, 13, 14, 15}
-        );
+    GSLU_MATRIX_VIEW (C_static, 4, 4,
+    {
+        0,   1,  2,  3,
+        4,   5,  6,  7,
+        8,   9, 10, 11,
+        12, 13, 14, 15
+    }
+                     );
     gsl_matrix *C = &C_static.matrix;
     gslu_matrix_printf (C, "C");
 
     // dynamic allocation
-    GSLU_MATRIX_VIEW (A_static, 4, 4, 
-                      { 4, 10, 7, 4,
-                        0, 1,  7, 6,
-                        7, 5,  7, 1,
-                        8, 6,  7, 1 });
+    GSLU_MATRIX_VIEW (A_static, 4, 4,
+    {
+        4, 10, 7, 4,
+        0, 1,  7, 6,
+        7, 5,  7, 1,
+        8, 6,  7, 1
+    });
     gsl_matrix *A = &A_static.matrix;
     gslu_matrix_printf (A, "A");
     gslu_matrix_printfc (A, "A", NULL, CblasTrans);
@@ -191,13 +203,13 @@ main (int argc, char *argv[])
     // matrix * vector
     GSLU_VECTOR_VIEW (b, 4);
     gslu_blas_mv (&b.vector, A, &x.vector); // A*x = b
-    gslu_vector_printf (&b.vector, "b");    
+    gslu_vector_printf (&b.vector, "b");
 
     // vector^T * matrix
     gsl_vector *bT = gslu_blas_vTm_alloc (A, &x.vector);
     gslu_vector_printfc (bT, "b", NULL, CblasTrans);
 
-    
+
     // vectorT * matrix * vector
     double scalar = gslu_blas_vTmv (&x.vector, A, y);
     printf ("scalar=%g\n", scalar);
@@ -292,7 +304,7 @@ main (int argc, char *argv[])
     gsl_matrix *A_rref = gslu_linalg_rref_alloc (A, 0);
     gslu_matrix_printf (A_rref, "A rref");
     gslu_matrix_free (A_rref);
-    
+
     /*
      * gsl_util_rand.h
      */
@@ -300,12 +312,14 @@ main (int argc, char *argv[])
 
     const double rho = 0.9999999999999;
     GSLU_VECTOR_VIEW (mu, 5, {0, 0, 200, 300, 400});
-    GSLU_MATRIX_VIEW (Sigma, 5, 5, 
-                      { 1,   -rho,  0,  0, 0,
-                       -rho,    1,  0,  0, 0,
-                        0,      0, .1,  0, 0,
-                        0,      0,  0,  1, 0,
-                        0,      0,  0,  0, .00001 });
+    GSLU_MATRIX_VIEW (Sigma, 5, 5,
+    {
+        1,   -rho,  0,  0, 0,
+        -rho,    1,  0,  0, 0,
+        0,      0, .1,  0, 0,
+        0,      0,  0,  1, 0,
+        0,      0,  0,  0, .00001
+    });
     gsl_rng *rng = gslu_rand_rng_alloc ();
 
     double s;

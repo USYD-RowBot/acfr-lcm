@@ -66,19 +66,22 @@ fasttrig_init (void)
     if (initialized)
         return;
 
-    for (size_t i = 0; i < SINCOS_MSB_TABLE_SIZE; i++) {
+    for (size_t i = 0; i < SINCOS_MSB_TABLE_SIZE; i++)
+    {
         double theta = (2. * M_PI * i / SINCOS_MSB_TABLE_SIZE);
         msb_table[i].m_sin = sin (theta);
         msb_table[i].m_cos = cos (theta);
     }
 
-    for (size_t i = 0; i < SINCOS_LSB_TABLE_SIZE; i++) {
+    for (size_t i = 0; i < SINCOS_LSB_TABLE_SIZE; i++)
+    {
         double theta = (2. * M_PI * i / (SINCOS_MSB_TABLE_SIZE * SINCOS_LSB_TABLE_SIZE));
         lsb_table[i].m_sin = sin (theta);
         lsb_table[i].m_cos = cos (theta);
     }
 
-    for (size_t i = 0; i < ARC_TABLE_SIZE; i++) {
+    for (size_t i = 0; i < ARC_TABLE_SIZE; i++)
+    {
         double v = ((double) i) / ARC_TABLE_SIZE;
         arc_table[i].m_asin = asin (v);
         arc_table[i].m_atan = atan (v);
@@ -97,7 +100,7 @@ fasttrig_init (void)
 static void
 tabtrig_idx (const double theta, size_t *lsb_idx, size_t *msb_idx)
 {
-    static const double idx_res = SINCOS_MSB_TABLE_SIZE * SINCOS_LSB_TABLE_SIZE / (2. * M_PI); // idx resolution 
+    static const double idx_res = SINCOS_MSB_TABLE_SIZE * SINCOS_LSB_TABLE_SIZE / (2. * M_PI); // idx resolution
     uint32_t idx = idx_res * theta;
 
     // rewrite theta = M + L, where L is very small.
@@ -142,7 +145,7 @@ _fsin (const double theta, FASTTRIG_ARGS_DEF)
     float cosM = msb_table[msb_idx].m_cos;
     float sinL = lsb_table[lsb_idx].m_sin;
     float cosL = lsb_table[lsb_idx].m_cos;
-    
+
     // angle sum formula
     return sinM*cosL + cosM*sinL;
 }
@@ -162,7 +165,7 @@ _fcos (const double theta, FASTTRIG_ARGS_DEF)
     float cosM = msb_table[msb_idx].m_cos;
     float sinL = lsb_table[lsb_idx].m_sin;
     float cosL = lsb_table[lsb_idx].m_cos;
-    
+
     // angle sum formula
     return cosM*cosL - sinM*sinL;
 }
@@ -188,14 +191,16 @@ _fasin (const double y, FASTTRIG_ARGS_DEF)
         return -M_PI_2;
 
     double a, b, drem;
-    if (yabs > ASIN_HIGH) {
+    if (yabs > ASIN_HIGH)
+    {
         double didx = ARC_TABLE_SIZE * (yabs - ASIN_HIGH) / (1. - ASIN_HIGH);
         size_t idx = (size_t) didx;
         drem = didx - idx;
         a = arc_table[idx].m_asinH;
         b = arc_table[idx+1].m_asinH;
     }
-    else {
+    else
+    {
         double didx = ARC_TABLE_SIZE * yabs;
         size_t idx = (size_t) didx;
         drem = didx - idx;
@@ -228,28 +233,33 @@ _fatan2 (const double y, const double x,  FASTTRIG_ARGS_DEF)
     double xabs = fabs (x);
 
     double S1, A, S2, didx;
-    if (xabs < yabs) {
+    if (xabs < yabs)
+    {
         S1 = (y < 0) ? -1 : 1;
         A = M_PI_2;
         S2 = (x*y < 0) ? 1 : -1;
 
         didx = ARC_TABLE_SIZE * xabs / yabs;
     }
-    else if (xabs > yabs) {
+    else if (xabs > yabs)
+    {
         S1 = (y < 0) ? -1 : 1;
         A = (x < 0) ? M_PI : 0;
         S2 = (x*y < 0) ? -1 : 1;
 
         didx = ARC_TABLE_SIZE * yabs / xabs;
     }
-    else {
-        if (x > 0) {
+    else
+    {
+        if (x > 0)
+        {
             if (y > 0)
                 return  M_PI_4; // Q-I
             else
                 return -M_PI_4; // Q-IV
         }
-        else {
+        else
+        {
             if (y > 0)
                 return  M_PI_4 + M_PI_2; // Q-II
             else
@@ -284,7 +294,8 @@ fasttrig_test_trig (void)
 
     printf ("     %20s : %15s %15s %15s %10s\n", "angle", "math", "fasttrig", "diff", "err/eps");
     double max_s_err = 0, max_c_err = 0, max_t_err = 0;
-    for (size_t i = 0; i < limit; i++) {
+    for (size_t i = 0; i < limit; i++)
+    {
         double theta = gsl_rng_uniform (r) * 2. * M_PI;
         double s, c, s2, c2;
         sincos (theta, &s, &c);
@@ -295,15 +306,18 @@ fasttrig_test_trig (void)
         t2 = ftan (theta);
 
         double s_err = fabs (s-s2), c_err = fabs (c-c2), t_err = fabs (t-t2);
-        if (s_err > max_s_err) {
+        if (s_err > max_s_err)
+        {
             printf("fsin %20.5f : %15.12f %15.12f %15.12f %10.5f\n", theta * RTOD, s, s2, s_err, s_err/eps);
             max_s_err = s_err;
         }
-        if (c_err > max_c_err) {
+        if (c_err > max_c_err)
+        {
             printf("fcos %20.5f : %15.12f %15.12f %15.12f %10.5f\n", theta * RTOD, c, c2, c_err, c_err/eps);
             max_c_err = c_err;
         }
-        if (t_err > max_t_err) {
+        if (t_err > max_t_err)
+        {
             printf("ftan %20.5f : %15.12f %15.12f %15.12f %10.5f\n", theta * RTOD, t, t2, t_err, t_err/eps);
             max_t_err = t_err;
         }
@@ -320,7 +334,8 @@ fasttrig_test_arctrig (void)
 
     printf ("       %18s : %15s %15s %15s\n", "angle err", "math", "fasttrig", "arg(s)");
     double max_s_err = 0, max_c_err = 0, max_t_err = 0;
-    for (size_t i = 0; i < 200000000; i++) {
+    for (size_t i = 0; i < 200000000; i++)
+    {
         double x = gsl_rng_uniform (r) * 2. - 1.;
         double y = gsl_rng_uniform (r) * 2. - 1.;
 
@@ -334,15 +349,18 @@ fasttrig_test_arctrig (void)
         double t2 = fatan2 (y, x);
 
         double s_err = fabs (s-s2), c_err = fabs (c-c2), t_err = fabs (t-t2);
-        if (s_err > max_s_err) {
+        if (s_err > max_s_err)
+        {
             printf ("fasin: %18.5f : %15f %15f %15f\n", s_err * RTOD, s * RTOD, s2 * RTOD, y);
             max_s_err = s_err;
         }
-        if (c_err > max_c_err) {
+        if (c_err > max_c_err)
+        {
             printf ("facos: %18.5f : %15f %15f %15f\n", c_err * RTOD, c * RTOD, c2 * RTOD, y);
             max_c_err = c_err;
         }
-        if (t_err > max_t_err) {
+        if (t_err > max_t_err)
+        {
             printf ("fatan: %18.5f : %15f %15f %15f %15f\n", t_err * RTOD, t * RTOD, t2 * RTOD, x, y);
             max_t_err = t_err;
         }

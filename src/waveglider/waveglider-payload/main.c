@@ -27,7 +27,8 @@
 // this should be the largest chunk of data *BEFORE* including
 // escaped characters
 
-typedef struct {
+typedef struct
+{
     uint8_t type; // ==0x91
     uint32_t transaction_id;
     uint16_t size;
@@ -41,7 +42,8 @@ typedef struct {
     uint32_t timestamp;
 } __attribute__ ((packed)) telemetry_header_t;
 
-typedef struct {
+typedef struct
+{
     uint8_t type; // ==0x91
     uint32_t transaction_id;
     uint16_t response_size;
@@ -51,14 +53,16 @@ typedef struct {
     uint16_t data_size;
 } __attribute__ ((packed)) console_write_t;
 
-typedef struct {
+typedef struct
+{
     pthread_mutex_t lock;
     char *message;
     size_t length;
     int64_t last_time;
 } message_channel_t;
 
-void channel_init(message_channel_t *channel) {
+void channel_init(message_channel_t *channel)
+{
     channel->message = 0;
     channel->length = 0;
     channel->last_time = 0;
@@ -196,14 +200,15 @@ signal_handler(int sigNum)
     program_exit = 1;
 }
 
-void escape_packet(state_t *state, char *buffer, size_t length) {
+void escape_packet(state_t *state, char *buffer, size_t length)
+{
     size_t rc = 1;
     size_t wc = 1;
 
     state->transmit_buffer[0] = buffer[0];
     // == 0x7E;
 
-    for (; rc < length;++rc)
+    for (; rc < length; ++rc)
     {
         switch (buffer[rc])
         {
@@ -224,51 +229,62 @@ void escape_packet(state_t *state, char *buffer, size_t length) {
 }
 
 
-size_t cleanse_next(state_t *state) {
-    switch (state->read_buffer[state->read_cursor]) {
-        case 0x7E:
-            // new frame !?
-            return 0;
-        case 0x7D:
-            if (state->data_end == state->read_cursor + 1 ) {
-                // this is the hardest case... we need 1 more byte...
-                // so we should probably just get it
-                // if it screws up then just abandon it all however...
-                ssize_t ret;
-                ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 1);
-                state->data_end += ret;
+size_t cleanse_next(state_t *state)
+{
+    switch (state->read_buffer[state->read_cursor])
+    {
+    case 0x7E:
+        // new frame !?
+        return 0;
+    case 0x7D:
+        if (state->data_end == state->read_cursor + 1 )
+        {
+            // this is the hardest case... we need 1 more byte...
+            // so we should probably just get it
+            // if it screws up then just abandon it all however...
+            ssize_t ret;
+            ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 1);
+            state->data_end += ret;
 
-                if (ret < 1) {
-                    return 0;
-                }
-            }
-            char next = state->read_buffer[state->read_cursor+1];
-            if (next == 0x5D) {
-                state->write_buffer[state->write_cursor] = 0x7D;
-            } else if (next == 0x5E) {
-                state->write_buffer[state->write_cursor] = 0x7E;
-            } else {
+            if (ret < 1)
+            {
                 return 0;
             }
+        }
+        char next = state->read_buffer[state->read_cursor+1];
+        if (next == 0x5D)
+        {
+            state->write_buffer[state->write_cursor] = 0x7D;
+        }
+        else if (next == 0x5E)
+        {
+            state->write_buffer[state->write_cursor] = 0x7E;
+        }
+        else
+        {
+            return 0;
+        }
 
-            state->read_cursor += 2;
-            state->write_cursor += 1;
+        state->read_cursor += 2;
+        state->write_cursor += 1;
 
-            return 2;
-        default:
-            state->write_buffer[state->write_cursor] = state->read_buffer[state->read_cursor];
-            state->read_cursor += 1;
-            state->write_cursor += 1;
-            return 1;
+        return 2;
+    default:
+        state->write_buffer[state->write_cursor] = state->read_buffer[state->read_cursor];
+        state->read_cursor += 1;
+        state->write_cursor += 1;
+        return 1;
     }
 }
 
-int read_packet(state_t *state) {
+int read_packet(state_t *state)
+{
     // now get the size, need to read enough bytes to make sure
 
     ssize_t ret;
 
-    while (state->data_end < 6) {
+    while (state->data_end < 6)
+    {
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, 6 - state->data_end);
         // any error, bail out
         if (ret <= 0) return 0;
@@ -277,16 +293,19 @@ int read_packet(state_t *state) {
 
 
     // check that packet starts with what we want it to
-    if (state->read_buffer[0] != 0x7E) {
+    if (state->read_buffer[0] != 0x7E)
+    {
         return 0;
     }
 
     // in case we have already read some data
-    if (state->read_cursor == 0) {
+    if (state->read_cursor == 0)
+    {
         state->read_cursor = 1;
     }
 
-    if (state->write_cursor == 0) {
+    if (state->write_cursor == 0)
+    {
         state->write_cursor = 1;
         state->write_buffer[0] = 0x7E;
     }
@@ -300,12 +319,14 @@ int read_packet(state_t *state) {
 
     printf("%ld: received packet length: %d\n", time(0), length);
 
-    while (state->write_cursor < length + 1) {
+    while (state->write_cursor < length + 1)
+    {
         size_t next_read = 1 + length - state->write_cursor - state->data_end + state->read_cursor;
         ret = acfr_sensor_read(state->sensor, state->read_buffer + state->data_end, next_read);
         state->data_end += ret;
 
-        while (state->read_cursor < state->data_end) {
+        while (state->read_cursor < state->data_end)
+        {
             if (cleanse_next(state) == 0) return 0;
         }
     }
@@ -343,14 +364,15 @@ void *serial_listen_thread(void *u)
         state->read_cursor = 0;
         state->write_cursor = 0;
 
-        if (read_packet(state)) {
+        if (read_packet(state))
+        {
             // deal with the packet now
             // check if there is something in the queue
             // will also have to make this section smarter to rotate through the information types
             // that come from all the source types
             // don't want the information to become stale as well...
             int i;
-            for (i=0;i<3;++i)
+            for (i=0; i<3; ++i)
             {
                 if (state->queue[i].length > 0)
                 {
@@ -370,14 +392,18 @@ void *serial_listen_thread(void *u)
                 send_message(state);
             }
             state->data_end = 0; // reset to start of buffer
-        } else {
+        }
+        else
+        {
             printf("%ld: failed to read packet!\n", time(0));
             // failed to get a packet...
             // go through leftover data and see if we have a new frame
             // either way discard any data before at SOF character.
-            while (state->read_cursor < state->data_end) {
+            while (state->read_cursor < state->data_end)
+            {
 
-                if (state->read_buffer[state->read_cursor] == 0x7E) {
+                if (state->read_buffer[state->read_cursor] == 0x7E)
+                {
                     printf("%ld: found unexpected SOF character\n", time(0));
                     memmove(state->read_buffer, state->read_buffer + state->read_cursor, state->data_end - state->read_cursor);
                     break;
@@ -401,13 +427,13 @@ main(int argc, char **argv)
     pthread_mutex_init(&state.queue_lock, 0);
 
     int i;
-    for (i=0;i<3;++i)
+    for (i=0; i<3; ++i)
     {
         channel_init(&state.queue[i]);
     }
 
     // install the signal handler
-	program_exit = 0;
+    program_exit = 0;
     signal(SIGINT, signal_handler);
     state.lcm = lcm_create(NULL);
 
@@ -440,29 +466,29 @@ main(int argc, char **argv)
     pthread_create(&tid_cc, NULL, serial_listen_thread, &state);
     pthread_detach(tid_cc);
 
-	int lcm_fd = lcm_get_fileno(state.lcm);
-	fd_set rfds;
+    int lcm_fd = lcm_get_fileno(state.lcm);
+    fd_set rfds;
 
-	// listen to LCM, serial has been delegated
-	while(!program_exit)
-	{
-	    FD_ZERO(&rfds);
+    // listen to LCM, serial has been delegated
+    while(!program_exit)
+    {
+        FD_ZERO(&rfds);
         FD_SET(lcm_fd, &rfds);
 
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
-	    int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1)
             perror("Select failure: ");
         else if(ret != 0)
             lcm_handle(state.lcm);
-	}
+    }
 
     pthread_join(tid_cc, NULL);
 
     acfr_sensor_destroy(state.sensor);
 
-	return 0;
+    return 0;
 }

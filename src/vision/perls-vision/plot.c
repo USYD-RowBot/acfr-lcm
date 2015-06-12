@@ -39,24 +39,24 @@
 #define FEAT_THICKNESS 1
 
 #define DOT_SIZE 10
- 
+
 /* generate 8 basic color */
-void 
+void
 _gen_basic_colors (CvScalar lcolors[8]) // b g r c m y k w
-{ 
+{
     /* RGB = [255 0 0]      = red
      * RGB = [0 255 0]      = green
      * RGB = [0 0 255]      = blue
      * RGB = [255 255 0]    = yellow
-     * RGB = [255 0 255]    = magenta 
+     * RGB = [255 0 255]    = magenta
      * RGB = [0 255 255]    = cyan
      * RGB = [255 255 255]  = white
-     * RGB = [0 0 0]        = black 
+     * RGB = [0 0 0]        = black
      */
 
     // cvcolor in BGR seq (this follows the matlab default)
     lcolors[0] = cvScalar (255, 0, 0, 0);      // blue
-    lcolors[1] = cvScalar (0, 255, 0, 0);      // green 
+    lcolors[1] = cvScalar (0, 255, 0, 0);      // green
     lcolors[2] = cvScalar (0, 0, 255, 0);      // red
     lcolors[3] = cvScalar (255, 0, 255, 0);    // magenta
     lcolors[4] = cvScalar (255, 255, 0, 0);    // cyan
@@ -67,10 +67,10 @@ _gen_basic_colors (CvScalar lcolors[8]) // b g r c m y k w
 }
 
 void
-vis_plot_add_utime (IplImage *image, 
-                    int64_t utime, 
-                    const CvPoint *_pt, 
-                    const CvFont *_font, 
+vis_plot_add_utime (IplImage *image,
+                    int64_t utime,
+                    const CvPoint *_pt,
+                    const CvFont *_font,
                     const CvScalar *_color)
 {
     assert (image);
@@ -99,7 +99,7 @@ vis_plot_add_utime (IplImage *image,
 }
 
 void
-vis_plot_add_text (IplImage *image, 
+vis_plot_add_text (IplImage *image,
                    const char *text,
                    const CvPoint *_pt,
                    const CvFont *_font,
@@ -130,7 +130,7 @@ vis_plot_add_text (IplImage *image,
 
 
 static IplImage *
-_vis_plot_mkimgplot (const IplImage *image, 
+_vis_plot_mkimgplot (const IplImage *image,
                      float scale)
 {
     CvSize size = {image->width*scale, image->height*scale};
@@ -143,51 +143,53 @@ _vis_plot_mkimgplot (const IplImage *image,
 }
 
 static void
-_vis_plot_feature_cvsurf (CvArr *img_plot, 
-                          const perllcm_van_feature_t *f, 
-                          const CvScalar color, 
+_vis_plot_feature_cvsurf (CvArr *img_plot,
+                          const perllcm_van_feature_t *f,
+                          const CvScalar color,
                           const float scale)
 {
     // plot options
     const int thickness = 1; // line thickness when pos number, -1 for filled circlea
 
     perllcm_van_feature_attr_cvsurf_t *attr = malloc (sizeof (*attr));
-    if (perllcm_van_feature_attr_cvsurf_t_decode (f->attr, 0, f->attrsize, attr) != f->attrsize) {
+    if (perllcm_van_feature_attr_cvsurf_t_decode (f->attr, 0, f->attrsize, attr) != f->attrsize)
+    {
         ERROR ("perllcm_van_feature_attr_cvsurf_t_decode() failed");
         free (attr);
         return;
     }
 
 
-/*    gsl_permutation *perm = gsl_permutation_alloc (f->npts);
-    gsl_vector_short_view size_vec = gsl_vector_short_view_array (attr->size, f->npts);
-    gsl_sort_vector_short_index (perm, &size_vec.vector); // ascending order
+    /*    gsl_permutation *perm = gsl_permutation_alloc (f->npts);
+        gsl_vector_short_view size_vec = gsl_vector_short_view_array (attr->size, f->npts);
+        gsl_sort_vector_short_index (perm, &size_vec.vector); // ascending order
 
-    for (size_t n=0; n < f->npts; n++) {
-        if (n<20) {
-        int i = perm ? perm->data[f->npts-1-n] : n;
-        const float u = f->u[i] * scale;
-        const float v = f->v[i] * scale;
-        const float radius = attr->size[i] * scale;
-        const float dir = attr->dir[i];
-        double s, c;
-        fsincos (dir, &s, &c); 
-        const CvPoint pt1 = cvPoint (u, v);
-        const CvPoint pt2 = cvPoint (u + radius*c, v+radius*s);
-        cvCircle (img_plot, pt1, radius, color, thickness, CV_AA, 0);
-        cvLine (img_plot, pt1, pt2, color, thickness, CV_AA, 0);
+        for (size_t n=0; n < f->npts; n++) {
+            if (n<20) {
+            int i = perm ? perm->data[f->npts-1-n] : n;
+            const float u = f->u[i] * scale;
+            const float v = f->v[i] * scale;
+            const float radius = attr->size[i] * scale;
+            const float dir = attr->dir[i];
+            double s, c;
+            fsincos (dir, &s, &c);
+            const CvPoint pt1 = cvPoint (u, v);
+            const CvPoint pt2 = cvPoint (u + radius*c, v+radius*s);
+            cvCircle (img_plot, pt1, radius, color, thickness, CV_AA, 0);
+            cvLine (img_plot, pt1, pt2, color, thickness, CV_AA, 0);
+            }
         }
-    }
 
-    if (perm) gsl_permutation_free (perm);*/
+        if (perm) gsl_permutation_free (perm);*/
 
-    for (size_t n=0; n < f->npts; n++) {
+    for (size_t n=0; n < f->npts; n++)
+    {
         const float u = f->u[n] * scale;
         const float v = f->v[n] * scale;
         const float radius = attr->size[n] * scale;
         const float dir = attr->dir[n];
         double s, c;
-        fsincos (dir, &s, &c); 
+        fsincos (dir, &s, &c);
         const CvPoint pt1 = cvPoint (u, v);
         const CvPoint pt2 = cvPoint (u + radius*c, v-radius*s);
 
@@ -200,27 +202,29 @@ _vis_plot_feature_cvsurf (CvArr *img_plot,
 }
 
 static void
-_vis_plot_feature_siftgpu (CvArr *img_plot, 
-                           const perllcm_van_feature_t *f, 
-                           const CvScalar color, 
+_vis_plot_feature_siftgpu (CvArr *img_plot,
+                           const perllcm_van_feature_t *f,
+                           const CvScalar color,
                            const float scale)
 {
     // plot options
     const int thickness = FEAT_THICKNESS; // line thickness when pos number, -1 for filled circle
 
     perllcm_van_feature_attr_siftgpu_t *attr = malloc (sizeof (*attr));
-    if (perllcm_van_feature_attr_siftgpu_t_decode (f->attr, 0, f->attrsize, attr) != f->attrsize) {
+    if (perllcm_van_feature_attr_siftgpu_t_decode (f->attr, 0, f->attrsize, attr) != f->attrsize)
+    {
         ERROR ("perllcm_van_feature_attr_siftgpu_t_decode() failed");
         free (attr);
-        return;        
+        return;
     }
-    for (size_t n=0; n < f->npts; n++) {
+    for (size_t n=0; n < f->npts; n++)
+    {
         const float u = f->u[n] * scale;
         const float v = f->v[n] * scale;
         const float radius = attr->s[n] * scale;
         const float dir = attr->o[n];
         double s, c;
-        fsincos (dir, &s, &c); 
+        fsincos (dir, &s, &c);
         const CvPoint pt1 = cvPoint (u, v);
         const CvPoint pt2 = cvPoint (u + radius*c, v+radius*s);
         cvCircle (img_plot, pt1, radius, color, thickness, CV_AA, 0);
@@ -230,16 +234,17 @@ _vis_plot_feature_siftgpu (CvArr *img_plot,
 }
 
 static void
-_vis_plot_feature_cvharris (CvArr *img_plot, 
-                            const perllcm_van_feature_t *f, 
-                            const CvScalar color, 
+_vis_plot_feature_cvharris (CvArr *img_plot,
+                            const perllcm_van_feature_t *f,
+                            const CvScalar color,
                             const float scale)
 {
     // plot options
     const int thickness = -1; // line thickness when pos number, -1 for filled circle
     const float radius = 1;
 
-    for (size_t n=0; n < f->npts; n++) {
+    for (size_t n=0; n < f->npts; n++)
+    {
         const float u = f->u[n] * scale;
         const float v = f->v[n] * scale;
 
@@ -249,16 +254,17 @@ _vis_plot_feature_cvharris (CvArr *img_plot,
 
 }
 void
-vis_plot_feature (const IplImage *image, 
-                  const perllcm_van_feature_t *f, 
-                  const char *named_window, 
-                  float scale, 
+vis_plot_feature (const IplImage *image,
+                  const perllcm_van_feature_t *f,
+                  const char *named_window,
+                  float scale,
                   int64_t utime)
 {
     fasttrig_init ();
     IplImage *img_plot = _vis_plot_mkimgplot (image, scale);
 
-    switch (f->attrtype) {
+    switch (f->attrtype)
+    {
     case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVSURF:
     case PERLLCM_VAN_FEATURE_T_ATTRTYPE_SURFGPU:
         _vis_plot_feature_cvsurf (img_plot, f, CV_RGB (0, 255, 0), scale);
@@ -272,10 +278,10 @@ vis_plot_feature (const IplImage *image,
     default:
         ERROR ("unknown attrtype %d", f->attrtype);
     }
-    
+
     if (utime)
         vis_plot_add_utime (img_plot, utime, NULL, NULL, NULL);
-    
+
     cvNamedWindow (named_window, CV_WINDOW_AUTOSIZE);
     cvShowImage (named_window, img_plot);
     cvReleaseImage (&img_plot);
@@ -314,15 +320,15 @@ vis_plot_saliency (const perllcm_van_saliency_t *sal,
         cvPutText (canvas, global_str, global_pt, &font,  green);
     else
         cvPutText (canvas, global_str, global_pt, &font,  red);
-    
+
     cvNamedWindow (named_window, CV_WINDOW_AUTOSIZE);
     cvShowImage (named_window, canvas);
     cvReleaseImage (&canvas);
 }
 
 void
-vis_plot_scene_prior (const IplImage *image, 
-                      const perllcm_van_scene_prior_t *sp, 
+vis_plot_scene_prior (const IplImage *image,
+                      const perllcm_van_scene_prior_t *sp,
                       const char *named_window,
                       int64_t utime, const float scale)
 {
@@ -336,7 +342,7 @@ vis_plot_scene_prior (const IplImage *image,
     cvSetImageROI (img_plot, cvRect (img_small->width, img_small->height, img_small->width, img_small->height));
     cvAdd (img_plot, img_small, img_plot, NULL);
     cvResetImageROI (img_plot);
-    
+
     // cache colors & font
     CvScalar red = CV_RGB (255, 0, 0);
     CvScalar green = CV_RGB (0, 255, 0);
@@ -348,11 +354,13 @@ vis_plot_scene_prior (const IplImage *image,
     cvInitFont (&font, CV_FONT_HERSHEY_PLAIN, 1.0, 1.0, 0, 1, 8);
 
     // plot bathy points
-    for (size_t n=0; n<sp->npts; n++) {
-        CvPoint pt = cvPoint (img_small->width + sp->u[n]*scale, 
+    for (size_t n=0; n<sp->npts; n++)
+    {
+        CvPoint pt = cvPoint (img_small->width + sp->u[n]*scale,
                               img_small->height + sp->v[n]*scale);
         CvScalar color;
-        switch (sp->id[n]) {
+        switch (sp->id[n])
+        {
         case 1:
             color = red;
             break;
@@ -388,20 +396,21 @@ vis_plot_scene_prior (const IplImage *image,
     cvReleaseImage (&img_plot);
 }
 
-/* This function has been imported 
- * from Rob Hess's sift code & modified 
- * Combines two images by scacking   
+/* This function has been imported
+ * from Rob Hess's sift code & modified
+ * Combines two images by scacking
  *  @return Returns the image resulting from stacking
  */
-static IplImage* 
+static IplImage*
 vis_plot_stack_imgs (IplImage* img1, IplImage* img2, int stack_type)
 {
     // stacked image to be returned
     IplImage* stacked = 0;
 
-    if (stack_type == VIS_PLOT_STACK_VERT) { // stacking vertically img1 = top, img2 = bottom
+    if (stack_type == VIS_PLOT_STACK_VERT)   // stacking vertically img1 = top, img2 = bottom
+    {
         stacked = cvCreateImage (cvSize (MAX (img1->width, img2->width),
-                                 img1->height + img2->height ),
+                                         img1->height + img2->height ),
                                  IPL_DEPTH_8U, img1->nChannels );
 
         cvZero (stacked);
@@ -413,9 +422,10 @@ vis_plot_stack_imgs (IplImage* img1, IplImage* img2, int stack_type)
 
         return stacked;
     }
-    else {
+    else
+    {
         stacked = cvCreateImage (cvSize (img1->width + img2->width,
-                                 MAX(img1->height,img2->height)),
+                                         MAX(img1->height,img2->height)),
                                  IPL_DEPTH_8U, img1->nChannels);
         cvZero (stacked);
         cvSetImageROI (stacked, cvRect (0, 0, img1->width, img1->height));
@@ -431,18 +441,20 @@ vis_plot_stack_imgs (IplImage* img1, IplImage* img2, int stack_type)
 /* when two images are gray
  * stack images and convert it to color to overlay useful informations
  */
-static IplImage* 
+static IplImage*
 vis_plot_stack_imgs_cvt_color (IplImage* img1, IplImage* img2, int stack_type)
 {
     IplImage* img_stack_rgb = 0;
     IplImage* img_stack = 0;
     img_stack = vis_plot_stack_imgs (img1, img2, stack_type);  // or STACK_VERT
 
-    if (img_stack->nChannels == 1) { // gray scale 
+    if (img_stack->nChannels == 1)   // gray scale
+    {
         img_stack_rgb = cvCreateImage (cvGetSize (img_stack), IPL_DEPTH_8U, 3);
-        cvCvtColor (img_stack, img_stack_rgb, CV_GRAY2BGR);  
+        cvCvtColor (img_stack, img_stack_rgb, CV_GRAY2BGR);
     }
-    else { // color 
+    else   // color
+    {
         img_stack_rgb = cvCloneImage (img_stack);
     }
 
@@ -472,12 +484,12 @@ vis_plot_pair (IplImage *img1,
 
 void
 _vis_plot_inliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index *clr_idx_vec,
-                   const gslu_index *sel1, const gslu_index *sel2, 
+                   const gslu_index *sel1, const gslu_index *sel2,
                    const gsl_matrix *uv1, const gsl_matrix *uv2)
 {
     // color code inliers
     CvScalar lcolors[4];
-    lcolors[0] = cvScalar (0, 255, 0, 0);      // green 
+    lcolors[0] = cvScalar (0, 255, 0, 0);      // green
     lcolors[1] = cvScalar (255, 255, 0, 0);    // cyan
     lcolors[2] = cvScalar (0, 255, 255, 0);    // yellow
     lcolors[3] = cvScalar (255, 255, 255, 0);  // white
@@ -496,13 +508,15 @@ _vis_plot_inliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index 
 
     // when no index provided, use default by setting all 0
     bool use_color_code = 1;
-    if (!clr_idx_vec) {
+    if (!clr_idx_vec)
+    {
         use_color_code = 0;
         clr_idx_vec = gslu_index_alloc (n_corr);
         gslu_index_set_zero (clr_idx_vec);
     }
 
-    for (int i=0; i < n_corr; i++) {
+    for (int i=0; i < n_corr; i++)
+    {
         size_t clr_idx = gslu_index_get (clr_idx_vec, i);
 
         // draw in image1
@@ -514,13 +528,15 @@ _vis_plot_inliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index 
         cvCircle (canvas, pt1, radius, red, circle_thickness, CV_AA, 0);
 
         // draw in image2
-        if (stack_type == VIS_PLOT_STACK_HORZ) {
+        if (stack_type == VIS_PLOT_STACK_HORZ)
+        {
             CvPoint pt1_on2 = cvPoint (gsl_matrix_get (uv1, 0, idx1)+offset, gsl_matrix_get (uv1, 1, idx1) );
             CvPoint pt2_on2 = cvPoint (gsl_matrix_get (uv2, 0, idx2)+offset, gsl_matrix_get (uv2, 1, idx2) );
             cvLine (canvas, pt1_on2, pt2_on2, lcolors[clr_idx], thickness, lineType, shift);
             cvCircle (canvas, pt2_on2, radius, red, circle_thickness, CV_AA, 0);
         }
-        else {
+        else
+        {
             CvPoint pt1_on2 = cvPoint (gsl_matrix_get (uv1, 0, idx1), gsl_matrix_get (uv1, 1, idx1)+offset);
             CvPoint pt2_on2 = cvPoint (gsl_matrix_get (uv2, 0, idx2), gsl_matrix_get (uv2, 1, idx2)+offset);
             cvLine (canvas, pt1_on2, pt2_on2, lcolors[clr_idx], thickness, lineType, shift);
@@ -534,10 +550,10 @@ _vis_plot_inliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index 
 
 void
 _vis_plot_outliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index *clr_idx_vec,
-                   const gslu_index *sel1, const gslu_index *sel2, 
-                   const gsl_matrix *uv1, const gsl_matrix *uv2)
+                    const gslu_index *sel1, const gslu_index *sel2,
+                    const gsl_matrix *uv1, const gsl_matrix *uv2)
 {
-        
+
     // color code outliers
     /* CvScalar lcolors[4]; */
     /* lcolors[0] = cvScalar (0, 0, 255, 0);      // red  */
@@ -546,7 +562,7 @@ _vis_plot_outliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index
     /* lcolors[3] = cvScalar (255, 255, 255, 0);  // white */
 
     // color of the feature location (red dot)
-    CvScalar red = cvScalar (0, 0, 255, 0);    
+    CvScalar red = cvScalar (0, 0, 255, 0);
 
     // plot options
     int thickness = LINE_THICKNESS;	        // line thickness 0~255
@@ -558,7 +574,8 @@ _vis_plot_outliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index
 
     // when no index provided, use default by setting all 0
     bool use_color_code = 1;
-    if (!clr_idx_vec) {
+    if (!clr_idx_vec)
+    {
         use_color_code = 0;
         clr_idx_vec = gslu_index_alloc (n);
         gslu_index_set_zero (clr_idx_vec);
@@ -571,27 +588,30 @@ _vis_plot_outliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index
     gsl_sort_vector_ulong (sel2_sort);
 
     int in_idx = 0;
-    for (int i=0; i<n; i++) {
-        if ( gslu_index_get (sel1_sort, in_idx) != i) {
+    for (int i=0; i<n; i++)
+    {
+        if ( gslu_index_get (sel1_sort, in_idx) != i)
+        {
             // draw in image1
             CvPoint pt1 = cvPoint (gsl_matrix_get (uv1, 0, i), gsl_matrix_get (uv1, 1, i));
             CvPoint pt2 = cvPoint (gsl_matrix_get (uv2, 0, i), gsl_matrix_get (uv2, 1, i));
             cvLine (canvas, pt1, pt2, red, thickness, lineType, shift);
 
             // draw in image2
-            if (stack_type == VIS_PLOT_STACK_HORZ) {
+            if (stack_type == VIS_PLOT_STACK_HORZ)
+            {
                 CvPoint pt1_on2 = cvPoint (gsl_matrix_get (uv1, 0, i)+offset, gsl_matrix_get (uv1, 1, i) );
                 CvPoint pt2_on2 = cvPoint (gsl_matrix_get (uv2, 0, i)+offset, gsl_matrix_get (uv2, 1, i) );
                 cvLine (canvas, pt1_on2, pt2_on2, red, thickness, lineType, shift);
             }
-            else {
+            else
+            {
                 CvPoint pt1_on2 = cvPoint (gsl_matrix_get (uv1, 0, i), gsl_matrix_get (uv1, 1, i)+offset);
                 CvPoint pt2_on2 = cvPoint (gsl_matrix_get (uv2, 0, i), gsl_matrix_get (uv2, 1, i)+offset);
                 cvLine (canvas, pt1_on2, pt2_on2, red, thickness, lineType, shift);
             }
         }
-        else
-            if (in_idx < n_corr-1) in_idx++;
+        else if (in_idx < n_corr-1) in_idx++;
     } //draw outliers
 
     // clean up
@@ -602,10 +622,10 @@ _vis_plot_outliers (IplImage *canvas, bool stack_type, size_t offset, gslu_index
         gslu_index_free (clr_idx_vec);
 }
 
-void 
-vis_plot_correspondences (IplImage *img1, IplImage *img2, 
-                          const gslu_index *sel1, const gslu_index *sel2, 
-                          const gsl_matrix *uv1, const gsl_matrix *uv2, 
+void
+vis_plot_correspondences (IplImage *img1, IplImage *img2,
+                          const gslu_index *sel1, const gslu_index *sel2,
+                          const gsl_matrix *uv1, const gsl_matrix *uv2,
                           bool stack_type, int in_or_out, const char *named_window,
                           gslu_index *clr_idx_vec, const float scale)
 {
@@ -621,11 +641,13 @@ vis_plot_correspondences (IplImage *img1, IplImage *img2,
     else
         offset = img1->height;
 
-    if (in_or_out & VIS_PLOT_IN) { // PLOT INLIERS
+    if (in_or_out & VIS_PLOT_IN)   // PLOT INLIERS
+    {
         _vis_plot_inliers (img_plot, stack_type, offset, clr_idx_vec, sel1, sel2, uv1, uv2);
     }
 
-    if (in_or_out & VIS_PLOT_OUT) { // PLOT OUTLIERS
+    if (in_or_out & VIS_PLOT_OUT)   // PLOT OUTLIERS
+    {
         _vis_plot_outliers (img_plot, stack_type, offset, clr_idx_vec, sel1, sel2, uv1, uv2);
     }
 
@@ -644,8 +666,8 @@ vis_plot_correspondences (IplImage *img1, IplImage *img2,
  * returns pt1 and pt2 to draw a line in the boundary
  * offset value will be used to control stacked image
  */
-void 
-_line_bounds(double xminus, double xplus, double yminus, double yplus, 
+void
+_line_bounds(double xminus, double xplus, double yminus, double yplus,
              gsl_matrix *epl,                                           // 3 x 1 matrix
              CvPoint *pt1, CvPoint *pt2,                                // pt1 and pt2 indicate boundary points
              bool stack_type)
@@ -662,29 +684,37 @@ _line_bounds(double xminus, double xplus, double yminus, double yplus,
     double dy = fabs (yplus - yminus);
     double ratio = dy /dx;
 
-    if ( fabs(a) < 1e-6 && fabs(b) < 1e-6 ) {
+    if ( fabs(a) < 1e-6 && fabs(b) < 1e-6 )
+    {
         // line equation is incorrect
         (*pt1) = cvPoint (0.0, 0.0);
         (*pt2) = cvPoint (0.0, 0.0);
     }
-    else {
-        if (slope < ratio) {
-            if (stack_type == VIS_PLOT_STACK_HORZ) {
+    else
+    {
+        if (slope < ratio)
+        {
+            if (stack_type == VIS_PLOT_STACK_HORZ)
+            {
                 (*pt1) = cvPoint (xminus, -(a*xminus + c)/b);
                 (*pt2) = cvPoint (xplus, -(a*xplus  + c)/b);
             }
-            else {
+            else
+            {
                 (*pt1) = cvPoint (xminus, -(a*xminus + c)/b);
                 (*pt2) = cvPoint (xplus, -(a*xplus  + c)/b);
             }
 
         }
-        else {
-            if (stack_type == VIS_PLOT_STACK_HORZ) {
+        else
+        {
+            if (stack_type == VIS_PLOT_STACK_HORZ)
+            {
                 (*pt1) = cvPoint (-(b*yminus + c)/a, yminus);
                 (*pt2) = cvPoint (-(b*yplus  + c)/a, yplus);
             }
-            else {
+            else
+            {
                 (*pt1) = cvPoint (-(b*yminus + c)/a, yminus);
                 (*pt2) = cvPoint (-(b*yplus  + c)/a, yplus);
             }
@@ -692,9 +722,9 @@ _line_bounds(double xminus, double xplus, double yminus, double yplus,
     }
 }
 
-void 
-_draw_epipolar_line (IplImage* img, const gsl_matrix *F, const gsl_vector *uv, 
-                     const int x_lb, const int x_ub, const int y_lb, const int y_ub, 
+void
+_draw_epipolar_line (IplImage* img, const gsl_matrix *F, const gsl_vector *uv,
+                     const int x_lb, const int x_ub, const int y_lb, const int y_ub,
                      const CvScalar line_color, const bool stack_type)
 {
     // plot options
@@ -709,7 +739,7 @@ _draw_epipolar_line (IplImage* img, const gsl_matrix *F, const gsl_vector *uv,
     gsl_matrix_set (&uv_h.matrix, 1,0, gsl_vector_get (uv,1));
     gslu_blas_mm (&epl.matrix, F, &uv_h.matrix);
 
-    CvPoint pt1, pt2;       // end points for a line    
+    CvPoint pt1, pt2;       // end points for a line
     _line_bounds(x_lb+1, x_ub-1, y_lb+1, y_ub-1, &epl.matrix, &pt1, &pt2, stack_type);
     cvLine (img, pt1, pt2, line_color, thickness, lineType, shift);
 }
@@ -719,8 +749,8 @@ _draw_epipolar_line (IplImage* img, const gsl_matrix *F, const gsl_vector *uv,
  * [1] "Linear Algebra and its Applications", Gibert Strang, p.335
  * [2] http://opencv.willowgarage.com/documentation/drawing_functions.html?highlight=ellipse#cvEllipse
  */
-void 
-_draw_ellipse (IplImage *img, const gsl_vector *mu, const gsl_matrix *cov, const double k2, 
+void
+_draw_ellipse (IplImage *img, const gsl_vector *mu, const gsl_matrix *cov, const double k2,
                const CvScalar color, const bool stack_type)
 {
 
@@ -747,22 +777,24 @@ _draw_ellipse (IplImage *img, const gsl_vector *mu, const gsl_matrix *cov, const
     if (2*r1 > 65535) r1 = 32766;
     if (2*r2 > 65535) r2 = 32766;
 
-    if (r1 > 0 && r2 > 0) {
+    if (r1 > 0 && r2 > 0)
+    {
         CvSize axes = cvSize (r1, r2);
         CvPoint center = cvPoint (gsl_vector_get (mu, 0), gsl_vector_get (mu, 1));
 
         // plot param
         double start_angle = 0;
-        double end_angle = 360; 
+        double end_angle = 360;
         int thickness=LINE_THICKNESS;
         int lineType=8;
         int shift=0;
 
-        if (SHOW_ELLIPSE_AXIS) {
+        if (SHOW_ELLIPSE_AXIS)
+        {
             /* PJO: taking out minus sign makes search regions align with epipolar lines */
             double theta = angle;
             CvPoint r1_pt1, r1_pt2;     // end points for a line of the second principal axis
-            CvPoint r2_pt1, r2_pt2;       
+            CvPoint r2_pt1, r2_pt2;
 
             // semi-major axis
             r1_pt1 = cvPoint (center.x + r1*cos (theta*DTOR), center.y + r1*sin (theta*DTOR));
@@ -784,26 +816,28 @@ _draw_ellipse (IplImage *img, const gsl_vector *mu, const gsl_matrix *cov, const
     }
 }
 
-void 
-vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2, 
+void
+vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2,
                         const gsl_matrix *uv1, const gsl_matrix *uv2p, const gsl_matrix *cov2p, const gsl_matrix *uv2,
                         const gsl_matrix *F, const double chiSquare2dof,
                         bool stack_type, const char *named_window, const float scale, int64_t dt)
 {
-    CvScalar lcolors[8]; 
+    CvScalar lcolors[8];
     _gen_basic_colors (lcolors); // [r g b y m c w k]
 
     IplImage *canvas1 = 0;
     IplImage *canvas2 = 0;
 
     // duplicate imgs to work with
-    if (img1->nChannels == 1) { // gray scale 
+    if (img1->nChannels == 1)   // gray scale
+    {
         canvas1 = cvCreateImage (cvGetSize (img1), IPL_DEPTH_8U, 3);
         canvas2 = cvCreateImage (cvGetSize (img2), IPL_DEPTH_8U, 3);
         cvCvtColor (img1, canvas1, CV_GRAY2BGR);
-        cvCvtColor (img2, canvas2, CV_GRAY2BGR);    
+        cvCvtColor (img2, canvas2, CV_GRAY2BGR);
     }
-    else { // color 
+    else   // color
+    {
         canvas1 = cvCloneImage (img1);
         canvas2 = cvCloneImage (img2);
     }
@@ -818,7 +852,8 @@ vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2,
 
     // plot pose instantiated epipolar lines on I1 and I2
     // --------------------------------------------
-    for (int i=0; i<nsamps; i++) {
+    for (int i=0; i<nsamps; i++)
+    {
         // draw lines from uv2p on I1
         gsl_vector_const_view uv2p_i = gsl_matrix_const_column (uv2p, i);
         _draw_epipolar_line (canvas1, &FT.matrix, &uv2p_i.vector, 0, img1->width, 0, MIN(img1->height,img2->height), lcolors[i], stack_type);
@@ -833,12 +868,13 @@ vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2,
     int radius = DOT_SIZE;
     int circle_thickness = -1;	// line thickness when pos number, -1 for filled circle
 
-    for (int i=0; i<nsamps; i++) {
+    for (int i=0; i<nsamps; i++)
+    {
         cvCircle (canvas1, cvPoint (gsl_matrix_get (uv1, 0, i), gsl_matrix_get (uv1, 1, i)),
                   radius, lcolors[i], circle_thickness, CV_AA, 0);  // uv on I1
 
         // RME: don't plot center of predicted ellipse
-        //cvCircle (canvas2, cvPoint (gsl_matrix_get (uv2p, 0, i), gsl_matrix_get (uv2p, 1, i)), 
+        //cvCircle (canvas2, cvPoint (gsl_matrix_get (uv2p, 0, i), gsl_matrix_get (uv2p, 1, i)),
         //          radius, lcolors[7], circle_thickness, CV_AA, 0);  // uvp on I2
     }
 
@@ -846,31 +882,34 @@ vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2,
     // ----------------------------------------------------
     int n2 = uv2->size2;
     GSLU_VECTOR_VIEW (uv2_j,2);
-    for (int i=0; i<nsamps; i++) {
+    for (int i=0; i<nsamps; i++)
+    {
         gsl_vector_const_view sigma_col = gsl_matrix_const_column (cov2p, i);
         gslu_vector_reshape (&cov_mat.matrix, &sigma_col.vector, CblasTrans);
         gslu_matrix_inv (&invcov_mat.matrix, &cov_mat.matrix);
         gsl_vector_const_view uv2p_i = gsl_matrix_const_column (uv2p, i);
         _draw_ellipse (canvas2, &uv2p_i.vector, &cov_mat.matrix, chiSquare2dof, lcolors[i], stack_type);
 
-        #if 1 //plot the points from (u2,v2) which lie inside the ellipse
-        for (int j=0; j < n2; ++j) {
-            gsl_vector_const_view uv2_j = gsl_matrix_const_column (uv2, j); 
+#if 1 //plot the points from (u2,v2) which lie inside the ellipse
+        for (int j=0; j < n2; ++j)
+        {
+            gsl_vector_const_view uv2_j = gsl_matrix_const_column (uv2, j);
             double dist = gslu_vector_mahal_dist (&uv2p_i.vector, &uv2_j.vector, &invcov_mat.matrix);
 
-            if (dist*dist < chiSquare2dof) { // inside ellipse, plot !
-                cvCircle (canvas2, cvPoint (gsl_matrix_get (uv2, 0, j), gsl_matrix_get (uv2, 1, j)), 
+            if (dist*dist < chiSquare2dof)   // inside ellipse, plot !
+            {
+                cvCircle (canvas2, cvPoint (gsl_matrix_get (uv2, 0, j), gsl_matrix_get (uv2, 1, j)),
                           radius, lcolors[i], circle_thickness, CV_AA, 0);  // uvp on I2
             }
         }
-        #endif
+#endif
     }
 
     // stack two canvases
     IplImage* img_plot = 0;
     img_plot = vis_plot_stack_imgs (canvas1, canvas2, stack_type);  // or STACK_VERT
 
-    // show dt 
+    // show dt
     CvFont font;
     cvInitFont (&font, CV_FONT_HERSHEY_PLAIN, 2.0, 2.0, 0, 2, 8);
     CvScalar red = CV_RGB (255, 0, 0);
@@ -894,25 +933,27 @@ vis_plot_pccs_ellipses (IplImage *img1, IplImage *img2,
     cvReleaseImage (&img_scaled);
 }
 
-void 
-_vis_plot_summary_F  (IplImage *img1, IplImage *img2, 
-                     const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_matrix *F,
-                     bool stack_type, const char *named_window, const float scale)
+void
+_vis_plot_summary_F  (IplImage *img1, IplImage *img2,
+                      const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_matrix *F,
+                      bool stack_type, const char *named_window, const float scale)
 {
-    CvScalar lcolors[8]; 
+    CvScalar lcolors[8];
     _gen_basic_colors (lcolors); // [r g b y m c w k]
 
     IplImage *canvas1 = 0;
     IplImage *canvas2 = 0;
 
     // duplicate imgs to work with
-    if (img1->nChannels == 1) { // gray scale 
+    if (img1->nChannels == 1)   // gray scale
+    {
         canvas1 = cvCreateImage (cvGetSize (img1), IPL_DEPTH_8U, 3);
         canvas2 = cvCreateImage (cvGetSize (img2), IPL_DEPTH_8U, 3);
         cvCvtColor (img1, canvas1, CV_GRAY2BGR);
-        cvCvtColor (img2, canvas2, CV_GRAY2BGR);    
+        cvCvtColor (img2, canvas2, CV_GRAY2BGR);
     }
-    else { // color 
+    else   // color
+    {
         canvas1 = cvCloneImage (img1);
         canvas2 = cvCloneImage (img2);
     }
@@ -925,7 +966,8 @@ _vis_plot_summary_F  (IplImage *img1, IplImage *img2,
 
     // plot pose instantiated epipolar lines on I1 and I2
     // --------------------------------------------
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         // draw lines from uv2p on I1
         gsl_vector_const_view uv2_i = gsl_matrix_const_column (uv2, i);
         _draw_epipolar_line (canvas1, &FT.matrix, &uv2_i.vector, 0, img1->width, 0, MIN(img1->height,img2->height), lcolors[i%8], stack_type);
@@ -940,7 +982,8 @@ _vis_plot_summary_F  (IplImage *img1, IplImage *img2,
     int radius = DOT_SIZE;
     int circle_thickness = -1;	// line thickness when pos number, -1 for filled circle
 
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         cvCircle (canvas1, cvPoint (gsl_matrix_get (uv1, 0, i), gsl_matrix_get (uv1, 1, i)),
                   radius, lcolors[i%8], circle_thickness, CV_AA, 0);  // uv1 on I1
         cvCircle (canvas2, cvPoint (gsl_matrix_get (uv2, 0, i), gsl_matrix_get (uv2, 1, i)),
@@ -964,25 +1007,27 @@ _vis_plot_summary_F  (IplImage *img1, IplImage *img2,
     cvReleaseImage (&img_scaled);
 }
 
-void 
-_vis_plot_summary_H  (IplImage *img1, IplImage *img2, 
-                     const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_matrix *H,
-                     bool stack_type, const char *named_window, const float scale)
+void
+_vis_plot_summary_H  (IplImage *img1, IplImage *img2,
+                      const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_matrix *H,
+                      bool stack_type, const char *named_window, const float scale)
 {
-    CvScalar lcolors[8]; 
+    CvScalar lcolors[8];
     _gen_basic_colors (lcolors); // [r g b y m c w k]
 
-    IplImage *canvas1 = 0; 
+    IplImage *canvas1 = 0;
     IplImage *canvas2 = 0;
 
     // duplicate imgs to work with
-    if (img1->nChannels == 1) { // gray scale 
+    if (img1->nChannels == 1)   // gray scale
+    {
         canvas1 = cvCreateImage (cvGetSize (img1), IPL_DEPTH_8U, 3);
         canvas2 = cvCreateImage (cvGetSize (img2), IPL_DEPTH_8U, 3);
         cvCvtColor (img1, canvas1, CV_GRAY2BGR);
-        cvCvtColor (img2, canvas2, CV_GRAY2BGR);    
+        cvCvtColor (img2, canvas2, CV_GRAY2BGR);
     }
-    else { // color 
+    else   // color
+    {
         canvas1 = cvCloneImage (img1);
         canvas2 = cvCloneImage (img2);
     }
@@ -1003,7 +1048,8 @@ _vis_plot_summary_H  (IplImage *img1, IplImage *img2,
     vis_homog_project (H, uv1, uv1p);
     vis_homog_project (&Hinv.matrix, uv2, uv2p);
 
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         cvCircle (canvas1, cvPoint (gsl_matrix_get (uv1, 0, i), gsl_matrix_get (uv1, 1, i)),
                   radius, lcolors[i%8], circle_thickness, CV_AA, 0);  // uv1 on I1
         cvCircle (canvas2, cvPoint (gsl_matrix_get (uv1p, 0, i), gsl_matrix_get (uv1p, 1, i)),
@@ -1037,8 +1083,8 @@ _vis_plot_summary_H  (IplImage *img1, IplImage *img2,
 
 // GNU PLOTS
 //-----------------------------------------------------------------//
-int 
-vis_plot_coordinate_frame (const gsl_vector *center, const gsl_matrix *R, 
+int
+vis_plot_coordinate_frame (const gsl_vector *center, const gsl_matrix *R,
                            FILE *gp, int nframe, int z_axis_color)
 {
 
@@ -1046,8 +1092,8 @@ vis_plot_coordinate_frame (const gsl_vector *center, const gsl_matrix *R,
     double cx = gsl_vector_get (center, 0);
     double cy = gsl_vector_get (center, 1);
     double cz = gsl_vector_get (center, 2);
-    double r1x = gsl_matrix_get (R, 0,0); 
-    double r1y = gsl_matrix_get (R, 0,1); 
+    double r1x = gsl_matrix_get (R, 0,0);
+    double r1y = gsl_matrix_get (R, 0,1);
     double r1z = gsl_matrix_get (R, 0,2);
     double r2x = gsl_matrix_get (R, 1,0);
     double r2y = gsl_matrix_get (R, 1,1);
@@ -1058,11 +1104,11 @@ vis_plot_coordinate_frame (const gsl_vector *center, const gsl_matrix *R,
 
     //fprintf (gp, "set label \"cam%d\" at first %g, first %g, first %g\n", nframe, cx,cy,cz);
     fprintf (gp, "set arrow %d from %g,%g,%g to %g,%g,%g ls 2\n"
-                 ,3*nframe, cx,cy,cz, cx+r1x,cy+r1y,cz+r1z);
+             ,3*nframe, cx,cy,cz, cx+r1x,cy+r1y,cz+r1z);
     fprintf (gp, "set arrow %d from %g,%g,%g to %g,%g,%g ls 2\n"
-                 ,3*nframe+1, cx,cy,cz, cx+r2x,cy+r2y,cz+r2z);
+             ,3*nframe+1, cx,cy,cz, cx+r2x,cy+r2y,cz+r2z);
     fprintf (gp, "set arrow %d from %g,%g,%g to %g,%g,%g ls %d\n"
-                 ,3*nframe+2, cx,cy,cz, cx+r3x,cy+r3y,cz+r3z, 1+z_axis_color);
+             ,3*nframe+2, cx,cy,cz, cx+r3x,cy+r3y,cz+r3z, 1+z_axis_color);
 
     nframe++;
     return nframe;
@@ -1088,8 +1134,9 @@ vis_plot_relpose (FILE *gp, const gsl_vector *x21, const double scale, const gsl
     GSLU_MATRIX_VIEW (nav_R2, 3,3);
     GSLU_VECTOR_VIEW (nav_t2, 3);
 
-    if (x21->size == 5) {
-        GSLU_VECTOR_VIEW (b_ext, 3,{0.0, 0.0, 1.0});
+    if (x21->size == 5)
+    {
+        GSLU_VECTOR_VIEW (b_ext, 3, {0.0, 0.0, 1.0});
         GSLU_VECTOR_VIEW (t21, 3);
         GSLU_MATRIX_VIEW (R21, 3,3);
         gsl_vector_set (&b_ext.vector, 0, gsl_vector_get (x21, 0));
@@ -1105,7 +1152,8 @@ vis_plot_relpose (FILE *gp, const gsl_vector *x21, const double scale, const gsl
         gslu_blas_mv (&t2.vector, &R2.matrix, &t21.vector);
         gsl_vector_scale (&t2.vector, -1.0);
     }
-    else if (x21->size == 6) {
+    else if (x21->size == 6)
+    {
         GSLU_MATRIX_VIEW (R21, 3,3);
         gsl_vector_const_view t21 = gsl_vector_const_subvector (x21,0,3);
         gsl_vector_const_view rph21 = gsl_vector_const_subvector (x21,3,3);
@@ -1120,7 +1168,7 @@ vis_plot_relpose (FILE *gp, const gsl_vector *x21, const double scale, const gsl
     else
         printf ("relative pose should be either 5 or 6 dof\n");
 
-    
+
 
     // set range
     double margin = 1.0; // meter
@@ -1135,11 +1183,12 @@ vis_plot_relpose (FILE *gp, const gsl_vector *x21, const double scale, const gsl
     fprintf (gp, "set yrange [%g:%g]\n", ymin, ymax);
     fprintf (gp, "set zrange [%g:%g]\n", zmin, zmax);
 
-    // plot coordinates 
+    // plot coordinates
     _nframe = vis_plot_coordinate_frame (&t1.vector, &R1.matrix, gp, _nframe, 0);
     _nframe = vis_plot_coordinate_frame (&t2.vector, &R2.matrix, gp, _nframe, 0);
 
-    if (nav) {
+    if (nav)
+    {
         GSLU_MATRIX_VIEW (nav_R21, 3,3);
         gsl_vector_const_view nav_t21 = gsl_vector_const_subvector (nav,0,3);
         gsl_vector_const_view nav_rph21 = gsl_vector_const_subvector (nav,3,3);
@@ -1158,15 +1207,15 @@ vis_plot_relpose (FILE *gp, const gsl_vector *x21, const double scale, const gsl
 
     // NOTE: 3D axis equal is not supported by gnuplot, only 2D so far.
     fprintf (gp, "set size ratio -1\n");     // 2D axis equal
-    fprintf (gp, "set view equal\n");       
+    fprintf (gp, "set view equal\n");
 
 }
 
-void 
+void
 vis_plot_3dpts (FILE *gp, const gsl_matrix *X)
 {
 
-    // X = 3 x n matrix 
+    // X = 3 x n matrix
     assert (X->size1 == 3);
     int n = X->size2;
 
@@ -1189,8 +1238,9 @@ vis_plot_3dpts (FILE *gp, const gsl_matrix *X)
 
     int j = snprintf(buffer, 20, "splot \"< echo -e '");
 
-    for (int i=0; i<n; i++) {
-        j += snprintf(buffer+j, 40, "%2.2g %2.2g %2.2g", 
+    for (int i=0; i<n; i++)
+    {
+        j += snprintf(buffer+j, 40, "%2.2g %2.2g %2.2g",
                       gsl_matrix_get (X,0,i),gsl_matrix_get (X,1,i),gsl_matrix_get (X,2,i));
 
         if (i!=n-1)
@@ -1204,10 +1254,10 @@ vis_plot_3dpts (FILE *gp, const gsl_matrix *X)
 
     // NOTE: 3D axis equal is not supported by gnuplot, only 2D so far.
     fprintf (gp, "set size ratio -1\n");     // 2D axis equal
-    fprintf (gp, "set view equal\n");       
+    fprintf (gp, "set view equal\n");
 }
 
-void 
+void
 vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, const double scale, const gsl_vector *nav)
 {
     int _nframe = 1;
@@ -1227,8 +1277,9 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
     GSLU_MATRIX_VIEW (nav_R2, 3,3);
     GSLU_VECTOR_VIEW (nav_t2, 3);
 
-    if (x21->size == 5) {
-        GSLU_VECTOR_VIEW (b_ext, 3,{0.0, 0.0, 1.0});
+    if (x21->size == 5)
+    {
+        GSLU_VECTOR_VIEW (b_ext, 3, {0.0, 0.0, 1.0});
         GSLU_VECTOR_VIEW (t21, 3);
         GSLU_MATRIX_VIEW (R21, 3,3);
         gsl_vector_set (&b_ext.vector, 0, gsl_vector_get (x21, 0));
@@ -1244,7 +1295,8 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
         gslu_blas_mv (&t2.vector, &R2.matrix, &t21.vector);
         gsl_vector_scale (&t2.vector, -1.0);
     }
-    else if (x21->size == 6) {
+    else if (x21->size == 6)
+    {
         GSLU_MATRIX_VIEW (R21, 3,3);
         gsl_vector_const_view t21 = gsl_vector_const_subvector (x21,0,3);
         gsl_vector_const_view rph21 = gsl_vector_const_subvector (x21,3,3);
@@ -1259,7 +1311,8 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
     else
         printf ("relative pose should be either 5 or 6 dof\n");
 
-    if (nav) {
+    if (nav)
+    {
         GSLU_MATRIX_VIEW (nav_R21, 3,3);
         gsl_vector_const_view nav_t21 = gsl_vector_const_subvector (nav,0,3);
         gsl_vector_const_view nav_rph21 = gsl_vector_const_subvector (nav,3,3);
@@ -1272,7 +1325,7 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
         gsl_vector_scale (&nav_t2.vector, -1.0);
     }
 
-    // X = 3 x n matrix 
+    // X = 3 x n matrix
     assert (X->size1 == 3);
     int n = X->size2;
     gsl_vector_const_view xdata = gsl_matrix_const_row (X, 0);
@@ -1303,18 +1356,19 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
     fprintf (gp, "set yrange [%g:%g]\n", ymin, ymax);
     fprintf (gp, "set zrange [%g:%g]\n", zmin, zmax);
 
-    // plot coordinates 
+    // plot coordinates
     _nframe = vis_plot_coordinate_frame (&t1.vector, &R1.matrix, gp, _nframe, 0);
     _nframe = vis_plot_coordinate_frame (&t2.vector, &R2.matrix, gp, _nframe, 0);
 
-    if (nav)  
+    if (nav)
         _nframe = vis_plot_coordinate_frame (&nav_t2.vector, &nav_R2.matrix, gp, _nframe, 3);
 
     // plot 3d points
     char *buffer = calloc (1, sizeof (char) * 50 * (n+1));
     int j = snprintf(buffer, 20, "splot \"< echo -e '");
-    for (int i=0; i<n; i++) {
-        j += snprintf(buffer+j, 40, "%2.2g %2.2g %2.2g", 
+    for (int i=0; i<n; i++)
+    {
+        j += snprintf(buffer+j, 40, "%2.2g %2.2g %2.2g",
                       gsl_matrix_get (X,0,i),gsl_matrix_get (X,1,i),gsl_matrix_get (X,2,i));
 
         if (i!=n-1)
@@ -1327,7 +1381,7 @@ vis_plot_relpose_3dpts (FILE *gp, const gsl_vector *x21, const gsl_matrix *X, co
 
     // NOTE: 3D axis equal is not supported by gnuplot, only 2D so far.
     fprintf (gp, "set size ratio -1\n");     // 2D axis equal
-    fprintf (gp, "set view equal\n");       
+    fprintf (gp, "set view equal\n");
 }
 
 
@@ -1343,16 +1397,20 @@ _vis_plot_clr_code_inliers_alloc (const perllcm_van_plot_debug_t *pd)
     gslu_index *clr_idx_vec = gslu_index_alloc (pd->n_in);
     gslu_index_set_zero (clr_idx_vec);
 
-    for (size_t ii=0; ii<pd->n_in; ii++) {
-        if (pd->isel[ii] < pd->npts_each_type[0]){
+    for (size_t ii=0; ii<pd->n_in; ii++)
+    {
+        if (pd->isel[ii] < pd->npts_each_type[0])
+        {
             gslu_index_set (clr_idx_vec, ii, 0);
         }
 
-        for (size_t n=1; n<pd->n_feat_types; n++) {
-            if (pd->npts_each_type[n-1]<=pd->isel[ii] && pd->isel[ii]<pd->npts_each_type[n]) {
+        for (size_t n=1; n<pd->n_feat_types; n++)
+        {
+            if (pd->npts_each_type[n-1]<=pd->isel[ii] && pd->isel[ii]<pd->npts_each_type[n])
+            {
                 gslu_index_set (clr_idx_vec, ii, n);
             }
-        }        
+        }
     }
 
     return clr_idx_vec;
@@ -1365,16 +1423,20 @@ _vis_plot_clr_code_pccs_alloc (const perllcm_van_plot_debug_t *pd)
         return NULL;
 
     gslu_index *clr_idx_vec = gslu_index_alloc (pd->n_in_pccs);
-    for (size_t n=0; n<pd->n_feat_types; n++) {
-        if (pd->npts_each_type[n]) {
-            if (n==0) {
+    for (size_t n=0; n<pd->n_feat_types; n++)
+    {
+        if (pd->npts_each_type[n])
+        {
+            if (n==0)
+            {
                 gslu_index *subvec = gslu_index_alloc (pd->npts_each_type[n]);
                 gslu_index_set_all (subvec, n);
                 gslu_index_view clr_idx_vec_sub = gslu_index_subvector (clr_idx_vec, 0, pd->npts_each_type[n]);
                 gslu_index_memcpy (&clr_idx_vec_sub.vector, subvec);
                 gslu_index_free (subvec);
             }
-            else {
+            else
+            {
                 gslu_index *subvec = gslu_index_alloc (pd->npts_each_type[n]-pd->npts_each_type[n-1]);
                 gslu_index_set_all (subvec, n);
                 gslu_index_view clr_idx_vec_sub = gslu_index_subvector (clr_idx_vec, pd->npts_each_type[n-1], pd->npts_each_type[n]-pd->npts_each_type[n-1]);
@@ -1388,15 +1450,15 @@ _vis_plot_clr_code_pccs_alloc (const perllcm_van_plot_debug_t *pd)
 }
 
 void
-vis_plot_pccs_debugplot (const perllcm_van_plot_debug_t *pd, 
+vis_plot_pccs_debugplot (const perllcm_van_plot_debug_t *pd,
                          IplImage *imgi, IplImage *imgj,
-                         const gslu_index *sel1, const gslu_index *sel2, 
+                         const gslu_index *sel1, const gslu_index *sel2,
                          const gsl_matrix *uv1, const gsl_matrix *uv2,
                          const float scale)
 {
     gslu_index *clr_idx_vec = _vis_plot_clr_code_pccs_alloc (pd);
-    vis_plot_correspondences (imgi, imgj, sel1, sel2, uv1, uv2, 
-                              VIS_PLOT_STACK_HORZ, VIS_PLOT_IN, PLOT_WIN_PUTCORR, 
+    vis_plot_correspondences (imgi, imgj, sel1, sel2, uv1, uv2,
+                              VIS_PLOT_STACK_HORZ, VIS_PLOT_IN, PLOT_WIN_PUTCORR,
                               clr_idx_vec, scale);
 
     gslu_index_free (clr_idx_vec);
@@ -1423,27 +1485,34 @@ _vis_plot_display_results_on_image (const perllcm_van_plot_debug_t *pd, IplImage
         snprintf (gic_str, sizeof gic_str, "GIC: N/A");
     cvPutText (imgi, gic_str, gic_pt, &font,  cyan);
 
-    if (pd->reg_result == PERLLCM_VAN_PLOT_DEBUG_T_REG_SUCC) {
+    if (pd->reg_result == PERLLCM_VAN_PLOT_DEBUG_T_REG_SUCC)
+    {
         snprintf (reg_str, sizeof gic_str, "Reg: Y");
         cvPutText (imgi, reg_str, reg_pt, &font,  green);
     }
-    else {
+    else
+    {
         // not registered. why?
-        if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_PCCS) {
+        if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_PCCS)
+        {
             snprintf (reg_str, sizeof gic_str, "Reg: N (PCCS)");
         }
         else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_E ||
-            pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_H) {
+                 pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_H)
+        {
             snprintf (reg_str, sizeof gic_str, "Reg: N (INLIERS)");
         }
         else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_E_ERROR ||
-            pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_H_ERROR) {
+                 pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_H_ERROR)
+        {
             snprintf (reg_str, sizeof gic_str, "Reg: N (SBA)");
         }
-        else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MDIST_NAV) {
+        else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_MDIST_NAV)
+        {
             snprintf (reg_str, sizeof gic_str, "Reg: N (MAHAL)");
         }
-        else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST) {
+        else if (pd->errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
+        {
             snprintf (reg_str, sizeof gic_str, "Reg: N (TRI)");
         }
         else
@@ -1453,7 +1522,7 @@ _vis_plot_display_results_on_image (const perllcm_van_plot_debug_t *pd, IplImage
 }
 
 void
-vis_plot_in_and_outliers_debugplot (const perllcm_van_plot_debug_t *pd, 
+vis_plot_in_and_outliers_debugplot (const perllcm_van_plot_debug_t *pd,
                                     IplImage *imgi, IplImage *imgj,
                                     gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
                                     int in_or_out, const float scale)
@@ -1470,11 +1539,13 @@ vis_plot_in_and_outliers_debugplot (const perllcm_van_plot_debug_t *pd,
     for (size_t ii=0; ii<pd->n_in; ii++)
         gslu_index_set (sel, ii, pd->isel[ii]);
 
-    if (in_or_out == VIS_PLOT_INOUT) {
+    if (in_or_out == VIS_PLOT_INOUT)
+    {
         vis_plot_correspondences (imgi, imgj, sel, sel, uvi_sel, uvj_sel,
                                   stack_type, VIS_PLOT_INOUT, PLOT_WIN_IN_OUT, NULL, scale);
     }
-    else if (in_or_out == VIS_PLOT_IN) {
+    else if (in_or_out == VIS_PLOT_IN)
+    {
         gslu_index *clr_idx_vec = _vis_plot_clr_code_inliers_alloc (pd);
         vis_plot_correspondences (imgi, imgj, sel, sel, uvi_sel, uvj_sel,
                                   VIS_PLOT_STACK_HORZ, VIS_PLOT_IN, PLOT_WIN_IN, clr_idx_vec, scale);
@@ -1500,9 +1571,9 @@ _vis_plot_display_nlink_on_image (const perllcm_van_plot_debug_t *pd, IplImage *
 }
 
 int
-vis_plot_manual_verification_debugplot (const perllcm_van_plot_debug_t *pd, 
+vis_plot_manual_verification_debugplot (const perllcm_van_plot_debug_t *pd,
                                         IplImage *imgi, IplImage *imgj,
-                                        gsl_matrix *uvi_sel, gsl_matrix *uvj_sel, 
+                                        gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
                                         const float scale)
 {
     // write gic and reg information on images
@@ -1530,9 +1601,10 @@ vis_plot_manual_verification_debugplot (const perllcm_van_plot_debug_t *pd,
     int msg = PERLLCM_VAN_PLOT_DEBUG_T_MSG_INVALID;
 
     // and what do you think?
-    char key = cvWaitKey(0); 
+    char key = cvWaitKey(0);
 
-    switch (key) {
+    switch (key)
+    {
     case '\n':   // enter
     case 'y':    // yes
         //printf ("yes\n");
@@ -1559,9 +1631,9 @@ vis_plot_manual_verification_debugplot (const perllcm_van_plot_debug_t *pd,
 }
 
 void
-vis_plot_pccs_ellipses_plotdebug (const perllcm_van_plot_debug_t *pd, 
+vis_plot_pccs_ellipses_plotdebug (const perllcm_van_plot_debug_t *pd,
                                   IplImage *imgi, IplImage *imgj,
-                                  gsl_matrix *uvi, gsl_matrix *uvj, 
+                                  gsl_matrix *uvi, gsl_matrix *uvj,
                                   const bool vice_versa, const float scale, int64_t dt)
 {
     if (!(imgi && imgj && uvi && uvj))
@@ -1572,7 +1644,8 @@ vis_plot_pccs_ellipses_plotdebug (const perllcm_van_plot_debug_t *pd,
     for (size_t i=0; i<16; i++)
         check_uv1 += pd->uv1_sample[i];
 
-    if (check_uv1 > 0) {
+    if (check_uv1 > 0)
+    {
         GSLU_MATRIX_VIEW (F21, 3,3);
         GSLU_MATRIX_VIEW (F12, 3,3);
         gsl_matrix_const_view F21_view = gsl_matrix_const_view_array (pd->F21, 3,3);
@@ -1580,9 +1653,12 @@ vis_plot_pccs_ellipses_plotdebug (const perllcm_van_plot_debug_t *pd,
         gsl_matrix_transpose_memcpy (&F12.matrix, &F21.matrix);
 
         // read from pd and store it in gsl double format for plotting
-        GSLU_MATRIX_VIEW (uv1_sample, 2,8);   GSLU_MATRIX_VIEW (uv2_sample, 2,8);
-        GSLU_MATRIX_VIEW (uv2p_sample, 2,8);  GSLU_MATRIX_VIEW (uv1p_sample, 2,8);
-        GSLU_MATRIX_VIEW (cov2p_sample, 4,8); GSLU_MATRIX_VIEW (cov1p_sample, 4,8);
+        GSLU_MATRIX_VIEW (uv1_sample, 2,8);
+        GSLU_MATRIX_VIEW (uv2_sample, 2,8);
+        GSLU_MATRIX_VIEW (uv2p_sample, 2,8);
+        GSLU_MATRIX_VIEW (uv1p_sample, 2,8);
+        GSLU_MATRIX_VIEW (cov2p_sample, 4,8);
+        GSLU_MATRIX_VIEW (cov1p_sample, 4,8);
 
         gsl_matrix_float_const_view uv1_sample_view = gsl_matrix_float_const_view_array (pd->uv1_sample, 2, 8);
         gsl_matrix_float_const_view uv2_sample_view = gsl_matrix_float_const_view_array (pd->uv2_sample, 2, 8);
@@ -1598,18 +1674,19 @@ vis_plot_pccs_ellipses_plotdebug (const perllcm_van_plot_debug_t *pd,
         GSLU_MATRIX_TYPEA_TO_TYPEB (gsl_matrix_float, &cov2p_sample_view.matrix, gsl_matrix, &cov2p_sample.matrix);
         GSLU_MATRIX_TYPEA_TO_TYPEB (gsl_matrix_float, &cov1p_sample_view.matrix, gsl_matrix, &cov1p_sample.matrix);
 
-        vis_plot_pccs_ellipses (imgi, imgj, &uv1_sample.matrix, &uv2p_sample.matrix, &cov2p_sample.matrix, uvj, &F21.matrix, pd->chiSquare2dof, 
+        vis_plot_pccs_ellipses (imgi, imgj, &uv1_sample.matrix, &uv2p_sample.matrix, &cov2p_sample.matrix, uvj, &F21.matrix, pd->chiSquare2dof,
                                 VIS_PLOT_STACK_HORZ, PLOT_WIN_SEARCH_ELLIPSES1, scale, dt);
 
-        if (vice_versa) {
-            vis_plot_pccs_ellipses (imgj, imgi, &uv2_sample.matrix, &uv1p_sample.matrix, &cov1p_sample.matrix, uvi, &F12.matrix, pd->chiSquare2dof, 
+        if (vice_versa)
+        {
+            vis_plot_pccs_ellipses (imgj, imgi, &uv2_sample.matrix, &uv1p_sample.matrix, &cov1p_sample.matrix, uvi, &F12.matrix, pd->chiSquare2dof,
                                     VIS_PLOT_STACK_HORZ, PLOT_WIN_SEARCH_ELLIPSES2, scale, dt);
         }
     }
 }
 
 void
-vis_plot_summary_debugplot (const perllcm_van_plot_debug_t *pd, 
+vis_plot_summary_debugplot (const perllcm_van_plot_debug_t *pd,
                             IplImage *imgi, IplImage *imgj,
                             gsl_matrix *uv1_pccs, gsl_matrix *uv2_pccs,
                             const float scale)
@@ -1620,7 +1697,7 @@ vis_plot_summary_debugplot (const perllcm_van_plot_debug_t *pd,
     int stack_type = VIS_PLOT_STACK_HORZ;
 
     // sample if n_inliers are large
-    size_t sample_stride = 1; 
+    size_t sample_stride = 1;
     size_t nsamp = MIN (pd->n_in, SUMMARY_PLOT_NPTS_MAX);
 
     gsl_matrix *uv1_in = gsl_matrix_alloc (2, nsamp);
@@ -1629,7 +1706,8 @@ vis_plot_summary_debugplot (const perllcm_van_plot_debug_t *pd,
     if (pd->n_in > SUMMARY_PLOT_NPTS_MAX)
         sample_stride = round (pd->n_in / SUMMARY_PLOT_NPTS_MAX);
 
-    for (size_t ii=0; ii<nsamp; ii++) {
+    for (size_t ii=0; ii<nsamp; ii++)
+    {
         const size_t jj = pd->isel[sample_stride*ii];
         assert (jj < uv1_pccs->size2);
         gsl_vector_const_view c1 = gsl_matrix_const_column (uv1_pccs, jj);
@@ -1639,19 +1717,21 @@ vis_plot_summary_debugplot (const perllcm_van_plot_debug_t *pd,
     }
 
 
-    if (pd->model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F) {
+    if (pd->model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F)
+    {
         GSLU_MATRIX_VIEW (F21, 3,3);
         gsl_matrix_const_view F21_view = gsl_matrix_const_view_array (pd->model, 3,3);
         gsl_matrix_memcpy (&F21.matrix, &F21_view.matrix);
-        
+
         _vis_plot_summary_F (imgi, imgj, uv1_in, uv2_in, &F21.matrix,
                              stack_type, PLOT_WIN_SUMMARY, scale);
     }
-    else { // pd->model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_H
+    else   // pd->model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_H
+    {
         GSLU_MATRIX_VIEW (H, 3,3);
         gsl_matrix_const_view H_view = gsl_matrix_const_view_array (pd->model, 3,3);
         gsl_matrix_memcpy (&H.matrix, &H_view.matrix);
-        
+
         _vis_plot_summary_H (imgi, imgj, uv1_in, uv2_in, &H.matrix,
                              stack_type, PLOT_WIN_SUMMARY, scale);
     }

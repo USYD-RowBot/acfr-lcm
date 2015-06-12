@@ -42,8 +42,8 @@
 #define ALTITUDE_SENSOR RDI_ALTITUDE_CORRECTED
 
 static void
-nav_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_ms_gx3_25_t *ustrain, void *user)
+nav_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_ms_gx3_25_t *ustrain, void *user)
 {
     nav_state_t *state = user;
 
@@ -54,11 +54,12 @@ nav_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 nav_corr_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-        const senlcm_rph_t *ustrain, void *user)
+                               const senlcm_rph_t *ustrain, void *user)
 {
     nav_state_t *state = user;
 
-    if (RPH_SENSOR == RPH_MICROSTRAIN) {
+    if (RPH_SENSOR == RPH_MICROSTRAIN)
+    {
         state->rph[0] = -ustrain->rph[0];
         state->rph[1] = -ustrain->rph[1];
         state->rph[2] =  ustrain->rph[2] + M_PI;
@@ -70,7 +71,8 @@ nav_corr_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                       state->rph[0] * RTOD,              // deg
                       state->temp,                       // celsius
                       state->dfs * UNITS_METER_TO_FEET); // feet
-        senlcm_raw_t gsd_msg = {
+        senlcm_raw_t gsd_msg =
+        {
             .utime = ustrain->utime,
             .length = strlen (msg),
             .data = (uint8_t *) msg,
@@ -80,8 +82,8 @@ nav_corr_microstrain_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 static void
-nav_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_os_compass_t *compass, void *user)
+nav_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel,
+                         const senlcm_os_compass_t *compass, void *user)
 {
     nav_state_t *state = user;
     if (DEPTH_SENSOR == DEPTH_OS_COMPASS) state->dfs = compass->depth;
@@ -91,11 +93,12 @@ nav_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 nav_corr_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-        const senlcm_rph_t *compass, void *user)
+                              const senlcm_rph_t *compass, void *user)
 {
     nav_state_t *state = user;
 
-    if (RPH_SENSOR == RPH_OS_COMPASS) {
+    if (RPH_SENSOR == RPH_OS_COMPASS)
+    {
         state->rph[0] = compass->rph[0];
         state->rph[1] = compass->rph[1];
         state->rph[2] = compass->rph[2];
@@ -107,7 +110,8 @@ nav_corr_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                       state->rph[0] * RTOD,         // deg
                       state->temp,                  // celsius
                       state->dfs * UNITS_METER_TO_FEET); // feet
-        senlcm_raw_t gsd_msg = {
+        senlcm_raw_t gsd_msg =
+        {
             .utime = compass->utime,
             .length = strlen (msg),
             .data = (uint8_t *) msg,
@@ -117,8 +121,8 @@ nav_corr_os_compass_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 static void
-nav_dstar_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_dstar_ssp1_t *dstar, void *user)
+nav_dstar_callback (const lcm_recv_buf_t *rbuf, const char *channel,
+                    const senlcm_dstar_ssp1_t *dstar, void *user)
 {
     nav_state_t *state = user;
     if (DEPTH_SENSOR == DEPTH_DSTAR)
@@ -126,8 +130,8 @@ nav_dstar_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 static void
-nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_rdi_pd4_t *pd4, void *user)
+nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
+                  const senlcm_rdi_pd4_t *pd4, void *user)
 {
     nav_state_t *state = user;
 
@@ -135,7 +139,8 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     static GSLU_VECTOR_VIEW (x_vs, 6);
     static GSLU_MATRIX_VIEW (R_vs, 3, 3);
     static GSLU_MATRIX_VIEW (bhat, 3, 4);
-    if (firstime) {
+    if (firstime)
+    {
         firstime = false;
         // static sensor to vehicle coordinate transform
         bot_param_get_double_array_or_fail (state->param, "sensors.rdi.x_vs", x_vs.data, 6);
@@ -147,10 +152,11 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         // RDI beam geometry
         double s, c;
         fsincos (30.0*DTOR, &s, &c);
-                                       /*  b1, b2, b3, b4 */
+        /*  b1, b2, b3, b4 */
         GSLU_MATRIX_VIEW (tmp_bhat, 3, 4, {-s,  s,  0,  0,
-                                            0,  0,  s, -s,
-                                           -c, -c, -c, -c });
+                                           0,  0,  s, -s,
+                                           -c, -c, -c, -c
+                                          });
         gsl_matrix_memcpy (&bhat.matrix, &tmp_bhat.matrix);
     }
 
@@ -158,7 +164,8 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     // Altitude
     // $SDDBT,#,f,#,M,#,F<*cc> feet, Meters, Fathoms
     char msg[256];
-    if (pd4->altitude > SENLCM_RDI_PD4_T_ALTITUDE_SENTINAL) {
+    if (pd4->altitude > SENLCM_RDI_PD4_T_ALTITUDE_SENTINAL)
+    {
         GSLU_MATRIX_VIEW (R_wv, 3, 3);
         so3_rotxyz (R_wv.data, state->rph);
 
@@ -167,8 +174,10 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
         int nbeams = 0;
         double altavg = 0, altmin = GSL_POSINF;
-        for (int i=0; i < 4; i++) {
-            if (pd4->range[i] > 0) {
+        for (int i=0; i < 4; i++)
+        {
+            if (pd4->range[i] > 0)
+            {
                 nbeams++;
                 GSLU_VECTOR_VIEW (bi_s, 3);
                 gsl_matrix_get_col (&bi_s.vector, &bhat.matrix, i);
@@ -182,7 +191,7 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                 if (bi_alt < altmin)
                     altmin = bi_alt;
             }
-        }            
+        }
         altavg /= nbeams;
 
         double uvc_altitude = 0;
@@ -194,10 +203,11 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
             ERROR ("unknown ALTITUDE_SENSOR");
 
         nmea_sprintf (msg, "$SDDBT,%.1f,f,%.1f,M,%.1f,F*",
-                uvc_altitude * UNITS_METER_TO_FEET,     //feet
-                uvc_altitude,                           //meters
-                uvc_altitude * UNITS_METER_TO_FATHOM);  //fathoms
-        senlcm_raw_t gsd_msg = {
+                      uvc_altitude * UNITS_METER_TO_FEET,     //feet
+                      uvc_altitude,                           //meters
+                      uvc_altitude * UNITS_METER_TO_FATHOM);  //fathoms
+        senlcm_raw_t gsd_msg =
+        {
             .utime = pd4->utime,
             .length = strlen (msg),
             .data = (uint8_t *) msg,
@@ -208,18 +218,20 @@ nav_rdi_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     // Velocity
     // $ODVL,<XSPEED>,<YSPEED>,<TMOUT><*cc>
     if (pd4->btv[0] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
-        pd4->btv[1] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
-        pd4->btv[2] > SENLCM_RDI_PD4_T_BTV_SENTINAL) {// three-beam or better soln
+            pd4->btv[1] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
+            pd4->btv[2] > SENLCM_RDI_PD4_T_BTV_SENTINAL)  // three-beam or better soln
+    {
 
         const int UVC_DVL_TIMEOUT = 5;
         gsl_vector_const_view uvw_s = gsl_vector_const_view_array (pd4->btv, 3);
         GSLU_VECTOR_VIEW (uvw_v, 3);
         gslu_blas_mv (&uvw_v.vector, &R_vs.matrix, &uvw_s.vector);
-        
-        // RME: 05/31/2011 - UMBS experiments seem to suggest that UVC is defining body-frame +X fwd, +Y port 
+
+        // RME: 05/31/2011 - UMBS experiments seem to suggest that UVC is defining body-frame +X fwd, +Y port
         // which is oppposite of our NED frame convention on the vehicle, hence why the -1.0 on v
         nmea_sprintf (msg, "$ODVL,%f,%f,%d*", uvw_v.data[0], -1.0*uvw_v.data[1], UVC_DVL_TIMEOUT);
-        senlcm_raw_t gsd_msg = {
+        senlcm_raw_t gsd_msg =
+        {
             .utime = pd4->utime,
             .length = strlen (msg),
             .data = (uint8_t *) msg,
@@ -233,17 +245,19 @@ nav_gpsd_client_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                           const senlcm_raw_t *gps, void *user)
 {
     nav_state_t *state = user;
-    
+
     /*** PeRL line feed hack for UVC4.7 with gpsd 2.92, 5/31/2011 ***/
     char nmea_str[1024] = {'\0'};
     snprintf (nmea_str, sizeof nmea_str, "%s\r\n", (const char *) gps->data);
 
-    if (0 == strncmp (nmea_str, "$PPSDA", 6)) {
+    if (0 == strncmp (nmea_str, "$PPSDA", 6))
+    {
         printf ("skipping $PPSDA\n");
         return;
     }
 
-    senlcm_raw_t gsd_msg = {
+    senlcm_raw_t gsd_msg =
+    {
         .utime = gps->utime,
         .length = strlen (nmea_str),
         .data = (uint8_t *) nmea_str,
@@ -254,19 +268,21 @@ nav_gpsd_client_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 nav_state_t*
 nav_init (lcm_t *lcm, BotParam *param)
 {
-    nav_state_t *state = calloc (1, sizeof (nav_state_t));    
+    nav_state_t *state = calloc (1, sizeof (nav_state_t));
     state->dfs = GSL_POSINF; // init to pos infty, so that vehicle exceeds max depth and aborts if no sensor data
     state->lcm = lcm;
     state->param = param;
 
-    if (botu_param_get_boolean_to_bool (state->param, "iver-state.use_navigator", &state->use_navigator)) {
+    if (botu_param_get_boolean_to_bool (state->param, "iver-state.use_navigator", &state->use_navigator))
+    {
         ERROR ("bot param could not find use_navigator field!");
         return NULL;
     }
 
     char *lcm_chan=NULL, *lcm_raw=NULL;
     // read navigator channels
-    if (state->use_navigator) {
+    if (state->use_navigator)
+    {
         ERROR ("we do not currently support missions with navigator!");
         return NULL;
     }

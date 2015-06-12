@@ -33,7 +33,7 @@
 #define d2current(x) ((float)x / 10.0)
 #define d2speed(x) (short)((short)(x - 0x80) * -1 * 4500 / 102)
 
-typedef struct 
+typedef struct
 {
     lcm_t *lcm;
     pcap_t* descr;
@@ -52,7 +52,7 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
 {
     senlcm_seabotix_sensors_t rov;
     memset(&rov, 0, sizeof(senlcm_seabotix_sensors_t));
-    
+
     rov.utime = timestamp;
     rov.heading = d2f(&d[8]);
     rov.depth = d2f(&d[12]);
@@ -61,12 +61,12 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
     rov.turns = d2f(&d[24]);
     rov.temperature_internal = d2f(&d[28]);
     rov.temperature_external = d2f(&d[32]);
-    
+
     rov.PF_faults = d[36];
     rov.PF_current = d2current(d[37]);
     rov.PF_speed = d2speed(d[38]);
     rov.PF_temperature = d[39];
-    
+
     rov.PA_faults = d[40];
     rov.PA_current = d2current(d[41]);
     rov.PA_speed = d2speed(d[42]);
@@ -93,51 +93,51 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
     rov.SV_temperature = d[59];
 
     senlcm_seabotix_sensors_t_publish(lcm, "SEABOTIX_SENSORS", &rov);
-    
+
     return 1;
 }
-   
+
 
 void packet_callback(u_char *u,const struct pcap_pkthdr* pkthdr,const u_char* packet)
 {
     state_t *state = (state_t *)u;
-       
+
     if(program_exit)
         pcap_breakloop(state->descr);
- 
-        
+
+
     // check to see what port the data is on
     const struct ip *ip;
     ip = (struct ip*)(packet + 14);
-    
+
     // We are only interested if the packet protocol is UDP
     if(ip->ip_p != IPPROTO_UDP)
         return;
-        
+
     const struct udphdr *udp;
     udp = (struct udphdr *)(packet + 14 + sizeof(struct ip));
-    
+
     // check the destination port
     if(ntohs(udp->dest) != AHRS_PORT)
         return;
-    
+
     // get a pointer to the payload data
     const unsigned char *payload = (unsigned char *)(packet + 14 + sizeof(struct ip) + sizeof(struct udphdr));
-            
+
     // check to see if the packet is correct
     if(payload[0] == 0x69 && payload[1] == 0x45)
-        parse_vlbv(payload, state->lcm, timestamp_now());       
-       
+        parse_vlbv(payload, state->lcm, timestamp_now());
+
 }
 
 int main(int argc,char **argv)
 {
     char errbuf[PCAP_ERRBUF_SIZE];
-    
+
     struct bpf_program fp;      /* hold compiled program     */
     bpf_u_int32 maskp;          /* subnet mask               */
     bpf_u_int32 netp;           /* ip                        */
-    
+
     state_t state;
 
     if(argc != 2)
@@ -145,21 +145,21 @@ int main(int argc,char **argv)
         printf("Usage: %s <device>\n", basename(argv[0]));
         return 0;
     }
-    
-    char *dev = argv[1];    
-    
+
+    char *dev = argv[1];
+
     // Install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
 
     /* grab a device to peak into... */
-/*    dev = pcap_lookupdev(errbuf);
-    if(dev == NULL)
-    {
-        printf("%s\n",errbuf);
-        exit(1);
-    }
-*/
+    /*    dev = pcap_lookupdev(errbuf);
+        if(dev == NULL)
+        {
+            printf("%s\n",errbuf);
+            exit(1);
+        }
+    */
     pcap_lookupnet(dev,&netp,&maskp,errbuf);
 
     /* open device for reading. NOTE: defaulting to promiscuous mode*/
@@ -184,11 +184,11 @@ int main(int argc,char **argv)
         fprintf(stderr,"Error setting filter\n");
         exit(1);
     }
- 
- 
+
+
     // start LCM
     state.lcm = lcm_create(NULL);
- 
+
     /* ... and loop */
     pcap_loop(state.descr, -1, packet_callback, (unsigned char *)&state);
 

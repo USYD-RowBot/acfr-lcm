@@ -30,14 +30,16 @@
 #define UPDATE_ALL_SG_STEP      100
 
 typedef struct invidx invidx_t;
-struct invidx {
+struct invidx
+{
     GSList    **index;          // list of imgnums (GsList)
-    size_t      len; 
+    size_t      len;
     int         max_idx;      // initialized with -1
 };
 
 typedef struct thread_data thread_data_t;
-struct thread_data {
+struct thread_data
+{
     GSList *sal_utimelist;   // this happens for all images
 
     GSList *vocab;           // GList of gsl_vector_float
@@ -45,7 +47,7 @@ struct thread_data {
 
     double sal_new_vocab_sim_thresh;
     double sal_new_vocab_motion_thresh;
-    double S_L_thresh;      // if S_L > S_L_thresh, it is locally salient 
+    double S_L_thresh;      // if S_L > S_L_thresh, it is locally salient
     double S_G_thresh;      // if S_G > S_G_thresh, it is globally salient
 
     // image bow generation statistics (assign word idx to feature i)
@@ -74,7 +76,7 @@ struct thread_data {
     // incrementally increase the size of container by EXTEND_LENGTH
     gslu_index *nwoccur;         // nw, number of word occurance (idf)
     int         Nf;              // number of docs (images used in idf calc)
-    int         imgcounter;      
+    int         imgcounter;
     double      sumidf_max;
     GSList     *image_bow_mask;  // list of boolean vector indicating wi occured in the image
     invidx_t   *invidx;
@@ -118,8 +120,10 @@ _calc_sum_idf (gslu_boolean *image_bow_mask, gslu_index *nw, int Nf)
 {
     // calculate sum of idf
     double sumidf = 0.0;    // sum of idf
-    for (size_t wi=0; wi<image_bow_mask->size; wi++) {
-        if (gslu_boolean_get (image_bow_mask, wi) > 0) { // wi occured
+    for (size_t wi=0; wi<image_bow_mask->size; wi++)
+    {
+        if (gslu_boolean_get (image_bow_mask, wi) > 0)   // wi occured
+        {
             double idf = log2 (Nf/gslu_index_get (nw, wi));
             //printf ("for nz %zu nw = %zu Nf = %d idf = %f\n", wi, gslu_index_get (nw, wi), Nf, idf);
             sumidf = sumidf + idf;
@@ -149,12 +153,13 @@ glist_calc_dist_vocab (gpointer data, gpointer user)
 
     double feat_dist = vis_feature_get_simscore_gsl_float (tdata->fi, wi);
 
-    if (feat_dist < tdata->feat_dist_min) {
+    if (feat_dist < tdata->feat_dist_min)
+    {
         // update corresponding word
         tdata->feat_dist_min = feat_dist;
         tdata->wi = wi;
         //tdata->corr_word_idx = word_idx;
-    }            
+    }
     // printf ("min dist to %zu word = %g\n", corr_word, feat_dist_min);
 }
 
@@ -165,7 +170,7 @@ glist_calc_dist_xji (gpointer data, gpointer user)
     thread_data_t *tdata = (thread_data_t *) user;
 
     double dxyz2 = 0.0;             // dx^2+ dy^2 + dz^2
-    for (size_t i=0; i<3; i++) 
+    for (size_t i=0; i<3; i++)
         dxyz2 += (tdata->xyz_lv_curr[i] - xyz_lv_prev[i]) * (tdata->xyz_lv_curr[i] - xyz_lv_prev[i]);
 
     if (tdata->min_dxyz2 > dxyz2)
@@ -203,7 +208,8 @@ init_invidx ()
 static void
 free_invidx (invidx_t *invidx)
 {
-    if (invidx) {
+    if (invidx)
+    {
         free (invidx->index);
         free (invidx);
     }
@@ -223,18 +229,22 @@ _update_sumidf_invidx (thread_data_t *tdata)
     // @TODO: implement unique(imgnum)
     gslu_boolean *imgbow_cur = g_slist_nth_data (tdata->image_bow_mask, tdata->vocab_len-1);
 
-    for (size_t wi=0; wi<tdata->vocab_len; wi++) {
-        if (gslu_boolean_get (imgbow_cur, wi) > 0) { // occured in the current image
+    for (size_t wi=0; wi<tdata->vocab_len; wi++)
+    {
+        if (gslu_boolean_get (imgbow_cur, wi) > 0)   // occured in the current image
+        {
             GSList *imglist = tdata->invidx->index[wi]; // imglist when wi occured
 
-            for (size_t imgidx=0; imgidx < g_slist_length (imglist); imgidx++) {
+            for (size_t imgidx=0; imgidx < g_slist_length (imglist); imgidx++)
+            {
                 int *imgnum = g_slist_nth_data (imglist, imgidx);
-                if (imgnum) {
+                if (imgnum)
+                {
                     gslu_boolean *image_bow_mask_i = g_slist_nth_data (tdata->image_bow_mask, (*imgnum));
                     double sumidf_i = _calc_sum_idf (image_bow_mask_i, tdata->nwoccur, tdata->Nf);
 
-                    gsl_vector_set (tdata->sumidf, (*imgnum), sumidf_i); 
-                    
+                    gsl_vector_set (tdata->sumidf, (*imgnum), sumidf_i);
+
                 }
                 else
                     printf ("ERROR: there is a missing imgnum in invidx imglist\n");
@@ -253,7 +263,7 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     // use only surf for saliency
     if (f->attrtype != PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVSURF &&
-        f->attrtype != PERLLCM_VAN_FEATURE_T_ATTRTYPE_SURFGPU)
+            f->attrtype != PERLLCM_VAN_FEATURE_T_ATTRTYPE_SURFGPU)
         return;
 
     // separate utimelist (shm = camera node utime)
@@ -261,14 +271,16 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     tdata->sal_utimelist = g_slist_append (tdata->sal_utimelist, gu_dup (&f->utime, sizeof f->utime));
     int imgnum_cur = tdata->imgcounter;
     tdata->imgcounter ++;
-    if (tdata->imgcounter > tdata->sumidf->size) {
+    if (tdata->imgcounter > tdata->sumidf->size)
+    {
         tdata->sumidf = _extend_gsl_vector (tdata->sumidf);
         tdata->bowE = _extend_gsl_vector (tdata->bowE);
         tdata->vocablen_list = _extend_gslu_index (tdata->vocablen_list);
     }
 
     // this is a valid node OR self testing mode: compute saliency!
-    if (f->npts == 0) {// not salient
+    if (f->npts == 0)  // not salient
+    {
         // publish the local saliency score
         perllcm_van_saliency_t *saliency = calloc (1, sizeof (*saliency));
         saliency->utime = f->utime;
@@ -289,14 +301,16 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     // -----------------------------------------------------------------
     bool update_vocab = true;
     tdata->min_dxyz2 = GSL_POSINF;
-    
-    if (tdata->xyz_lv_prev) { // when null (=first time) just update        
+
+    if (tdata->xyz_lv_prev)   // when null (=first time) just update
+    {
         g_slist_foreach (tdata->xyz_lv_prev, &glist_calc_dist_xji, tdata);
         if (tdata->min_dxyz2 < tdata->sal_new_vocab_motion_thresh * tdata->sal_new_vocab_motion_thresh && tdata->vocab_len > 0)
             update_vocab = false;
     }
 
-    if (update_vocab) { // valid node to check spatial distance
+    if (update_vocab)   // valid node to check spatial distance
+    {
         double *xyz_dup = calloc (1, sizeof(*xyz_dup));
         for (size_t i=0; i<3; i++) xyz_dup[i] = tdata->xyz_lv_curr[i];
         tdata->xyz_lv_prev = g_slist_append (tdata->xyz_lv_prev, xyz_dup);
@@ -317,14 +331,16 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     // we might need scale information
     perllcm_van_feature_attr_cvsurf_t *attr = malloc (sizeof (*attr));
-    if (perllcm_van_feature_attr_cvsurf_t_decode (f->attr, 0, f->attrsize, attr) < 0) {
+    if (perllcm_van_feature_attr_cvsurf_t_decode (f->attr, 0, f->attrsize, attr) < 0)
+    {
         ERROR ("perllcm_van_feature_attr_cvsurf_t_decode() failed");
         free (attr);
         return;
     }
 
     t0 = timestamp_now ();
-    for (size_t feat_idx=0; feat_idx<nfeat; feat_idx++) {
+    for (size_t feat_idx=0; feat_idx<nfeat; feat_idx++)
+    {
 
         //printf ("size = %d\n", (attr->size[feat_idx]));
 
@@ -334,13 +350,15 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         gsl_vector_float_view fi = gsl_vector_float_view_array (f->keys[feat_idx], f->keylen);
         tdata->fi = &fi.vector;
 
-        if (tdata->vocab_len > 0) { //if ((attr->size[feat_idx]) > 40)
+        if (tdata->vocab_len > 0)   //if ((attr->size[feat_idx]) > 40)
+        {
             // find the closest one from vocab
             g_slist_foreach (tdata->vocab, &glist_calc_dist_vocab, tdata);
             size_t closest_idx = g_slist_index (tdata->vocab, tdata->wi);
-            
+
             // check what was min dist for feature fi
-            if (tdata->feat_dist_min > tdata->sal_new_vocab_sim_thresh) {
+            if (tdata->feat_dist_min > tdata->sal_new_vocab_sim_thresh)
+            {
                 // add a new word to vocab
                 gsl_vector_float *new_word = gsl_vector_float_alloc (f->keylen);
                 gsl_vector_float_memcpy (new_word, &fi.vector);
@@ -352,29 +370,33 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                     tdata->nwoccur = _extend_gslu_index (tdata->nwoccur);
 
                 // fi just has been assigned to a new word
-                tdata->corr_word_idx = tdata->vocab_len - 1;           
+                tdata->corr_word_idx = tdata->vocab_len - 1;
 
                 // index for global saliency
                 gslu_boolean_set (occurrence_mask, tdata->corr_word_idx, 1);
                 gslu_index_set (tdata->nwoccur, tdata->corr_word_idx, 1);
                 gslu_index_set (image_bow, feat_idx, tdata->corr_word_idx);
             }
-            else {
+            else
+            {
                 // assign word idx from exising vocab
                 // tdata->corr_word_idx = closest_idx;
                 gslu_index_set (image_bow, feat_idx, closest_idx);
 
-                if (gslu_boolean_get (occurrence_mask, closest_idx) == 0) {
+                if (gslu_boolean_get (occurrence_mask, closest_idx) == 0)
+                {
                     gslu_boolean_set (occurrence_mask, closest_idx, 1);
 
-                    if (update_vocab) {
+                    if (update_vocab)
+                    {
                         int current_nw = gslu_index_get (tdata->nwoccur, closest_idx);
                         gslu_index_set (tdata->nwoccur, closest_idx, current_nw + 1);
                     }
                 }
             }
         }
-        else {
+        else
+        {
             printf ("No vocab exist. Initializing vocab...\n");
             // initialize the vocab by adding it
             gsl_vector_float *new_word = gsl_vector_float_alloc (f->keylen);
@@ -393,17 +415,20 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     //t0 = timestamp_now ();
     gslu_index *vocab_histc = gslu_index_alloc (tdata->vocab_len);
     gslu_index_set_zero (vocab_histc);
-    for (size_t feat_idx=0; feat_idx<f->npts; feat_idx++) {
+    for (size_t feat_idx=0; feat_idx<f->npts; feat_idx++)
+    {
         size_t word_i = gslu_index_get (image_bow, feat_idx);
         size_t cur_count_word_i = gslu_index_get (vocab_histc, word_i);
         gslu_index_set (vocab_histc, word_i, cur_count_word_i+1);
     }
 
     double bowE = 0.0;
-    for (size_t wi=0; wi<tdata->vocab_len; wi++) {
+    for (size_t wi=0; wi<tdata->vocab_len; wi++)
+    {
         size_t count_word_i = gslu_index_get (vocab_histc, wi);
 
-        if (count_word_i > 0) {
+        if (count_word_i > 0)
+        {
             // sum over non-zero probability
             double p = (double) count_word_i / (double) f->npts;
             bowE = bowE - p * log2(p);
@@ -426,16 +451,20 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 #if 0
     // maintain inverted indeces
     t2 = timestamp_now ();
-    for (int wi=0; wi<tdata->vocab_len; wi++) {
-        if (gslu_boolean_get (occurrence_mask, wi) > 0) { // occured in the current image
-            if (wi > tdata->invidx->max_idx) {
+    for (int wi=0; wi<tdata->vocab_len; wi++)
+    {
+        if (gslu_boolean_get (occurrence_mask, wi) > 0)   // occured in the current image
+        {
+            if (wi > tdata->invidx->max_idx)
+            {
                 // we don't have imglist for wi
                 tdata->invidx->max_idx = wi;
                 GSList *imglist_tmp = NULL;
                 imglist_tmp = g_slist_append (imglist_tmp, gu_dup (&imgnum_cur, sizeof imgnum_cur));
                 tdata->invidx->index[wi] = imglist_tmp;
             }
-            else {
+            else
+            {
                 // it is already in invidx
                 GSList *imglist = tdata->invidx->index[wi];
                 imglist = g_slist_append (imglist, gu_dup (&imgnum_cur, sizeof imgnum_cur));
@@ -453,17 +482,18 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     //printf ("alive batch %d\n", do_batch);
     double sumidf = 0.0;
     if (do_batch)
-        {
-            //gslu_boolean_printfc (image_bow_mask, "mask", "%g", CblasTrans);
-            //gslu_index_printfc (tdata->nwoccur, "nw", "%g", CblasTrans);
+    {
+        //gslu_boolean_printfc (image_bow_mask, "mask", "%g", CblasTrans);
+        //gslu_index_printfc (tdata->nwoccur, "nw", "%g", CblasTrans);
 
-            t1 = timestamp_now ();
-            _update_sumidf_all (tdata);
-            dt = timestamp_now () - t1;
-            printf ("Updated sumidf for ALL image. dt=%"PRId64"\n", dt);
-            sumidf = gsl_vector_get (tdata->sumidf, imgnum_cur);
-        }
-    else {
+        t1 = timestamp_now ();
+        _update_sumidf_all (tdata);
+        dt = timestamp_now () - t1;
+        printf ("Updated sumidf for ALL image. dt=%"PRId64"\n", dt);
+        sumidf = gsl_vector_get (tdata->sumidf, imgnum_cur);
+    }
+    else
+    {
         //gslu_boolean_printfc (image_bow_mask, "mask", "%g", CblasTrans);
         //gslu_index_printfc (tdata->nwoccur, "nw", "%g", CblasTrans);
         // calculate the current global saliency
@@ -497,14 +527,15 @@ perllcm_van_feature_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     printf ("S_L = %2.2f S_G = %2.2f:\tnpts=%d\tN=%d\t|w|=%zu\tdt=%"PRId64"\n", S_L, S_G, f->npts, tdata->imgcounter, tdata->vocab_len, dt);
 
     // save image in bow rep
-    if (tdata->save_image_bow) {
+    if (tdata->save_image_bow)
+    {
         char bowimage_fname[512];
         snprintf (bowimage_fname, sizeof bowimage_fname, "%s/%"PRId64".bow", shm->logdir, f->utime);
-        FILE *fbow = fopen (bowimage_fname, "wb");  
+        FILE *fbow = fopen (bowimage_fname, "wb");
         fprintf (fbow, "%zu\n", tdata->vocab_len);
         fprintf (fbow, "%g\n", bowE);
         fprintf (fbow, "%g\n", S_L);
-        gslu_index_fprintf (fbow, image_bow, "%d");  
+        gslu_index_fprintf (fbow, image_bow, "%d");
         fclose (fbow);
     }
 
@@ -521,7 +552,7 @@ hauv_bs_cnv_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 {
     thread_data_t *tdata = user;
 
-    // we need xyz position (only cnv)    
+    // we need xyz position (only cnv)
     tdata->xyz_lv_curr[0] = msg->x;
     tdata->xyz_lv_curr[1] = msg->y;
     tdata->xyz_lv_curr[2] = msg->z;
@@ -534,7 +565,8 @@ perllcm_isam_cmd_t_cmd_callback (const lcm_recv_buf_t *rbuf, const char *channel
     thread_data_t *tdata = user;
 
     // option_cmd is from viewer
-    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE && tdata->save_saliency) {
+    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE && tdata->save_saliency)
+    {
         printf ("saving saliency to ./saliency.dat\n");
 
         // global
@@ -542,12 +574,14 @@ perllcm_isam_cmd_t_cmd_callback (const lcm_recv_buf_t *rbuf, const char *channel
         GHashTable *bowE_hash = g_hash_table_new_full (&gu_int64_hash, &gu_int64_equal, &free, &free);
         GHashTable *sumidf_hash = g_hash_table_new_full (&gu_int64_hash, &gu_int64_equal, &free, &free);
         GHashTable *vocablen_hash = g_hash_table_new_full (&gu_int64_hash, &gu_int64_equal, &free, &free);
-        for (size_t i=0; i<tdata->imgcounter; i++) {
+        for (size_t i=0; i<tdata->imgcounter; i++)
+        {
             int64 *utime = g_slist_nth_data (tdata->sal_utimelist, i);
             double sumidf = gsl_vector_get (tdata->sumidf, i);
             double bowE = gsl_vector_get (tdata->bowE, i);
             size_t vocablen = gslu_index_get (tdata->vocablen_list, i);
-            if (utime) {
+            if (utime)
+            {
                 // printf ("%g %zu\n", sumidf, vocablen);
                 g_hash_table_insert (sumidf_hash, gu_dup (utime, sizeof (*utime)), gu_dup (&sumidf, sizeof (sumidf)));
                 g_hash_table_insert (bowE_hash, gu_dup (utime, sizeof (*utime)), gu_dup (&bowE, sizeof (bowE)));
@@ -571,41 +605,52 @@ saliency_thread (gpointer user)
 
     // saliency_thread state
     thread_data_t *tdata = calloc (1, sizeof (*tdata));
-    
-    // load from config
-    tdata->sal_new_vocab_sim_thresh = 0.2;    bot_param_get_double (shm->param, "rtvan.saliency_thread.sal_new_vocab_sim_thresh", &tdata->sal_new_vocab_sim_thresh);
-    tdata->sal_new_vocab_motion_thresh = 0.5; bot_param_get_double (shm->param, "rtvan.saliency_thread.sal_new_vocab_motion_thresh", &tdata->sal_new_vocab_motion_thresh);
-    tdata->S_L_thresh = 0.6;                  bot_param_get_double (shm->param, "rtvan.saliency_thread.S_L_thresh", &tdata->S_L_thresh);
-    tdata->S_G_thresh = 0.5;                  bot_param_get_double (shm->param, "rtvan.saliency_thread.S_G_thresh", &tdata->S_G_thresh);
 
-    tdata->self_testing = false;              botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.selftest_saliency", &tdata->self_testing);
+    // load from config
+    tdata->sal_new_vocab_sim_thresh = 0.2;
+    bot_param_get_double (shm->param, "rtvan.saliency_thread.sal_new_vocab_sim_thresh", &tdata->sal_new_vocab_sim_thresh);
+    tdata->sal_new_vocab_motion_thresh = 0.5;
+    bot_param_get_double (shm->param, "rtvan.saliency_thread.sal_new_vocab_motion_thresh", &tdata->sal_new_vocab_motion_thresh);
+    tdata->S_L_thresh = 0.6;
+    bot_param_get_double (shm->param, "rtvan.saliency_thread.S_L_thresh", &tdata->S_L_thresh);
+    tdata->S_G_thresh = 0.5;
+    bot_param_get_double (shm->param, "rtvan.saliency_thread.S_G_thresh", &tdata->S_G_thresh);
+
+    tdata->self_testing = false;
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.selftest_saliency", &tdata->self_testing);
     if (tdata->self_testing)                  shm->active = true;
 
-    tdata->save_image_bow = false;             botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_image_bow", &tdata->save_image_bow);
+    tdata->save_image_bow = false;
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_image_bow", &tdata->save_image_bow);
     printf ("self testing %d\n", tdata->self_testing);
 
-    tdata->save_saliency = false;             botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_saliency", &tdata->save_saliency);
+    tdata->save_saliency = false;
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_saliency", &tdata->save_saliency);
 
     tdata->bowE = gsl_vector_calloc (EXTEND_LENGTH);
-    tdata->sumidf = gsl_vector_calloc (EXTEND_LENGTH);    
-    tdata->vocablen_list = gslu_index_alloc (EXTEND_LENGTH); gslu_index_set_zero (tdata->vocablen_list);
+    tdata->sumidf = gsl_vector_calloc (EXTEND_LENGTH);
+    tdata->vocablen_list = gslu_index_alloc (EXTEND_LENGTH);
+    gslu_index_set_zero (tdata->vocablen_list);
 
-    tdata->nwoccur = gslu_index_alloc (EXTEND_LENGTH); gslu_index_set_zero (tdata->nwoccur);
+    tdata->nwoccur = gslu_index_alloc (EXTEND_LENGTH);
+    gslu_index_set_zero (tdata->nwoccur);
     tdata->invidx = init_invidx ();
 
     // lcm subscriptions
-    perllcm_van_feature_t_subscription_t *perllcm_van_feature_t_sub = 
-        perllcm_van_feature_t_subscribe (shm->lcm, VAN_WORDS_CHANNEL, 
+    perllcm_van_feature_t_subscription_t *perllcm_van_feature_t_sub =
+        perllcm_van_feature_t_subscribe (shm->lcm, VAN_WORDS_CHANNEL,
                                          &perllcm_van_feature_t_callback, tdata);
 
-    hauv_bs_cnv_t_subscription_t *hauv_bs_cnv_t_sub = 
+    hauv_bs_cnv_t_subscription_t *hauv_bs_cnv_t_sub =
         hauv_bs_cnv_t_subscribe (shm->lcm, "HAUV_BS_CNV", &hauv_bs_cnv_t_callback, tdata);
 
-    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_cmd_sub = 
+    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_cmd_sub =
         perllcm_isam_cmd_t_subscribe (shm->lcm, "CMD", &perllcm_isam_cmd_t_cmd_callback, tdata);
 
-    while (!shm->done) {
-        struct timeval timeout = {
+    while (!shm->done)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 500000,
         };
@@ -615,7 +660,7 @@ saliency_thread (gpointer user)
     // clean up
     hauv_bs_cnv_t_unsubscribe (shm->lcm, hauv_bs_cnv_t_sub);
     perllcm_van_feature_t_unsubscribe (shm->lcm, perllcm_van_feature_t_sub);
-    perllcm_isam_cmd_t_unsubscribe (shm->lcm, perllcm_isam_cmd_t_cmd_sub);    
+    perllcm_isam_cmd_t_unsubscribe (shm->lcm, perllcm_isam_cmd_t_cmd_sub);
     g_slist_foreach (tdata->vocab, &glist_destroyer, NULL);
     g_slist_foreach (tdata->xyz_lv_prev, &glist_destroyer, NULL);
     gslu_vector_free (tdata->sumidf);

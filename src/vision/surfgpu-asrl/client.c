@@ -34,7 +34,8 @@ main (int argc, char *argv[])
     getopt_add_int    (gopt, 'p',   "port",           default_port_str, "Server port");
     getopt_add_help   (gopt, NULL);
 
-    if (!getopt_parse (gopt, argc, argv, 1) || getopt_get_bool (gopt, "help") || gopt->extraargs->len !=1) {
+    if (!getopt_parse (gopt, argc, argv, 1) || getopt_get_bool (gopt, "help") || gopt->extraargs->len !=1)
+    {
         getopt_do_usage (gopt, "imagefile");
         exit (EXIT_FAILURE);
     }
@@ -42,7 +43,8 @@ main (int argc, char *argv[])
     // load image
     const char *img_fullname = gopt->extraargs->pdata[0];
     IplImage* imggray = cvLoadImage (img_fullname, CV_LOAD_IMAGE_GRAYSCALE);
-    if (!imggray) {
+    if (!imggray)
+    {
         printf ("ERROR: loading image\n");
         getopt_do_usage (gopt, NULL);
         return 0;
@@ -58,12 +60,13 @@ main (int argc, char *argv[])
     if (!f)
         exit (EXIT_FAILURE);
     printf ("%"PRId64" ms\n", dt);
-  
+
     // write to a key file
     const char *key_fullname = getopt_get_string (gopt, "keyfile");
     vis_feature_fprintf (f, key_fullname);
 
-    if (getopt_get_bool (gopt, "visualize")) {
+    if (getopt_get_bool (gopt, "visualize"))
+    {
         vis_plot_feature (imggray, f, img_fullname, 1.0, 0);
         cvWaitKey(0);
     }

@@ -47,27 +47,27 @@ timestamp_seconds (int64_t v)
     return v / 1000000;
 }
 
-int64_t 
+int64_t
 timestamp_useconds (int64_t v)
 {
     return v % 1000000;
 }
 
-double 
+double
 timestamp_to_double (int64_t v)
 {
     return v / 1000000.0;
 }
 
-void 
+void
 timestamp_to_timeval (int64_t v, struct timeval *tv)
 {
     tv->tv_sec  = timestamp_seconds (v);
     tv->tv_usec = timestamp_useconds (v);
 }
 
-void 
-timestamp_to_timespec (int64_t v, struct timespec *ts) 
+void
+timestamp_to_timespec (int64_t v, struct timespec *ts)
 {
     ts->tv_sec  = timestamp_seconds (v);
     ts->tv_nsec = timestamp_useconds (v) * 1000;
@@ -108,7 +108,8 @@ int64_t
 timestamp_sync (timestamp_sync_state_t *s, int64_t dev_ticks,
                 int64_t host_utime)
 {
-    if (!s->is_valid) {
+    if (!s->is_valid)
+    {
         /* The first sync has no history */
         s->is_valid = 1;
 
@@ -137,19 +138,21 @@ timestamp_sync (timestamp_sync_state_t *s, int64_t dev_ticks,
     /* If time_err is very large, resynchronize, emitting a warning. if
      * it is negative, we're just adjusting our timebase (it means
      * we got a nice new low-latency measurement.) */
-    if (time_err > 1000000000LL) { /* 1000 seconds */
+    if (time_err > 1000000000LL)   /* 1000 seconds */
+    {
         fprintf (stderr, "Warning: Time sync has drifted by more than 1000 seconds\n");
         s->sync_host_time = host_utime;
         s->dev_ticks_since_sync = 0;
         dev_utime = host_utime;
     }
-    if (time_err < 0) {
+    if (time_err < 0)
+    {
         s->sync_host_time = host_utime;
         s->dev_ticks_since_sync = 0;
         dev_utime = host_utime;
     }
 #if 0
-    printf ("%"PRId64"  %"PRId64"  %+6"PRId64"  %8"PRId64"  %"PRId64"\n", 
+    printf ("%"PRId64"  %"PRId64"  %+6"PRId64"  %8"PRId64"  %"PRId64"\n",
             host_utime, dev_utime, time_err, dticks, dev_ticks);
 #endif
 

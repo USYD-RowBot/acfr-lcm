@@ -67,7 +67,8 @@ parse_buf (const char *buf, int len, senlcm_os_compass_t *osc, bool freshwater)
         osc->depth = dfs_simple (DFS_RHO_SALTWATER, osc->p_gage);
 
     // magnetic field in Gauss
-    if (os.bitmask & OS5000_BITMASK_M_XYZ) {
+    if (os.bitmask & OS5000_BITMASK_M_XYZ)
+    {
         osc->Mxyz[0] = os.Mxyz[0] * UNITS_MILLI_TO_ONE;
         osc->Mxyz[1] = os.Mxyz[1] * UNITS_MILLI_TO_ONE;
         osc->Mxyz[2] = os.Mxyz[2] * UNITS_MILLI_TO_ONE;
@@ -76,7 +77,8 @@ parse_buf (const char *buf, int len, senlcm_os_compass_t *osc, bool freshwater)
         return 0;
 
     // acceleration in G's
-    if (os.bitmask & OS5000_BITMASK_A_XYZ) {
+    if (os.bitmask & OS5000_BITMASK_A_XYZ)
+    {
         osc->Gxyz[0] = os.Axyz[0];
         osc->Gxyz[1] = os.Axyz[1];
         osc->Gxyz[2] = os.Axyz[2];
@@ -104,7 +106,7 @@ os_config (generic_sensor_driver_t *gsd)
     SEND_TO_COMPASS (gsd, buf, len);
 
     /* select desired fields */
-    const int desired = 
+    const int desired =
         OS5000_BITMASK_H + OS5000_BITMASK_P + OS5000_BITMASK_R +
         OS5000_BITMASK_T + OS5000_BITMASK_D + OS5000_BITMASK_M_XYZ + OS5000_BITMASK_A_XYZ;
     len = sprintf (buf, "%cX\r", ASCII_ESC);
@@ -139,26 +141,29 @@ main (int argc, char *argv[])
     gsd_launch (gsd);
 
     rphcorr_t *rphcorr = rphcorr_create (gsd->params, gsd->rootkey);
-    if (!rphcorr) {
+    if (!rphcorr)
+    {
         ERROR ("rphcorr_create () failed!");
         exit (EXIT_FAILURE);
     }
 
     os_config (gsd);
-    
+
     double salinity = bot_param_get_double_or_fail (gsd->params, "site.salinity");
     bool freshwater = salinity < 5 ? 1 : 0;
 
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
-    while (1) {
+    while (1)
+    {
         // read stream
         char buf[1024];
         int64_t timestamp;
         int len = gsd_read (gsd, buf, 128, &timestamp);
 
         senlcm_os_compass_t os_compass;
-        if (parse_buf (buf, len, &os_compass, freshwater)) {
+        if (parse_buf (buf, len, &os_compass, freshwater))
+        {
             os_compass.utime = timestamp;
             senlcm_os_compass_t_publish (gsd->lcm, gsd->channel, &os_compass);
             publish_rphcorr (gsd->lcm, rphcorr, timestamp, os_compass.rph);

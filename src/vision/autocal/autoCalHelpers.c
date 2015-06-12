@@ -18,9 +18,11 @@ void
 printMat (CvMat *A)
 {
     int i, j;
-    for (i = 0; i < A->rows; i++) {
-        printf ("\n"); 
-        switch (CV_MAT_DEPTH (A->type)) {
+    for (i = 0; i < A->rows; i++)
+    {
+        printf ("\n");
+        switch (CV_MAT_DEPTH (A->type))
+        {
         case CV_32F:
         case CV_64F:
             for (j = 0; j < A->cols; j++)
@@ -49,8 +51,9 @@ computeReprojectionError (const CvMat *objectPoints,
                                        imagePoints->cols, imagePoints->type);
     int i, imageCount = rotVects->rows, pointsSoFar = 0;
     double sumSquaredDiff = 0, err, stdev;
-    
-    for(i = 0; i < imageCount; i++) {
+
+    for(i = 0; i < imageCount; i++)
+    {
 
         CvMat objectPointsI, imagePointsI, imagePoints2I;
         int pointCount = pointCounts->data.i[i];
@@ -81,7 +84,7 @@ computeReprojectionError (const CvMat *objectPoints,
 
     cvReleaseMat (&imagePoints2);
     stdev = sqrt (sumSquaredDiff / (pointsSoFar * 2));
-    
+
     return stdev;
 }
 
@@ -96,17 +99,17 @@ parseArgs (getopt_t *opts, int argc, char** argv)
     getopt_add_bool        (opts, 'Q', "quiet", 0, "Don't draw frames if true");
     getopt_add_double      (opts, 's', "scale", "0.7", "Frame scale");
     getopt_add_double      (opts, 'S', "square-size", "0.03", "Square size, in meters");
-    getopt_add_string      (opts, '\0', "translations", "ExtrTrans.xml", 
+    getopt_add_string      (opts, '\0', "translations", "ExtrTrans.xml",
                             "Extrinsic Translation output file");
-    getopt_add_string      (opts, '\0', "rotations", "ExtrRotation.xml", 
+    getopt_add_string      (opts, '\0', "rotations", "ExtrRotation.xml",
                             "Extrinsic Rotation output file");
-    getopt_add_string      (opts, '\0', "intrinsics", "Intrinsics.xml", 
+    getopt_add_string      (opts, '\0', "intrinsics", "Intrinsics.xml",
                             "Intrinsics output file");
-    getopt_add_string      (opts, '\0', "residuals", "Residuals.xml", 
+    getopt_add_string      (opts, '\0', "residuals", "Residuals.xml",
                             "Reprojection error residuals output file");
-    getopt_add_string      (opts, '\0', "dist-coeffs", "Distortion.xml", 
+    getopt_add_string      (opts, '\0', "dist-coeffs", "Distortion.xml",
                             "Distortion coefficients output file");
-    getopt_add_string      (opts, '\0', "index-outfile", "indeces.txt", 
+    getopt_add_string      (opts, '\0', "index-outfile", "indeces.txt",
                             "Indeces to image name output file");
     getopt_add_help        (opts, NULL);
 
@@ -115,14 +118,14 @@ parseArgs (getopt_t *opts, int argc, char** argv)
 
 void
 sayDone()
-{  
+{
     printf ("\nDone.\n");
     fflush (stdout);
 }
 
 void
 printInfo (const char* message)
-{  
+{
     printf ("INFO: %s", message);
-    fflush (stdout); 
+    fflush (stdout);
 }

@@ -23,35 +23,35 @@ est_pmf_differential_drive (const est_estimator_t *state, const gsl_vector *u_ct
                             gsl_vector *x_bar, gsl_matrix *F, gsl_matrix *Q, void *user)
 {
     est_pmf_differential_drive_user_t *usr = user;
-    
-    // read the index_t 
+
+    // read the index_t
     perllcm_est_navigator_index_t index_t;
     est_pmf_differential_drive_get_index_t (&index_t);
-    
+
     // get values from state vector
     // local-level translation
-    double x = gsl_vector_get (state->mu, index_t.x); 
+    double x = gsl_vector_get (state->mu, index_t.x);
     double y = gsl_vector_get (state->mu, index_t.y);
     // local-level Euler angles (rph)
-    double r = gsl_vector_get (state->mu, index_t.r); 
+    double r = gsl_vector_get (state->mu, index_t.r);
     double p = gsl_vector_get (state->mu, index_t.p);
     double h = gsl_vector_get (state->mu, index_t.h);
     // body frame angular rates
-    double a = gsl_vector_get (state->mu, index_t.a); 
+    double a = gsl_vector_get (state->mu, index_t.a);
     double b = gsl_vector_get (state->mu, index_t.b);
     double c = gsl_vector_get (state->mu, index_t.c);
     // get values from control
-    double wl = gsl_vector_get (u_ctl, I_U_WL); 
+    double wl = gsl_vector_get (u_ctl, I_U_WL);
     double wr = gsl_vector_get (u_ctl, I_U_WR);
     double dh = gsl_vector_get (u_ctl, I_U_DH);
-    
+
     //Euler angular rates in local-level frame
     GSLU_VECTOR_VIEW (rph, 3, {r, p, h});
     GSLU_VECTOR_VIEW (abc, 3, {a, b, c});
     GSLU_VECTOR_VIEW (rph_dot, 3, {0});
     GSLU_MATRIX_VIEW (Jabc_rph, 3, 6, {0});
     so3_body2euler_gsl (&abc.vector, &rph.vector, &rph_dot.vector, &Jabc_rph.matrix);
-    
+
     // velocity of the center of the vehicle
     double wheel_size_fudge_factor = usr->wheel_size_fudge_factor;
     double vc = wheel_size_fudge_factor * (wl + wr) / 2.0;
@@ -70,25 +70,25 @@ est_pmf_differential_drive (const est_estimator_t *state, const gsl_vector *u_ct
     gsl_vector_set (x_bar, index_t.a, a);
     gsl_vector_set (x_bar, index_t.b, b);
     gsl_vector_set (x_bar, index_t.c, c);
-    
+
     // build process jacobian (F)
     gsl_matrix_set_identity (F);
     // x_bar wrt h
     gsl_matrix_set (F, index_t.x, index_t.h, -vc*sin(h)*dt);
     // y_bar wrt h
     gsl_matrix_set (F, index_t.y, index_t.h,  vc*cos(h)*dt);
-    
+
     // pre scale the body2euler jacobian by dt
     gsl_matrix_scale (&Jabc_rph.matrix, dt);
     // rp_bar wrt rph
     gsl_matrix_view F_rp_rph =  gsl_matrix_submatrix (F, index_t.r, index_t.r, 2, 3);
     gsl_matrix_view J_rph = gsl_matrix_submatrix (&Jabc_rph.matrix, 0, 3, 2, 3);
-    // important added NOT overwritten need identity 2x3 
-    gsl_matrix_add (&F_rp_rph.matrix, &J_rph.matrix); 
+    // important added NOT overwritten need identity 2x3
+    gsl_matrix_add (&F_rp_rph.matrix, &J_rph.matrix);
     // rp_bar wrt abc
     gsl_matrix_view J_abc = gsl_matrix_submatrix (&Jabc_rph.matrix, 0, 0, 2, 3);
     gslu_matrix_set_submatrix (F, index_t.r, index_t.a, &J_abc.matrix);
-    
+
     // build additive noise (Q)
     GSLU_MATRIX_VIEW (Qu_full, 8, 8, {0});
     GSLU_MATRIX_VIEW (Ju, 8, 3, {0});
@@ -102,10 +102,10 @@ est_pmf_differential_drive (const est_estimator_t *state, const gsl_vector *u_ct
     gsl_matrix_set (&Ju.matrix, index_t.h, I_U_DH, 1);
 
     gslu_blas_mmmT (&Qu_full.matrix, &Ju.matrix, usr->Qu, &Ju.matrix, NULL);
-        
+
     gsl_matrix_add (Q, usr->Qadd);
     gsl_matrix_add (Q, &Qu_full.matrix);
-    
+
 
 //gslu_matrix_printf (&Ju.matrix, "Qu");
 //gslu_matrix_printf (&Ju.matrix, "Ju");
@@ -115,16 +115,16 @@ est_pmf_differential_drive (const est_estimator_t *state, const gsl_vector *u_ct
 
 // hack, always propagate forward same state
 // gsl_vector_memcpy (x_bar, state->mu);
-// gsl_matrix_set_identity (F);    
-    
-    
+// gsl_matrix_set_identity (F);
+
+
 //gslu_vector_printf (u_ctl, "u_ctl");
 //gslu_vector_printf (x_bar, "x_bar");
 //gslu_vector_printf (state->mu, "state->mu");
 // once there are attitude observation models check and make sure F is as expected
-//gslu_matrix_printf (&Jabc_rph.matrix, "Jabc_rph");    
+//gslu_matrix_printf (&Jabc_rph.matrix, "Jabc_rph");
 //gslu_matrix_printf (F, "F");
-    
+
 }
 
 // -----------------------------------------------------------------------------
@@ -132,15 +132,15 @@ est_pmf_differential_drive (const est_estimator_t *state, const gsl_vector *u_ct
 // -----------------------------------------------------------------------------
 void
 est_pmf_differential_drive_get_index_t (perllcm_est_navigator_index_t *index)
-{    
+{
     //init all unused
     init_index_t (index);
-    
+
     index->proc_state_len = state_len; //length of state process model acts on
-    
+
     //length of control vector
-    index->u_len = 3; //no control for this process model          
-    
+    index->u_len = 3; //no control for this process model
+
     // specify indicies for the used variables
     index->x = 0;     // Translation (x y)
     index->y = 1;
@@ -159,13 +159,13 @@ est_pmf_differential_drive_get_index_t (perllcm_est_navigator_index_t *index)
 // allocate user_t
 est_pmf_differential_drive_user_t *
 est_pmf_differential_drive_alloc_user_t (void)
-{   
-   est_pmf_differential_drive_user_t *user = calloc (1, sizeof (*user));
-   
-   user->Qu = gsl_matrix_calloc (3, 3);
-   user->Qadd = gsl_matrix_calloc (state_len, state_len);
+{
+    est_pmf_differential_drive_user_t *user = calloc (1, sizeof (*user));
 
-   return user; 
+    user->Qu = gsl_matrix_calloc (3, 3);
+    user->Qadd = gsl_matrix_calloc (state_len, state_len);
+
+    return user;
 }
 
 // free user_t
@@ -173,9 +173,9 @@ void
 est_pmf_differential_drive_free_user_t (void *user)
 {
     est_pmf_differential_drive_user_t *usr = user;
-    
+
     gslu_matrix_free (usr->Qu);
     gslu_matrix_free (usr->Qadd);
-    free (usr); 
+    free (usr);
 }
 

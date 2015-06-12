@@ -16,7 +16,7 @@ vis_triangulate (const gsl_matrix *K, const gsl_matrix *R, const gsl_vector *t, 
 {
     size_t Np = uv1->size2;
 
-    assert (gslu_matrix_is_same_size (uv1, uv2) && (uv1->size1 == 2) && (uv1->size2 == Np) && 
+    assert (gslu_matrix_is_same_size (uv1, uv2) && (uv1->size1 == 2) && (uv1->size2 == Np) &&
             (_X1->size1 == 3) && (_X1->size2 == Np));
     assert (_alpha ? (_alpha->size == Np) : (_alpha == NULL));
     assert (_beta  ? (_beta->size  == Np) : (_beta  == NULL));
@@ -40,19 +40,20 @@ vis_triangulate (const gsl_matrix *K, const gsl_matrix *R, const gsl_vector *t, 
     gsl_vector_memcpy (&b.vector, t);
     gsl_vector_scale (&b.vector, -1.0); // b = -t
 
-    for (size_t j=0; j<Np; j++) {
+    for (size_t j=0; j<Np; j++)
+    {
         // normalize the rays to unit magnitude
         gsl_vector_view r1 = gsl_matrix_column (r1_mat, j);
         double r1_norm = gslu_vector_norm (&r1.vector);
         gsl_vector_scale (&r1.vector, 1.0/r1_norm); // r1_hat
 
-        gsl_vector_view r2 = gsl_matrix_column (r2_mat, j); 
+        gsl_vector_view r2 = gsl_matrix_column (r2_mat, j);
         double r2_norm = gslu_vector_norm (&r2.vector);
         gsl_vector_scale (&r2.vector, 1.0/r2_norm); // r2_hat
 
         // rotate the ray from camera 1 into orientation of camera 2 frame
         gslu_blas_mv (&r1_prime.vector, R, &r1.vector); // r1_prime = R*r1
-        
+
         // c = r1_prime x r2
         gslu_vector_cross (&c.vector, &r1_prime.vector, &r2.vector);
         double c_norm = gslu_vector_norm (&c.vector);
@@ -129,17 +130,22 @@ vis_triangulate_constraint_alloc (const gsl_matrix *X, const int j, const double
     gslu_index *tri_const_idx = NULL;
 
     int n_accepted = 0;
-    for (int i=0; i<n; i++) {
-        if (gsl_matrix_get (X,j,i) > lb && gsl_matrix_get (X,j,i) < ub) {
+    for (int i=0; i<n; i++)
+    {
+        if (gsl_matrix_get (X,j,i) > lb && gsl_matrix_get (X,j,i) < ub)
+        {
             n_accepted++;
         }
     }
 
-    if (n_accepted > 0) {
+    if (n_accepted > 0)
+    {
         tri_const_idx = gslu_index_alloc (n_accepted);
         int idx = 0;
-        for (int i=0; i<n; i++) {
-            if (gsl_matrix_get(X,j,i) > lb && gsl_matrix_get(X,j,i) < ub) {
+        for (int i=0; i<n; i++)
+        {
+            if (gsl_matrix_get(X,j,i) > lb && gsl_matrix_get(X,j,i) < ub)
+            {
                 gslu_index_set(tri_const_idx, idx, i);
                 idx++;
             }

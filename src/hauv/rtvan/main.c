@@ -34,7 +34,8 @@ static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("my_signal_handler()\n");
-    if (shm->done) {
+    if (shm->done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
     }
@@ -48,11 +49,12 @@ main (int argc, char *argv[])
     // so that redirected stdout won't be insanely buffered.
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
-    if (!g_thread_supported ()) 
+    if (!g_thread_supported ())
         g_thread_init (NULL);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -77,20 +79,24 @@ main (int argc, char *argv[])
     botu_param_get_boolean_to_bool (shm->param, "rtvan.link_thread.use_seserver", &use_seserver);
     botu_param_get_boolean_to_bool (shm->param, "rtvan.link_thread.use_isamserver", &use_isamserver);
 
-    if (use_seserver && use_isamserver) {
+    if (use_seserver && use_isamserver)
+    {
         ERROR ("use_seserver and use_isamserver can not both be ON\n");
         exit (EXIT_FAILURE);
     }
 
-    if (use_seserver) {
+    if (use_seserver)
+    {
         printf ("using seserver link proposal. (see master.cfg)\n");
         shm->tid_isam_interf_thread = g_thread_create (&secam_thread, NULL, 1, NULL);
     }
-    else if (use_isamserver) {
+    else if (use_isamserver)
+    {
         printf ("using isam-server link proposal. (see master.cfg)\n");
         shm->tid_isam_interf_thread = g_thread_create (&isam_interf_thread, NULL, 1, NULL);
     }
-    else {
+    else
+    {
         printf ("using rtvan link proposal. (see master.cfg)\n");
         shm->tid_link_thread = g_thread_create (&link_thread, NULL, 1, NULL);
         shm->active = true;
@@ -98,8 +104,10 @@ main (int argc, char *argv[])
     shm->tid_plot_thread = g_thread_create (&plot_thread, NULL, 1, NULL);
     shm->tid_twoview_thread = g_thread_create (&twoview_thread, NULL, 1, NULL);
 
-    while (!shm->done) {
-        struct timeval timeout = {
+    while (!shm->done)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 500000,
         };

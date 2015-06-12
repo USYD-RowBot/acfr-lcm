@@ -13,7 +13,8 @@
 #include "highgui_util.h"
 
 /* This data will be passed to correspondence callbacks.  Should be hidden from user */
-typedef struct vis_hgu_manual_corresp_data_t {
+typedef struct vis_hgu_manual_corresp_data_t
+{
     const IplImage *img1;
     const IplImage *img2;
     char *img1Name;
@@ -37,14 +38,16 @@ _vis_hgu_manual_corres_mouse_callback (int event,
     int height = data->currentImg->height;
     IplImage *imgClone = cvCloneImage (data->currentImg);
     gsl_matrix *currentPoints = (data->currentImg == data->img1) ? data->pointsSoFar1 : data->pointsSoFar2;
-    
+
     /* draw all the current points */
-    for (int i=0; i<currentPoints->size2; i++) {
+    for (int i=0; i<currentPoints->size2; i++)
+    {
         cvCircle (imgClone, cvPoint (gsl_matrix_get (currentPoints, 0, i), gsl_matrix_get (currentPoints, 1, i)),
                   3, cvScalar (0, 255, 0, 0), 1, CV_AA, 0);
     }
-    
-    switch (event) {
+
+    switch (event)
+    {
     case CV_EVENT_MOUSEMOVE:
         /* Draw crosshair */
         cvLine (imgClone, cvPoint (0, y), cvPoint (width, y), cvScalar (0, 255, 0, 0), 1, 8, 0);
@@ -67,7 +70,7 @@ _vis_hgu_manual_corres_mouse_callback (int event,
         cvShowImage (data->img1Name, imgClone);
     else
         cvShowImage (data->img2Name, imgClone);
-        
+
     /* set the next image, if appropriate */
     if (event == CV_EVENT_LBUTTONDOWN)
         data->currentImg = data->currentImg == data->img1 ? data->img2 : data->img1;

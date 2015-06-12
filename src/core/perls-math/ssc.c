@@ -29,14 +29,16 @@ ssc_pose_printf (const double X[6], const char *name, bool degree, bool rowvec)
 {
     GSLU_VECTOR_VIEW (x_ij, 6, {X[0], X[1], X[2], X[3], X[4], X[5]});
     char varname[256];
-    if (degree) {
+    if (degree)
+    {
         x_ij.data[3] *= RTOD;
         x_ij.data[4] *= RTOD;
         x_ij.data[5] *= RTOD;
         snprintf (varname, sizeof varname, "%s (deg)", name);
-    } else
+    }
+    else
         snprintf (varname, sizeof varname, "%s", name);
-    
+
     gslu_vector_printfc (&x_ij.vector, varname, NULL, rowvec ? CblasTrans : CblasNoTrans);
 }
 
@@ -46,10 +48,13 @@ int
 ssc_inverse_gsl (gsl_vector *X_ji, gsl_matrix *Jminus, const gsl_vector *X_ij)
 {
     assert (X_ji->size == 6 && X_ij->size == 6);
-    if (Jminus) {
+    if (Jminus)
+    {
         assert (Jminus->size1 == 6 && Jminus->size2 == 6 && Jminus->tda == 6);
         return ssc_inverse (X_ji->data, Jminus->data, X_ij->data);
-    } else {
+    }
+    else
+    {
         return ssc_inverse (X_ji->data, NULL, X_ij->data);
     }
 }
@@ -78,10 +83,11 @@ ssc_inverse (double X_ji[6], double Jminus[6*6], const double X_ij[6])
     X_ji(SSC_DOF_P) = p_ji;
     X_ji(SSC_DOF_H) = h_ji;
 
-    if (Jminus != NULL) {
+    if (Jminus != NULL)
+    {
         const double x_ij=X_ij(SSC_DOF_X), y_ij=X_ij(SSC_DOF_Y), z_ij=X_ij(SSC_DOF_Z);
         const double r_ij=X_ij(SSC_DOF_R), p_ij=X_ij(SSC_DOF_P), h_ij=X_ij(SSC_DOF_H);
-        
+
         double sr_ij, cr_ij, sp_ij, cp_ij, sh_ij, ch_ij;
         fsincos (r_ij, &sr_ij, &cr_ij);
         fsincos (p_ij, &sp_ij, &cp_ij);
@@ -90,23 +96,25 @@ ssc_inverse (double X_ji[6], double Jminus[6*6], const double X_ij[6])
 
         // N
         double tmp = x_ij*ch_ij + y_ij*sh_ij;
-        const double N_data[] = {
-             0,    -R_ij(2,0)*tmp + z_ij*cp_ij,       R_ij(1,0)*x_ij - R_ij(0,0)*y_ij,
-             z_ji, -R_ij(2,1)*tmp + z_ij*sp_ij*sr_ij, R_ij(1,1)*x_ij - R_ij(0,1)*y_ij,
+        const double N_data[] =
+        {
+            0,    -R_ij(2,0)*tmp + z_ij*cp_ij,       R_ij(1,0)*x_ij - R_ij(0,0)*y_ij,
+            z_ji, -R_ij(2,1)*tmp + z_ij*sp_ij*sr_ij, R_ij(1,1)*x_ij - R_ij(0,1)*y_ij,
             -y_ji, -R_ij(2,2)*tmp + z_ij*sp_ij*cr_ij, R_ij(1,2)*x_ij - R_ij(0,2)*y_ij
         };
         gsl_matrix_const_view N = gsl_matrix_const_view_array (N_data, 3, 3);
 
         // Q
         tmp = sqrt (1-R_ij(0,2)*R_ij(0,2));
-        double Q_data[] = {
+        double Q_data[] =
+        {
             -R_ij(0,0),           -R_ij(0,1)*cr_ij,      R_ij(0,2)*R_ij(2,2),
-             R_ij(0,1)*tmp,       -R_ij(2,2)*ch_ij*tmp,  R_ij(1,2)*tmp,
-             R_ij(0,2)*R_ij(0,0), -R_ij(1,2)*ch_ij,     -R_ij(2,2)
+            R_ij(0,1)*tmp,       -R_ij(2,2)*ch_ij*tmp,  R_ij(1,2)*tmp,
+            R_ij(0,2)*R_ij(0,0), -R_ij(1,2)*ch_ij,     -R_ij(2,2)
         };
         gsl_matrix_view Q = gsl_matrix_view_array (Q_data, 3, 3);
         gsl_matrix_scale (&Q.matrix, 1./(tmp*tmp));
-        
+
         // Jminus
         gsl_matrix_view J = gsl_matrix_view_array (Jminus, 6, 6);
         gsl_matrix_set_zero (&J.matrix);
@@ -123,10 +131,13 @@ int
 ssc_head2tail_gsl (gsl_vector *X_ik, gsl_matrix *Jplus, const gsl_vector *X_ij, const gsl_vector *X_jk)
 {
     assert (X_ik->size == 6 && X_ij->size == 6 && X_jk->size == 6);
-    if (Jplus) {
+    if (Jplus)
+    {
         assert (Jplus->size1 == 6 && Jplus->size2 == 12 && Jplus->tda == 12);
         return ssc_head2tail (X_ik->data, Jplus->data, X_ij->data, X_jk->data);
-    } else {
+    }
+    else
+    {
         return ssc_head2tail (X_ik->data, NULL, X_ij->data, X_jk->data);
     }
 }
@@ -167,7 +178,8 @@ ssc_head2tail (double X_ik[6], double Jplus[6*12], const double X_ij[6], const d
     X_ik(SSC_DOF_P) = p_ik;
     X_ik(SSC_DOF_H) = h_ik;
 
-    if (Jplus != NULL) {
+    if (Jplus != NULL)
+    {
         double sr_ij, cr_ij;
         fsincos (r_ij, &sr_ij, &cr_ij);
         double sp_ij, cp_ij;
@@ -196,31 +208,38 @@ ssc_head2tail (double X_ik[6], double Jplus[6*12], const double X_ij[6], const d
         double secp_ik = 1/cp_ik;
 
         // M
-        const double M_data[9] = 
-            { R_ij(0,2)*y_jk - R_ij(0,1)*z_jk,  z_dif*ch_ij,                                  -y_dif,
-              R_ij(1,2)*y_jk - R_ij(1,1)*z_jk,  z_dif*sh_ij,                                   x_dif,
-              R_ij(2,2)*y_jk - R_ij(2,1)*z_jk, -x_jk*cp_ij - (y_jk*sr_ij + z_jk*cr_ij)*sp_ij,  0       };
+        const double M_data[9] =
+        {
+            R_ij(0,2)*y_jk - R_ij(0,1)*z_jk,  z_dif*ch_ij,                                  -y_dif,
+            R_ij(1,2)*y_jk - R_ij(1,1)*z_jk,  z_dif*sh_ij,                                   x_dif,
+            R_ij(2,2)*y_jk - R_ij(2,1)*z_jk, -x_jk*cp_ij - (y_jk*sr_ij + z_jk*cr_ij)*sp_ij,  0
+        };
         gsl_matrix_const_view M = gsl_matrix_const_view_array (M_data, 3, 3);
 
         // K1
-        const double K1_data[9] = 
-            { cp_ij*ch_dif*secp_ik,                         sh_dif*secp_ik,  0,
-             -cp_ij*sh_dif,                                 ch_dif,          0,
-              (R_jk(0,1)*sr_ik + R_jk(0,2)*cr_ik)*secp_ik,  sh_dif*tp_ik,    1  };
+        const double K1_data[9] =
+        {
+            cp_ij*ch_dif*secp_ik,                         sh_dif*secp_ik,  0,
+            -cp_ij*sh_dif,                                 ch_dif,          0,
+            (R_jk(0,1)*sr_ik + R_jk(0,2)*cr_ik)*secp_ik,  sh_dif*tp_ik,    1
+        };
         gsl_matrix_const_view K1 = gsl_matrix_const_view_array (K1_data, 3, 3);
 
         // K2
-        const double K2_data[9] = 
-            { 1,  sr_dif*tp_ik,    (R_ij(0,2)*ch_ik + R_ij(1,2)*sh_ik)*secp_ik,
-              0,  cr_dif,         -cp_jk*sr_dif,
-              0,  sr_dif*secp_ik,  cp_jk*cr_dif*secp_ik };
+        const double K2_data[9] =
+        {
+            1,  sr_dif*tp_ik,    (R_ij(0,2)*ch_ik + R_ij(1,2)*sh_ik)*secp_ik,
+            0,  cr_dif,         -cp_jk*sr_dif,
+            0,  sr_dif*secp_ik,  cp_jk*cr_dif*secp_ik
+        };
         gsl_matrix_const_view K2 = gsl_matrix_const_view_array (K2_data, 3, 3);
 
 
         // I_3x3
         double I_data[9] = { 1, 0, 0,
                              0, 1, 0,
-                             0, 0, 1  };
+                             0, 0, 1
+                           };
         gsl_matrix_view I = gsl_matrix_view_array (I_data, 3, 3);
 
         // Jplus
@@ -239,10 +258,13 @@ int
 ssc_tail2tail_gsl (gsl_vector *X_jk, gsl_matrix *Jtail, const gsl_vector *X_ij, const gsl_vector *X_ik)
 {
     assert (X_jk->size == 6 && X_ij->size == 6 && X_ik->size == 6);
-    if (Jtail) {
+    if (Jtail)
+    {
         assert (Jtail->size1 == 6 && Jtail->size2 == 12 && Jtail->tda == 12);
         return ssc_tail2tail (X_jk->data, Jtail->data, X_ij->data, X_ik->data);
-    } else {
+    }
+    else
+    {
         return ssc_tail2tail (X_jk->data, NULL, X_ij->data, X_ik->data);
     }
 }
@@ -252,18 +274,20 @@ ssc_tail2tail (double X_jk[6], double Jtail[6*12], const double X_ij[6], const d
 {
     GSLU_VECTOR_VIEW (X_ji, 6);
 
-    if (Jtail == NULL) {
+    if (Jtail == NULL)
+    {
         // x_ji = ominus x_ij
         ssc_inverse (X_ji.data, NULL, X_ij);
-        
+
         // x_jk = x_ji oplus x_ik
         ssc_head2tail (X_jk, NULL, X_ji.data, X_ik);
     }
-    else {
+    else
+    {
         // x_ji = ominus x_ij
         GSLU_MATRIX_VIEW (Jminus, 6, 6);
         ssc_inverse (X_ji.data, Jminus.data, X_ij);
-        
+
         // x_jk = x_ji oplus x_ik
         GSLU_MATRIX_VIEW (Jplus, 6, 12);
         ssc_head2tail (X_jk, Jplus.data, X_ji.data, X_ik);
@@ -293,20 +317,21 @@ ssc_homo4x4 (double H_ij[4*4], const double X_ij[6])
     GSLU_MATRIX_VIEW (R_ij, 3, 3);
     so3_rotxyz (R_ij.data, SSC_RPH (X_ij));
 
-    const double H_ij_data[4*4] = {
+    const double H_ij_data[4*4] =
+    {
         R_ij(0,0), R_ij(0,1), R_ij(0,2), X_ij(0),
         R_ij(1,0), R_ij(1,1), R_ij(1,2), X_ij(1),
         R_ij(2,0), R_ij(2,1), R_ij(2,2), X_ij(2),
         0,         0,         0,         1
     };
-    
+
     memcpy (H_ij, H_ij_data, sizeof (H_ij_data));
     return GSL_SUCCESS;
 }
 
 int
-ssc_relative_sensor_pose (double x_cjci[6], double J[6*12], 
-                          const double x_lvj[6], const double x_lvi[6], 
+ssc_relative_sensor_pose (double x_cjci[6], double J[6*12],
+                          const double x_lvj[6], const double x_lvi[6],
                           const double x_vjc[6], const double x_vic[6])
 {
     // some workspace for x_cjci
@@ -340,14 +365,14 @@ ssc_relative_sensor_pose (double x_cjci[6], double J[6*12],
 
 
 int
-ssc_jacobian_camera_aerph (double H[5*12], 
-                           const double x_lvj[6], const double x_lvi[6], 
+ssc_jacobian_camera_aerph (double H[5*12],
+                           const double x_lvj[6], const double x_lvi[6],
                            const double x_vjc[6], const double x_vic[6])
 {
 
     double x_cjci[6];
     gsl_vector_view x_cjci_view = gsl_vector_view_array (x_cjci, 6);
-    double J_lvj_lvi_vc_array[6*12];    
+    double J_lvj_lvi_vc_array[6*12];
     gsl_matrix_view J_lvj_lvi_vc_view = gsl_matrix_view_array (J_lvj_lvi_vc_array, 6, 12);
     gsl_matrix *J_lvj_lvi_vc = &J_lvj_lvi_vc_view.matrix;
 
@@ -365,7 +390,7 @@ ssc_jacobian_camera_aerph (double H[5*12],
     //gslu_vector_printf (&t.vector, "t");
     // Jacobian of measurement w.r.t. relative camera pose i.e. d(z_ji)/d(x_cjci)
     // J_cjci = [Jb(1:2,:), zeros(2,3);
-	//           zeros(3),  eye(3)];
+    //           zeros(3),  eye(3)];
     double J_cjci_array[5*6];
     gsl_matrix_view J_cjci_view = gsl_matrix_view_array (J_cjci_array, 5, 6);
     gsl_matrix *J_cjci = &J_cjci_view.matrix;

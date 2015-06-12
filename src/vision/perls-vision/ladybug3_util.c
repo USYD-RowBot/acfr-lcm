@@ -33,7 +33,8 @@
 /* Expanded data source object for memory input */
 
 typedef struct lb3_source_mgr lb3_source_mgr_t;
-struct lb3_source_mgr {
+struct lb3_source_mgr
+{
     struct jpeg_source_mgr pub;	/* public fields */
     JOCTET eoi_buffer[2];       /* a place to put a dummy EOI */
 };
@@ -94,16 +95,18 @@ lb3_skip_input_data (j_decompress_ptr cinfo, long num_bytes)
 {
     lb3_src_ptr src = (lb3_src_ptr) cinfo->src;
 
-    if (num_bytes > 0) {
-      while (num_bytes > (long) src->pub.bytes_in_buffer) {
-        num_bytes -= (long) src->pub.bytes_in_buffer;
-        (void) lb3_fill_input_buffer (cinfo);
-        /* note we assume that fill_input_buffer will never return FALSE,
-         * so suspension need not be handled.
-         */
-      }
-      src->pub.next_input_byte += (size_t) num_bytes;
-      src->pub.bytes_in_buffer -= (size_t) num_bytes;
+    if (num_bytes > 0)
+    {
+        while (num_bytes > (long) src->pub.bytes_in_buffer)
+        {
+            num_bytes -= (long) src->pub.bytes_in_buffer;
+            (void) lb3_fill_input_buffer (cinfo);
+            /* note we assume that fill_input_buffer will never return FALSE,
+             * so suspension need not be handled.
+             */
+        }
+        src->pub.next_input_byte += (size_t) num_bytes;
+        src->pub.bytes_in_buffer -= (size_t) num_bytes;
     }
 }
 
@@ -142,10 +145,11 @@ void lb3_jpeg_memory_src (j_decompress_ptr cinfo, const JOCTET * buffer, size_t 
      * This makes it unsafe to use this manager and a different source
      * manager serially with the same JPEG object.  Caveat programmer.
      */
-    if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+    if (cinfo->src == NULL)  	/* first time for this JPEG object? */
+    {
         cinfo->src = (struct jpeg_source_mgr *)
-          (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-            			  sizeof (lb3_source_mgr_t));
+                     (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+                             sizeof (lb3_source_mgr_t));
     }
 
     src = (lb3_src_ptr) cinfo->src;
@@ -163,10 +167,10 @@ void lb3_jpeg_memory_src (j_decompress_ptr cinfo, const JOCTET * buffer, size_t 
  * This function decompresses the jpeg buffer
  */
 int
-lb3_decompress_jpeg (const unsigned char *src, unsigned long size,  unsigned char *dest, 
+lb3_decompress_jpeg (const unsigned char *src, unsigned long size,  unsigned char *dest,
                      const uint32_t width, const uint32_t height)
 {
-    
+
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
 
@@ -174,13 +178,13 @@ lb3_decompress_jpeg (const unsigned char *src, unsigned long size,  unsigned cha
     /* Now we can initialize the JPEG decompression object. */
     jpeg_create_decompress (&cinfo);
     lb3_jpeg_memory_src (&cinfo, src, size);
-    
+
     /* Step 3: read file parameters with jpeg_read_header() */
     jpeg_read_header (&cinfo, TRUE);
-    
+
     /* Step 5: Start decompressor */
     jpeg_start_decompress (&cinfo);
-    
+
     uint32_t row_stride = cinfo.output_width * cinfo.output_components;
     //printf("rowstride = %d\n", row_stride);
     //*dest = (unsigned char*) malloc(row_stride*cinfo.output_height);
@@ -188,19 +192,20 @@ lb3_decompress_jpeg (const unsigned char *src, unsigned long size,  unsigned cha
     //decoded_buffer.resize(row_stride*cinfo.output_height);
 
     JSAMPARRAY buffer = (*cinfo.mem->alloc_sarray)
-      ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-    
+                        ((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+
     uint32_t scan_line=0;
-    while (cinfo.output_scanline < cinfo.output_height) {
+    while (cinfo.output_scanline < cinfo.output_height)
+    {
         //printf("cinfo.output_scanline = %d, cinfo.output_height = %d\n"
         //             , cinfo.output_scanline, cinfo.output_height);
-	jpeg_read_scanlines (&cinfo,buffer,1);
-	memcpy (dest+scan_line*row_stride,buffer[0],row_stride);
-	scan_line++;
+        jpeg_read_scanlines (&cinfo,buffer,1);
+        memcpy (dest+scan_line*row_stride,buffer[0],row_stride);
+        scan_line++;
     }
-    
+
     jpeg_finish_decompress (&cinfo);
-    jpeg_destroy_decompress (&cinfo);    
+    jpeg_destroy_decompress (&cinfo);
 
     return 0;
 }
@@ -224,10 +229,10 @@ lb3_reverse_int (uint32_t i)
 /**
  * This function reads the header from the file
  */
-int 
+int
 lb3_read_stream_header (FILE *fp, LB3StreamHeaderInfo_t *header)
 {
-    // Signature	
+    // Signature
     fscanf (fp,"PGRLADYBUGSTREAM");
     fread (&header->versionNum, 4, 1, fp);
     fread (&header->framerate, 4, 1, fp);
@@ -248,16 +253,16 @@ lb3_read_stream_header (FILE *fp, LB3StreamHeaderInfo_t *header)
     fread (&header->streamDataOffset, 4, 1, fp);
     fread (&header->gpsDataOffset, 4, 1, fp);
     fread (&header->gpsDataSize, 4, 1, fp);
-    //Reserved space is 848 bytes 
+    //Reserved space is 848 bytes
     //Also need to fill space for Image index [0] to Image index [M-1]
     //Basically fill the space from position 0xA0 to 0xBF0
     for (int i = 0; i < 723; i++)
         fread (&reserve, 4, 1, fp);
- 
+
     //|| Image index [0] || 4 unsigned int || Offset of image 0 ||
     //Since numIndex_M is fixed to 0
     fread (&header->streamDataOffset, 4, 1, fp);
-    return 0;   
+    return 0;
 }
 
 /**
@@ -271,12 +276,13 @@ lb3_read_calib_data (FILE *fp, LB3StreamHeaderInfo_t *header, const char *folder
     sprintf (filename, "%s/ladybug%d.cal", folder, header->headSerialNum);
     FILE *calib_fp = fopen (filename, "wb");
     int i = 0;
-    while (i < header->configDataSize) {
-        fread (&a, 4, 1, fp); 
-        fwrite (&a, 4, 1, calib_fp); 
+    while (i < header->configDataSize)
+    {
+        fread (&a, 4, 1, fp);
+        fwrite (&a, 4, 1, calib_fp);
         i = i + 4;
     }
-    
+
     fclose (calib_fp);
 }
 
@@ -312,8 +318,10 @@ lb3_read_jpeg_header (FILE *fp, LB3JpegHeaderInfo_t *jpegHeader)
         fread (&reserve, 4, 1, fp);
     fread (&jpegHeader->gpsOffset, 4, 1, fp);
     fread (&jpegHeader->gpsSize, 4, 1, fp);
-    for (int i = 0; i < 6; i++) {
-        for (int j = 0; j < 4; j++) {
+    for (int i = 0; i < 6; i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
             fread (&jpegHeader->jpegDataOffset[i][j], 4, 1, fp);
             fread (&jpegHeader->jpegDataSize[i][j], 4, 1, fp);
             jpegHeader->jpegDataOffset[i][j] = lb3_reverse_int (jpegHeader->jpegDataOffset[i][j]);
