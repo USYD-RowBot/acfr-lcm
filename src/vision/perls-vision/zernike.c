@@ -20,7 +20,7 @@ _mul_elem_in_range (int r1, int r2)
     if (r1*r2 < 0)
         return 0.0;
 
-    double mul = r1; 
+    double mul = r1;
     size_t range = r2-r1;
     for (size_t i=1; i<range+1; i++)
         mul = mul * (r1+i);
@@ -29,8 +29,8 @@ _mul_elem_in_range (int r1, int r2)
 }
 
 void
-vis_zernike_polynomial (const size_t n, const size_t m, 
-                        const gsl_vector *rsamp, const gsl_vector *tsamp, 
+vis_zernike_polynomial (const size_t n, const size_t m,
+                        const gsl_vector *rsamp, const gsl_vector *tsamp,
                         vis_zernike_params_t params,
                         gsl_vector_complex *V_nm_col)
 {
@@ -48,7 +48,8 @@ vis_zernike_polynomial (const size_t n, const size_t m,
      */
 
     // NOTE: max value of n in gsl_fs_fact () is 170.
-    for (size_t s=0; s<=itr; s++) {
+    for (size_t s=0; s<=itr; s++)
+    {
         ulong D[3] = {s, (n+abs(m))/2-s, (n-abs(m))/2-s};
         gsl_vector_ulong_view dens = gsl_vector_ulong_view_array (D, 3);
 
@@ -65,7 +66,8 @@ vis_zernike_polynomial (const size_t n, const size_t m,
         double factor = num/den;
 
         // evaluate radial function: R_nm = R_nm + factor*rho.^(n-2*s);
-        for (size_t i=0; i<nsamp; i++) {
+        for (size_t i=0; i<nsamp; i++)
+        {
             double val = gsl_vector_get (&R_nm.vector, i) + factor * pow (gsl_vector_get (rsamp, i),(n-2*s));
             gsl_vector_set (&R_nm.vector, i, val);
         }
@@ -73,9 +75,10 @@ vis_zernike_polynomial (const size_t n, const size_t m,
 
     // complex Zernike basis function evaluated at all (rho,theta)
     // V_nm = R_nm .* exp(j*m*theta);
-    // V_nm = ( Zbasis.darea(:) * sqrt((N+1)/pi) ) .* Zbasis.V_nm; 
+    // V_nm = ( Zbasis.darea(:) * sqrt((N+1)/pi) ) .* Zbasis.V_nm;
     double sqrt_Nplus1_pi = sqrt ( (n+1)/M_PI );
-    for (size_t i=0; i<nsamp; i++) { 
+    for (size_t i=0; i<nsamp; i++)
+    {
         //printf("%g + %gi\n", GSL_REAL(z), GSL_IMAG(z));
         double darea = gsl_vector_get (params.darea, i);
         gsl_complex exp_jmtheta= gsl_complex_polar (1.0, m*gsl_vector_get (tsamp, i));
@@ -104,7 +107,7 @@ vis_zernike_init (size_t window_size, size_t r_nsamp, size_t t_nsamp, size_t ord
 
     int nsamp = r_nsamp*t_nsamp;    // total number of sample pts
     params.nsamp = nsamp;
-    
+
     if (nsamp>0)
         params.sampler = gsl_matrix_alloc (2, nsamp);
     else
@@ -114,32 +117,34 @@ vis_zernike_init (size_t window_size, size_t r_nsamp, size_t t_nsamp, size_t ord
     size_t repetition = order+1;
     for (size_t i=0; i<order+1; i++)
         repetition += floor(0.5*i);
-    
+
     params.repetition = repetition;
 
-    // store r samples and theta samples locally 
+    // store r samples and theta samples locally
     // for zernike polynomical calculation
     gsl_vector *rsamp = gsl_vector_alloc (nsamp);
     gsl_vector *tsamp = gsl_vector_alloc (nsamp);
-    
+
     params.darea = gsl_vector_alloc (nsamp);
     params.m_idx = gslu_index_alloc (repetition);
 
     // computes x samples and y samples and gen sampler
-    for (size_t i=0; i<r_nsamp; i++) {
-        
+    for (size_t i=0; i<r_nsamp; i++)
+    {
+
         double r = 0.5*dr + dr*i;
 
-        for (size_t j=0; j<t_nsamp; j++) {
+        for (size_t j=0; j<t_nsamp; j++)
+        {
             double theta = dt*j;
             double darea = r*dr*dt;
             gsl_vector_set (params.darea, i*t_nsamp+j, darea);
-            gsl_vector_set (rsamp, i*t_nsamp+j, r);                   
+            gsl_vector_set (rsamp, i*t_nsamp+j, r);
             gsl_vector_set (tsamp, i*t_nsamp+j, theta);
 
             // expand pre-sampled polar grid with window size
             double xsamp = window_size*r*cos (theta);
-            double ysamp = window_size*r*sin (theta);  
+            double ysamp = window_size*r*sin (theta);
 
             gsl_matrix_set (params.sampler, 0, i*t_nsamp+j, xsamp);
             gsl_matrix_set (params.sampler, 1, i*t_nsamp+j, -ysamp);
@@ -149,8 +154,10 @@ vis_zernike_init (size_t window_size, size_t r_nsamp, size_t t_nsamp, size_t ord
     // calculate zernike polynomial
     params.V_nm = gsl_matrix_complex_alloc (nsamp, repetition);
     size_t idx_col = 0;
-    for (size_t n=0; n<order+1; n++) {
-        for (size_t m = fmod (n,2.0); m<=n; m+=2) {
+    for (size_t n=0; n<order+1; n++)
+    {
+        for (size_t m = fmod (n,2.0); m<=n; m+=2)
+        {
             //printf ("idx=%d,n=%d, m=%d\n",(int)idx_col,(int)n,(int)m);
             gsl_vector_complex_view V_nm_col = gsl_matrix_complex_column (params.V_nm, idx_col);
             vis_zernike_polynomial (n, m, rsamp, tsamp, params, &V_nm_col.vector);
@@ -168,7 +175,7 @@ vis_zernike_init (size_t window_size, size_t r_nsamp, size_t t_nsamp, size_t ord
     return params;
 }
 
-void 
+void
 zernike_detrend_polar (gsl_vector *polarpatch, vis_zernike_params_t params)
 {
     double polarmean = gslu_vector_dot (polarpatch, params.darea) / M_PI; // for unit circle total area = PI
@@ -183,7 +190,7 @@ zernike_detrend_polar (gsl_vector *polarpatch, vis_zernike_params_t params)
 
 void
 vis_zernike_polarpatch (const CvArr* image, const double u, const double v, gsl_matrix *Hinf,
-                        vis_zernike_params_t params, gsl_vector *workspace, 
+                        vis_zernike_params_t params, gsl_vector *workspace,
                         gsl_vector_complex *patch_col)
 {
     // project via Hinf and warp to N-E coordinate
@@ -197,7 +204,8 @@ vis_zernike_polarpatch (const CvArr* image, const double u, const double v, gsl_
     size_t n_samp = params.nsamp;
     gsl_matrix *sampler = params.sampler;
 
-    for (size_t i=0; i<n_samp; i++) {
+    for (size_t i=0; i<n_samp; i++)
+    {
         double xsamp = gsl_matrix_get (sampler, 0, i) + uw;
         double ysamp = gsl_matrix_get (sampler, 1, i) + vw;
 

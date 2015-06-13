@@ -19,12 +19,14 @@ stdiou_shexdump (char *str, const void *buf, size_t len, const char *prefix)
     else
         sptr += sprintf (sptr, "0x");
 
-    if (G_BYTE_ORDER == G_LITTLE_ENDIAN) {
+    if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+    {
         const unsigned char *bptr = buf+len-1;
         for (int i=0; i<len; i++, bptr--)
             sptr += sprintf (sptr, "%02x", *bptr);
     }
-    else { /* G_BIG_ENDIAN */
+    else   /* G_BIG_ENDIAN */
+    {
         const unsigned char *bptr = buf;
         for (int i=0; i<len; i++, bptr++)
             sptr += sprintf (sptr, "%02x", *bptr);
@@ -38,37 +40,47 @@ stdiou_hexscan (const char *str, size_t len, void *buf, const char *prefix)
 {
     const char *sptr = str;
     //skip the prefix
-    if (prefix) {
+    if (prefix)
+    {
         sptr += strlen (prefix);
         len -= strlen (prefix);
     }
-    else {
+    else
+    {
         sptr += strlen ("0x");
         len -= strlen (prefix);
     }
-    
+
     //len is the length of the hex string, two characters per byte of data
     if (len % 2)
         ERROR ("ERROR: Hex string length not even! ");
     int byte_len = len/2;
-    
-    
+
+
     unsigned int u;
-    if (G_BYTE_ORDER == G_LITTLE_ENDIAN) {
+    if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+    {
         char *bptr = buf+byte_len-1;
-        for (int i=0 ; i<byte_len && sscanf(sptr, "%2x", &u) == 1; i++) {
-            *bptr = u; bptr--; sptr += 2;
+        for (int i=0 ; i<byte_len && sscanf(sptr, "%2x", &u) == 1; i++)
+        {
+            *bptr = u;
+            bptr--;
+            sptr += 2;
         }
     }
-    else { /* G_BIG_ENDIAN */   
+    else   /* G_BIG_ENDIAN */
+    {
         char *bptr = buf;
-        for (int i=0 ; i<byte_len && sscanf(sptr, "%2x", &u) == 1; i++) {
-            *bptr = u; bptr++; sptr += 2;
+        for (int i=0 ; i<byte_len && sscanf(sptr, "%2x", &u) == 1; i++)
+        {
+            *bptr = u;
+            bptr++;
+            sptr += 2;
         }
     }
-    
+
     return byte_len;
-   
+
 }
 
 int
@@ -103,13 +115,15 @@ stdiou_sbindump (char *str, const void *buf, size_t len, const char *prefix)
     else
         sptr += sprintf (sptr, "0b");
 
-    if (G_BYTE_ORDER == G_LITTLE_ENDIAN) {
+    if (G_BYTE_ORDER == G_LITTLE_ENDIAN)
+    {
         const unsigned char *bptr = buf+len-1;
         for (int i=0; i<len; i++, bptr--)
             for (int b=7; b>=0; b--)
                 sptr += sprintf (sptr, "%d", (*bptr & (1<<b)) ? 1 : 0 );
     }
-    else { /* G_BIG_ENDIAN */
+    else   /* G_BIG_ENDIAN */
+    {
         const unsigned char *bptr = buf;
         for (size_t i=0; i<len; i++, bptr++)
             sptr += sprintf (sptr, "%d", *bptr);

@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004-05  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -17,7 +17,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************** 
+/********************************************************************************
  * Box-constrained Levenberg-Marquardt nonlinear minimization. The same core code
  * is used with appropriate #defines to derive single and double precision versions,
  * see also lmbc_core.c

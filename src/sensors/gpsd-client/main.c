@@ -101,7 +101,8 @@ parse_gpsd (const struct gps_data_t *ud, senlcm_gpsd_t *gd)
     gd->epe    = ud->epe;
 
     gd->satellites_visible = ud->satellites;
-    for (size_t i=0; i<gd->satellites_visible; i++) {
+    for (size_t i=0; i<gd->satellites_visible; i++)
+    {
         gd->PRN[i] = ud->PRN[i];
         gd->elevation[i] = ud->elevation[i];
         gd->azimuth[i] = ud->azimuth[i];
@@ -120,7 +121,7 @@ parse_gpsd (const struct gps_data_t *ud, senlcm_gpsd_t *gd)
 
     gd->ndevices = ud->ndevices;
     gd->devicelist = ud->devicelist;
-    
+
     return 1;
 }
 
@@ -131,120 +132,131 @@ parse_ppsda (const char *buf, senlcm_ppsboard_t *ppsboard)
 
     if (!nmea_arg (buf, 1, ppsboard->ntp_time))
         return -1;
-   
-   char ntp_status;
-   if (!nmea_argc (buf, 2, &ntp_status))
-       return -1;
-   else {
-       if (ntp_status == 'A')
-           ppsboard->ntp_status = 1;
-       else
-           ppsboard->ntp_status = 0;
-   }
 
-   char src_type;
-   if (!nmea_argc (buf, 4, &src_type))
-       return -1;
-   else {
-       if (src_type == 'I')
-           ppsboard->src_type = "IVER";
-       else if (src_type == 'G')
-           ppsboard->src_type = "GARMIN";
-       else
-           ppsboard->src_type = "UNKNOWN";
-   }
+    char ntp_status;
+    if (!nmea_argc (buf, 2, &ntp_status))
+        return -1;
+    else
+    {
+        if (ntp_status == 'A')
+            ppsboard->ntp_status = 1;
+        else
+            ppsboard->ntp_status = 0;
+    }
 
-   if (!nmea_argi (buf, 5, (int *) &ppsboard->src_pps))
-       return -1;
+    char src_type;
+    if (!nmea_argc (buf, 4, &src_type))
+        return -1;
+    else
+    {
+        if (src_type == 'I')
+            ppsboard->src_type = "IVER";
+        else if (src_type == 'G')
+            ppsboard->src_type = "GARMIN";
+        else
+            ppsboard->src_type = "UNKNOWN";
+    }
 
-   if (!nmea_argi (buf, 7, (int *) &ppsboard->sync_mode))
-       return -1;
+    if (!nmea_argi (buf, 5, (int *) &ppsboard->src_pps))
+        return -1;
 
-   if (!nmea_argi (buf, 8, (int *) &ppsboard->sync_num))
-       return -1;
+    if (!nmea_argi (buf, 7, (int *) &ppsboard->sync_mode))
+        return -1;
 
-   if (!nmea_arg  (buf, 9, ppsboard->sync_date))
-       *ppsboard->sync_date = '\0';
+    if (!nmea_argi (buf, 8, (int *) &ppsboard->sync_num))
+        return -1;
 
-   if (!nmea_arg  (buf, 10, ppsboard->sync_time))
-       *ppsboard->sync_time = '\0';
+    if (!nmea_arg  (buf, 9, ppsboard->sync_date))
+        *ppsboard->sync_date = '\0';
 
-   if (!nmea_argi (buf, 12, (int *) &ppsboard->offset_counts))
-       ppsboard->offset_counts = atoi ("NaN");
+    if (!nmea_arg  (buf, 10, ppsboard->sync_time))
+        *ppsboard->sync_time = '\0';
 
-   if (!nmea_argf (buf, 13, &ppsboard->offset_usecs))
-       ppsboard->offset_usecs = atof ("NaN");
+    if (!nmea_argi (buf, 12, (int *) &ppsboard->offset_counts))
+        ppsboard->offset_counts = atoi ("NaN");
 
-   if (!nmea_argf (buf, 15, &ppsboard->temperature))
-       return -1;
-   
-   return 1;
+    if (!nmea_argf (buf, 13, &ppsboard->offset_usecs))
+        ppsboard->offset_usecs = atof ("NaN");
+
+    if (!nmea_argf (buf, 15, &ppsboard->temperature))
+        return -1;
+
+    return 1;
 }
 
 static void
 on_clean_data (struct gps_data_t *ud, char *buf, size_t ulen, int level)
 {
-  if (buf[0] == '$') { // raw NMEA pkt
-      senlcm_raw_t raw;
-      raw.utime = timestamp_now ();
-      raw.length = ulen;
-      raw.data = (uint8_t *) buf;
-      
-      if (0==strncmp (buf, "$PPSDA", 6)) { // $PPSDA
-          static char ppsboard_channel[] = "PPSBOARD";
-          static char *ppsboard_read_channel = NULL;
-          if (!ppsboard_read_channel) {
-              ppsboard_read_channel = malloc (LCM_MAX_CHANNEL_NAME_LENGTH);
-              char *raw_delim = strtok (gsd->read_channel, gsd->channel);
-              sprintf (ppsboard_read_channel, "%s%s", ppsboard_channel, raw_delim);
-          }
-          senlcm_raw_t_publish (gsd->lcm, ppsboard_read_channel, &raw);
+    if (buf[0] == '$')   // raw NMEA pkt
+    {
+        senlcm_raw_t raw;
+        raw.utime = timestamp_now ();
+        raw.length = ulen;
+        raw.data = (uint8_t *) buf;
 
-          if (parse_ppsda (buf, &lcm_ppsboard)) {
-              senlcm_ppsboard_t_publish (gsd->lcm, ppsboard_channel, &lcm_ppsboard);
-              gsd_update_stats (gsd, 1);
-          } 
-          else
-              gsd_update_stats (gsd, -1);
-      } 
-      else  // generic NMEA packet
-          senlcm_raw_t_publish (gsd->lcm, gsd->read_channel, &raw);
-  } 
-  else { // gpsd packet
-      if (0==strncmp (buf, "GPSD,O=RMC", 10)) {
-          if (parse_gpsd (ud, &lcm_gps_data)) {
-              senlcm_gpsd_t_publish (gsd->lcm, gsd->channel, &lcm_gps_data);
-              gsd_update_stats (gsd, 1);
-          }
-          else
-              gsd_update_stats (gsd, -1);
-      }
-  }
+        if (0==strncmp (buf, "$PPSDA", 6))   // $PPSDA
+        {
+            static char ppsboard_channel[] = "PPSBOARD";
+            static char *ppsboard_read_channel = NULL;
+            if (!ppsboard_read_channel)
+            {
+                ppsboard_read_channel = malloc (LCM_MAX_CHANNEL_NAME_LENGTH);
+                char *raw_delim = strtok (gsd->read_channel, gsd->channel);
+                sprintf (ppsboard_read_channel, "%s%s", ppsboard_channel, raw_delim);
+            }
+            senlcm_raw_t_publish (gsd->lcm, ppsboard_read_channel, &raw);
+
+            if (parse_ppsda (buf, &lcm_ppsboard))
+            {
+                senlcm_ppsboard_t_publish (gsd->lcm, ppsboard_channel, &lcm_ppsboard);
+                gsd_update_stats (gsd, 1);
+            }
+            else
+                gsd_update_stats (gsd, -1);
+        }
+        else  // generic NMEA packet
+            senlcm_raw_t_publish (gsd->lcm, gsd->read_channel, &raw);
+    }
+    else   // gpsd packet
+    {
+        if (0==strncmp (buf, "GPSD,O=RMC", 10))
+        {
+            if (parse_gpsd (ud, &lcm_gps_data))
+            {
+                senlcm_gpsd_t_publish (gsd->lcm, gsd->channel, &lcm_gps_data);
+                gsd_update_stats (gsd, 1);
+            }
+            else
+                gsd_update_stats (gsd, -1);
+        }
+    }
 }
 
 static void
 on_data (struct gps_data_t *ud, char *buf, size_t ulen, int level)
 {
-  if (buf[0] == '$' && strstr (buf, "GPSD,")) {
-      //printf ("\nGPSD weirdness:\n");
+    if (buf[0] == '$' && strstr (buf, "GPSD,"))
+    {
+        //printf ("\nGPSD weirdness:\n");
 
-      char mybuf[ulen+1];
-      memcpy (mybuf, buf, ulen);
-      mybuf[ulen] = '\0';
+        char mybuf[ulen+1];
+        memcpy (mybuf, buf, ulen);
+        mybuf[ulen] = '\0';
 
-      char *tok = strchr (mybuf, '\n');
-      if (tok) {
-          mybuf[tok-mybuf] = '\0';
-          //printf ("mybuf=%s\n", mybuf);
-          on_clean_data (ud, mybuf, strlen (mybuf), level);
-          tok++;
-          //printf ("tok=%s\n", tok);
-          on_clean_data (ud, tok, strlen (tok), level);
-          
-      }
-  }
-  else
-      on_clean_data (ud, buf, ulen, level);
+        char *tok = strchr (mybuf, '\n');
+        if (tok)
+        {
+            mybuf[tok-mybuf] = '\0';
+            //printf ("mybuf=%s\n", mybuf);
+            on_clean_data (ud, mybuf, strlen (mybuf), level);
+            tok++;
+            //printf ("tok=%s\n", tok);
+            on_clean_data (ud, tok, strlen (tok), level);
+
+        }
+    }
+    else
+        on_clean_data (ud, buf, ulen, level);
 }
 
 static int
@@ -262,11 +274,11 @@ main (int argc, char *argv[])
 {
     // so that redirected stdout won't be insanely buffered.
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
-    
+
     gsd = gsd_create (argc, argv, NULL, myopts);
-    
+
     //gsd_reset_stats (gsd);
-    
+
     init_lcm_gps_data (&lcm_gps_data);
     init_lcm_ppsboard (&lcm_ppsboard);
 
@@ -275,10 +287,12 @@ main (int argc, char *argv[])
     char *gpsddev;
     if (getopt_has_flag (gsd->gopt, "gpsddev"))
         gpsddev = (char *) getopt_get_string (gsd->gopt, "gpsddev");
-    else {  
+    else
+    {
         char key[256];
         sprintf (key, "%s.gpsddev", gsd->rootkey);
-        if (bot_param_get_str (gsd->params, key, &gpsddev)) {
+        if (bot_param_get_str (gsd->params, key, &gpsddev))
+        {
             ERROR ("gpsddev not set");
             exit (EXIT_FAILURE);
         }
@@ -287,9 +301,10 @@ main (int argc, char *argv[])
     // open gpsd client
     struct gps_data_t *gpsdata;
     gpsdata = gps_open (NULL, NULL);
-    if (gpsdata == NULL) {
-      ERROR ("gps_open() failed.");
-      exit (EXIT_FAILURE);
+    if (gpsdata == NULL)
+    {
+        ERROR ("gps_open() failed.");
+        exit (EXIT_FAILURE);
     }
 
     gps_set_raw_hook (gpsdata, on_data);
@@ -299,11 +314,11 @@ main (int argc, char *argv[])
 
 
     while (!gsd->done)
-      gps_poll (gpsdata);
+        gps_poll (gpsdata);
 
     gps_close (gpsdata);
     free_lcm_gps_data (&lcm_gps_data);
     free_lcm_ppsboard (&lcm_ppsboard);
 
-  return 0;
+    return 0;
 }

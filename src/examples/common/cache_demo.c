@@ -29,7 +29,8 @@ void
 printf_key (cache_t *cache, int64_t key)
 {
     perllcm_van_example_t *value = cache_pop (cache, key);
-    if (value) {
+    if (value)
+    {
         printf ("key=%"PRId64"\tvalue.utime=%"PRId64"\n", key, value->utime);
         free (value);
     }
@@ -59,7 +60,8 @@ main (int argc, char *argv[])
 
     // over populate it so things are pushed out of cache
     size_t i=0;
-    for (i=0; i<10*MAX_NNODES; i++) {
+    for (i=0; i<10*MAX_NNODES; i++)
+    {
         int64_t key = i;
         perllcm_van_example_t *value = malloc (sizeof (*value));
         value->utime = i;
@@ -81,11 +83,12 @@ main (int argc, char *argv[])
     // second cache on image
     cache_t *imgcache = cache_new (IMGCACHE_MAX, &imgcache_value_copy, &imgcache_value_destroy);
 
-    IplImage *img = cvCreateImage (cvSize(1360,1024), IPL_DEPTH_8U, 1); // ~1.2MB per image 
+    IplImage *img = cvCreateImage (cvSize(1360,1024), IPL_DEPTH_8U, 1); // ~1.2MB per image
 
     // if you see 100MB is taken by this proc --> there's mem leak
     // w/o leak ~20MB is used by this proc.
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100; i++)
+    {
         int64_t utime = i;
         cache_push (imgcache, utime, cvCloneImage (img));
         printf ("adding image to %d th node in the cache with max size %d\n", i, IMGCACHE_MAX);

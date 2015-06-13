@@ -107,19 +107,20 @@ static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("my_signal_handler()\n");
-    if (done) {
+    if (done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
     }
     else
         printf("Quitting!\n");
-        done = 1;
+    done = 1;
 }
 
 
 static void
 heartbeat_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                      const perllcm_heartbeat_t *hb, void *user)
+                    const perllcm_heartbeat_t *hb, void *user)
 {
     state_t *state = user;
 
@@ -141,14 +142,15 @@ desert_star_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 ms_gx3_25_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                      const senlcm_ms_gx3_25_t *ustrain, void *user)
+                    const senlcm_ms_gx3_25_t *ustrain, void *user)
 {
     state_t *state = user;
 
     // only send fresh Euler data
     if (! (ustrain->bitmask & SENLCM_MS_GX3_25_T_EULER))
         return;
-    if (ustrain->utime > state->ms_utime) {
+    if (ustrain->utime > state->ms_utime)
+    {
         state->rph[0]   = -ustrain->Euler[0];
         state->rph[1]   = -ustrain->Euler[1];
         state->rph[2]   =  ustrain->Euler[2] + M_PI;
@@ -159,14 +161,15 @@ ms_gx3_25_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 ms_gx1_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                      const senlcm_ms_gx1_t *ustrain, void *user)
+                 const senlcm_ms_gx1_t *ustrain, void *user)
 {
     state_t *state = user;
 
     // only send fresh Euler data
     if (! (ustrain->bitmask & SENLCM_MS_GX1_T_STAB_EULER))
         return;
-    if (ustrain->utime > state->ms_utime) {
+    if (ustrain->utime > state->ms_utime)
+    {
         state->rph[0]   = -ustrain->sEuler[0];
         state->rph[1]   = -ustrain->sEuler[1];
         state->rph[2]   =  ustrain->sEuler[2] + M_PI;
@@ -185,7 +188,8 @@ rdi_pd4_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     static GSLU_VECTOR_VIEW (x_vs, 6);
     static GSLU_MATRIX_VIEW (R_vs, 3, 3);
     static GSLU_MATRIX_VIEW (bhat, 3, 4);
-    if (firstime) {
+    if (firstime)
+    {
         firstime = false;
         // static sensor to vehicle coordinate transform
         bot_param_get_double_array_or_fail (state->param, "sensors.rdi.x_vs", x_vs.data, 6);
@@ -197,19 +201,21 @@ rdi_pd4_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         // RDI beam geometry
         double s, c;
         fsincos (30.0*DTOR, &s, &c);
-                                       /*  b1, b2, b3, b4 */
+        /*  b1, b2, b3, b4 */
         GSLU_MATRIX_VIEW (tmp_bhat, 3, 4, {-s,  s,  0,  0,
-                                            0,  0,  s, -s,
-                                           -c, -c, -c, -c });
+                                           0,  0,  s, -s,
+                                           -c, -c, -c, -c
+                                          });
         gsl_matrix_memcpy (&bhat.matrix, &tmp_bhat.matrix);
     }
 
     // Altitude
     // three-beam or better soln
-    if (pd4->altitude > SENLCM_RDI_PD4_T_ALTITUDE_SENTINAL && 
-        pd4->btv[0] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
-        pd4->btv[1] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
-        pd4->btv[2] > SENLCM_RDI_PD4_T_BTV_SENTINAL){
+    if (pd4->altitude > SENLCM_RDI_PD4_T_ALTITUDE_SENTINAL &&
+            pd4->btv[0] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
+            pd4->btv[1] > SENLCM_RDI_PD4_T_BTV_SENTINAL &&
+            pd4->btv[2] > SENLCM_RDI_PD4_T_BTV_SENTINAL)
+    {
         GSLU_MATRIX_VIEW (R_wv, 3, 3);
         so3_rotxyz (R_wv.data, state->rph);
 
@@ -218,8 +224,10 @@ rdi_pd4_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
         int nbeams = 0;
         double altavg = 0, altmin = GSL_POSINF;
-        for (int i=0; i < 4; i++) {
-            if (pd4->range[i] > 0) {
+        for (int i=0; i < 4; i++)
+        {
+            if (pd4->range[i] > 0)
+            {
                 nbeams++;
                 GSLU_VECTOR_VIEW (bi_s, 3);
                 gsl_matrix_get_col (&bi_s.vector, &bhat.matrix, i);
@@ -236,13 +244,13 @@ rdi_pd4_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         }
 
         altavg /= nbeams;
-    // Velocity
-    // $ODVL,<XSPEED>,<YSPEED>,<TMOUT><*cc>
+        // Velocity
+        // $ODVL,<XSPEED>,<YSPEED>,<TMOUT><*cc>
         gsl_vector_const_view uvw_s = gsl_vector_const_view_array (pd4->btv, 3);
         GSLU_VECTOR_VIEW (uvw_v, 3);
         gslu_blas_mv (&uvw_v.vector, &R_vs.matrix, &uvw_s.vector);
 
-        // RME: 05/31/2011 - UMBS experiments seem to suggest that UVC is defining body-frame +X fwd, +Y port 
+        // RME: 05/31/2011 - UMBS experiments seem to suggest that UVC is defining body-frame +X fwd, +Y port
         // which is oppposite of our NED frame convention on the vehicle, hence why the -1.0 on v
 
         double dt = (pd4->utime - state->rdi_utime)/1E6;
@@ -274,22 +282,22 @@ clear_control(state_t * state)
 {
     state->control.alt_mod       = 0;
     state->control.alt_mod_flag  = 0;
-    
+
     state->control.prev_wp_count = 0;
     state->control.prev_wp       = 0;
     state->control.danger_flag   = 0;
     state->control.danger_lat    = 0;
     state->control.danger_long   = 0;
     state->control.danger_depth  = 0;
-    
+
     state->control.abort_count   = 0;
     state->control.abort         = 0;
-    
+
     state->control.dx_up         = 0;
     state->control.dx_down       = 0;
-    
+
     state->control.timeout       = 1;
-    
+
     state->control.utime         = state->utime;
 
     perllcm_auv_es_control_t_publish (state->lcm, state->control_channel, &(state->control));
@@ -317,11 +325,11 @@ update_control(state_t * state)
     state->control.utime         = state->utime;
 
     // Check to see if looking up too long
-    if ((state->rph[1] > TURN_ANGLE) && 
-        (state->control.alt_mod > 0.1))
+    if ((state->rph[1] > TURN_ANGLE) &&
+            (state->control.alt_mod > 0.1))
         state->control.dx_up += state->dx_c;
-    else if ((state->rph[1] < ES_ANGLE/2) || 
-        (state->control.alt_mod < 0.1))
+    else if ((state->rph[1] < ES_ANGLE/2) ||
+             (state->control.alt_mod < 0.1))
         state->control.dx_up = 0;
 
     if (state->rph[1] < -TURN_ANGLE)
@@ -330,20 +338,23 @@ update_control(state_t * state)
         state->control.dx_down = 0;
 
     state->dx_c = 0;
-    if ((state->control.dx_up > state->peek_dx) && 
-        ((state->horizon.index > 10) || (state->horizon.index < 1))) {
+    if ((state->control.dx_up > state->peek_dx) &&
+            ((state->horizon.index > 10) || (state->horizon.index < 1)))
+    {
         state->control.alt_mod = state->alt - (state->goal_alt + 2);
         state->control.alt_mod_flag = 1;
         perllcm_auv_es_control_t_publish (state->lcm, state->control_channel, &(state->control));
         return;
     }
-    else if (state->control.dx_down > state->peek_dx) {
+    else if (state->control.dx_down > state->peek_dx)
+    {
         state->control.alt_mod = state->alt - 0.5;
         state->control.alt_mod_flag = 1;
         perllcm_auv_es_control_t_publish (state->lcm, state->control_channel, &(state->control));
         return;
     }
-    else {
+    else
+    {
         if (state->horizon.flag_slope > TURN_SLOPE)
             state->control.prev_wp_count += 1;
         else
@@ -354,11 +365,12 @@ update_control(state_t * state)
         else if (state->horizon.flag_slope > MAX_SLOPE)
             state->control.abort_count += 1;
 
-        if ((state->horizon.flag_slope > MAX_SLOPE) && 
-            (((state->horizon.index < 6) && 
-            (state->control.abort_count > 3)) || 
-            ((state->control.abort_count > 5) &&
-            (state->horizon.index < 15)))) {
+        if ((state->horizon.flag_slope > MAX_SLOPE) &&
+                (((state->horizon.index < 6) &&
+                  (state->control.abort_count > 3)) ||
+                 ((state->control.abort_count > 5) &&
+                  (state->horizon.index < 15))))
+        {
             state->control.abort = 1;
             printf("Attempting to Abort!\n");
             state->control.prev_wp_count = 0;
@@ -368,8 +380,9 @@ update_control(state_t * state)
             perllcm_auv_es_control_t_publish (state->lcm, state->control_channel, &(state->control));
             return;
         }
-        else if (state->control.prev_wp_count > 5 && 
-            state->horizon.index < 15) {
+        else if (state->control.prev_wp_count > 5 &&
+                 state->horizon.index < 15)
+        {
             state->control.prev_wp = 1;
             printf("Attempting to Turn Around!\n");
             // INSERT THE control.danger_*
@@ -384,33 +397,40 @@ update_control(state_t * state)
         }
     }
 
-    if (state->horizon.index > 0) {
+    if (state->horizon.index > 0)
+    {
         double dist = state->horizon.index*SIZE_BIN + state->horizon.offset;
         double pseudo_bottom = state->depth + state->alt;
-        if ((state->horizon.health[state->horizon.index] > 1.1) && 
-            (state->horizon.slope > GREEN_SLOPE)) {
+        if ((state->horizon.health[state->horizon.index] > 1.1) &&
+                (state->horizon.slope > GREEN_SLOPE))
+        {
             pseudo_bottom =  state->horizon.depth[state->horizon.index] +
-                GREEN_SLOPE*dist;
+                             GREEN_SLOPE*dist;
         }
         else if ((state->horizon.health[state->horizon.index] < 1.1) &&
-            (state->horizon.slope > YELLOW_SLOPE)) {
+                 (state->horizon.slope > YELLOW_SLOPE))
+        {
             pseudo_bottom = state->horizon.depth[state->horizon.index] +
-                YELLOW_SLOPE*dist;
+                            YELLOW_SLOPE*dist;
         }
         if ((pseudo_bottom < (state->depth + fmin(state->goal_alt, state->alt))) ||
-            (state->control.danger_flag > 0.1))  {
-            if (state->control.danger_flag > 0.1) {
-            state->control.alt_mod =
-                (state->control.danger_depth + fmin(state->goal_alt, state->alt)) - 
-                pseudo_bottom;
+                (state->control.danger_flag > 0.1))
+        {
+            if (state->control.danger_flag > 0.1)
+            {
+                state->control.alt_mod =
+                    (state->control.danger_depth + fmin(state->goal_alt, state->alt)) -
+                    pseudo_bottom;
             }
-            else {
-            state->control.alt_mod = (state->depth + fmin(state->goal_alt, state->alt)) -
-                pseudo_bottom;
+            else
+            {
+                state->control.alt_mod = (state->depth + fmin(state->goal_alt, state->alt)) -
+                                         pseudo_bottom;
             }
             state->control.alt_mod_flag = 1;
         }
-        else {
+        else
+        {
             state->control.alt_mod      = 0;
             state->control.alt_mod_flag = 0;
         }
@@ -421,10 +441,10 @@ update_control(state_t * state)
 void
 update_horizon(state_t * state)
 {
-    double pitch = state->rph[1];  //rad 
+    double pitch = state->rph[1];  //rad
     double range = state->range;   //m
 
-    
+
     if (range < 0.3)
         range = 50;
     double es_depth = state->depth - ES_X*sin(pitch) - ES_Z*cos(pitch);
@@ -433,9 +453,10 @@ update_horizon(state_t * state)
     double ii_range = ii*SIZE_BIN + state->horizon.offset;
     // Area cleared by beam
     while ((ii_range < ((range - SIZE_BIN)*cos(pitch)))  &&
-           (ii < state->nBins-1)) {
-        state->horizon.depth[ii] = fmax(state->horizon.depth[ii], 
-            es_depth - ii_range*sin(pitch - CLEAR_ANGLE));
+            (ii < state->nBins-1))
+    {
+        state->horizon.depth[ii] = fmax(state->horizon.depth[ii],
+                                        es_depth - ii_range*sin(pitch - CLEAR_ANGLE));
         if (state->horizon.health[ii] >= 0.9)
             state->horizon.health[ii] = 2;
         else if (state->horizon.health[ii] < 0.9)
@@ -449,37 +470,43 @@ update_horizon(state_t * state)
 
     // Last cleared grid
     if ((temp_deep < state->horizon.depth[ii]) &&
-        (state->horizon.health[ii] > 0.1)) {
+            (state->horizon.health[ii] > 0.1))
+    {
         state->horizon.depth[ii]  = temp_deep;
         state->horizon.health[ii] = 1;
-    } 
-    else if ((temp_deep > state->horizon.depth[ii]) && 
-        ((temp_shal <  state->horizon.depth[ii]) || 
-        (state->horizon.health[ii] == 1))) { 
+    }
+    else if ((temp_deep > state->horizon.depth[ii]) &&
+             ((temp_shal <  state->horizon.depth[ii]) ||
+              (state->horizon.health[ii] == 1)))
+    {
         state->horizon.depth[ii]  = temp_shal;
         state->horizon.health[ii] = 1;
     }
-    else if (ii < state->nBins-1) {
+    else if (ii < state->nBins-1)
+    {
         state->horizon.depth[ii]  = temp_shal;
         state->horizon.health[ii] = 1;
     }
     else
         state->horizon.depth[ii]  = temp_shal;
 
-    if (range > 5) 
+    if (range > 5)
         state->horizon.health[ii] = 0;
 
     // Find the slope to horizon from the warning alt
     state->horizon.flag_slope = -1;
     state->horizon.index = 0;
     double rise, run, temp_slope;
-    for (int jj = 0; jj < state->nBins; jj++) {
-        if ((state->horizon.health[jj] > 0.1) && (jj > state->cleared) 
-            && (state->horizon.depth[jj] > 0.1)) {
+    for (int jj = 0; jj < state->nBins; jj++)
+    {
+        if ((state->horizon.health[jj] > 0.1) && (jj > state->cleared)
+                && (state->horizon.depth[jj] > 0.1))
+        {
             rise = (state->depth + WARN_ALT) - state->horizon.depth[jj];
             run = es_x + state->horizon.offset + jj*SIZE_BIN;
             temp_slope = rise/run;
-            if (temp_slope > state->horizon.flag_slope) {
+            if (temp_slope > state->horizon.flag_slope)
+            {
                 state->horizon.flag_slope = temp_slope;
                 state->horizon.index = jj;
             }
@@ -487,9 +514,10 @@ update_horizon(state_t * state)
     } // for
 
     state->horizon.slope = -1;
-    if (state->horizon.index > state->cleared) {
-        rise = (state->depth + fmin(state->goal_alt, state->alt)) - 
-            state->horizon.depth[state->horizon.index];
+    if (state->horizon.index > state->cleared)
+    {
+        rise = (state->depth + fmin(state->goal_alt, state->alt)) -
+               state->horizon.depth[state->horizon.index];
         run = es_x + state->horizon.offset + state->horizon.index*SIZE_BIN;
         state->horizon.slope = rise/run;
     } // if
@@ -503,19 +531,23 @@ void
 update_offset(state_t * state)
 {
     state->horizon.offset = state->horizon.offset - state->dx_o;
-    while (state->horizon.offset < 0) { 
+    while (state->horizon.offset < 0)
+    {
         state->horizon.offset += 1;
-        for (int i=0; i < state->nBins-1; i++) {
-            state->horizon.depth[i]  = state->horizon.depth[i+1]; 
+        for (int i=0; i < state->nBins-1; i++)
+        {
+            state->horizon.depth[i]  = state->horizon.depth[i+1];
             state->horizon.health[i] = state->horizon.health[i+1];
         } // for
-        state->horizon.depth[state->nBins-1]  = 0; 
+        state->horizon.depth[state->nBins-1]  = 0;
         state->horizon.health[state->nBins-1] = 0;
     } // while
 
-    while (state->horizon.offset > 1) {
+    while (state->horizon.offset > 1)
+    {
         state->horizon.offset  -= 1;
-        for (int i=state->nBins-1; i>0; i--) {
+        for (int i=state->nBins-1; i>0; i--)
+        {
             state->horizon.depth[i]  = state->horizon.depth[i-1];
             state->horizon.health[i] = state->horizon.health[i-1];
         } // for
@@ -544,11 +576,13 @@ void my_opts (state_t * state, int argc, char *argv[])
     botu_param_add_pserver_to_getopt (state->gopt);
 
     // Run command line options
-    if (!getopt_parse (state->gopt, argc, argv, 1)) {
+    if (!getopt_parse (state->gopt, argc, argv, 1))
+    {
         getopt_do_usage (state->gopt, "mission-file");
         exit (EXIT_FAILURE);
     } // if
-    else if (getopt_get_bool (state->gopt, "help")) {
+    else if (getopt_get_bool (state->gopt, "help"))
+    {
         getopt_do_usage (state->gopt, "mission-file");
         exit (EXIT_SUCCESS);
     } // else if
@@ -573,7 +607,8 @@ void my_lcm(state_t * state)
     // Connect to LCM
     state->lcm = lcm_create (NULL);
 
-    if (!state->lcm) {
+    if (!state->lcm)
+    {
         printf ("lcm_create() failed!\n");
         exit (EXIT_FAILURE);
     } // if
@@ -601,7 +636,8 @@ void my_lcm(state_t * state)
 //    free (lcm_chan); free (lcm_key);
 
     lcm_key = "sensors.ms-gx3-25.gsd.channel";
-    if (bot_param_has_key(state->param, lcm_key)) {
+    if (bot_param_has_key(state->param, lcm_key))
+    {
         lcm_chan = bot_param_get_str_or_fail(state->param, lcm_key);
         senlcm_ms_gx3_25_t_subscribe (state->lcm, lcm_chan, &ms_gx3_25_callback, state);
 //        free (lcm_chan);
@@ -609,7 +645,8 @@ void my_lcm(state_t * state)
 //    free (lcm_key);
 
     lcm_key = "sensors.ms-gx1.gsd.channel";
-    if (bot_param_has_key(state->param, lcm_key)) {
+    if (bot_param_has_key(state->param, lcm_key))
+    {
         lcm_chan = bot_param_get_str_or_fail(state->param, lcm_key);
         senlcm_ms_gx1_t_subscribe (state->lcm, lcm_chan, &ms_gx1_callback, state);
 //        free (lcm_chan);
@@ -624,7 +661,7 @@ void my_lcm(state_t * state)
 
     // LCM Outputs
     lcm_key = "es-control.control.channel";
-    if (bot_param_has_key(state->param, lcm_key)) 
+    if (bot_param_has_key(state->param, lcm_key))
         state->control_channel = bot_param_get_str_or_fail (state->param, lcm_key);
     else
         state->control_channel = "IVER31_ES_CONTROL";
@@ -632,16 +669,16 @@ void my_lcm(state_t * state)
 
     lcm_key = "es-control.horizon.channel";
     if (bot_param_has_key(state->param, lcm_key))
-        state->horizon_channel = bot_param_get_str_or_fail (state->param, lcm_key); 
+        state->horizon_channel = bot_param_get_str_or_fail (state->param, lcm_key);
     else
-        state->horizon_channel = "IVER31_ES_HORIZON"; 
+        state->horizon_channel = "IVER31_ES_HORIZON";
 //    free (lcm_key); free(lcm_chan);
 
 } // my_lcm
 
 
 void init_state(state_t * state)
-{    
+{
     // Init part of state
     state->hb = 0;
     state->dstar_new = 0;
@@ -660,7 +697,8 @@ void init_state(state_t * state)
     state->control.abort_count   = 0;
     state->control.dx_up         = 0;
     state->control.dx_down       = 0;
-    for (int i=0; i<state->nBins; i++) {
+    for (int i=0; i<state->nBins; i++)
+    {
         state->horizon.depth[i]  = 0;
         state->horizon.health[i] = 0;
     } // for
@@ -687,8 +725,9 @@ int main (int argc, char *argv[])
 
     // wait for sensors to send data
     while ((!state->dstar_new == 1 || !state->es_new_c == 1 ||
-           !state->ms_new == 1  || !state->rdi_new_c == 1 ||
-           !state->hb == 1) && !done) {
+            !state->ms_new == 1  || !state->rdi_new_c == 1 ||
+            !state->hb == 1) && !done)
+    {
         lcm_handle (state->lcm);
         last_utime = state->utime;
     }
@@ -696,8 +735,9 @@ int main (int argc, char *argv[])
     state->dx_o = 0;
     state->dx_c = 0;
     state->cleared  = fmax(0, floor(WARN_ALT/(MAX_SLOPE*SIZE_BIN)));
-    // main loop 
-    while (!done){
+    // main loop
+    while (!done)
+    {
         utime = state->utime;
         lcm_handle (state->lcm);
 
@@ -708,17 +748,19 @@ int main (int argc, char *argv[])
             update_horizon(state);
 
         if (state->dstar_new == 1 && state->es_new_c == 1 &&
-            state->rdi_new_c == 1  && 
-            ((utime - last_utime)/1e6 > (1/state->control_hz))) {
+                state->rdi_new_c == 1  &&
+                ((utime - last_utime)/1e6 > (1/state->control_hz)))
+        {
             update_control(state);
             last_utime = utime;
         } // if
 
-        if ((state->control.utime - last_utime)/1e6 > state->timeout) {
+        if ((state->control.utime - last_utime)/1e6 > state->timeout)
+        {
             printf ("Sensors Timedout\n");
             clear_control(state);
             last_utime = utime;
-        } // if   
+        } // if
     } // while
     printf ("Cleaning up\n");
     getopt_destroy (state->gopt);

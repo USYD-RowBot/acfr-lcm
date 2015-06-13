@@ -42,17 +42,20 @@ program_dvl (generic_sensor_driver_t *gsd, const char *config)
 
     printf ("Initializing DVL according to %s\n", config);
     FILE *fptr = fopen (config, "r");
-    if (fptr == NULL) {
+    if (fptr == NULL)
+    {
         PERROR ("fopen()");
         exit (EXIT_FAILURE);
     }
 
     /* block until we know dvl is alive */
     char buf[256];
-    do {
+    do
+    {
         const char sw_break[] = "===\n";  // software break
         gsd_write (gsd, sw_break, strlen (sw_break));
-    } while (!gsd_read_timeout (gsd, buf, sizeof buf, NULL, 100E3));
+    }
+    while (!gsd_read_timeout (gsd, buf, sizeof buf, NULL, 100E3));
     printf ("\n");
 
     char line[256];
@@ -60,17 +63,20 @@ program_dvl (generic_sensor_driver_t *gsd, const char *config)
         printf ("%s", line);
 
     printf ("--------------------programming---------------------------------\n");
-    while (fgets (line, sizeof line, fptr)) {
+    while (fgets (line, sizeof line, fptr))
+    {
         if (line[0] == ';') continue; // comment
 
         printf ("%s", line);
         gsd_write (gsd, line, strlen (line));
 
-        if (0==strncmp (line, "#PD4", 4)) {
+        if (0==strncmp (line, "#PD4", 4))
+        {
             rdi_pd_mode = RDI_PD4_MODE;
             rdi_pd_len  = RDI_PD4_LEN;
         }
-        if (0==strncmp (line, "#PD5", 4)) {
+        if (0==strncmp (line, "#PD5", 4))
+        {
             rdi_pd_mode = RDI_PD5_MODE;
             rdi_pd_len  = RDI_PD5_LEN;
         }
@@ -102,14 +108,16 @@ main (int argc, char *argv[])
     char dvlconfig[PATH_MAX] = {'\0'};
     if (getopt_has_flag (gsd->gopt, "config"))
         strcpy (dvlconfig, getopt_get_string (gsd->gopt, "config"));
-    else {
+    else
+    {
         char key[256];
         sprintf (key, "%s.%s", gsd->rootkey, "config");
 
         char *config;
         if (0==bot_param_get_str (gsd->params, key, &config))
             snprintf (dvlconfig, sizeof dvlconfig, "%s/%s", gsd->rootdir, config);
-        else {
+        else
+        {
             ERROR ("bot_param_get_str(), unable to parse config key [%s]", key);
             exit (EXIT_FAILURE);
         }
@@ -119,19 +127,23 @@ main (int argc, char *argv[])
     gsd_noncanonical (gsd, rdi_pd_len, 1);
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
-    while (1) {
+    while (1)
+    {
         // read stream
         char buf[1024];
         int64_t timestamp;
         int len = gsd_read (gsd, buf, rdi_pd_len, &timestamp);
 
         // try to parse it
-        switch (rdi_pd_mode) {   
-        case RDI_PD4_MODE: {
+        switch (rdi_pd_mode)
+        {
+        case RDI_PD4_MODE:
+        {
             rdi_pd4_t pd4;
-            if (0==rdi_parse_pd4 (buf, len, &pd4)) {
+            if (0==rdi_parse_pd4 (buf, len, &pd4))
+            {
                 senlcm_rdi_pd4_t lcm_pd4 = rdi_pd4_to_lcm_pd4 (&pd4);
-                lcm_pd4.utime = rdi_timestamp_sync (tss, pd4.tofp_hour, pd4.tofp_minute, pd4.tofp_second, 
+                lcm_pd4.utime = rdi_timestamp_sync (tss, pd4.tofp_hour, pd4.tofp_minute, pd4.tofp_second,
                                                     pd4.tofp_hundredth, timestamp);
                 senlcm_rdi_pd4_t_publish (gsd->lcm, gsd->channel, &lcm_pd4);
                 gsd_update_stats (gsd, true);
@@ -141,12 +153,14 @@ main (int argc, char *argv[])
 
             break;
         }
-        case RDI_PD5_MODE: {
+        case RDI_PD5_MODE:
+        {
             rdi_pd5_t pd5;
-            if (0==rdi_parse_pd5 (buf, len, &pd5)) {
+            if (0==rdi_parse_pd5 (buf, len, &pd5))
+            {
                 senlcm_rdi_pd5_t lcm_pd5 = rdi_pd5_to_lcm_pd5 (&pd5);
-                lcm_pd5.utime = lcm_pd5.pd4.utime = rdi_timestamp_sync (tss, pd5.tofp_hour, pd5.tofp_minute, 
-                                                                        pd5.tofp_second, pd5.tofp_hundredth, timestamp);
+                lcm_pd5.utime = lcm_pd5.pd4.utime = rdi_timestamp_sync (tss, pd5.tofp_hour, pd5.tofp_minute,
+                                                    pd5.tofp_second, pd5.tofp_hundredth, timestamp);
                 senlcm_rdi_pd5_t_publish (gsd->lcm, gsd->channel, &lcm_pd5);
                 gsd_update_stats (gsd, true);
             }

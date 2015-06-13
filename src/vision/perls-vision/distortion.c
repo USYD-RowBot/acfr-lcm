@@ -35,14 +35,16 @@ vis_distort_pts_radial (const gsl_matrix *src, gsl_matrix *dst, const gsl_matrix
 {
 
     gsl_matrix *K;
-    if (_K == NULL) {
+    if (_K == NULL)
+    {
         K = gsl_matrix_alloc (3, 3);
         gsl_matrix_set_identity (K);
-    } else
+    }
+    else
         K = gslu_matrix_clone (_K);
-    
-	
-    assert (src->size1 == 2 && gslu_matrix_is_same_size (src, dst) && 
+
+
+    assert (src->size1 == 2 && gslu_matrix_is_same_size (src, dst) &&
             K->size1 == 3 && K->size2 == 3 && distCoeffs->size == 5);
 
     double k1 = gsl_vector_get (distCoeffs, 0);
@@ -55,13 +57,14 @@ vis_distort_pts_radial (const gsl_matrix *src, gsl_matrix *dst, const gsl_matrix
     gsl_matrix *tmp_h = homogenize_alloc (src);
 
     gsl_matrix *Kinv = gslu_matrix_inv_alloc (K);
-	//gslu_matrix_printf(tmp_h,"tmp_h");
-	//gslu_matrix_printf(K,"K");
-	//gslu_matrix_printf(Kinv,"Kinv");
+    //gslu_matrix_printf(tmp_h,"tmp_h");
+    //gslu_matrix_printf(K,"K");
+    //gslu_matrix_printf(Kinv,"Kinv");
     gsl_matrix *xy_h = gslu_blas_mm_alloc (Kinv, tmp_h);
-    
 
-    for (size_t n=0; n<src->size2; n++) {
+
+    for (size_t n=0; n<src->size2; n++)
+    {
         double x = gsl_matrix_get (xy_h, 0, n);
         double y = gsl_matrix_get (xy_h, 1, n);
 
@@ -97,15 +100,17 @@ void
 vis_undistort_pts_radial (const gsl_matrix *src, gsl_matrix *dst, const gsl_matrix *_K, const gsl_vector *distCoeffs)
 {
     gsl_matrix *K;
-    if (_K == NULL) {
+    if (_K == NULL)
+    {
         K = gsl_matrix_alloc (3, 3);
         gsl_matrix_set_identity (K);
-    } else
+    }
+    else
         K = gslu_matrix_clone (_K);
 
-    assert (src->size1 == 2 && gslu_matrix_is_same_size (src, dst) && 
+    assert (src->size1 == 2 && gslu_matrix_is_same_size (src, dst) &&
             K->size1 == 3 && K->size2 == 3 && distCoeffs->size == 5);
-    
+
     /* Note: cvUndistortPoints only seems to work with points stored as a Nx1 2-channel array.
      */
     gsl_matrix *srcT = gslu_matrix_transpose_alloc (src); // [N x 2]
@@ -118,7 +123,7 @@ vis_undistort_pts_radial (const gsl_matrix *src, gsl_matrix *dst, const gsl_matr
     CvMat dstT_2NC1 = vis_cvu_gsl_matrix_to_cvmat_view (dstT); // [N x 2]
     CvMat dstT_1NC2_header, *dstT_1NC2;
     dstT_1NC2 = cvReshape(&dstT_2NC1, &dstT_1NC2_header, 2, 1); // [N x 1] 2-channel
-    
+
     // undistort
     CvMat K_cv = vis_cvu_gsl_matrix_to_cvmat_view (K);
     CvMat distCoeffs_cv = vis_cvu_gsl_vector_to_cvmat_view (distCoeffs);
@@ -126,7 +131,7 @@ vis_undistort_pts_radial (const gsl_matrix *src, gsl_matrix *dst, const gsl_matr
 
     // copy back
     gsl_matrix_transpose_memcpy (dst, dstT);
- 
+
     // clean up
     gsl_matrix_free (srcT);
     gsl_matrix_free (dstT);
@@ -143,9 +148,9 @@ vis_undistort_mask (const perllcm_van_calib_t *calib)
 
     cvSet (I, cvScalarAll (255), NULL);
     vis_cvu_map_t *map = vis_undistort_map (calib);
-    cvRemap (I, Imask, map->mapu, map->mapv, 
+    cvRemap (I, Imask, map->mapu, map->mapv,
              CV_INTER_LINEAR + CV_WARP_FILL_OUTLIERS, cvScalarAll (0));
-    
+
     // This would be the preferred way to generate the mask if black fill-in was working in cvUndistort2
     //cvUndistort2 (Iall, Imask, calib->cv.K, calib->cv.distCoeffs);
 
@@ -158,7 +163,7 @@ vis_undistort_mask (const perllcm_van_calib_t *calib)
 #define VIS_DISTORTION_BACKWARD 1
 
 static vis_cvu_map_t *
-_vis_distortion_map (const perllcm_van_calib_t *calib, int direction) 
+_vis_distortion_map (const perllcm_van_calib_t *calib, int direction)
 {
     vis_cvu_map_t *map = malloc (sizeof (*map));
     map->mapu = cvCreateMat (calib->height, calib->width, CV_32FC1);
@@ -166,16 +171,19 @@ _vis_distortion_map (const perllcm_van_calib_t *calib, int direction)
 
     // fill with pixel coordinates
     gsl_matrix *uv = gsl_matrix_alloc (2, calib->height * calib->width);
-    for (size_t v = 0, k = 0; v < calib->height; v++) {
-        for (size_t u = 0; u < calib->width; u++, k++) {
+    for (size_t v = 0, k = 0; v < calib->height; v++)
+    {
+        for (size_t u = 0; u < calib->width; u++, k++)
+        {
             gsl_matrix_set (uv, 0, k, u);
             gsl_matrix_set (uv, 1, k, v);
         }
     }
-    
+
     // distort points
     vis_calib_const_view_gsl_t gsl = vis_calib_const_view_gsl (calib);
-    switch (calib->kc_model) {
+    switch (calib->kc_model)
+    {
     case PERLLCM_VAN_CALIB_T_KC_MODEL_RADTAN:
         if (direction == VIS_DISTORTION_FORWARD)
             vis_distort_pts_radial (uv, uv, &gsl.K.matrix, &gsl.kc.vector);
@@ -189,8 +197,10 @@ _vis_distortion_map (const perllcm_van_calib_t *calib, int direction)
     }
 
     // map to opencv
-    for (size_t v = 0, k = 0; v < calib->height; v++) {
-        for (size_t u = 0; u < calib->width; u++, k++) {
+    for (size_t v = 0, k = 0; v < calib->height; v++)
+    {
+        for (size_t u = 0; u < calib->width; u++, k++)
+        {
             cvmSet (map->mapu, v, u, gsl_matrix_get (uv, 0, k));
             cvmSet (map->mapv, v, u, gsl_matrix_get (uv, 1, k));
         }

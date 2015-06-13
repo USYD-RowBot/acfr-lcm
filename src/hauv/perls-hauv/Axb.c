@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Solution of linear systems involved in the Levenberg - Marquardt
 //  minimization algorithm
 //  Copyright (C) 2004  Manolis Lourakis (lourakis at ics forth gr)
@@ -18,7 +18,7 @@
 //
 /////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************** 
+/********************************************************************************
  * LAPACK-based implementations for various linear system solvers. The same core
  * code is used with appropriate #defines to derive single and double precision
  * solver versions, see also Axb_core.c

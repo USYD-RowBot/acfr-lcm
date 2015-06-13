@@ -5,7 +5,7 @@
 #include <lcm/lcm.h>
 
 #include <opencv/cv.h>
-#include <opencv/highgui.h> 
+#include <opencv/highgui.h>
 
 #include "perls-lcmtypes/bot_core_image_t.h"
 #include "perls-lcmtypes/bot_core_image_sync_t.h"
@@ -26,25 +26,28 @@ main (int argc, char *argv[])
     getopt_add_string  (gopt, 'f',  "filename", "image.tif", "image filename");
     getopt_add_string  (gopt, 'c',  "channel",  "PROSILICA_M", "LCM Channel");
     getopt_add_bool    (gopt, '\0', "no-sync", 0,  "Publish bot_core_image_t without bot_core_image_sync_t");
-                        
 
-    if (!getopt_parse (gopt, argc, argv, 1) || argc == 1) {
+
+    if (!getopt_parse (gopt, argc, argv, 1) || argc == 1)
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_SUCCESS);
     }
 
 
-    int64_t utime = getopt_get_long (gopt, "time");        
+    int64_t utime = getopt_get_long (gopt, "time");
     const char *filename = getopt_get_string (gopt, "filename");
     const char *channel_name = getopt_get_string (gopt, "channel");
 
     // lcm
     lcm_t *lcm = lcm_create (NULL);
-    if (!lcm) {
+    if (!lcm)
+    {
         printf ("lcm_create() failed!\n");
         return -1;
     }
@@ -53,18 +56,22 @@ main (int argc, char *argv[])
     IplImage* img = cvLoadImage (filename, -1);
 
     printf ("%"PRId64", %s, %s\n", utime, filename, channel_name);
-    if (img) {
+    if (img)
+    {
         // publish img
         bot_core_image_t *botimg = vis_iplimage_to_botimage_copy (img);
-        if (!botimg) {
+        if (!botimg)
+        {
             ERROR ("null bot\n");
             cvReleaseImage (&img);
             exit (-1);
         }
 
-        if (!getopt_get_bool (gopt, "no-sync")) {
+        if (!getopt_get_bool (gopt, "no-sync"))
+        {
             char *channel_sync = g_strconcat (channel_name, ".SYNC", NULL);
-            bot_core_image_sync_t botsync = {
+            bot_core_image_sync_t botsync =
+            {
                 .utime = utime,
             };
             bot_core_image_sync_t_publish (lcm, channel_sync, &botsync);
@@ -80,7 +87,8 @@ main (int argc, char *argv[])
         //cvWaitKey(0);
         cvReleaseImage (&img);
     }
-    else {
+    else
+    {
         ERROR ("Error reading image: %s", filename);
         cvReleaseImage (&img);
     }

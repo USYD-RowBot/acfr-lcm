@@ -20,22 +20,22 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
                         gsl_vector *x_bar, gsl_matrix *F, gsl_matrix *Q, void *user)
 {
     est_pmf_const_vel_body_user_t *usr = user;
-    
-    // read the index_t 
+
+    // read the index_t
     perllcm_est_navigator_index_t index_t;
     est_pmf_const_vel_body_get_index_t (&index_t);
 
     // get values from state vector
     //local-level Euler angles (rph)
-    double r = gsl_vector_get (state->mu, index_t.r); 
+    double r = gsl_vector_get (state->mu, index_t.r);
     double p = gsl_vector_get (state->mu, index_t.p);
     double h = gsl_vector_get (state->mu, index_t.h);
     //body frame velocities
-    double u = gsl_vector_get (state->mu, index_t.u); 
+    double u = gsl_vector_get (state->mu, index_t.u);
     double v = gsl_vector_get (state->mu, index_t.v);
     double w = gsl_vector_get (state->mu, index_t.w);
     //body frame angular rates
-    double a = gsl_vector_get (state->mu, index_t.a); 
+    double a = gsl_vector_get (state->mu, index_t.a);
     double b = gsl_vector_get (state->mu, index_t.b);
     double c = gsl_vector_get (state->mu, index_t.c);
 
@@ -68,11 +68,11 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
     // constant velocity process model
     gsl_vector *x_dot = gsl_vector_calloc (state_len);
     //Xdot(xyz_i) = xyz_dot;
-    gsl_vector_set (x_dot, index_t.x, gsl_vector_get (xyz_dot, 0)); 
+    gsl_vector_set (x_dot, index_t.x, gsl_vector_get (xyz_dot, 0));
     gsl_vector_set (x_dot, index_t.y, gsl_vector_get (xyz_dot, 1));
     gsl_vector_set (x_dot, index_t.z, gsl_vector_get (xyz_dot, 2));
     //Xdot(rph_i) = rph_dot;
-    gsl_vector_set (x_dot, index_t.r, gsl_vector_get (rph_dot, 0)); 
+    gsl_vector_set (x_dot, index_t.r, gsl_vector_get (rph_dot, 0));
     gsl_vector_set (x_dot, index_t.p, gsl_vector_get (rph_dot, 1));
     gsl_vector_set (x_dot, index_t.h, gsl_vector_get (rph_dot, 2));
     //Xdot(uvw_i) = [0,0,0]';
@@ -97,7 +97,7 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
     so3_drotx_gsl (DROTX, r);
     so3_droty_gsl (DROTY, p);
     so3_drotz_gsl (DROTZ, h);
-    
+
     gsl_matrix_set_zero (F); //F is 12x12
     gsl_matrix *Fv = gsl_matrix_calloc (state_len, state_len);
 
@@ -108,19 +108,19 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
 
     gsl_matrix *tmp_rot = gsl_matrix_calloc (3, 3);
     gsl_vector *tmp_vec = gsl_vector_calloc (3);
-    
+
     // Fv(xyz_i,rph_i(1)) = ROTZ'*ROTY'*DROTX'*uvw;  % deriv xyz_dot w.c.t. c
     gslu_blas_mTmTmT (tmp_rot, ROTZ, ROTY, DROTX, NULL);
     gslu_blas_mv (tmp_vec, tmp_rot, uvw);
     gsl_vector_view  F_wrt_r = gsl_matrix_subcolumn (Fv, index_t.r, index_t.x, 3);
     gsl_vector_memcpy (&F_wrt_r.vector, tmp_vec);
-    
+
     // Fv(xyz_i,rph_i(2)) = ROTZ'*DROTY'*ROTX'*uvw;  % deriv xyz_dot w.c.t. a
     gslu_blas_mTmTmT (tmp_rot, ROTZ, DROTY, ROTX, NULL);
     gslu_blas_mv (tmp_vec, tmp_rot, uvw);
     gsl_vector_view  F_wrt_p = gsl_matrix_subcolumn (Fv, index_t.p, index_t.x, 3);
     gsl_vector_memcpy (&F_wrt_p.vector, tmp_vec);
-    
+
     //  Fv(xyz_i,rph_i(3)) = DROTZ'*ROTY'*ROTX'*uvw;  % deriv xyz_dot w.c.t. h
     gslu_blas_mTmTmT (tmp_rot, DROTZ, ROTY, ROTX, NULL);
     gslu_blas_mv (tmp_vec, tmp_rot, uvw);
@@ -170,7 +170,7 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
     gsl_matrix_view B_lr_v = gsl_matrix_submatrix (B, state_len, state_len, state_len, state_len);
     gsl_matrix_memcpy (F, &B_lr_v.matrix);
     gsl_matrix_transpose (F);
-    
+
     //Q = F * B(1:state_len,state_len+1:end); % discrete process covariance
     gsl_matrix_view B_ur_v = gsl_matrix_submatrix (B, 0, state_len, state_len, state_len);
     gslu_blas_mm (Q, F, &B_ur_v.matrix);
@@ -192,26 +192,28 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
 
     // simpson rule numerical integration to find Bk
     // number of pts for simpson rule numerical int, must be even
-    #define SIMPSON_NUM_PTS 6
+#define SIMPSON_NUM_PTS 6
     double t = 0; //t = 0 ... dt
-    for (int i = 0; i <= SIMPSON_NUM_PTS ; i++) {
+    for (int i = 0; i <= SIMPSON_NUM_PTS ; i++)
+    {
         // tmp = tmp + expm(-Fv*t);
         gsl_matrix_memcpy (nFv, Fv);
         gsl_matrix_scale (nFv, -1);
         gsl_matrix_scale (nFv, t);
         gsl_linalg_exponential_ss (nFv, exp_nFv, .01);
-        
+
         // scale depending on where we are in the sequence
         // no scaling on first value
-        if (i > 0 && i < SIMPSON_NUM_PTS) {
+        if (i > 0 && i < SIMPSON_NUM_PTS)
+        {
             if (0 == (i % 2)) //even scale by 2
-                gsl_matrix_scale (exp_nFv, 2);    
+                gsl_matrix_scale (exp_nFv, 2);
             else // if odd scale by 4
                 gsl_matrix_scale (exp_nFv, 4);
         }
         gsl_matrix_add (NUMINT, exp_nFv);
-      
-        // t = t + (xn - x0)/n;  
+
+        // t = t + (xn - x0)/n;
         t = t + dt/SIMPSON_NUM_PTS;
     }
     // scale by (xn-x0)/(3*n)
@@ -220,7 +222,7 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
 
 //////// WORKS BUT IN ORDER TO BE ACCURATE ENOUGH (SMALL DT) VERY SLOW
 ////////  // actually might just have a bug
-////////  
+////////
 ////////    int num_steps = floor(dt/EULER_NUM_INT_DT);
 //////////printf("NUMSTEPS = %d \n", num_steps);
 ////////    double t = 0;
@@ -250,7 +252,7 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
     gsl_matrix_scale (nFv, dt);
     gsl_linalg_exponential_ss (nFv, exp_nFv, .01);
     gslu_blas_mm (Bk, exp_nFv, NUMINT);
-    
+
     //x_bar = F*mu + Bk*uk;
     //x_bar = F*mu;
     gslu_blas_mv (x_bar, F, state->mu);
@@ -302,15 +304,15 @@ est_pmf_const_vel_body (const est_estimator_t *state, const gsl_vector *u_ctl, c
 // -----------------------------------------------------------------------------
 void
 est_pmf_const_vel_body_get_index_t (perllcm_est_navigator_index_t *index)
-{    
+{
     //init all unused
     init_index_t (index);
-    
+
     index->proc_state_len = state_len; //length of state process model acts on
 
     //length of control vector
-    index->u_len = 0; //no control for this process model          
-    
+    index->u_len = 0; //no control for this process model
+
     // specify indicies for the used variables
     index->x = 0;  // Translation
     index->y = 1;
@@ -333,11 +335,11 @@ est_pmf_const_vel_body_get_index_t (perllcm_est_navigator_index_t *index)
 // allocate user_t
 est_pmf_const_vel_body_user_t *
 est_pmf_const_vel_body_alloc_user_t (void)
-{   
+{
     est_pmf_const_vel_body_user_t *user = calloc (1, sizeof (*user));
-   
-   user->Qv = gsl_matrix_calloc (state_len, state_len);  
-   return user; 
+
+    user->Qv = gsl_matrix_calloc (state_len, state_len);
+    return user;
 }
 
 // free user_t
@@ -345,7 +347,7 @@ void
 est_pmf_const_vel_body_free_user_t (void *user)
 {
     est_pmf_const_vel_body_user_t *usr = user;
-    
+
     gsl_matrix_free (usr->Qv);
     free (usr);
 }

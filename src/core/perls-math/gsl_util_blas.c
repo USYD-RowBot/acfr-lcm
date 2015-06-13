@@ -11,7 +11,7 @@ gslu_blas_mmm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gs
 {
     assert (D->size1 == A->size1 && D->size2 == C->size2 &&
             A->size2 == B->size1 && B->size2 == C->size1);
-    
+
     gsl_matrix *work = _work;
     if (work)
         assert (work->size1 == A->size1 && work->size2 == B->size2);
@@ -29,7 +29,7 @@ gslu_blas_mmm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gs
 int
 gslu_blas_mmmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size1 &&
             A->size2 == B->size1 && B->size2 == C->size2);
 
     gsl_matrix *work = _work;
@@ -50,7 +50,7 @@ gslu_blas_mmmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const g
 int
 gslu_blas_mmTm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size2 &&
             A->size2 == B->size2 && B->size1 == C->size1);
 
     gsl_matrix *work = _work;
@@ -70,7 +70,7 @@ gslu_blas_mmTm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const g
 int
 gslu_blas_mTmm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size2 &&
             A->size1 == B->size1 && B->size2 == C->size1);
 
     gsl_matrix *work = _work;
@@ -90,7 +90,7 @@ gslu_blas_mTmm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const g
 int
 gslu_blas_mmTmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size1 &&
             A->size2 == B->size2 && B->size1 == C->size2);
 
     gsl_matrix *work = _work;
@@ -110,7 +110,7 @@ gslu_blas_mmTmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const 
 int
 gslu_blas_mTmTm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size2 &&
             A->size1 == B->size2 && B->size1 == C->size1);
 
     gsl_matrix *work = _work;
@@ -130,7 +130,7 @@ gslu_blas_mTmTm (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const 
 int
 gslu_blas_mTmmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size1 &&
             A->size1 == B->size1 && B->size2 == C->size2);
 
     gsl_matrix *work = _work;
@@ -150,7 +150,7 @@ gslu_blas_mTmmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const 
 int
 gslu_blas_mTmTmT (gsl_matrix *D, const gsl_matrix *A, const gsl_matrix *B, const gsl_matrix *C, gsl_matrix *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size1 &&
             A->size1 == B->size2 && B->size1 == C->size2);
 
     gsl_matrix *work = _work;
@@ -181,7 +181,8 @@ gslu_blas_vvT (gsl_matrix *C, const gsl_vector *a, const gsl_vector *b)
     const size_t MB = b->size;
     //const size_t NB = 1;
 
-    if (M == MA && N == MB) {  /* [MxN] = [MAxNA][MBxNB]^T = [MAxNA][NBxMB] */
+    if (M == MA && N == MB)    /* [MxN] = [MAxNA][MBxNB]^T = [MAxNA][NBxMB] */
+    {
         cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasTrans, M, N, 1,
                      1.0, a->data, a->stride, b->data, b->stride, 0.0,
                      C->data, C->tda);
@@ -192,12 +193,12 @@ gslu_blas_vvT (gsl_matrix *C, const gsl_vector *a, const gsl_vector *b)
 }
 
 int
-gslu_blas_mmm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B, 
-                  const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+gslu_blas_mmm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
+                       const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
     assert (D->size1 == A->size1 && D->size2 == C->size2 &&
             A->size2 == B->size1 && B->size2 == C->size1);
-    
+
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
     gsl_complex beta = gsl_complex_rect (0.0, 0.0);
 
@@ -216,10 +217,10 @@ gslu_blas_mmm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const
 }
 
 int
-gslu_blas_mmmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B, 
-                   const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+gslu_blas_mmmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
+                        const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size1 &&
             A->size2 == B->size1 && B->size2 == C->size2);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -242,9 +243,9 @@ gslu_blas_mmmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, cons
 
 int
 gslu_blas_mmHm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                   const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                        const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size2 &&
             A->size2 == B->size2 && B->size1 == C->size1);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -266,9 +267,9 @@ gslu_blas_mmHm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, cons
 
 int
 gslu_blas_mHmm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                   const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                        const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size2 &&
             A->size1 == B->size1 && B->size2 == C->size1);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -290,9 +291,9 @@ gslu_blas_mHmm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, cons
 
 int
 gslu_blas_mmHmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                    const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                         const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size1 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size1 && D->size2 == C->size1 &&
             A->size2 == B->size2 && B->size1 == C->size2);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -315,9 +316,9 @@ gslu_blas_mmHmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, con
 
 int
 gslu_blas_mHmHm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                    const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                         const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size2 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size2 &&
             A->size1 == B->size2 && B->size1 == C->size1);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -340,9 +341,9 @@ gslu_blas_mHmHm_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, con
 
 int
 gslu_blas_mHmmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                    const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                         const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size1 &&
             A->size1 == B->size1 && B->size2 == C->size2);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);
@@ -364,9 +365,9 @@ gslu_blas_mHmmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, con
 
 int
 gslu_blas_mHmHmH_complex (gsl_matrix_complex *D, const gsl_matrix_complex *A, const gsl_matrix_complex *B,
-                     const gsl_matrix_complex *C, gsl_matrix_complex *_work)
+                          const gsl_matrix_complex *C, gsl_matrix_complex *_work)
 {
-    assert (D->size1 == A->size2 && D->size2 == C->size1 && 
+    assert (D->size1 == A->size2 && D->size2 == C->size1 &&
             A->size1 == B->size2 && B->size1 == C->size2);
 
     gsl_complex alpha = gsl_complex_rect (1.0, 0.0);

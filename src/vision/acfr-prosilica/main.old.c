@@ -102,7 +102,7 @@ struct lcminfo
 };
 
 typedef struct state state_t;
-struct state 
+struct state
 {
     BotParam     *cfg;
     getopt_t    *gopt;
@@ -130,11 +130,15 @@ attributes_thread (void *context)
     state_t *state = context;
 
     size_t i = 0;
-    while (!gblDone) {
-        if (i++%10 == 0) {
-            if (state->camera->alive) {
+    while (!gblDone)
+    {
+        if (i++%10 == 0)
+        {
+            if (state->camera->alive)
+            {
                 senlcm_prosilica_t *pvatt = prosilica_get_pvattributes (state->camera->handle);
-                if (pvatt != NULL) {
+                if (pvatt != NULL)
+                {
                     pvatt->self = 1;
                     pvatt->utime = timestamp_now ();
                     senlcm_prosilica_t_publish (state->lcminfo->lcm, state->lcminfo->channel_attributes, pvatt);
@@ -157,12 +161,12 @@ static void *
 write_thread (void *context)
 {
     write_data_t *wdata = context;
-    
+
     char filename[NAME_MAX];
     prosilica_strftime_filename (filename, sizeof filename, wdata->state->driver->strftime, wdata->utime, wdata->framecount);
 
     bool color_interpolate = wdata->state->driver->bayer ? false : true;
-    prosilica_save_tiff (wdata->Frame, wdata->state->camera->uid, wdata->state->driver->logdir, 
+    prosilica_save_tiff (wdata->Frame, wdata->state->camera->uid, wdata->state->driver->logdir,
                          filename, color_interpolate, wdata->state->driver->compression, wdata->state->driver->quality);
 
     prosilica_free_frames (wdata->Frame, 1);
@@ -184,8 +188,10 @@ FrameDoneCB (tPvFrame *Frame)
     static double fps = 0;
     const  double alpha = 0.25;
 
-    switch (Frame->Status) {
-    case ePvErrSuccess: {
+    switch (Frame->Status)
+    {
+    case ePvErrSuccess:
+    {
         int64_t Timestamp = ((int64_t)Frame->TimestampLo) + (((int64_t)Frame->TimestampHi)<<32);
         int64_t utime = timestamp_sync (state->tss, Timestamp, utime_raw);
 
@@ -207,7 +213,8 @@ FrameDoneCB (tPvFrame *Frame)
             prosilica_bitshift_frame (dupFrame);
 
         // publish image data over lcm?
-        if (state->driver->publish) {
+        if (state->driver->publish)
+        {
             bot_core_image_t image;
             botu_pvframe_to_image (&image, dupFrame, utime, 0);
 
@@ -216,21 +223,22 @@ FrameDoneCB (tPvFrame *Frame)
             PvAttrUint32Get (state->camera->handle, "ExposureValue", &ExpValue);
             //PvAttrUint32Get (state->camera->handle, "ExposureValue", (tPvUint32 *)&(state->driver->ExposureValue));
             state->driver->ExposureValue = (uint32_t) ExpValue;
-	    bot_core_image_metadata_t metadata;
-	    char *key = "ExposureValue";
-	    metadata.key =malloc(strlen(key));
-	    strcpy(metadata.key,key);
-	    metadata.n = 4;
-	    metadata.value =  (uint8_t *) &(state->driver->ExposureValue);
-	    image.nmetadata = 1; 
-	    image.metadata=malloc(sizeof(  bot_core_image_metadata_t)* image.nmetadata);
+            bot_core_image_metadata_t metadata;
+            char *key = "ExposureValue";
+            metadata.key =malloc(strlen(key));
+            strcpy(metadata.key,key);
+            metadata.n = 4;
+            metadata.value =  (uint8_t *) &(state->driver->ExposureValue);
+            image.nmetadata = 1;
+            image.metadata=malloc(sizeof(  bot_core_image_metadata_t)* image.nmetadata);
             memcpy(image.metadata,&metadata,sizeof(bot_core_image_metadata_t));
 
             bot_core_image_t_publish (state->lcminfo->lcm, state->lcminfo->channel_data, &image);
         }
 
         // write to disk?
-        if (state->driver->logtodisk) {
+        if (state->driver->logtodisk)
+        {
             write_data_t *wdata = malloc (sizeof (*wdata));
             wdata->Frame = dupFrame;
             wdata->state = state;
@@ -249,10 +257,12 @@ FrameDoneCB (tPvFrame *Frame)
 
         break;
     }
-    case ePvErrCancelled: {
+    case ePvErrCancelled:
+    {
         break;
     }
-    case ePvErrUnplugged: {
+    case ePvErrUnplugged:
+    {
         break;
     }
     default:
@@ -269,18 +279,21 @@ PvLinkAdd (state_t *state)
     // fail-safe open the camera
     int attempts = 0;
     bool alive = false;
-    while (!alive) {
+    while (!alive)
+    {
         timeutil_sleep (1);
 
-        if (prosilica_camera_online (state->camera->uid)) {
+        if (prosilica_camera_online (state->camera->uid))
+        {
             if (state->driver->monitor)
                 err = PvCameraOpen (state->camera->uid, ePvAccessMonitor, &state->camera->handle);
             else
                 err = PvCameraOpen (state->camera->uid, ePvAccessMaster, &state->camera->handle);
-            
+
             if (err == ePvErrSuccess)
                 alive = true;
-            else {
+            else
+            {
                 if (++attempts > 1 )
                     PROSILICA_ERROR (err, "PvCameraOpen()");
                 timeutil_sleep (5);
@@ -297,7 +310,8 @@ PvLinkAdd (state_t *state)
 
 
     // configure camera settings
-    if (!state->driver->monitor) {
+    if (!state->driver->monitor)
+    {
         err = PvCaptureAdjustPacketSize (state->camera->handle, PROSILICA_MAX_PACKET_SIZE);
         if (err != ePvErrSuccess)
             PROSILICA_ERROR (err, "PvCaputerAdjustPacketSize()");
@@ -309,7 +323,8 @@ PvLinkAdd (state_t *state)
             PROSILICA_ERROR (err, "PvAttrUint32Set()");
 
         // load any custom config settings
-        if (state->driver->attfile) {
+        if (state->driver->attfile)
+        {
             if (prosilica_load_attfile (state->camera->handle, state->driver->attfile))
                 PROSILICA_ERROR (NULL, "prosilica_load_attfile() failed to load %s", state->driver->attfile);
             else
@@ -342,10 +357,11 @@ PvLinkAdd (state_t *state)
             PvAttrUint32Set (state->camera->handle, "PacketSize", state->driver->PacketSize);
         if (getopt_has_flag (state->gopt, "StreamBytesPerSecond"))
             PvAttrUint32Set (state->camera->handle, "StreamBytesPerSecond", state->driver->StreamBytesPerSecond);
-            
+
 
         // auto StreamBytesPerSecond
-        if (getopt_has_flag (state->gopt, "multicam")) {
+        if (getopt_has_flag (state->gopt, "multicam"))
+        {
             long ret = prosilica_multicam (state->camera->handle, state->driver->multicam);
             if (ret < 0)
                 PROSILICA_ERROR (NULL, "prosilica_multicam: unable to auto set StreamBytesPerSecond");
@@ -359,11 +375,13 @@ PvLinkAdd (state_t *state)
     // alloc frame buffer and queue frames
     state->camera->nFrames = state->driver->queue;
     state->camera->Frames = prosilica_alloc_frames (state->camera->handle, state->camera->nFrames);
-    if (state->camera->Frames == NULL) {
+    if (state->camera->Frames == NULL)
+    {
         PROSILICA_ERROR (-1, "unable to alloc frame buffer memory - abort");
         abort ();
     }
-    for (int i=0; i<state->camera->nFrames; i++) {
+    for (int i=0; i<state->camera->nFrames; i++)
+    {
         state->camera->Frames[i].Context[0] = state;
         PvCaptureQueueFrame (state->camera->handle, state->camera->Frames+i, FrameDoneCB);
     }
@@ -377,7 +395,7 @@ PvLinkAdd (state_t *state)
         sprintf (type, "Monitor");
     else
         sprintf (type, "Master");
-    printf ("camera %lu opened and ready: %s, %s, TotalBytesPerFrame=%lu\n", 
+    printf ("camera %lu opened and ready: %s, %s, TotalBytesPerFrame=%lu\n",
             state->camera->uid, type, PixelFormat, TotalBytesPerFrame);
 
     // bandwidth
@@ -429,13 +447,16 @@ LinkEventCB (void* context, tPvInterface interface, tPvLinkEvent event, unsigned
     if (uid != state->camera->uid)
         return;
 
-    switch(event) {
-    case ePvLinkAdd: {
+    switch(event)
+    {
+    case ePvLinkAdd:
+    {
         printf ("camera %lu plugged\n", uid);
         PvLinkAdd (state);
         break;
     }
-    case ePvLinkRemove: {
+    case ePvLinkRemove:
+    {
         printf ("camera %lu unplugged\n", uid);
         PvLinkRemove (state);
         printf ("camera %ld waiting\n", state->camera->uid);
@@ -447,7 +468,7 @@ LinkEventCB (void* context, tPvInterface interface, tPvLinkEvent event, unsigned
 }
 
 static void
-pvattributes_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
+pvattributes_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                        const senlcm_prosilica_t *pvatt, void *user)
 {
     state_t *state = (state_t*) user;
@@ -506,7 +527,7 @@ parse_args (state_t *state, int argc, char *argv[])
 {
     char key[256];
 
-   /* Add std command-line options */
+    /* Add std command-line options */
     getopt_add_description (state->gopt, "Prosilica Gig-E camera driver.");
     getopt_add_help   (state->gopt, NULL);
     getopt_add_bool   (state->gopt, 'D',  "daemon",     0,                          "Run as daemon");
@@ -548,11 +569,13 @@ parse_args (state_t *state, int argc, char *argv[])
     getopt_add_bool   (state->gopt, '\0', "nopublish",   0,                         "disable LCM image_t data frame publishing");
     getopt_add_string (state->gopt, '\0', "url",         "",                        "LCM publish url (default is NULL)");
 
-    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0) {
+    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0)
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (state->gopt, "help")) {
+    else if (getopt_get_bool (state->gopt, "help"))
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -572,7 +595,8 @@ parse_args (state_t *state, int argc, char *argv[])
         state->camera->uid = getopt_get_int (state->gopt, "uid");
     else if (bot_param_get_int (state->cfg, key, &uid_int) == 0)
         state->camera->uid = uid_int;
-    else {
+    else
+    {
         ERROR ("unspecified camera uid");
         exit (EXIT_FAILURE);
     }
@@ -590,11 +614,12 @@ parse_args (state_t *state, int argc, char *argv[])
         state->driver->attfile = strdup (getopt_get_string (state->gopt, "attfile"));
     else if (bot_param_get_str (state->cfg, key, &state->driver->attfile) != 0)
         state->driver->attfile = strdup (getopt_get_string (state->gopt, "attfile"));
-    if (strlen (state->driver->attfile) == 0) {
+    if (strlen (state->driver->attfile) == 0)
+    {
         free (state->driver->attfile);
         state->driver->attfile = NULL;
     }
-    
+
     // queue
     sprintf (key, "%s.queue", state->rootkey);
     if (getopt_has_flag (state->gopt, "queue"))
@@ -612,14 +637,16 @@ parse_args (state_t *state, int argc, char *argv[])
     /* PROSILICA OPTS */
 
     // ConfigFileIndex
-    if (getopt_has_flag (state->gopt, "ConfigFileIndex")) {
+    if (getopt_has_flag (state->gopt, "ConfigFileIndex"))
+    {
         int index = 0;
         const char *index_str = getopt_get_string (state->gopt, "ConfigFileIndex");
         if (!strcasecmp (index_str, "Factory"))
             state->driver->ConfigFileIndex = 0;
         else if (isdigit (index_str[0]) && (index=atoi (index_str)) && 0<index && index <= 5)
             state->driver->ConfigFileIndex = index;
-        else {
+        else
+        {
             PROSILICA_ERROR (NULL, "unrecognized argument to --ConfigFileIndex");
             exit (EXIT_FAILURE);
         }
@@ -630,7 +657,8 @@ parse_args (state_t *state, int argc, char *argv[])
         state->driver->ExposureValue = getopt_get_int (state->gopt, "ExposureValue");
 
     // ExposureMode
-    if (getopt_has_flag (state->gopt, "ExposureMode")) {
+    if (getopt_has_flag (state->gopt, "ExposureMode"))
+    {
         const char *expmode = getopt_get_string (state->gopt, "ExposureMode");
         if (!strcasecmp (expmode, "Manual"))
             state->driver->ExposureMode = strdup ("Manual");
@@ -638,7 +666,8 @@ parse_args (state_t *state, int argc, char *argv[])
             state->driver->ExposureMode = strdup ("Auto");
         else if (!strcasecmp (expmode, "AutoOnce"))
             state->driver->ExposureMode = strdup ("AutoOnce");
-        else {
+        else
+        {
             PROSILICA_ERROR (NULL, "unrecognized argument to --ExposureMode");
             exit (EXIT_FAILURE);
         }
@@ -649,7 +678,8 @@ parse_args (state_t *state, int argc, char *argv[])
         state->driver->FrameRate = getopt_get_double (state->gopt, "FrameRate");
 
     // FrameStartTriggerMode
-    if (getopt_has_flag (state->gopt, "FrameStartTriggerMode")) {
+    if (getopt_has_flag (state->gopt, "FrameStartTriggerMode"))
+    {
         const char *trigger = getopt_get_string (state->gopt, "FrameStartTriggerMode");
         if (!strcasecmp (trigger, "Freerun"))
             state->driver->FrameStartTriggerMode = strdup ("Freerun");
@@ -659,7 +689,8 @@ parse_args (state_t *state, int argc, char *argv[])
             state->driver->FrameStartTriggerMode = strdup ("SyncIn2");
         else if (!strcasecmp (trigger, "FixedRate"))
             state->driver->FrameStartTriggerMode = strdup ("FixedRate");
-        else {
+        else
+        {
             PROSILICA_ERROR (NULL, "unrecognized argument to --FrameStartTriggerMode");
             exit (EXIT_FAILURE);
         }
@@ -677,7 +708,8 @@ parse_args (state_t *state, int argc, char *argv[])
         state->driver->GainValue = getopt_get_int (state->gopt, "GainValue");
 
     // GainMode
-    if (getopt_has_flag (state->gopt, "GainMode")) {
+    if (getopt_has_flag (state->gopt, "GainMode"))
+    {
         const char *gainmode = getopt_get_string (state->gopt, "GainMode");
         if (!strcasecmp (gainmode, "Manual"))
             state->driver->GainMode = strdup ("Manual");
@@ -685,14 +717,16 @@ parse_args (state_t *state, int argc, char *argv[])
             state->driver->GainMode = strdup ("Auto");
         else if (!strcasecmp (gainmode, "AutoOnce"))
             state->driver->GainMode = strdup ("AutoOnce");
-        else {
+        else
+        {
             PROSILICA_ERROR (NULL, "unrecognized argument to --GainMode");
             exit (EXIT_FAILURE);
         }
     }
 
     // PixelFormat
-    if (getopt_has_flag (state->gopt, "PixelFormat")) {
+    if (getopt_has_flag (state->gopt, "PixelFormat"))
+    {
         const char *pixelformat = getopt_get_string (state->gopt, "PixelFormat");
         if (!strcasecmp (pixelformat, "Mono8"))
             state->driver->PixelFormat = strdup ("Mono8");
@@ -718,7 +752,8 @@ parse_args (state_t *state, int argc, char *argv[])
             state->driver->PixelFormat = strdup ("Rgba32");
         else if (!strcasecmp (pixelformat, "Bgra32"))
             state->driver->PixelFormat = strdup ("Bgra32");
-        else {
+        else
+        {
             PROSILICA_ERROR (NULL, "unrecognized argument to --PixelFormat");
             exit (EXIT_FAILURE);
         }
@@ -738,7 +773,8 @@ parse_args (state_t *state, int argc, char *argv[])
     char **subkeys = bot_param_get_subkeys (state->cfg, key);
     state->driver->pvatt.n_attributes = nkeys;
     state->driver->pvatt.PvAttributes = (senlcm_prosilica_attribute_t *) calloc (nkeys, sizeof (senlcm_prosilica_attribute_t));
-    for (int i=0; i<nkeys; i++) {
+    for (int i=0; i<nkeys; i++)
+    {
         char *subkey = subkeys[i];
         state->driver->pvatt.PvAttributes[i].label = subkey;
         char subkeyfull[256];
@@ -763,7 +799,7 @@ parse_args (state_t *state, int argc, char *argv[])
     else if (bot_param_get_str (state->cfg, key, &state->driver->logdir) != 0)
         state->driver->logdir = strdup (getopt_get_string (state->gopt, "logdir")); /* default */
 
-    
+
     // compression
     sprintf (key, "%s.compression", state->rootkey);
     char *compression;
@@ -775,9 +811,10 @@ parse_args (state_t *state, int argc, char *argv[])
     state->driver->quality = 95;
     if (!strcasecmp (compression, "none"))
         state->driver->compression = COMPRESSION_NONE;
-    else if (!strcasecmp (compression, "jpeg")) 
+    else if (!strcasecmp (compression, "jpeg"))
         state->driver->compression = COMPRESSION_JPEG;
-    else if (!strncasecmp (compression, "jpeg:",5)) {
+    else if (!strncasecmp (compression, "jpeg:",5))
+    {
         state->driver->compression = COMPRESSION_JPEG;
         unsigned int q;
         if (1==sscanf (compression, "jpeg:%u", &q))
@@ -791,11 +828,12 @@ parse_args (state_t *state, int argc, char *argv[])
         state->driver->compression = COMPRESSION_LZW;
     else if (!strcasecmp (compression, "deflate"))
         state->driver->compression = COMPRESSION_DEFLATE;
-    else {
+    else
+    {
         PROSILICA_ERROR (NULL, "unrecognized argument to --compression");
         exit (EXIT_FAILURE);
     }
-    
+
 
     // strftime
     sprintf (key, "%s.strftime", state->rootkey);
@@ -846,7 +884,8 @@ parse_args (state_t *state, int argc, char *argv[])
     else if (bot_param_get_str (state->cfg, key, &state->driver->url) != 0)
         state->driver->url = strdup (getopt_get_string (state->gopt, "url")); /* default */
 
-    if (strlen (state->driver->url) == 0) {
+    if (strlen (state->driver->url) == 0)
+    {
         free (state->driver->url);
         state->driver->url = NULL;
     }
@@ -862,23 +901,26 @@ int main (int argc, char *argv[])
     parse_args (state, argc, argv);
 
     // make sure logging directory exists
-    if (state->driver->logtodisk && unix_mkpath (state->driver->logdir, 0775) < 0) {
+    if (state->driver->logtodisk && unix_mkpath (state->driver->logdir, 0775) < 0)
+    {
         PERROR ("unix_mkpath()");
         exit (EXIT_FAILURE);
     }
 
-    if (getopt_get_bool (state->gopt, "daemon")) {
+    if (getopt_get_bool (state->gopt, "daemon"))
+    {
         daemon_fork ();
         close (STDERR_FILENO);
     }
 
     // bring up the API
     tPvErr err = PvInitialize ();
-    if (err != ePvErrSuccess) {
+    if (err != ePvErrSuccess)
+    {
         PROSILICA_ERROR (err, "PvInitialize()");
         exit (EXIT_FAILURE);
     }
-    
+
     printf ("camera %ld waiting\n", state->camera->uid);
 
     // register a callback for when cameras enter/leave the bus
@@ -888,15 +930,17 @@ int main (int argc, char *argv[])
 
     // fire up lcm
     state->lcminfo->lcm = lcm_create (NULL);
-    if (!state->lcminfo->lcm) {
+    if (!state->lcminfo->lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
     senlcm_prosilica_t_subscription_t *sub = senlcm_prosilica_t_subscribe (state->lcminfo->lcm, state->lcminfo->channel_attributes,
-                                                                           &pvattributes_callback, state);
+            &pvattributes_callback, state);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -919,7 +963,7 @@ int main (int argc, char *argv[])
 
     // send message to turn off StrobeControlledDuration (otherwise flash keeps going)
     PvAttrEnumSet (state->camera->handle, "Strobe1ControlledDuration", "Off");
-    
+
     // free resources
     senlcm_prosilica_t_unsubscribe (state->lcminfo->lcm, sub);
     PvLinkRemove (state);

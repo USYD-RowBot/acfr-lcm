@@ -38,8 +38,9 @@
 
 // pointers to additional data, used for computed image projections and their jacobians
 typedef struct userdata userdata_t;
-struct userdata {
-    double *rot0params; /* initial rotation parameters, combined with a local rotation parameterization 
+struct userdata
+{
+    double *rot0params; /* initial rotation parameters, combined with a local rotation parameterization
                          * only used in RT case when it uses quaternion
                          */
     double *intrcalib;  /* the 5 intrinsic calibration parameters [fu, u0, v0, ar, skew]
@@ -48,7 +49,7 @@ struct userdata {
                          * the 9 elements in K matrix (3x3) for RAE and H
                          */
     double *distCoeffs; /* the 5 distortion coefficients [k1 k2 p1 p2 k3]
-                         * consisting of 3 radial distortion coefficients 
+                         * consisting of 3 radial distortion coefficients
                          * and 2 tangential coefficients
                          */
     int cnp, pnp, mnp;  /* cnp = number of unknowns in camera pose
@@ -68,7 +69,7 @@ struct userdata {
 
 /******************************************************************
  *                 Twoview bundle adjustment RAE
- *  
+ *
  *
  ******************************************************************/
 
@@ -77,10 +78,10 @@ struct userdata {
 // -------------------------------------------------------------- //
 static void
 img_proj_Rae (double *p,
-              struct sba_crsm *idxij, 
-              int *rcidxs, 
-              int *rcsubs, 
-              double *hx, 
+              struct sba_crsm *idxij,
+              int *rcidxs,
+              int *rcsubs,
+              double *hx,
               void *adata)
 {
     const userdata_t *udata = adata;
@@ -114,11 +115,13 @@ img_proj_Rae (double *p,
     const double rph[3] = {(pa+cnp)[2], (pa+cnp)[3], (pa+cnp)[4]};
     GSLU_MATRIX_VIEW (R2_view, 3, 3);
 
-    if (udata->useCmath) {
+    if (udata->useCmath)
+    {
         dm_dm2trans_cmath (b_ext, t2_view.data, NULL);
         so3_rotxyz_cmath (R2_view.data, rph);
     }
-    else {
+    else
+    {
         dm_dm2trans (b_ext, t2_view.data, NULL);
         so3_rotxyz (R2_view.data, rph);
     }
@@ -131,11 +134,13 @@ img_proj_Rae (double *p,
     gsl_matrix *uv1p = gsl_matrix_alloc (2, npts);
     gsl_matrix *uv2p = gsl_matrix_alloc (2, npts);
 
-    if (udata->distCoeffs) {
+    if (udata->distCoeffs)
+    {
         vis_camera_project_nonlin (&P1_view.matrix, &K_view.matrix, &distCoeffs_view.vector, X1, uv1p);
         vis_camera_project_nonlin (&P2_view.matrix, &K_view.matrix, &distCoeffs_view.vector, X1, uv2p);
     }
-    else {
+    else
+    {
         vis_camera_project (&P1_view.matrix, X1, uv1p);
         vis_camera_project (&P2_view.matrix, X1, uv2p);
     }
@@ -157,19 +162,21 @@ void
 vis_sba_img_proj_Rae (const gsl_vector *params,
                       const gsl_matrix *K,
                       const gsl_vector *distCoeffs,
-                      int npts, 
+                      int npts,
                       int ncam,
                       int cnp,
                       int pnp,
                       int mnp,
                       gsl_vector *predicted_measurements)
 {
-    struct sba_crsm idxij = {
+    struct sba_crsm idxij =
+    {
         .nr = npts,
         .nc = ncam,
     };
 
-    userdata_t udata = {
+    userdata_t udata =
+    {
         .cnp = cnp,
         .pnp = pnp,
         .mnp = mnp,
@@ -178,7 +185,7 @@ vis_sba_img_proj_Rae (const gsl_vector *params,
         .rot0params = NULL,
         .useCmath = 1,
     };
-    
+
     img_proj_Rae (params->data, &idxij, NULL, NULL, predicted_measurements->data, &udata);
 }
 
@@ -212,7 +219,8 @@ vis_sba_img_proj_Rae_jacob (const gsl_vector *params,
     gsl_vector_memcpy (pPerturb, params);
 
     //for each parameter [a1 e1 r1 p1 h1 a2 e2 r2 p2 h2 x1 y1 z1 ...]
-    for (i=0; i<numJacobCols; i++) {
+    for (i=0; i<numJacobCols; i++)
+    {
 
         /* Use Hartley/Zisserman recommendation for delta size */
         double pi = gsl_vector_get (params, i);
@@ -269,7 +277,8 @@ vis_sba_img_proj_H_jacob (const gsl_vector *params,
     gsl_vector_memcpy (pPerturb, params);
 
     //for each parameter [a1 e1 r1 p1 h1 a2 e2 r2 p2 h2 x1 y1 z1 ...]
-    for (i=0; i<numJacobCols; i++) {
+    for (i=0; i<numJacobCols; i++)
+    {
 
         /* Use Hartley/Zisserman recommendation for delta size */
         double pi = gsl_vector_get (params, i);
@@ -335,7 +344,8 @@ readfromgsl_Rae (const int cnp,
 
 
     double t[3], rph[3], b[3];
-    for (int i=0; i<3; i++) { 
+    for (int i=0; i<3; i++)
+    {
         t[i] = gsl_vector_get (X_c1c2, i);        // t
         rph[i] = gsl_vector_get (X_c1c2, i+3);    // rph
     }
@@ -350,7 +360,8 @@ readfromgsl_Rae (const int cnp,
 
     // ------------------- vmask ------------------
     *vmask = malloc (npts * ncam * sizeof(char));
-    if (*vmask==NULL) {
+    if (*vmask==NULL)
+    {
         ERROR ("memory allocation for 'vmask' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
@@ -358,7 +369,8 @@ readfromgsl_Rae (const int cnp,
 
     // ------------------ motstruct ------------------
     *motstruct = malloc ( (ncam*cnp + npts*pnp)*sizeof(double) );
-    if (*motstruct==NULL) {
+    if (*motstruct==NULL)
+    {
         ERROR ("memory allocation for 'motstruct' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
@@ -366,13 +378,17 @@ readfromgsl_Rae (const int cnp,
     // cam1
     for (int i=0; i<cnp; i++)
         (*motstruct)[i] = 0.0;
-    
+
     // cam2
-    (*motstruct)[cnp] = b[0]; (*motstruct)[cnp+1] = b[1];
-    (*motstruct)[cnp+2] = rph[0]; (*motstruct)[cnp+3] = rph[1]; (*motstruct)[cnp+4] = rph[2];
+    (*motstruct)[cnp] = b[0];
+    (*motstruct)[cnp+1] = b[1];
+    (*motstruct)[cnp+2] = rph[0];
+    (*motstruct)[cnp+3] = rph[1];
+    (*motstruct)[cnp+4] = rph[2];
 
     // X1
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         (*motstruct)[ncam*cnp + 3*i]   = gsl_matrix_get (X1, 0, i);
         (*motstruct)[ncam*cnp + 3*i+1] = gsl_matrix_get (X1, 1, i);
         (*motstruct)[ncam*cnp + 3*i+2] = gsl_matrix_get (X1, 2, i);
@@ -381,11 +397,13 @@ readfromgsl_Rae (const int cnp,
 
     // ------------------ imgpts ------------------
     *imgpts = malloc (2*npts * mnp * sizeof(double));
-    if (*imgpts==NULL) {
+    if (*imgpts==NULL)
+    {
         ERROR ("memory allocation for 'initrot' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         (*imgpts)[4*i]   = gsl_matrix_get (uv1, 0, i);
         (*imgpts)[4*i+1] = gsl_matrix_get (uv1, 1, i);
         (*imgpts)[4*i+2] = gsl_matrix_get (uv2, 0, i);
@@ -395,7 +413,8 @@ readfromgsl_Rae (const int cnp,
     // measurements covariance matrices
     //*covimgpts = NULL;
     *covimgpts = malloc (*numprojs * mnp * mnp * sizeof (double));
-    for (int i=0; i<*numprojs; i++) {
+    for (int i=0; i<*numprojs; i++)
+    {
         (*covimgpts)[4*i] = 5.0*5.0;
         (*covimgpts)[4*i+1] = 0.0;
         (*covimgpts)[4*i+2] = 0.0;
@@ -412,10 +431,10 @@ readfromgsl_Rae (const int cnp,
 // [main function - twoview bundle adjustment RAE with nonlinear projection]
 // ------------------------------------------------------------------------ //
 int
-vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of relative pose, 6 dof [x y z r p h]    
-                       const gsl_matrix *K,          // calibration matrix [3 x 3] 
+vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of relative pose, 6 dof [x y z r p h]
+                       const gsl_matrix *K,          // calibration matrix [3 x 3]
                        const gsl_vector *distCoeffs, // distortion coefficient [5 x 1] (k1, k2, p1, p2, k3)
-                       const gsl_matrix *uv1,        // uv image points in image 1 [2 x N] 
+                       const gsl_matrix *uv1,        // uv image points in image 1 [2 x N]
                        const gsl_matrix *uv2,
                        const gsl_matrix *X1,         // intial guess of 3D structure points [3 x N]
                        gsl_vector *p21,              // output 1 = optimized 5 dof pose [azim, elev, r, p, h]
@@ -431,7 +450,7 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
 
     // X_c2c1 = [xyzrph]
     const int cnp=5;          // 2 trans params + 3 rot params
-    const int pnp=3;          // euclidean 3D points 
+    const int pnp=3;          // euclidean 3D points
     const int mnp=2;          // image points are 2D
     const int constraint_nth_cam =1;     // fix the first camera
 
@@ -440,13 +459,14 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
     int nframes, numpts3D, numprojs;
     char *vmask;
     double *motstruct, *imgpts, *covimgpts, *invcovret;
-    int ret = readfromgsl_Rae (cnp, pnp, mnp, 
-                               &nframes, &numpts3D, &numprojs, 
+    int ret = readfromgsl_Rae (cnp, pnp, mnp,
+                               &nframes, &numpts3D, &numprojs,
                                &motstruct, &imgpts, &covimgpts, &vmask, &invcovret,
                                X_c2c1, uv1, uv2, X1, n_inliers);
 
     /* If provided the scale, we can estimate the feature covariance */
-    if (featscalei_f && featscalej_f) {
+    if (featscalei_f && featscalej_f)
+    {
         free (covimgpts);
         covimgpts = vis_feature_2v_covimgpts_alloc (featscalei_f, featscalej_f);
     }
@@ -456,7 +476,8 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
 
     // set up userdata (need in cost function)
     // -------------------------------------------------------------- //
-    userdata_t userdata = {
+    userdata_t userdata =
+    {
         .cnp = cnp,
         .pnp = pnp,
         .mnp = mnp,
@@ -468,7 +489,8 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
     // SBA option
     // -------------------------------------------------------------- //
     int analyticjac = 0;                        // analytic or approximate jacobian?
-    double opts[SBA_OPTSSZ] = {
+    double opts[SBA_OPTSSZ] =
+    {
         [0]=SBA_INIT_MU,
         [1]=SBA_STOP_THRESH,
         [2]=SBA_STOP_THRESH,
@@ -488,58 +510,65 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
 
     double info[SBA_INFOSZ];
     int64_t start_time = timestamp_now ();
-    ret = sba_motstr_levmar_x (numpts3D, 0, 2, constraint_nth_cam, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp, 
+    ret = sba_motstr_levmar_x (numpts3D, 0, 2, constraint_nth_cam, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
                                img_proj_Rae, NULL, &userdata, MAXITER2, verbose, opts, info, invcovret, f_robust);
     int64_t end_time = timestamp_now ();
 
     //if sba is successful, copy the resulting motstruct to params vector
-    if (ret > 0) {
-        if (params) {
+    if (ret > 0)
+    {
+        if (params)
+        {
             gsl_vector_view paramView = gsl_vector_view_array (motstruct, 2*cnp + pnp*numpts3D);
             gsl_vector_memcpy(params, &paramView.vector);
-		}
+        }
     }
 
     //unlock mutex
     if (sba_mutex) g_mutex_unlock (sba_mutex);
 
-    if (verbose) { // print results
+    if (verbose)   // print results
+    {
         if (ret==SBA_ERROR)
             ERROR ("SBA_ERROR occured\n");
-        else {
+        else
+        {
             const int nvars=nframes*cnp + numpts3D*pnp;
             fflush (stdout);
-            fprintf (stdout, "SBA using %d 3D pts, %d frames and %d image projections, %d variables\n", 
+            fprintf (stdout, "SBA using %d 3D pts, %d frames and %d image projections, %d variables\n",
                      numpts3D, nframes, numprojs, nvars);
-            fprintf (stdout, "\n %s Jacobian, %s covariances", 
+            fprintf (stdout, "\n %s Jacobian, %s covariances",
                      analyticjac? "analytic" : "approximate", covimgpts? "with" : "without");
-            fputs ("\n\n", stdout); 
-            fprintf (stdout, "SBA returned %d in %g iter, reason %g, error %g [initial %g], %d/%d func/fjac evals, %d lin. systems\n", 
+            fputs ("\n\n", stdout);
+            fprintf (stdout, "SBA returned %d in %g iter, reason %g, error %g [initial %g], %d/%d func/fjac evals, %d lin. systems\n",
                      ret, info[5], info[6], info[1]/numprojs, info[0]/numprojs, (int)info[7], (int)info[8], (int)info[9]);
             fprintf (stdout, "Elapsed time: %"PRId64" usecs\n", end_time - start_time);
             fflush (stdout);
         }
     }
 
-    if (ret > 0) {
+    if (ret > 0)
+    {
         gsl_matrix_view S21_tmp = gsl_matrix_view_array (invcovret, cnp, cnp);
 
         // turning off default gsl error handler (=abort) to check pos def
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
 
         // cholesky failes for non pos def matrix
-        if (gsl_linalg_cholesky_decomp (&S21_tmp.matrix) == GSL_EDOM) {
+        if (gsl_linalg_cholesky_decomp (&S21_tmp.matrix) == GSL_EDOM)
+        {
             ret = SBA_ERROR;
         }
-        else {
+        else
+        {
             gsl_linalg_cholesky_invert (&S21_tmp.matrix);
             gsl_matrix_memcpy (S21, &S21_tmp.matrix);
 
             // store
-            gsl_vector_set (p21, 0, motstruct[cnp+0]); 
+            gsl_vector_set (p21, 0, motstruct[cnp+0]);
             gsl_vector_set (p21, 1, motstruct[cnp+1]);
-            gsl_vector_set (p21, 2, motstruct[cnp+2]); 
-            gsl_vector_set (p21, 3, motstruct[cnp+3]); 
+            gsl_vector_set (p21, 2, motstruct[cnp+2]);
+            gsl_vector_set (p21, 3, motstruct[cnp+3]);
             gsl_vector_set (p21, 4, motstruct[cnp+4]);
 
             /*// cpr -- DEBUG
@@ -552,12 +581,12 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
             FILE *fp21 = fopen ("p21.txt", "wb");  gsl_vector_fprintf (fp21, p21,"%g");  fclose(fp21);*/
 
         }
-    
+
         // restore back to default
         gsl_set_error_handler (default_handler);
     }
 
-  ON_ERROR:
+ON_ERROR:
     // clean up
     if (covimgpts) free (covimgpts);
     if (invcovret) free (invcovret);
@@ -572,10 +601,10 @@ vis_sba_2v_rae_nonlin (const gsl_vector *X_c2c1,     // initial estimate of rela
 // [main function - twoview bundle adjustment RAE]
 // -------------------------------------------------------------- //
 int
-vis_sba_2v_rae (const gsl_vector *X_c2c1,     // initial estimate of relative pose, 6 dof [x y z r p h]    
-                const gsl_matrix *K,          // calibration matrix [3 x 3] 
-                const gsl_matrix *uv1,        // uv image points in image 1 [2 x N] 
-                const gsl_matrix *uv2, 
+vis_sba_2v_rae (const gsl_vector *X_c2c1,     // initial estimate of relative pose, 6 dof [x y z r p h]
+                const gsl_matrix *K,          // calibration matrix [3 x 3]
+                const gsl_matrix *uv1,        // uv image points in image 1 [2 x N]
+                const gsl_matrix *uv2,
                 const gsl_matrix *X1,         // intial guess of 3D structure points [3 x N]
                 gsl_vector *p21,              // output 1 = optimized 5 dof pose [azim, elev, r, p, h]
                 gsl_matrix *S21,              // output 2 = related covariance matrix [5 x 5]
@@ -593,7 +622,7 @@ vis_sba_2v_rae (const gsl_vector *X_c2c1,     // initial estimate of relative po
 
 /******************************************************************
  *               Twoview bundle adjustment Homography
- *  
+ *
  *
  ******************************************************************/
 
@@ -602,10 +631,10 @@ vis_sba_2v_rae (const gsl_vector *X_c2c1,     // initial estimate of relative po
 // -------------------------------------------------------------- //
 static void
 img_proj_H (double *p,
-            struct sba_crsm *idxij, 
-            int *rcidxs, 
-            int *rcsubs, 
-            double *hx, 
+            struct sba_crsm *idxij,
+            int *rcidxs,
+            int *rcsubs,
+            double *hx,
             void *adata)
 {
     const userdata_t *udata = adata;
@@ -646,16 +675,18 @@ img_proj_H (double *p,
     // project
     // -------------------------------------------------------------- //
     GSLU_MATRIX_VIEW (H_view, 3, 3);
-    vis_homog_matrix_plane_induced (&H_view.matrix, &K_view.matrix, &R2_view.matrix, 
+    vis_homog_matrix_plane_induced (&H_view.matrix, &K_view.matrix, &R2_view.matrix,
                                     &t_view.vector, &n_view.vector, d);
 
     gsl_matrix *uv2_hat = gsl_matrix_alloc (2, npts);
-    if (udata->distCoeffs) {
+    if (udata->distCoeffs)
+    {
         vis_homog_project_nonlin (&H_view.matrix, &K_view.matrix, &distCoeffs_view.vector, uv1_hat, uv2_hat);
         /* Apply distortion to uv1_hat */
         vis_distort_pts_radial (uv1_hat, uv1_hat, &K_view.matrix, &distCoeffs_view.vector);
     }
-    else {
+    else
+    {
         vis_homog_project (&H_view.matrix, uv1_hat, uv2_hat);
     }
 
@@ -663,9 +694,12 @@ img_proj_H (double *p,
     // -------------------------------------------------------------- //
     gsl_matrix_view uv1_hatT_hx_view = gsl_matrix_view_array_with_tda (hx, npts, 2, 4);
     gsl_matrix_view uv2_hatT_hx_view = gsl_matrix_view_array_with_tda (hx+2, npts, 2, 4);
-    if (udata->distCoeffs) {
+    if (udata->distCoeffs)
+    {
         gsl_matrix_transpose_memcpy (&uv1_hatT_hx_view.matrix, uv1_hat);
-    } else {
+    }
+    else
+    {
         gsl_matrix_memcpy (&uv1_hatT_hx_view.matrix, &uv1_hatT_view.matrix);
     }
     gsl_matrix_transpose_memcpy (&uv2_hatT_hx_view.matrix, uv2_hat);
@@ -679,19 +713,21 @@ void
 vis_sba_img_proj_H (const gsl_vector *params,
                     const gsl_matrix *K,
                     const gsl_vector *distCoeffs,
-                    int npts, 
+                    int npts,
                     int ncam,
                     int cnp,
                     int pnp,
                     int mnp,
                     gsl_vector *predicted_measurements)
 {
-    struct sba_crsm idxij = {
+    struct sba_crsm idxij =
+    {
         .nr = npts,
         .nc = ncam,
     };
 
-    userdata_t udata = {
+    userdata_t udata =
+    {
         .cnp = cnp,
         .pnp = pnp,
         .mnp = mnp,
@@ -700,7 +736,7 @@ vis_sba_img_proj_H (const gsl_vector *params,
         .rot0params = NULL,
         .useCmath = 1,
     };
-    
+
     img_proj_H (params->data, &idxij, NULL, NULL, predicted_measurements->data, &udata);
 }
 
@@ -708,23 +744,23 @@ vis_sba_img_proj_H (const gsl_vector *params,
 // [read parameters into sba input structures]
 // -------------------------------------------------------------- //
 int
-readfromgsl_H (const int cnp, 
-               const int pnp, 
-               const int mnp, 
-               int *nframes, 
-               int *numpts2D, 
-               int *numprojs, 
-               double **motstruct, 
-               double **imgpts, 
-               double **covimgpts, 
-               char **vmask, 
+readfromgsl_H (const int cnp,
+               const int pnp,
+               const int mnp,
+               int *nframes,
+               int *numpts2D,
+               int *numprojs,
+               double **motstruct,
+               double **imgpts,
+               double **covimgpts,
+               char **vmask,
                double **invcovret,
-               const gsl_vector *X_c1c2, 
-               const gsl_matrix *uv1, 
-               const gsl_matrix *uv2, 
-               const gsl_vector *n_o, 
-               double d_o, 
-               const gsl_matrix *uv1p, 
+               const gsl_vector *X_c1c2,
+               const gsl_matrix *uv1,
+               const gsl_matrix *uv2,
+               const gsl_vector *n_o,
+               double d_o,
+               const gsl_matrix *uv1p,
                const int n_inliers)
 {
 
@@ -741,10 +777,11 @@ readfromgsl_H (const int cnp,
      */
 
     double t[3], rph[3], n[3];
-    for (int i=0; i <3; i++) { 
+    for (int i=0; i <3; i++)
+    {
         t[i] = gsl_vector_get (X_c1c2,i);     // t
         rph[i] = gsl_vector_get (X_c1c2,i+3); // rph
-        n[i] = gsl_vector_get (n_o,i);        // n        
+        n[i] = gsl_vector_get (n_o,i);        // n
     }
 
     double b[3], n_dm[3];
@@ -760,7 +797,8 @@ readfromgsl_H (const int cnp,
 
     // ------------------- vmask ------------------
     *vmask = malloc (npts * ncam * sizeof (char));
-    if (*vmask==NULL) {
+    if (*vmask==NULL)
+    {
         fprintf (stderr, "memory allocation for 'vmask' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
@@ -768,7 +806,8 @@ readfromgsl_H (const int cnp,
 
     // ------------------ motstruct ------------------
     *motstruct = malloc ( (ncam*cnp + npts*pnp) * sizeof (double));
-    if(*motstruct == NULL) {
+    if(*motstruct == NULL)
+    {
         fprintf (stderr, "memory allocation for 'motstruct' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
@@ -778,25 +817,34 @@ readfromgsl_H (const int cnp,
         (*motstruct)[i] = 0;
 
     // cam2
-    (*motstruct)[5] = n_dm[0]; (*motstruct)[6] = n_dm[1];  (*motstruct)[7] = d_o;   // temp. FIXIT = DELETE
-    (*motstruct)[cnp] = b[0]; (*motstruct)[cnp+1]  = b[1];
-    (*motstruct)[cnp+2] = rph[0]; (*motstruct)[cnp+3] = rph[1]; (*motstruct)[cnp+4] = rph[2];
-    (*motstruct)[cnp+5] = n_dm[0]; (*motstruct)[cnp+6] = n_dm[1];
+    (*motstruct)[5] = n_dm[0];
+    (*motstruct)[6] = n_dm[1];
+    (*motstruct)[7] = d_o;   // temp. FIXIT = DELETE
+    (*motstruct)[cnp] = b[0];
+    (*motstruct)[cnp+1]  = b[1];
+    (*motstruct)[cnp+2] = rph[0];
+    (*motstruct)[cnp+3] = rph[1];
+    (*motstruct)[cnp+4] = rph[2];
+    (*motstruct)[cnp+5] = n_dm[0];
+    (*motstruct)[cnp+6] = n_dm[1];
     (*motstruct)[cnp+7] = d_o;
 
     // uv1_hat
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         (*motstruct)[ncam*cnp + 2*i]   = gsl_matrix_get (uv1p, 0, i);
         (*motstruct)[ncam*cnp + 2*i+1] = gsl_matrix_get (uv1p, 1, i);
     }
 
     // ------------------ imgpts ------------------
     *imgpts = malloc (*numprojs * mnp * sizeof (double));
-    if (*imgpts==NULL) {
+    if (*imgpts==NULL)
+    {
         fprintf (stderr, "memory allocation for 'initrot' failed in readfromgsl()\n");
         return VIS_SBA_ERROR;
     }
-    for (int i=0; i<npts; i++) {
+    for (int i=0; i<npts; i++)
+    {
         (*imgpts)[4*i]   = gsl_matrix_get (uv1, 0, i);
         (*imgpts)[4*i+1] = gsl_matrix_get (uv1, 1, i);
         (*imgpts)[4*i+2] = gsl_matrix_get (uv2, 0, i);
@@ -807,7 +855,8 @@ readfromgsl_H (const int cnp,
     //*covimgpts = NULL;
     *covimgpts = malloc (*numprojs *mnp * mnp * sizeof (double));
     //memset (*covimgpts, 0, (*numprojs *mnp * mnp) * sizeof (double));
-    for (int i=0; i<*numprojs; i++) {
+    for (int i=0; i<*numprojs; i++)
+    {
         (*covimgpts)[4*i] = 5.0*5.0;
         (*covimgpts)[4*i+1] = 0.0;
         (*covimgpts)[4*i+2] = 0.0;
@@ -821,13 +870,13 @@ readfromgsl_H (const int cnp,
 }
 
 int
-vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of relative pose, 6 dof [x y z r p h]    
-                     const gsl_matrix *K,            // calibration matrix [3 x 3] 
+vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of relative pose, 6 dof [x y z r p h]
+                     const gsl_matrix *K,            // calibration matrix [3 x 3]
                      const gsl_vector *distCoeffs,   // distortion coefficient [5 x 1] (k1, k2, p1, p2, k3)
                      const gsl_vector *n_o,          // initial guess for plane normal vector n_o = [0 0 -1]
                      const double d_o,               // initial guess for scene depth (d = mean(Z))
-                     const gsl_matrix *uv1,          // uv image points in image 1 [2 x N]  
-                     const gsl_matrix *uv2, 
+                     const gsl_matrix *uv1,          // uv image points in image 1 [2 x N]
+                     const gsl_matrix *uv2,
                      const gsl_matrix *uv1p,         // intial guess of projected points [2 x N]
                      gsl_vector *p21,                // output 1 = optimized 5 dof pose [azim, elev, r, p, h]
                      gsl_matrix *S21,                // output 2 = related covariance matrix [5 x 5]
@@ -850,12 +899,13 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
     double *motstruct, *imgpts, *covimgpts, *invcovret;
     char *vmask;
     int nframes, numpts2D, numprojs;
-    int ret = readfromgsl_H (cnp, pnp, mnp, &nframes, &numpts2D, &numprojs, 
+    int ret = readfromgsl_H (cnp, pnp, mnp, &nframes, &numpts2D, &numprojs,
                              &motstruct, &imgpts, &covimgpts, &vmask, &invcovret,
                              X_c2c1, uv1, uv2, n_o, d_o, uv1p, n_inliers);
 
     /* If provided the scale, we can estimate the feature covariance */
-    if (featscalei_h && featscalej_h) {
+    if (featscalei_h && featscalej_h)
+    {
         free (covimgpts);
         covimgpts = vis_feature_2v_covimgpts_alloc (featscalei_h, featscalej_h);
     }
@@ -865,7 +915,8 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
 
     // set up userdata (need in cost function)
     // -------------------------------------------------------------- //
-    userdata_t userdata = {
+    userdata_t userdata =
+    {
         .cnp = cnp,
         .pnp = pnp,
         .mnp = mnp,
@@ -877,7 +928,8 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
     // SBA option
     // -------------------------------------------------------------- //
     int analyticjac=0;  // analytic or approximate jacobian?
-    double opts[SBA_OPTSSZ] = {
+    double opts[SBA_OPTSSZ] =
+    {
         [0] = SBA_INIT_MU,
         [1] = SBA_STOP_THRESH,
         [2] = SBA_STOP_THRESH,
@@ -898,63 +950,71 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
 
     double info[SBA_INFOSZ];
     int64_t start_time = timestamp_now ();
-    ret = sba_motstr_levmar_x (numpts2D, 0, 2, constraint_nth_cam, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp, 
+    ret = sba_motstr_levmar_x (numpts2D, 0, 2, constraint_nth_cam, vmask, motstruct, cnp, pnp, imgpts, covimgpts, mnp,
                                img_proj_H, NULL, &userdata, MAXITER2, verbose, opts, info, invcovret, NULL);
     int64_t end_time = timestamp_now ();
 
     //if sba is successful, copy the resulting motstruct to params vector
-    if (ret > 0) {
-        if (params) {
+    if (ret > 0)
+    {
+        if (params)
+        {
             gsl_vector_view paramView = gsl_vector_view_array (motstruct, 2*cnp + pnp*numpts2D);
             gsl_vector_memcpy(params, &paramView.vector);
-		}
+        }
     }
 
     //get mutex unlock
     if (sba_mutex) g_mutex_unlock (sba_mutex);
 
-    if (verbose) { // print results
-        if (ret==SBA_ERROR) {
+    if (verbose)   // print results
+    {
+        if (ret==SBA_ERROR)
+        {
             ERROR ("SBA_ERROR occured");
-        } 
-        else {
+        }
+        else
+        {
             const int nvars = nframes*cnp + numpts2D*pnp;
 
             fflush (stdout);
-            fprintf (stdout, "SBA using %d 3D pts, %d frames and %d image projections, %d variables\n", 
+            fprintf (stdout, "SBA using %d 3D pts, %d frames and %d image projections, %d variables\n",
                      numpts2D, nframes, numprojs, nvars);
-            fprintf (stdout, "\n %s Jacobian, %s covariances", 
-                     analyticjac? "analytic" : "approximate", 
+            fprintf (stdout, "\n %s Jacobian, %s covariances",
+                     analyticjac? "analytic" : "approximate",
                      covimgpts? "with" : "without");
-            fputs ("\n\n", stdout); 
-            fprintf (stdout, "SBA returned %d in %g iter, reason %g, error %g [initial %g], %d/%d func/fjac evals, %d lin. systems\n", 
-                     ret, info[5], info[6], info[1]/numprojs, info[0]/numprojs, 
+            fputs ("\n\n", stdout);
+            fprintf (stdout, "SBA returned %d in %g iter, reason %g, error %g [initial %g], %d/%d func/fjac evals, %d lin. systems\n",
+                     ret, info[5], info[6], info[1]/numprojs, info[0]/numprojs,
                      (int)info[7], (int)info[8], (int)info[9]);
             fprintf (stdout, "Elapsed time: %"PRId64" usecs\n", end_time - start_time);
             fflush (stdout);
         }
     }
 
-    if (ret > 0) {
+    if (ret > 0)
+    {
         gsl_matrix_view S21_tmp = gsl_matrix_view_array (invcovret, cnp, cnp);
 
         // turning off default gsl error handler (=abort) to check pos def
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
 
         // cholesky failes for non pos def matrix
-        if (gsl_linalg_cholesky_decomp (&S21_tmp.matrix) == GSL_EDOM) {
+        if (gsl_linalg_cholesky_decomp (&S21_tmp.matrix) == GSL_EDOM)
+        {
             ret = SBA_ERROR;
         }
-        else {
+        else
+        {
             gsl_linalg_cholesky_invert (&S21_tmp.matrix);
             gsl_matrix_view S21_tmp_sub = gsl_matrix_submatrix (&S21_tmp.matrix, 0, 0, 5, 5);
             gsl_matrix_memcpy (S21, &S21_tmp_sub.matrix);
 
             // store
-            gsl_vector_set (p21, 0, motstruct[cnp+0]); 
+            gsl_vector_set (p21, 0, motstruct[cnp+0]);
             gsl_vector_set (p21, 1, motstruct[cnp+1]);
-            gsl_vector_set (p21, 2, motstruct[cnp+2]); 
-            gsl_vector_set (p21, 3, motstruct[cnp+3]); 
+            gsl_vector_set (p21, 2, motstruct[cnp+2]);
+            gsl_vector_set (p21, 3, motstruct[cnp+3]);
             gsl_vector_set (p21, 4, motstruct[cnp+4]);
         }
 
@@ -964,7 +1024,7 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
     }
 
     // clean up
-  ON_ERROR:
+ON_ERROR:
     if (covimgpts) free (covimgpts);
     if (invcovret) free (invcovret);
     if (motstruct) free (motstruct);
@@ -978,12 +1038,12 @@ vis_sba_2v_h_nonlin (const gsl_vector *X_c2c1,       // initial estimate of rela
 // [main function - twoview bundle adjustment H]
 // -------------------------------------------------------------- //
 int
-vis_sba_2v_h (const gsl_vector *X_c2c1,       // initial estimate of relative pose, 6 dof [x y z r p h]    
-              const gsl_matrix *K,            // calibration matrix [3 x 3] 
+vis_sba_2v_h (const gsl_vector *X_c2c1,       // initial estimate of relative pose, 6 dof [x y z r p h]
+              const gsl_matrix *K,            // calibration matrix [3 x 3]
               const gsl_vector *n_o,          // initial guess for plane normal vector n_o = [0 0 -1]
               const double d_o,               // initial guess for scene depth (d = mean(Z))
-              const gsl_matrix *uv1,          // uv image points in image 1 [2 x N]  
-              const gsl_matrix *uv2, 
+              const gsl_matrix *uv1,          // uv image points in image 1 [2 x N]
+              const gsl_matrix *uv2,
               const gsl_matrix *uv1p,         // intial guess of projected points [2 x N]
               gsl_vector *p21,                // output 1 = optimized 5 dof pose [azim, elev, r, p, h]
               gsl_matrix *S21,                // output 2 = related covariance matrix [5 x 5]
@@ -998,8 +1058,8 @@ vis_sba_2v_h (const gsl_vector *X_c2c1,       // initial estimate of relative po
 }
 
 void
-vis_sba_2v_rae_enforce_tri_const_alloc (const gsl_matrix *K, const gsl_vector *X_c2c1, 
-                                        const gsl_matrix *uvi_f, const gsl_matrix *uvj_f, 
+vis_sba_2v_rae_enforce_tri_const_alloc (const gsl_matrix *K, const gsl_vector *X_c2c1,
+                                        const gsl_matrix *uvi_f, const gsl_matrix *uvj_f,
                                         double min_dist, double max_dist,
                                         gsl_matrix **uvi_f_triconst, gsl_matrix **uvj_f_triconst)
 {
@@ -1017,11 +1077,13 @@ vis_sba_2v_rae_enforce_tri_const_alloc (const gsl_matrix *K, const gsl_vector *X
     gslu_index *tri_const_idx = vis_triangulate_constraint_alloc (tri->X1, 2, min_dist, max_dist);
 
     size_t n_accepted = tri_const_idx ? tri_const_idx->size : 0;
-    if (tri_const_idx && n_accepted != n_in_f) {
+    if (tri_const_idx && n_accepted != n_in_f)
+    {
         *uvi_f_triconst = gslu_matrix_selcol_alloc (uvi_f, tri_const_idx);
         *uvj_f_triconst = gslu_matrix_selcol_alloc (uvj_f, tri_const_idx);
     }
-    else {
+    else
+    {
         *uvi_f_triconst = gsl_matrix_calloc (uvi_f->size1, uvi_f->size2);
         *uvj_f_triconst = gsl_matrix_calloc (uvj_f->size1, uvj_f->size2);
         gsl_matrix_memcpy (*uvi_f_triconst, uvi_f);
@@ -1033,11 +1095,11 @@ vis_sba_2v_rae_enforce_tri_const_alloc (const gsl_matrix *K, const gsl_vector *X
 }
 
 int
-vis_sba_2v_rae_nonlin_from_model_with_tri (const gsl_matrix *K, const gsl_vector *distCoeffs, const gsl_vector *X_c2c1, 
-                                           const gsl_matrix *uvi_f, const gsl_matrix *uvj_f, size_t minpt, 
-                                           int pt3d_debug_mode, double min_dist, double max_dist,
-                                           gsl_vector *rel_pose21, gsl_matrix *rel_pose_cov21, gsl_vector *params, int verbose, gsl_matrix **X1_plot,
-                                           GMutex *sba_mutex, const gsl_vector *featscalei_f, const gsl_vector *featscalej_f)
+vis_sba_2v_rae_nonlin_from_model_with_tri (const gsl_matrix *K, const gsl_vector *distCoeffs, const gsl_vector *X_c2c1,
+        const gsl_matrix *uvi_f, const gsl_matrix *uvj_f, size_t minpt,
+        int pt3d_debug_mode, double min_dist, double max_dist,
+        gsl_vector *rel_pose21, gsl_matrix *rel_pose_cov21, gsl_vector *params, int verbose, gsl_matrix **X1_plot,
+        GMutex *sba_mutex, const gsl_vector *featscalei_f, const gsl_vector *featscalej_f)
 {
     int ret_sba = VIS_SBA_ERROR;
 
@@ -1071,25 +1133,29 @@ vis_sba_2v_rae_nonlin_from_model_with_tri (const gsl_matrix *K, const gsl_vector
     gsl_matrix_free (X1_h);
     gsl_matrix_free (X2);
 
-    if (tri_const_idx && tri_const_idx2) {
+    if (tri_const_idx && tri_const_idx2)
+    {
         size_t n_accepted = tri_const_idx->size;
         size_t n_accepted2 = tri_const_idx2->size;
         //printf("tri-constraint: rejecting %d points out of %d points\n", n_in_f-n_accepted, n_in_f);
-        if (n_accepted < minpt && n_accepted2 < minpt) {
+        if (n_accepted < minpt && n_accepted2 < minpt)
+        {
             printf ("[twoview]    ERROR: NPTS (tri): npts (%zu) < required (%zu: %g~%g\n)", n_accepted, minpt, min_dist, max_dist);
             gslu_index_free (tri_const_idx);
             gslu_index_free (tri_const_idx2);
             vis_triangulate_free (tri);
-            return -1;                
+            return -1;
         }
 
-        if (n_accepted == n_in_f) {
+        if (n_accepted == n_in_f)
+        {
             ret_sba = vis_sba_2v_rae_nonlin (X_c2c1, K, distCoeffs, uvi_f, uvj_f, tri->X1, rel_pose21, rel_pose_cov21, params, verbose, sba_mutex, NULL, featscalei_f, featscalej_f);  // X_c2c1 = [xyzrph]
 
             if (ret_sba > 0 && pt3d_debug_mode )
                 (*X1_plot) = gslu_matrix_clone (tri->X1);
         }
-        else {
+        else
+        {
             gsl_matrix *uvi_f_triconst = gslu_matrix_selcol_alloc (uvi_f, tri_const_idx);
             gsl_matrix *uvj_f_triconst = gslu_matrix_selcol_alloc (uvj_f, tri_const_idx);
             gsl_matrix *X1_triconst = gslu_matrix_selcol_alloc (tri->X1, tri_const_idx);
@@ -1104,7 +1170,8 @@ vis_sba_2v_rae_nonlin_from_model_with_tri (const gsl_matrix *K, const gsl_vector
             gslu_matrix_free (X1_triconst);
         }
     }
-    else {
+    else
+    {
         printf ("[twoview]    ERROR: NPTS (tri): npts (%d) < required (%zu: %g~%g\n)", 0, minpt, min_dist, max_dist);
 #ifdef SBA_VERBOSE
         gslu_vector_printf (X_c2c1, "X_c2c1");
@@ -1127,10 +1194,10 @@ vis_sba_2v_rae_from_model_with_tri (const gsl_matrix *K, const gsl_vector *X_c2c
                                     GMutex *sba_mutex, const gsl_vector *featscalei_f, const gsl_vector *featscalej_f)
 {
     gsl_vector *distCoeffs = NULL;
-    return vis_sba_2v_rae_nonlin_from_model_with_tri (K, distCoeffs, X_c2c1, uvi_f, uvj_f, 
-                                                      minpt, pt3d_debug_mode, min_dist, max_dist,
-                                                      rel_pose21, rel_pose_cov21, params, verbose, X1_plot, 
-                                                      sba_mutex, featscalei_f, featscalej_f);
+    return vis_sba_2v_rae_nonlin_from_model_with_tri (K, distCoeffs, X_c2c1, uvi_f, uvj_f,
+            minpt, pt3d_debug_mode, min_dist, max_dist,
+            rel_pose21, rel_pose_cov21, params, verbose, X1_plot,
+            sba_mutex, featscalei_f, featscalej_f);
 }
 
 int
@@ -1140,7 +1207,7 @@ vis_sba_2v_rae_from_model_wo_tri (const gsl_matrix *K, const gsl_vector *X_c2c1,
                                   GMutex *sba_mutex)
 {
     int ret_sba = VIS_SBA_ERROR;
-    GSLU_VECTOR_VIEW (X_C21, 6, {1.,0.,0.,0.,0.,0.});   // just arbitrary non-zero x_c21 
+    GSLU_VECTOR_VIEW (X_C21, 6, {1.,0.,0.,0.,0.,0.});   // just arbitrary non-zero x_c21
 
     // triangulate
     GSLU_MATRIX_VIEW (R, 3,3);
@@ -1161,24 +1228,25 @@ vis_sba_2v_rae_from_model_wo_tri (const gsl_matrix *K, const gsl_vector *X_c2c1,
 }
 
 int
-vis_sba_2v_h_nonlin_from_model (gsl_matrix *H, const gsl_vector *distCoeffs, const gsl_matrix *uvi_h, const gsl_matrix *uvj_h, 
+vis_sba_2v_h_nonlin_from_model (gsl_matrix *H, const gsl_vector *distCoeffs, const gsl_matrix *uvi_h, const gsl_matrix *uvj_h,
                                 const gsl_matrix *K, const perllcm_van_feature_t *fi, const gsl_vector *X_c2c1,
                                 gsl_vector *rel_pose21, gsl_matrix *rel_pose_cov21, gsl_vector *params, int verbose,
                                 GMutex *sba_mutex, const gsl_vector *featscalei_h, const gsl_vector *featscalej_h)
 {
     size_t n_in_h = uvj_h->size2;
 
-    GSLU_MATRIX_VIEW (invH, 3, 3); 
+    GSLU_MATRIX_VIEW (invH, 3, 3);
     gslu_matrix_inv (&invH.matrix, H);
     gsl_matrix *uvj_h_h = homogenize_alloc(uvj_h);
-    gsl_matrix *uvip_h = gsl_matrix_alloc (3, n_in_h);    
+    gsl_matrix *uvip_h = gsl_matrix_alloc (3, n_in_h);
     gslu_blas_mm (uvip_h, &invH.matrix, uvj_h_h);
     gsl_matrix *uvip = dehomogenize_alloc (uvip_h);
 
     // run BA
     // -------------------------------------------------- //
     double d_o = 1.0;                      // dist_o = mean(Z1);
-    if (fi) {
+    if (fi)
+    {
         perllcm_van_feature_user_depth_t *sp1 = malloc (sizeof (*sp1));
         perllcm_van_feature_user_depth_t_decode (fi->user, 0, fi->usersize, sp1);
         double z_avg = 0.0;
@@ -1193,7 +1261,7 @@ vis_sba_2v_h_nonlin_from_model (gsl_matrix *H, const gsl_vector *distCoeffs, con
 
     // clean up
     gslu_matrix_free (uvj_h_h);
-    gslu_matrix_free (uvip_h);    
+    gslu_matrix_free (uvip_h);
     gslu_matrix_free (uvip);
 
     return ret_sba;
@@ -1201,7 +1269,7 @@ vis_sba_2v_h_nonlin_from_model (gsl_matrix *H, const gsl_vector *distCoeffs, con
 
 
 int
-vis_sba_2v_h_from_model (gsl_matrix *H, const gsl_matrix *uvi_h, const gsl_matrix *uvj_h, 
+vis_sba_2v_h_from_model (gsl_matrix *H, const gsl_matrix *uvi_h, const gsl_matrix *uvj_h,
                          const gsl_matrix *K, const perllcm_van_feature_t *fi, const gsl_vector *X_c2c1,
                          gsl_vector *rel_pose21, gsl_matrix *rel_pose_cov21, gsl_vector *params, int verbose,
                          GMutex *sba_mutex, const gsl_vector *featscalei_h, const gsl_vector *featscalej_h)
@@ -1211,8 +1279,8 @@ vis_sba_2v_h_from_model (gsl_matrix *H, const gsl_matrix *uvi_h, const gsl_matri
 }
 
 int32_t
-vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matrix *uv2, 
-                        const gsl_vector *x21_nav, const gsl_matrix *p21_nav, 
+vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matrix *uv2,
+                        const gsl_vector *x21_nav, const gsl_matrix *p21_nav,
                         double min_dist, double max_dist,
                         const double thresh, int verbose, gsl_vector *x21_o)
 {
@@ -1240,13 +1308,15 @@ vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
 
     // triangulate
     vis_triangulate_t *tri = vis_triangulate_alloc (K, &R_nav.matrix, &t_nav.vector, uv1, uv2);
-    
+
     // enforce triangulation constraint
     gslu_index *tri_const_idx = vis_triangulate_constraint_alloc (tri->X1, 2, min_dist, max_dist);
 
-    if (tri_const_idx) {
+    if (tri_const_idx)
+    {
         size_t n_accepted = tri_const_idx->size;
-        if (n_accepted < minpt) {
+        if (n_accepted < minpt)
+        {
             printf ("[twoview]    ERROR: NPTS (tri-init): npts (%zu) < required (%zu: %g~%g\n)", n_accepted, minpt, min_dist, max_dist);
 #ifdef SBA_VERBOSE
             gslu_vector_printf (x21_nav, "x21_nav");
@@ -1255,13 +1325,15 @@ vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
             errmsg = PERLLCM_VAN_VLINK_T_MSG_TRI_CONST;
             //gslu_index_printf (tri_const_idx,"idx");
         }
-        else if (n_accepted == n) {
+        else if (n_accepted == n)
+        {
             /* E = vis_epi_relorient_horn (K, uv1, uv2, &R_nav.matrix, &R_o.matrix, &t_o.vector, verbose); */
             vis_epi_relorient_horn (K, uv1, uv2, &R_nav.matrix, &R_o.matrix, &t_o.vector, verbose);
             gsl_vector_scale (&t_o.vector, scale);
             ssc_pose_set_Rt_gsl (x21_o, &R_o.matrix, &t_o.vector);
         }
-        else {
+        else
+        {
             gsl_matrix *uv1_triconst = gslu_matrix_selcol_alloc (uv1, tri_const_idx);
             gsl_matrix *uv2_triconst = gslu_matrix_selcol_alloc (uv2, tri_const_idx);
 
@@ -1274,7 +1346,8 @@ vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
             gslu_matrix_free (uv2_triconst);
         }
     }
-    else {
+    else
+    {
         printf ("[twoview]    ERROR: NPTS (tri-init): npts (%d) < required (%zu: %g~%g\n)", 0, minpt, min_dist, max_dist);
         errmsg = PERLLCM_VAN_VLINK_T_MSG_TRI_CONST;
 #ifdef SBA_VERBOSE
@@ -1283,7 +1356,7 @@ vis_sba_init_relorient (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
         gslu_matrix_printf (tri->X1, "X1");
 #endif
     }
-    
+
     gslu_index_free (tri_const_idx);
     vis_triangulate_free (tri);
 

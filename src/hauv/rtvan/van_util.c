@@ -28,7 +28,7 @@
 #include "van_util.h"
 
 void
-vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list, 
+vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list,
                                GHashTable *x_vc, GHashTable *S_ii)
 {
     printf ("-- Saving to %s/graph.isam ...\n", filepath);
@@ -39,14 +39,17 @@ vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list,
     FILE *file_isam = fopen (isam_tmp, "r");
     FILE *file_rtvan = fopen (rtvan_tmp, "w");
 
-    if (file_isam != NULL && file_rtvan != NULL) {
+    if (file_isam != NULL && file_rtvan != NULL)
+    {
         char line [MAXPATHLEN];
-        while ( fgets (line, sizeof line, file_isam) != NULL )  { // read a line
+        while ( fgets (line, sizeof line, file_isam) != NULL )    // read a line
+        {
             // copy the existing line to new graph.isam file
             int len = strlen (line);
-            if (line[len-1] != '\n') { 
+            if (line[len-1] != '\n')
+            {
                 printf ("increase buffer size reading isam graph\n");
-                return; 
+                return;
             }
             line[len-1] = '\0';
             fprintf (file_rtvan, "%s", line);
@@ -56,14 +59,16 @@ vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list,
             bool line_node = false;
             int64_t utime;
             char *pch = strtok (line," ,;(){}");
-            while (pch != NULL) {
+            while (pch != NULL)
+            {
                 if ((token_counter == 0) && (strcmp (line, "Pose3d_Node" ) == 0))
                     line_node = true;
 
                 if (line_node && (token_counter == 1) && (atoi (pch) == 0))
                     line_node = false;
-                
-                if (line_node && (token_counter == (2+6))) {
+
+                if (line_node && (token_counter == (2+6)))
+                {
                     // yes. this is a line for node. if token_counter is not 8, this could be other line starting with Pose3d_Node*
                     utime = atol (pch);
 
@@ -71,19 +76,23 @@ vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list,
                     double *offset = g_hash_table_lookup (camoffset_list, &utime);
                     perllcm_pose3d_t *x_vs = g_hash_table_lookup (x_vc, &utime);
 
-                    if (offset && x_vs) {
+                    if (offset && x_vs)
+                    {
                         // we don't have these value for nodes related to other sensors
-                        fprintf (file_rtvan, " %g (%g, %g, %g, %g, %g, %g)", 
-                                               *offset, x_vs->mu[0], x_vs->mu[1], x_vs->mu[2], 
-                                                        x_vs->mu[3], x_vs->mu[4], x_vs->mu[5]);
+                        fprintf (file_rtvan, " %g (%g, %g, %g, %g, %g, %g)",
+                                 *offset, x_vs->mu[0], x_vs->mu[1], x_vs->mu[2],
+                                 x_vs->mu[3], x_vs->mu[4], x_vs->mu[5]);
                     }
 
                     // write covaraince for each node
                     gsl_matrix *S_vii = g_hash_table_lookup (S_ii, &utime);
-                    if (S_vii) {
+                    if (S_vii)
+                    {
                         fprintf (file_rtvan, " {");
-                        for (size_t i=0; i<6; i++) {
-                            for (size_t j=0; j<6; j++) {
+                        for (size_t i=0; i<6; i++)
+                        {
+                            for (size_t j=0; j<6; j++)
+                            {
                                 fprintf (file_rtvan, "%g",gsl_matrix_get (S_vii, i, j));
                                 if (i!=5 || j!=5) fprintf (file_rtvan, ", ");
                             }
@@ -110,10 +119,11 @@ vanu_isam_save_rtvan_appended (const char *filepath, GHashTable *camoffset_list,
 }
 
 void
-vanu_isam_save_rtvan_appended_via_lcm (FILE *fid, se_save_isam_t *isam_line, 
+vanu_isam_save_rtvan_appended_via_lcm (FILE *fid, se_save_isam_t *isam_line,
                                        GHashTable *camoffset_list, GHashTable *x_vc, GHashTable *S_ii)
 {
-    if (!fid) {
+    if (!fid)
+    {
         printf ("ERROR: graph.isam was not open properly.\n");
         return;
     }
@@ -126,26 +136,31 @@ vanu_isam_save_rtvan_appended_via_lcm (FILE *fid, se_save_isam_t *isam_line,
     fprintf (fid, "%s", line);
 
     // add additional information to camera nodes
-    if (isam_line->type == SE_SAVE_ISAM_T_TYPE_NODE) {
+    if (isam_line->type == SE_SAVE_ISAM_T_TYPE_NODE)
+    {
         int64_t utime = isam_line->id;
         //printf ("utime = %"PRId64"\n", utime);
 
         double *offset = g_hash_table_lookup (camoffset_list, &utime);
         perllcm_pose3d_t *x_vs = g_hash_table_lookup (x_vc, &utime);
 
-        if (offset && x_vs) {
+        if (offset && x_vs)
+        {
             // we don't have these value for nodes related to other sensors
-            fprintf (fid, " %g (%g, %g, %g, %g, %g, %g)", 
-                           *offset, x_vs->mu[0], x_vs->mu[1], x_vs->mu[2], 
-                                    x_vs->mu[3], x_vs->mu[4], x_vs->mu[5]);
+            fprintf (fid, " %g (%g, %g, %g, %g, %g, %g)",
+                     *offset, x_vs->mu[0], x_vs->mu[1], x_vs->mu[2],
+                     x_vs->mu[3], x_vs->mu[4], x_vs->mu[5]);
         }
 
         // write covaraince for each node
         gsl_matrix *S_vii = g_hash_table_lookup (S_ii, &utime);
-        if (S_vii) {
+        if (S_vii)
+        {
             fprintf (fid, " {");
-            for (size_t i=0; i<6; i++) {
-                for (size_t j=0; j<6; j++) {
+            for (size_t i=0; i<6; i++)
+            {
+                for (size_t j=0; j<6; j++)
+                {
                     fprintf (fid, "%g",gsl_matrix_get (S_vii, i, j));
                     if (i!=5 || j!=5) fprintf (fid, ", ");
                 }
@@ -154,21 +169,23 @@ vanu_isam_save_rtvan_appended_via_lcm (FILE *fid, se_save_isam_t *isam_line,
         }
     }
     fprintf (fid, "\n");
-    //printf ("isam : %s (type:%d,sensor:%d)\n", isam_line->line, isam_line->type, isam_line->sensor);    
+    //printf ("isam : %s (type:%d,sensor:%d)\n", isam_line->line, isam_line->type, isam_line->sensor);
 }
 
 
 GSList *
-vanu_load_isam_graph (const char *filename, GSList *utimelist, 
+vanu_load_isam_graph (const char *filename, GSList *utimelist,
                       GHashTable *camoffset_list, GHashTable *x_vc_hash, GHashTable *S_ii_hash,
                       size_t *n_nodes)
 {
     FILE *file = fopen (filename, "r" );
-    size_t dof = 6; 
+    size_t dof = 6;
 
-    if (file != NULL) {
+    if (file != NULL)
+    {
         char line [1024];
-        while ( fgets (line, sizeof line, file) != NULL ) { // read a line
+        while ( fgets (line, sizeof line, file) != NULL )   // read a line
+        {
             //printf ("reading line: %s\n", line);
             size_t token_counter = 0;
             bool line_node = false;
@@ -183,27 +200,31 @@ vanu_load_isam_graph (const char *filename, GSList *utimelist,
             size_t idx_x_vs = 0;
             size_t idx_S_ii = 0;
             char *pch = strtok (line," ,;(){}");
-            while (pch != NULL) {
+            while (pch != NULL)
+            {
                 if (token_counter == 0 && (strcmp(line, "Pose3d_Node" ) == 0))
                     line_node = true;
 
                 if (line_node && (token_counter == 1) && (atoi (pch) == 0))
                     line_node = false;
-                
-                if (line_node && (token_counter == (2+dof))) 
+
+                if (line_node && (token_counter == (2+dof)))
                     utime = atol (pch);
 
-                if (line_node && (token_counter == (2+dof+1))) {
+                if (line_node && (token_counter == (2+dof+1)))
+                {
                     camoffset = atof (pch);
                     camera_node = true;
                 }
 
-                if (line_node && ((2+dof+2) <= token_counter) && (token_counter < (2+dof+2+dof))) {
+                if (line_node && ((2+dof+2) <= token_counter) && (token_counter < (2+dof+2+dof)))
+                {
                     instant_x_vc.mu[idx_x_vs] = atof (pch);
                     idx_x_vs ++;
                 }
 
-                if (line_node && ( (2+dof+2+dof) <= token_counter && token_counter < (2+dof+2+dof+dof*dof))) {
+                if (line_node && ( (2+dof+2+dof) <= token_counter && token_counter < (2+dof+2+dof+dof*dof)))
+                {
                     S_ii_tmp_array[idx_S_ii] = atof(pch);
                     idx_S_ii ++;
                 }
@@ -212,7 +233,8 @@ vanu_load_isam_graph (const char *filename, GSList *utimelist,
                 token_counter++;
             }
 
-            if (line_node && camera_node) {
+            if (line_node && camera_node)
+            {
                 // verify if we read everything needed
                 if (utime == 0) printf ("ERROR: no valid utime has been loaded\n");
 
@@ -224,7 +246,7 @@ vanu_load_isam_graph (const char *filename, GSList *utimelist,
                 perllcm_pose3d_t *x_vc = calloc (1, sizeof(*x_vc));
                 memcpy (x_vc, &instant_x_vc, sizeof(*x_vc));
                 g_hash_table_insert (x_vc_hash, gu_dup (&utime, sizeof utime), x_vc);
-                
+
                 // store camera offset
                 double *offset = g_malloc (sizeof(*offset));
                 *offset = camoffset;
@@ -238,13 +260,14 @@ vanu_load_isam_graph (const char *filename, GSList *utimelist,
                 g_hash_table_insert (S_ii_hash, gu_dup (&utime, sizeof utime), S_ii);
 
                 (*n_nodes)++;
-            } 
+            }
         } // read line by line
 
         fclose (file);
         return utimelist;
     }
-    else {
+    else
+    {
         printf ("ERROR loading isam graph\n");
         return NULL;
     }
@@ -254,7 +277,7 @@ perllcm_van_corrset_t*
 vanu_prepare_corrset (int64_t utime1, int64_t utime2, gsl_vector *z, gsl_matrix *R, gsl_matrix *uv1, gsl_matrix *uv2)
 {
     assert (uv1->size1 == 2 && uv2->size1 == 2 && uv1->size2 == uv2->size2);
-    
+
     perllcm_van_corrset_t *corr = calloc (1, sizeof (*corr));
 
     // assign timestamps
@@ -271,8 +294,10 @@ vanu_prepare_corrset (int64_t utime1, int64_t utime2, gsl_vector *z, gsl_matrix 
     corr->npts = npts;
 
     // assign inliers
-    corr->u1 = malloc (sizeof (corr->u1) * npts); corr->v1 = malloc (sizeof (corr->v1) * npts);
-    corr->u2 = malloc (sizeof (corr->u2) * npts); corr->v2 = malloc (sizeof (corr->v2) * npts);
+    corr->u1 = malloc (sizeof (corr->u1) * npts);
+    corr->v1 = malloc (sizeof (corr->v1) * npts);
+    corr->u2 = malloc (sizeof (corr->u2) * npts);
+    corr->v2 = malloc (sizeof (corr->v2) * npts);
 
     gsl_vector_float_view u1_view = gsl_vector_float_view_array (corr->u1, npts);
     gsl_vector_float_view v1_view = gsl_vector_float_view_array (corr->v1, npts);
@@ -288,10 +313,10 @@ vanu_prepare_corrset (int64_t utime1, int64_t utime2, gsl_vector *z, gsl_matrix 
     GSLU_VECTOR_TYPEA_TO_TYPEB (gsl_vector, &v2_vec.vector, gsl_vector_float, &v2_view.vector);
 
     return corr;
-} 
+}
 
 void
-vanu_dvlpts_save2disk (const char *filepath, GSList *dvlpts_glist, 
+vanu_dvlpts_save2disk (const char *filepath, GSList *dvlpts_glist,
                        perllcm_van_calib_t *calibUw_water, perllcm_van_calib_t *calibUw_air,
                        perllcm_van_calib_t *calibPeri_water, perllcm_van_calib_t *calibPeri_air)
 {
@@ -301,17 +326,18 @@ vanu_dvlpts_save2disk (const char *filepath, GSList *dvlpts_glist,
 
     // prepare dvl_bathy
     perllcm_van_rdi_bathy_collection_t *bathy_list = calloc (1, sizeof (*bathy_list));
-    //bathy_list->id = 
+    //bathy_list->id =
     size_t listlen = g_slist_length (dvlpts_glist);
     bathy_list->npts = listlen;
     bathy_list->bathy_v = malloc (sizeof (*bathy_list->bathy_v) * listlen);
     bathy_list->x_vc = malloc (sizeof (*bathy_list->x_vc) * listlen);
     bathy_list->calib_list = malloc (sizeof (*bathy_list->calib) * listlen);
 
-    for (size_t i=0; i<listlen; i++) {
+    for (size_t i=0; i<listlen; i++)
+    {
         perllcm_van_rdi_bathy_collection_t *bathy_i = g_slist_nth_data (dvlpts_glist, i);
         bathy_list->bathy_v[i] = bathy_i->bathy_v[0];
-        bathy_list->x_vc[i] = bathy_list->x_vc[0];        
+        bathy_list->x_vc[i] = bathy_list->x_vc[0];
         bathy_list->calib_list[i] = bathy_list->calib_list[0];
     }
 
@@ -333,7 +359,7 @@ vanu_dvlpts_save2disk (const char *filepath, GSList *dvlpts_glist,
 
 void
 vanu_corrset_save2disk (int64_t utime1, int64_t utime2, const char *logdir,
-                          gsl_vector *z, gsl_matrix *R, gsl_matrix *uv1, gsl_matrix *uv2)
+                        gsl_vector *z, gsl_matrix *R, gsl_matrix *uv1, gsl_matrix *uv2)
 {
     // write z, R, uv1, uv2 into disk
     char corrsetdir[PATH_MAX];
@@ -351,7 +377,8 @@ vanu_load_manual_plink (const char *filename, GHashTable *plinks)
     int nplink = 0;
 
     FILE *fid = fopen (filename, "r");
-    if (!fid) {
+    if (!fid)
+    {
         ERROR ("unable to read file %s!", filename);
         return nplink;
     }
@@ -363,7 +390,7 @@ vanu_load_manual_plink (const char *filename, GHashTable *plinks)
 
     if (nplink == 0)
         return nplink;
-    
+
     // populate GList and return
     double mu[6] = {0.1, 0., 0., 0., 0., 0.};
     double s = 0.1;
@@ -372,13 +399,15 @@ vanu_load_manual_plink (const char *filename, GHashTable *plinks)
                         0., 0., s,0., 0., 0.,
                         0., 0., 0., s, 0., 0.,
                         0., 0., 0., 0., s, 0.,
-                        0., 0., 0., 0., 0., s};
+                        0., 0., 0., 0., 0., s
+                       };
 
     perllcm_pose3d_t x_cjci = {0};
     memcpy (x_cjci.mu, mu, sizeof (double) * 6);
     memcpy (x_cjci.Sigma, Sigma, sizeof (double) *36);
 
-    while (fgets (line, sizeof line, fid) != NULL) {
+    while (fgets (line, sizeof line, fid) != NULL)
+    {
         int64_t utime1 = 0, utime2 = 0;
         sscanf (line, "%ld %ld", &utime1, &utime2);
 
@@ -409,7 +438,8 @@ vanu_load_manual_plink_wo_prior (const char *filename, GHashTable *plinks)
     int nplink = 0;
 
     FILE *fid = fopen (filename, "r");
-    if (!fid) {
+    if (!fid)
+    {
         ERROR ("unable to read file %s!", filename);
         return nplink;
     }
@@ -421,8 +451,9 @@ vanu_load_manual_plink_wo_prior (const char *filename, GHashTable *plinks)
 
     if (nplink == 0)
         return nplink;
-    
-    while (fgets (line, sizeof line, fid) != NULL) {
+
+    while (fgets (line, sizeof line, fid) != NULL)
+    {
         int64_t utime1 = 0, utime2 = 0;
         sscanf (line, "%ld %ld", &utime1, &utime2);
 
@@ -450,26 +481,30 @@ vanu_saliency_save2disk (const char *filename, GSList *utimelist, GHashTable *S_
 {
 
     FILE *stream = fopen (filename, "w");
-    if (!stream) {
+    if (!stream)
+    {
         ERROR ("unable to create file %s!", filename);
         return EXIT_FAILURE;
     }
 
     size_t len = g_slist_length (utimelist);
 
-    for (size_t i=0; i<len; i++) {
+    for (size_t i=0; i<len; i++)
+    {
         GSList *event = g_slist_nth (utimelist, i);
         int64_t *utime = event->data;
 
         double *S_L = g_hash_table_lookup (S_L_table, utime);
         double local_saliency = 0.0;
-        if (S_L) {
+        if (S_L)
+        {
             local_saliency = *S_L;
         }
 
         double *sumidf = g_hash_table_lookup (sumidf_list, utime);
         double global_saliency = 0.0;
-        if (sumidf) {
+        if (sumidf)
+        {
             global_saliency = (*sumidf)/sumidf_max;
         }
 
@@ -495,17 +530,19 @@ vanu_link_info_save2disk (const char *logdir, GSList *linklist)
     //printf ("%s\n", plinkfile);
 
     FILE *stream = fopen (plinkfile, "w");
-    if (!stream) {
+    if (!stream)
+    {
         ERROR ("unable to create file %s!", plinkfile);
         return EXIT_FAILURE;
     }
 
     size_t linklen = g_slist_length (linklist);
-    for (size_t i=0; i<linklen; i++) {
+    for (size_t i=0; i<linklen; i++)
+    {
         perllcm_van_vlink_t *link = g_slist_nth_data (linklist, i);
         bool success = false;
         if (link->type > 0) success = true;
-        fprintf (stream, "%"PRId64"\t%"PRId64"\t%g\t%g\t%d\n", 
+        fprintf (stream, "%"PRId64"\t%"PRId64"\t%g\t%g\t%d\n",
                  link->utime_i, link->utime_j, link->S_L, link->Ig, success);
     }
     fclose (stream);

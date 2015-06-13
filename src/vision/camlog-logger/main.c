@@ -35,7 +35,8 @@
 GMainLoop *_mainloop;
 
 typedef struct iver iver_t;
-struct iver {
+struct iver
+{
     int nextwp;
     double depth; // m
     double alt;   // m
@@ -48,7 +49,8 @@ struct iver {
 };
 
 typedef struct cam_event cam_event_t;
-struct cam_event {
+struct cam_event
+{
     char *channel;
     bot_core_image_t *image;
     int   mem_size;
@@ -64,7 +66,8 @@ cam_event_free (cam_event_t *ce)
 }
 
 typedef struct channel_stats channel_stats_t;
-struct channel_stats {
+struct channel_stats
+{
     int64_t images_count;
     int64_t images_size;
     int64_t curr_event_utime;
@@ -72,7 +75,8 @@ struct channel_stats {
 };
 
 typedef struct cam_logger cam_logger_t;
-struct cam_logger {
+struct cam_logger
+{
     int64_t     utime0;
     char        *logpath;
     int64_t     max_write_queue_size;
@@ -112,10 +116,11 @@ struct cam_logger {
 static void
 print_stats (cam_logger_t *logger, int64_t now)
 {
-    if (now - logger->last_report_utime >= 900000) {
+    if (now - logger->last_report_utime >= 900000)
+    {
         g_mutex_lock (logger->mutex);
         printf ("Summary: t: %2"PRId64"s Buffer: %-2d ( %2"PRId64" MB ) Written: %-4"PRId64" ( %3"PRId64" MB ) Channels: %s\n",
-                (now-logger->utime0)/1000000, 
+                (now-logger->utime0)/1000000,
                 logger->write_queue_length, logger->write_queue_size/1024/1024,
                 logger->images_count, logger->images_size/1024/1024,
                 logger->channels_name);
@@ -130,7 +135,8 @@ write_thread (void *user)
 {
     cam_logger_t *logger = user;
 
-    while (1) {
+    while (1)
+    {
         GTimeVal end_time;
         g_get_current_time (&end_time);
         g_time_val_add (&end_time, 250000);
@@ -139,12 +145,14 @@ write_thread (void *user)
 
         // Should the write thread exit?
         g_mutex_lock (logger->mutex);
-        if (logger->write_thread_exit_flag) {
+        if (logger->write_thread_exit_flag)
+        {
             g_mutex_unlock (logger->mutex);
             return NULL;
         }
         // nope. did we timeout?
-        if (!ce) {
+        if (!ce)
+        {
             g_mutex_unlock (logger->mutex);
             print_stats (logger, now);
             continue;
@@ -156,10 +164,12 @@ write_thread (void *user)
 
         // have we seen this channel before?
         channel_stats_t *channel_stats = g_hash_table_lookup (logger->channels_hash, ce->channel);
-        if (!channel_stats) { // nope. create an entry for it
+        if (!channel_stats)   // nope. create an entry for it
+        {
             char channeldir[PATH_MAX];
             snprintf (channeldir, sizeof channeldir, "%s/%s", logger->logpath, ce->channel);
-            if (0 != unix_mkpath (channeldir, 0775)) {
+            if (0 != unix_mkpath (channeldir, 0775))
+            {
                 fprintf (stderr, "error, unable to create directory: %s\n", channeldir);
                 cam_event_free (ce);
                 continue;
@@ -173,11 +183,12 @@ write_thread (void *user)
 
         // format image description
         char description[1024] = "";
-        switch (logger->image_description) {
+        switch (logger->image_description)
+        {
         case IMAGE_DESCRIPTION_IVER:
-            snprintf (description, sizeof description, 
+            snprintf (description, sizeof description,
                       "$IVER,nwp=%d,lat=%.6f,lon=%.6f,d=%.1f,a=%.1f,r=%.1f,p=%.1f,h=%.1f,s=%.2f",
-                      ce->iver.nextwp, ce->iver.lat, ce->iver.lon, ce->iver.depth, ce->iver.alt, 
+                      ce->iver.nextwp, ce->iver.lat, ce->iver.lon, ce->iver.depth, ce->iver.alt,
                       ce->iver.r, ce->iver.p, ce->iver.h, ce->iver.speed);
             break;
         case IMAGE_DESCRIPTION_NONE:
@@ -186,7 +197,8 @@ write_thread (void *user)
             ERROR ("unknown image_description option = %d", logger->image_description);
         }
 
-        if (logger->bayerfilt) {
+        if (logger->bayerfilt)
+        {
             bot_core_image_t *bayer;
             vis_botimage_bayerfilt (&bayer, ce->image);
             bot_core_image_t_destroy (ce->image);
@@ -195,11 +207,13 @@ write_thread (void *user)
 
         // write image to disk
         char filename[PATH_MAX];
-        snprintf (filename, sizeof filename, "%s/%s/%"PRId64".tif", 
+        snprintf (filename, sizeof filename, "%s/%s/%"PRId64".tif",
                   logger->logpath, ce->channel, ce->image->utime);
-        if (0 != vis_botimage_write_tiff (ce->image, filename, ce->channel, description, logger->compression | logger->quality)) {
+        if (0 != vis_botimage_write_tiff (ce->image, filename, ce->channel, description, logger->compression | logger->quality))
+        {
             static int64_t last_spew_utime = 0;
-            if (now - last_spew_utime > 500000) {
+            if (now - last_spew_utime > 500000)
+            {
                 fprintf (stderr, "error writing: %s\n", filename);
                 last_spew_utime = now;
             }
@@ -222,7 +236,7 @@ write_thread (void *user)
 
 static void
 bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                         const bot_core_image_t *image, void *user)
+                           const bot_core_image_t *image, void *user)
 {
     cam_logger_t *logger = user;
 
@@ -233,7 +247,8 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     g_mutex_lock (logger->mutex);
     int64_t mem_required = mem_size + logger->write_queue_size;
 
-    if (mem_required > logger->max_write_queue_size) {
+    if (mem_required > logger->max_write_queue_size)
+    {
         // can't write images fast enough.  drop image.
         g_mutex_unlock (logger->mutex);
 
@@ -242,7 +257,8 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         logger->dropped_images_count++;
         int rc = logger->dropped_images_count - logger->last_drop_report_count;
 
-        if (now - logger->last_drop_report_utime > 1000000 && rc > 0) {
+        if (now - logger->last_drop_report_utime > 1000000 && rc > 0)
+        {
             fprintf (stderr, "Can't write images fast enough.  Dropped %d image%s\n",
                      rc, rc==1 ? "":"s");
             logger->last_drop_report_utime = now;
@@ -250,7 +266,8 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         }
         return;
     }
-    else {
+    else
+    {
         logger->write_queue_length++;
         logger->write_queue_size = mem_required;
         g_mutex_unlock (logger->mutex);
@@ -268,7 +285,7 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 senlcm_uvc_osi_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                                       const senlcm_uvc_osi_t *msg, void *user)
+                           const senlcm_uvc_osi_t *msg, void *user)
 {
     cam_logger_t *logger = user;
 
@@ -298,7 +315,7 @@ main (int argc, char *argv[])
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
     getopt_t *gopt = getopt_create ();
-    getopt_add_description (gopt,  
+    getopt_add_description (gopt,
                             "Camera LCM logger logs bot_core_image_t events to disk as TIFF image files.");
     getopt_add_bool   (gopt, 'D',  "daemon",           0,               "Run as system daemon");
     getopt_add_string (gopt, 'c',  "channel",          "^PROSILICA_[A-Z]+$", "POSIX regular expression of channels to log");
@@ -309,16 +326,18 @@ main (int argc, char *argv[])
     getopt_add_string (gopt, 'C',  "compression",      "none",          "TIFF file compression scheme {none,lzw,deflate,jpeg,jpeg:quality}");
     getopt_add_string (gopt, 'd',  "description",      "none",          "Write state description to TIFF header {none,iver,segway,quad}");
     getopt_add_help   (gopt, NULL);
-    getopt_add_example (gopt, 
+    getopt_add_example (gopt,
                         "Match PROSLICA_C or PROSILICA_M, log to ~/foo/bar, color interpolate, and use 95%% JPEG compression\n"
                         "%s --channel ^PROSILICA_.$ --outdir ~/foo/bar/.  --bayerfilt --compression jpeg:95", argv[0]);
 
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len !=0) {
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len !=0)
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -326,7 +345,7 @@ main (int argc, char *argv[])
     BotParam *param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
 
     // initialize GLib threading
-    if (!g_thread_supported ()) 
+    if (!g_thread_supported ())
         g_thread_init (NULL);
 
     cam_logger_t *logger = g_malloc0 (sizeof (*logger));
@@ -334,12 +353,14 @@ main (int argc, char *argv[])
     char filename[PATH_MAX];
     const char *outdir = getopt_get_string (gopt, "outdir");
     if (outdir[strlen (outdir)-1] != '/' &&
-        outdir[strlen (outdir)-1] != '.') {
+            outdir[strlen (outdir)-1] != '.')
+    {
         ERROR ("[%s] does not specify a fully qualified directory path", outdir);
         exit (EXIT_FAILURE);
     }
-    else {
-        timeutil_strftime (filename, sizeof filename, outdir, 
+    else
+    {
+        timeutil_strftime (filename, sizeof filename, outdir,
                            timestamp_now ());
         logger->logpath = g_path_get_dirname (filename);
     }
@@ -359,7 +380,8 @@ main (int argc, char *argv[])
              1 == sscanf (compression_str, "jpeg:%u", &quality) &&
              0 < quality && quality <= 100)
         logger->compression = VIS_BOTIMAGE_TIFF_COMPRESSION_JPEG | quality;
-    else {
+    else
+    {
         fprintf (stderr, "unrecognized compression format\n");
         exit (EXIT_FAILURE);
     }
@@ -378,15 +400,18 @@ main (int argc, char *argv[])
     if (getopt_has_flag (gopt, "lcm-url"))
         lcmurl = getopt_get_string (gopt, "lcm-url");
     logger->lcm = lcm_create (lcmurl);
-    if (!logger->lcm) {
+    if (!logger->lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
     const char *description = getopt_get_string (gopt, "description");
-    if (0==strcasecmp (description, "none")) {
+    if (0==strcasecmp (description, "none"))
+    {
         logger->image_description = IMAGE_DESCRIPTION_NONE;
     }
-    else if (0==strcasecmp (description, "iver")) {
+    else if (0==strcasecmp (description, "iver"))
+    {
         logger->image_description = IMAGE_DESCRIPTION_IVER;
 
         char *osc_osi_channel = lcmu_channel_get_os_conduit (param, LCMU_CHANNEL_OS_CONDUIT_OSI);
@@ -397,13 +422,14 @@ main (int argc, char *argv[])
         senlcm_os_compass_t_subscribe (logger->lcm, os_compass_channel, &senlcm_os_compass_t_callback, logger);
         free (os_compass_channel);
     }
-    else {
+    else
+    {
         fprintf (stderr, "unrecognized description \"%s\"\n", description);
         exit (EXIT_FAILURE);
     }
 
     // begin logging
-    bot_core_image_t_subscription_t *sub = 
+    bot_core_image_t_subscription_t *sub =
         bot_core_image_t_subscribe (logger->lcm, getopt_get_string (gopt, "channel"), &bot_core_image_t_callback, logger);
 
     if (getopt_get_bool (gopt, "daemon"))
@@ -419,8 +445,10 @@ main (int argc, char *argv[])
     fprintf (stderr, "Logger exiting\n");
     bot_core_image_t_unsubscribe (logger->lcm, sub);
     int n = g_async_queue_length (logger->write_queue), n_last_report = 0;
-    while (n > 0) {
-        if (n!=n_last_report) {
+    while (n > 0)
+    {
+        if (n!=n_last_report)
+        {
             fprintf (stderr, "%d images remaining in the queue\n", n);
             n_last_report = n;
         }
@@ -440,7 +468,7 @@ main (int argc, char *argv[])
     // cleanup.  This isn't strictly necessary, do it to be pendantic and so that
     // leak checkers don't complain
     bot_glib_mainloop_detach_lcm (logger->lcm);
-    lcm_destroy (logger->lcm);    
+    lcm_destroy (logger->lcm);
     g_async_queue_unref (logger->write_queue);
     free (logger->logpath);
     free (logger);

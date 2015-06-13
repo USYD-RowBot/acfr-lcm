@@ -64,7 +64,7 @@ perllcm_pose3d_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
  */
 static void
 perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                                           const perllcm_van_feature_collection_t *fc, void *user)
+        const perllcm_van_feature_collection_t *fc, void *user)
 {
     thread_data_t *tdata = user;
 
@@ -79,9 +79,10 @@ perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const cha
     // propose the last MAX_HYPOTHESES candidates
     GList *eventi = g_list_next (tdata->imglist);
     size_t imglistlen = g_list_length (tdata->imglist);
-    for (size_t i=0; i < GSL_MIN (MAX_HYPOTHESES, imglistlen-1); i++, eventi = g_list_next (eventi)) {
+    for (size_t i=0; i < GSL_MIN (MAX_HYPOTHESES, imglistlen-1); i++, eventi = g_list_next (eventi))
+    {
         perllcm_pose3d_t *x_lci = eventi->data;
-        
+
         // a priori relative pose of ci w.r.t. cj
         perllcm_pose3d_t x_cjci = {.utime = x_lcj->utime};
         ssc_tail2tail (x_cjci.mu, NULL, x_lcj->mu, x_lci->mu);
@@ -97,7 +98,8 @@ perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const cha
             overlap = (2*camoffset*tan(0.5*fov_h) - dy) / (2*camoffset*tan(0.5*fov_h));
         //printf ("camoffset = %g [m], overlap = %g%%\n", camoffset, overlap);
 
-        if (overlap < tdata->max_overlap && tdata->min_overlap < overlap) {
+        if (overlap < tdata->max_overlap && tdata->min_overlap < overlap)
+        {
             // fudge covariance estimate for now
             const double sigma_x = 0.001*x_cjci.mu[0];   // 0.01 oceanus testing
             const double sigma_y = 0.001*x_cjci.mu[1];
@@ -105,15 +107,18 @@ perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const cha
             const double sigma_r = 0.1*DTOR;
             const double sigma_p = 0.1*DTOR;
             const double sigma_h = 0.1*DTOR;
-            GSLU_VECTOR_VIEW (x_cjci_variance, 6, 
-                              {sigma_x*sigma_x, sigma_y*sigma_y, sigma_z*sigma_z, 
-                               sigma_r*sigma_r, sigma_p*sigma_p, sigma_h*sigma_h});
+            GSLU_VECTOR_VIEW (x_cjci_variance, 6,
+            {
+                sigma_x*sigma_x, sigma_y*sigma_y, sigma_z*sigma_z,
+                sigma_r*sigma_r, sigma_p*sigma_p, sigma_h*sigma_h
+            });
             gsl_matrix_view Sigma = gsl_matrix_view_array (x_cjci.Sigma, 6, 6);
             gsl_vector_view Sigma_diag = gsl_matrix_diagonal (&Sigma.matrix);
             gsl_vector_memcpy (&Sigma_diag.vector, &x_cjci_variance.vector);
 
             // stuff and send plink lcm msg
-            perllcm_van_plink_t plink = {
+            perllcm_van_plink_t plink =
+            {
                 .utime_i = x_lci->utime,
                 .utime_j = x_lcj->utime,
                 .prior   = 1,
@@ -126,7 +131,8 @@ perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const cha
     // keep list at finite length
     tdata->imglist = g_list_reverse (tdata->imglist); /* (reverse list so that we delete
                                                        * elements off tail) */
-    while (imglistlen > MAX_HYPOTHESES) {
+    while (imglistlen > MAX_HYPOTHESES)
+    {
         GList *eventk = tdata->imglist;
         perllcm_pose3d_t_destroy (eventk->data);
         tdata->imglist = g_list_delete_link (tdata->imglist, eventk);
@@ -146,7 +152,7 @@ link_thread (gpointer user)
     // link_thread state
     thread_data_t *tdata = calloc (1, sizeof (*tdata));
     tdata->imglist = NULL;
- 
+
     // min and max image overlap percentage
     tdata->min_overlap = 0.0;
     bot_param_get_double (shm->param, "rtvan.link_thread.min_overlap", &tdata->min_overlap);
@@ -155,19 +161,21 @@ link_thread (gpointer user)
     bot_param_get_double (shm->param, "rtvan.link_thread.max_overlap", &tdata->max_overlap);
 
     // lcm subscriptions
-    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub = 
-        perllcm_van_feature_collection_t_subscribe (shm->lcm, VAN_FEATURE_COLLECTION_CHANNEL, 
-                                                    &perllcm_van_feature_collection_t_callback, tdata);
+    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub =
+        perllcm_van_feature_collection_t_subscribe (shm->lcm, VAN_FEATURE_COLLECTION_CHANNEL,
+                &perllcm_van_feature_collection_t_callback, tdata);
 
-    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_subUw = 
-        perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_UW_CHANNEL, 
+    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_subUw =
+        perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_UW_CHANNEL,
                                     &perllcm_pose3d_t_callback, tdata);
-    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_subPeri = 
-        perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_PERI_CHANNEL, 
+    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_subPeri =
+        perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_PERI_CHANNEL,
                                     &perllcm_pose3d_t_callback, tdata);
 
-    while (!shm->done) {
-        struct timeval timeout = {
+    while (!shm->done)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 500000,
         };

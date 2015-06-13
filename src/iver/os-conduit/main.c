@@ -97,7 +97,7 @@ osd_init (senlcm_uvc_osd_t *osd, BotParam *param)
 }
 
 static void
-publish (state_t *state, perllcm_auv_os_conduit_raw_t *sensor, 
+publish (state_t *state, perllcm_auv_os_conduit_raw_t *sensor,
          const int64_t utime, const char msg[])
 {
 #if PUBLISH_OS_CONDUIT_RAW
@@ -117,7 +117,8 @@ static int
 publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
 {
     // $OSI -- vehicle state data
-    if (0==strncmp (msg, "$OSI", 4)) {
+    if (0==strncmp (msg, "$OSI", 4))
+    {
         char hex[128] = {'\0'};
         if (!nmea_arg (msg, 1, hex))
             ERROR ("unable to extract OSI hex");
@@ -206,7 +207,8 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 9, &altimeter))
             ERROR ("unable to parse OSI altimeter");
 
-        char park[128]; double park_time = 0;
+        char park[128];
+        double park_time = 0;
         if (!nmea_arg (msg, 10, park))
             ERROR ("unable to parse OSI park");
         else
@@ -216,13 +218,14 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
         if (!nmea_argf (msg, 11, &magnetic_dec))
             ERROR ("unable to parse OSI magnetic_dec");
 
-        senlcm_uvc_osi_t data = {
+        senlcm_uvc_osi_t data =
+        {
             .utime          = timestamp,
             .yaw_top        = yt,
             .yaw_bot        = yb,
             .pitch_left     = pl,
             .pitch_right    = pr,
-            .motor          = mot, 
+            .motor          = mot,
             .mode           = mode,
             .nextwp         = nextwp + 1,  // to match match vector map indexing
             .latitude       = DTOR * latitude,
@@ -234,12 +237,13 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
             .park_time      = park_time,
             .magnetic_dec   = magnetic_dec,
         };
-        senlcm_uvc_osi_t_publish (state->gsd->lcm, state->osc_osi_channel, &data); 
+        senlcm_uvc_osi_t_publish (state->gsd->lcm, state->osc_osi_channel, &data);
         return 1;
     }
 
     // $OPI -- vehicle power data
-    else if (0==strncmp (msg,"$OPI",4)) {
+    else if (0==strncmp (msg,"$OPI",4))
+    {
         double percent = 0;
         if (!nmea_argf (msg, 1, &percent))
             ERROR ("unable to parse OPI percent");
@@ -269,47 +273,52 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
             ERROR ("unable to parse OPI bs");
 
         int batt_state = 0;
-        switch (bs) {
-            case 'C':
-                batt_state = SENLCM_UVC_OPI_T_BS_CHARGING;
-                break;
-            case 'D':
-                batt_state = SENLCM_UVC_OPI_T_BS_DISCHARGING;
-                break;
-            case 'F':
-                batt_state = SENLCM_UVC_OPI_T_BS_FAULT;
-                break;
-            default:
-                ERROR ("unable to parse OPI batt_state");
+        switch (bs)
+        {
+        case 'C':
+            batt_state = SENLCM_UVC_OPI_T_BS_CHARGING;
+            break;
+        case 'D':
+            batt_state = SENLCM_UVC_OPI_T_BS_DISCHARGING;
+            break;
+        case 'F':
+            batt_state = SENLCM_UVC_OPI_T_BS_FAULT;
+            break;
+        default:
+            ERROR ("unable to parse OPI batt_state");
         }
 
         int leak = 0;
         if (!nmea_argi (msg, 8, &leak))
             ERROR ("unable to parse OPI leak");
 
-        senlcm_uvc_opi_t data = {
+        senlcm_uvc_opi_t data =
+        {
             .utime         = timestamp,
             .percent       = percent,
             .remaining_cap = remaining_cap,
             .pwr           = pwr,
             .volts         = volts,
             .current       = current,
-            .time_til      = time_til,	    
+            .time_til      = time_til,
             .batt_state    = batt_state,
             .leak          = leak,
         };
         senlcm_uvc_opi_t_publish (state->gsd->lcm, state->osc_opi_channel, &data);
         return 1;
-    }  
+    }
 
     // $C#P#R#T#D# -- uvc to host compass string
-    else if (0==strncmp (msg, "$C", 2)) {
+    else if (0==strncmp (msg, "$C", 2))
+    {
         double heading, pitch, roll, temp, depth = 0;
-        if (5!=sscanf (msg, "$C%lfP%lfR%lfT%lfD%lf", &heading, &pitch, &roll, &temp, &depth)) {
+        if (5!=sscanf (msg, "$C%lfP%lfR%lfT%lfD%lf", &heading, &pitch, &roll, &temp, &depth))
+        {
             ERROR ("unable to parse UVC Compass string!");
         }
-        
-        senlcm_uvc_rphtd_t data = {
+
+        senlcm_uvc_rphtd_t data =
+        {
             .utime         = timestamp,
             .rph           = {roll*DTOR, pitch*DTOR, heading*DTOR},
             .T             = temp,
@@ -320,7 +329,8 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
     }
 
     // $ACK -- uvc ack of backseat driver cmd
-    else if (0==strncmp (msg,"$ACK",4)) {
+    else if (0==strncmp (msg,"$ACK",4))
+    {
         int msg_type = 0;
         if (!nmea_argi (msg, 1, &msg_type))
             ERROR ("unable to parse ACK msg_type");
@@ -336,7 +346,8 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
         char usrset[128] = {'\0'};
         int usrnum = 0;
         char usrval[128] = {'\0'};
-        if (msg_type == SENLCM_UVC_ACK_T_ACK_ORWSET) {
+        if (msg_type == SENLCM_UVC_ACK_T_ACK_ORWSET)
+        {
             if (!nmea_arg (msg, 4, usrset))
                 ERROR ("unable to parse ACK usrset");
 
@@ -347,7 +358,8 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
                 ERROR ("unable to parse ACK usrval");
         }
 
-        senlcm_uvc_ack_t data = {
+        senlcm_uvc_ack_t data =
+        {
             .utime    = timestamp,
             .msg_type = msg_type,
             .status   = status,
@@ -356,7 +368,7 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
             .usrnum   = usrnum,
             .usrval   = usrval,
         };
-        senlcm_uvc_ack_t_publish (state->gsd->lcm, state->osc_ack_channel, &data); 
+        senlcm_uvc_ack_t_publish (state->gsd->lcm, state->osc_ack_channel, &data);
         return 1;
     }
 
@@ -366,7 +378,7 @@ publish_from_uvc (state_t *state, const char *msg, const int64_t timestamp)
 
 static void
 compass_query_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                    const perllcm_heartbeat_t *beat, void *user)
+                        const perllcm_heartbeat_t *beat, void *user)
 {
     state_t *state = user;
 
@@ -385,16 +397,16 @@ osd_query_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     state_t *state = user;
 
     int g = state->osd.gps, c = state->osd.compass, s = state->osd.state,
-    p = state->osd.power, y = state->osd.ysi;
+        p = state->osd.power, y = state->osd.ysi;
 
     char msg[256];
 
     nmea_sprintf (msg, "$OSD,%s%s%s%s%s,*",
-                        g == 0 ? "," : "G,", 
-                        c == 0 ? "," : "C,", 
-                        s == 0 ? "," : "S,",
-                        p == 0 ? "," : "P,", 
-                        y == 0 ? "," : "Y,");
+                  g == 0 ? "," : "G,",
+                  c == 0 ? "," : "C,",
+                  s == 0 ? "," : "S,",
+                  p == 0 ? "," : "P,",
+                  y == 0 ? "," : "Y,");
 
     int64_t osd_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
@@ -425,7 +437,7 @@ omp_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     char msg[256];
     nmea_sprintf  (msg, "$OMP,%02x%02x%02x%02x%02x,00,%d*",
                    fyt, fyb, fpl, fpr, ms, to);
-    
+
     int64_t omp_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
     publish (state, &state->os_conduit.omp, omp_utime, msg);
@@ -454,10 +466,10 @@ omstop_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                  const senlcm_uvc_omstop_t *cmd, void *user)
 {
     state_t *state = user;
-    
+
     char msg[256];
     nmea_sprintf (msg, "$OMSTOP,%d*", cmd->msg_flag);
-    
+
     int64_t omstop_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
     publish (state, &state->os_conduit.omstop, omstop_utime, msg);
@@ -471,7 +483,7 @@ omload_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     char msg[256];
     nmea_sprintf (msg, "$OMLOAD,%s,%d*", cmd->directory_name, cmd->msg_flag);
-    
+
     int64_t omload_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
     publish (state, &state->os_conduit.omload, omload_utime, msg);
@@ -485,7 +497,7 @@ ojw_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     char msg[256];
     nmea_sprintf (msg, "$OJW,%d*", cmd->waypoint);
-    
+
     int64_t ojw_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
     publish (state, &state->os_conduit.ojw, ojw_utime, msg);
@@ -498,14 +510,14 @@ opos_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     state_t *state = user;
 
     char msg[256];
-    //nmea_sprintf (msg, "$OPOS,%f,%f,%f,%f,%f*", 
+    //nmea_sprintf (msg, "$OPOS,%f,%f,%f,%f,%f*",
     //        cmd->latitude, cmd->longitude, cmd->speed, cmd->conductivity, cmd->temperature);
 
     // just pack lat/lon/speed for now JMW 08/12 HACK
-    nmea_sprintf (msg, "$OPOS,%f,%f,%f,,*", 
-            cmd->latitude*UNITS_RADIAN_TO_DEGREE, 
-            cmd->longitude*UNITS_RADIAN_TO_DEGREE, 
-            cmd->speed*UNITS_METER_PER_SEC_TO_KNOT);
+    nmea_sprintf (msg, "$OPOS,%f,%f,%f,,*",
+                  cmd->latitude*UNITS_RADIAN_TO_DEGREE,
+                  cmd->longitude*UNITS_RADIAN_TO_DEGREE,
+                  cmd->speed*UNITS_METER_PER_SEC_TO_KNOT);
 
     int64_t opos_utime = timestamp_now ();
     gsd_write (state->gsd, msg, strlen (msg));
@@ -518,7 +530,7 @@ lcm_thread (void *context)
     generic_sensor_driver_t *gsd = context;
     while (!gsd->done)
         lcm_handle (gsd->lcm);
-    
+
     return 0;
 }
 
@@ -539,7 +551,7 @@ main (int argc, char *argv[])
     state->gsd = gsd_create (argc, argv, "os-conduit", &myopts);
     gsd_canonical (state->gsd, '\r','\n');
     gsd_launch (state->gsd);
-        
+
     osd_init (&state->osd, state->gsd->params);
 
     // parse lcm channel names
@@ -563,7 +575,7 @@ main (int argc, char *argv[])
     state->hb10_channel = lcmu_channel_get_heartbeat (state->prefix, 10);
 
     // subscribe to os-conduit commmand channels
-    senlcm_uvc_osd_t_subscribe (state->gsd->lcm, state->osc_osd_channel, &osd_callback, state);    
+    senlcm_uvc_osd_t_subscribe (state->gsd->lcm, state->osc_osd_channel, &osd_callback, state);
     senlcm_uvc_omp_t_subscribe (state->gsd->lcm, state->osc_omp_channel, &omp_callback, state);
     senlcm_uvc_ojw_t_subscribe (state->gsd->lcm, state->osc_ojw_channel, &ojw_callback, state);
     senlcm_uvc_opos_t_subscribe (state->gsd->lcm, state->osc_opos_channel, &opos_callback, state);
@@ -575,7 +587,7 @@ main (int argc, char *argv[])
     perllcm_heartbeat_t_subscribe (state->gsd->lcm, state->hb1_channel, &osd_query_callback, state);
 
     // query compass at 10Hz to reverse engineer ocean-server soft-iron compass calibration
-/*     perllcm_heartbeat_t_subscribe (state->gsd->lcm, state->hb10_channel, &compass_query_callback, state); */
+    /*     perllcm_heartbeat_t_subscribe (state->gsd->lcm, state->hb10_channel, &compass_query_callback, state); */
 
     // launch lcm_thread
     pthread_t tid;
@@ -584,20 +596,25 @@ main (int argc, char *argv[])
 
     gsd_flush (state->gsd);
     gsd_reset_stats (state->gsd);
-    while (!state->gsd->done) {
+    while (!state->gsd->done)
+    {
         // read stream
         char buf[1024];
         int64_t timestamp;
         int len = gsd_read (state->gsd, buf, sizeof buf, &timestamp);
-        if (len > 0) {
-            if (publish_from_uvc (state, buf, timestamp)) {
+        if (len > 0)
+        {
+            if (publish_from_uvc (state, buf, timestamp))
+            {
                 gsd_update_stats (state->gsd, 1);
             }
-            else {
+            else
+            {
                 gsd_update_stats (state->gsd, -1);
             }
         }
-        else {
+        else
+        {
             gsd_update_stats (state->gsd, -1);
         }
     }

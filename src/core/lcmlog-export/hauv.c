@@ -25,8 +25,8 @@ hauv_bs_cnv_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_dvl_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_dvl_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                          const hauv_bs_dvl_2_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -49,8 +49,8 @@ hauv_bs_dvl_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_dvl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_dvl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_dvl_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -72,8 +72,8 @@ hauv_bs_dvl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_imu_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_imu_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_imu_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -93,8 +93,8 @@ hauv_bs_imu_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_nvg_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_nvg_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_nvg_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -111,15 +111,15 @@ hauv_bs_nvg_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "altitude",         "%f",      msg->altitude);
     TEXTREAD_ADD_FIELD (tr, "depth",            "%f",      msg->depth);
     TEXTREAD_ADD_FIELD (tr, "heading",          "%f",      msg->heading);
-    TEXTREAD_ADD_FIELD (tr, "roll",             "%f",      msg->roll);    
+    TEXTREAD_ADD_FIELD (tr, "roll",             "%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch",            "%f",      msg->pitch);
     TEXTREAD_ADD_FIELD (tr, "time_compute",     "%"PRId64, msg->time_compute);
     textread_stop (tr);
 }
 
 
-void 
-hauv_bs_nvr_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_nvr_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_nvr_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -138,8 +138,8 @@ hauv_bs_nvr_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_pit_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_pit_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_pit_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -154,8 +154,8 @@ hauv_bs_pit_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_raw_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -167,8 +167,8 @@ hauv_bs_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_rbs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_rbs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_rbs_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -186,8 +186,8 @@ hauv_bs_rbs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_rcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_rcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_rcm_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -205,8 +205,8 @@ hauv_bs_rcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_rdp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_rdp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_rdp_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -220,8 +220,8 @@ hauv_bs_rdp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_rnv_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_rnv_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                          const hauv_bs_rnv_2_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -243,8 +243,8 @@ hauv_bs_rnv_2_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_bs_rnv_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_bs_rnv_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_bs_rnv_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -261,8 +261,8 @@ hauv_bs_rnv_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_didson_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_didson_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                            const hauv_didson_raw_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -271,7 +271,8 @@ hauv_didson_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "time_received",    "%"PRId64, msg->time_received);
     TEXTREAD_ADD_FIELD (tr, "length",           "%"PRId32, msg->length);
-    for (int i=0; i<12; i++) {
+    for (int i=0; i<12; i++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "data(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRIu8, i < msg->length ? msg->data[i] : 0);
@@ -280,16 +281,16 @@ hauv_didson_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_didson_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_didson_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_didson_t *msg, void *user)
 {
     return;
 }
 
 
-void 
-hauv_pl_gbp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_pl_gbp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_pl_gbp_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -306,8 +307,8 @@ hauv_pl_gbp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_pl_ghp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_pl_ghp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_pl_ghp_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -322,8 +323,8 @@ hauv_pl_ghp_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_pl_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_pl_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_pl_raw_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -335,8 +336,8 @@ hauv_pl_raw_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_pl_san_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_pl_san_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_pl_san_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -349,8 +350,8 @@ hauv_pl_san_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_pl_sus_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_pl_sus_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const hauv_pl_sus_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -362,8 +363,8 @@ hauv_pl_sus_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-hauv_vehicle_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+hauv_vehicle_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                               const hauv_vehicle_state_t *msg, void * user)
 {
     lcmlog_export_t *lle = user;
