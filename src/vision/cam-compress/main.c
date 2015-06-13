@@ -38,7 +38,7 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         int output_width = image->width / step;
         int output_height =image->height / step;
         short *image_buffer;
-        unsigned char *image_8bit, *image_8bit_rgb, *image_8bit_out;
+        unsigned char *image_8bit = NULL, *image_8bit_rgb = NULL, *image_8bit_out = NULL;
         unsigned char *output_buffer = NULL;
         unsigned long output_size;
 
@@ -85,6 +85,8 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         acfrlcm_compressed_image_t_publish(state->lcm, state->out_channel, &cimage);
 
         free(image_8bit);
+        if(image_8bit_rgb != NULL)
+            free(image_8bit_rgb);
         tjDestroy(jpeg_compress);
         tjFree(output_buffer);
 
