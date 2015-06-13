@@ -20,6 +20,7 @@
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
 #include "acfr-common/timestamp.h"
+#include "acfr-common/units.h"
 #include "perls-lcmtypes/senlcm_seabotix_sensors_t.h"
 
 // libpcap network filter
@@ -54,10 +55,10 @@ int parse_vlbv(const unsigned char *d, lcm_t *lcm, int64_t timestamp)
     memset(&rov, 0, sizeof(senlcm_seabotix_sensors_t));
 
     rov.utime = timestamp;
-    rov.heading = d2f(&d[8]);
+    rov.heading = d2f(&d[8]) * DTOR;
     rov.depth = d2f(&d[12]);
-    rov.pitch = d2f(&d[16]);
-    rov.roll = d2f(&d[20]);
+    rov.pitch = d2f(&d[16]) * DTOR;
+    rov.roll = d2f(&d[20]) * DTOR;
     rov.turns = d2f(&d[24]);
     rov.temperature_internal = d2f(&d[28]);
     rov.temperature_external = d2f(&d[32]);
