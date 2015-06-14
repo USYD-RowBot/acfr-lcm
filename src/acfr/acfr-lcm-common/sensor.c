@@ -6,6 +6,7 @@ acfr_sensor_t *acfr_sensor_create(lcm_t *lcm, char *rootkey)
     acfr_sensor_t *s = (acfr_sensor_t *)malloc(sizeof(acfr_sensor_t));
     if(acfr_sensor_load_config(lcm, s, rootkey))
     {
+        
         if(acfr_sensor_open(s))
             return s;
         else
@@ -68,6 +69,8 @@ int acfr_sensor_load_config(lcm_t *lcm, acfr_sensor_t *s, char *rootkey)
 
         sprintf(key, "%s.port", rootkey);
         s->inet_port = bot_param_get_str_or_fail(s->param, key);
+        
+        
     }
 
     s->port_open = 0;
@@ -99,6 +102,7 @@ int acfr_sensor_open(acfr_sensor_t *s)
     }
     else if(s->io_type == io_tcp)
     {
+    
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
@@ -110,7 +114,6 @@ int acfr_sensor_open(acfr_sensor_t *s)
 //	        printf("Could not connect to %s on port %s\n", s->ip, s->inet_port);
 //    		return 0;
 //        }
-
         int retry_count = 0;
         int ret;
         int i = 0;

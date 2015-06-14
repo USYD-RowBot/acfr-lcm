@@ -23,6 +23,9 @@ add_custom_target (clean
   COMMAND cmake ..
   )
 
+add_custom_target (install
+  COMMAND cmake ..
+  )
 #***********************************************************************
 # add third-party library targets below in alphabetical order
 #***********************************************************************
