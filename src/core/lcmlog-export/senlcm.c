@@ -1116,6 +1116,9 @@ senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "ship_roll","%6.4f",      msg->ship_roll);
     TEXTREAD_ADD_FIELD (tr, "ship_pitch","%6.4f",      msg->ship_pitch);
     TEXTREAD_ADD_FIELD (tr, "ship_heading","%6.4f",      msg->ship_heading);
+    TEXTREAD_ADD_FIELD (tr, "target_x","%6.4f",      msg->target_x);
+    TEXTREAD_ADD_FIELD (tr, "target_y","%6.4f",      msg->target_y);
+    TEXTREAD_ADD_FIELD (tr, "target_z","%6.4f",      msg->target_z);
 
     textread_stop (tr);
 }
