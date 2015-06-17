@@ -366,9 +366,9 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     usbl_data.ship_roll = usbl->ship_roll * RTOD;
     usbl_data.ship_pitch = usbl->ship_pitch * RTOD;
     usbl_data.ship_heading = usbl->ship_heading * RTOD;
-    //usbl_data.target_x = usbl->target_x;
-    //usbl_data.target_y = usbl->target_y;
-    //usbl_data.target_z = usbl->target_z;
+    usbl_data.target_x = usbl->target_x;
+    usbl_data.target_y = usbl->target_y;
+    usbl_data.target_z = usbl->target_z;
     
     if(state->mode == NAV)
        	state->slam->handle_evologicsfix_data(usbl_data);
