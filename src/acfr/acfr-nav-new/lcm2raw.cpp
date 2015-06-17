@@ -75,6 +75,8 @@ int main(int argc, char **argv) {
         state.lcm->subscribeFunction("USBL_FIX.*", on_evologics, &state);
         state.lcm->subscribeFunction("UVC_DVL", on_uvc_dvl, &state);
         state.lcm->subscribeFunction("UVC_RPH", on_uvc_rph, &state);
+        state.lcm->subscribeFunction("SEABOTIX_SENSORS", on_seabotix_sensors, &state);
+        //state.lcm->subscribeFunction("MICRON_SOUNDER", on_micron_sounder, &state);
         
         
         while(!state.lcm->handle());
