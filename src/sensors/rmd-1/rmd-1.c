@@ -55,8 +55,10 @@ main (int argc, char *argv[])
             perror("Select failure: ");
         else if(ret != 0)
         {
+			memset(buf, 0, sizeof(buf));
             rmd.utime = timestamp_now();
-            if(acfr_sensor_read(sensor, buf, sizeof(buf) - 1) > 0)
+			ret = acfr_sensor_read(sensor, buf, sizeof(buf));
+            if(ret > 4)
             {
                 // parse out the voltage value leaving the mV off then end
                 memset(value, 0, sizeof(value));
