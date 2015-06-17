@@ -29,7 +29,7 @@ main (int argc, char *argv[])
 
     const char channel[] = "PROSILICA_C";
     //const char channel[] = "SENSOR.CAM1.DATA";
-    bot_core_image_t_subscription_t *sub = 
+    bot_core_image_t_subscription_t *sub =
         bot_core_image_t_subscribe (lcm, channel, &my_handler, NULL);
 
     while (1)

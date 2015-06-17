@@ -1,7 +1,7 @@
 /* 	Seabird Depth LCM module
 	uses code lifted from the original vehicle code, SIO_seabird_depth.c
 	and uses ecopuck as a basis
-	
+
 	17/5/2011
 	Lachlan Toohey
 */
@@ -30,7 +30,8 @@
 #define SEABIRD_LAT_CMD      "LATITUDE=%i\r\n" /* Latitude command - should this somehow be variable/configurable? */
 
 // parse routine lifted from SIO_seabird_depth.h from vehicle code
-static int parseSeabirdDepth(char *buf, int buf_len, senlcm_seabird_depth_t *seabird_depth) { 
+static int parseSeabirdDepth(char *buf, int buf_len, senlcm_seabird_depth_t *seabird_depth)
+{
     double depth;
 
     if (1 == sscanf(buf,"%lf", &depth))
@@ -44,14 +45,16 @@ static int parseSeabirdDepth(char *buf, int buf_len, senlcm_seabird_depth_t *sea
     }
 }
 
-static int myopts(generic_sensor_driver_t *gsd) {
+static int myopts(generic_sensor_driver_t *gsd)
+{
     getopt_add_description (gsd->gopt, "Seabird Depth driver.");
     getopt_add_int(gsd->gopt, 'l', "latitude", "22", "Approximate Latitude for Seabird Depth");
     return 0;
 }
 
-int main (int argc, char *argv[]) {
-		
+int main (int argc, char *argv[])
+{
+
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_canonical (gsd, '\r','\n');
     gsd_launch (gsd);
@@ -75,16 +78,18 @@ int main (int argc, char *argv[]) {
 
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
-    
+
     // loop to collect data, parse and send it on its way
-    while(!gsd->done) {
-    	char buf[256];
+    while(!gsd->done)
+    {
+        char buf[256];
         int64_t timestamp;
         int len = gsd_read (gsd, buf, 256, &timestamp);
-        
+
         senlcm_seabird_depth_t seabird_depth;
         seabird_depth.utime = timestamp;
-        if(parseSeabirdDepth(buf, len, &seabird_depth)) {
+        if(parseSeabirdDepth(buf, len, &seabird_depth))
+        {
             senlcm_seabird_depth_t_publish (gsd->lcm, gsd->channel, &seabird_depth);
             gsd_update_stats (gsd, 1);
         }
@@ -93,8 +98,8 @@ int main (int argc, char *argv[]) {
     }
 }
 
-		
-    
-    
-    
+
+
+
+
 

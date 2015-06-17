@@ -14,7 +14,7 @@
 #include "perls-lcmtypes/bot_core_raw_t.h"
 
 static void
-my_handler (const lcm_recv_buf_t *rbuf, const char * channel, 
+my_handler (const lcm_recv_buf_t *rbuf, const char * channel,
             const bot_core_raw_t * msg, void * user)
 {
     static int count = 0;

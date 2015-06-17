@@ -3,15 +3,19 @@
 #include "perls-math/math.h"
 #include "perls-vision/vision.h"
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 
     double scale = 1;
-    
+
     gsl_matrix *X1 = gsl_matrix_alloc (3, 200);
-    FILE * fX1 = fopen ("../share/examples/_test_corr_files/X.txt", "rb");  gsl_matrix_fscanf (fX1, X1);  fclose(fX1);
+    FILE * fX1 = fopen ("../share/examples/_test_corr_files/X.txt", "rb");
+    gsl_matrix_fscanf (fX1, X1);
+    fclose(fX1);
 
     double angle = 0.0;
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<3; i++)
+    {
         FILE *gp = popen("gnuplot","w"); // 'gp' is the pipe descriptor
         fprintf (gp, "set size ratio -1\n");
         fprintf (gp, "set view equal\n");

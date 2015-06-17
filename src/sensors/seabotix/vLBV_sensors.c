@@ -20,7 +20,7 @@ int parse_vlbv(char *d, lcm_t *lcm, int64_t timestamp)
 {
     senlcm_seabotix_vlbv_t rov;
     memset(&rov, 0, sizeof(senlcm_seabotix_vlbv_t));
-    
+
     rov.utime = timestamp;
     rov.heading = d2f(&d[8]);
     rov.depth = d2f(&d[12]);
@@ -29,12 +29,12 @@ int parse_vlbv(char *d, lcm_t *lcm, int64_t timestamp)
     rov.turns = d2f(&d[24]);
     rov.temperature_internal = d2f(&d[28]);
     rov.temperature_external = d2f(&d[32]);
-    
+
     rov.PF_faults = d[36];
     rov.PF_current = d2current(d[37]);
     rov.PF_speed = d2speed(d[38]);
     rov.PF_temperature = d[39];
-    
+
     rov.PA_faults = d[40];
     rov.PA_current = d2current(d[41]);
     rov.PA_speed = d2speed(d[42]);
@@ -61,12 +61,12 @@ int parse_vlbv(char *d, lcm_t *lcm, int64_t timestamp)
     rov.SV_temperature = d[59];
 
     senlcm_seabotix_vlbv_t_publish(lcm, "SEABOTIX_STATS", &rov);
-    
+
     return 1;
 }
-    
-    
-    
+
+
+
 
 int program_exit;
 void
@@ -90,20 +90,20 @@ int main (int argc, char *argv[])
         printf("Could not create the multicast listen port\n");
         return 0;
     }
-    
+
     // start lcm
     //lcm_t *lcm = lcm_create(NULL);
-    
-    
+
+
     fd_set rfds;
     struct timeval tv;
     uint64_t timestamp;
     char buf[256];
-    
+
     buf[0] = 0;
     recvfrom(sockfd, &buf, 1, MSG_ERRQUEUE, NULL, NULL);
     printf("Got message from error queue: %d\n", buf[0]);
-    
+
     // Loop and listen for data on the UDP socket
     while(!program_exit)
     {
@@ -111,7 +111,7 @@ int main (int argc, char *argv[])
         FD_SET(sockfd, &rfds);
         tv.tv_sec = 1;
         tv.tv_usec = 0;
-	    
+
         int ret = select(FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1)
             perror("Select failure: ");
@@ -124,21 +124,22 @@ int main (int argc, char *argv[])
             {
                 recvfrom(sockfd, &buf, 2, 0, NULL, NULL);
                 printf("Got data, %X, %X\n", buf[0] && 0xFF, buf[1] & 0xFF);
-            } while(buf[0] != 0x69 && buf[1] != 0x54);
-            
+            }
+            while(buf[0] != 0x69 && buf[1] != 0x54);
+
             // now read the rest of the data
             int data_len = 2;
             while(data_len < MSG_LEN)
                 data_len += recvfrom(sockfd, &buf[data_len], MSG_LEN - data_len, 0, NULL, NULL);
-                
+
             //parse_vlbv(buf, lcm, timestamp);
         }
         else
             printf("Timeout\n");
     }
-    
+
     close(sockfd);
-    
+
     return 1;
 }
-            
+

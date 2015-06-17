@@ -49,9 +49,15 @@ print_relorient_results (gsl_matrix *R, gsl_vector *t, double E)
     gsl_matrix *ans_R = gsl_matrix_alloc (3,3);
     gsl_vector *ans_t = gsl_vector_alloc (3);
     gsl_vector *ans_E = gsl_vector_alloc (1);
-    FILE *fR = fopen ("../share/examples/_test_corr_files/ans_R_horn.txt", "rb");  gsl_matrix_fscanf (fR, ans_R);  fclose(fR);
-    FILE *ft = fopen ("../share/examples/_test_corr_files/ans_t_horn.txt", "rb");  gsl_vector_fscanf (ft, ans_t);  fclose(ft);
-    FILE *fE = fopen ("../share/examples/_test_corr_files/ans_E_horn.txt", "rb");  gsl_vector_fscanf (fE, ans_E);  fclose(fE);
+    FILE *fR = fopen ("../share/examples/_test_corr_files/ans_R_horn.txt", "rb");
+    gsl_matrix_fscanf (fR, ans_R);
+    fclose(fR);
+    FILE *ft = fopen ("../share/examples/_test_corr_files/ans_t_horn.txt", "rb");
+    gsl_vector_fscanf (ft, ans_t);
+    fclose(ft);
+    FILE *fE = fopen ("../share/examples/_test_corr_files/ans_E_horn.txt", "rb");
+    gsl_vector_fscanf (fE, ans_E);
+    fclose(fE);
 
     gslu_matrix_printf (ans_R,"R");
     gslu_vector_printf (ans_t,"t");
@@ -69,16 +75,17 @@ print_relorient_results (gsl_matrix *R, gsl_vector *t, double E)
     gsl_matrix_memcpy (&err_mat.matrix, R);
     gsl_matrix_sub (&err_mat.matrix, ans_R);
     double R_err = 0;
-    for (size_t i=0; i<3; i++) {
+    for (size_t i=0; i<3; i++)
+    {
         gsl_vector_view col = gsl_matrix_column (&err_mat.matrix, i);
         R_err = R_err + gslu_vector_norm (&col.vector);
     }
 
     printf("\n-----------------------\n");
-        if (t_err < thresh && R_err < thresh && fabs(E-gsl_vector_get (ans_E, 0)) < thresh)
-            printf ("Test1: REL ORIENT: PASSED (t err =%g / R err=%g / E err =%g)!\n",t_err, R_err, fabs(E-gsl_vector_get (ans_E, 0)));
-        else
-            printf ("Test1: REL ORIENT: FAILED (t err =%g / R err=%g / E err =%g)!\n",t_err, R_err, fabs(E-gsl_vector_get (ans_E, 0)));
+    if (t_err < thresh && R_err < thresh && fabs(E-gsl_vector_get (ans_E, 0)) < thresh)
+        printf ("Test1: REL ORIENT: PASSED (t err =%g / R err=%g / E err =%g)!\n",t_err, R_err, fabs(E-gsl_vector_get (ans_E, 0)));
+    else
+        printf ("Test1: REL ORIENT: FAILED (t err =%g / R err=%g / E err =%g)!\n",t_err, R_err, fabs(E-gsl_vector_get (ans_E, 0)));
 
     // clean up
     gsl_matrix_free (ans_R);
@@ -100,13 +107,27 @@ int main(int argc, char *argv[])
     gsl_matrix *uv2 = gsl_matrix_alloc(2, n);
 
     // to generate these files, do make examples
-    FILE *fk = fopen ("../share/examples/_test_corr_files/k.txt", "rb");  gsl_matrix_fscanf (fk, K); fclose(fk);
-    FILE *fuv1 = fopen ("../share/examples/_test_corr_files/uv1.txt", "rb");  gsl_matrix_fscanf (fuv1, uv1);  fclose(fuv1);
-    FILE *fuv2 = fopen ("../share/examples/_test_corr_files/uv2.txt", "rb");  gsl_matrix_fscanf (fuv2, uv2);  fclose(fuv2);
-    FILE *fx12 = fopen ("../share/examples/_test_corr_files/x12.txt", "rb");  gsl_vector_fscanf (fx12, x12);  fclose(fx12);
-    FILE *fx21 = fopen ("../share/examples/_test_corr_files/x21.txt", "rb");  gsl_vector_fscanf (fx21, x21);  fclose(fx21);
-    FILE *fp12 = fopen ("../share/examples/_test_corr_files/p12.txt", "rb");  gsl_matrix_fscanf (fp12, p12);  fclose(fp12);
-    FILE *fp21 = fopen ("../share/examples/_test_corr_files/p21.txt", "rb");  gsl_matrix_fscanf (fp21, p21);  fclose(fp21);
+    FILE *fk = fopen ("../share/examples/_test_corr_files/k.txt", "rb");
+    gsl_matrix_fscanf (fk, K);
+    fclose(fk);
+    FILE *fuv1 = fopen ("../share/examples/_test_corr_files/uv1.txt", "rb");
+    gsl_matrix_fscanf (fuv1, uv1);
+    fclose(fuv1);
+    FILE *fuv2 = fopen ("../share/examples/_test_corr_files/uv2.txt", "rb");
+    gsl_matrix_fscanf (fuv2, uv2);
+    fclose(fuv2);
+    FILE *fx12 = fopen ("../share/examples/_test_corr_files/x12.txt", "rb");
+    gsl_vector_fscanf (fx12, x12);
+    fclose(fx12);
+    FILE *fx21 = fopen ("../share/examples/_test_corr_files/x21.txt", "rb");
+    gsl_vector_fscanf (fx21, x21);
+    fclose(fx21);
+    FILE *fp12 = fopen ("../share/examples/_test_corr_files/p12.txt", "rb");
+    gsl_matrix_fscanf (fp12, p12);
+    fclose(fp12);
+    FILE *fp21 = fopen ("../share/examples/_test_corr_files/p21.txt", "rb");
+    gsl_matrix_fscanf (fp21, p21);
+    fclose(fp21);
 
 
     // test1 : vis_tv_relorient_horn
@@ -130,9 +151,9 @@ int main(int argc, char *argv[])
     int nsamples = 1;
     //tic();
     GSLU_VECTOR_VIEW (x21_prior, 6, {0,0,0,0,0,0});
-    gsl_vector *min_x21 = vis_tv_use_navprior (K, uv1, uv2, 
-                                               x21, p21, &x21_prior.vector,
-                                               nsamples, verbose);
+    gsl_vector *min_x21 = vis_tv_use_navprior (K, uv1, uv2,
+                          x21, p21, &x21_prior.vector,
+                          nsamples, verbose);
     //toc();
     printf ("\n");
     gslu_vector_printfc (x21, "x21 given", NULL, CblasTrans);
@@ -154,7 +175,9 @@ int main(int argc, char *argv[])
     //toc();
 
     gsl_vector *ans_mdist = gsl_vector_alloc (1);
-    FILE *fmd = fopen ("../share/examples/_test_corr_files/ans_mdist.txt", "rb");  gsl_vector_fscanf (fmd, ans_mdist);  fclose(fmd);
+    FILE *fmd = fopen ("../share/examples/_test_corr_files/ans_mdist.txt", "rb");
+    gsl_vector_fscanf (fmd, ans_mdist);
+    fclose(fmd);
 
     double md_err = fabs (mdist - gsl_vector_get (ans_mdist, 0));
     printf("\n-----------------------\n");

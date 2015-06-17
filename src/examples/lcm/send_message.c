@@ -22,7 +22,8 @@ send_message (lcm_t * lcm)
     struct timezone tz;
     gettimeofday(&tv, &tz);
 
-    perllcm_van_example_t my_data = {
+    perllcm_van_example_t my_data =
+    {
         .utime = tv.tv_sec*1E6+tv.tv_usec,
         .position = { 1, 2, 3 },
         .orientation = { 1, 0, 0, 0 },

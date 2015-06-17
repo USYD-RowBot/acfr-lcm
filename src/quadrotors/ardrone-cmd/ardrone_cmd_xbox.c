@@ -24,7 +24,7 @@
 
 /**** LCM COMMUNICATION ******************************************************
  *
- *    LCM INPUTS: 
+ *    LCM INPUTS:
  *          - xbox controller
  *    LCM OUTPUTS:
  *          - ardrone_cmd
@@ -39,7 +39,7 @@
  *****************************************************************************/
 
 //----------------------------------------------------------------------------------
-// STATE STRUCTURE 
+// STATE STRUCTURE
 //----------------------------------------------------------------------------------
 typedef struct _state_t state_t;
 struct _state_t
@@ -47,11 +47,11 @@ struct _state_t
     int done;
     int is_daemon;
     lcm_t *lcm;
-    
+
     senlcm_xbox_controller_t xbox_ctrl_state;
-    
+
     const char *xbox_lcm_chan;
-    const char *cmd_pub_lcm_chan;    
+    const char *cmd_pub_lcm_chan;
 };
 //Init the state structure to zero
 state_t state = {0};
@@ -69,12 +69,12 @@ bool land_toggle = false;
 void
 xbox_controller_cb (const lcm_recv_buf_t *rbuf, const char *channel,
                     const senlcm_xbox_controller_t *msg, void *user)
-{    
+{
     memcpy (&state.xbox_ctrl_state, msg, sizeof (* msg));
 }
 
 //----------------------------------------------------------------------------------
-// Send LCM command messages to drone based on state 
+// Send LCM command messages to drone based on state
 //----------------------------------------------------------------------------------
 void
 send_drone_cmd (void)
@@ -82,70 +82,79 @@ send_drone_cmd (void)
     // copy joystick state pointer over from state
     senlcm_xbox_controller_t *x = &state.xbox_ctrl_state;
 
-    bool takeoff = false; 
-    bool camera = false; 
+    bool takeoff = false;
+    bool camera = false;
     bool emergency = false;
     bool hover = false;
 
     int change_speed = 0;
 
     //set emergency kill (same as reset signal)
-    if (x->l_trig == AXIS_MAX && x->r_trig == AXIS_MAX && x->l_bump && x->r_bump && timestamp_now()-emergency_delay > BUTTON_TOLERANCE) {
+    if (x->l_trig == AXIS_MAX && x->r_trig == AXIS_MAX && x->l_bump && x->r_bump && timestamp_now()-emergency_delay > BUTTON_TOLERANCE)
+    {
         emergency = true;
         emergency_delay = timestamp_now ();
-    } 
+    }
 
     // determine command: takeoff, land hover, reset, camera switch, ctrl_toggle or speed controls
 
-    else if (x->start_btn && timestamp_now()-takeoff_delay > BUTTON_TOLERANCE) {
+    else if (x->start_btn && timestamp_now()-takeoff_delay > BUTTON_TOLERANCE)
+    {
         takeoff = true;
         takeoff_delay = timestamp_now ();
     }
 
-    else if (x->a_btn && timestamp_now()-hover_delay > BUTTON_TOLERANCE) {
+    else if (x->a_btn && timestamp_now()-hover_delay > BUTTON_TOLERANCE)
+    {
         hover = true;
         hover_delay = timestamp_now ();
     }
 
-    else if (x->b_btn && timestamp_now()-camera_delay > BUTTON_TOLERANCE) {
+    else if (x->b_btn && timestamp_now()-camera_delay > BUTTON_TOLERANCE)
+    {
         camera = true;
         camera_delay = timestamp_now ();
     }
 
-    else if (x->dpad_u && timestamp_now()-change_speed_delay > BUTTON_TOLERANCE){
+    else if (x->dpad_u && timestamp_now()-change_speed_delay > BUTTON_TOLERANCE)
+    {
         change_speed = 1;
         change_speed_delay = timestamp_now ();
     }
 
-    else if (x->dpad_d && timestamp_now()-change_speed_delay > BUTTON_TOLERANCE) {
+    else if (x->dpad_d && timestamp_now()-change_speed_delay > BUTTON_TOLERANCE)
+    {
         change_speed = -1;
-        change_speed_delay = timestamp_now ();        
+        change_speed_delay = timestamp_now ();
     }
-    
-    else if (x->x_btn && timestamp_now()-follow_toggle_delay > BUTTON_TOLERANCE) {
+
+    else if (x->x_btn && timestamp_now()-follow_toggle_delay > BUTTON_TOLERANCE)
+    {
         follow_toggle = !follow_toggle;
         follow_toggle_delay = timestamp_now ();
     }
- 
-    else if (x->y_btn && timestamp_now()-land_toggle_delay > BUTTON_TOLERANCE) {
+
+    else if (x->y_btn && timestamp_now()-land_toggle_delay > BUTTON_TOLERANCE)
+    {
         land_toggle = !land_toggle;
         land_toggle_delay = timestamp_now ();
     }
 
-	//determine drive messages - BY PID CONTROLLER
-	//--------------------------------------------------------------------------
+    //determine drive messages - BY PID CONTROLLER
+    //--------------------------------------------------------------------------
     //if (ctrl_toggle == true) {
-        //printf ("PID CONTROL\n");
-        // set perllcm_ardrone_cmd_t.controller to TRUE
+    //printf ("PID CONTROL\n");
+    // set perllcm_ardrone_cmd_t.controller to TRUE
     //}
 
     // determine drive messages - BY XBOX CONTROLLER
     // -------------------------------------------------------------------------
-    if ((fabs (x->l_stick_x) > AXIS_ZERO_T_MAX) || 
-             (fabs (x->l_stick_y) > AXIS_ZERO_T_MAX) || 
-             (fabs( x->r_stick_x) > AXIS_ZERO_T_MAX) || 
-             (fabs (x->r_stick_y) > AXIS_ZERO_T_MAX)) {
-        
+    if ((fabs (x->l_stick_x) > AXIS_ZERO_T_MAX) ||
+            (fabs (x->l_stick_y) > AXIS_ZERO_T_MAX) ||
+            (fabs( x->r_stick_x) > AXIS_ZERO_T_MAX) ||
+            (fabs (x->r_stick_y) > AXIS_ZERO_T_MAX))
+    {
+
         // set ctrl_toggle to OFF
         follow_toggle = false;
         land_toggle = false;
@@ -155,8 +164,9 @@ send_drone_cmd (void)
 
     int64_t utime = timestamp_now ();
 
-    //send command messages    
-    perllcm_ardrone_cmd_t cmd_state = {
+    //send command messages
+    perllcm_ardrone_cmd_t cmd_state =
+    {
         .utime = utime,
         .takeoff = takeoff,
         .hover = hover,
@@ -171,22 +181,23 @@ send_drone_cmd (void)
 }
 
 //----------------------------------------------------------------------------------
-// Called when program shuts down 
+// Called when program shuts down
 //----------------------------------------------------------------------------------
 static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("\nmy_signal_handler()\n");
-    if (state.done) {
+    if (state.done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
-    } 
+    }
     else
         state.done = 1;
 }
 
 //----------------------------------------------------------------------------------
-// Main 
+// Main
 //----------------------------------------------------------------------------------
 int
 main (int argc, char *argv[])
@@ -195,60 +206,66 @@ main (int argc, char *argv[])
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
     act.sa_flags |= SA_SIGINFO;
     sigaction (SIGTERM, &act, NULL);
     sigaction (SIGINT,  &act, NULL);
-    
+
     // Read in the command line options
     getopt_t *gopt = getopt_create ();
-    
+
     getopt_add_description (gopt, "Commander for Drone - XBOX");
     getopt_add_string (gopt,  'x',  "in_chan",      "XBOX_CONTROLER",       "Xbox controller LCM channel");
     getopt_add_string (gopt,  'c',  "cmd_pub_chan", "ARDRONE_CMD",          "Drone commands LCM channel");
     getopt_add_bool (gopt,    'D',  "daemon",       0,                      "Run as system daemon");
     getopt_add_bool (gopt,    'h',  "help",         0,                      "Display Help");
 
-    if (!getopt_parse (gopt, argc, argv, 1)) {
+    if (!getopt_parse (gopt, argc, argv, 1))
+    {
         getopt_do_usage (gopt,"");
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt,"");
         exit (EXIT_SUCCESS);;
     }
-    
+
     // set the lcm publish channel
     state.xbox_lcm_chan = getopt_get_string (gopt, "in_chan");
     state.cmd_pub_lcm_chan = getopt_get_string (gopt, "cmd_pub_chan");
 
     //start as daemon if asked
-    if (getopt_get_bool (gopt, "daemon")) {
+    if (getopt_get_bool (gopt, "daemon"))
+    {
         daemon_fork ();
         state.is_daemon = 1;
     }
     else
         state.is_daemon = 0;
-    
-    // initialize lcm 
+
+    // initialize lcm
     state.lcm = lcm_create (NULL);
-    if (!state.lcm) {
+    if (!state.lcm)
+    {
         ERROR ("lcm_create() failed!\n");
         exit (EXIT_FAILURE);
     }
-    
+
     // subscribe to xbox controller
     senlcm_xbox_controller_t_subscribe(state.lcm, state.xbox_lcm_chan,
                                        &xbox_controller_cb, NULL);
 
-    while (!state.done) {
+    while (!state.done)
+    {
         lcm_handle (state.lcm);
         send_drone_cmd ();
     }
-             
+
     printf ("\nDone.\n");
     exit (EXIT_SUCCESS);
 }

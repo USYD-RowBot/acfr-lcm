@@ -9,7 +9,8 @@ int
 nmea_payload (const char *buf, char **str)
 {
     char tmp[1024];
-    if (1 == sscanf (buf, "$%[^*]s", tmp)) {
+    if (1 == sscanf (buf, "$%[^*]s", tmp))
+    {
         *str = strdup (tmp);
         return strlen (*str);
     }
@@ -28,7 +29,7 @@ nmea_compute_checksum (const char *buf)
     int checksum = 0;
     for (int i=0; i<msglen; i++)
         checksum ^= msg[i];
-    
+
     return checksum;
 }
 
@@ -69,7 +70,7 @@ int
 nmea_arg (const char *str, int n, char *out)
 {
     const char *c1, *c2, *c;
-    
+
     c = str;
     // find a delim
     while ((*c != ',') && (*c != '*') && (*c != '\0'))
@@ -77,30 +78,34 @@ nmea_arg (const char *str, int n, char *out)
     c++;        // skip the comma
 
     // for preceding args
-    for (int i=0; i<(n-1); i++) {
+    for (int i=0; i<(n-1); i++)
+    {
         while ((*c != ',') && (*c != '*') && (*c != '\0'))
             c++; // skip preceding args
         c++;     // skip comma
     }
     char pa = *(c-1);
-    if ( pa == '*' || pa == '\0') {
-        return 0;    
+    if ( pa == '*' || pa == '\0')
+    {
+        return 0;
     }
-    
+
     c1 = c; // points to first char of arg we want, or next comma
     while ((*c != ',') && (*c != '*') && (*c != '\0'))
         c++;     // skip to end
     c2 = c - 1;  // points to last char before comma
 
-    if (c1 <= c2) {
+    if (c1 <= c2)
+    {
         out[0] = '\0';
         strncat (out, c1, (c2-c1+1));
         return 1;
     }
-    else {
+    else
+    {
         out[0] = '\0'; // empty
         return 1;
-    }       
+    }
 }
 
 
@@ -112,7 +117,7 @@ nmea_argc (const char *buf, int n, char *c)
         return 0;
     else
         *c = str[0];
-        
+
     return 1;
 }
 

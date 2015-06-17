@@ -52,7 +52,8 @@
 //#define SALIENCY_FILE "./saliency.dat"
 
 typedef struct thread_data thread_data_t;
-struct thread_data {
+struct thread_data
+{
 
     // about the graph
     bool   initialized;
@@ -190,18 +191,18 @@ _check_overlap_criteria (const double x_cjci[6], int64_t dt, double offset, thre
     double fov_w = 40*DTOR; //fc->calib.fov[0];
     double fov_h = 30*DTOR; //fc->calib.fov[1];
     double dx = fabs (x_cjci[0]), dy = fabs (x_cjci[1]), overlap = 0;
-    if (dx > dy) 
+    if (dx > dy)
         overlap = (2*(offset)*tan(0.5*fov_w) - dx) / (2*(offset)*tan(0.5*fov_w));
-    else         
+    else
         overlap = (2*(offset)*tan(0.5*fov_h) - dy) / (2*(offset)*tan(0.5*fov_h));
 
     if (tdata->min_overlap < overlap && overlap < tdata->max_overlap && dt > 5E6) valid_plink = true;
 
-    return valid_plink;    
+    return valid_plink;
 }
 
 static bool
-_check_mdist_criteria (const gsl_vector *x_c21, const gsl_matrix *S_c21, int64_t dt, thread_data_t *tdata) 
+_check_mdist_criteria (const gsl_vector *x_c21, const gsl_matrix *S_c21, int64_t dt, thread_data_t *tdata)
 {
     bool valid_plink = false;
 
@@ -216,7 +217,7 @@ _check_mdist_criteria (const gsl_vector *x_c21, const gsl_matrix *S_c21, int64_t
     if (mdist < 100000.0 && dt > 60E6)
         valid_plink = true;
 
-    return valid_plink;    
+    return valid_plink;
 }
 
 
@@ -225,13 +226,17 @@ _publish_plinks (thread_data_t *tdata, int64_t utime, bool is_salient)
 {
     size_t plinklistlen = g_slist_length (tdata->plinklist);
 
-    if (is_salient) {
-        for (size_t i=0, idx=0; i < plinklistlen; i++) {
+    if (is_salient)
+    {
+        for (size_t i=0, idx=0; i < plinklistlen; i++)
+        {
             GSList *event = g_slist_nth (tdata->plinklist, idx);
             perllcm_van_plink_t *x_ji = event->data;
 
-            if (utime >= x_ji->utime_j && x_ji->utime_j > 0) {
-                if (shm->van_opts.vis_use_saliency) {
+            if (utime >= x_ji->utime_j && x_ji->utime_j > 0)
+            {
+                if (shm->van_opts.vis_use_saliency)
+                {
                     double *bowE = g_hash_table_lookup (tdata->bowE, &(x_ji->utime_i));
                     if (bowE) x_ji->S_L = (*bowE) / log2 ((double) tdata->vocab_len);
                 }
@@ -239,7 +244,8 @@ _publish_plinks (thread_data_t *tdata, int64_t utime, bool is_salient)
                     x_ji->S_L = 1.0;
 
                 // publish & destroy
-                if (x_ji->S_L > tdata->S_L_thresh) {
+                if (x_ji->S_L > tdata->S_L_thresh)
+                {
                     printf ("plink publish %"PRId64"-%"PRId64"\n", x_ji->utime_i, x_ji->utime_j);
                     perllcm_van_plink_t_publish (shm->lcm, VAN_PLINK_CHANNEL, x_ji);
                 }
@@ -250,15 +256,19 @@ _publish_plinks (thread_data_t *tdata, int64_t utime, bool is_salient)
                 idx++;
         }
     }
-    else {
+    else
+    {
         printf ("NOT SALIENT: No links proposed\n");
 
-        if (tdata->force_seq_plink) {//(FORCE_SEQ_PLINK) {
-            for (size_t i=0, idx=0; i < plinklistlen; i++) {
+        if (tdata->force_seq_plink)  //(FORCE_SEQ_PLINK) {
+        {
+            for (size_t i=0, idx=0; i < plinklistlen; i++)
+            {
                 GSList *event = g_slist_nth (tdata->plinklist, idx);
                 perllcm_van_plink_t *x_ji = event->data;
 
-                if (utime >= x_ji->utime_j && x_ji->Ig > 100.0) {
+                if (utime >= x_ji->utime_j && x_ji->Ig > 100.0)
+                {
                     // publish & destroy
                     perllcm_van_plink_t_publish (shm->lcm, VAN_PLINK_CHANNEL, x_ji);
                     perllcm_van_plink_t_destroy (event->data);
@@ -269,11 +279,13 @@ _publish_plinks (thread_data_t *tdata, int64_t utime, bool is_salient)
             }
         }
 
-        for (size_t i=0, idx=0; i < plinklistlen; i++) {
+        for (size_t i=0, idx=0; i < plinklistlen; i++)
+        {
             GSList *event = g_slist_nth (tdata->plinklist, idx);
             perllcm_van_plink_t *x_ji = event->data;
 
-            if (utime >= x_ji->utime_j && x_ji->utime_j > 0) {
+            if (utime >= x_ji->utime_j && x_ji->utime_j > 0)
+            {
                 // publish & destroy
                 // printf ("removing plink publish %"PRId64"-%"PRId64"\n", x_ji->utime_i, x_ji->utime_j);
                 perllcm_van_plink_t_destroy (event->data);
@@ -297,26 +309,31 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     thread_data_t *tdata = user;
 
     perllcm_pose3d_t *x_lc_current, *x_lc_last;
-    if (strcmp (channel, shm->bot_core_image_t_channelUw) == 0) {
+    if (strcmp (channel, shm->bot_core_image_t_channelUw) == 0)
+    {
         x_lc_current = &(tdata->x_lcUw_current);
         x_lc_last = &(tdata->x_lcUw_last);
     }
-    else if (strcmp (channel, shm->bot_core_image_t_channelPeri) == 0) {
+    else if (strcmp (channel, shm->bot_core_image_t_channelPeri) == 0)
+    {
         x_lc_current = &(tdata->x_lcPeri_current);
         x_lc_last = &(tdata->x_lcPeri_last);
     }
-    else {
+    else
+    {
         ERROR ("Unkown bot_core_image_t channel name");
         exit (1);
     }
 
-    if (!tdata->use_sal_add_node || !shm->van_opts.vis_use_saliency) {
+    if (!tdata->use_sal_add_node || !shm->van_opts.vis_use_saliency)
+    {
         if (!shm->active)
             return;
 
         // process only every nth frame
         tdata->imgcounter++;
-        if ((tdata->imgcounter % shm->imgstep)) {
+        if ((tdata->imgcounter % shm->imgstep))
+        {
             printf ("bot_core_image_t event %"PRId64" - skipping add node\n", msg->utime);
             //printf ("imgstep=%d\n", shm->imgstep);
             return;
@@ -325,7 +342,7 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
         bool add_node = false;           // HACK to add all node (for path planning implementation)
         /*// CURTISS HACK----------
-          if ((1296927189967721 < msg->utime && msg->utime < 1296927305966933) || 
+          if ((1296927189967721 < msg->utime && msg->utime < 1296927305966933) ||
           (1296932968335437 < msg->utime && msg->utime < 1296933179333844) ||
           (1286128310793854 < msg->utime && msg->utime < 1286128328292624)) {
           return;
@@ -335,9 +352,11 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
           // CURTISS HACK----------*/
 
         // request a batch update every so often
-        if ((tdata->imgcounter % tdata->batchstep) == 0) {
-            se_add_node_t batch_node = {
-                .utime = msg->utime - 10, // give the batch node a different utime than the image node 
+        if ((tdata->imgcounter % tdata->batchstep) == 0)
+        {
+            se_add_node_t batch_node =
+            {
+                .utime = msg->utime - 10, // give the batch node a different utime than the image node
                 .node_type = SE_ADD_NODE_T_NODE_POSE3D,
                 .sensor_id = SE_ADD_NODE_T_NODE_BATCH,
             };
@@ -345,24 +364,27 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
             printf ("Sending a batch request\n");
         }
 
-        if (tdata->initialized) {
+        if (tdata->initialized)
+        {
             double x_cji[6];
             ssc_tail2tail (x_cji, NULL, x_lc_current->mu, x_lc_last->mu);      // j = temp = cur, i = last
 
             double dist2 = x_cji[0]*x_cji[0] + x_cji[1]*x_cji[1] + x_cji[2]*x_cji[2];
             tdata->pathlen_add_node = sqrt (dist2);
 
-            if (tdata->pathlen_add_node > tdata->add_node_thresh || tdata->uncertain_prior) 
+            if (tdata->pathlen_add_node > tdata->add_node_thresh || tdata->uncertain_prior)
                 add_node = true;
-            else 
+            else
                 printf ("x_cji too close -- skipping (d=%g)\n", tdata->pathlen_add_node);
         }
-        else {
+        else
+        {
             printf ("CHECK! reinitialized!\n");
             add_node = true;
         }
 
-        if (add_node) {
+        if (add_node)
+        {
             // add node
             se_add_node_t node;
             node.utime = msg->utime;
@@ -378,7 +400,8 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                 memcpy (x_vc, &tdata->x_vcUw_current, sizeof (*x_vc));
             else if (strcmp (channel, shm->bot_core_image_t_channelPeri))
                 memcpy (x_vc, &tdata->x_vcPeri_current, sizeof (*x_vc));
-            else {
+            else
+            {
                 ERROR ("unknown bot_core_image_t channel name");
                 exit (1);
             }
@@ -392,7 +415,7 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
             // last pose that has been added as a node
             *x_lc_last = *x_lc_current;
-            
+
             tdata->pathlen_add_node = 0.0;
         }
     }
@@ -407,16 +430,20 @@ se_add_node_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 {
     thread_data_t *tdata = user;
 
-    if (msg->sensor_id & SE_ADD_NODE_T_NODE_CAMERA) {
+    if (msg->sensor_id & SE_ADD_NODE_T_NODE_CAMERA)
+    {
         // check if seserver is initialized and sync with se_camclient
-        if (!tdata->initialized) {
+        if (!tdata->initialized)
+        {
             size_t utimelistlen = g_slist_length (shm->utimelist);
-            for (size_t i=0, idx=0; i<utimelistlen; i++) {
+            for (size_t i=0, idx=0; i<utimelistlen; i++)
+            {
                 GSList *event = g_slist_nth (shm->utimelist, idx);
                 int64_t *utime = event->data;
                 if (*utime == msg->utime)
                     idx++;
-                else {
+                else
+                {
                     printf ("not initialized - deleting %"PRId64"\n", *utime);
                     free (event->data);
                     shm->utimelist = g_slist_delete_link (shm->utimelist, event);
@@ -425,7 +452,7 @@ se_add_node_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
             tdata->initialized = true;
         }
 
-        // bookkeeping utimelist for images        
+        // bookkeeping utimelist for images
         shm->utimelist = g_slist_append (shm->utimelist, gu_dup (&msg->utime, sizeof msg->utime));
         size_t utimelist_len = g_slist_length (shm->utimelist);
 
@@ -436,7 +463,8 @@ se_add_node_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         se_rq_st->variables = malloc (se_rq_st->n * sizeof (*se_rq_st->variables));
         //printf ("requesting entire graph %zu nodes\n", utimelist_len);
         printf ("utimelist add_node_ack_t_callback: %"PRId64"\n", msg->utime);
-        for (size_t i=0; i<utimelist_len; i++) {
+        for (size_t i=0; i<utimelist_len; i++)
+        {
             int64_t *utime_i = g_slist_nth_data (shm->utimelist, i);
             se_rq_st->variables[i] = (*utime_i);
         }
@@ -444,10 +472,13 @@ se_add_node_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         se_request_state_t_destroy (se_rq_st);
 
         // propose a link if manually provided
-        if (tdata->nplist_manual > 0) {
+        if (tdata->nplist_manual > 0)
+        {
             perllcm_van_plink_t *plink = g_hash_table_lookup (tdata->plist_manual, &msg->utime);
-            if (plink) {
-                if (plink->prior) {                
+            if (plink)
+            {
+                if (plink->prior)
+                {
                     printf ("=== FEEDING MANUAL PLINK ===\n");
                     plink->link_id = tdata->link_id;
                     tdata->link_id ++;
@@ -458,13 +489,13 @@ se_add_node_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     }
 }
 
-/* 
+/*
  */
 static void
 perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                                           const perllcm_van_feature_collection_t *fc, void *user)
+        const perllcm_van_feature_collection_t *fc, void *user)
 {
-    thread_data_t *tdata = user;   
+    thread_data_t *tdata = user;
 
     bool salient = true;
 
@@ -476,18 +507,20 @@ static void
 perllcm_van_saliency_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                                  const perllcm_van_saliency_t *sal, void *user)
 {
-    thread_data_t *tdata = user;   
+    thread_data_t *tdata = user;
 
-    if (tdata->use_sal_add_node) {
+    if (tdata->use_sal_add_node)
+    {
         bool add_node = false;
 
         if (!shm->active || !shm->van_opts.vis_use_saliency)
             return;
 
         // CURTISS HACK----------
-        if ((1296927189967721 < sal->utime && sal->utime < 1296927305966933) || 
-            (1296932968335437 < sal->utime && sal->utime < 1296933179333844) ||
-            (1286128310793854 < sal->utime && sal->utime < 1286128328292624)) {
+        if ((1296927189967721 < sal->utime && sal->utime < 1296927305966933) ||
+                (1296932968335437 < sal->utime && sal->utime < 1296933179333844) ||
+                (1286128310793854 < sal->utime && sal->utime < 1286128328292624))
+        {
             tdata->force_seq_plink = true;
         }
         else
@@ -497,7 +530,8 @@ perllcm_van_saliency_t_callback (const lcm_recv_buf_t *rbuf, const char *channel
         //    add_node = true;
         // CURTISS HACK----------
 
-        if (tdata->initialized) {
+        if (tdata->initialized)
+        {
             double x_cji[6];
             /* Use underwater camera to compute distance */
             ssc_tail2tail (x_cji, NULL, tdata->x_lcUw_current.mu, tdata->x_lcUw_last.mu);      // j = temp = cur, i = last
@@ -505,19 +539,21 @@ perllcm_van_saliency_t_callback (const lcm_recv_buf_t *rbuf, const char *channel
             double dist2 = x_cji[0]*x_cji[0] + x_cji[1]*x_cji[1] + x_cji[2]*x_cji[2];
             tdata->pathlen_add_node = sqrt (dist2);
 
-            if (tdata->pathlen_add_node > tdata->add_node_thresh && sal->is_S_L) 
+            if (tdata->pathlen_add_node > tdata->add_node_thresh && sal->is_S_L)
                 add_node = true;
-            else 
+            else
                 printf ("x_cji too close or not salient -- skipping node (d=%g)\n", tdata->pathlen_add_node);
 
             if (tdata->uncertain_prior) add_node = true;
         }
-        else {
+        else
+        {
             printf ("CHECK! reinitialized!\n");
             add_node = true;
         }
 
-        if (add_node) {
+        if (add_node)
+        {
             tdata->imgcounter++;
 
             // add node
@@ -545,9 +581,11 @@ perllcm_van_saliency_t_callback (const lcm_recv_buf_t *rbuf, const char *channel
             tdata->pathlen_add_node = 0.0;
 
             // request a batch update every so often
-            if ((tdata->imgcounter % tdata->batchstep) == 0) {
-                se_add_node_t batch_node = {
-                    .utime = sal->utime - 10, // give the batch node a different utime than the image node 
+            if ((tdata->imgcounter % tdata->batchstep) == 0)
+            {
+                se_add_node_t batch_node =
+                {
+                    .utime = sal->utime - 10, // give the batch node a different utime than the image node
                     .node_type = SE_ADD_NODE_T_NODE_POSE3D,
                     .sensor_id = SE_ADD_NODE_T_NODE_BATCH,
                 };
@@ -557,7 +595,8 @@ perllcm_van_saliency_t_callback (const lcm_recv_buf_t *rbuf, const char *channel
         }
     }
 
-    if (shm->van_opts.vis_use_saliency) {
+    if (shm->van_opts.vis_use_saliency)
+    {
         // store saliency score
         double *bowE = g_malloc (sizeof (*bowE));
         *bowE = sal->bowE;
@@ -581,10 +620,13 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
     // do the manual list first
     int64_t manual_utime_i = 0;
     perllcm_van_plink_t *plink_manual = NULL;
-    if (tdata->nplist_manual > 0) {
+    if (tdata->nplist_manual > 0)
+    {
         perllcm_van_plink_t *plink = g_hash_table_lookup (tdata->plist_manual, &utime_j);
-        if (plink) {
-            if (!plink->prior) {
+        if (plink)
+        {
+            if (!plink->prior)
+            {
                 manual_utime_i = plink->utime_i;
                 plink_manual = plink;
             }
@@ -592,8 +634,8 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
     }
 
     // current utime and pose
-    perllcm_pose3d_t x_cjci; 
-    se_pose_t x_lvj = state->poses[npair];   
+    perllcm_pose3d_t x_cjci;
+    se_pose_t x_lvj = state->poses[npair];
     perllcm_pose3d_t *x_vjc = g_hash_table_lookup (tdata->x_vc, &utime_j);
 
     // remember the most recent block diagonal
@@ -620,13 +662,15 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
     GSLU_MATRIX_VIEW (work, 6, 12);
     GSLU_MATRIX_VIEW (H, 5, 12);                // observaion model jacobian
     GSLU_MATRIX_VIEW (R, 5, 5);                 // measurement uncertainty
-    gsl_matrix_set_identity (&R.matrix);  gsl_matrix_scale (&R.matrix, 1E-4);
+    gsl_matrix_set_identity (&R.matrix);
+    gsl_matrix_scale (&R.matrix, 1E-4);
     GSLU_MATRIX_VIEW (SplusR, 5, 5);            // innovation S + R
     GSLU_MATRIX_VIEW (work_Ig, 5, 12);
 
     // for each x_lci
     size_t num_valid_plinks = 0;
-    for (size_t i=0; i<npair; i++) {
+    for (size_t i=0; i<npair; i++)
+    {
 
         x_cjci.utime = utime_j;
         int64_t utime_i = state->timestamps[i];
@@ -639,8 +683,9 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
         gsl_matrix_transpose_memcpy (&S_sub_vji.matrix, &cov_ij.matrix);
         gsl_matrix *S_vii = g_hash_table_lookup (tdata->S_ii, &utime_i);
 
-        if (S_vii == NULL) {
-            printf ("Sii null for %"PRId64"\n", utime_i);   
+        if (S_vii == NULL)
+        {
+            printf ("Sii null for %"PRId64"\n", utime_i);
             return;  // ERROR printf ("Sii null for %"PRId64"\n", utime_i);
         }
 
@@ -668,30 +713,35 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
 
         int64_t dt = utime_j - utime_i;
         bool valid_plink = false;
-        if (tdata->uncertain_prior || tdata->mdist_plink) {
+        if (tdata->uncertain_prior || tdata->mdist_plink)
+        {
             gsl_vector_view x_cji_gsl = gsl_vector_view_array (x_cjci.mu, 6);
             valid_plink = _check_mdist_criteria (&x_cji_gsl.vector, &S_c21.matrix, dt, tdata);
         }
-        else {
+        else
+        {
             //double *offset = g_hash_table_lookup (tdata->camoffset_list, &utime_i);
             //valid_plink = _check_overlap_criteria (x_cjci.mu, dt, *offset, tdata);
             if (Ig > tdata->Ig_thresh) valid_plink = true;
         }
 
-        if (tdata->force_seq_plink && i == 0 && dt < 3E6) { //FORCE_SEQ_PLINK
+        if (tdata->force_seq_plink && i == 0 && dt < 3E6)   //FORCE_SEQ_PLINK
+        {
             valid_plink = true;    // force a seq pair ?
             I = 1000.0;
         }
         //printf ("cov req: %"PRId64"-%"PRId64":", utime_i, utime_j);
         //printf ("Ig=%g, S=%g, I=%g\n", Ig, saliency, I);
 
-        if (manual_utime_i == utime_i) {
+        if (manual_utime_i == utime_i)
+        {
             printf ("=== FEEDING MANUAL PLINK ===\n");
             plink_manual->x_ji = x_cjci;
             tdata->plinklist = g_slist_prepend (tdata->plinklist, perllcm_van_plink_t_copy (plink_manual));
         }
-        
-        if (valid_plink && num_valid_plinks < MAX_NUM_PLINKS) {
+
+        if (valid_plink && num_valid_plinks < MAX_NUM_PLINKS)
+        {
             gsl_vector_set (&distlist.vector, num_valid_plinks, 1.0/I);
             plinklist_sort[num_valid_plinks].utime_i = utime_i;
             plinklist_sort[num_valid_plinks].utime_j = utime_j;
@@ -704,12 +754,14 @@ _informative_link_hypothesis (const se_return_state_t *state, thread_data_t *tda
         }
     } // END of for each utime i
 
-    if (num_valid_plinks > 0) {
+    if (num_valid_plinks > 0)
+    {
         // sort based upon distance
         gsl_permutation *perm = gsl_permutation_alloc (MAX_NUM_PLINKS);
         gsl_sort_vector_index (perm, &distlist.vector);
 
-        for (size_t i=0; i < shm->van_opts.n_plinks; i++) {
+        for (size_t i=0; i < shm->van_opts.n_plinks; i++)
+        {
             size_t idx = perm->data[i];
 
             // propose! but wait until feature_t event comes in
@@ -739,7 +791,8 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
     printf ("mu return: %zu nodes in the graph. request cov - %"PRId64"\n", n, utime_j);
 
     // request for the first node covariance and return wo sorting
-    if (n == 1) {
+    if (n == 1)
+    {
         se_request_state_t *se_rq_st = calloc (1, sizeof(*se_rq_st));
         se_rq_st->state_type = SE_REQUEST_STATE_T_COV_RIGHTCOL | SE_REQUEST_STATE_T_POSE;
         se_rq_st->n = 1;
@@ -748,11 +801,11 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
         se_request_state_t_publish (shm->lcm, SE_REQUEST_ST_CHANNEL, se_rq_st);
         se_request_state_t_destroy (se_rq_st);
         return;
-    }  
+    }
 
     // current utime and pose
-    perllcm_pose3d_t x_lci, x_lcj, x_cjci; 
-    se_pose_t x_lvj = state->poses[npair];   
+    perllcm_pose3d_t x_lci, x_lcj, x_cjci;
+    se_pose_t x_lvj = state->poses[npair];
     perllcm_pose3d_t *x_vjc = g_hash_table_lookup (tdata->x_vc, &utime_j);
     int64_t rq_cov_utimelist[MAX_NUM_TO_RQ_COV];
     GSLU_VECTOR_VIEW (distlist, MAX_NUM_TO_RQ_COV);
@@ -765,7 +818,8 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
     bool use_mdist = false;
     gsl_matrix_view J_view = gsl_matrix_view_array (J, 6, 12);
     gsl_matrix_view Jsub = gsl_matrix_submatrix (&J_view.matrix, 0, 0, 6, 6);
-    GSLU_MATRIX_VIEW (S_cjj_inv, 6, 6); gsl_matrix_set_zero (&S_cjj_inv.matrix);
+    GSLU_MATRIX_VIEW (S_cjj_inv, 6, 6);
+    gsl_matrix_set_zero (&S_cjj_inv.matrix);
     GSLU_MATRIX_VIEW (work, 6,6);
     gslu_blas_mmmT (&S_cjj_inv.matrix, &Jsub.matrix, tdata->S_recent, &Jsub.matrix, &work.matrix);
 
@@ -778,11 +832,14 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
       gslu_matrix_printf (tdata->S_recent, "S");
       gslu_matrix_printf (&S_cjj_inv.matrix, "Scjj");*/
     //
-    GSLU_VECTOR_VIEW (zero, 6);     GSLU_INDEX_VIEW (c, 3, {3, 4, 5});
-    if (tdata->S_recent) { // when covariance is available
+    GSLU_VECTOR_VIEW (zero, 6);
+    GSLU_INDEX_VIEW (c, 3, {3, 4, 5});
+    if (tdata->S_recent)   // when covariance is available
+    {
         //gslu_matrix_printf (tdata->S_recent, "S_rr");
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
-        if (gsl_linalg_cholesky_decomp (&S_cjj_inv.matrix) != GSL_EDOM) {
+        if (gsl_linalg_cholesky_decomp (&S_cjj_inv.matrix) != GSL_EDOM)
+        {
             gsl_linalg_cholesky_invert (&S_cjj_inv.matrix);
             use_mdist = true;
             //gslu_matrix_printf (&S_cjj_inv.matrix, "inv Scjj");
@@ -794,10 +851,13 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
     // request covariance
     size_t num_request = 0;
     // do the manual list first
-    if (tdata->nplist_manual > 0) {
+    if (tdata->nplist_manual > 0)
+    {
         perllcm_van_plink_t *plink = g_hash_table_lookup (tdata->plist_manual, &utime_j);
-        if (plink) {
-            if (!plink->prior) {
+        if (plink)
+        {
+            if (!plink->prior)
+            {
                 printf ("=== MANUAL PLINK COV REQUEST ===\n");
                 rq_cov_utimelist[num_request] = plink->utime_i;
                 gsl_vector_set (&distlist.vector, num_request, 0.0);    // set 0 distance to manual links
@@ -807,7 +867,8 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
     }
 
     // then, do normal candidates
-    for (size_t i=0; i<npair; i++) { // for each x_lci
+    for (size_t i=0; i<npair; i++)   // for each x_lci
+    {
         //int64_t *utime_i = g_list_nth_data (shm->utimelist, i);
         int64_t utime_i = state->timestamps[i];
         perllcm_pose3d_t *x_vic = g_hash_table_lookup (tdata->x_vc, &utime_i);
@@ -816,13 +877,14 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
         ssc_tail2tail (x_cjci.mu, NULL, x_lcj.mu, x_lci.mu);      // x_cjci
 
 #if USE_MDIST_COVRQ
-        perllcm_pose3d_t x_vjvi; 
+        perllcm_pose3d_t x_vjvi;
         ssc_tail2tail (x_vjvi.mu, NULL, x_lvj.mu, x_lvi.mu);      // x_cjci
         gsl_vector_view x_v21_view = gsl_vector_view_array (x_vjvi.mu, 6);  // prepare gsl view
 
         double mdist = gslu_vector_mahal_circ_dist (&x_v21_view.vector, &zero.vector, &S_cjj_inv.matrix, &c.vector);
 
-        if (mdist < 10000.0 && (num_request < MAX_NUM_TO_RQ_COV)) {
+        if (mdist < 10000.0 && (num_request < MAX_NUM_TO_RQ_COV))
+        {
             // request again with covariance
             //printf ("re-requesting %"PRId64",%"PRId64"\n", utime_i, utime_j);
             rq_cov_utimelist[num_request] = utime_i;
@@ -832,19 +894,21 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
 #else
         double xc21_dist2 = x_cjci.mu[0]*x_cjci.mu[0] + x_cjci.mu[1]*x_cjci.mu[1] + x_cjci.mu[2]*x_cjci.mu[2];
         int64_t dt = utime_j - utime_i;
-        //if (num_request == 0) printf ("dist = %g dt = %"PRId64"\n", xc21_dist2, dt); 
+        //if (num_request == 0) printf ("dist = %g dt = %"PRId64"\n", xc21_dist2, dt);
 
         double range_thresh2 = COVRQ_DIST * COVRQ_DIST;
         bool dt_check_pass = true;
 
         // when uncertain checkbox is on from the viewer: map merging.
-        if (tdata->uncertain_prior) {
+        if (tdata->uncertain_prior)
+        {
             range_thresh2 = 10.0 * 10.0;            // larger range thresh
             if (dt < 60E6) dt_check_pass = false;   // dt should be large for map merging
         }
 
         //printf ("mu for pair (%"PRId64",%"PRId64")\n", utime_i, utime_j);
-        if ((xc21_dist2 < range_thresh2) && dt_check_pass && (num_request < MAX_NUM_TO_RQ_COV)) {
+        if ((xc21_dist2 < range_thresh2) && dt_check_pass && (num_request < MAX_NUM_TO_RQ_COV))
+        {
             // request again with covariance
             //printf ("re-requesting %"PRId64",%"PRId64"\n", utime_i, utime_j);
             rq_cov_utimelist[num_request] = utime_i;
@@ -855,7 +919,8 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
     } // for each x_lci
 
     //printf ("mindist = %g\n", mindist);
-    if (num_request > 0) {
+    if (num_request > 0)
+    {
         // sort based upon distance
         gsl_permutation *perm = gsl_permutation_alloc (MAX_NUM_TO_RQ_COV);
         gsl_sort_vector_index (perm, &distlist.vector);
@@ -865,15 +930,16 @@ _sort_cov_request (const se_return_state_t *state, thread_data_t *tdata)
         se_rq_st->state_type = SE_REQUEST_STATE_T_COV_RIGHTCOL | SE_REQUEST_STATE_T_POSE;
         se_rq_st->n = num_request+1;
         se_rq_st->variables = malloc (se_rq_st->n * sizeof (se_rq_st->variables));
-        for (size_t i=0; i<num_request; i++) {
+        for (size_t i=0; i<num_request; i++)
+        {
             se_rq_st->variables[i] = rq_cov_utimelist[perm->data[i]];
         }
         se_rq_st->variables[num_request] = utime_j;
         se_request_state_t_publish (shm->lcm, SE_REQUEST_ST_CHANNEL, se_rq_st);
         se_request_state_t_destroy (se_rq_st);
-        
+
         gsl_permutation_free (perm);
-    }  
+    }
 }
 
 static void
@@ -882,11 +948,13 @@ se_return_state_t_callback (const lcm_recv_buf_t *buf, const char *channel,
 {
     thread_data_t *tdata = user;
 
-    if ((msg->state_type & SE_REQUEST_STATE_T_POSE) && 
-        (msg->state_type & SE_REQUEST_STATE_T_COV_RIGHTCOL)) {
+    if ((msg->state_type & SE_REQUEST_STATE_T_POSE) &&
+            (msg->state_type & SE_REQUEST_STATE_T_COV_RIGHTCOL))
+    {
 
         // CASE 1: return state == mu+cov: propose links
-        if (msg->n == 1) {
+        if (msg->n == 1)
+        {
             int64_t utime_j = msg->timestamps[msg->n-1];
             printf ("cov return: %d nodes returned to be just added - %"PRId64"\n", msg->n, utime_j);
 
@@ -897,19 +965,22 @@ se_return_state_t_callback (const lcm_recv_buf_t *buf, const char *channel,
             g_hash_table_insert (tdata->S_ii, gu_dup (&utime_j, sizeof utime_j), S_vrr);
             tdata->S_recent = S_vrr;    // passing the pointer
         }
-        else 
+        else
             _informative_link_hypothesis (msg, tdata);
-        
+
     }
-    else if (msg->state_type & SE_REQUEST_STATE_T_POSE) {
+    else if (msg->state_type & SE_REQUEST_STATE_T_POSE)
+    {
         // CASE 2: return state == mu only: request again for cov
         _sort_cov_request (msg, tdata);
     }
-    else if (msg->state_type & SE_REQUEST_STATE_T_COV_BLOCK) {
-        // CASE 3: return state == cov block only: when a graph is loaded   
+    else if (msg->state_type & SE_REQUEST_STATE_T_COV_BLOCK)
+    {
+        // CASE 3: return state == cov block only: when a graph is loaded
         double *cov = msg->covariance;
         size_t n_nodes = msg->m / 36;
-        for (size_t i=0; i<n_nodes; i++) {
+        for (size_t i=0; i<n_nodes; i++)
+        {
             int64_t utime = msg->timestamps[i];
             gsl_matrix_view cov_rr = gsl_matrix_view_array (cov+36*i, 6, 6);
             gsl_matrix *S_vrr = gslu_matrix_clone (&cov_rr.matrix);
@@ -929,26 +1000,33 @@ perllcm_isam_cmd_t_ack_callback (const lcm_recv_buf_t *rbuf, const char *channel
     thread_data_t *tdata = user;
 
     // SAVE via local file
-    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE) {
-        if (msg->savepath) {
+    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE)
+    {
+        if (msg->savepath)
+        {
             vanu_isam_save_rtvan_appended (msg->savepath, tdata->camoffset_list, tdata->x_vc, tdata->S_ii);
         }
     }
 
     // LOAD
     size_t n_nodes = 0;
-    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_LOAD) {
-        if (msg->graphfile) {
-            shm->utimelist = vanu_load_isam_graph (msg->graphfile, shm->utimelist, tdata->camoffset_list, 
+    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_LOAD)
+    {
+        if (msg->graphfile)
+        {
+            shm->utimelist = vanu_load_isam_graph (msg->graphfile, shm->utimelist, tdata->camoffset_list,
                                                    tdata->x_vc, tdata->S_ii, &n_nodes);
 
-            if (shm->utimelist && n_nodes != 0) {
+            if (shm->utimelist && n_nodes != 0)
+            {
                 // quickly check if we can load all feat+ppm from logged folder first
                 size_t valid_node = 0;
-                for (size_t i=0; i<n_nodes; i++) {
+                for (size_t i=0; i<n_nodes; i++)
+                {
                     int64_t *utime_i = g_slist_nth_data (shm->utimelist, i);
                     IplImage *img_warp = vis_cvu_iplimg_load (shm->logdir, (*utime_i));
-                    if (img_warp) {
+                    if (img_warp)
+                    {
                         valid_node++;
                         cvReleaseImage (&img_warp);
                     }
@@ -965,13 +1043,13 @@ perllcm_isam_cmd_t_ack_callback (const lcm_recv_buf_t *rbuf, const char *channel
                 /*for (size_t i=0; i<valid_node;) {
                   GList *utime_event = g_list_nth (shm->utimelist, i);
                   int64_t *utime_i = utime_event->data;
-                    
+
                   // prepare image cache
                   IplImage *img_warp = vis_cvu_iplimg_load (shm->logdir, (*utime_i));
                   if (img_warp) {
                   se_rq_st->variables[i] = (*utime_i);
                   cache_push (shm->imgcache, (*utime_i), cvCloneImage (img_warp));
-                        
+
                   // publish for the sample images (TODO: implement dx or step)
                   double scale = 0.25;
                   CvSize size = {img_warp->width*scale, img_warp->height*scale};
@@ -1009,25 +1087,31 @@ perllcm_isam_cmd_t_cmd_callback (const lcm_recv_buf_t *rbuf, const char *channel
 {
     thread_data_t *tdata = user;
 
-    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_START) {
+    if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_START)
+    {
         shm->active = true;
     }
-    else if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_WAIT) {
+    else if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_WAIT)
+    {
         shm->active = false;
     }
-    else if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE) { // SAVE via lcm
-        if (msg->savepath) {
+    else if (msg->mode == PERLLCM_ISAM_CMD_T_MODE_SAVE)   // SAVE via lcm
+    {
+        if (msg->savepath)
+        {
             char graph_path[MAXPATHLEN];
             snprintf (graph_path, strlen (msg->savepath)+12, "%s/graph.isam\n", msg->savepath);
 
             printf ("-- Saving to %s ...\n", graph_path);
             // open up a file to write, close it in se_save_isam_callback
             tdata->fid_save = fopen (graph_path, "w");
-            if (tdata->fid_save != NULL) {
+            if (tdata->fid_save != NULL)
+            {
                 tdata->save_mode = true;        // change flags to saving mode
                 tdata->saving_done = false;     // i calloced but just in case
             }
-            else {
+            else
+            {
                 printf ("ERROR: cannot save %s.\n The directory does exist on the machine that you run rtvan!\n Instead saving to ./graph.isam",graph_path);
 
                 char graph_path[MAXPATHLEN];
@@ -1036,10 +1120,11 @@ perllcm_isam_cmd_t_cmd_callback (const lcm_recv_buf_t *rbuf, const char *channel
                 printf ("-- Saving to %s ...\n", graph_path);
                 // open up a file to write, close it in se_save_isam_callback
                 tdata->fid_save = fopen (graph_path, "w");
-                if (tdata->fid_save != NULL) {
+                if (tdata->fid_save != NULL)
+                {
                     tdata->save_mode = true;        // change flags to saving mode
                     tdata->saving_done = false;     // i calloced but just in case
-                }                
+                }
             }
         }
     }
@@ -1058,20 +1143,22 @@ perllcm_van_options_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         shm->imgstep = 1;
     else
         shm->imgstep = tdata->imgstep_cfg;
-      
+
 }
 
-static int64_t 
+static int64_t
 find_closest_utime (int64_t time_given, GSList *utimelist)
 {
     int64_t utime_img = 0;
     double min_dt = GSL_POSINF;
 
     size_t utimelistlen = g_slist_length (utimelist);
-    for (size_t i=0; i<utimelistlen; i++) {
+    for (size_t i=0; i<utimelistlen; i++)
+    {
         int64_t *utime_i = g_slist_nth_data (utimelist, i);
         double dt = abs((*utime_i) - time_given);
-        if (dt < min_dt) {
+        if (dt < min_dt)
+        {
             utime_img = *utime_i;
             min_dt = dt;
         }
@@ -1083,7 +1170,7 @@ find_closest_utime (int64_t time_given, GSList *utimelist)
 static void
 se_goto_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                     const se_goto_t *msg, void *user)
-{    
+{
     //thread_data_t *tdata = user;
 
     // load the image at utime target
@@ -1091,14 +1178,16 @@ se_goto_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     IplImage *img_target = vis_cvu_iplimg_load (shm->logdir, utime_target);
     printf ("target =%"PRId64" and imgutime=%"PRId64"\n", msg->utime_target, utime_target);
 
-    if (img_target) {
+    if (img_target)
+    {
         bot_core_image_t *botimg = vis_iplimage_to_botimage_copy (img_target);
         botimg->utime = utime_target;
         bot_core_image_t_publish (shm->lcm, VAN_PLOT_CAM_TARGET, botimg);
         bot_core_image_t_destroy (botimg);
         cvReleaseImage (&img_target);
     }
-    else {
+    else
+    {
         // loading error OR the target node is not related to images
         printf ("ERROR: loading target image from disk (%"PRId64")\n", msg->utime_target);
     }
@@ -1113,13 +1202,15 @@ se_save_isam_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     if (!tdata->save_mode)
         return;
 
-    if (msg->type == SE_SAVE_ISAM_T_TYPE_DONE) {
+    if (msg->type == SE_SAVE_ISAM_T_TYPE_DONE)
+    {
         tdata->save_mode = false;
         fclose (tdata->fid_save);
 
         printf ("-- isam result has been saved to graph.isam\n");
     }
-    else {
+    else
+    {
         // save this line
         se_save_isam_t *isam_line = se_save_isam_t_copy (msg);
         vanu_isam_save_rtvan_appended_via_lcm (tdata->fid_save, isam_line, tdata->camoffset_list, tdata->x_vc, tdata->S_ii);
@@ -1141,17 +1232,19 @@ secam_thread (gpointer user)
     tdata->bowE             = g_hash_table_new_full (&gu_int64_hash, &gu_int64_equal, &free, &free);
     tdata->plist_manual     = g_hash_table_new_full (&gu_int64_hash, &gu_int64_equal, &free, &perllcm_plink_t_destroy_wrapper);
     tdata->S_recent         = NULL;
-    tdata->Ig_thresh = 0.0;  bot_param_get_double (shm->param, "rtvan.link_thread.Ig_thresh", &tdata->Ig_thresh);
-    tdata->S_L_thresh = 0.0; bot_param_get_double (shm->param, "rtvan.saliency_thread.S_L_thresh", &tdata->S_L_thresh);
+    tdata->Ig_thresh = 0.0;
+    bot_param_get_double (shm->param, "rtvan.link_thread.Ig_thresh", &tdata->Ig_thresh);
+    tdata->S_L_thresh = 0.0;
+    bot_param_get_double (shm->param, "rtvan.saliency_thread.S_L_thresh", &tdata->S_L_thresh);
 
     tdata->use_sal_add_node = false;
     bot_param_get_boolean (shm->param, "rtvan.link_thread.use_sal_add_node", (int*)&tdata->use_sal_add_node);
 
     // rtvan internal subscriptions
-    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub = 
+    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub =
         perllcm_van_feature_collection_t_subscribe (shm->lcm, VAN_FEATURE_COLLECTION_CHANNEL, &perllcm_van_feature_collection_t_callback, tdata);
 
-    perllcm_van_options_t_subscription_t *perllcm_van_options_t_sub = 
+    perllcm_van_options_t_subscription_t *perllcm_van_options_t_sub =
         perllcm_van_options_t_subscribe (shm->lcm, VAN_OPTIONS_CHANNEL, &perllcm_van_options_t_callback, tdata);
 
     perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_vc_subUw =
@@ -1159,40 +1252,40 @@ secam_thread (gpointer user)
     perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_vc_subPeri =
         perllcm_pose3d_t_subscribe (shm->lcm, VAN_V2C_POSE_PERI_CHANNEL, &perllcm_pose3d_t_x_vc_peri_callback, tdata);
 
-    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_lc_subUw = 
+    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_lc_subUw =
         perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_UW_CHANNEL, &perllcm_pose3d_t_x_lc_uw_callback, tdata);
-    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_lc_subPeri = 
+    perllcm_pose3d_t_subscription_t *perllcm_pose3d_t_x_lc_subPeri =
         perllcm_pose3d_t_subscribe (shm->lcm, VAN_CAMERA_POSE_PERI_CHANNEL, &perllcm_pose3d_t_x_lc_peri_callback, tdata);
 
     // DATA lcm subscriptions
-    hauv_bs_rnv_2_t_subscription_t *hauv_bs_rnv_2_t_sub = 
+    hauv_bs_rnv_2_t_subscription_t *hauv_bs_rnv_2_t_sub =
         hauv_bs_rnv_2_t_subscribe (shm->lcm, "HAUV_BS_RNV_2", &hauv_bs_rnv_2_t_callback, tdata);
 
-    bot_core_image_t_subscription_t *bot_core_image_t_subUw = 
+    bot_core_image_t_subscription_t *bot_core_image_t_subUw =
         bot_core_image_t_subscribe (shm->lcm, shm->bot_core_image_t_channelUw, &bot_core_image_t_callback, tdata);
-    bot_core_image_t_subscription_t *bot_core_image_t_subPeri = 
+    bot_core_image_t_subscription_t *bot_core_image_t_subPeri =
         bot_core_image_t_subscribe (shm->lcm, shm->bot_core_image_t_channelPeri, &bot_core_image_t_callback, tdata);
 
     // SESERVER lcm subscriptions
-    se_return_state_t_subscription_t *se_return_state_t_sub = 
+    se_return_state_t_subscription_t *se_return_state_t_sub =
         se_return_state_t_subscribe (shm->lcm, SE_RETURN_ST_CHANNEL, &se_return_state_t_callback, tdata);
-    
-    se_add_node_ack_t_subscription_t *se_add_node_ack_t_sub = 
+
+    se_add_node_ack_t_subscription_t *se_add_node_ack_t_sub =
         se_add_node_ack_t_subscribe (shm->lcm, SE_ADD_MODE_ACK_CHANNEL, &se_add_node_ack_t_callback, tdata);
 
-    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_ack_sub = 
+    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_ack_sub =
         perllcm_isam_cmd_t_subscribe (shm->lcm, SE_OPTION_ACK_CHANNEL, &perllcm_isam_cmd_t_ack_callback, tdata);
 
-    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_cmd_sub = 
+    perllcm_isam_cmd_t_subscription_t *perllcm_isam_cmd_t_cmd_sub =
         perllcm_isam_cmd_t_subscribe (shm->lcm, SE_OPTION_CMD_CHANNEL, &perllcm_isam_cmd_t_cmd_callback, tdata);
 
-    se_goto_t_subscription_t *se_goto_t_sub = 
+    se_goto_t_subscription_t *se_goto_t_sub =
         se_goto_t_subscribe (shm->lcm, SE_GOTO_CHANNEL, &se_goto_t_callback, tdata);
 
-    se_save_isam_t_subscription_t *se_save_isam_t_sub = 
+    se_save_isam_t_subscription_t *se_save_isam_t_sub =
         se_save_isam_t_subscribe (shm->lcm, SE_SAVE_ISAM_CHANNEL, &se_save_isam_t_callback, tdata);
 
-    perllcm_van_saliency_t_subscription_t *perllcm_van_saliency_t_sub = 
+    perllcm_van_saliency_t_subscription_t *perllcm_van_saliency_t_sub =
         perllcm_van_saliency_t_subscribe (shm->lcm, VAN_SALIENCY_CHANNEL, &perllcm_van_saliency_t_callback, tdata);
 
     // min and max image overlap percentage
@@ -1213,14 +1306,17 @@ secam_thread (gpointer user)
     // manual plink provided?
     tdata->nplist_manual = 0;
     bot_param_get_int (shm->param, "rtvan.link_thread.use_manual_plinks", &tdata->nplist_manual);
-    if (tdata->nplist_manual > 0) {
+    if (tdata->nplist_manual > 0)
+    {
         const char *plink_manual_fname = "./plink_manual.list";
         //tdata->nplist_manual = vanu_load_manual_plink (plink_manual_fname, tdata->plist_manual);
         tdata->nplist_manual = vanu_load_manual_plink_wo_prior (plink_manual_fname, tdata->plist_manual);
     }
 
-    while (!shm->done) {
-        struct timeval timeout = {
+    while (!shm->done)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 500000,
         };
@@ -1242,7 +1338,7 @@ secam_thread (gpointer user)
     se_return_state_t_unsubscribe (shm->lcm, se_return_state_t_sub);
     se_add_node_ack_t_unsubscribe (shm->lcm, se_add_node_ack_t_sub);
     perllcm_isam_cmd_t_unsubscribe (shm->lcm, perllcm_isam_cmd_t_ack_sub);
-    perllcm_isam_cmd_t_unsubscribe (shm->lcm, perllcm_isam_cmd_t_cmd_sub);    
+    perllcm_isam_cmd_t_unsubscribe (shm->lcm, perllcm_isam_cmd_t_cmd_sub);
     se_goto_t_unsubscribe (shm->lcm, se_goto_t_sub);
     se_save_isam_t_unsubscribe (shm->lcm, se_save_isam_t_sub);
 

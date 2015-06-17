@@ -5,7 +5,8 @@
 
 #include "cache.h"
 
-struct _cache {
+struct _cache
+{
     GTree *tree;
     CacheValueCopyFunc value_copy_func;
     CacheValueDestroyFunc value_destroy_func; // CacheValueDestroyFunc == GDestroyNotify
@@ -15,14 +16,16 @@ struct _cache {
 };
 
 typedef struct cache_node cache_node_t;
-struct cache_node {
+struct cache_node
+{
     gpointer value;
     size_t   refcount;
     GDestroyNotify value_destroy_func;
 };
 
 typedef struct cache_search cache_search_t;
-struct cache_search {
+struct cache_search
+{
     int64_t key;
     size_t  refcount;
 };
@@ -44,9 +47,10 @@ _cache_search_func (gpointer key, gpointer value, gpointer data)
 {
     cache_search_t *oldest = data;
     cache_node_t *node = value;
-    if (node->refcount < oldest->refcount) {
+    if (node->refcount < oldest->refcount)
+    {
         oldest->refcount = node->refcount;
-        oldest->key = *((int64_t*)key);        
+        oldest->key = *((int64_t*)key);
     }
     return FALSE;
 }
@@ -121,7 +125,8 @@ cache_push (cache_t *cache, int64_t key, void *value)
     g_static_mutex_lock (&cache->mutex);
     g_tree_insert (cache->tree, k, node);
     size_t nnodes = g_tree_nnodes (cache->tree);
-    while (nnodes > cache->max_nnodes) {
+    while (nnodes > cache->max_nnodes)
+    {
         cache_search_t oldest = {.refcount = cache->refcount};
         g_tree_foreach (cache->tree, &_cache_search_func, &oldest);
         g_tree_remove (cache->tree, &oldest.key);
@@ -136,13 +141,14 @@ cache_pop (cache_t *cache, int64_t key)
     void *ret_value = NULL;
     g_static_mutex_lock (&cache->mutex);
     cache_node_t *node = g_tree_lookup (cache->tree, &key);
-    if (node) {// found it
+    if (node)  // found it
+    {
         node->refcount = ++cache->refcount;
         if (cache->value_copy_func)
             ret_value = cache->value_copy_func (node->value);
         else
             ret_value = node->value;
-    } 
+    }
     g_static_mutex_unlock (&cache->mutex);
     return ret_value;
 }

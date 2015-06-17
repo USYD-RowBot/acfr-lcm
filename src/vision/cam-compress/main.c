@@ -38,10 +38,10 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         int output_width = image->width / step;
         int output_height =image->height / step;
         short *image_buffer;
-        unsigned char *image_8bit, *image_8bit_rgb, *image_8bit_out;
+        unsigned char *image_8bit = NULL, *image_8bit_rgb = NULL, *image_8bit_out = NULL;
         unsigned char *output_buffer = NULL;
         unsigned long output_size;
-   
+
 
 
         // Convert to 8bit as all JPEGs are 8 bit, scale at the same time
@@ -53,30 +53,30 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                 image_8bit[count++] = image_buffer[j + i * image->width] >> 8;
 
 
-	int pixel_format;
-	
-	// If the imag is Bayer we need to convert it to RGB
+        int pixel_format;
+
+        // If the imag is Bayer we need to convert it to RGB
         if(state->is_bayer)
         {
             // Convert to RGB
             image_8bit_rgb = (unsigned char *)malloc(output_width * output_height * 3);
             gp_bayer_decode(image_8bit, output_width, output_height, image_8bit_rgb, BAYER_TILE_RGGB);
-	    pixel_format = TJPF_RGB;
-	    cimage.is_rgb = 1;
-	    image_8bit_out = image_8bit_rgb;
-	}
-	else
-	{
-	    pixel_format = TJPF_GRAY;
-	    cimage.is_rgb = 0;
-	    image_8bit_out = image_8bit;
-	}
-	
-	tjhandle jpeg_compress = tjInitCompress();
-	tjCompress2(jpeg_compress, image_8bit_out, output_width, 0, output_height, 
-	pixel_format,
-          &output_buffer, &output_size, TJSAMP_444, state->quality,
-          TJFLAG_FASTDCT);
+            pixel_format = TJPF_RGB;
+            cimage.is_rgb = 1;
+            image_8bit_out = image_8bit_rgb;
+        }
+        else
+        {
+            pixel_format = TJPF_GRAY;
+            cimage.is_rgb = 0;
+            image_8bit_out = image_8bit;
+        }
+
+        tjhandle jpeg_compress = tjInitCompress();
+        tjCompress2(jpeg_compress, image_8bit_out, output_width, 0, output_height,
+                    pixel_format,
+                    &output_buffer, &output_size, TJSAMP_444, state->quality,
+                    TJFLAG_FASTDCT);
 
         // Fill in the rest of the data and send it on it's way
         cimage.utime = image->utime;
@@ -85,8 +85,10 @@ bot_core_image_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
         acfrlcm_compressed_image_t_publish(state->lcm, state->out_channel, &cimage);
 
         free(image_8bit);
-	tjDestroy(jpeg_compress);
-	tjFree(output_buffer);
+        if(image_8bit_rgb != NULL)
+            free(image_8bit_rgb);
+        tjDestroy(jpeg_compress);
+        tjFree(output_buffer);
 
         state->count = 0;
     }
@@ -118,18 +120,18 @@ int main(int argc, char **argv)
     char opt;
     while((opt = getopt(argc, argv, "r:bq:")) != -1)
     {
-    	switch(opt)
-	{
-		case 'b':
-        	    state.is_bayer = 1;
-		    break;
+        switch(opt)
+        {
+        case 'b':
+            state.is_bayer = 1;
+            break;
         case 'q':
             state.quality = atoi(optarg);
-	    break;
-	case 'r':
-              state.rate = atoi(optarg);
-	      break;
-	}    
+            break;
+        case 'r':
+            state.rate = atoi(optarg);
+            break;
+        }
     }
     state.out_channel = argv[optind + 1];
 

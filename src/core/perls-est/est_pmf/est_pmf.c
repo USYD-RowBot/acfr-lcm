@@ -3,11 +3,11 @@
 // initializes all index values to -1
 void
 init_index_t (perllcm_est_navigator_index_t *index)
-{    
+{
     index->proc_state_len = 0;
 
-    index->u_len = 0; 
-    
+    index->u_len = 0;
+
     // Translation
     index->x = -1;
     index->y = -1;

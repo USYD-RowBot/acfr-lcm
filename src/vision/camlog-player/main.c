@@ -27,7 +27,8 @@
 #define MAX_CAMERA_CACHE_DEPTH 10
 
 typedef struct camera camera_t;
-struct camera {
+struct camera
+{
     char    *channel;
     char    *channel_out;
     char    *campath;
@@ -47,7 +48,8 @@ struct camera {
 };
 
 typedef struct player player_t;
-struct player {
+struct player
+{
     int64_t     utime0;
     char        *logpath;
     lcm_t       *lcm_sync;
@@ -55,11 +57,11 @@ struct player {
     const char  *channel_out;
 
     GHashTable  *sync_channel_hash;
-    int         ncameras; 
+    int         ncameras;
     camera_t    *cameras[MAX_CAMERA_CHANNELS];
 
     bool ignore_tiff_tag;
-    
+
 };
 
 
@@ -78,7 +80,7 @@ cache_value_destroy_func (void *value)
     bot_core_image_t_destroy (value);
 }
 
-static gint 
+static gint
 glist_sorter (gconstpointer a, gconstpointer b)
 {
     const int64_t *ai = a, *bi = b;
@@ -88,7 +90,7 @@ glist_sorter (gconstpointer a, gconstpointer b)
         return 0;
     else
         return -1;
-} 
+}
 
 static void
 glist_destroyer (gpointer data, gpointer user)
@@ -102,7 +104,8 @@ prefetch_thread (void *user)
 {
     camera_t *camera = user;
 
-    while (1) {
+    while (1)
+    {
         GTimeVal end_time;
         g_get_current_time (&end_time);
         g_time_val_add (&end_time, 250000);
@@ -110,7 +113,8 @@ prefetch_thread (void *user)
 
         // Should the prefetch thread exit?
         g_mutex_lock (camera->mutex);
-        if (camera->done) {
+        if (camera->done)
+        {
             g_mutex_unlock (camera->mutex);
 #if DEBUG
             printf ("%s: exiting\n", camera->channel);
@@ -118,13 +122,15 @@ prefetch_thread (void *user)
             return NULL;
         }
         // nope. did we timeout?
-        if (!ce) {
+        if (!ce)
+        {
             g_mutex_unlock (camera->mutex);
             continue;
         }
         // we have a cam event
         free (ce);
-        if (--camera->qlen > 0) {
+        if (--camera->qlen > 0)
+        {
             fprintf (stderr, "%s: unabled to keep up, try slowing down lcm-logplayer [%d]\n",
                      camera->channel, camera->qlen);
         }
@@ -138,11 +144,13 @@ prefetch_thread (void *user)
         g_mutex_lock (camera->mutex);
         n = MAX_CAMERA_CACHE_DEPTH - (camera->qpos - camera->cpos);
         g_mutex_unlock (camera->mutex);
-        if (n < 0) {
+        if (n < 0)
+        {
             fprintf (stderr, "TIME WARP n=%d!\n", n);
             n = 0;
         }
-        for (int i=0; i<n; i++) {
+        for (int i=0; i<n; i++)
+        {
             g_mutex_lock (camera->mutex);
             GList *next = g_list_next (camera->files);
             if (!next)
@@ -155,16 +163,18 @@ prefetch_thread (void *user)
             int64_t utime_next = *((int64_t *)next->data);
             char filename[PATH_MAX] = "";
             sprintf (filename, "%s/%"PRId64".tif", camera->campath, utime_next);
-            if (0 == vis_botimage_read_tiff (&img, NULL, NULL, filename, camera->ignore_tiff_tag)) {
+            if (0 == vis_botimage_read_tiff (&img, NULL, NULL, filename, camera->ignore_tiff_tag))
+            {
                 g_mutex_lock (camera->mutex);
                 g_hash_table_insert (camera->cache, gu_dup (&utime_next, sizeof utime_next), img);
                 camera->qpos++;
                 g_mutex_unlock (camera->mutex);
-#if DEBUG               
+#if DEBUG
                 printf ("%s: %"PRId64" queued\n", camera->channel, utime_next);
 #endif
             }
-            else {
+            else
+            {
                 ERROR ("%s: %"PRId64".tif error reading, unable to queue up image", camera->channel, utime_next);
                 continue;
             }
@@ -193,20 +203,25 @@ camera_new (player_t *player, const char *data_channel)
     if (player->channel_out)
         printf ("%s: output mapped to channel %s\n", camera->channel, camera->channel_out);
 
-   // populate camera's list of available .tif files
-   GDir *dir = g_dir_open (campath, 0, NULL);
-    if (!dir) {
+    // populate camera's list of available .tif files
+    GDir *dir = g_dir_open (campath, 0, NULL);
+    if (!dir)
+    {
         ERROR ("unable to open dir [%s]", campath);
         goto on_error;
     }
-    else {
-        for (const char *file = g_dir_read_name (dir); file != NULL; file = g_dir_read_name (dir)) {
+    else
+    {
+        for (const char *file = g_dir_read_name (dir); file != NULL; file = g_dir_read_name (dir))
+        {
             int64_t utime;
-            if (1 != sscanf (file, "%16"PRId64".tif", &utime)) {
+            if (1 != sscanf (file, "%16"PRId64".tif", &utime))
+            {
                 ERROR ("unexpected file [%s] in dir [%s]", file, camera->campath);
                 continue;
             }
-            else {
+            else
+            {
                 camera->nfiles++;
                 camera->files = g_list_prepend (camera->files, gu_dup (&utime, sizeof utime));
             }
@@ -216,14 +231,15 @@ camera_new (player_t *player, const char *data_channel)
     g_dir_close (dir);
 
     camera->prefetch_thread = g_thread_create (&prefetch_thread, camera, TRUE, NULL);
-    if (!camera->prefetch_thread) {
+    if (!camera->prefetch_thread)
+    {
         ERROR ("unable to create camera_thread for [%s]", data_channel);
         goto on_error;
     }
 
     return camera;
 
-  on_error:
+on_error:
     free (camera->channel);
     free (camera->channel_out);
     free (camera->campath);
@@ -251,15 +267,17 @@ camera_free (camera_t *camera)
 
 static void
 bot_core_image_sync_t_callback (const lcm_recv_buf_t *rbuf, const char *sync_channel,
-                              const bot_core_image_sync_t *msg, void *user)
+                                const bot_core_image_sync_t *msg, void *user)
 {
     player_t *player = user;
 
     camera_t *camera = g_hash_table_lookup (player->sync_channel_hash, sync_channel);
-    if (!camera) {
+    if (!camera)
+    {
         char data_channel[LCM_MAX_CHANNEL_NAME_LENGTH] = "";
         char *sync_ptr = strstr (sync_channel, ".SYNC");
-        if (!sync_ptr) {
+        if (!sync_ptr)
+        {
             ERROR ("unable to parse channel name from [%s]", sync_channel);
             return;
         }
@@ -267,11 +285,13 @@ bot_core_image_sync_t_callback (const lcm_recv_buf_t *rbuf, const char *sync_cha
             memcpy (data_channel, sync_channel, sync_ptr - sync_channel);
 
         camera = camera_new (player, data_channel);
-        if (!camera) {
+        if (!camera)
+        {
             ERROR ("unable to create camera for [%s]", data_channel);
             return;
         }
-        else {
+        else
+        {
             printf ("%s: adding channel\n", data_channel);
             g_hash_table_insert (player->sync_channel_hash, strdup (sync_channel), camera);
             player->cameras[player->ncameras++] = camera;
@@ -282,7 +302,8 @@ bot_core_image_sync_t_callback (const lcm_recv_buf_t *rbuf, const char *sync_cha
     g_mutex_lock (camera->mutex);
     bot_core_image_t *img = g_hash_table_lookup (camera->cache, &msg->utime);
     g_mutex_unlock (camera->mutex);
-    if (img) {
+    if (img)
+    {
 #if DEBUG
         printf ("%s: %"PRId64" in cache\n", camera->channel, msg->utime);
 #endif
@@ -302,20 +323,23 @@ bot_core_image_sync_t_callback (const lcm_recv_buf_t *rbuf, const char *sync_cha
         int i = 1;
         g_async_queue_push (camera->prefetch_queue, gu_dup (&i, sizeof i));
     }
-    else {
+    else
+    {
         // event not in cache, look for it on disk
         fprintf (stderr, "%s: %"PRId64" event not in cache, loading...\n", camera->channel, msg->utime);
         g_mutex_lock (camera->mutex);
         GList *event = g_list_find_custom (g_list_first (camera->files), &msg->utime, &glist_sorter);
-        if (!event) {
+        if (!event)
+        {
             g_mutex_unlock (camera->mutex);
             fprintf (stderr, "%s: %"PRId64".tif not on disk!\n", camera->channel, msg->utime);
             return;
         }
-        else {
+        else
+        {
             camera->files = event;
             g_mutex_unlock (camera->mutex);
-            
+
             // requeue the cache
             g_mutex_lock (camera->mutex);
             g_hash_table_remove_all (camera->cache);
@@ -329,11 +353,14 @@ bot_core_image_sync_t_callback (const lcm_recv_buf_t *rbuf, const char *sync_cha
 
             char filename[PATH_MAX];
             sprintf (filename, "%s/%"PRId64".tif", camera->campath, msg->utime);
-            if (0 == vis_botimage_read_tiff (&img, NULL, NULL, filename, player->ignore_tiff_tag)) {
+            if (0 == vis_botimage_read_tiff (&img, NULL, NULL, filename, player->ignore_tiff_tag))
+            {
                 // publish camera event
                 bot_core_image_t_publish (player->lcm_pub, camera->channel_out, img);
-                bot_core_image_t_destroy (img);            }
-            else {
+                bot_core_image_t_destroy (img);
+            }
+            else
+            {
                 ERROR ("%s: %"PRId64".tif error reading", camera->channel, msg->utime);
                 return;
             }
@@ -360,33 +387,36 @@ main (int argc, char *argv[])
     getopt_add_bool   (gopt, 'i',  "ignore",           0,                      "Ignore bot-specific tiff tags checking");
     getopt_add_help   (gopt, NULL);
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len !=1) {
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len !=1)
+    {
         getopt_do_usage (gopt, "ROOTDIR");
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, "ROOTDIR");
         exit (EXIT_SUCCESS);
     }
 
     // initialize GLib threading
-    if (!g_thread_supported ()) 
+    if (!g_thread_supported ())
         g_thread_init (NULL);
 
     // parse options
     player_t *player = g_malloc0 (sizeof (*player));
     player->utime0 = timestamp_now ();
     player->sync_channel_hash = g_hash_table_new_full (&g_str_hash, &g_str_equal, &free, NULL);
-    
+
     const char *dirpath = g_ptr_array_index (gopt->extraargs, 0);
     if (dirpath[strlen (dirpath)-1] != '/' &&
-        dirpath[strlen (dirpath)-1] != '.') {
+            dirpath[strlen (dirpath)-1] != '.')
+    {
         ERROR ("[%s] does not specify a fully qualified directory path", dirpath);
         exit (EXIT_FAILURE);
     }
     else
         player->logpath = g_path_get_dirname (dirpath);
-    
+
     const char *channel_out = getopt_get_string (gopt, "channel-out");
     if (getopt_has_flag (gopt, "channel-out"))
         player->channel_out = channel_out;
@@ -398,7 +428,8 @@ main (int argc, char *argv[])
 
     // begin playback
     player->lcm_sync = lcm_create (NULL);
-    if (!player->lcm_sync) {
+    if (!player->lcm_sync)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
@@ -406,11 +437,12 @@ main (int argc, char *argv[])
     if (getopt_has_flag (gopt, "lcm-url"))
         lcmurl = getopt_get_string (gopt, "lcm-url");
     player->lcm_pub = lcm_create (lcmurl);
-    if (!player->lcm_pub) {
+    if (!player->lcm_pub)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
-    bot_core_image_sync_t_subscription_t *sub = 
+    bot_core_image_sync_t_subscription_t *sub =
         bot_core_image_sync_t_subscribe (player->lcm_sync, getopt_get_string (gopt, "channel"), &bot_core_image_sync_t_callback, player);
 
     if (getopt_get_bool (gopt, "daemon"))
@@ -424,7 +456,8 @@ main (int argc, char *argv[])
     g_main_loop_run (_mainloop);
 
     fprintf (stderr, "Player exiting\n");
-    for (int i=0; i<player->ncameras; i++) {
+    for (int i=0; i<player->ncameras; i++)
+    {
         camera_t *camera = player->cameras[i];
         g_mutex_lock (camera->mutex);
         camera->done = 1;

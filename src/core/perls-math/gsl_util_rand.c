@@ -43,13 +43,16 @@ gslu_rand_index (const gsl_rng *r, gslu_index *rsel, size_t n)
 
     // draw sample indices
     size_t nsamps = 0;
-    while (nsamps < rsel->size) {
+    while (nsamps < rsel->size)
+    {
         size_t s = floor (gsl_rng_uniform (r) * n);
 
         // check for uniqueness
         bool unique = 1;
-        for (size_t i=0; i<nsamps; i++) {
-            if (s == gslu_index_get (rsel, i)) {
+        for (size_t i=0; i<nsamps; i++)
+        {
+            if (s == gslu_index_get (rsel, i))
+            {
                 unique = 0;
                 break;
             }
@@ -71,17 +74,20 @@ gslu_rand_index (const gsl_rng *r, gslu_index *rsel, size_t n)
 
 /*===========================RANDOM SCALAR/VECTOR/MATRIX=========================*/
 void
-gslu_rand_gaussian_vector (const gsl_rng *r, gsl_vector *a, 
+gslu_rand_gaussian_vector (const gsl_rng *r, gsl_vector *a,
                            const gsl_vector *mu, const gsl_matrix *Sigma, const gsl_matrix *L)
 {
     assert (a->size == mu->size && (Sigma || L));
     for (size_t i=0; i<a->size; i++)
         gsl_vector_set (a, i, gsl_ran_gaussian_ziggurat (r, 1.0));
 
-    if (L) {
+    if (L)
+    {
         assert (L->size1 == L->size2 && L->size1 == mu->size);
         gsl_blas_dtrmv (CblasLower, CblasNoTrans, CblasNonUnit, L, a);
-    } else {
+    }
+    else
+    {
         assert (Sigma->size1 == Sigma->size2 && Sigma->size1 == mu->size);
         gsl_matrix *_L = gsl_matrix_alloc (Sigma->size1, Sigma->size2);
         gsl_matrix_memcpy (_L, Sigma);
@@ -94,19 +100,21 @@ gslu_rand_gaussian_vector (const gsl_rng *r, gsl_vector *a,
 }
 
 void
-gslu_rand_gaussian_matrix (const gsl_rng *r, gsl_matrix *A, 
+gslu_rand_gaussian_matrix (const gsl_rng *r, gsl_matrix *A,
                            const gsl_vector *mu, const gsl_matrix *Sigma, const gsl_matrix *L)
 {
     assert (A->size1 == mu->size && (Sigma || L));
     for (size_t i=0; i<A->size1; i++)
         for (size_t j=0; j<A->size2; j++)
             gsl_matrix_set (A, i, j, gsl_ran_gaussian_ziggurat (r, 1.0));
-    
-    if (L) {
+
+    if (L)
+    {
         assert (L->size1 == L->size2 && L->size1 == mu->size);
         gsl_blas_dtrmm (CblasLeft, CblasLower, CblasNoTrans, CblasNonUnit, 1.0, L, A);
     }
-    else {
+    else
+    {
         assert (Sigma->size1 == Sigma->size2 && Sigma->size1 == mu->size);
         gsl_matrix *_L = gsl_matrix_alloc (Sigma->size1, Sigma->size2);
         gsl_matrix_memcpy (_L, Sigma);
@@ -115,7 +123,8 @@ gslu_rand_gaussian_matrix (const gsl_rng *r, gsl_matrix *A,
         gsl_matrix_free (_L);
     }
 
-    for (size_t j=0; j<A->size2; j++) {
+    for (size_t j=0; j<A->size2; j++)
+    {
         gsl_vector_view a = gsl_matrix_column (A, j);
         gsl_vector_add (&a.vector, mu);
     }

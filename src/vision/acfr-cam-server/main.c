@@ -37,7 +37,7 @@
 #define SET_STATE		        4
 #define SET_ALL					5
 
-typedef struct 
+typedef struct
 {
     lcm_t *lcm;
     int connected;
@@ -49,7 +49,7 @@ typedef struct
 int program_exit;
 int connected;
 
-void signal_handler(int sig_num) 
+void signal_handler(int sig_num)
 {
     // do a safe exit
     if(sig_num == SIGINT)
@@ -61,13 +61,15 @@ void signal_handler(int sig_num)
 }
 
 // Process LCM messages with callbacks
-static void *lcm_thread (void *context) {
+static void *lcm_thread (void *context)
+{
     lcm_t *lcm = (lcm_t *) context;
 
-    while (!program_exit) {
+    while (!program_exit)
+    {
         struct timeval tv;
-	    tv.tv_sec = 1;
-	    tv.tv_usec = 0;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
 
         lcmu_handle_timeout(lcm, &tv);
     }
@@ -87,14 +89,14 @@ int send_log_message(state_t *state, char *msg)
     pthread_mutex_lock(state->lock);
     send(state->sock_fd, msg_out, strlen(msg_out), 0);
     pthread_mutex_unlock(state->lock);
-    
+
     return 0;
 }
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-    
+
     // send out a beat msg once a second
     //send_log_message(state, "\0");
 }
@@ -103,14 +105,14 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 void vis_rawlog_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_vis_rawlog_t *rl, void *u)
 {
     state_t *state = (state_t *)u;
-    
+
     // we are going to send back the entry that ends up in the main log file
     // the format is VIS: [timestamp] [image_name] exp: [exposure time]
-    
+
     char out_str[128];
     sprintf(out_str, "[%f] %s exp: %d\0", rl->utime/1e6, rl->image_name, rl->exp_time);
     send_log_message(state, out_str);
-    
+
 }
 
 
@@ -121,11 +123,11 @@ int parse_message(char *data, state_t *state)
     char msg[256];
     float f_value;
     char command[256];
-    
-    acfrlcm_auv_camera_trigger_t ct;
-    memset(&ct, 0, sizeof(acfrlcm_auv_camera_trigger_t));  
 
-    
+    acfrlcm_auv_camera_trigger_t ct;
+    memset(&ct, 0, sizeof(acfrlcm_auv_camera_trigger_t));
+
+
     num_msg = sscanf(data, "%u-%s", &msg_len, msg);
 
     if(!strncmp(msg, "start", 5))
@@ -137,7 +139,7 @@ int parse_message(char *data, state_t *state)
         sprintf(command, "/home/auv/git/acfr_lcm/build/bin/acfr-cam-logger -c PROSILICA_..16 -o %s &\n", state->dir);
         printf("Command: %s", command);
         system(command);
-    
+
         ct.command = SET_STATE;
         ct.enabled = 1;
         ct.utime = timestamp_now();
@@ -145,8 +147,8 @@ int parse_message(char *data, state_t *state)
         send_log_message(state, "Capture Start... [SUCCESS]");
         return 1;
     }
-        
-        
+
+
     else if(!strncmp(msg, "stop", 4))
     {
         ct.command = SET_STATE;
@@ -156,7 +158,7 @@ int parse_message(char *data, state_t *state)
         send_log_message(state, "Capture Stop... [SUCCESS]");
         system("killall acfr-cam-logger");
         return 1;
-    }    
+    }
 
     else if(!strncmp(msg, "f=", 2))
     {
@@ -171,35 +173,35 @@ int parse_message(char *data, state_t *state)
     }
 
     else if(!strncmp(msg, "savedir=", 8))
-	{
+    {
         int parse_state = 1;
         int i=0;
         memset(state->dir, 0, sizeof(state->dir));
-		char *ptr = strstr(msg, "savedir='");
-		ptr += strlen("savedir='");
-		while( (*ptr != '\'') && parse_state )	//0x60 -> hex for ' 
-		{
-			if( (*ptr == 0) || (i >= sizeof(state->dir)) )	//Null char or buffer len overrun
-			{
-				parse_state = 0;	
+        char *ptr = strstr(msg, "savedir='");
+        ptr += strlen("savedir='");
+        while( (*ptr != '\'') && parse_state )	//0x60 -> hex for '
+        {
+            if( (*ptr == 0) || (i >= sizeof(state->dir)) )	//Null char or buffer len overrun
+            {
+                parse_state = 0;
                 i=0;
-			}
-			else
-				state->dir[i++] = *ptr++;	//copy until the delimiter
-    
-        }   
+            }
+            else
+                state->dir[i++] = *ptr++;	//copy until the delimiter
+
+        }
         // check to see that the dir has a slah on the end
         if(state->dir[strlen(state->dir)] != '/')
             state->dir[i] = '/';
-            
+
         printf("Save dir set to %s\n", state->dir);
         return 1;
 
-    } 
-    else       
+    }
+    else
         return 0;
 }
-        
+
 
 
 int main()
@@ -212,15 +214,15 @@ int main()
     state.connected = 0;
     state.lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     pthread_mutex_init(state.lock, NULL);
-    
+
     // set a default save dir
     strcpy(state.dir, "/media/data/itest/");
 
     program_exit = 0;
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
-    
-    
+
+
     sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     int yes = 1;
     setsockopt(sock_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
@@ -230,7 +232,7 @@ int main()
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
     memset(&(server_addr.sin_zero), 0, 8);
-    
+
 
     if(bind(sock_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
@@ -242,33 +244,33 @@ int main()
     {
         perror("listen");
     }
-    
-    
+
+
     // start LCM
     state.lcm = lcm_create(NULL);
 
     // create an LCM thread to listen to stuff
     pthread_t tid;
     pthread_create(&tid, NULL, lcm_thread, state.lcm);
-    pthread_detach(tid);	
-    
+    pthread_detach(tid);
+
     // subscribe to the required lcm messages
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
     acfrlcm_auv_vis_rawlog_t_subscribe(state.lcm, "ACFR_AUV_VIS_RAWLOG", &vis_rawlog_handler, &state);
-    
+
     // now accepting tcp connections
     struct timeval tv;
     fd_set sock_fds, read_fds;
     char buffer[256];
     int bytes_read;
-    
-    
+
+
     while(!program_exit)
-    {   
+    {
         FD_ZERO(&sock_fds);
         FD_SET(sock_fd, &sock_fds);
         tv.tv_sec = 2;
-        tv.tv_usec = 0;    
+        tv.tv_usec = 0;
         connected = 0;
         if(select(sock_fd+1, &sock_fds, NULL, NULL, NULL) > 0)
         {
@@ -293,18 +295,22 @@ int main()
                     bytes_read = read(new_fd, buffer, sizeof(buffer));
                     if (bytes_read > 0)
                     {
-                       parse_message(buffer, &state);
-                    } else {
-                       printf("cam server: broken read. Closing connection\n");
-                       close(new_fd);
-                       connected = 0;
+                        parse_message(buffer, &state);
+                    }
+                    else
+                    {
+                        printf("cam server: broken read. Closing connection\n");
+                        close(new_fd);
+                        connected = 0;
                     }
                     FD_SET(new_fd, &read_fds);
-                } else if (selectReturn < 0) {
-                    printf("cam server: Error returned from select.  Closing connection\n"); 
+                }
+                else if (selectReturn < 0)
+                {
+                    printf("cam server: Error returned from select.  Closing connection\n");
                     close(new_fd);
                     connected = 0;
-                } 
+                }
             }
             printf("cam server: Connection closed\n");
         }
@@ -316,8 +322,8 @@ int main()
     pthread_join(tid, NULL);
     pthread_mutex_destroy(state.lock);
     free(state.lock);
-   
+
     return 0;
 }
-    
-    
+
+

@@ -24,9 +24,9 @@ typedef struct
     lcm_t *lcm;
     acfr_sensor_t *sensor;
     int enabled;
-	
-	char *base_path;
-	int osi_mode;
+
+    char *base_path;
+    int osi_mode;
 } state_t;
 
 
@@ -87,65 +87,65 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
 void uvc_osi_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_uvc_osi_t *osi, void *u)
 {
-	state_t *state = (state_t *)u;
-	acfrlcm_auv_camera_control_t cc;
-	char path_name[256];
-	// We need to detect when a mission has stopped so we can clear the path for the logger
-	if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
-	{	
-		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
-		cc.utime = timestamp_now();
-		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_STOP;
-		memset(path_name, 0, sizeof(path_name));
-		sprintf(path_name, " ");
-		cc.path = path_name;
-		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
-	}
-	else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
-	{
-		// Generate a file path for the mission				
-		strcpy(path_name, state->base_path);
-		if(path_name[strlen(path_name) - 1] != '/')
-                strcat(path_name, "/");
+    state_t *state = (state_t *)u;
+    acfrlcm_auv_camera_control_t cc;
+    char path_name[256];
+    // We need to detect when a mission has stopped so we can clear the path for the logger
+    if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_NORMAL && osi->mode == SENLCM_UVC_OSI_T_MODE_STOPPED)
+    {
+        memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
+        cc.utime = timestamp_now();
+        cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_STOP;
+        memset(path_name, 0, sizeof(path_name));
+        sprintf(path_name, " ");
+        cc.path = path_name;
+        acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
+    }
+    else if(state->osi_mode == SENLCM_UVC_OSI_T_MODE_STOPPED && osi->mode == SENLCM_UVC_OSI_T_MODE_NORMAL)
+    {
+        // Generate a file path for the mission
+        strcpy(path_name, state->base_path);
+        if(path_name[strlen(path_name) - 1] != '/')
+            strcat(path_name, "/");
 
-		struct timeval tv;
-		timestamp_to_timeval (osi->utime, &tv);
-		struct tm tm;
-		localtime_r (&tv.tv_sec, &tm);
-		char mission_date_name[64];
-		memset(mission_date_name, 0, sizeof(mission_date_name));
-		char acfr_format_r[24] = "r%Y%m%d_%H%M%S_";		 
-		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
-		strcat(path_name, mission_date_name);
-		strcat(path_name, osi->mission_name);
+        struct timeval tv;
+        timestamp_to_timeval (osi->utime, &tv);
+        struct tm tm;
+        localtime_r (&tv.tv_sec, &tm);
+        char mission_date_name[64];
+        memset(mission_date_name, 0, sizeof(mission_date_name));
+        char acfr_format_r[24] = "r%Y%m%d_%H%M%S_";
+        strftime(mission_date_name, sizeof(mission_date_name), acfr_format_r, &tm);
+        strcat(path_name, mission_date_name);
+        strcat(path_name, osi->mission_name);
 
-		char acfr_format_i[24] = "/i%Y%m%d_%H%M%S";		 
-		strftime(mission_date_name, sizeof(mission_date_name), acfr_format_i, &tm);
-		strcat(path_name, mission_date_name);
-		
-		char cmd_str[256];
-		sprintf(cmd_str, "mkdir -p %s\n", path_name);
-		system(cmd_str);
+        char acfr_format_i[24] = "/i%Y%m%d_%H%M%S";
+        strftime(mission_date_name, sizeof(mission_date_name), acfr_format_i, &tm);
+        strcat(path_name, mission_date_name);
 
-		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
-		cc.utime = timestamp_now();
-		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_SET_PATH;
-		cc.path = path_name;
-		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
+        char cmd_str[256];
+        sprintf(cmd_str, "mkdir -p %s\n", path_name);
+        system(cmd_str);
 
-		usleep(500000);
+        memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
+        cc.utime = timestamp_now();
+        cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_SET_PATH;
+        cc.path = path_name;
+        acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
 
-		memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
-		cc.utime = timestamp_now();
-		memset(path_name, 0, sizeof(path_name));
-		sprintf(path_name, " ");
-		cc.path = path_name;
-		cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START;
-		acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
+        usleep(500000);
 
-	}
+        memset(&cc, 0, sizeof(acfrlcm_auv_camera_control_t));
+        cc.utime = timestamp_now();
+        memset(path_name, 0, sizeof(path_name));
+        sprintf(path_name, " ");
+        cc.path = path_name;
+        cc.command = ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START;
+        acfrlcm_auv_camera_control_t_publish(state->lcm, "CAMERA_CONTROL", &cc);
 
-	state->osi_mode = osi->mode;
+    }
+
+    state->osi_mode = osi->mode;
 }
 
 
@@ -182,17 +182,17 @@ int main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
 
-	char key[64];
+    char key[64];
 
-	// get the base image path
-	sprintf(key, "%s.base_path", rootkey);
-	state.base_path = bot_param_get_str_or_fail(state.sensor->param, key); 
+    // get the base image path
+    sprintf(key, "%s.base_path", rootkey);
+    state.base_path = bot_param_get_str_or_fail(state.sensor->param, key);
 
-	state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
+    state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-	senlcm_uvc_osi_t_subscribe(state.lcm, "UVC_OSI", &uvc_osi_handler, &state);
+    senlcm_uvc_osi_t_subscribe(state.lcm, "UVC_OSI", &uvc_osi_handler, &state);
 
     char buf[128];
     fd_set rfds;
@@ -215,7 +215,7 @@ int main (int argc, char *argv[])
             {
                 memset(buf, 0, sizeof(buf));
                 int ret = acfr_sensor_read(state.sensor, buf, sizeof(buf));
-                { 
+                {
                     if(ret > 0)
                         parse_msg(&state, buf);
                 }

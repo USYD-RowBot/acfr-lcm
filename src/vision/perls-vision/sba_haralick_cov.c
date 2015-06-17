@@ -12,7 +12,8 @@
 
 #define POOL_THREADS_MAX 10
 
-typedef struct ThreadData {
+typedef struct ThreadData
+{
     int row;
     int col;
     gsl_matrix *u1;
@@ -24,7 +25,8 @@ typedef struct ThreadData {
     gsl_vector *featscalej;
 } ThreadData;
 
-typedef struct MatrixData {
+typedef struct MatrixData
+{
     gsl_matrix *dg_dx;
     GMutex *mutex;
 } MatrixData;
@@ -33,7 +35,7 @@ static gsl_vector *
 stackCalibAlloc (const gsl_matrix *K, const gsl_vector *distCoeffs)
 {
     gsl_vector *stacked = gsl_vector_calloc (9);
-    
+
     double fx, fy, cx, cy, k1, k2, p1, p2, k3;
 
     /* get the values from K */
@@ -87,14 +89,14 @@ unstackCalibAlloc (const gsl_vector *stacked, gsl_matrix **K, gsl_vector **distC
     gsl_matrix_set (*K, 0, 2, cx);
     gsl_matrix_set (*K, 1, 2, cy);
     gsl_matrix_set (*K, 2, 2, 1.0);
-    
+
     /* set the distortion coefficients */
     gsl_vector_set (*distCoeffs, 0, k1);
     gsl_vector_set (*distCoeffs, 1, k2);
     gsl_vector_set (*distCoeffs, 2, p1);
     gsl_vector_set (*distCoeffs, 3, p2);
     gsl_vector_set (*distCoeffs, 4, k3);
-    
+
 }
 
 static gsl_vector *
@@ -104,11 +106,12 @@ stackFeaturesAlloc (const gsl_matrix *u1Observed, const gsl_matrix *u2Observed)
 
     int numberOfFeatures = u1Observed->size2;
     int numberOfElements = 2*u1Observed->size1*numberOfFeatures;
-    
+
     gsl_vector *stackedFeatures = gsl_vector_calloc (numberOfElements);
 
     int stackedVectorIdx = 0;
-    for (int featIdx=0; featIdx<numberOfFeatures; featIdx++) {
+    for (int featIdx=0; featIdx<numberOfFeatures; featIdx++)
+    {
         gsl_vector_const_view ithFeature1 = gsl_matrix_const_column (u1Observed, featIdx);
         gsl_vector_const_view ithFeature2 = gsl_matrix_const_column (u2Observed, featIdx);
         gsl_vector_view stackedSubVector = gsl_vector_subvector (stackedFeatures, stackedVectorIdx, 2);
@@ -127,7 +130,8 @@ sigmaUInvAlloc (const gsl_vector *featscalei,
 {
     gsl_matrix *sigmaUInv = gsl_matrix_calloc (4*featscalei->size, 4*featscalei->size);
 
-    for (int i=0; i<featscalei->size; i++) {
+    for (int i=0; i<featscalei->size; i++)
+    {
         double scalei = gsl_vector_get (featscalei, i);
         double scalej = gsl_vector_get (featscalej, i);
         gsl_matrix_set (sigmaUInv, i*4+0, i*4+0, 1/(scalei*scalei));
@@ -251,8 +255,8 @@ printRelPose (gsl_matrix *Sigma)
 
 static void
 vis_sba_haralick_cov_hz_Rae (const gsl_vector *params, const gsl_matrix *K,
-                             const gsl_vector *distCoeffs, 
-                             const gsl_vector *featscalei, const gsl_vector *featscalej, 
+                             const gsl_vector *distCoeffs,
+                             const gsl_vector *featscalei, const gsl_vector *featscalej,
                              gsl_matrix *hzCovEst)
 {
     int ret, ncam;
@@ -275,15 +279,16 @@ vis_sba_haralick_cov_hz_Rae (const gsl_vector *params, const gsl_matrix *K,
 
     /* Set error handler */
     oldHandler = gsl_set_error_handler (doNothingHandler);
-    
+
     ret = gslu_matrix_spdinv(hzCovEst, JTSJ);
 
-    if (ret) {
+    if (ret)
+    {
         printf ("Matrix is not invertible\n");
         goto ON_ERROR;
-    } 
+    }
 
-  ON_ERROR:
+ON_ERROR:
     gsl_matrix_free (JTmp);
     gsl_matrix_free (J);
     gsl_matrix_free (JTSJ);
@@ -294,7 +299,7 @@ vis_sba_haralick_cov_hz_Rae (const gsl_vector *params, const gsl_matrix *K,
 
 static void
 vis_sba_haralick_cov_hz_H (const gsl_vector *params, const gsl_matrix *K,
-                           const gsl_vector *distCoeffs, 
+                           const gsl_vector *distCoeffs,
                            const gsl_vector *featscalei, const gsl_vector *featscalej,
                            gsl_matrix *hzCovEst)
 {
@@ -318,15 +323,16 @@ vis_sba_haralick_cov_hz_H (const gsl_vector *params, const gsl_matrix *K,
 
     /* Set error handler */
     oldHandler = gsl_set_error_handler (doNothingHandler);
-    
+
     ret = gslu_matrix_spdinv(hzCovEst, JTSJ);
 
-    if (ret) {
+    if (ret)
+    {
         printf ("Matrix is not invertible\n");
         goto ON_ERROR;
-    } 
+    }
 
-  ON_ERROR:
+ON_ERROR:
     gsl_matrix_free (JTmp);
     gsl_matrix_free (J);
     gsl_matrix_free (JTSJ);
@@ -366,7 +372,7 @@ threadFuncRae (gpointer data, gpointer user_data)
     /* Compute the differentiation */
     double term1, term2, term3, term4, secondDeriv;
     term1 = costFunctionRae (paramsPerturb, stackedCalibPerturb,
-                             threadData->u1, threadData->u2, 
+                             threadData->u1, threadData->u2,
                              threadData->featscalei, threadData->featscalej);
     term2 = costFunctionRae (paramsPerturb, stackedCalib,
                              threadData->u1, threadData->u2,
@@ -377,7 +383,7 @@ threadFuncRae (gpointer data, gpointer user_data)
     term4 = costFunctionRae (threadData->params, stackedCalib,
                              threadData->u1, threadData->u2,
                              threadData->featscalei, threadData->featscalej);
-    
+
     secondDeriv = (term1 - term2 - term3 + term4) / (deltaX * deltaTheta);
 
     /* Set the value at (row, col) */
@@ -470,7 +476,7 @@ threadFuncH (gpointer data, gpointer user_data)
 }
 
 static gsl_matrix *
-computeATermRaeAlloc (const gsl_vector *params, const gsl_matrix *u1, 
+computeATermRaeAlloc (const gsl_vector *params, const gsl_matrix *u1,
                       const gsl_matrix *u2, const gsl_matrix *K,
                       const gsl_vector *distCoeffs,
                       const gsl_vector *featscalei, const gsl_vector *featscalej)
@@ -486,8 +492,10 @@ computeATermRaeAlloc (const gsl_vector *params, const gsl_matrix *u1,
     GThreadPool *pool = g_thread_pool_new (threadFuncRae, user_data, POOL_THREADS_MAX, TRUE, NULL);
 
     /* Push every (row, col) element onto the thread pool */
-    for (int row=0; row<dg_dx_rows; row++) {
-        for (int col=0; col<dg_dx_cols; col++) {
+    for (int row=0; row<dg_dx_rows; row++)
+    {
+        for (int col=0; col<dg_dx_cols; col++)
+        {
 
             ThreadData *threadData = calloc (1, sizeof(*threadData));
             threadData->row = row;
@@ -512,7 +520,7 @@ computeATermRaeAlloc (const gsl_vector *params, const gsl_matrix *u1,
 
         }
     }
-    
+
     /* Wait for all the jobs to finish */
     g_thread_pool_free (pool, FALSE, TRUE);
 
@@ -529,7 +537,7 @@ computeATermRaeAlloc (const gsl_vector *params, const gsl_matrix *u1,
 }
 
 static gsl_matrix *
-computeATermHAlloc (const gsl_vector *params, const gsl_matrix *u1, 
+computeATermHAlloc (const gsl_vector *params, const gsl_matrix *u1,
                     const gsl_matrix *u2, const gsl_matrix *K,
                     const gsl_vector *distCoeffs,
                     const gsl_vector *featscalei, const gsl_vector *featscalej)
@@ -545,8 +553,10 @@ computeATermHAlloc (const gsl_vector *params, const gsl_matrix *u1,
     GThreadPool *pool = g_thread_pool_new (threadFuncH, user_data, POOL_THREADS_MAX, TRUE, NULL);
 
     /* Push every (row, col) element onto the thread pool */
-    for (int row=0; row<dg_dx_rows; row++) {
-        for (int col=0; col<dg_dx_cols; col++) {
+    for (int row=0; row<dg_dx_rows; row++)
+    {
+        for (int col=0; col<dg_dx_cols; col++)
+        {
 
             ThreadData *threadData = calloc (1, sizeof(*threadData));
             threadData->row = row;
@@ -571,7 +581,7 @@ computeATermHAlloc (const gsl_vector *params, const gsl_matrix *u1,
 
         }
     }
-    
+
     /* Wait for all the jobs to finish */
     g_thread_pool_free (pool, FALSE, TRUE);
 
@@ -610,7 +620,7 @@ void
 vis_sba_haralick_cov_2v_Rae (const gsl_matrix *sigmaCalib,
                              const gsl_vector *params, const gsl_matrix *u1,
                              const gsl_matrix *u2, const gsl_matrix *K,
-                             const gsl_vector *distCoeffs, 
+                             const gsl_vector *distCoeffs,
                              const gsl_vector *featscalei, const gsl_vector *featscalej,
                              gsl_matrix *rel_pose_cov)
 {
@@ -640,7 +650,7 @@ void
 vis_sba_haralick_cov_2v_H (const gsl_matrix *sigmaCalib,
                            const gsl_vector *params, const gsl_matrix *u1,
                            const gsl_matrix *u2, const gsl_matrix *K,
-                           const gsl_vector *distCoeffs, 
+                           const gsl_vector *distCoeffs,
                            const gsl_vector *featscalei, const gsl_vector *featscalej,
                            gsl_matrix *rel_pose_cov)
 {

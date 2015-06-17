@@ -23,7 +23,7 @@
 
 /**** LCM COMMUNICATION ******************************************************
  *
- *    LCM INPUTS: 
+ *    LCM INPUTS:
  *          - current quadrotor pose
  *          - current target pose
  *    LCM OUTPUTS:
@@ -125,7 +125,8 @@ void
 manager_load_cfg (config_t *config)
 {
     BotParam *param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-    if (!param) {
+    if (!param)
+    {
         ERROR ("Could not create configuration parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
         exit (EXIT_FAILURE);
     }
@@ -149,7 +150,7 @@ manager_load_cfg (config_t *config)
 //----------------------------------------------------------------------
 static void
 quad_cmd_cb (const lcm_recv_buf_t *rbug, const char *channel,
-                                const  perllcm_ardrone_cmd_t *msg, void *user)
+             const  perllcm_ardrone_cmd_t *msg, void *user)
 {
     if (!state.controller)
         state.controller = (perllcm_ardrone_cmd_t*) malloc (sizeof (perllcm_ardrone_cmd_t));
@@ -161,7 +162,7 @@ quad_cmd_cb (const lcm_recv_buf_t *rbug, const char *channel,
 //----------------------------------------------------------------------------------
 static void
 quad_perllcm_position_cb (const lcm_recv_buf_t *rbug, const char *channel,
-                                const  perllcm_position_t *msg, void *user)
+                          const  perllcm_position_t *msg, void *user)
 {
     if (!state.quadrotor_pose)
         state.quadrotor_pose = (perllcm_position_t*) malloc (sizeof (perllcm_position_t));
@@ -175,7 +176,7 @@ quad_perllcm_position_cb (const lcm_recv_buf_t *rbug, const char *channel,
 
 static void
 quad_senlcm_mocap_cb (const lcm_recv_buf_t *rbug, const char *channel,
-                                const  senlcm_mocap_t *msg, void *user)
+                      const  senlcm_mocap_t *msg, void *user)
 {
     if (!msg->valid || msg->residual > 10) return;
 
@@ -195,11 +196,11 @@ quad_senlcm_mocap_cb (const lcm_recv_buf_t *rbug, const char *channel,
 //----------------------------------------------------------------------------------
 static void
 targ_perllcm_position_cb (const lcm_recv_buf_t *rbug, const char *channel,
-                                const  perllcm_position_t *msg, void *user)
+                          const  perllcm_position_t *msg, void *user)
 {
     if (!state.target_pose)
         state.target_pose = (perllcm_position_t*) malloc (sizeof (perllcm_position_t));
-    
+
     printf ("CALLBACK: TARGET POSE\n");
 
     memcpy (state.target_pose, msg, sizeof (perllcm_position_t));
@@ -209,7 +210,7 @@ targ_perllcm_position_cb (const lcm_recv_buf_t *rbug, const char *channel,
 
 static void
 targ_senlcm_mocap_cb (const lcm_recv_buf_t *rbug, const char *channel,
-                                const  senlcm_mocap_t *msg, void *user)
+                      const  senlcm_mocap_t *msg, void *user)
 {
     if (!msg->valid || msg->residual > 10) return;
 
@@ -253,13 +254,16 @@ void
 update_mission ()
 {
     int publish_waypoints = 0;
-    perllcm_pose3d_t waypoint = {
+    perllcm_pose3d_t waypoint =
+    {
         .utime = state.utime,
     };
-    perllcm_pose3d_t goal = {
+    perllcm_pose3d_t goal =
+    {
         .utime = state.utime,
     };
-    perllcm_ardrone_cmd_t land = {
+    perllcm_ardrone_cmd_t land =
+    {
         .utime = state.utime,
         .controller = state.controller && state.controller->controller,
         .auth_follow = state.controller && state.controller->auth_follow,
@@ -267,261 +271,275 @@ update_mission ()
         //.takeoff = true,
         .emergency = true,
     };
-/*     perllcm_ardrone_cmd_t hover = { */
-/*         .utime = state.utime, */
-/*         .hover = true, */
-/*     }; */
+    /*     perllcm_ardrone_cmd_t hover = { */
+    /*         .utime = state.utime, */
+    /*         .hover = true, */
+    /*     }; */
 
     double cur_ang, tmp, ang1, ang2, tmpx, tmpy;
 
     // control flow
-    switch (state.mission_state) {
+    switch (state.mission_state)
+    {
 
-        // wait for initial conditions (quadrotor state update)
-        case INITIALIZATION:
-            printf ("STATE: INITIALIZATION\n");
-            if (state.quadrotor_pose)
-                state.mission_state = IDENTIFY_TARGET; // intentionally doesn't break
-            else
-                break;
-            
-        // wait until target is found
-        case IDENTIFY_TARGET:
-            printf ("STATE: IDENTIFY_TARGET\n");
-            // do something in the future to "explore"
-            goal.mu[0] = waypoint.mu[0] = state.quadrotor_pose->xyzrph[0];
-            goal.mu[1] = waypoint.mu[1] = state.quadrotor_pose->xyzrph[1];
-            goal.mu[2] = waypoint.mu[2] = config.rel_look_behind.mu[2];
-            goal.mu[3] = waypoint.mu[3] = state.quadrotor_pose->xyzrph[3];
-            goal.mu[4] = waypoint.mu[4] = state.quadrotor_pose->xyzrph[4];
-            goal.mu[5] = waypoint.mu[5] = state.quadrotor_pose->xyzrph[5] + M_PI/12;
-
-            publish_waypoints = 1;
-
-            if (state.target_pose && 
-                    (state.utime - state.target_pose->utime) < config.target_timeout * 1e6)
-                state.mission_state = LOCK_ON_TARGET; /* intentionally doesn't break */
-            else
-                break;
-
-        // navigate toward target, move on at 1 meter radius
-        case LOCK_ON_TARGET:
-            printf ("STATE: LOCK_ON_TARGET\n");
-            state.time_at_look_behind = 0;
-            goal.mu[5] = atan2 (state.target_pose->xyzrph[1] - state.quadrotor_pose->xyzrph[1],
-                                state.target_pose->xyzrph[0] - state.quadrotor_pose->xyzrph[0]);
-            goal.mu[0] = state.target_pose->xyzrph[0] + config.main_radius * cos (goal.mu[5] + M_PI);
-            goal.mu[1] = state.target_pose->xyzrph[1] + config.main_radius * sin (goal.mu[5] + M_PI);
-            goal.mu[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
-
-            waypoint.mu[5] = goal.mu[5];
-            waypoint.mu[2] = goal.mu[2];
-            if (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < config.lookahead_radius) {
-                waypoint.mu[0] = goal.mu[0];
-                waypoint.mu[1] = goal.mu[1];
-            }
-            else {
-                waypoint.mu[0] = state.quadrotor_pose->xyzrph[0] + config.lookahead_radius * cos (goal.mu[5]);
-                waypoint.mu[1] = state.quadrotor_pose->xyzrph[1] + config.lookahead_radius * sin (goal.mu[5]);
-            }
-
-            publish_waypoints = 1;
-
-            if (dist2d (state.quadrotor_pose, state.target_pose) < config.main_radius + config.lookahead_radius)
-                state.mission_state = PREPARE_LANDING;
-
+    // wait for initial conditions (quadrotor state update)
+    case INITIALIZATION:
+        printf ("STATE: INITIALIZATION\n");
+        if (state.quadrotor_pose)
+            state.mission_state = IDENTIFY_TARGET; // intentionally doesn't break
+        else
             break;
 
-        // move to relative "look behind" point
-        case PREPARE_LANDING:
-            printf ("STATE: PREPARE_LANDING\n");
-            // assign goal point
-            goal.mu[0] = state.target_pose->xyzrph[0]
+    // wait until target is found
+    case IDENTIFY_TARGET:
+        printf ("STATE: IDENTIFY_TARGET\n");
+        // do something in the future to "explore"
+        goal.mu[0] = waypoint.mu[0] = state.quadrotor_pose->xyzrph[0];
+        goal.mu[1] = waypoint.mu[1] = state.quadrotor_pose->xyzrph[1];
+        goal.mu[2] = waypoint.mu[2] = config.rel_look_behind.mu[2];
+        goal.mu[3] = waypoint.mu[3] = state.quadrotor_pose->xyzrph[3];
+        goal.mu[4] = waypoint.mu[4] = state.quadrotor_pose->xyzrph[4];
+        goal.mu[5] = waypoint.mu[5] = state.quadrotor_pose->xyzrph[5] + M_PI/12;
+
+        publish_waypoints = 1;
+
+        if (state.target_pose &&
+                (state.utime - state.target_pose->utime) < config.target_timeout * 1e6)
+            state.mission_state = LOCK_ON_TARGET; /* intentionally doesn't break */
+        else
+            break;
+
+    // navigate toward target, move on at 1 meter radius
+    case LOCK_ON_TARGET:
+        printf ("STATE: LOCK_ON_TARGET\n");
+        state.time_at_look_behind = 0;
+        goal.mu[5] = atan2 (state.target_pose->xyzrph[1] - state.quadrotor_pose->xyzrph[1],
+                            state.target_pose->xyzrph[0] - state.quadrotor_pose->xyzrph[0]);
+        goal.mu[0] = state.target_pose->xyzrph[0] + config.main_radius * cos (goal.mu[5] + M_PI);
+        goal.mu[1] = state.target_pose->xyzrph[1] + config.main_radius * sin (goal.mu[5] + M_PI);
+        goal.mu[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
+
+        waypoint.mu[5] = goal.mu[5];
+        waypoint.mu[2] = goal.mu[2];
+        if (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < config.lookahead_radius)
+        {
+            waypoint.mu[0] = goal.mu[0];
+            waypoint.mu[1] = goal.mu[1];
+        }
+        else
+        {
+            waypoint.mu[0] = state.quadrotor_pose->xyzrph[0] + config.lookahead_radius * cos (goal.mu[5]);
+            waypoint.mu[1] = state.quadrotor_pose->xyzrph[1] + config.lookahead_radius * sin (goal.mu[5]);
+        }
+
+        publish_waypoints = 1;
+
+        if (dist2d (state.quadrotor_pose, state.target_pose) < config.main_radius + config.lookahead_radius)
+            state.mission_state = PREPARE_LANDING;
+
+        break;
+
+    // move to relative "look behind" point
+    case PREPARE_LANDING:
+        printf ("STATE: PREPARE_LANDING\n");
+        // assign goal point
+        goal.mu[0] = state.target_pose->xyzrph[0]
+                     + config.rel_look_behind.mu[0] * cos (state.target_pose->xyzrph[5])
+                     - config.rel_look_behind.mu[1] * sin (state.target_pose->xyzrph[5]);
+        goal.mu[1] = state.target_pose->xyzrph[1]
+                     + config.rel_look_behind.mu[0] * sin (state.target_pose->xyzrph[5])
+                     + config.rel_look_behind.mu[1] * cos (state.target_pose->xyzrph[5]);
+        goal.mu[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
+        goal.mu[5] = state.target_pose->xyzrph[5];
+
+        // determine incremental waypoint
+        cur_ang = atan2 (state.quadrotor_pose->xyzrph[1] - state.target_pose->xyzrph[1],
+                         state.quadrotor_pose->xyzrph[0] - state.target_pose->xyzrph[0]);
+        tmpx = state.target_pose->xyzrph[0]
+               + config.rel_look_behind.mu[0] * cos (cur_ang + M_PI)
+               - config.rel_look_behind.mu[1] * sin (cur_ang + M_PI);
+        tmpy = state.target_pose->xyzrph[1]
+               + config.rel_look_behind.mu[0] * sin (cur_ang + M_PI)
+               + config.rel_look_behind.mu[1] * cos (cur_ang + M_PI);
+
+        waypoint.mu[2] = goal.mu[2];
+        if (sqrt (pow (goal.mu[0]-tmpx,2) + pow (goal.mu[1]-tmpy,2)) < config.lookahead_radius)
+        {
+            waypoint.mu[0] = goal.mu[0];
+            waypoint.mu[1] = goal.mu[1];
+            waypoint.mu[5] = goal.mu[5];
+        }
+        else
+        {
+            tmp = 2 * asin (config.lookahead_radius / 2.0 / config.main_radius);
+            ang1 = cur_ang + tmp;
+            ang2 = cur_ang - tmp;
+
+            if (abs (normalize_angle (goal.mu[5] - (ang1 + M_PI))) < abs (normalize_angle (goal.mu[5] - (ang2 + M_PI))) )
+                tmp = ang1;
+            else
+                tmp = ang2;
+
+            // get nearest point on circle
+            waypoint.mu[0] = state.target_pose->xyzrph[0] + config.main_radius * cos (tmp);
+            waypoint.mu[1] = state.target_pose->xyzrph[1] + config.main_radius * sin (tmp);
+            waypoint.mu[5] = tmp + M_PI;
+        }
+
+        publish_waypoints = 1;
+
+        if (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) +
+                  pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < config.lookahead_radius &&
+                (state.controller && state.controller->auth_land))
+        {
+            if (state.time_at_look_behind == 0)
+                state.time_at_look_behind = state.utime;
+            else if ( (state.utime - state.time_at_look_behind) > 2e6 )
+            {
+                state.time_on_target = 0;
+                state.mission_state = BEGIN_DESCENT;
+            }
+        }
+        else if (dist2d (state.quadrotor_pose, state.target_pose) > 5)
+            state.mission_state = LOCK_ON_TARGET;
+        break;
+
+    // begin descent onto landing pad
+    case BEGIN_DESCENT:
+        printf ("STATE: BEGIN_DESCENT\n");
+        goal.mu[5] = state.target_pose->xyzrph[5];
+        goal.mu[0] = state.target_pose->xyzrph[0] - .02*cos(goal.mu[5]);
+        goal.mu[1] = state.target_pose->xyzrph[1] - .02*sin(goal.mu[5]);
+        goal.mu[2] = state.target_pose->xyzrph[2] - 0.70;
+
+        double lb[3];
+        lb[0] = state.target_pose->xyzrph[0]
                 + config.rel_look_behind.mu[0] * cos (state.target_pose->xyzrph[5])
                 - config.rel_look_behind.mu[1] * sin (state.target_pose->xyzrph[5]);
-            goal.mu[1] = state.target_pose->xyzrph[1]
+        lb[1] = state.target_pose->xyzrph[1]
                 + config.rel_look_behind.mu[0] * sin (state.target_pose->xyzrph[5])
                 + config.rel_look_behind.mu[1] * cos (state.target_pose->xyzrph[5]);
-            goal.mu[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
-            goal.mu[5] = state.target_pose->xyzrph[5];
+        lb[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
+        //printf ("lookback point set\n");
 
-            // determine incremental waypoint
-            cur_ang = atan2 (state.quadrotor_pose->xyzrph[1] - state.target_pose->xyzrph[1],
-                            state.quadrotor_pose->xyzrph[0] - state.target_pose->xyzrph[0]);
-            tmpx = state.target_pose->xyzrph[0]
-                + config.rel_look_behind.mu[0] * cos (cur_ang + M_PI)
-                - config.rel_look_behind.mu[1] * sin (cur_ang + M_PI);
-            tmpy = state.target_pose->xyzrph[1]
-                + config.rel_look_behind.mu[0] * sin (cur_ang + M_PI)
-                + config.rel_look_behind.mu[1] * cos (cur_ang + M_PI);
+        double phi = atan2 (lb[1] - goal.mu[1], lb[0] - goal.mu[0]);
 
+
+        double dist_to_target = sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2));
+        printf ("distance to target: %4.4f\n", dist_to_target);
+
+        if (dist_to_target < config.lookahead_radius)
+        {
+            waypoint.mu[0] = goal.mu[0];
+            waypoint.mu[1] = goal.mu[1];
             waypoint.mu[2] = goal.mu[2];
-            if (sqrt (pow (goal.mu[0]-tmpx,2) + pow (goal.mu[1]-tmpy,2)) < config.lookahead_radius) {
-                waypoint.mu[0] = goal.mu[0];
-                waypoint.mu[1] = goal.mu[1];
-                waypoint.mu[5] = goal.mu[5];
-            }
-            else {
-                tmp = 2 * asin (config.lookahead_radius / 2.0 / config.main_radius);
-                ang1 = cur_ang + tmp;
-                ang2 = cur_ang - tmp;
+        }
+        else
+        {
+            waypoint.mu[0] = goal.mu[0] + (dist_to_target - config.lookahead_radius) * cos (phi);
+            waypoint.mu[1] = goal.mu[1] + (dist_to_target - config.lookahead_radius) * sin (phi);
+            waypoint.mu[2] = goal.mu[2] + (dist_to_target - config.lookahead_radius)/config.main_radius * config.rel_look_behind.mu[2];
+            //waypoint.mu[0] = goal.mu[0] + 0.38 * dist_to_target * cos (phi);
+            //waypoint.mu[1] = goal.mu[1] + 0.38 * dist_to_target * sin (phi);
+            //waypoint.mu[2] = goal.mu[2] + 0.38 * dist_to_target/config.main_radius * config.rel_look_behind.mu[2];
 
-                if (abs (normalize_angle (goal.mu[5] - (ang1 + M_PI))) < abs (normalize_angle (goal.mu[5] - (ang2 + M_PI))) )
-                    tmp = ang1;
-                else
-                    tmp = ang2;
+        }
 
-                // get nearest point on circle
-                waypoint.mu[0] = state.target_pose->xyzrph[0] + config.main_radius * cos (tmp);
-                waypoint.mu[1] = state.target_pose->xyzrph[1] + config.main_radius * sin (tmp);
-                waypoint.mu[5] = tmp + M_PI;
-            }
+        waypoint.mu[5] = goal.mu[5];
 
-            publish_waypoints = 1;
-
-            if (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + 
-                        pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < config.lookahead_radius && 
-                        (state.controller && state.controller->auth_land)) {
-                if (state.time_at_look_behind == 0)
-                    state.time_at_look_behind = state.utime;
-                else if ( (state.utime - state.time_at_look_behind) > 2e6 ) {
-                    state.time_on_target = 0;
-                    state.mission_state = BEGIN_DESCENT;
-                }
-            }
-            else if (dist2d (state.quadrotor_pose, state.target_pose) > 5)
-                state.mission_state = LOCK_ON_TARGET;
-            break;
-
-        // begin descent onto landing pad
-        case BEGIN_DESCENT:
-            printf ("STATE: BEGIN_DESCENT\n");
-            goal.mu[5] = state.target_pose->xyzrph[5];
-            goal.mu[0] = state.target_pose->xyzrph[0] - .02*cos(goal.mu[5]);
-            goal.mu[1] = state.target_pose->xyzrph[1] - .02*sin(goal.mu[5]);
-            goal.mu[2] = state.target_pose->xyzrph[2] - 0.70;
-
-            double lb[3];
-            lb[0] = state.target_pose->xyzrph[0]
-                + config.rel_look_behind.mu[0] * cos (state.target_pose->xyzrph[5])
-                - config.rel_look_behind.mu[1] * sin (state.target_pose->xyzrph[5]);
-            lb[1] = state.target_pose->xyzrph[1]
-                + config.rel_look_behind.mu[0] * sin (state.target_pose->xyzrph[5])
-                + config.rel_look_behind.mu[1] * cos (state.target_pose->xyzrph[5]);
-            lb[2] = state.target_pose->xyzrph[2] + config.rel_look_behind.mu[2];
-            //printf ("lookback point set\n");
-
-            double phi = atan2 (lb[1] - goal.mu[1], lb[0] - goal.mu[0]);
-
-
-            double dist_to_target = sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2));
-            printf ("distance to target: %4.4f\n", dist_to_target);
-
-            if (dist_to_target < config.lookahead_radius) {
-                waypoint.mu[0] = goal.mu[0];
-                waypoint.mu[1] = goal.mu[1];
-                waypoint.mu[2] = goal.mu[2];
-            }
-            else {
-                waypoint.mu[0] = goal.mu[0] + (dist_to_target - config.lookahead_radius) * cos (phi);
-                waypoint.mu[1] = goal.mu[1] + (dist_to_target - config.lookahead_radius) * sin (phi);
-                waypoint.mu[2] = goal.mu[2] + (dist_to_target - config.lookahead_radius)/config.main_radius * config.rel_look_behind.mu[2];
-                //waypoint.mu[0] = goal.mu[0] + 0.38 * dist_to_target * cos (phi);
-                //waypoint.mu[1] = goal.mu[1] + 0.38 * dist_to_target * sin (phi);
-                //waypoint.mu[2] = goal.mu[2] + 0.38 * dist_to_target/config.main_radius * config.rel_look_behind.mu[2];
-
-            }
-
-            waypoint.mu[5] = goal.mu[5];
-
-            publish_waypoints = 1;
+        publish_waypoints = 1;
 
 
 
-            bool within_volume = (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + 
-                        pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < 0.25 && 
-                        fabs (goal.mu[2]-state.quadrotor_pose->xyzrph[2]) < .15);
+        bool within_volume = (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) +
+                                    pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < 0.25 &&
+                              fabs (goal.mu[2]-state.quadrotor_pose->xyzrph[2]) < .15);
 
-            //if (!(state.controller && state.controller->auth_land)) {
-                //state.mission_state = INITIALIZATION;
-            //}
-            /*if (within_volume && state.time_on_target == 0){
-                state.time_on_target = state.utime;
-                perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &hover);
-            }
-            else if (within_volume && (state.utime-state.time_on_target) > 6e5){
-                state.mission_state = FINAL_DESCENT;
-            }*/
-            if (within_volume) {
-                state.mission_state = FINAL_DESCENT;
-            }
-            //else if (!within_volume && (state.utime - state.time_on_target) < 1e6){
-                //state.time_on_target = state.utime;
-                //printf ("stay in begin descent 2\n");
-            //}
-            else if (dist2d (state.quadrotor_pose, state.target_pose) > 5){
-                state.mission_state = LOCK_ON_TARGET;
-            }
+        //if (!(state.controller && state.controller->auth_land)) {
+        //state.mission_state = INITIALIZATION;
+        //}
+        /*if (within_volume && state.time_on_target == 0){
+            state.time_on_target = state.utime;
+            perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &hover);
+        }
+        else if (within_volume && (state.utime-state.time_on_target) > 6e5){
+            state.mission_state = FINAL_DESCENT;
+        }*/
+        if (within_volume)
+        {
+            state.mission_state = FINAL_DESCENT;
+        }
+        //else if (!within_volume && (state.utime - state.time_on_target) < 1e6){
+        //state.time_on_target = state.utime;
+        //printf ("stay in begin descent 2\n");
+        //}
+        else if (dist2d (state.quadrotor_pose, state.target_pose) > 5)
+        {
+            state.mission_state = LOCK_ON_TARGET;
+        }
 
-            break;
+        break;
 
-        // go straight down onto target
-        case FINAL_DESCENT:
-            printf ("STATE: FINAL_DESCENT\n");
-            goal.mu[5] = waypoint.mu[5] = state.target_pose->xyzrph[5];
-            goal.mu[0] = waypoint.mu[0] = state.target_pose->xyzrph[0] - .02*cos(goal.mu[5]);
-            goal.mu[1] = waypoint.mu[1] = state.target_pose->xyzrph[1] - .02*sin(goal.mu[5]);
-            goal.mu[2] = waypoint.mu[2] = state.target_pose->xyzrph[2] - 0.00;
+    // go straight down onto target
+    case FINAL_DESCENT:
+        printf ("STATE: FINAL_DESCENT\n");
+        goal.mu[5] = waypoint.mu[5] = state.target_pose->xyzrph[5];
+        goal.mu[0] = waypoint.mu[0] = state.target_pose->xyzrph[0] - .02*cos(goal.mu[5]);
+        goal.mu[1] = waypoint.mu[1] = state.target_pose->xyzrph[1] - .02*sin(goal.mu[5]);
+        goal.mu[2] = waypoint.mu[2] = state.target_pose->xyzrph[2] - 0.00;
 
-            publish_waypoints = 1;
+        publish_waypoints = 1;
 
-            bool landing_volume = (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) + 
-                        pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < 0.15 && 
-                        fabs (goal.mu[2]-state.quadrotor_pose->xyzrph[2]) < .15);
+        bool landing_volume = (sqrt (pow (goal.mu[0]-state.quadrotor_pose->xyzrph[0],2) +
+                                     pow (goal.mu[1]-state.quadrotor_pose->xyzrph[1],2)) < 0.15 &&
+                               fabs (goal.mu[2]-state.quadrotor_pose->xyzrph[2]) < .15);
 
-            if (landing_volume){
-                state.mission_state = EXECUTE_LANDING;
-            }
-            else if (dist2d (state.quadrotor_pose, state.target_pose) > 5){
-                state.mission_state = LOCK_ON_TARGET;
-            }
+        if (landing_volume)
+        {
+            state.mission_state = EXECUTE_LANDING;
+        }
+        else if (dist2d (state.quadrotor_pose, state.target_pose) > 5)
+        {
+            state.mission_state = LOCK_ON_TARGET;
+        }
 
-            break;
+        break;
 
-        // currently just above landing pad, we can now cut motors
-        case EXECUTE_LANDING:
-            printf ("STATE: EXECUTE_LANDING\n");
-            goal.mu[0] = state.target_pose->xyzrph[0];
-            goal.mu[1] = state.target_pose->xyzrph[1];
-            goal.mu[2] = state.target_pose->xyzrph[2] - 0.0;
-            goal.mu[5] = state.target_pose->xyzrph[5];
+    // currently just above landing pad, we can now cut motors
+    case EXECUTE_LANDING:
+        printf ("STATE: EXECUTE_LANDING\n");
+        goal.mu[0] = state.target_pose->xyzrph[0];
+        goal.mu[1] = state.target_pose->xyzrph[1];
+        goal.mu[2] = state.target_pose->xyzrph[2] - 0.0;
+        goal.mu[5] = state.target_pose->xyzrph[5];
 
-            waypoint.mu[0] = state.target_pose->xyzrph[0];
-            waypoint.mu[1] = state.target_pose->xyzrph[1];
-            waypoint.mu[2] = state.target_pose->xyzrph[2] - 0.0;
-            waypoint.mu[5] = state.target_pose->xyzrph[5];
+        waypoint.mu[0] = state.target_pose->xyzrph[0];
+        waypoint.mu[1] = state.target_pose->xyzrph[1];
+        waypoint.mu[2] = state.target_pose->xyzrph[2] - 0.0;
+        waypoint.mu[5] = state.target_pose->xyzrph[5];
 
-            publish_waypoints = 1;
-            
-            perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &land);
-            state.mission_state = MISSION_COMPLETE;
+        publish_waypoints = 1;
 
-            break;
+        perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &land);
+        state.mission_state = MISSION_COMPLETE;
 
-        case MISSION_COMPLETE:
-            printf ("STATE: MISSION_COMPLETE\n");
-            //perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &land);
-            state.done = 1;
-            break;
+        break;
 
-        default:
-            break;
+    case MISSION_COMPLETE:
+        printf ("STATE: MISSION_COMPLETE\n");
+        //perllcm_ardrone_cmd_t_publish (state.lcm, config.ardrone_cmd_channel, &land);
+        state.done = 1;
+        break;
+
+    default:
+        break;
     }
 
 
 
     /* publish waypoints, only allow 50 hz publishing */
-    if (publish_waypoints && ((timestamp_now () - state.last_publish) > 20000)) {
+    if (publish_waypoints && ((timestamp_now () - state.last_publish) > 20000))
+    {
 
         // lcmgl stuff.. for debug
         bot_lcmgl_t *lcmgl = bot_lcmgl_init (state.lcm, "DEBUG_MM");
@@ -530,7 +548,8 @@ update_mission ()
         lcmglPointSize(10);
 
         // target
-        if (state.target_pose) {
+        if (state.target_pose)
+        {
             lcmglPushMatrix ();
             lcmglTranslated (state.target_pose->xyzrph[0], state.target_pose->xyzrph[1], state.target_pose->xyzrph[2]);
             lcmglRotated (state.target_pose->xyzrph[5]*180/M_PI, 0, 0, 1);
@@ -601,22 +620,23 @@ update_mission ()
 }
 
 //----------------------------------------------------------------------------------
-// Called when program shuts down 
+// Called when program shuts down
 //----------------------------------------------------------------------------------
 static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("\nmy_signal_handler()\n");
-    if (state.done) {
+    if (state.done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
-    } 
+    }
     else
         state.done = 1;
 }
 
 //----------------------------------------------------------------------------------
-// Main 
+// Main
 //----------------------------------------------------------------------------------
 int
 main (int argc, char *argv[])
@@ -625,7 +645,8 @@ main (int argc, char *argv[])
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -640,35 +661,39 @@ main (int argc, char *argv[])
     //config.rel_look_behind.mu[2] = -0.80;
     config.main_radius = sqrt (pow (config.rel_look_behind.mu[0],2) + pow (config.rel_look_behind.mu[1],2));
     //config.lookahead_radius = 0.6;
-    
+
     // read in the command line options
     getopt_t *gopt = getopt_create ();
-    
+
     getopt_add_description (gopt, "Mission Manager for Drone");
     getopt_add_bool (gopt, 'v', "nav", 0, "Run using navigator");
     getopt_add_bool (gopt, 'D', "daemon", 0, "Run as system daemon");
     getopt_add_bool (gopt, 'h', "help",   0, "Display Help");
 
-    if (!getopt_parse (gopt, argc, argv, 1)) {
+    if (!getopt_parse (gopt, argc, argv, 1))
+    {
         getopt_do_usage (gopt,"");
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt,"");
         exit (EXIT_SUCCESS);;
     }
-    
+
     //start as daemon if asked
-    if (getopt_get_bool (gopt, "daemon")) {
+    if (getopt_get_bool (gopt, "daemon"))
+    {
         daemon_fork ();
         state.is_daemon = 1;
     }
     else
         state.is_daemon = 0;
-    
+
     // init lcm
     state.lcm = lcm_create (NULL);
-    if (!state.lcm) {
+    if (!state.lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
@@ -678,24 +703,27 @@ main (int argc, char *argv[])
 
     perllcm_ardrone_cmd_t_subscribe (state.lcm, config.ardrone_cmd_channel, &quad_cmd_cb, NULL);
 
-    if (state.use_nav) {
+    if (state.use_nav)
+    {
         // subscribe to quadrotor pose
         perllcm_position_t_subscribe (state.lcm, config.quadrotor_pose_channel, &quad_perllcm_position_cb, NULL);
 
         // subscribe to target pose
         perllcm_position_t_subscribe (state.lcm, config.target_pose_channel, &targ_perllcm_position_cb, NULL);
     }
-    else {
+    else
+    {
         // subscribe to quadrotor pose
         senlcm_mocap_t_subscribe (state.lcm, "MOCAP_POSE_ARDRONE", &quad_senlcm_mocap_cb, NULL);
 
         // subscribe to target pose
         senlcm_mocap_t_subscribe (state.lcm, "MOCAP_POSE_TARGET", &targ_senlcm_mocap_cb, NULL);
     }
-                                       
+
 
     // main loop
-    while (!state.done) {
+    while (!state.done)
+    {
         lcm_handle (state.lcm);
         update_mission ();
     }
@@ -704,7 +732,7 @@ main (int argc, char *argv[])
 
     if (state.quadrotor_pose)
         perllcm_position_t_destroy (state.quadrotor_pose);
-             
+
     if (state.target_pose)
         perllcm_position_t_destroy (state.target_pose);
 

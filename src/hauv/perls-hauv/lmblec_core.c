@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004-06  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -73,7 +73,8 @@
 #define LEVMAR_BLEC_DIF LM_ADD_PREFIX(levmar_blec_dif)
 #define LEVMAR_COVAR LM_ADD_PREFIX(levmar_covar)
 
-struct LMBLEC_DATA{
+struct LMBLEC_DATA
+{
     LM_REAL *x, *lb, *ub, *w;
     int *bctype;
     void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adata);
@@ -96,8 +97,10 @@ static void LMBLEC_FUNC(LM_REAL *p, LM_REAL *hx, int m, int n, void *adata)
     typ=data->bctype;
     (*(data->func))(p, hx, m, nn, data->adata);
 
-    for(i=nn, j=0; i<n; ++i, ++j){
-        switch(typ[j]){
+    for(i=nn, j=0; i<n; ++i, ++j)
+    {
+        switch(typ[j])
+        {
         case __BC_INTERVAL__:
             tmp=(LM_CNST(2.0)*p[j]-(lb[j]+ub[j]))/(ub[j]-lb[j]);
             hx[i]=w[j]*__MAX__(tmp*tmp-LM_CNST(1.0), LM_CNST(0.0));
@@ -133,8 +136,10 @@ static void LMBLEC_JACF(LM_REAL *p, LM_REAL *jac, int m, int n, void *adata)
     for(i=nn*m; i<n*m; ++i)
         jac[i]=0.0;
 
-    for(i=nn, j=0; i<n; ++i, ++j){
-        switch(typ[j]){
+    for(i=nn, j=0; i<n; ++i, ++j)
+    {
+        switch(typ[j])
+        {
         case __BC_INTERVAL__:
             if(lb[j]<=p[j] && p[j]<=ub[j])
                 continue; // corresp. jac element already 0
@@ -164,7 +169,7 @@ static void LMBLEC_JACF(LM_REAL *p, LM_REAL *jac, int m, int n, void *adata)
     }
 }
 
-/* 
+/*
  * This function seeks the parameter vector p that best describes the measurements
  * vector x under box & linear constraints.
  * More precisely, given a vector function  func : R^m --> R^n with n>=m,
@@ -186,7 +191,7 @@ static void LMBLEC_JACF(LM_REAL *p, LM_REAL *jac, int m, int n, void *adata)
  */
 int LEVMAR_BLEC_DER(
     void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adata), /* functional relation describing measurements. A p \in R^m yields a \hat{x} \in  R^n */
-    void (*jacf)(LM_REAL *p, LM_REAL *j, int m, int n, void *adata),  /* function to evaluate the Jacobian \part x / \part p */ 
+    void (*jacf)(LM_REAL *p, LM_REAL *j, int m, int n, void *adata),  /* function to evaluate the Jacobian \part x / \part p */
     LM_REAL *p,         /* I/O: initial parameter estimates. On output has the estimated solution */
     LM_REAL *x,         /* I: measurement vector. NULL implies a zero vector */
     int m,              /* I: parameter vector dimension (i.e. #unknowns) */
@@ -209,7 +214,7 @@ int LEVMAR_BLEC_DER(
      * info[6]=reason for terminating: 1 - stopped by small gradient J^T e
      *                                 2 - stopped by small Dp
      *                                 3 - stopped by itmax
-     *                                 4 - singular matrix. Restart from current p with increased mu 
+     *                                 4 - singular matrix. Restart from current p with increased mu
      *                                 5 - no further error reduction is possible. Restart with increased mu
      *                                 6 - stopped by small ||e||_2
      *                                 7 - stopped by invalid (i.e. NaN or Inf) "func" values. This is a user error
@@ -228,27 +233,32 @@ int LEVMAR_BLEC_DER(
     LM_REAL locinfo[LM_INFO_SZ];
     register int i;
 
-    if(!jacf){
+    if(!jacf)
+    {
         fprintf(stderr, RCAT("No function specified for computing the Jacobian in ", LEVMAR_BLEC_DER)
                 RCAT("().\nIf no such function is available, use ", LEVMAR_BLEC_DIF) RCAT("() rather than ", LEVMAR_BLEC_DER) "()\n");
         return LM_ERROR;
     }
 
-    if(!lb && !ub){
+    if(!lb && !ub)
+    {
         fprintf(stderr, RCAT(LCAT(LEVMAR_BLEC_DER, "(): lower and upper bounds for box constraints cannot be both NULL, use "),
                              LEVMAR_LEC_DER) "() in this case!\n");
         return LM_ERROR;
     }
 
-    if(!LEVMAR_BOX_CHECK(lb, ub, m)){
+    if(!LEVMAR_BOX_CHECK(lb, ub, m))
+    {
         fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): at least one lower bound exceeds the upper one\n"));
         return LM_ERROR;
     }
 
     /* measurement vector needs to be extended by m */
-    if(x){ /* nonzero x */
+    if(x)  /* nonzero x */
+    {
         data.x=(LM_REAL *)malloc((n+m)*sizeof(LM_REAL));
-        if(!data.x){
+        if(!data.x)
+        {
             fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): memory allocation request #1 failed\n"));
             return LM_ERROR;
         }
@@ -262,7 +272,8 @@ int LEVMAR_BLEC_DER(
         data.x=NULL;
 
     data.w=(LM_REAL *)malloc(m*sizeof(LM_REAL) + m*sizeof(int)); /* should be arranged in that order for proper doubles alignment */
-    if(!data.w){
+    if(!data.w)
+    {
         fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): memory allocation request #2 failed\n"));
         if(data.x) free(data.x);
         return LM_ERROR;
@@ -270,7 +281,8 @@ int LEVMAR_BLEC_DER(
     data.bctype=(int *)(data.w+m);
 
     /* note: at this point, one of lb, ub are not NULL */
-    for(i=0; i<m; ++i){
+    for(i=0; i<m; ++i)
+    {
         data.w[i]=(!wghts)? __BC_WEIGHT__ : wghts[i];
         if(!lb) data.bctype[i]=__BC_HIGH__;
         else if(!ub) data.bctype[i]=__BC_LOW__;
@@ -314,7 +326,7 @@ int LEVMAR_BLEC_DIF(
                          * scale factor for initial \mu, stopping thresholds for ||J^T e||_inf, ||Dp||_2 and ||e||_2 and
                          * the step used in difference approximation to the Jacobian. Set to NULL for defaults to be used.
                          * If \delta<0, the Jacobian is approximated with central differences which are more accurate
-                         * (but slower!) compared to the forward differences employed by default. 
+                         * (but slower!) compared to the forward differences employed by default.
                          */
     LM_REAL info[LM_INFO_SZ],
     /* O: information regarding the minimization. Set to NULL if don't care
@@ -324,7 +336,7 @@ int LEVMAR_BLEC_DIF(
      * info[6]=reason for terminating: 1 - stopped by small gradient J^T e
      *                                 2 - stopped by small Dp
      *                                 3 - stopped by itmax
-     *                                 4 - singular matrix. Restart from current p with increased mu 
+     *                                 4 - singular matrix. Restart from current p with increased mu
      *                                 5 - no further error reduction is possible. Restart with increased mu
      *                                 6 - stopped by small ||e||_2
      *                                 7 - stopped by invalid (i.e. NaN or Inf) "func" values. This is a user error
@@ -343,21 +355,25 @@ int LEVMAR_BLEC_DIF(
     register int i;
     LM_REAL locinfo[LM_INFO_SZ];
 
-    if(!lb && !ub){
+    if(!lb && !ub)
+    {
         fprintf(stderr, RCAT(LCAT(LEVMAR_BLEC_DIF, "(): lower and upper bounds for box constraints cannot be both NULL, use "),
                              LEVMAR_LEC_DIF) "() in this case!\n");
         return LM_ERROR;
     }
 
-    if(!LEVMAR_BOX_CHECK(lb, ub, m)){
+    if(!LEVMAR_BOX_CHECK(lb, ub, m))
+    {
         fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): at least one lower bound exceeds the upper one\n"));
         return LM_ERROR;
     }
 
     /* measurement vector needs to be extended by m */
-    if(x){ /* nonzero x */
+    if(x)  /* nonzero x */
+    {
         data.x=(LM_REAL *)malloc((n+m)*sizeof(LM_REAL));
-        if(!data.x){
+        if(!data.x)
+        {
             fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): memory allocation request #1 failed\n"));
             return LM_ERROR;
         }
@@ -371,7 +387,8 @@ int LEVMAR_BLEC_DIF(
         data.x=NULL;
 
     data.w=(LM_REAL *)malloc(m*sizeof(LM_REAL) + m*sizeof(int)); /* should be arranged in that order for proper doubles alignment */
-    if(!data.w){
+    if(!data.w)
+    {
         fprintf(stderr, LCAT(LEVMAR_BLEC_DER, "(): memory allocation request #2 failed\n"));
         if(data.x) free(data.x);
         return LM_ERROR;
@@ -379,7 +396,8 @@ int LEVMAR_BLEC_DIF(
     data.bctype=(int *)(data.w+m);
 
     /* note: at this point, one of lb, ub are not NULL */
-    for(i=0; i<m; ++i){
+    for(i=0; i<m; ++i)
+    {
         data.w[i]=(!wghts)? __BC_WEIGHT__ : wghts[i];
         if(!lb) data.bctype[i]=__BC_HIGH__;
         else if(!ub) data.bctype[i]=__BC_LOW__;

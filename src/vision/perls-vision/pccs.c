@@ -35,11 +35,11 @@
  *  L = 6 + 2 + 1  = 9
  *  r = 2*L +1     = total number of sigma points
  */
-int 
-vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1, 
-                                         const gsl_matrix *K, const gsl_matrix *invK,
-                                         const double cov_z,
-                                         gsl_matrix *X_vectors, gsl_vector *weights, gsl_matrix *H_pre_vectors)
+int
+vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1,
+        const gsl_matrix *K, const gsl_matrix *invK,
+        const double cov_z,
+        gsl_matrix *X_vectors, gsl_vector *weights, gsl_matrix *H_pre_vectors)
 {
     int L = 9;				// = length(mu_x);
     int r = 2*L+1;
@@ -66,10 +66,11 @@ vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_mat
 
     if (gsl_linalg_cholesky_decomp (R_xx) == GSL_EDOM)
         return 0;
-    else {
+    else
+    {
         // The upper triangular part of the input matrix contains L^T = R
         // set lower triangular part 0
-        for (int i = 0; i < L; i++)	                    
+        for (int i = 0; i < L; i++)
             for (int j = 0; j < L; j++)
                 if (i > j)
                     gsl_matrix_set (R_xx, i, j, 0);
@@ -86,7 +87,7 @@ vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_mat
     gsl_matrix *mu_x_stack = gsl_matrix_alloc (L, r);
     for (int j=0; j<r; j++)
         gsl_matrix_set_col (mu_x_stack, j, mu_x);
-    
+
     gsl_matrix_set_zero (X_vectors);
     gslu_matrix_set_submatrix (X_vectors, 0, 1, R_xx);
     gsl_matrix_scale (R_xx, -1.0);
@@ -99,7 +100,8 @@ vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_mat
     GSLU_VECTOR_VIEW (Hcol, 9);
 
     GSLU_MATRIX_VIEW (work, 3, 3);
-    for (int i=0; i<r; i++) {
+    for (int i=0; i<r; i++)
+    {
         gsl_vector_const_view x_col = gsl_matrix_const_column (X_vectors, i);
         gsl_vector_const_view rph = gsl_vector_const_subvector (&x_col.vector, 3, 3);
         so3_rotxyz_gsl (&R.matrix, &rph.vector);
@@ -116,11 +118,11 @@ vis_pccs_precalc_single_xfer_params_ukf (const gsl_vector *X_c2c1, const gsl_mat
     return 1;
 }
 
-void 
-vis_pccs_single_ptxfer (const gsl_vector *X, 
-                        const gsl_vector *uv, 
-                        const double z, 
-                        const gsl_matrix *K, 
+void
+vis_pccs_single_ptxfer (const gsl_vector *X,
+                        const gsl_vector *uv,
+                        const double z,
+                        const gsl_matrix *K,
                         const gsl_vector *h_inf, // h_inf = [h11 h12 h13 h21 h22 h23 h31 h32 h33]
                         gsl_vector *uvp)
 {
@@ -129,7 +131,7 @@ vis_pccs_single_ptxfer (const gsl_vector *X,
         Do two things for efficiency.
         (1) precalculate H = K R K^-1
         (2) calculate uvp analytically
-        
+
         uvp = Hinf * uv + K t/z
         [uvp_h1]  = [H11 H12 H13] [u] + [K11 K12 K13] [t1/z]
         [uvp_h2]    [H21 H22 H23] [v] + [K21 K22 K23] [t2/z]
@@ -139,15 +141,29 @@ vis_pccs_single_ptxfer (const gsl_vector *X,
         vp = uvp_h2 / uvp_h3
     */
 
-    double H11 = gsl_vector_get (h_inf, 0); double H12 = gsl_vector_get (h_inf, 1); double H13 = gsl_vector_get (h_inf, 2);
-    double H21 = gsl_vector_get (h_inf, 3); double H22 = gsl_vector_get (h_inf, 4); double H23 = gsl_vector_get (h_inf, 5);
-    double H31 = gsl_vector_get (h_inf, 6); double H32 = gsl_vector_get (h_inf, 7); double H33 = gsl_vector_get (h_inf, 8);
+    double H11 = gsl_vector_get (h_inf, 0);
+    double H12 = gsl_vector_get (h_inf, 1);
+    double H13 = gsl_vector_get (h_inf, 2);
+    double H21 = gsl_vector_get (h_inf, 3);
+    double H22 = gsl_vector_get (h_inf, 4);
+    double H23 = gsl_vector_get (h_inf, 5);
+    double H31 = gsl_vector_get (h_inf, 6);
+    double H32 = gsl_vector_get (h_inf, 7);
+    double H33 = gsl_vector_get (h_inf, 8);
 
-    double K11 = gsl_matrix_get (K, 0, 0); double K12 = gsl_matrix_get (K, 0, 1); double K13 = gsl_matrix_get (K, 0, 2);
-    double K21 = gsl_matrix_get (K, 1, 0); double K22 = gsl_matrix_get (K, 1, 1); double K23 = gsl_matrix_get (K, 1, 2);
-    double K31 = gsl_matrix_get (K, 2, 0); double K32 = gsl_matrix_get (K, 2, 1); double K33 = gsl_matrix_get (K, 2, 2);
+    double K11 = gsl_matrix_get (K, 0, 0);
+    double K12 = gsl_matrix_get (K, 0, 1);
+    double K13 = gsl_matrix_get (K, 0, 2);
+    double K21 = gsl_matrix_get (K, 1, 0);
+    double K22 = gsl_matrix_get (K, 1, 1);
+    double K23 = gsl_matrix_get (K, 1, 2);
+    double K31 = gsl_matrix_get (K, 2, 0);
+    double K32 = gsl_matrix_get (K, 2, 1);
+    double K33 = gsl_matrix_get (K, 2, 2);
 
-    double t1 = gsl_vector_get (X, 0); double t2 = gsl_vector_get (X, 1); double t3 = gsl_vector_get (X, 2);
+    double t1 = gsl_vector_get (X, 0);
+    double t2 = gsl_vector_get (X, 1);
+    double t3 = gsl_vector_get (X, 2);
 
     // add sigma point
     double u = gsl_vector_get (uv,0) + gsl_vector_get (X, 7);
@@ -170,19 +186,20 @@ vis_pccs_single_ptxfer (const gsl_vector *X,
  *   projection of image point uv1 onto image 2 = uv2p ( 2x1 vector [u2p, v2p])
  *   Uncertainty related to this transformation = cov_uv2p (2x2 matrix)
  */
-void 
-vis_pccs_relview_single_ptxfer_ukf (const gsl_matrix *K, const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1, const gsl_vector *uv1, const double z1, 
+void
+vis_pccs_relview_single_ptxfer_ukf (const gsl_matrix *K, const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1, const gsl_vector *uv1, const double z1,
                                     const gsl_matrix *X_vectors, const gsl_vector *weights, gsl_matrix *H_pre_vectors,
                                     gsl_vector *uv2p, gsl_matrix *cov_uv2p)
 {
     int L = 9;				// = length(mu_x);
     int r = 2*L+1;
 
-    gsl_matrix *Y_matrices = gsl_matrix_calloc (2, r); 
-    GSLU_VECTOR_VIEW (y_col, 2);                     // conveyer vector for col of Y_matrices y_col = [u; v;] 
+    gsl_matrix *Y_matrices = gsl_matrix_calloc (2, r);
+    GSLU_VECTOR_VIEW (y_col, 2);                     // conveyer vector for col of Y_matrices y_col = [u; v;]
     GSLU_VECTOR_VIEW (mu_y, 2, {0.0, 0.0});
 
-    for (int i=0; i<r; i++) {
+    for (int i=0; i<r; i++)
+    {
         //evaluate model at sigma point
         gsl_vector_const_view h_inf = gsl_matrix_const_column (H_pre_vectors, i);
         gsl_vector_const_view x_col = gsl_matrix_const_column (X_vectors, i);
@@ -194,12 +211,13 @@ vis_pccs_relview_single_ptxfer_ukf (const gsl_matrix *K, const gsl_vector *X_c2c
         gsl_vector_add (&mu_y.vector, &y_col.vector);
     }
 
-    // compute transformed covariance and cross-covariance  
+    // compute transformed covariance and cross-covariance
     double sum11 = 0, sum12 = 0, sum22 = 0;
     double mu_y1 = gsl_vector_get (&mu_y.vector, 0);
     double mu_y2 = gsl_vector_get (&mu_y.vector, 1);
 
-    for (int i=0; i<r; i++) {
+    for (int i=0; i<r; i++)
+    {
         double y1 = gsl_matrix_get (Y_matrices, 0, i) - mu_y1;
         double y2 = gsl_matrix_get (Y_matrices, 1, i) - mu_y2;
         sum11 = sum11 + y1*y1 * gsl_vector_get (weights, i);
@@ -221,8 +239,8 @@ vis_pccs_relview_single_ptxfer_ukf (const gsl_matrix *K, const gsl_vector *X_c2c
 /* lcm to gsl converter
  * read from lcm and conver to gsl format
  */
-void 
-_pccs_read_to_gsl_format (const perllcm_van_feature_t *f1, const perllcm_van_feature_t *f2, 
+void
+_pccs_read_to_gsl_format (const perllcm_van_feature_t *f1, const perllcm_van_feature_t *f2,
                           const perllcm_pose3d_t p21,
                           gsl_matrix *uv1, gsl_matrix *uv2, gsl_vector *z1, gsl_vector *z2,
                           gsl_vector *cov_z1, gsl_vector *cov_z2,
@@ -240,35 +258,41 @@ _pccs_read_to_gsl_format (const perllcm_van_feature_t *f1, const perllcm_van_fea
     perllcm_van_feature_user_depth_t *sp2 = malloc (sizeof (*sp2));
     perllcm_van_feature_user_depth_t_decode (f2->user, 0, f2->usersize, sp2);
 
-    if (sp1->npts > 0) { // if scene prior found
+    if (sp1->npts > 0)   // if scene prior found
+    {
         gsl_vector_float_const_view z1f = gsl_vector_float_const_view_array (sp1->mu_Z, sp1->npts);
         GSLU_VECTOR_TYPEA_TO_TYPEB (gsl_vector_float, &z1f.vector, gsl_vector, z1);
-        
+
         if (USE_FIXED_COV_Z)
             gsl_vector_set_all (cov_z1, 0.01);    // matlab uses fixed 0.01 covariance
-        else {
+        else
+        {
             gsl_vector_float_const_view cov_z1f = gsl_vector_float_const_view_array (sp1->Sigma_Z, sp1->npts);
             GSLU_VECTOR_TYPEA_TO_TYPEB (gsl_vector_float, &cov_z1f.vector, gsl_vector, cov_z1);
         }
     }
-    else {
+    else
+    {
         gsl_vector_set_all (z1, 1.0);               // any finite value
-        gsl_vector_set_all (cov_z1, GSL_POSINF);    // with large covariance        
+        gsl_vector_set_all (cov_z1, GSL_POSINF);    // with large covariance
     }
 
-    if (sp2->npts > 0) { // if scene prior found
+    if (sp2->npts > 0)   // if scene prior found
+    {
         gsl_vector_float_const_view z2f = gsl_vector_float_const_view_array (sp2->mu_Z, sp2->npts);
         GSLU_VECTOR_TYPEA_TO_TYPEB (gsl_vector_float, &z2f.vector, gsl_vector, z2);
         if (USE_FIXED_COV_Z)
             gsl_vector_set_all (cov_z2, 0.01);    // matlab uses fixed 0.01 covariance
-        else {
+        else
+        {
             gsl_vector_float_const_view cov_z2f = gsl_vector_float_const_view_array (sp2->Sigma_Z, sp2->npts);
             GSLU_VECTOR_TYPEA_TO_TYPEB (gsl_vector_float, &cov_z2f.vector, gsl_vector, cov_z2);
         }
     }
-    else {
+    else
+    {
         gsl_vector_set_all (z2, 1.0);               // any finite value
-        gsl_vector_set_all (cov_z2, GSL_POSINF);    // with large covariance        
+        gsl_vector_set_all (cov_z2, GSL_POSINF);    // with large covariance
     }
 
     // clean up
@@ -297,28 +321,29 @@ vis_pccs_corrset_feat (const perllcm_van_feature_t *f1, const perllcm_van_featur
 {
 
     double pccs_simAB_thres = 1.0;    // 1.0, do not use sim thread
- 
+
     int n1 = f1->npts;
     int n2 = f2->npts;
 
     int simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
-    switch (f1->attrtype) {
-        case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVSURF:
-            simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
-            pccs_simAB_thres = simAB_thres;
-            break;
-        case PERLLCM_VAN_FEATURE_T_ATTRTYPE_SIFTGPU:
-            simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
-            pccs_simAB_thres = simAB_thres;
-            break;
-        case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVHARRIS:
-            // this should set to VIS_PCCS_SIMSCORE_MAX when using zernike
-            simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
-            pccs_simAB_thres = simAB_thres;
-            break;
-        default:
-            ERROR ("unknown attrtype %d", f1->attrtype);
-            abort ();
+    switch (f1->attrtype)
+    {
+    case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVSURF:
+        simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
+        pccs_simAB_thres = simAB_thres;
+        break;
+    case PERLLCM_VAN_FEATURE_T_ATTRTYPE_SIFTGPU:
+        simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
+        pccs_simAB_thres = simAB_thres;
+        break;
+    case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVHARRIS:
+        // this should set to VIS_PCCS_SIMSCORE_MAX when using zernike
+        simscore_minmax = VIS_PCCS_SIMSCORE_MIN;
+        pccs_simAB_thres = simAB_thres;
+        break;
+    default:
+        ERROR ("unknown attrtype %d", f1->attrtype);
+        abort ();
     }
 
     // read feature and pose into gsl format
@@ -331,15 +356,15 @@ vis_pccs_corrset_feat (const perllcm_van_feature_t *f1, const perllcm_van_featur
     gsl_vector *cov_z2 = gsl_vector_alloc (n2);
     GSLU_VECTOR_VIEW (X_c2c1, 6);
     GSLU_MATRIX_VIEW (P_c2c1, 6, 6);
-    _pccs_read_to_gsl_format (f1, f2, p21, uv1, uv2, z1, z2, cov_z1, cov_z2, 
+    _pccs_read_to_gsl_format (f1, f2, p21, uv1, uv2, z1, z2, cov_z1, cov_z2,
                               &X_c2c1.vector, &P_c2c1.matrix);
 
-    // run pccs 
+    // run pccs
     // -------------------------------------------------------------- //
     int ret = vis_pccs_corrset_core (uv1, uv2, z1, z2, cov_z1, cov_z2, K,
                                      &X_c2c1.vector, &P_c2c1.matrix, NULL, NULL, f1, f2,
                                      sel1, sel2, pccs_simAB_thres, chiSquare2dof, simscore_minmax,
-                                     pd); 
+                                     pd);
 
 
     // clean up
@@ -354,7 +379,7 @@ vis_pccs_corrset_feat (const perllcm_van_feature_t *f1, const perllcm_van_featur
     return ret;
 }
 
-int 
+int
 vis_pccs_corrset_feat_alloc (const perllcm_van_feature_t *f1, const perllcm_van_feature_t *f2,             /* feature_t of image 1 and 2 */
                              const perllcm_pose3d_t p21,                                            /* relative pose 12, containing mu and sigma */
                              const gsl_matrix *K,                                                /* calibration matrix K */
@@ -371,11 +396,12 @@ vis_pccs_corrset_feat_alloc (const perllcm_van_feature_t *f1, const perllcm_van_
     gslu_index *sel2_temp = gslu_index_alloc (n2_init);
 
     n_corr = vis_pccs_corrset_feat (f1, f2, p21, K, simAB_thres, chiSquare2dof,
-                                    sel1_temp, sel2_temp, pd); 
+                                    sel1_temp, sel2_temp, pd);
 
-    if (n_corr > 0) { // ret = number of correspondence
-        ret = n_corr;   
-     
+    if (n_corr > 0)   // ret = number of correspondence
+    {
+        ret = n_corr;
+
         // re-allocate memory for sel1, sel2, uv1 and uv2 with size of n_corr
         (*sel1) = gslu_index_alloc (n_corr);
         (*sel2) = gslu_index_alloc (n_corr);
@@ -396,8 +422,8 @@ vis_pccs_corrset_feat_alloc (const perllcm_van_feature_t *f1, const perllcm_van_
     return ret;
 }
 
-int 
-vis_pccs_corrset_gsl_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,               /* input matrices uv1 (2 x n1) and uv2 (2 x n2)*/           
+int
+vis_pccs_corrset_gsl_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,               /* input matrices uv1 (2 x n1) and uv2 (2 x n2)*/
                             const gsl_vector *z1, const gsl_vector *z2,                 /* input depth prior in gsl, z1 (n1 x 1) and z2 (n2 x 1)  */
                             const gsl_vector *cov_z1, const gsl_vector *cov_z2,         /* input depth prior uncertainty in gsl */
                             const gsl_matrix *K,                                        /* calibration matrix K */
@@ -417,11 +443,12 @@ vis_pccs_corrset_gsl_alloc (const gsl_matrix *uv1, const gsl_matrix *uv2,       
 
     n_corr = vis_pccs_corrset_core (uv1, uv2, z1, z2, cov_z1, cov_z2, K,
                                     X_c2c1, P_c2c1, key1, key2, NULL, NULL,
-                                    sel1_temp, sel2_temp, simAB_thres, -1, simscore_minmax,NULL); 
+                                    sel1_temp, sel2_temp, simAB_thres, -1, simscore_minmax,NULL);
 
-    if (n_corr > 0) { // ret = number of correspondence
-        ret = n_corr;   
-     
+    if (n_corr > 0)   // ret = number of correspondence
+    {
+        ret = n_corr;
+
         // re-allocate memory for sel1, sel2, uv1 and uv2 with size of n_corr
         (*sel1) = gslu_index_alloc (n_corr);
         (*sel2) = gslu_index_alloc (n_corr);
@@ -459,16 +486,19 @@ _vis_pccs_sample_uv_alloc (const gsl_matrix *uv, int img_w, int img_h)
 
     int n = uv->size2;
 
-    for (int i=0; i<nsample; ++i) {
+    for (int i=0; i<nsample; ++i)
+    {
         gsl_vector_view uv_sample_i = gsl_matrix_column (&uv_sample.matrix, i);
 
         double min_dist = GSL_POSINF;
         int min_idx = 0;
-        for (int j=0; j<n; j++) {
+        for (int j=0; j<n; j++)
+        {
             gsl_vector_const_view uv_j = gsl_matrix_const_column (uv, j);
             double dist = gslu_vector_dist (&uv_j.vector, &uv_sample_i.vector);
 
-            if (dist < min_dist) {
+            if (dist < min_dist)
+            {
                 min_dist = dist;
                 min_idx = j;
             }
@@ -495,16 +525,19 @@ _vis_pccs_sample_uv (gslu_index *sel, const gsl_matrix *uv, int img_w, int img_h
 
     int n = uv->size2;
 
-    for (int i=0; i<nsample; ++i) {
+    for (int i=0; i<nsample; ++i)
+    {
         gsl_vector_view uv_sample_i = gsl_matrix_column (&uv_sample.matrix, i);
 
         double min_dist = GSL_POSINF;
         int min_idx = 0;
-        for (int j=0; j<n; j++) {
+        for (int j=0; j<n; j++)
+        {
             gsl_vector_const_view uv_j = gsl_matrix_const_column (uv, j);
             double dist = gslu_vector_dist (&uv_j.vector, &uv_sample_i.vector);
 
-            if (dist < min_dist) {
+            if (dist < min_dist)
+            {
                 min_dist = dist;
                 min_idx = j;
             }
@@ -517,8 +550,8 @@ _vis_pccs_sample_uv (gslu_index *sel, const gsl_matrix *uv, int img_w, int img_h
 void
 gslu_matrix_fprintf (const gsl_matrix *A, const char *filename)
 {
-    FILE *fid = fopen (filename, "wb");  
-    gsl_matrix_fprintf (fid, A, "%g");  
+    FILE *fid = fopen (filename, "wb");
+    gsl_matrix_fprintf (fid, A, "%g");
     fclose (fid);
 }
 
@@ -533,8 +566,8 @@ _write_to_disk_mat (const gsl_matrix *A, const char *name)
 void
 gslu_vector_fprintf (const gsl_vector *A, const char *filename)
 {
-    FILE *fid = fopen (filename, "wb");  
-    gsl_vector_fprintf (fid, A, "%g");  
+    FILE *fid = fopen (filename, "wb");
+    gsl_vector_fprintf (fid, A, "%g");
     fclose (fid);
 }
 
@@ -551,7 +584,7 @@ _write_to_disk_vec (const gsl_vector *A, const char *name)
  */
 void
 _vis_pccs_prepare_plot_debug (const gsl_matrix *K, perllcm_van_plot_debug_t *pd,
-                              const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1, gsl_vector *X_c1c2, gsl_matrix *P_c1c2, 
+                              const gsl_vector *X_c2c1, const gsl_matrix *P_c2c1, gsl_vector *X_c1c2, gsl_matrix *P_c1c2,
                               const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_vector *z1, const gsl_vector *z2,
                               gsl_matrix *X_vectors21_pre, gsl_vector *weights21_pre, gsl_matrix *H_vectors21_pre,
                               gsl_matrix *X_vectors12_pre, gsl_vector *weights12_pre, gsl_matrix *H_vectors12_pre)
@@ -564,21 +597,26 @@ _vis_pccs_prepare_plot_debug (const gsl_matrix *K, perllcm_van_plot_debug_t *pd,
     GSLU_MATRIX_VIEW (F21, 3,3);
     vis_epi_F_from_KX (&F21.matrix, K, X_c2c1);
 
-    int img_w = pd->img_w; int img_h = pd->img_h;
+    int img_w = pd->img_w;
+    int img_h = pd->img_h;
     GSLU_INDEX_VIEW (sample_uv1, 8);
     GSLU_INDEX_VIEW (sample_uv2, 8);
     _vis_pccs_sample_uv (&sample_uv1.vector, uv1, img_w, img_h);
     _vis_pccs_sample_uv (&sample_uv2.vector, uv2, img_w, img_h);
 
-    GSLU_MATRIX_VIEW (uv1_sample, 2,8);   GSLU_MATRIX_VIEW (uv2_sample, 2,8);
-    GSLU_MATRIX_VIEW (uv2p_sample, 2,8);  GSLU_MATRIX_VIEW (uv1p_sample, 2,8);
-    GSLU_MATRIX_VIEW (cov2p_sample, 4,8); GSLU_MATRIX_VIEW (cov1p_sample, 4,8);
+    GSLU_MATRIX_VIEW (uv1_sample, 2,8);
+    GSLU_MATRIX_VIEW (uv2_sample, 2,8);
+    GSLU_MATRIX_VIEW (uv2p_sample, 2,8);
+    GSLU_MATRIX_VIEW (uv1p_sample, 2,8);
+    GSLU_MATRIX_VIEW (cov2p_sample, 4,8);
+    GSLU_MATRIX_VIEW (cov1p_sample, 4,8);
 
 #if SAVE_ELLIPSES_DATA
     GSLU_VECTOR_VIEW (z1_sample,8);
 #endif
 
-    for (int i=0; i<8; ++i) {
+    for (int i=0; i<8; ++i)
+    {
         int idx_sample1 = gslu_index_get (&sample_uv1.vector, i);
         int idx_sample2 = gslu_index_get (&sample_uv2.vector, i);
         gsl_vector_const_view uv1_i = gsl_matrix_const_column (uv1, idx_sample1);
@@ -593,16 +631,16 @@ _vis_pccs_prepare_plot_debug (const gsl_matrix *K, perllcm_van_plot_debug_t *pd,
                                             X_vectors12_pre, weights12_pre, H_vectors12_pre, &uv1p_j.vector, &Cov_u1pv1p.matrix);
 
         // populate sample uv and uvp
-        gsl_matrix_set_col (&uv1_sample.matrix, i, &uv1_i.vector); 
+        gsl_matrix_set_col (&uv1_sample.matrix, i, &uv1_i.vector);
         gsl_matrix_set_col (&uv2_sample.matrix, i, &uv2_j.vector);
         gslu_matrix_stack (&sigma_col.vector, &Cov_u2pv2p.matrix, CblasTrans);
         gsl_matrix_set_col (&cov2p_sample.matrix, i, &sigma_col.vector);
         gslu_matrix_stack (&sigma_col.vector, &Cov_u1pv1p.matrix, CblasTrans);
         gsl_matrix_set_col (&cov1p_sample.matrix, i, &sigma_col.vector);
 
-        #if SAVE_ELLIPSES_DATA
-            gsl_vector_set (&z1_sample.vector,i,gsl_vector_get (z1,idx_sample1));
-        #endif
+#if SAVE_ELLIPSES_DATA
+        gsl_vector_set (&z1_sample.vector,i,gsl_vector_get (z1,idx_sample1));
+#endif
 
     }
 
@@ -636,7 +674,7 @@ _vis_pccs_prepare_plot_debug (const gsl_matrix *K, perllcm_van_plot_debug_t *pd,
 #endif
 }
 
-int 
+int
 vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,                 /* input matrices uv1 (2 x n1) and uv2 (2 x n2)*/
                        const gsl_vector *z1, const gsl_vector *z2,                   /* input depth prior in gsl, z1 (n1 x 1) and z2 (n2 x 1)  */
                        const gsl_vector *cov_z1, const gsl_vector *cov_z2,           /* input depth prior uncertainty in gsl */
@@ -656,7 +694,8 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
         isfeature_t = 1;
     else if (key1 && key2)
         isfeature_t = 0;
-    else {
+    else
+    {
         ERROR ("Either feature_t or gsl matrix key should be provided\n");
         abort ();
     }
@@ -678,9 +717,9 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
 
 
     // init forward index and backward index
-    gslu_index *fwd12_sel = gslu_index_alloc (n1); 
+    gslu_index *fwd12_sel = gslu_index_alloc (n1);
     gslu_index_set_all (fwd12_sel, nomatch);
-    gslu_index *fwd21_sel = gslu_index_alloc (n2); 
+    gslu_index *fwd21_sel = gslu_index_alloc (n2);
     gslu_index_set_all (fwd21_sel, nomatch);
     gsl_vector *fwd21_score = gsl_vector_alloc (n2);
     if (simscore_minmax == VIS_PCCS_SIMSCORE_MIN) // this should check the type of feature
@@ -689,7 +728,8 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
         gsl_vector_set_all (fwd21_score, GSL_NEGINF);
 
     // init loop up table before mapping 2 to 1 (zero = never mapped before)
-    gslu_index *lut = gslu_index_alloc (n2); gslu_index_set_zero (lut);
+    gslu_index *lut = gslu_index_alloc (n2);
+    gslu_index_set_zero (lut);
     gsl_matrix *uv1p = gsl_matrix_alloc (2, n2);
     gsl_matrix *cov1p = gsl_matrix_alloc (4, n2);
 
@@ -716,17 +756,18 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
     GSLU_VECTOR_VIEW (weights12_pre, 19);       // r
 
     int xfer21_ret = vis_pccs_precalc_single_xfer_params_ukf (X_c2c1, P_c2c1, K, &invK.matrix, gsl_vector_get (cov_z1, 0),
-                                                              &X_vectors21_pre.matrix, &weights21_pre.vector, &H_vectors21_pre.matrix);
-    
+                     &X_vectors21_pre.matrix, &weights21_pre.vector, &H_vectors21_pre.matrix);
+
     int xfer12_ret = vis_pccs_precalc_single_xfer_params_ukf (&X_c1c2.vector, &P_c1c2.matrix, K, &invK.matrix, gsl_vector_get (cov_z2, 0),
-                                                              &X_vectors12_pre.matrix, &weights12_pre.vector, &H_vectors12_pre.matrix);
+                     &X_vectors12_pre.matrix, &weights12_pre.vector, &H_vectors12_pre.matrix);
 
     if (!xfer21_ret || !xfer12_ret) // error occured in cholesky decomp
         return 0;                   // no corr. has found
-        
+
     // set threshold
     // -------------------------------------------------------------- //
-    if (chiSquare2dof<0) { // if it is zero (not provided, set value for chiSquare2dof
+    if (chiSquare2dof<0)   // if it is zero (not provided, set value for chiSquare2dof
+    {
         double alpha = 1.0-2.0*gsl_cdf_ugaussian_P (-6.0);
         double fudge = 1.2; // size of the ellipsoid
         chiSquare2dof = gsl_cdf_chisq_Pinv (alpha, 2)* fudge * fudge;
@@ -735,7 +776,8 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
 
     // MAIN LOOP
     // -------------------------------------------------------------- //
-    for (int i=0; i<n1; ++i) {
+    for (int i=0; i<n1; ++i)
+    {
         double dist12 = GSL_POSINF, dist21 = GSL_POSINF, key_dist_min = GSL_POSINF, key_dist_2nd_min = GSL_POSINF;
 
         gsl_vector_const_view uv1_i = gsl_matrix_const_column (uv1, i);
@@ -745,20 +787,24 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
         //gslu_vector_printf (&uv2p_i.vector,"&uv2p_i.vector - UKF1");
         //gslu_matrix_printf (&Cov_u2pv2p.matrix,"&Cov_u2pv2p.matrix - UKF1");
 
-        for (int j=0; j < n2; ++j) {
-            gsl_vector_const_view uv2_j = gsl_matrix_const_column (uv2, j); 
+        for (int j=0; j < n2; ++j)
+        {
+            gsl_vector_const_view uv2_j = gsl_matrix_const_column (uv2, j);
             dist12 = gslu_vector_mahal_dist (&uv2p_i.vector, &uv2_j.vector, &invCov_u2pv2p.matrix);
-            
-            if (dist12*dist12 < chiSquare2dof) {
+
+            if (dist12*dist12 < chiSquare2dof)
+            {
                 gsl_vector_view uv1p_j = gsl_matrix_column (uv1p, j);
                 gsl_vector_view sigma_col = gsl_matrix_column (cov1p, j);
 
-                if (gslu_index_get (lut, j)) {   // been mapped before
+                if (gslu_index_get (lut, j))     // been mapped before
+                {
                     gslu_vector_reshape (&Cov_u1pv1p.matrix, &sigma_col.vector, CblasTrans);
                     gslu_matrix_inv (&invCov_u1pv1p.matrix, &Cov_u1pv1p.matrix);
                 }
-                else {
-                    vis_pccs_relview_single_ptxfer_ukf (K, &X_c1c2.vector, &P_c1c2.matrix, &uv2_j.vector, gsl_vector_get (z2,j), 
+                else
+                {
+                    vis_pccs_relview_single_ptxfer_ukf (K, &X_c1c2.vector, &P_c1c2.matrix, &uv2_j.vector, gsl_vector_get (z2,j),
                                                         &X_vectors12_pre.matrix, &weights12_pre.vector, &H_vectors12_pre.matrix, &uv1p_j.vector, &Cov_u1pv1p.matrix);
                     gslu_matrix_inv (&invCov_u1pv1p.matrix, &Cov_u1pv1p.matrix);
                     //gslu_vector_printf (&uv1p_j.vector,"&uv1p_j.vector - UKF");
@@ -766,24 +812,29 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
 
                     gslu_index_set (lut, j, 1.0);       // look up table set to be 1, once mapped.
                     gslu_matrix_stack (&sigma_col.vector, &Cov_u1pv1p.matrix, CblasTrans);
-                    
+
                 }
                 dist21 = gslu_vector_mahal_dist (&uv1p_j.vector, &uv1_i.vector, &invCov_u1pv1p.matrix);
 
-                if (dist21*dist21 < chiSquare2dof) {
+                if (dist21*dist21 < chiSquare2dof)
+                {
                     double key_dist = GSL_POSINF;
-                    if (isfeature_t) {
+                    if (isfeature_t)
+                    {
                         key_dist = vis_feature_get_simscore (f1, f2, i, j);
                     }
-                    else {
+                    else
+                    {
                         gsl_vector_float_const_view key1_i = gsl_matrix_float_const_column (key1, i);
                         gsl_vector_float_const_view key2_j = gsl_matrix_float_const_column (key2, j);
                         key_dist = vis_feature_get_simscore_gsl_float (&key1_i.vector, &key2_j.vector);
                     }
 
                     // find the best score (min/max) & simA and simB test & update fwd12_sel
-                    if (simscore_minmax == VIS_PCCS_SIMSCORE_MIN) { // this should check the type of feature 
-                        if (key_dist < key_dist_min) {
+                    if (simscore_minmax == VIS_PCCS_SIMSCORE_MIN)   // this should check the type of feature
+                    {
+                        if (key_dist < key_dist_min)
+                        {
                             key_dist_2nd_min = key_dist_min;
                             key_dist_min = key_dist;
 
@@ -794,18 +845,21 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
                                 gslu_index_set (fwd12_sel, i, nomatch);
 
                         }
-                        if (key_dist_min < key_dist && key_dist < key_dist_2nd_min) {
+                        if (key_dist_min < key_dist && key_dist < key_dist_2nd_min)
+                        {
                             key_dist_2nd_min = key_dist;
                             if (key_dist_min > simscore_thres*key_dist_2nd_min) // check simA simB
                                 gslu_index_set (fwd12_sel, i, nomatch);
                         }
                     }
-                    else {
+                    else
+                    {
                         // this is case when feature key is harris
                     }
 
-                    // simultaneously.. find the best score (min/max) & update fwd21_sel        
-                    if (key_dist < gsl_vector_get (fwd21_score, j)) {
+                    // simultaneously.. find the best score (min/max) & update fwd21_sel
+                    if (key_dist < gsl_vector_get (fwd21_score, j))
+                    {
                         gslu_index_set (fwd21_sel, j, i);
                         gsl_vector_set (fwd21_score, j, key_dist);
                     }
@@ -817,24 +871,30 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
 
     // Done. Now check fwd and bwd to populate sel1 sel2
     int idx_sel = 0;
-    for (int j=0; j<n2; ++j) {
-        if (gslu_index_get (fwd21_sel,j) != nomatch) {
-            if ( gslu_index_get (fwd12_sel, gslu_index_get (fwd21_sel,j)) == j) {
+    for (int j=0; j<n2; ++j)
+    {
+        if (gslu_index_get (fwd21_sel,j) != nomatch)
+        {
+            if ( gslu_index_get (fwd12_sel, gslu_index_get (fwd21_sel,j)) == j)
+            {
                 gslu_index_set (sel2, idx_sel, j);
                 idx_sel++;
             }
         }
     }
-    int n_corr = idx_sel; ret = n_corr;
+    int n_corr = idx_sel;
+    ret = n_corr;
 
-    for (int i=0; i<n_corr; ++i) {
+    for (int i=0; i<n_corr; ++i)
+    {
         int j = gslu_index_get (fwd21_sel, gslu_index_get (sel2, i));
         gslu_index_set (sel1, i, j);
-    }        
+    }
 
     // check if we need to prepare plot_debug_t
     // -------------------------------------------------------------- //
-    if (pd && pd->plt_ellipses) {
+    if (pd && pd->plt_ellipses)
+    {
         pd->chiSquare2dof = chiSquare2dof;
         _vis_pccs_prepare_plot_debug (K, pd,
                                       X_c2c1, P_c2c1, &X_c1c2.vector, &P_c1c2.matrix, uv1,uv2, z1, z2,
@@ -844,9 +904,9 @@ vis_pccs_corrset_core (const gsl_matrix *uv1, const gsl_matrix *uv2,            
 
     // clean up
     // -------------------------------------------------------------- //
-    gslu_index_free (fwd12_sel); 
-    gslu_index_free (fwd21_sel); 
-    gslu_vector_free (fwd21_score); 
+    gslu_index_free (fwd12_sel);
+    gslu_index_free (fwd21_sel);
+    gslu_vector_free (fwd21_score);
 
     gslu_index_free (lut);
     gslu_matrix_free (uv1p);

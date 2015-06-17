@@ -42,25 +42,27 @@ struct _state_t
     uint8_t bitmask;
 };
 
-static void 
+static void
 add_commandline_options (state_t *state, int argc, char *argv[])
 {
     getopt_add_description (state->gopt, "EasyDAQ SERDIO8R 8-channel relay-board driver.");
     getopt_add_help (state->gopt, NULL);
     getopt_add_bool (state->gopt, 'D', "daemon", 0, "Run as system daemon");
     getopt_add_bool (state->gopt, 'i', "ignore", 0, "Ignore init relay state request in .cfg");
-    getopt_add_string (state->gopt, 'c', "channel", 
+    getopt_add_string (state->gopt, 'c', "channel",
                        botu_param_get_str_or_default (state->param, "hotel.easydaq.channel", "EASYDAQ"),
                        "LCM channel name");
-    getopt_add_string (state->gopt, '\0', "device", 
+    getopt_add_string (state->gopt, '\0', "device",
                        botu_param_get_str_or_default (state->param, "hotel.easydaq.device", "/dev/ttyS0"),
                        "Device to connect to, e.g. /dev/ttyS0");
 
-    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0) {
+    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0)
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (state->gopt, "help")) {
+    else if (getopt_get_bool (state->gopt, "help"))
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -70,34 +72,38 @@ static int
 update_state (state_t *state)
 {
     const int MAX_ATTEMPS = 10;
-    for (int i=0; i<MAX_ATTEMPS; i++) {
+    for (int i=0; i<MAX_ATTEMPS; i++)
+    {
         easydaq_setdir (state->fd, 0x00);
         int err = easydaq_read (state->fd, &state->bitmask);
-        if (!err) {
-            for (int r=0; r<8; r++) {
+        if (!err)
+        {
+            for (int r=0; r<8; r++)
+            {
                 if (state->bitmask & (1 << r))
                     state->easydaq.relay[r].state = 1;
                 else
                     state->easydaq.relay[r].state = 0;
             }
             return 0;
-        } 
+        }
     }
     printf ("*Warning*: Easydaq not talking, are you on the correct serial port?\n");
     return -1;
 }
 
 static void
-easydaq_t_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
+easydaq_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                     const senlcm_easydaq_t *easydaq, void *user)
 {
     state_t *state = user;
 
     if (easydaq->self)
         return;
-    
+
     // toggle relays
-    for (int r=0; r<8; r++) {
+    for (int r=0; r<8; r++)
+    {
         if (easydaq->relay[r].state)
             state->bitmask |= (1 << r);
         else
@@ -107,7 +113,8 @@ easydaq_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     easydaq_write (state->fd, state->bitmask);
 
     // publish current relay state
-    if (0 == update_state (state)) {
+    if (0 == update_state (state))
+    {
         state->easydaq.self = 1;
         state->easydaq.utime = timestamp_now ();
         senlcm_easydaq_t_publish (state->lcm, state->channel, &state->easydaq);
@@ -122,9 +129,15 @@ timer_callback (void *user)
         return 1; // wait for initialiation to finish, don't print an empty struct
 
     static int up_sec=0, up_min=0, up_hour=0, up_days=0;
-    if (++up_sec > 59) { up_sec = 0;
-        if (++up_min > 59) { up_min = 0;
-            if (++up_hour > 23) { up_hour = 0;
+    if (++up_sec > 59)
+    {
+        up_sec = 0;
+        if (++up_min > 59)
+        {
+            up_min = 0;
+            if (++up_hour > 23)
+            {
+                up_hour = 0;
                 ++up_days;
             }
         }
@@ -137,8 +150,8 @@ timer_callback (void *user)
     return 1;
 }
 
-int main (int argc, char *argv[]) 
-{   
+int main (int argc, char *argv[])
+{
     // so that redirected stdout won't be insanely buffered.
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
@@ -146,7 +159,8 @@ int main (int argc, char *argv[])
     state_t *state = calloc (1, sizeof (*state));
 
     state->param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-    if (!state->param) {
+    if (!state->param)
+    {
         ERROR ("Could not create config parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
         exit (EXIT_FAILURE);
     }
@@ -156,7 +170,8 @@ int main (int argc, char *argv[])
 
     if (getopt_get_bool (state->gopt, "daemon"))
         daemon_fork ();
-    else {
+    else
+    {
         // launch foreground timer thread
         struct timespec spec = timeutil_hz_to_timespec (1.0);
         timeutil_timer_create (spec, &timer_callback, &state->easydaq);
@@ -164,14 +179,16 @@ int main (int argc, char *argv[])
 
     const char *device = getopt_get_string (state->gopt, "device");
     state->fd = easydaq_open (device);
-    if (state->fd < 0) {
+    if (state->fd < 0)
+    {
         ERROR ("easydaq_open");
         exit (EXIT_FAILURE);
     }
 
     // init lcm and subscribe
     state->lcm = lcm_create (NULL);
-    if (!state->lcm) {
+    if (!state->lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
@@ -181,9 +198,10 @@ int main (int argc, char *argv[])
 
     // parse config file
     state->easydaq.utime = timestamp_now ();
-    for (int r=0; r<8; r++) {
+    for (int r=0; r<8; r++)
+    {
         char key[128];
-        
+
         sprintf (key, "hotel.easydaq.relay%d.label", r+1);
         char *label = botu_param_get_str_or_default (state->param, key, "unknown");
 
@@ -192,11 +210,11 @@ int main (int argc, char *argv[])
 
         sprintf (key, "hotel.easydaq.relay%d.state", r+1);
         bool onoff = false;
-	bot_param_get_boolean (state->param, key, (int*)&onoff);
+        bot_param_get_boolean (state->param, key, (int*)&onoff);
 
         sprintf (key, "hotel.easydaq.relay%d.exclude_all", r+1);
         bool exclude_all = false;
-	bot_param_get_boolean (state->param, key, (int*)&exclude_all);
+        bot_param_get_boolean (state->param, key, (int*)&exclude_all);
 
         // assign our relays
         state->easydaq.relay[r].label = label;
@@ -213,14 +231,17 @@ int main (int argc, char *argv[])
     // main loop
     if (getopt_get_bool (state->gopt, "daemon"))
         close (STDERR_FILENO);
-    while (1) {
-        struct timeval timeout = {
+    while (1)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 250000,
         };
         int ret = lcmu_handle_timeout (state->lcm, &timeout);
 
-        if (ret==0 && 0==update_state (state)) { /* timeout */
+        if (ret==0 && 0==update_state (state))   /* timeout */
+        {
             state->easydaq.self = 1;
             state->easydaq.utime = timestamp_now ();
             senlcm_easydaq_t_publish (state->lcm, state->channel, &state->easydaq);
@@ -228,7 +249,8 @@ int main (int argc, char *argv[])
     }
 
     // clean up
-    if (lockf (state->fd, F_ULOCK, 0) < 0) {
+    if (lockf (state->fd, F_ULOCK, 0) < 0)
+    {
         PERROR ("lockf");
         return -1;
     }

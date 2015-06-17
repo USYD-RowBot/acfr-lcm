@@ -35,7 +35,8 @@ uint16_t AccelGainScale;
 uint16_t GyroGainScale;
 
 typedef struct _ms_query_t ms_query_t;
-struct _ms_query_t {
+struct _ms_query_t
+{
     char cmd_byte;
     char cmd_data[24];
     int  cmd_data_len;
@@ -47,7 +48,8 @@ poll_data (generic_sensor_driver_t *gsd, ms_query_t *msq, char buf[], int64_t *u
 {
     gsd_noncanonical (gsd, msq->response_len, 0);
     int ret = 0;
-    while (ret == 0) {
+    while (ret == 0)
+    {
         gsd_write (gsd, &msq->cmd_byte, 1);
         gsd_write (gsd, msq->cmd_data, msq->cmd_data_len);
         ret = gsd_read_timeout (gsd, buf, MICROSTRAIN_MAX_LEN, utime, 1000000);
@@ -60,7 +62,8 @@ pubGyroVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
 {
     char buf[MICROSTRAIN_MAX_LEN];
 
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_GYRO_VECTOR,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -68,12 +71,13 @@ pubGyroVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
     };
     int buflen = poll_data (gsd, &msq, buf, &ms->utime);
 
-    int ret = ms_parseGyroVector (buf, buflen, 
-                                  ms->sMagField, MagGainScale, 
+    int ret = ms_parseGyroVector (buf, buflen,
+                                  ms->sMagField, MagGainScale,
                                   ms->sAccel,    AccelGainScale,
                                   ms->sAngRate,  GyroGainScale,
                                   &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = STAB_MAGFIELD | STAB_ACCEL | STAB_ANGRATE;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -81,7 +85,7 @@ pubGyroVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
         gsd_update_stats (gsd, 1);
     }
     else
-        gsd_update_stats (gsd, 0);    
+        gsd_update_stats (gsd, 0);
 }
 
 static void
@@ -89,7 +93,8 @@ pubInstVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
 {
     char buf[MICROSTRAIN_MAX_LEN];
 
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_INST_VECTOR,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -97,12 +102,13 @@ pubInstVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
     };
     int buflen = poll_data (gsd, &msq, buf, &ms->utime);
 
-    int ret = ms_parseInstVector (buf, buflen, 
-                                  ms->iMagField, MagGainScale, 
+    int ret = ms_parseInstVector (buf, buflen,
+                                  ms->iMagField, MagGainScale,
                                   ms->iAccel, AccelGainScale,
                                   ms->iAngRate, GyroGainScale,
                                   &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = INST_MAGFIELD | INST_ACCEL | INST_ANGRATE;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -110,7 +116,7 @@ pubInstVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm
         gsd_update_stats (gsd, 1);
     }
     else
-        gsd_update_stats (gsd, 0);    
+        gsd_update_stats (gsd, 0);
 }
 
 static void
@@ -118,7 +124,8 @@ pubInstQuat (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm_m
 {
     char buf[MICROSTRAIN_MAX_LEN];
 
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_INST_QUAT,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -127,7 +134,8 @@ pubInstQuat (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm_m
     int buflen = poll_data (gsd, &msq, buf, &ms->utime);
 
     int ret = ms_parseInstQuat (buf, buflen, ms->iQ, &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = INST_Q;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -149,7 +157,8 @@ pubGyroQuat (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm_m
 {
     char buf[MICROSTRAIN_MAX_LEN];
 
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_GYRO_QUAT,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -158,7 +167,8 @@ pubGyroQuat (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm_m
     int buflen = poll_data (gsd, &msq, buf, &ms->utime);
 
     int ret = ms_parseGyroQuat (buf, buflen, ms->sQ, &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = STAB_Q;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -181,7 +191,8 @@ pubGyroQuatVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, se
 {
     char buf[MICROSTRAIN_MAX_LEN];
 
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_GYRO_QUAT_VECTOR,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -193,9 +204,10 @@ pubGyroQuatVector (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, se
                                       ms->sQ,
                                       ms->iMagField, MagGainScale,
                                       ms->iAccel, AccelGainScale,
-                                      ms->sAngRate, GyroGainScale, 
+                                      ms->sAngRate, GyroGainScale,
                                       &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = STAB_Q | INST_MAGFIELD | INST_ACCEL | STAB_ANGRATE;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -216,7 +228,8 @@ static void
 pubTemperature (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlcm_ms_gx1_t *ms)
 {
     char buf[MICROSTRAIN_MAX_LEN];
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_TEMPERATURE,
         .cmd_data = "\0",
         .cmd_data_len = 0,
@@ -225,7 +238,8 @@ pubTemperature (generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss, senlc
     int buflen = poll_data (gsd, &msq, buf, &ms->utime);
 
     int ret = ms_parseTemperature (buf, buflen, &ms->Temperature, &ms->TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         ms->bitmask = TEMPERATURE;
         ms->utime = timestamp_sync (tss, (uint16_t) ms->TimerTicks, ms->utime);
 
@@ -240,7 +254,8 @@ static uint16_t
 getMagGainScale (generic_sensor_driver_t *gsd)
 {
     char buf[MICROSTRAIN_MAX_LEN];
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_READ_EEPROM_WITH_CHECKSUM,
         .cmd_data = {0, 232},
         .cmd_data_len = 2,
@@ -252,11 +267,13 @@ getMagGainScale (generic_sensor_driver_t *gsd)
     uint16_t MagGainScale;
     int16_t TimerTicks;
     int ret = ms_parseReadEepromWithChecksum (buf, buflen, &MagGainScale, &TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         gsd_update_stats (gsd, 1);
         return MagGainScale;
     }
-    else {
+    else
+    {
         gsd_update_stats (gsd, 0);
         ERROR("using default uncalibrated value MagGainScale=2000");
         return 2000;
@@ -267,7 +284,8 @@ static uint16_t
 getAccelGainScale (generic_sensor_driver_t *gsd)
 {
     char buf[MICROSTRAIN_MAX_LEN];
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_READ_EEPROM_WITH_CHECKSUM,
         .cmd_data = {0, 230},
         .cmd_data_len = 2,
@@ -279,11 +297,13 @@ getAccelGainScale (generic_sensor_driver_t *gsd)
     uint16_t AccelGainScale;
     int16_t TimerTicks;
     int ret = ms_parseReadEepromWithChecksum (buf, buflen, &AccelGainScale, &TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         gsd_update_stats (gsd, 1);
         return AccelGainScale;
     }
-    else {
+    else
+    {
         gsd_update_stats (gsd, 0);
         ERROR("using default uncalibrated value AccelGainScale=7000");
         return 7000;
@@ -294,7 +314,8 @@ static uint16_t
 getGyroGainScale (generic_sensor_driver_t *gsd)
 {
     char buf[MICROSTRAIN_MAX_LEN];
-    ms_query_t msq = {
+    ms_query_t msq =
+    {
         .cmd_byte = CMD_READ_EEPROM_WITH_CHECKSUM,
         .cmd_data = {0, 130},
         .cmd_data_len = 2,
@@ -306,11 +327,13 @@ getGyroGainScale (generic_sensor_driver_t *gsd)
     uint16_t GyroGainScale;
     int16_t TimerTicks;
     int ret = ms_parseReadEepromWithChecksum (buf, buflen, &GyroGainScale, &TimerTicks);
-    if (ret > 0) {
+    if (ret > 0)
+    {
         gsd_update_stats (gsd, 1);
         return GyroGainScale;
     }
-    else {
+    else
+    {
         gsd_update_stats (gsd, 0);
         ERROR("using default uncalibrated value GyroGainScale=8500");
         return 8500;
@@ -343,7 +366,7 @@ main (int argc, char *argv[])
 
     int all = 1;
     if (getopt_has_flag (gsd->gopt, "stabAttitude") || getopt_has_flag (gsd->gopt, "stabVectors")  ||
-        getopt_has_flag (gsd->gopt, "instAttitude") || getopt_has_flag (gsd->gopt, "instVectors"))
+            getopt_has_flag (gsd->gopt, "instAttitude") || getopt_has_flag (gsd->gopt, "instVectors"))
         all = 0;
 
     MagGainScale = ms.MagGainScale = getMagGainScale (gsd);
@@ -351,7 +374,8 @@ main (int argc, char *argv[])
     GyroGainScale = ms.GyroGainScale = getGyroGainScale (gsd);
 
     uint8_t i=0;
-    while (1) {        
+    while (1)
+    {
         if (all || getopt_get_bool (gsd->gopt, "stabAttitude"))
             pubGyroQuat (gsd, tss, &ms);
 

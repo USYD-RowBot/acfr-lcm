@@ -30,7 +30,8 @@ static const int TIMEOUT_MICROSEC = 5000000;
 typedef struct gps_data_t gpsdata_t;
 
 typedef struct _state_t state_t;
-struct _state_t {
+struct _state_t
+{
     gpsdata_t *gpsdata;
     char *gpsddev;
 
@@ -60,10 +61,12 @@ state_init (int argc, char *argv[])
     state->gpsddev = NULL;
     if (getopt_has_flag (state->gsd->gopt, "gpsddev"))
         state->gpsddev = g_strdup (getopt_get_string (state->gsd->gopt, "gpsddev"));
-    else {
+    else
+    {
         char key[256];
         snprintf (key, sizeof key, "%s.gpsddev", state->gsd->rootkey);
-        if (bot_param_get_str (state->gsd->params, key, &state->gpsddev)) {
+        if (bot_param_get_str (state->gsd->params, key, &state->gpsddev))
+        {
             ERROR ("gpsddev not set");
             exit (EXIT_FAILURE);
         }
@@ -77,7 +80,8 @@ state_init (int argc, char *argv[])
     const char *server = getopt_get_string (state->gsd->gopt, "server");
     const char *port = getopt_get_string (state->gsd->gopt, "port");
     state->gpsdata = calloc (1, sizeof (gpsdata_t));
-    if (gps_open (server, port, state->gpsdata) != 0) {
+    if (gps_open (server, port, state->gpsdata) != 0)
+    {
         ERROR ("gps_open () failed");
         exit (EXIT_FAILURE);
     }
@@ -85,7 +89,7 @@ state_init (int argc, char *argv[])
     return state;
 }
 
-void 
+void
 state_destroy (state_t *state)
 {
     gps_stream (state->gpsdata, WATCH_DISABLE, NULL);
@@ -112,7 +116,8 @@ parse_ppsda (const char *buf, senlcm_ppsboard_t *ppsboard)
     char ntp_status;
     if (!nmea_argc (buf, 2, &ntp_status))
         return 0;
-    else {
+    else
+    {
         if (ntp_status == 'A')
             ppsboard->ntp_status = 1;
         else
@@ -122,7 +127,8 @@ parse_ppsda (const char *buf, senlcm_ppsboard_t *ppsboard)
     char src_type;
     if (!nmea_argc (buf, 4, &src_type))
         return 0;
-    else {
+    else
+    {
         g_free (ppsboard->src_type);
         if (src_type == 'I')
             ppsboard->src_type = strdup ("IVER");
@@ -151,21 +157,25 @@ parse_ppsda (const char *buf, senlcm_ppsboard_t *ppsboard)
         ppsboard->sync_num = sync_num;
 
     char tmp_sync_date[32];
-    if (!nmea_arg  (buf, 9, tmp_sync_date)) {
+    if (!nmea_arg  (buf, 9, tmp_sync_date))
+    {
         g_free (ppsboard->sync_date);
         ppsboard->sync_date = strdup ("");
     }
-    else {
+    else
+    {
         g_free (ppsboard->sync_date);
         ppsboard->sync_date = strdup (tmp_sync_date);
     }
 
     char tmp_sync_time[32];
-    if (!nmea_arg  (buf, 10, tmp_sync_time)) {
+    if (!nmea_arg  (buf, 10, tmp_sync_time))
+    {
         g_free (ppsboard->sync_time);
         ppsboard->sync_time = strdup ("");
     }
-    else {
+    else
+    {
         g_free (ppsboard->sync_time);
         ppsboard->sync_time = strdup (tmp_sync_time);
     }
@@ -202,7 +212,8 @@ parse_gphdt (const char *buf, senlcm_nmea_gphdt_t *gphdt)
     char D = '\0';
     if (!nmea_argc (buf, 3, &D))
         return 0;
-    switch (D) {
+    switch (D)
+    {
     case 'E':
         break;
     case 'W':
@@ -211,7 +222,7 @@ parse_gphdt (const char *buf, senlcm_nmea_gphdt_t *gphdt)
     default:
         return 0;
     }
-    
+
     // magnetic variation
     double v = 0.0;
     if (!nmea_argf (buf, 4, &v))
@@ -221,7 +232,8 @@ parse_gphdt (const char *buf, senlcm_nmea_gphdt_t *gphdt)
     char V = '\0';
     if (!nmea_argc (buf, 5, &V))
         return 0;
-    switch (V) {
+    switch (V)
+    {
     case 'E':
         break;
     case 'W':
@@ -230,13 +242,14 @@ parse_gphdt (const char *buf, senlcm_nmea_gphdt_t *gphdt)
     default:
         return 0;
     }
-    
-    *gphdt = (senlcm_nmea_gphdt_t) {
+
+    *gphdt = (senlcm_nmea_gphdt_t)
+    {
         .utime     = timestamp_now (),
-        .h_true    = (h_raw + d + v)*DTOR,
-        .h_raw     = h_raw*DTOR,
-        .deviation = d*DTOR,
-        .variation = v*DTOR,
+         .h_true    = (h_raw + d + v)*DTOR,
+          .h_raw     = h_raw*DTOR,
+           .deviation = d*DTOR,
+            .variation = v*DTOR,
     };
 
     return 1;
@@ -247,20 +260,23 @@ static const int MAXSTRINGLEN = 32;
 static void
 handle_nmea (state_t *state, const char *buf)
 {
-    senlcm_raw_t raw = {
+    senlcm_raw_t raw =
+    {
         .utime = timestamp_now (),
         .length = strlen (buf) + 1, // +1 for '\0' char
         .data = (uint8_t *) buf,
     };
     senlcm_raw_t_publish (state->gsd->lcm, state->gsd->read_channel, &raw);
 
-    if (strncmp (buf, "$PPSDA", 6) == 0) {
+    if (strncmp (buf, "$PPSDA", 6) == 0)
+    {
         senlcm_ppsboard_t *ppsboard = calloc (1, sizeof (*ppsboard));
         ppsboard->ntp_time = malloc (MAXSTRINGLEN * sizeof (*ppsboard->ntp_time));
         ppsboard->src_type = malloc (MAXSTRINGLEN * sizeof (*ppsboard->src_type));
         ppsboard->sync_date = malloc (MAXSTRINGLEN * sizeof (*ppsboard->sync_date));
         ppsboard->sync_time = malloc (MAXSTRINGLEN * sizeof (*ppsboard->sync_time));
-        if (parse_ppsda (buf, ppsboard)) {
+        if (parse_ppsda (buf, ppsboard))
+        {
             senlcm_ppsboard_t_publish (state->gsd->lcm, state->ppsboard_channel, ppsboard);
             gsd_update_stats (state->gsd, 1);
         }
@@ -270,19 +286,21 @@ handle_nmea (state_t *state, const char *buf)
     }
     else if (nmea_validate_checksum (buf))
         gsd_update_stats (state->gsd, 1);
-    else {
+    else
+    {
         gsd_update_stats (state->gsd, -1);
         return;
     }
 
-    if (0==strncmp (buf, "$GPHDG", 6)) {
+    if (0==strncmp (buf, "$GPHDG", 6))
+    {
         senlcm_nmea_gphdt_t gphdt = {0};
         if (parse_gphdt (buf, &gphdt))
             senlcm_nmea_gphdt_t_publish (state->gsd->lcm, state->gphdt_channel, &gphdt);
     }
 }
 
-static int 
+static int
 pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
 {
     gd->utime = timestamp_now ();
@@ -327,7 +345,8 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
     /* satellite status */
     gd->skyview_utime = (int64_t) (ud->skyview_time * 1.0E6);
     gd->satellites_visible = ud->satellites_visible;
-    for (size_t i=0; i<gd->satellites_visible; i++) {
+    for (size_t i=0; i<gd->satellites_visible; i++)
+    {
         gd->PRN[i] = ud->PRN[i];
         gd->elevation[i] = ud->elevation[i];
         gd->azimuth[i] = ud->azimuth[i];
@@ -335,7 +354,8 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
     }
 
     /* devconfig_t data */
-    if (ud->set & DEVICE_SET) {
+    if (ud->set & DEVICE_SET)
+    {
         gd->dev.path = strdup (ud->dev.path);
         gd->dev.flags = ud->dev.flags;
         gd->dev.driver = strdup (ud->dev.driver);
@@ -347,7 +367,8 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
         gd->dev.mincycle = ud->dev.mincycle;
         gd->dev.driver_mode = ud->dev.driver_mode;
     }
-    else {
+    else
+    {
         gd->dev.path = strdup ("");
         gd->dev.driver = strdup ("");
         gd->dev.subtype = strdup ("");
@@ -372,11 +393,13 @@ handle_gpsd (state_t *state, const char *buf)
     gpsd->azimuth = malloc (MAXCHANNELS * sizeof (*gpsd->azimuth));
     gpsd->ss = malloc (MAXCHANNELS * sizeof (*gpsd->ss));
 
-    if (pack_gpsd (state->gpsdata, gpsd) == 0) {
+    if (pack_gpsd (state->gpsdata, gpsd) == 0)
+    {
         senlcm_gpsd3_t_publish (state->gsd->lcm, state->gsd->channel, gpsd);
         gsd_update_stats (state->gsd, 1);
     }
-    else {
+    else
+    {
         gsd_update_stats (state->gsd, -1);
     }
 
@@ -400,21 +423,25 @@ main (int argc, char *argv[])
 
     // main gps read loop
     gps_stream (state->gpsdata, FLAGS, NULL);
-    while (!state->gsd->done) {
-        if (gps_waiting (state->gpsdata, TIMEOUT_MICROSEC)) {
-			    
-			if (gps_read (state->gpsdata) == -1) {
-				ERROR ("gps_read error");
-            
-			}
-			else {
-            parse_gpsdata (state); 
-			}
-		}
+    while (!state->gsd->done)
+    {
+        if (gps_waiting (state->gpsdata, TIMEOUT_MICROSEC))
+        {
+
+            if (gps_read (state->gpsdata) == -1)
+            {
+                ERROR ("gps_read error");
+
+            }
+            else
+            {
+                parse_gpsdata (state);
+            }
+        }
 
 
 
-		/*
+        /*
         if (!gps_waiting (state->gpsdata, TIMEOUT_MICROSEC)) {
             ERROR ("gpsd-client timed out waiting for data");
             exit (EXIT_FAILURE);
@@ -424,9 +451,9 @@ main (int argc, char *argv[])
             exit (EXIT_SUCCESS);
         }
         else {
-            parse_gpsdata (state); 
+            parse_gpsdata (state);
         }
-		*/
+        */
     }
 
     state_destroy (state);

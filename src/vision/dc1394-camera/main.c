@@ -28,7 +28,7 @@ struct _setting_t
 
 // config structure loaded from cfg file
 typedef struct _cam_config_t cam_config_t;
-struct _cam_config_t 
+struct _cam_config_t
 {
     char cam_id[256];
     dc1394video_mode_t dc1394_video_mode;
@@ -38,7 +38,7 @@ struct _cam_config_t
 
     // standard
     setting_t framerate;
-    setting_t speed1394b; 
+    setting_t speed1394b;
 
     // format 7
     setting_t width;
@@ -67,7 +67,8 @@ struct _config_t
 
 // define state structure
 typedef struct _state_t state_t;
-struct _state_t {
+struct _state_t
+{
     int done;
     int is_daemon;
     lcm_t *lcm;
@@ -83,16 +84,19 @@ read_option (BotParam *param, const char *key, config_t *config, int config_offs
     int n = bot_param_get_array_len (param, key);
     setting_t *setting;
 
-    if (n > 0) {
+    if (n > 0)
+    {
         double *tmp_arr = calloc (n, sizeof (double));
         bot_param_get_double_array (param, key, tmp_arr, n);
 
-        for (int i=0; i < n; ++i) {
+        for (int i=0; i < n; ++i)
+        {
             setting = (setting_t*) ((intptr_t)&config->camera_configs[i] + config_offset);
             setting->manual = 1;
             setting->value = tmp_arr[i];
         }
-        for (int i=1; n == 1 && i < config->num_cameras; ++i) {
+        for (int i=1; n == 1 && i < config->num_cameras; ++i)
+        {
             setting = (setting_t*) ((intptr_t)&config->camera_configs[i] + config_offset);
             setting->manual = 1;
             setting->value = tmp_arr[0];
@@ -108,7 +112,8 @@ void
 perls_dc1394_camera_load_cfg (config_t *config)
 {
     BotParam *param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-    if (!param) {
+    if (!param)
+    {
         ERROR ("Could not create configuration parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
         exit (EXIT_FAILURE);
     }
@@ -119,7 +124,8 @@ perls_dc1394_camera_load_cfg (config_t *config)
     // read in camera ID's
     config->num_cameras = bot_param_get_array_len (param, "dc1394-camera.cam_id");
 
-    if (config-> num_cameras < 1) {
+    if (config-> num_cameras < 1)
+    {
         ERROR ("Must specify at least one camera ID\n");
         exit (EXIT_FAILURE);
     }
@@ -137,7 +143,8 @@ perls_dc1394_camera_load_cfg (config_t *config)
     // read in video modes
     n = bot_param_get_array_len (param, "dc1394-camera.video_mode");
 
-    if (n > 0) {
+    if (n > 0)
+    {
         tmp = bot_param_get_str_array_alloc (param, "dc1394-camera.video_mode");
 
         for (int i=0; i < n && i < config->num_cameras; ++i)
@@ -153,7 +160,8 @@ perls_dc1394_camera_load_cfg (config_t *config)
     // read in color codes
     n = bot_param_get_array_len (param, "dc1394-camera.color_code");
 
-    if (n > 0) {
+    if (n > 0)
+    {
         tmp = bot_param_get_str_array_alloc (param, "dc1394-camera.color_code");
 
         for (int i=0; i < n && i < config->num_cameras; ++i)
@@ -169,7 +177,8 @@ perls_dc1394_camera_load_cfg (config_t *config)
     // read in lcm channels
     n = bot_param_get_array_len (param, "dc1394-camera.lcm_channel");
 
-    if (n > 0) {
+    if (n > 0)
+    {
         tmp = bot_param_get_str_array_alloc (param, "dc1394-camera.lcm_channel");
 
         for (int i=0; i < n && i < config->num_cameras; ++i)
@@ -179,7 +188,8 @@ perls_dc1394_camera_load_cfg (config_t *config)
 
         bot_param_str_array_free (tmp);
     }
-    else {
+    else
+    {
         for (int i=0; i < config->num_cameras; ++i)
             snprintf (config->camera_configs[i].image_channel, 256, "IMAGE%d", i);
     }
@@ -205,28 +215,65 @@ int
 pixelformat_dc1394_to_bot (dc1394color_coding_t dc1394_color, dc1394color_filter_t filter)
 {
     int pix = -1;
-    switch (dc1394_color) {
-        case DC1394_COLOR_CODING_MONO8:     pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY; break;
-        case DC1394_COLOR_CODING_YUV411:    pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV411P; break;
-        case DC1394_COLOR_CODING_YUV422:    pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV420; break;
-        case DC1394_COLOR_CODING_YUV444:    pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV420; break;
-        case DC1394_COLOR_CODING_RGB8:      pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB; break;
-        case DC1394_COLOR_CODING_MONO16:    pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_GRAY16; break;
-        case DC1394_COLOR_CODING_RGB16:     pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_RGB16; break;
-        case DC1394_COLOR_CODING_MONO16S:   pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_SIGNED_GRAY16; break;
-        case DC1394_COLOR_CODING_RGB16S:    pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_SIGNED_RGB16; break;
-        case DC1394_COLOR_CODING_RAW8:      pix = 0; break; // NEED TO QUERY BAYER MODE
-        case DC1394_COLOR_CODING_RAW16:     pix = 0; break; // NEED TO QUERY BAYER MODE
-        default: pix = -1; break;
+    switch (dc1394_color)
+    {
+    case DC1394_COLOR_CODING_MONO8:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
+        break;
+    case DC1394_COLOR_CODING_YUV411:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV411P;
+        break;
+    case DC1394_COLOR_CODING_YUV422:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV420;
+        break;
+    case DC1394_COLOR_CODING_YUV444:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_YUV420;
+        break;
+    case DC1394_COLOR_CODING_RGB8:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
+        break;
+    case DC1394_COLOR_CODING_MONO16:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_GRAY16;
+        break;
+    case DC1394_COLOR_CODING_RGB16:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_RGB16;
+        break;
+    case DC1394_COLOR_CODING_MONO16S:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_SIGNED_GRAY16;
+        break;
+    case DC1394_COLOR_CODING_RGB16S:
+        pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_SIGNED_RGB16;
+        break;
+    case DC1394_COLOR_CODING_RAW8:
+        pix = 0;
+        break; // NEED TO QUERY BAYER MODE
+    case DC1394_COLOR_CODING_RAW16:
+        pix = 0;
+        break; // NEED TO QUERY BAYER MODE
+    default:
+        pix = -1;
+        break;
     }
 
-    if (pix == 0) {
-        switch (filter) {
-            case DC1394_COLOR_FILTER_RGGB:  pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB; break;
-            case DC1394_COLOR_FILTER_GBRG:  pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG; break;
-            case DC1394_COLOR_FILTER_GRBG:  pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG; break;
-            case DC1394_COLOR_FILTER_BGGR:  pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR; break;
-            default: pix = -1; break;
+    if (pix == 0)
+    {
+        switch (filter)
+        {
+        case DC1394_COLOR_FILTER_RGGB:
+            pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB;
+            break;
+        case DC1394_COLOR_FILTER_GBRG:
+            pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG;
+            break;
+        case DC1394_COLOR_FILTER_GRBG:
+            pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG;
+            break;
+        case DC1394_COLOR_FILTER_BGGR:
+            pix = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR;
+            break;
+        default:
+            pix = -1;
+            break;
         }
     }
 
@@ -234,16 +281,19 @@ pixelformat_dc1394_to_bot (dc1394color_coding_t dc1394_color, dc1394color_filter
 }
 
 //----------------------------------------------------------------------------------
-// Called when program shuts down 
+// Called when program shuts down
 //----------------------------------------------------------------------------------
 static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("\nmy_signal_handler()\n");
-    if (state.done) {
+    if (state.done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
-    } else {
+    }
+    else
+    {
         state.done = 1;
     }
 }
@@ -260,7 +310,8 @@ main (int argc, char **argv)
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -269,7 +320,7 @@ main (int argc, char **argv)
     sigaction (SIGINT,  &act, NULL);
 
     config_t config = {0};
-    
+
     // Read in the command line options
     getopt_t *gopt = getopt_create ();
     getopt_add_description (gopt, "PERLS dc1394 Camera Driver: Publishes LCM image_t messages.");
@@ -301,43 +352,50 @@ main (int argc, char **argv)
     getopt_add_int    (gopt,    'Y',    "starty",            "0",          "Starting Y pos. of ROI");
 
 
-    if (!getopt_parse (gopt, argc, argv, 1)) {
+    if (!getopt_parse (gopt, argc, argv, 1))
+    {
         getopt_do_usage (gopt,"");
 
         return EXIT_FAILURE;
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt,"");
 
         return EXIT_SUCCESS;
     }
     //start as daemon if asked
-    if (getopt_get_bool (gopt, "daemon")) {
+    if (getopt_get_bool (gopt, "daemon"))
+    {
         daemon_fork ();
         state.is_daemon = 1;
     }
     else
         state.is_daemon = 0;
 
-    if (getopt_get_bool (gopt, "list")) {
+    if (getopt_get_bool (gopt, "list"))
+    {
         if (perls_dc1394_camera_list () == DC1394_SUCCESS);
-            return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
         return EXIT_FAILURE;
     }
 
-    if (getopt_has_flag (gopt, "query")) {
+    if (getopt_has_flag (gopt, "query"))
+    {
         if (perls_dc1394_camera_query (getopt_get_string (gopt, "query")) != DC1394_SUCCESS)
             return EXIT_SUCCESS;
         return EXIT_FAILURE;
     }
 
-    if (getopt_get_bool (gopt, "clean")) {
+    if (getopt_get_bool (gopt, "clean"))
+    {
         if (perls_dc1394_camera_clean () != DC1394_SUCCESS)
             return EXIT_SUCCESS;
         return EXIT_FAILURE;
     }
 
-    if (getopt_has_flag (gopt, "camid")) {
+    if (getopt_has_flag (gopt, "camid"))
+    {
         printf ("Camera specified, ignoring config file settings...\n");
 
         config.num_cameras = 1;
@@ -346,9 +404,11 @@ main (int argc, char **argv)
 
         strcpy (config.camera_configs[0].image_channel, getopt_get_string (gopt, "channel"));
 
-        if (getopt_has_flag (gopt, "videomode")) {
+        if (getopt_has_flag (gopt, "videomode"))
+        {
             int ret = dc1394_videomode_string_to_int (getopt_get_string (gopt, "videomode"));
-            if (ret == -1) {
+            if (ret == -1)
+            {
                 ERROR ("Video mode [%s] not recognized", getopt_get_string (gopt, "videomode"));
                 free (config.camera_configs);
                 return EXIT_FAILURE;
@@ -357,9 +417,11 @@ main (int argc, char **argv)
             config.camera_configs[0].dc1394_video_mode = ret;
         }
 
-        if (getopt_has_flag (gopt, "colorcode")) {
+        if (getopt_has_flag (gopt, "colorcode"))
+        {
             int ret = dc1394_colorcode_string_to_int (getopt_get_string (gopt, "colorcode"));
-            if (ret == -1) {
+            if (ret == -1)
+            {
                 ERROR ("Color code [%s] not recognized", getopt_get_string (gopt, "colorcode"));
                 free (config.camera_configs);
                 return EXIT_FAILURE;
@@ -368,94 +430,110 @@ main (int argc, char **argv)
             config.camera_configs[0].dc1394_color_coding = ret;
         }
 
-        if (getopt_has_flag (gopt, "framerate")) {
+        if (getopt_has_flag (gopt, "framerate"))
+        {
             config.camera_configs[0].framerate.manual = 1;
             config.camera_configs[0].framerate.value = getopt_get_double (gopt, "framerate");
         }
 
-        if (getopt_has_flag (gopt, "1394b")) {
+        if (getopt_has_flag (gopt, "1394b"))
+        {
             config.camera_configs[0].speed1394b.manual = 1;
             config.camera_configs[0].speed1394b.value = 1;
         }
 
-        if (getopt_has_flag (gopt, "width")) {
+        if (getopt_has_flag (gopt, "width"))
+        {
             config.camera_configs[0].width.manual = 1;
             config.camera_configs[0].width.value = getopt_get_double (gopt, "width");
         }
 
-        if (getopt_has_flag (gopt, "height")) {
+        if (getopt_has_flag (gopt, "height"))
+        {
             config.camera_configs[0].height.manual = 1;
             config.camera_configs[0].height.value = getopt_get_double (gopt, "height");
         }
 
-        if (getopt_has_flag (gopt, "startx")) {
+        if (getopt_has_flag (gopt, "startx"))
+        {
             config.camera_configs[0].startx.manual = 1;
             config.camera_configs[0].startx.value = getopt_get_double (gopt, "startx");
         }
 
-        if (getopt_has_flag (gopt, "starty")) {
+        if (getopt_has_flag (gopt, "starty"))
+        {
             config.camera_configs[0].starty.manual = 1;
             config.camera_configs[0].starty.value = getopt_get_double (gopt, "starty");
         }
 
-        if (getopt_has_flag (gopt, "brightness")) {
+        if (getopt_has_flag (gopt, "brightness"))
+        {
             config.camera_configs[0].brightness.manual = 1;
             config.camera_configs[0].brightness.value = getopt_get_double (gopt, "brightness");
         }
 
-        if (getopt_has_flag (gopt, "exposure")) {
+        if (getopt_has_flag (gopt, "exposure"))
+        {
             config.camera_configs[0].exposure.manual = 1;
             config.camera_configs[0].exposure.value = getopt_get_double (gopt, "exposure");
         }
 
-        if (getopt_has_flag (gopt, "gamma")) {
+        if (getopt_has_flag (gopt, "gamma"))
+        {
             config.camera_configs[0].gamma.manual = 1;
             config.camera_configs[0].gamma.value = getopt_get_double (gopt, "gamma");
         }
 
-        if (getopt_has_flag (gopt, "shutter")) {
+        if (getopt_has_flag (gopt, "shutter"))
+        {
             config.camera_configs[0].shutter.manual = 1;
             config.camera_configs[0].shutter.value = getopt_get_double (gopt, "shutter");
         }
 
-        if (getopt_has_flag (gopt, "gain")) {
+        if (getopt_has_flag (gopt, "gain"))
+        {
             config.camera_configs[0].gain.manual = 1;
             config.camera_configs[0].gain.value = getopt_get_double (gopt, "gain");
         }
 
-        if (getopt_has_flag (gopt, "whitebalance_blue")) {
+        if (getopt_has_flag (gopt, "whitebalance_blue"))
+        {
             config.camera_configs[0].whitebalance_blue.manual = 1;
             config.camera_configs[0].whitebalance_blue.value = getopt_get_double (gopt, "whitebalance_blue");
         }
 
-        if (getopt_has_flag (gopt, "whitebalance_red")) {
+        if (getopt_has_flag (gopt, "whitebalance_red"))
+        {
             config.camera_configs[0].whitebalance_red.manual = 1;
             config.camera_configs[0].whitebalance_red.value = getopt_get_double (gopt, "whitebalance_red");
         }
     }
-    
-    
+
+
     // load in config file option
-    if (config.num_cameras == 0) 
+    if (config.num_cameras == 0)
         perls_dc1394_camera_load_cfg (&config);
 
-    // initialize lcm 
+    // initialize lcm
     state.lcm = lcm_create (NULL);
-    if (!state.lcm) {
+    if (!state.lcm)
+    {
         printf ("ERROR: lcm_create() failed!\n");
         exit (EXIT_FAILURE);
-    }    
+    }
 
     printf ("num cameras = %d\n", config.num_cameras);
     // allocate handles for each camera
     PERLS_dc1394_camera_t **cameras = calloc (config.num_cameras, sizeof(PERLS_dc1394_camera_t*));
 
-    for (int i=0; i < config.num_cameras; ++i) {
+    for (int i=0; i < config.num_cameras; ++i)
+    {
 
         // initialize and clean camera
         cameras[i] = perls_dc1394_camera_init (config.camera_configs[i].cam_id);
 
-        if (cameras[i] == NULL) {
+        if (cameras[i] == NULL)
+        {
             ERROR ("Problem initializing camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -463,17 +541,19 @@ main (int argc, char **argv)
             exit (EXIT_FAILURE);
         }
 
-        
+
         printf ("%s %s - %lx\n", cameras[i]->cam->vendor,cameras[i]->cam->model, cameras[i]->cam->guid);
 
         // set isochronous speed depending on 1394b compatibiliity
         // NOTE: unfortunately, we have to manually control the input here because Pt Grey
         // USB cameras report as 'bmode_capable'.. This may be fixed in future firmware updates
         if (cameras[i]->cam->bmode_capable > 0 && config.camera_configs[i].speed1394b.manual > 0
-                && config.camera_configs[i].speed1394b.value > 0) {
+                && config.camera_configs[i].speed1394b.value > 0)
+        {
             // attempt to set operation mode to 1394b
             status = perls_dc1394_camera_set_operation_mode (cameras[i], DC1394_OPERATION_MODE_1394B);
-            if (status != DC1394_SUCCESS) {
+            if (status != DC1394_SUCCESS)
+            {
                 ERROR ("Problem setting operation mode on camera [%s]", config.camera_configs[i].cam_id);
                 free (config.camera_configs);
                 for (int x=0; x<config.num_cameras; ++x)
@@ -481,9 +561,10 @@ main (int argc, char **argv)
                 exit (EXIT_FAILURE);
             }
 
-            // set iso speed 
+            // set iso speed
             status = perls_dc1394_camera_set_iso_speed (cameras[i], DC1394_ISO_SPEED_800);
-            if (status != DC1394_SUCCESS) {
+            if (status != DC1394_SUCCESS)
+            {
                 ERROR ("Problem setting iso speed on camera [%s]", config.camera_configs[i].cam_id);
                 free (config.camera_configs);
                 for (int x=0; x<config.num_cameras; ++x)
@@ -491,9 +572,11 @@ main (int argc, char **argv)
                 exit (EXIT_FAILURE);
             }
         }
-        else {
+        else
+        {
             status = perls_dc1394_camera_set_operation_mode (cameras[i], DC1394_OPERATION_MODE_LEGACY);
-            if (status != DC1394_SUCCESS) {
+            if (status != DC1394_SUCCESS)
+            {
                 ERROR ("Problem setting operation mode on camera [%s]", config.camera_configs[i].cam_id);
                 free (config.camera_configs);
                 for (int x=0; x<config.num_cameras; ++x)
@@ -501,7 +584,8 @@ main (int argc, char **argv)
                 exit (EXIT_FAILURE);
             }
             status = perls_dc1394_camera_set_iso_speed (cameras[i], DC1394_ISO_SPEED_400);
-            if (status != DC1394_SUCCESS) {
+            if (status != DC1394_SUCCESS)
+            {
                 ERROR ("Problem setting iso speed on camera [%s]", config.camera_configs[i].cam_id);
                 free (config.camera_configs);
                 for (int x=0; x<config.num_cameras; ++x)
@@ -512,7 +596,8 @@ main (int argc, char **argv)
 
         // set video mode
         status = perls_dc1394_camera_set_video_mode (cameras[i], config.camera_configs[i].dc1394_video_mode);
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting video mode on camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -521,7 +606,8 @@ main (int argc, char **argv)
         }
 
         // determine if video mode is FORMAT_7 or not
-        if (dc1394_is_video_mode_scalable (config.camera_configs[i].dc1394_video_mode)) {
+        if (dc1394_is_video_mode_scalable (config.camera_configs[i].dc1394_video_mode))
+        {
             double f;
             int l, t, w, h;
             f = config.camera_configs[i].framerate.manual ? config.camera_configs[i].framerate.value : -1;
@@ -532,7 +618,8 @@ main (int argc, char **argv)
 
             status = perls_dc1394_camera_set_roi (cameras[i], config.camera_configs[i].dc1394_color_coding, f, l, t, w, h);
         }
-        else {
+        else
+        {
             // ALL OTHER FORMATS
 
             // set framerate
@@ -542,7 +629,8 @@ main (int argc, char **argv)
                 status = perls_dc1394_camera_set_frame_rate (cameras[i], -1);
         }
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem configuring camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -554,9 +642,10 @@ main (int argc, char **argv)
         status = perls_dc1394_camera_get_color_coding (cameras[i], &config.camera_configs[i].dc1394_color_coding);
         status += perls_dc1394_camera_get_bayer_pattern (cameras[i], &config.camera_configs[i].dc1394_color_filter);
         config.camera_configs[i].bot_pixelformat = pixelformat_dc1394_to_bot (
-                config.camera_configs[i].dc1394_color_coding, config.camera_configs[i].dc1394_color_filter);
+                    config.camera_configs[i].dc1394_color_coding, config.camera_configs[i].dc1394_color_filter);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem obtaining color code/filter for camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -566,21 +655,23 @@ main (int argc, char **argv)
 
         //setup embedded timestamp
         status = perls_dc1394_camera_embed_timestamp_into_frame (cameras[i]);
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem embedding timestamp into camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
                 if (cameras[x]) perls_dc1394_camera_camera_free (cameras[x]);
             exit (EXIT_FAILURE);
         }
-        
+
 
         // BRIGHTNESS
-        status = perls_dc1394_camera_set_brightness (cameras[i], 
-                config.camera_configs[i].brightness.manual, 
-                config.camera_configs[i].brightness.value);
+        status = perls_dc1394_camera_set_brightness (cameras[i],
+                 config.camera_configs[i].brightness.manual,
+                 config.camera_configs[i].brightness.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting brightness of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -589,11 +680,12 @@ main (int argc, char **argv)
         }
 
         // EXPOSURE
-        status = perls_dc1394_camera_set_exposure (cameras[i], 
-                config.camera_configs[i].exposure.manual, 
-                config.camera_configs[i].exposure.value);
+        status = perls_dc1394_camera_set_exposure (cameras[i],
+                 config.camera_configs[i].exposure.manual,
+                 config.camera_configs[i].exposure.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting exposure of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -602,11 +694,12 @@ main (int argc, char **argv)
         }
 
         // GAMMA
-        status = perls_dc1394_camera_set_gamma (cameras[i], 
-                config.camera_configs[i].gamma.manual, 
-                config.camera_configs[i].gamma.value);
+        status = perls_dc1394_camera_set_gamma (cameras[i],
+                                                config.camera_configs[i].gamma.manual,
+                                                config.camera_configs[i].gamma.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting gamma of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -615,11 +708,12 @@ main (int argc, char **argv)
         }
 
         // SHUTTER
-        status = perls_dc1394_camera_set_shutter (cameras[i], 
-                config.camera_configs[i].shutter.manual, 
-                config.camera_configs[i].shutter.value);
+        status = perls_dc1394_camera_set_shutter (cameras[i],
+                 config.camera_configs[i].shutter.manual,
+                 config.camera_configs[i].shutter.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting shutter of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -628,25 +722,27 @@ main (int argc, char **argv)
         }
 
         // GAIN
-        status = perls_dc1394_camera_set_gain (cameras[i], 
-                config.camera_configs[i].gain.manual, 
-                config.camera_configs[i].gain.value);
+        status = perls_dc1394_camera_set_gain (cameras[i],
+                                               config.camera_configs[i].gain.manual,
+                                               config.camera_configs[i].gain.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting gain of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
                 if (cameras[x]) perls_dc1394_camera_camera_free (cameras[x]);
             exit (EXIT_FAILURE);
         }
-        
+
 
         // WHITEBALANCE
-        status = perls_dc1394_camera_set_whitebalance (cameras[i], 
-                config.camera_configs[i].whitebalance_blue.manual && config.camera_configs[i].whitebalance_red.manual,
-                config.camera_configs[i].whitebalance_blue.value, config.camera_configs[i].whitebalance_red.value);
+        status = perls_dc1394_camera_set_whitebalance (cameras[i],
+                 config.camera_configs[i].whitebalance_blue.manual && config.camera_configs[i].whitebalance_red.manual,
+                 config.camera_configs[i].whitebalance_blue.value, config.camera_configs[i].whitebalance_red.value);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem setting whitebalance of camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -655,11 +751,13 @@ main (int argc, char **argv)
         }
     }
 
-    for (int i=0; i < config.num_cameras; ++i) {
+    for (int i=0; i < config.num_cameras; ++i)
+    {
         // cameras finally set up, start video
         status = perls_dc1394_camera_start_video_transmission (cameras[i]);
 
-        if (status != DC1394_SUCCESS) {
+        if (status != DC1394_SUCCESS)
+        {
             ERROR ("Problem starting video transmission on camera [%s]", config.camera_configs[i].cam_id);
             free (config.camera_configs);
             for (int x=0; x<config.num_cameras; ++x)
@@ -667,7 +765,7 @@ main (int argc, char **argv)
             exit (EXIT_FAILURE);
         }
     }
-    
+
 
 
     dc1394video_frame_t **frames = calloc (config.num_cameras, sizeof(dc1394video_frame_t*));
@@ -675,45 +773,52 @@ main (int argc, char **argv)
     int count = 0;
 
     //unused meta data filled
-    for (int i=0; i < config.num_cameras; ++i) {
+    for (int i=0; i < config.num_cameras; ++i)
+    {
         img[i].nmetadata = 0;
         img[i].metadata = NULL;
     }
-    
+
     // setup timestamp sync to estimate system time of camera framegrab
     state.tss = calloc (config.num_cameras, sizeof (timestamp_sync_state_t*));
     for (int i=0; i < config.num_cameras; ++i)
         state.tss[i] = timestamp_sync_init (1000000, 128000000, 1);
-    
+
     // main capture loop
     int64_t utime_prev = 0;
     printf ("starting capture loop...\n");
-    while (!state.done) {         
-        for (int i=0; i < config.num_cameras; ++i) {
-            if (dc1394_capture_dequeue (cameras[i]->cam, DC1394_CAPTURE_POLICY_WAIT, &frames[i])!=DC1394_SUCCESS) {
+    while (!state.done)
+    {
+        for (int i=0; i < config.num_cameras; ++i)
+        {
+            if (dc1394_capture_dequeue (cameras[i]->cam, DC1394_CAPTURE_POLICY_WAIT, &frames[i])!=DC1394_SUCCESS)
+            {
                 printf ("DC1394 dequeue failed\n");
                 return FALSE;
             }
 
-            while (frames[i]->frames_behind > 0) {
+            while (frames[i]->frames_behind > 0)
+            {
                 dc1394_capture_enqueue (cameras[i]->cam, frames[i]);
-                if (dc1394_capture_dequeue (cameras[i]->cam, DC1394_CAPTURE_POLICY_WAIT, &frames[i])!=DC1394_SUCCESS) {
+                if (dc1394_capture_dequeue (cameras[i]->cam, DC1394_CAPTURE_POLICY_WAIT, &frames[i])!=DC1394_SUCCESS)
+                {
                     printf ("DC1394 dequeue failed\n");
                     return FALSE;
                 }
             }
         }
-        
+
         // calculate timestamp
         uint64_t timestamp;
         int64_t utime;
-        for (int i=0; i < config.num_cameras; ++i) {
+        for (int i=0; i < config.num_cameras; ++i)
+        {
             status = perls_dc1394_camera_parse_embedded_timestamp (cameras[i], frames[i]->image, &timestamp);
             if (status != DC1394_SUCCESS)
                 utime = timestamp_sync (state.tss[i], timestamp, timestamp_now());
             else
                 utime = timestamp;
-            
+
             // Pack structure and publish bot_core_image_t struct
             img[i].utime = utime;
             img[i].width = frames[i]->size[0];
@@ -723,10 +828,10 @@ main (int argc, char **argv)
             img[i].data = frames[i]->image;
             img[i].pixelformat = config.camera_configs[i].bot_pixelformat;
         }
-            
+
         // Publish over LCM
         for (int i=0; i < config.num_cameras; ++i)
-            bot_core_image_t_publish (state.lcm, config.camera_configs[i].image_channel, &img[i]);      
+            bot_core_image_t_publish (state.lcm, config.camera_configs[i].image_channel, &img[i]);
 
         printf ("FRAME #%d: ts=%"PRId64" frame_rate=%0.2lf Hz width=%d, height=%d, size=%d \r",
                 count, img[0].utime,
@@ -734,13 +839,14 @@ main (int argc, char **argv)
                 img[0].width,img[0].height,img[0].size);
 
         utime_prev = utime;
-        
+
         for (int i=0; i<config.num_cameras; ++i)
             dc1394_capture_enqueue (cameras[i]->cam, frames[i]);
         count++;
     }
 
-    for (int i=0; i < config.num_cameras; ++i) {
+    for (int i=0; i < config.num_cameras; ++i)
+    {
         if (state.tss[i])
             timestamp_sync_free (state.tss[i]);
 
@@ -752,6 +858,6 @@ main (int argc, char **argv)
     getopt_destroy (gopt);
 
     printf ("\nDone.\n");
-    
+
     return EXIT_SUCCESS;
 }

@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct seabotix_command_t
+{
+    int64_t utime;
+	
+	const int8_t DEPTH_MODE = 0x01;
+    const int8_t ALTITUDE_MODE = 0x02;
+    const int8_t HEADING_MODE = 0x04;
+	
+	int8_t mode;
+	
+	double heading;
+	double depth;
+	double altitude;	
+}

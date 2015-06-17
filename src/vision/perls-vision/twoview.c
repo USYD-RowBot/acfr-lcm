@@ -39,7 +39,8 @@ vis_twoview_vlink (int64_t utime_i, int64_t utime_j, int32_t type, int32_t errms
     vlink->type = type;
     vlink->msg = errmsg;
 
-    if (type > 0) { // no error
+    if (type > 0)   // no error
+    {
         // publish z and R
         gsl_vector_view z_view = gsl_vector_view_array (vlink->z, dof);
         gsl_matrix_view R_view = gsl_matrix_view_array (vlink->R, dof, dof);
@@ -57,23 +58,26 @@ vis_twoview_vlink (int64_t utime_i, int64_t utime_j, int32_t type, int32_t errms
         vlink->isel_i = malloc (n_in*sizeof(int32_t));
         vlink->isel_j = malloc (n_in*sizeof(int32_t));
 
-        for (size_t ii=0; ii<n_in; ii++) {
-            if (type == PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR) {
+        for (size_t ii=0; ii<n_in; ii++)
+        {
+            if (type == PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR)
+            {
                 vlink->isel_i[ii] = gslu_index_get (seli, gslu_index_get (sel_f, ii));
                 vlink->isel_j[ii] = gslu_index_get (selj, gslu_index_get (sel_f, ii));
             }
-            else {
+            else
+            {
                 vlink->isel_i[ii] = gslu_index_get (seli, gslu_index_get (sel_h, ii));
                 vlink->isel_j[ii] = gslu_index_get (selj, gslu_index_get (sel_h, ii));
             }
         }
     }
-    
+
     return vlink;
 }
 
 se_publish_link_t *
-vis_twoview_se_vlink (int64_t utime_i, int64_t utime_j, 
+vis_twoview_se_vlink (int64_t utime_i, int64_t utime_j,
                       int32_t type, int32_t errmsg, int64_t link_id,
                       gsl_vector *z_gsl, gsl_matrix *R_gsl)
 {
@@ -92,7 +96,8 @@ vis_twoview_se_vlink (int64_t utime_i, int64_t utime_j,
     snprintf(se_vlink->comment, VLINK_MSG_LEN, "Camera Link");
     se_vlink->link_id = link_id;
 
-    if (type > 0) { // no error
+    if (type > 0)   // no error
+    {
         se_vlink->accept = 1;      // boolean
         se_vlink->accept_code = SE_PUBLISH_LINK_T_LINK_ACCEPTED;
 
@@ -107,16 +112,17 @@ vis_twoview_se_vlink (int64_t utime_i, int64_t utime_j,
         gsl_vector_memcpy (&z_view.vector, z_gsl);
         gsl_matrix_memcpy (&R_view.matrix, R_gsl);
     }
-    else { // error occured
+    else   // error occured
+    {
         se_vlink->accept = 0;      // boolean
 
         if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_PCCS ||
-            errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
+                errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
             se_vlink->accept_code = SE_PUBLISH_LINK_T_LINK_MIN_CORR;
-        else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_E || 
+        else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_E ||
                  errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_H)
             se_vlink->accept_code = SE_PUBLISH_LINK_T_LINK_MIN_CORR;
-        else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_E_ERROR || 
+        else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_E_ERROR ||
                  errmsg == PERLLCM_VAN_VLINK_T_MSG_SBA_H_ERROR)
             se_vlink->accept_code = SE_PUBLISH_LINK_T_LINK_MIN_INLIERS;
         else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_NO_MODEL_FIT)
@@ -124,12 +130,12 @@ vis_twoview_se_vlink (int64_t utime_i, int64_t utime_j,
         else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MDIST_NAV)
             se_vlink->accept_code = SE_PUBLISH_LINK_T_LINK_MDIST_NAV;
     }
-    
+
     return se_vlink;
 }
 
 perllcm_isam_vlink_t *
-vis_twoview_isam_vlink (int64_t utime_i, int64_t utime_j, 
+vis_twoview_isam_vlink (int64_t utime_i, int64_t utime_j,
                         perllcm_van_plink_t *plink,
                         int32_t type, int32_t errmsg, int64_t link_id,
                         gsl_vector *z_gsl, gsl_matrix *R_gsl)
@@ -147,7 +153,8 @@ vis_twoview_isam_vlink (int64_t utime_i, int64_t utime_j,
     memcpy (vlink->x_vs1, plink->x_vs1, sizeof(vlink->x_vs1));
     memcpy (vlink->x_vs2, plink->x_vs2, sizeof(vlink->x_vs2));
 
-    if (type > 0) { // no error
+    if (type > 0)   // no error
+    {
         vlink->accept = 1;      // boolean
         vlink->accept_code = PERLLCM_ISAM_VLINK_T_CODE_ACCEPTED;
 
@@ -162,11 +169,12 @@ vis_twoview_isam_vlink (int64_t utime_i, int64_t utime_j,
         gsl_vector_memcpy (&z_view.vector, z_gsl);
         gsl_matrix_memcpy (&R_view.matrix, R_gsl);
     }
-    else { // error occured
+    else   // error occured
+    {
         vlink->accept = 0;      // boolean
 
         if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_PCCS ||
-            errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
+                errmsg == PERLLCM_VAN_VLINK_T_MSG_TRI_CONST)
             vlink->accept_code = PERLLCM_ISAM_VLINK_T_CODE_MIN_CORR;
         else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_E ||
                  errmsg == PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_H)
@@ -179,12 +187,12 @@ vis_twoview_isam_vlink (int64_t utime_i, int64_t utime_j,
         else if (errmsg == PERLLCM_VAN_VLINK_T_MSG_MDIST_NAV)
             vlink->accept_code = PERLLCM_ISAM_VLINK_T_CODE_MDIST_NAV;
     }
-    
+
     return vlink;
 }
 
 gsl_vector *
-vis_tv_use_navprior (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matrix *uv2, 
+vis_tv_use_navprior (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matrix *uv2,
                      const gsl_vector *x21, const gsl_matrix *p21, const gsl_vector *x21_prior,
                      int nsamples, bool verbose)
 {
@@ -240,12 +248,14 @@ vis_tv_use_navprior (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matri
     gslu_matrix_inv (&invCov.matrix, p21);
     GSLU_INDEX_VIEW (c, 3, {3, 4, 5});
     double dist = gslu_vector_mahal_circ_dist (&X.vector, x21_prior, &invCov.matrix, &c.vector);
-    if (dist < mdist) {
+    if (dist < mdist)
+    {
         mdist = dist;
         gsl_vector_memcpy (min_x21, &X.vector);
     }
 
-    for (size_t i=0; i<nsamples; i++) {
+    for (size_t i=0; i<nsamples; i++)
+    {
         gsl_vector_set (&t.vector, 0, gsl_ran_gaussian (r, 1)); // using t for r.v. storage
         gsl_vector_set (&t.vector, 1, gsl_ran_gaussian (r, 1)); // using t for r.v. storage
         gsl_vector_set (&t.vector, 2, gsl_ran_gaussian (r, 1)); // using t for r.v. storage
@@ -263,7 +273,8 @@ vis_tv_use_navprior (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matri
         ssc_pose_set_Rt_gsl (&X.vector, &R.matrix, &t.vector);
 
         dist = gslu_vector_mahal_circ_dist (&X.vector, x21_prior, &invCov.matrix, &c.vector);
-        if (dist < mdist) {
+        if (dist < mdist)
+        {
             mdist = dist;
             gsl_vector_memcpy (min_x21, &X.vector);
         }
@@ -276,7 +287,7 @@ vis_tv_use_navprior (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matri
 
 }
 
-int32_t 
+int32_t
 vis_tv_mdist_check_error (const gsl_vector *nav_p21, const gsl_matrix *nav_cov21,
                           const gsl_vector *cam_p21, const gsl_matrix *cam_cov21,
                           const double thresh, double *min_mdist)
@@ -299,7 +310,8 @@ vis_tv_mdist_check_error (const gsl_vector *nav_p21, const gsl_matrix *nav_cov21
     GSLU_INDEX_VIEW (c, 5, {0, 1, 2, 3, 4});
     double mdist = gslu_vector_mahal_circ_dist (&nav_p21_5dof.vector, cam_p21, &nav_cov_inv.matrix, &c.vector);
 
-    if ( mdist > thresh) {
+    if ( mdist > thresh)
+    {
         printf ("[twoview]    ERROR: MAHAL. dist. (%g) > thresh (%g)\n", mdist, thresh);
         errmsg = PERLLCM_VAN_VLINK_T_MSG_MDIST_NAV;
     }
@@ -314,16 +326,20 @@ vis_tv_minpt_check_error (size_t n, size_t minpt, size_t proc_name)
 {
     int32_t errmsg = PERLLCM_VAN_VLINK_T_MSG_NO_ERROR;
 
-    if (n < minpt) {
-        if (proc_name == VIS_TV_PROC_PCCS) {
+    if (n < minpt)
+    {
+        if (proc_name == VIS_TV_PROC_PCCS)
+        {
             printf ("[twoview]    ERROR: NPTS (pccs): npts (%d) < required (%d)\n", (int) n, (int) minpt);
             errmsg = PERLLCM_VAN_VLINK_T_MSG_MIN_PCCS;
         }
-        else if (proc_name == VIS_TV_PROC_FIN) {
+        else if (proc_name == VIS_TV_PROC_FIN)
+        {
             printf ("[twoview]    ERROR: NPTS (f_inliers): npts (%d) < required (%d)\n", (int) n, (int) minpt);
             errmsg = PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_E;
         }
-        else if (proc_name == VIS_TV_PROC_HIN) {
+        else if (proc_name == VIS_TV_PROC_HIN)
+        {
             printf ("[twoview]    ERROR: NPTS (h_inliers): npts (%d) < required (%d)\n", (int) n, (int) minpt);
             errmsg = PERLLCM_VAN_VLINK_T_MSG_MIN_INLIERS_H;
         }
@@ -334,7 +350,7 @@ vis_tv_minpt_check_error (size_t n, size_t minpt, size_t proc_name)
     return errmsg;
 }
 // print results
-//--------------------------------------------------------------------------------- 
+//---------------------------------------------------------------------------------
 void
 vis_tv_print_sba (const gsl_vector *rel_pose21, const gsl_matrix *rel_pose_cov21, int64_t dt)
 {
@@ -366,13 +382,17 @@ vis_tv_print_motion (const gsl_vector *nav21, const gsl_matrix *navS21,
     dm_trans2dm_pose_cov (nav21, navS21, &nav_p21_5dof.vector, &nav_cov21_5dof.matrix, NULL);
 
     double nav_a, nav_e, nav_r, nav_p, nav_h;
-    nav_a = gsl_vector_get (&nav_p21_5dof.vector,0); nav_e = gsl_vector_get (&nav_p21_5dof.vector,1);
-    nav_r = gsl_vector_get (&nav_p21_5dof.vector,2); nav_p = gsl_vector_get (&nav_p21_5dof.vector,3); 
+    nav_a = gsl_vector_get (&nav_p21_5dof.vector,0);
+    nav_e = gsl_vector_get (&nav_p21_5dof.vector,1);
+    nav_r = gsl_vector_get (&nav_p21_5dof.vector,2);
+    nav_p = gsl_vector_get (&nav_p21_5dof.vector,3);
     nav_h = gsl_vector_get (&nav_p21_5dof.vector,4);
 
     double navS_a, navS_e, navS_r, navS_p, navS_h;
-    navS_a = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,0,0)); navS_e = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,1,1));
-    navS_r = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,2,2)); navS_p = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,3,3)); 
+    navS_a = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,0,0));
+    navS_e = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,1,1));
+    navS_r = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,2,2));
+    navS_p = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,3,3));
     navS_h = sqrt (gsl_matrix_get (&nav_cov21_5dof.matrix,4,4));
 
     printf ("\n\t     [deg]\t%7s\t%7s\t%7s\t%7s\t%7s\n","az","el","r","p","h");
@@ -380,29 +400,37 @@ vis_tv_print_motion (const gsl_vector *nav21, const gsl_matrix *navS21,
     printf ("\t     nav\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\n", nav_a*RTOD, nav_e*RTOD, nav_r*RTOD, nav_p*RTOD, nav_h*RTOD);
     printf ("\t     +/-\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\n\n", navS_a*RTOD, navS_e*RTOD, navS_r*RTOD, navS_p*RTOD, navS_h*RTOD);
 
-    if (horn21) {
+    if (horn21)
+    {
         GSLU_VECTOR_VIEW (b21, 3);
         gsl_vector_const_view t21 = gsl_vector_const_subvector (horn21, 0, 3);
         gsl_vector_const_view rph21 = gsl_vector_const_subvector (horn21, 3, 3);
         dm_trans2dm_gsl (&t21.vector, &b21.vector, NULL);
 
         double horn_a, horn_e, horn_r, horn_p, horn_h;
-        horn_a = gsl_vector_get (&b21.vector,0); horn_e = gsl_vector_get (&b21.vector,1);
-        horn_r = gsl_vector_get (&rph21.vector,0); horn_p = gsl_vector_get (&rph21.vector,1); 
+        horn_a = gsl_vector_get (&b21.vector,0);
+        horn_e = gsl_vector_get (&b21.vector,1);
+        horn_r = gsl_vector_get (&rph21.vector,0);
+        horn_p = gsl_vector_get (&rph21.vector,1);
         horn_h = gsl_vector_get (&rph21.vector,2);
         printf ("\t     horn\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\n\n", horn_a*RTOD, horn_e*RTOD, horn_r*RTOD, horn_p*RTOD, horn_h*RTOD);
 
     }
 
-    if (cam21 && camS21) {
+    if (cam21 && camS21)
+    {
         double cam_a, cam_e, cam_r, cam_p, cam_h;
-        cam_a = gsl_vector_get (cam21,0); cam_e = gsl_vector_get (cam21,1);
-        cam_r = gsl_vector_get (cam21,2); cam_p = gsl_vector_get (cam21,3); 
+        cam_a = gsl_vector_get (cam21,0);
+        cam_e = gsl_vector_get (cam21,1);
+        cam_r = gsl_vector_get (cam21,2);
+        cam_p = gsl_vector_get (cam21,3);
         cam_h = gsl_vector_get (cam21,4);
 
         double camS_a, camS_e, camS_r, camS_p, camS_h;
-        camS_a = sqrt (gsl_matrix_get (camS21,0,0)); camS_e = sqrt (gsl_matrix_get (camS21,1,1));
-        camS_r = sqrt (gsl_matrix_get (camS21,2,2)); camS_p = sqrt (gsl_matrix_get (camS21,3,3)); 
+        camS_a = sqrt (gsl_matrix_get (camS21,0,0));
+        camS_e = sqrt (gsl_matrix_get (camS21,1,1));
+        camS_r = sqrt (gsl_matrix_get (camS21,2,2));
+        camS_p = sqrt (gsl_matrix_get (camS21,3,3));
         camS_h = sqrt (gsl_matrix_get (camS21,4,4));
 
         printf ("\t     sba\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\t%+7.2f\n", cam_a*RTOD, cam_e*RTOD, cam_r*RTOD, cam_p*RTOD, cam_h*RTOD);
@@ -412,10 +440,10 @@ vis_tv_print_motion (const gsl_vector *nav21, const gsl_matrix *navS21,
 
 
 // prepare plot_debug_t
-//--------------------------------------------------------------------------------- 
+//---------------------------------------------------------------------------------
 perllcm_van_plot_debug_t *
-vis_tv_init_plot_debug (perllcm_van_options_t van_opt, 
-                        const perllcm_van_feature_collection_t *fci, const perllcm_van_feature_collection_t *fcj, 
+vis_tv_init_plot_debug (perllcm_van_options_t van_opt,
+                        const perllcm_van_feature_collection_t *fci, const perllcm_van_feature_collection_t *fcj,
                         const perllcm_van_calib_t *calib)
 {
 
@@ -426,24 +454,27 @@ vis_tv_init_plot_debug (perllcm_van_options_t van_opt,
 
 
     if (!van_opt.vis_plot_put_corr &&
-        !van_opt.vis_plot_in_and_out &&
-        !van_opt.vis_plot_inliers &&
-        !van_opt.vis_plot_relpose &&
-        !van_opt.vis_plot_3pts &&
-        !van_opt.vis_plot_relpose_3pts &&
-        !van_opt.vis_plot_search_ellipses &&
-        !van_opt.vis_plot_summary &&
-        !van_opt.manual_corr) {// all off
+            !van_opt.vis_plot_in_and_out &&
+            !van_opt.vis_plot_inliers &&
+            !van_opt.vis_plot_relpose &&
+            !van_opt.vis_plot_3pts &&
+            !van_opt.vis_plot_relpose_3pts &&
+            !van_opt.vis_plot_search_ellipses &&
+            !van_opt.vis_plot_summary &&
+            !van_opt.manual_corr)  // all off
+    {
 
         return pd;
     }
-    else {
+    else
+    {
         pd = calloc (1, sizeof (*pd));
         pd->utime_i = utime_i;
         pd->utime_j = utime_j;
 
         // image width and height are needed for sampling
-        if (van_opt.vis_plot_search_ellipses) {
+        if (van_opt.vis_plot_search_ellipses)
+        {
             pd->plt_ellipses = 1;
             pd->img_w = calib->width;
             pd->img_h = calib->height;
@@ -451,12 +482,13 @@ vis_tv_init_plot_debug (perllcm_van_options_t van_opt,
 
         // inliers are needed
         if (van_opt.vis_plot_put_corr || van_opt.vis_plot_inliers || van_opt.vis_plot_in_and_out
-            || van_opt.vis_plot_summary || van_opt.manual_corr) {
+                || van_opt.vis_plot_summary || van_opt.manual_corr)
+        {
             pd->n_feat_types = fci->ntypes;
             pd->npts_each_type = malloc (pd->n_feat_types * sizeof (int32_t));
         }
 
-        return pd;    
+        return pd;
     }
 }
 
@@ -479,13 +511,16 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
                           || van_opt.manual_corr;
 
     // pccs
-    // -------------------------------------- 
-    if (need_inliers) { // seli and selj are needed
-        if (selic && seljc && selic->size == seljc->size) {
+    // --------------------------------------
+    if (need_inliers)   // seli and selj are needed
+    {
+        if (selic && seljc && selic->size == seljc->size)
+        {
             pd->n_in_pccs = selic->size;
             pd->isel_pccs_i = malloc (selic->size * sizeof (int32_t));
             pd->isel_pccs_j = malloc (seljc->size * sizeof (int32_t));
-            for (size_t ii=0; ii<selic->size; ii++) {
+            for (size_t ii=0; ii<selic->size; ii++)
+            {
                 pd->isel_pccs_i[ii] = gslu_index_get (selic, ii);
                 pd->isel_pccs_j[ii] = gslu_index_get (seljc, ii);
             }
@@ -493,13 +528,16 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
     }
 
     // inliers & outliers OR inliers only
-    // -------------------------------------- 
-    if (van_opt.vis_plot_in_and_out || van_opt.vis_plot_inliers || van_opt.vis_plot_summary || van_opt.manual_corr) {
-        if (model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F) {
-            if (selic && seljc && selic->size == seljc->size && sel_f) {
+    // --------------------------------------
+    if (van_opt.vis_plot_in_and_out || van_opt.vis_plot_inliers || van_opt.vis_plot_summary || van_opt.manual_corr)
+    {
+        if (model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F)
+        {
+            if (selic && seljc && selic->size == seljc->size && sel_f)
+            {
                 pd->n_in = sel_f->size;
                 pd->isel = malloc (sel_f->size * sizeof (int32_t));
-                
+
                 for (size_t ii=0; ii<sel_f->size; ii++)
                     pd->isel[ii] = gslu_index_get (sel_f, ii);
 
@@ -511,11 +549,13 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
 
             }
         }
-        else {//(model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_H) {
-            if (selic && seljc && selic->size == seljc->size && sel_h) {
+        else  //(model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_H) {
+        {
+            if (selic && seljc && selic->size == seljc->size && sel_h)
+            {
                 pd->n_in = sel_h->size;
                 pd->isel = malloc (sel_h->size * sizeof (int32_t));
-                
+
                 for (size_t ii=0; ii<sel_h->size; ii++)
                     pd->isel[ii] = gslu_index_get (sel_h, ii);
 
@@ -537,8 +577,10 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
     dm_trans2dm_gsl (&t21.vector, &b21.vector, NULL);
 
     // summary motion
-    if (van_opt.vis_plot_summary && type > 0) {
-        if (model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F) {
+    if (van_opt.vis_plot_summary && type > 0)
+    {
+        if (model_gic == PERLLCM_VAN_PLOT_DEBUG_T_GIC_F)
+        {
             double mag = gsl_vector_get (&b21.vector, 2);
             GSLU_VECTOR_VIEW (z_6dof, 6);
             gsl_vector_view z_6dof_xyz = gsl_vector_subvector (&z_6dof.vector, 0, 3);
@@ -552,15 +594,17 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
 
             // uv2' F21 uv1 = 0
             gsl_matrix_view F21 = gsl_matrix_view_array (pd->model, 3, 3);
-            vis_epi_F_from_KX (&F21.matrix, K_or_H, &z_6dof.vector); 
+            vis_epi_F_from_KX (&F21.matrix, K_or_H, &z_6dof.vector);
         }
-        else {  // homograpy
+        else    // homograpy
+        {
             gsl_matrix_view H = gsl_matrix_view_array (pd->model, 3, 3);
             gsl_matrix_memcpy (&H.matrix, K_or_H);
         }
     }
 
-    if (van_opt.vis_plot_relpose && type > 0) {
+    if (van_opt.vis_plot_relpose && type > 0)
+    {
         pd->dof = 5;
         gsl_vector_view x21_view = gsl_vector_view_array (pd->x21, pd->dof);
         gsl_vector_memcpy (&x21_view.vector, z_gsl);
@@ -572,19 +616,22 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
         gsl_vector_memcpy (&nav21_view.vector, &p21_view.vector);
     }
 
-    if (van_opt.vis_plot_3pts && type > 0 && X1) {
+    if (van_opt.vis_plot_3pts && type > 0 && X1)
+    {
         pd->npts3d = X1->size2; // 3xN matrix
         pd->x = malloc (pd->npts3d * sizeof (float));
         pd->y = malloc (pd->npts3d * sizeof (float));
         pd->z = malloc (pd->npts3d * sizeof (float));
-        for (size_t i=0; i<pd->npts3d; i++) {
+        for (size_t i=0; i<pd->npts3d; i++)
+        {
             pd->x[i] = (float) gsl_matrix_get (X1, 0, i);
             pd->y[i] = (float) gsl_matrix_get (X1, 1, i);
             pd->z[i] = (float) gsl_matrix_get (X1, 2, i);
         }
     }
 
-    if (van_opt.vis_plot_relpose_3pts && type > 0 && X1) {
+    if (van_opt.vis_plot_relpose_3pts && type > 0 && X1)
+    {
         pd->dof = 5;
         gsl_vector_view x21_view = gsl_vector_view_array (pd->x21, pd->dof);
         gsl_vector_memcpy (&x21_view.vector, z_gsl);
@@ -594,12 +641,13 @@ vis_tv_prepare_plot_debug (perllcm_van_plot_debug_t *pd, perllcm_van_options_t v
         pd->x = malloc (pd->npts3d * sizeof (float));
         pd->y = malloc (pd->npts3d * sizeof (float));
         pd->z = malloc (pd->npts3d * sizeof (float));
-        for (size_t i=0; i<pd->npts3d; i++) {
+        for (size_t i=0; i<pd->npts3d; i++)
+        {
             pd->x[i] = (float) gsl_matrix_get (X1, 0, i);
             pd->y[i] = (float) gsl_matrix_get (X1, 1, i);
             pd->z[i] = (float) gsl_matrix_get (X1, 2, i);
         }
-    
+
         // navigation prior
         gsl_vector_view nav21_view = gsl_vector_view_array (pd->nav21, 6);
         gsl_vector_view p21_view = gsl_vector_view_array (p21.mu, 6);

@@ -48,14 +48,16 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
     gopt->exename = strdup (argv[0]);
 
     // take the input stream and chop it up into tokens
-    for (int i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++)
+    {
         char *arg = strdup (argv[i]);
         char *eq = strstr (arg, "=");
 
         // no equal sign? Push the whole thing.
         if (eq == NULL)
             g_ptr_array_add (toks, strdup (arg));
-        else {
+        else
+        {
             // there was an equal sign. Push the part
             // before and after the equal sign
             char *val = &eq[1];
@@ -64,7 +66,8 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
 
             // if the part after the equal sign is
             // enclosed by quotation marks, strip them.
-            if (val[0]=='\"') {
+            if (val[0]=='\"')
+            {
                 int last = strlen (val) - 1;
                 if (val[last]=='\"')
                     val[last] = 0;
@@ -77,32 +80,39 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
 
     // now loop over the elements and evaluate the arguments
     unsigned int i = 0;
-    while (i < toks->len) {
+    while (i < toks->len)
+    {
 
         char *tok = g_ptr_array_index (toks, i);
 
-        if (!strncmp(tok,"--", 2)) {
+        if (!strncmp(tok,"--", 2))
+        {
             char *optname = &tok[2];
             getopt_option_t *goo = g_hash_table_lookup (gopt->lopts, optname);
-            if (goo == NULL) {
+            if (goo == NULL)
+            {
                 okay = 0;
-                if (showErrors) 
+                if (showErrors)
                     printf ("Unknown option --%s\n", optname);
                 i++;
                 continue;
             }
 
-            if (goo->type == GOO_BOOL_TYPE) {
-                if ((i+1) < toks->len) {
+            if (goo->type == GOO_BOOL_TYPE)
+            {
+                if ((i+1) < toks->len)
+                {
                     char *val = g_ptr_array_index (toks, i+1);
-                    
-                    if (0==strcmp (val, "true")) {
+
+                    if (0==strcmp (val, "true"))
+                    {
                         i+=2;
                         goo->svalue = "true";
                         goo->found = 1;
                         continue;
                     }
-                    if (0==strcmp (val,"false")) {
+                    if (0==strcmp (val,"false"))
+                    {
                         i+=2;
                         goo->svalue = "false";
                         goo->found = 1;
@@ -116,11 +126,13 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
                 continue;
             }
 
-            if (goo->type == GOO_STRING_TYPE) {
-                if ((i+1) < toks->len) {
+            if (goo->type == GOO_STRING_TYPE)
+            {
+                if ((i+1) < toks->len)
+                {
                     char *val = g_ptr_array_index (toks, i+1);
                     i+=2;
-                    
+
                     goo->svalue = strdup (val);
                     goo->found = 1;
                     continue;
@@ -132,21 +144,27 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
             }
         }
 
-        if (0==strncmp (tok,"-",1) && strncmp (tok,"--", 2)) {
+        if (0==strncmp (tok,"-",1) && strncmp (tok,"--", 2))
+        {
             int len = strlen (tok);
             int pos;
-            for (pos = 1; pos < len; pos++) {
+            for (pos = 1; pos < len; pos++)
+            {
                 char sopt[2];
                 sopt[0] = tok[pos];
                 sopt[1] = 0;
                 getopt_option_t *goo = g_hash_table_lookup (gopt->sopts, sopt);
 
-                if (goo==NULL) {
+                if (goo==NULL)
+                {
                     // is the argument a numerical literal that happens to be negative?
-                    if (pos==1 && isdigit(tok[pos])) {
+                    if (pos==1 && isdigit(tok[pos]))
+                    {
                         g_ptr_array_add (gopt->extraargs, tok);
                         break;
-                    } else {
+                    }
+                    else
+                    {
                         okay = 0;
                         if (showErrors)
                             printf ("Unknown option -%c\n", tok[pos]);
@@ -155,15 +173,18 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
                     }
                 }
 
-                if (goo->type == GOO_BOOL_TYPE) {
+                if (goo->type == GOO_BOOL_TYPE)
+                {
                     goo->svalue = "true";
                     goo->found = 1;
                     continue;
                 }
 
 
-                if (goo->type == GOO_STRING_TYPE) {
-                    if ((i+1) < toks->len) {
+                if (goo->type == GOO_STRING_TYPE)
+                {
+                    if ((i+1) < toks->len)
+                    {
                         char *val = g_ptr_array_index (toks, i+1);
                         if (val[0]=='-')
                         {
@@ -172,17 +193,17 @@ getopt_parse (getopt_t *gopt, int argc, char *argv[], int showErrors)
                                 printf ("Ran out of arguments for option block %s\n", tok);
                         }
                         i++;
-                        
+
                         goo->svalue=strdup (val);
                         goo->found = 1;
                         continue;
                     }
-                    
+
                     okay = 0;
                     if (showErrors)
                         printf ("Option -%c requires a string argument.\n", tok[pos]);
                 }
-            } 
+            }
             i++;
             continue;
         }
@@ -232,7 +253,7 @@ getopt_add_help (getopt_t *gopt, const char *help)
 }
 
 void
-getopt_add_bool (getopt_t *gopt, char sopt, const char *lname, int def, const char *help) 
+getopt_add_bool (getopt_t *gopt, char sopt, const char *lname, int def, const char *help)
 {
     char sname[2];
     sname[0] = sopt;
@@ -244,7 +265,7 @@ getopt_add_bool (getopt_t *gopt, char sopt, const char *lname, int def, const ch
     goo->svalue = strdup (def ? "true" : "false");
     goo->type = GOO_BOOL_TYPE;
     goo->help = strdup (help);
-    
+
     g_hash_table_insert (gopt->lopts, goo->lname, goo);
     g_hash_table_insert (gopt->sopts, goo->sname, goo);
     g_ptr_array_add (gopt->options, goo);
@@ -281,7 +302,7 @@ getopt_add_string (getopt_t *gopt, char sopt, const char *lname, const char *def
     goo->svalue = strdup (def);
     goo->type = GOO_STRING_TYPE;
     goo->help = strdup (help);
-    
+
     g_hash_table_insert (gopt->lopts, goo->lname, goo);
     g_hash_table_insert (gopt->sopts, goo->sname, goo);
     g_ptr_array_add (gopt->options, goo);
@@ -308,18 +329,21 @@ getopt_get_int (getopt_t *getopt, const char *lname)
     long i = strtol (v, &endptr, 10);
 
     if ((errno == ERANGE && (i == LONG_MAX || i == LONG_MIN))
-        || (errno != 0 && i == 0)) {
+            || (errno != 0 && i == 0))
+    {
         PERROR ("%s argument: strtol", lname);
         exit (EXIT_FAILURE);
     }
 
-    if (i >= INT_MAX || i <= INT_MIN) {
+    if (i >= INT_MAX || i <= INT_MIN)
+    {
         ERROR ("%s argument is outside integer range", lname);
         exit (EXIT_FAILURE);
     }
 
 
-    if (endptr == v) {
+    if (endptr == v)
+    {
         ERROR ("%s argument cannot be parsed as an integer", lname);
         exit (EXIT_FAILURE);
     }
@@ -338,12 +362,14 @@ getopt_get_long (getopt_t *getopt, const char *lname)
     long l = strtol (v, &endptr, 10);
 
     if ((errno == ERANGE && (l == LONG_MAX || l == LONG_MIN))
-        || (errno != 0 && l == 0)) {
+            || (errno != 0 && l == 0))
+    {
         PERROR ("%s argument: strtol", lname);
         exit (EXIT_FAILURE);
     }
 
-    if (endptr == v) {
+    if (endptr == v)
+    {
         ERROR ("%s argument cannot be parsed as an integer", lname);
         exit (EXIT_FAILURE);
     }
@@ -362,12 +388,14 @@ getopt_get_double (getopt_t *getopt, const char *lname)
     char *endptr = (char *) v;
     double d = strtod (v, &endptr);
 
-    if (errno != 0) {
+    if (errno != 0)
+    {
         PERROR ("%s argument: strtod", lname);
         exit (EXIT_FAILURE);
     }
 
-    if (endptr == v) {
+    if (endptr == v)
+    {
         ERROR ("%s argument cannot be parsed as a double", lname);
         exit (EXIT_FAILURE);
     }
@@ -387,7 +415,7 @@ getopt_get_string (getopt_t *gopt, const char *lname)
 }
 
 
-static int 
+static int
 max (int a, int b)
 {
     return a > b ? a : b;
@@ -406,18 +434,21 @@ getopt_do_usage (getopt_t *gopt, const char *extraargs)
         printf ("Usage: %s [options]\n", gopt->exename);
 
     int examples = 0;
-    for (unsigned int i = 0; i < gopt->options->len; i++) {
+    for (unsigned int i = 0; i < gopt->options->len; i++)
+    {
         getopt_option_t *goo = g_ptr_array_index (gopt->options, i);
-        
+
         if (goo->spacer)
             continue;
 
-        if (goo->example) {
+        if (goo->example)
+        {
             examples = 1;
             continue;
         }
 
-        if (goo->description) {
+        if (goo->description)
+        {
             if (goo->help==NULL || strlen (goo->help)==0)
                 printf ("\n");
             else
@@ -433,42 +464,47 @@ getopt_do_usage (getopt_t *gopt, const char *extraargs)
 
     printf ("\nOptions\n");
 
-    for (unsigned int i = 0; i < gopt->options->len; i++) {
+    for (unsigned int i = 0; i < gopt->options->len; i++)
+    {
         getopt_option_t *goo = g_ptr_array_index (gopt->options, i);
 
         if (goo->description || goo->example)
             continue;
 
-        if (goo->spacer) {
+        if (goo->spacer)
+        {
             if (goo->help==NULL || strlen (goo->help)==0)
                 printf ("\n");
             else
                 printf ("%*s%s\n", leftmargin, "", goo->help);
             continue;
         }
-        
+
         printf ("%*s", leftmargin, "");
-        
+
         if (goo->sname[0]==0)
             printf ("     ");
         else
             printf ("-%c | ", goo->sname[0]);
-        
+
         printf ("--%*s ", -longwidth, goo->lname);
-        
+
         printf (" [ %s ]", goo->svalue);
-        
+
         printf ("%*s", (int) (valuewidth - strlen (goo->svalue)), "");
-        
+
         printf (" %s   ", goo->help);
-        printf ("\n");   
+        printf ("\n");
     }
 
-    if (examples) {
+    if (examples)
+    {
         printf ("\nExamples");
-        for (unsigned int i = 0; i < gopt->options->len; i++) {
+        for (unsigned int i = 0; i < gopt->options->len; i++)
+        {
             getopt_option_t *goo = g_ptr_array_index (gopt->options, i);
-            if (goo->example) {
+            if (goo->example)
+            {
                 if (goo->help==NULL || strlen (goo->help)==0)
                     printf ("\n");
                 else

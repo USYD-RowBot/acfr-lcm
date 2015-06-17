@@ -12,14 +12,14 @@
 uint32_t
 cycle_timer_to_usec (uint32_t cycle)
 {
-    return (((uint32_t)cycle >> 25) & 0x7f) * 1000000 + 
+    return (((uint32_t)cycle >> 25) & 0x7f) * 1000000 +
            (((uint32_t)cycle & 0x01fff000) >> 12) * 125 +
-           ((uint32_t)cycle & 0x00000fff) * 125 / 3072;   
+           ((uint32_t)cycle & 0x00000fff) * 125 / 3072;
 }
 
 dc1394error_t
 perls_dc1394_camera_parse_embedded_timestamp (PERLS_dc1394_camera_t *perls_cam, uint8_t *image, uint64_t *timestamp)
-{   
+{
     dc1394error_t status;
     uint64_t bus_timestamp;
     uint32_t cycle_usec_now;
@@ -33,7 +33,8 @@ perls_dc1394_camera_parse_embedded_timestamp (PERLS_dc1394_camera_t *perls_cam, 
     bus_timestamp &= 0xfffffff0;
 
     status = dc1394_read_cycle_timer (perls_cam->cam, &cyctime, &systime);
-    if (status != DC1394_SUCCESS) {
+    if (status != DC1394_SUCCESS)
+    {
         *timestamp = cycle_timer_to_usec (bus_timestamp);
         return status;
     }
@@ -56,19 +57,22 @@ dc1394error_t
 perls_dc1394_camera_list (void)
 {
     dc1394_t *dc1394 = dc1394_new ();
-    if (!dc1394) {
+    if (!dc1394)
+    {
         printf ("Returning dc1394 is null\n");
         return DC1394_FAILURE;
     }
 
     dc1394camera_list_t *camlist;
-    if (dc1394_camera_enumerate (dc1394, &camlist) < 0) {
+    if (dc1394_camera_enumerate (dc1394, &camlist) < 0)
+    {
         dc1394_free (dc1394);
         printf ("No camera found\n");
         return DC1394_FAILURE;
     }
 
-    for (int i=0; i < camlist->num; ++i) {
+    for (int i=0; i < camlist->num; ++i)
+    {
         dc1394camera_t *cam = dc1394_camera_new (dc1394, camlist->ids[i].guid);
         printf ("%s %s: ID=%lx\n", cam->vendor, cam->model, cam->guid);
         dc1394_camera_free (cam);
@@ -88,7 +92,8 @@ dc1394error_t
 perls_dc1394_camera_query (const char *cam_id)
 {
     dc1394_t *dc1394 = dc1394_new ();
-    if (!dc1394) {
+    if (!dc1394)
+    {
         printf ("Returning dc1394 is null\n");
         return DC1394_FAILURE;
     }
@@ -96,7 +101,8 @@ perls_dc1394_camera_query (const char *cam_id)
     uint64_t id;
     sscanf (cam_id, "%lx", &id);
     dc1394camera_t *cam = dc1394_camera_new (dc1394, id);
-    if (!cam) {
+    if (!cam)
+    {
         printf ("Error: Specified camera not found.\n");
         dc1394_free (dc1394);
         return DC1394_FAILURE;
@@ -113,14 +119,18 @@ perls_dc1394_camera_query (const char *cam_id)
 
     printf ("Standard Video Modes:\n");
     printf ("These modes can be set to any framerate not exceeding the maximum listed framerate.\n");
-    for (int x = 0; x < video_modes.num; ++x) {
+    for (int x = 0; x < video_modes.num; ++x)
+    {
 
-        if (!dc1394_is_video_mode_scalable (video_modes.modes[x])) {
+        if (!dc1394_is_video_mode_scalable (video_modes.modes[x]))
+        {
             char *tmp = dc1394_videomode_int_to_string (video_modes.modes[x]);
-            printf ("\t%s\n", tmp); free (tmp);
+            printf ("\t%s\n", tmp);
+            free (tmp);
             printf ("\t\t-Standard Framerates = ");
             dc1394_video_get_supported_framerates (cam, video_modes.modes[x], &framerates);
-            for (int f = 0; f < framerates.num; ++f) {
+            for (int f = 0; f < framerates.num; ++f)
+            {
                 printf ("%g", dc1394_framerate_int_to_double (framerates.framerates[f]));
                 if (f!=framerates.num-1) printf (", ");
                 else printf ("\n");
@@ -138,11 +148,14 @@ perls_dc1394_camera_query (const char *cam_id)
     printf ("Scalable Video Modes (FORMAT7):\n");
     printf ("These modes cannot directly control framerate, the user must select a target framerate below max.\n");
     printf ("Note: Assumed ISO mode for fps estimates is %s\n", cam->bmode_capable>0?"800":"400");
-    for (int x = 0; x < video_modes.num; ++x) {
+    for (int x = 0; x < video_modes.num; ++x)
+    {
 
-        if (dc1394_is_video_mode_scalable (video_modes.modes[x])) {
+        if (dc1394_is_video_mode_scalable (video_modes.modes[x]))
+        {
             char *tmp = dc1394_videomode_int_to_string (video_modes.modes[x]);
-            printf ("\t%s\n", tmp); free (tmp);
+            printf ("\t%s\n", tmp);
+            free (tmp);
             dc1394_format7_get_max_image_size (cam, video_modes.modes[x], &h, &v);
             printf ("\t\t-Max image width = %d, height = %d\n", h, v);
             dc1394_format7_get_unit_size (cam, video_modes.modes[x], &h_unit, &v_unit);
@@ -156,11 +169,13 @@ perls_dc1394_camera_query (const char *cam_id)
             printf ("\t\t-Max framerate @ %dx%d and 1 byte/pixel = %4.1f fps\n", h, v, fps);
             printf ("\t\t-Packet max bytes = %d, unit bytes = %d\n", max_bytes, unit_bytes);
             dc1394_format7_get_color_codings (cam, video_modes.modes[x], &codings);
-            for (int i=0; i < codings.num; ++i) {
+            for (int i=0; i < codings.num; ++i)
+            {
                 tmp = dc1394_colorcode_int_to_string (codings.codings[i]);
 
                 if (i == 0) printf ("\t\tColor codings: ");
-                printf ("%s", tmp); free (tmp);
+                printf ("%s", tmp);
+                free (tmp);
                 if (i != codings.num-1) printf (", ");
                 else printf ("\n");
             }
@@ -181,23 +196,28 @@ dc1394error_t
 perls_dc1394_camera_clean (void)
 {
     dc1394_t *dc1394 = dc1394_new ();
-    if (!dc1394) {
+    if (!dc1394)
+    {
         printf ("Returning dc1394 is null\n");
         return DC1394_FAILURE;
     }
 
     dc1394camera_list_t *camlist;
-    if (dc1394_camera_enumerate (dc1394, &camlist) < 0) {
+    if (dc1394_camera_enumerate (dc1394, &camlist) < 0)
+    {
         dc1394_free (dc1394);
         printf ("No camera found\n");
         return DC1394_FAILURE;
     }
     dc1394camera_list_t *active_camlist;
 
-    for (int i=0; i < camlist->num; ++i) {
+    for (int i=0; i < camlist->num; ++i)
+    {
         dc1394_camera_enumerate (dc1394, &active_camlist);
-        for (int x=0; x< active_camlist->num; ++x) {
-            if (camlist->ids[i].guid == active_camlist->ids[x].guid) {
+        for (int x=0; x< active_camlist->num; ++x)
+        {
+            if (camlist->ids[i].guid == active_camlist->ids[x].guid)
+            {
                 dc1394camera_t *cam = dc1394_camera_new (dc1394, active_camlist->ids[x].guid);
                 if (cam == NULL || dc1394_reset_bus (cam) != DC1394_SUCCESS)
                     return DC1394_FAILURE;
@@ -213,53 +233,58 @@ perls_dc1394_camera_clean (void)
 
     return DC1394_SUCCESS;
 }
-        
+
 
 /**
  * Looks for the cam_id camera connected
- * to the computer and initializes it. It returns a pointer 
- * to the camera handle on success and returns "NULL" on 
+ * to the computer and initializes it. It returns a pointer
+ * to the camera handle on success and returns "NULL" on
  * failure.
  */
-PERLS_dc1394_camera_t * 
+PERLS_dc1394_camera_t *
 perls_dc1394_camera_init (const char * cam_id)
 {
     PERLS_dc1394_camera_t *perls_cam = malloc (sizeof (*perls_cam));
     dc1394camera_t *cam = NULL;
     dc1394_t *dc1394 = dc1394_new ();
-    if (!dc1394) {
-        printf ("Returning dc1394 is null\n"); 
+    if (!dc1394)
+    {
+        printf ("Returning dc1394 is null\n");
         return NULL;
     }
 
     dc1394camera_list_t *camlist;
-    if (dc1394_camera_enumerate (dc1394, &camlist) < 0) {
+    if (dc1394_camera_enumerate (dc1394, &camlist) < 0)
+    {
         dc1394_free (dc1394);
         printf ("No camera found\n");
         return NULL;
     }
-  
+
     //loop over all firewire cameras available
-    for (int i = 0; i < camlist->num; i++) {
+    for (int i = 0; i < camlist->num; i++)
+    {
         cam = dc1394_camera_new (dc1394, camlist->ids[i].guid);
 
         if (cam == NULL)
             continue;
-     
+
         char unique_id[17] = {0};
-        snprintf (unique_id,17,"%"PRIx64"", cam->guid);        
-        
-        if (strcmp ("", cam_id) && strcmp (unique_id, cam_id)) { //finds specified ID
+        snprintf (unique_id,17,"%"PRIx64"", cam->guid);
+
+        if (strcmp ("", cam_id) && strcmp (unique_id, cam_id))   //finds specified ID
+        {
             dc1394_camera_free (cam);
             cam = NULL;
             continue;
         }
-        
+
         break;
     }
-  
+
     dc1394_camera_free_list (camlist);
-    if (!cam) {
+    if (!cam)
+    {
         printf ("Failed to find camera w/ ID = %s\n",cam_id);
         dc1394_free (dc1394);
         return NULL;
@@ -267,11 +292,12 @@ perls_dc1394_camera_init (const char * cam_id)
 
     // show some information about the camera we're using
     dc1394_camera_print_info (cam, stdout);
-    
-    perls_cam->cam = cam;
-    perls_cam->dc1394 = dc1394; 
 
-    if (perls_dc1394_camera_cleanup_iso (perls_cam->cam) != DC1394_SUCCESS) {
+    perls_cam->cam = cam;
+    perls_cam->dc1394 = dc1394;
+
+    if (perls_dc1394_camera_cleanup_iso (perls_cam->cam) != DC1394_SUCCESS)
+    {
         printf ("Failed in pre-cleaning bus, perhaps reset bus.\n");
         dc1394_camera_free (cam);
         dc1394_free (dc1394);
@@ -295,7 +321,8 @@ perls_dc1394_camera_cleanup_iso (dc1394camera_t *cam)
     status = dc1394_video_get_bandwidth_usage (cam, &value);
     DC1394_WRN (status, "getting iso bandwidth");
 
-    if (status == DC1394_SUCCESS) {
+    if (status == DC1394_SUCCESS)
+    {
         status = dc1394_iso_release_bandwidth (cam, value);
         DC1394_WRN (status, "releasing iso bandwidth");
     }
@@ -304,7 +331,8 @@ perls_dc1394_camera_cleanup_iso (dc1394camera_t *cam)
     status = dc1394_video_get_iso_channel (cam, &value);
     DC1394_WRN (status, "getting iso channel");
 
-    if (status == DC1394_SUCCESS) {
+    if (status == DC1394_SUCCESS)
+    {
         status = dc1394_iso_release_channel (cam, value);
         DC1394_WRN (status, "releasing iso channel");
     }
@@ -315,7 +343,7 @@ perls_dc1394_camera_cleanup_iso (dc1394camera_t *cam)
 /**
  * Sets the operation mode to 1394A (legacy) or 1394B
  */
-dc1394error_t 
+dc1394error_t
 perls_dc1394_camera_set_operation_mode (PERLS_dc1394_camera_t *perls_cam, dc1394operation_mode_t mode)
 {
     dc1394error_t status;
@@ -351,30 +379,36 @@ perls_dc1394_camera_set_video_mode (PERLS_dc1394_camera_t *perls_cam, dc1394vide
     status = dc1394_video_get_supported_modes (perls_cam->cam, &video_modes);
     DC1394_ERR_RTN (status, "checking supported video modes");
 
-    if (video_modes.num == 0) {
+    if (video_modes.num == 0)
+    {
         ERROR ("No supported video modes found");
         return DC1394_FAILURE;
     }
 
-    if (vidMode == 0) { // auto assign
+    if (vidMode == 0)   // auto assign
+    {
         int found1280 = -1, found640 = -1;
-        for (int i=0; i < video_modes.num; ++i) {
+        for (int i=0; i < video_modes.num; ++i)
+        {
             if (video_modes.modes[i] == DC1394_VIDEO_MODE_640x480_MONO8) found640 = i;
             if (video_modes.modes[i] == DC1394_VIDEO_MODE_1280x960_MONO8) found1280 = i;
         }
 
-        vidMode = (found1280 > -1) ? video_modes.modes[found1280] : 
-                    (found640 > -1) ? video_modes.modes[found640] : video_modes.modes[0];
+        vidMode = (found1280 > -1) ? video_modes.modes[found1280] :
+                  (found640 > -1) ? video_modes.modes[found640] : video_modes.modes[0];
 
         tmp = dc1394_videomode_int_to_string (vidMode);
         ERROR ("Video mode not specified, setting to [%s]", tmp);
         free (tmp);
     }
-    else {
-        for (int i=0; i < video_modes.num; ++i) {
+    else
+    {
+        for (int i=0; i < video_modes.num; ++i)
+        {
             if (vidMode == video_modes.modes[i])
                 break;
-            if (i == video_modes.num-1) {
+            if (i == video_modes.num-1)
+            {
                 tmp = dc1394_videomode_int_to_string (vidMode);
                 ERROR ("Video mode [%s] not supported by camera", tmp);
                 free (tmp);
@@ -382,10 +416,10 @@ perls_dc1394_camera_set_video_mode (PERLS_dc1394_camera_t *perls_cam, dc1394vide
             }
         }
     }
-    
+
     status = dc1394_video_set_mode (perls_cam->cam, vidMode);
     DC1394_ERR_RTN (status, "setting video mode");
-  
+
     return status;
 }
 
@@ -420,37 +454,38 @@ perls_dc1394_camera_get_bayer_pattern (PERLS_dc1394_camera_t *perls_cam, dc1394c
 {
     uint32_t value = 0;
     dc1394error_t status = dc1394_get_control_register (perls_cam->cam,
-            PERLS_DC1394_CAMERA_REGISTER_BAYER_TILE_MAPPING, &value);
+                           PERLS_DC1394_CAMERA_REGISTER_BAYER_TILE_MAPPING, &value);
     DC1394_ERR_RTN (status, "Reading bayer tile mapping register");
 
     // R=52, G=47, B=42, Y=59
-    switch (value) {
-        case 0x59595959:    // YYYY
-            *filter = (dc1394color_filter_t) 0;
-            break;
-        case 0x52474742:    // RGGB
-            *filter = DC1394_COLOR_FILTER_RGGB;
-            break;
-        case 0x47425247:    // GBRG
-            *filter = DC1394_COLOR_FILTER_GBRG;
-            break;
-        case 0x47524247:    // GRBG
-            *filter = DC1394_COLOR_FILTER_GRBG;
-            break;
-        case 0x42474752:    // BGGR
-            *filter = DC1394_COLOR_FILTER_BGGR;
-            break;
-        default:
-            *filter = (dc1394color_filter_t) 0;
-            break;
+    switch (value)
+    {
+    case 0x59595959:    // YYYY
+        *filter = (dc1394color_filter_t) 0;
+        break;
+    case 0x52474742:    // RGGB
+        *filter = DC1394_COLOR_FILTER_RGGB;
+        break;
+    case 0x47425247:    // GBRG
+        *filter = DC1394_COLOR_FILTER_GBRG;
+        break;
+    case 0x47524247:    // GRBG
+        *filter = DC1394_COLOR_FILTER_GRBG;
+        break;
+    case 0x42474752:    // BGGR
+        *filter = DC1394_COLOR_FILTER_BGGR;
+        break;
+    default:
+        *filter = (dc1394color_filter_t) 0;
+        break;
     }
 
     return status;
 }
 
 /**
- * Sets the framerate of the camera. 
- * If set frame rate is more than the transfer rate then the framerate is governed by the 
+ * Sets the framerate of the camera.
+ * If set frame rate is more than the transfer rate then the framerate is governed by the
  * transfer rate. Note: only use this function on non-scalable video modes.
  */
 dc1394error_t
@@ -463,7 +498,8 @@ perls_dc1394_camera_set_frame_rate (PERLS_dc1394_camera_t *perls_cam, float fram
     dc1394video_mode_t mode;
     status = dc1394_video_get_mode (perls_cam->cam, &mode);
     DC1394_ERR_RTN (status, "Must set video mode before setting framerate");
-    if (dc1394_is_video_mode_scalable (mode)) {
+    if (dc1394_is_video_mode_scalable (mode))
+    {
         ERROR ("Can't set framerate of scalable video modes");
         return DC1394_FAILURE;
     }
@@ -474,14 +510,17 @@ perls_dc1394_camera_set_frame_rate (PERLS_dc1394_camera_t *perls_cam, float fram
     DC1394_ERR_RTN (status, "Can't retrieve supported framerates. Is the video mode not supported?");
 
     // set limits on framerate
-    if (framerate < 0 || framerate > dc1394_framerate_int_to_double (framerates.framerates[framerates.num-1])) {
+    if (framerate < 0 || framerate > dc1394_framerate_int_to_double (framerates.framerates[framerates.num-1]))
+    {
         framerate = dc1394_framerate_int_to_double (framerates.framerates[framerates.num-1]);
         printf ("Set maximum framerate: %g fps\n", framerate);
     }
-    
+
     // set bus framerate to just above actual framerate
-    for (int i=0; i<framerates.num; ++i) {
-        if (framerate <= dc1394_framerate_int_to_double (framerates.framerates[i])) {
+    for (int i=0; i<framerates.num; ++i)
+    {
+        if (framerate <= dc1394_framerate_int_to_double (framerates.framerates[i]))
+        {
             status = dc1394_video_set_framerate (perls_cam->cam, framerates.framerates[i]);
             DC1394_ERR_RTN (status, "Can't set default framerate.");
             break;
@@ -490,7 +529,7 @@ perls_dc1394_camera_set_frame_rate (PERLS_dc1394_camera_t *perls_cam, float fram
 
     // Set frame rate control register to check absolute value frame rate field
     uint32_t value=0;
-    value = 0xC2000000; 
+    value = 0xC2000000;
     status = dc1394_set_control_register (perls_cam->cam, PERLS_DC1394_CAMERA_REGISTER_FRAME_RATE_CONTROL, value);
     DC1394_ERR_RTN (status, "Cannot set the frame rate register value");
 
@@ -507,7 +546,7 @@ perls_dc1394_camera_set_frame_rate (PERLS_dc1394_camera_t *perls_cam, float fram
  */
 dc1394error_t
 perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_coding_t color,
-        double framerate, int left, int top, int width, int height)
+                             double framerate, int left, int top, int width, int height)
 {
     dc1394error_t status;
 
@@ -517,7 +556,8 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
     DC1394_ERR_RTN (status, "Must set video mode before setting ROI");
 
     // check that this is a scalable video mode
-    if (!dc1394_is_video_mode_scalable (mode)) {
+    if (!dc1394_is_video_mode_scalable (mode))
+    {
         ERROR ("Can't set ROI because video mode not scalable");
         return DC1394_FAILURE;
     }
@@ -525,13 +565,15 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
     dc1394color_codings_t codings;
     dc1394_format7_get_color_codings (perls_cam->cam, mode, &codings);
 
-    if (codings.num == 0) {
+    if (codings.num == 0)
+    {
         ERROR ("No supported color codes found");
         return DC1394_FAILURE;
     }
 
     // no color specified.. pick one that is supported
-    if (color == -1 || color == 0) {
+    if (color == -1 || color == 0)
+    {
         color = codings.codings[0];
         char *tmp = dc1394_colorcode_int_to_string (color);
         ERROR ("Color code not specified, setting to [%s]", tmp);
@@ -539,9 +581,11 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
     }
 
     // verify color choice
-    for (int i=0; i<codings.num; ++i) {
+    for (int i=0; i<codings.num; ++i)
+    {
         if (codings.codings[i] == color) break;
-        if (i == codings.num-1) {
+        if (i == codings.num-1)
+        {
             ERROR ("Specified scalable color coding not supported by this video mode");
             return DC1394_FAILURE;
         }
@@ -570,13 +614,30 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
     else top = 0;
     if (width == -1) width = h-left;
     if (height == -1) height = v-top;
-    
+
     int flag = 0;
-    if (left % h_unit_pos != 0) { left = left - left%h_unit_pos; flag = 1;}
-    if (top % v_unit_pos != 0) { top = top - top%v_unit_pos; flag = 1;}
-    if (width % h_unit != 0) { width = width - width%h_unit; flag = 1;}
-    if (height % v_unit != 0) { height = height - height%v_unit; flag = 1;}
-    if (left + width > h || top + height > v) {
+    if (left % h_unit_pos != 0)
+    {
+        left = left - left%h_unit_pos;
+        flag = 1;
+    }
+    if (top % v_unit_pos != 0)
+    {
+        top = top - top%v_unit_pos;
+        flag = 1;
+    }
+    if (width % h_unit != 0)
+    {
+        width = width - width%h_unit;
+        flag = 1;
+    }
+    if (height % v_unit != 0)
+    {
+        height = height - height%v_unit;
+        flag = 1;
+    }
+    if (left + width > h || top + height > v)
+    {
         ERROR ("Image dimensions illegal, max = %dx%d\n", h,v);
         return DC1394_FAILURE;
     }
@@ -598,13 +659,26 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
     dc1394_get_color_coding_bit_size (color, &bits);
     dc1394_video_get_iso_speed (perls_cam->cam, &speed);
     double iso_cycles = 1000;
-    switch (speed) {
-        case DC1394_ISO_SPEED_100: iso_cycles = 1000.0; break;
-        case DC1394_ISO_SPEED_200: iso_cycles = 2000.0; break;
-        case DC1394_ISO_SPEED_400: iso_cycles = 4000.0; break;
-        case DC1394_ISO_SPEED_800: iso_cycles = 8000.0; break;
-        case DC1394_ISO_SPEED_1600: iso_cycles = 16000.0; break;
-        case DC1394_ISO_SPEED_3200: iso_cycles = 32000.0; break;
+    switch (speed)
+    {
+    case DC1394_ISO_SPEED_100:
+        iso_cycles = 1000.0;
+        break;
+    case DC1394_ISO_SPEED_200:
+        iso_cycles = 2000.0;
+        break;
+    case DC1394_ISO_SPEED_400:
+        iso_cycles = 4000.0;
+        break;
+    case DC1394_ISO_SPEED_800:
+        iso_cycles = 8000.0;
+        break;
+    case DC1394_ISO_SPEED_1600:
+        iso_cycles = 16000.0;
+        break;
+    case DC1394_ISO_SPEED_3200:
+        iso_cycles = 32000.0;
+        break;
     }
 
     double goal_packet_size = framerate * height * width * (bits/8.0) / iso_cycles * FORMAT7_BUS_MULTIPLIER;
@@ -612,7 +686,8 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
 
     packet_size = (int) goal_packet_size;
     packet_size = packet_size - packet_size%unit_bytes;
-    if (packet_size > max_bytes) {
+    if (packet_size > max_bytes)
+    {
         printf ("Note: Framerate maxed at %4.1f fps\n", max_fps);
         packet_size = max_bytes;
     }
@@ -626,7 +701,7 @@ perls_dc1394_camera_set_roi (PERLS_dc1394_camera_t *perls_cam, dc1394color_codin
 
     // Set frame rate control register to auto (this may not be necessary here)
     uint32_t value=0;
-    value = 0xC3000000; 
+    value = 0xC3000000;
     status = dc1394_set_control_register (perls_cam->cam, PERLS_DC1394_CAMERA_REGISTER_FRAME_RATE_CONTROL, value);
     DC1394_ERR_RTN (status, "Cannot set the frame rate register value");
 
@@ -643,13 +718,13 @@ perls_dc1394_camera_start_video_transmission (PERLS_dc1394_camera_t *perls_cam)
     dc1394error_t status;
     status = dc1394_capture_setup (perls_cam->cam, 4, DC1394_CAPTURE_FLAGS_DEFAULT);
     DC1394_ERR_RTN (status, "capture setup");
-   
+
     // start data transmission
     status = dc1394_video_set_transmission (perls_cam->cam, DC1394_ON);
     DC1394_ERR_RTN (status, "enabling video transmission");
     return status;
 }
- 
+
 /**
  * Stops the video transmission
  */
@@ -675,10 +750,10 @@ perls_dc1394_camera_stop_video_transmission (PERLS_dc1394_camera_t *perls_cam)
 void
 perls_dc1394_camera_camera_free (PERLS_dc1394_camera_t *perls_cam)
 {
-  dc1394_camera_free (perls_cam->cam);
-  dc1394_free (perls_cam->dc1394);
+    dc1394_camera_free (perls_cam->cam);
+    dc1394_free (perls_cam->dc1394);
 }
- 
+
 /**
  * These functions allow the user to set camera settings
  * Returns error code "DC1394_SUCCESS" on success and
@@ -742,11 +817,13 @@ dc1394error_t
 perls_dc1394_camera_set_exposure_mode (PERLS_dc1394_camera_t *perls_cam, char mode[64])
 {
     dc1394error_t err;
-    if (0==strcmp (mode, "auto")) {
+    if (0==strcmp (mode, "auto"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_EXPOSURE, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_EXPOSURE, DC1394_FEATURE_MODE_AUTO);
     }
-    else if (0==strcmp (mode, "manual")) {
+    else if (0==strcmp (mode, "manual"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_EXPOSURE, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_EXPOSURE, DC1394_FEATURE_MODE_MANUAL);
     }
@@ -764,7 +841,8 @@ perls_dc1394_camera_set_exposure (PERLS_dc1394_camera_t* perls_cam, int manual, 
     dc1394error_t status;
     if (manual == 0)
         status = perls_dc1394_camera_set_exposure_mode (perls_cam, "auto");
-    else {
+    else
+    {
         status = perls_dc1394_camera_set_exposure_mode (perls_cam, "manual");
         status += perls_dc1394_camera_set_exposure_manual (perls_cam, value);
     }
@@ -787,10 +865,11 @@ dc1394error_t
 perls_dc1394_camera_set_gamma_mode (PERLS_dc1394_camera_t *perls_cam, char mode[64])
 {
     dc1394error_t err;
-    
-    if (0==strcmp (mode, "manual")) {
+
+    if (0==strcmp (mode, "manual"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_GAMMA, DC1394_ON);
-        err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);    
+        err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_GAMMA, DC1394_FEATURE_MODE_MANUAL);
     }
     else if (0==strcmp (mode, "off"))
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_GAMMA, DC1394_OFF);
@@ -806,7 +885,8 @@ perls_dc1394_camera_set_gamma (PERLS_dc1394_camera_t* perls_cam, int manual, dou
     dc1394error_t status;
     if (manual == 0)
         status = perls_dc1394_camera_set_gamma_mode (perls_cam, "off");
-    else {
+    else
+    {
         status = perls_dc1394_camera_set_gamma_mode (perls_cam, "manual");
         status += perls_dc1394_camera_set_gamma_manual (perls_cam, value);
     }
@@ -829,12 +909,14 @@ dc1394error_t
 perls_dc1394_camera_set_shutter_mode (PERLS_dc1394_camera_t *perls_cam, char mode[64])
 {
     dc1394error_t err;
-    
-    if (0==strcmp (mode, "auto")) {
+
+    if (0==strcmp (mode, "auto"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_SHUTTER, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
     }
-    else if (0==strcmp(mode, "manual")) {
+    else if (0==strcmp(mode, "manual"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_SHUTTER, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_MANUAL);
     }
@@ -842,7 +924,7 @@ perls_dc1394_camera_set_shutter_mode (PERLS_dc1394_camera_t *perls_cam, char mod
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_SHUTTER, DC1394_OFF);
     else
         err = DC1394_FAILURE;
-    
+
     return err;
 }
 
@@ -852,7 +934,8 @@ perls_dc1394_camera_set_shutter (PERLS_dc1394_camera_t* perls_cam, int manual, d
     dc1394error_t status;
     if (manual == 0)
         status = perls_dc1394_camera_set_shutter_mode (perls_cam, "auto");
-    else {
+    else
+    {
         status = perls_dc1394_camera_set_shutter_mode (perls_cam, "manual");
         status += perls_dc1394_camera_set_shutter_manual (perls_cam, value);
     }
@@ -875,11 +958,13 @@ dc1394error_t
 perls_dc1394_camera_set_gain_mode (PERLS_dc1394_camera_t *perls_cam, char mode[64])
 {
     dc1394error_t err;
-    if (0==strcmp (mode, "auto")) {
+    if (0==strcmp (mode, "auto"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_GAIN, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
     }
-    else if (0==strcmp (mode, "manual")) {
+    else if (0==strcmp (mode, "manual"))
+    {
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_GAIN, DC1394_ON);
         err += dc1394_feature_set_mode (perls_cam->cam, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_MANUAL);
     }
@@ -887,7 +972,7 @@ perls_dc1394_camera_set_gain_mode (PERLS_dc1394_camera_t *perls_cam, char mode[6
         err = dc1394_feature_set_power (perls_cam->cam, DC1394_FEATURE_GAIN, DC1394_OFF);
     else
         err = DC1394_FAILURE;
-    
+
     return err;
 }
 
@@ -897,7 +982,8 @@ perls_dc1394_camera_set_gain (PERLS_dc1394_camera_t* perls_cam, int manual, doub
     dc1394error_t status;
     if (manual == 0)
         status = perls_dc1394_camera_set_gain_mode (perls_cam, "auto");
-    else {
+    else
+    {
         status = perls_dc1394_camera_set_gain_mode (perls_cam, "manual");
         status += perls_dc1394_camera_set_gain_manual (perls_cam, value);
     }
@@ -936,7 +1022,7 @@ perls_dc1394_camera_set_whitebalance (PERLS_dc1394_camera_t* perls_cam, int manu
 }
 
 /**
- * Embeds the timestamp coming from dc1394 library 
+ * Embeds the timestamp coming from dc1394 library
  * to the first few bytes of the image frame.
  */
 dc1394error_t
@@ -964,91 +1050,158 @@ perls_dc1394_camera_embed_timestamp_into_frame (PERLS_dc1394_camera_t *perls_cam
 char *
 dc1394_videomode_int_to_string (int n)
 {
-    switch (n) {
-        case DC1394_VIDEO_MODE_160x120_YUV444:      return strdup ("DC1394_VIDEO_MODE_160x120_YUV444");
-        case DC1394_VIDEO_MODE_320x240_YUV422:      return strdup ("DC1394_VIDEO_MODE_320x240_YUV422");
-        case DC1394_VIDEO_MODE_640x480_YUV411:      return strdup ("DC1394_VIDEO_MODE_640x480_YUV411");
-        case DC1394_VIDEO_MODE_640x480_YUV422:      return strdup ("DC1394_VIDEO_MODE_640x480_YUV422");
-        case DC1394_VIDEO_MODE_640x480_RGB8:        return strdup ("DC1394_VIDEO_MODE_640x480_RGB8");
-        case DC1394_VIDEO_MODE_640x480_MONO8:       return strdup ("DC1394_VIDEO_MODE_640x480_MONO8");
-        case DC1394_VIDEO_MODE_640x480_MONO16:      return strdup ("DC1394_VIDEO_MODE_640x480_MONO16");
-        case DC1394_VIDEO_MODE_800x600_YUV422:      return strdup ("DC1394_VIDEO_MODE_800x600_YUV422");
-        case DC1394_VIDEO_MODE_800x600_RGB8:        return strdup ("DC1394_VIDEO_MODE_800x600_RGB8");
-        case DC1394_VIDEO_MODE_800x600_MONO8:       return strdup ("DC1394_VIDEO_MODE_800x600_MONO8");
-        case DC1394_VIDEO_MODE_1024x768_YUV422:     return strdup ("DC1394_VIDEO_MODE_1024x768_YUV422");
-        case DC1394_VIDEO_MODE_1024x768_RGB8:       return strdup ("DC1394_VIDEO_MODE_1024x768_RGB8");
-        case DC1394_VIDEO_MODE_1024x768_MONO8:      return strdup ("DC1394_VIDEO_MODE_1024x768_MONO8");
-        case DC1394_VIDEO_MODE_800x600_MONO16:      return strdup ("DC1394_VIDEO_MODE_800x600_MONO16");
-        case DC1394_VIDEO_MODE_1024x768_MONO16:     return strdup ("DC1394_VIDEO_MODE_1024x768_MONO16");
-        case DC1394_VIDEO_MODE_1280x960_YUV422:     return strdup ("DC1394_VIDEO_MODE_1280x960_YUV422");
-        case DC1394_VIDEO_MODE_1280x960_RGB8:       return strdup ("DC1394_VIDEO_MODE_1280x960_RGB8");
-        case DC1394_VIDEO_MODE_1280x960_MONO8:      return strdup ("DC1394_VIDEO_MODE_1280x960_MONO8");
-        case DC1394_VIDEO_MODE_1600x1200_YUV422:    return strdup ("DC1394_VIDEO_MODE_1600x1200_YUV422");
-        case DC1394_VIDEO_MODE_1600x1200_RGB8:      return strdup ("DC1394_VIDEO_MODE_1600x1200_RGB8");
-        case DC1394_VIDEO_MODE_1600x1200_MONO8:     return strdup ("DC1394_VIDEO_MODE_1600x1200_MONO8");
-        case DC1394_VIDEO_MODE_1280x960_MONO16:     return strdup ("DC1394_VIDEO_MODE_1280x960_MONO16");
-        case DC1394_VIDEO_MODE_1600x1200_MONO16:    return strdup ("DC1394_VIDEO_MODE_1600x1200_MONO16");
-        case DC1394_VIDEO_MODE_EXIF:                return strdup ("DC1394_VIDEO_MODE_EXIF");
-        case DC1394_VIDEO_MODE_FORMAT7_0:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_0");
-        case DC1394_VIDEO_MODE_FORMAT7_1:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_1");
-        case DC1394_VIDEO_MODE_FORMAT7_2:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_2");
-        case DC1394_VIDEO_MODE_FORMAT7_3:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_3");
-        case DC1394_VIDEO_MODE_FORMAT7_4:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_4");
-        case DC1394_VIDEO_MODE_FORMAT7_5:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_5");
-        case DC1394_VIDEO_MODE_FORMAT7_6:           return strdup ("DC1394_VIDEO_MODE_FORMAT7_6");
-        case DC1394_VIDEO_MODE_FORMAT7_7:            return strdup ("DC1394_VIDEO_MODE_FORMAT7_7");
-        default: return NULL;
+    switch (n)
+    {
+    case DC1394_VIDEO_MODE_160x120_YUV444:
+        return strdup ("DC1394_VIDEO_MODE_160x120_YUV444");
+    case DC1394_VIDEO_MODE_320x240_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_320x240_YUV422");
+    case DC1394_VIDEO_MODE_640x480_YUV411:
+        return strdup ("DC1394_VIDEO_MODE_640x480_YUV411");
+    case DC1394_VIDEO_MODE_640x480_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_640x480_YUV422");
+    case DC1394_VIDEO_MODE_640x480_RGB8:
+        return strdup ("DC1394_VIDEO_MODE_640x480_RGB8");
+    case DC1394_VIDEO_MODE_640x480_MONO8:
+        return strdup ("DC1394_VIDEO_MODE_640x480_MONO8");
+    case DC1394_VIDEO_MODE_640x480_MONO16:
+        return strdup ("DC1394_VIDEO_MODE_640x480_MONO16");
+    case DC1394_VIDEO_MODE_800x600_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_800x600_YUV422");
+    case DC1394_VIDEO_MODE_800x600_RGB8:
+        return strdup ("DC1394_VIDEO_MODE_800x600_RGB8");
+    case DC1394_VIDEO_MODE_800x600_MONO8:
+        return strdup ("DC1394_VIDEO_MODE_800x600_MONO8");
+    case DC1394_VIDEO_MODE_1024x768_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_1024x768_YUV422");
+    case DC1394_VIDEO_MODE_1024x768_RGB8:
+        return strdup ("DC1394_VIDEO_MODE_1024x768_RGB8");
+    case DC1394_VIDEO_MODE_1024x768_MONO8:
+        return strdup ("DC1394_VIDEO_MODE_1024x768_MONO8");
+    case DC1394_VIDEO_MODE_800x600_MONO16:
+        return strdup ("DC1394_VIDEO_MODE_800x600_MONO16");
+    case DC1394_VIDEO_MODE_1024x768_MONO16:
+        return strdup ("DC1394_VIDEO_MODE_1024x768_MONO16");
+    case DC1394_VIDEO_MODE_1280x960_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_1280x960_YUV422");
+    case DC1394_VIDEO_MODE_1280x960_RGB8:
+        return strdup ("DC1394_VIDEO_MODE_1280x960_RGB8");
+    case DC1394_VIDEO_MODE_1280x960_MONO8:
+        return strdup ("DC1394_VIDEO_MODE_1280x960_MONO8");
+    case DC1394_VIDEO_MODE_1600x1200_YUV422:
+        return strdup ("DC1394_VIDEO_MODE_1600x1200_YUV422");
+    case DC1394_VIDEO_MODE_1600x1200_RGB8:
+        return strdup ("DC1394_VIDEO_MODE_1600x1200_RGB8");
+    case DC1394_VIDEO_MODE_1600x1200_MONO8:
+        return strdup ("DC1394_VIDEO_MODE_1600x1200_MONO8");
+    case DC1394_VIDEO_MODE_1280x960_MONO16:
+        return strdup ("DC1394_VIDEO_MODE_1280x960_MONO16");
+    case DC1394_VIDEO_MODE_1600x1200_MONO16:
+        return strdup ("DC1394_VIDEO_MODE_1600x1200_MONO16");
+    case DC1394_VIDEO_MODE_EXIF:
+        return strdup ("DC1394_VIDEO_MODE_EXIF");
+    case DC1394_VIDEO_MODE_FORMAT7_0:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_0");
+    case DC1394_VIDEO_MODE_FORMAT7_1:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_1");
+    case DC1394_VIDEO_MODE_FORMAT7_2:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_2");
+    case DC1394_VIDEO_MODE_FORMAT7_3:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_3");
+    case DC1394_VIDEO_MODE_FORMAT7_4:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_4");
+    case DC1394_VIDEO_MODE_FORMAT7_5:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_5");
+    case DC1394_VIDEO_MODE_FORMAT7_6:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_6");
+    case DC1394_VIDEO_MODE_FORMAT7_7:
+        return strdup ("DC1394_VIDEO_MODE_FORMAT7_7");
+    default:
+        return NULL;
     }
 }
 
 char *
 dc1394_colorcode_int_to_string (int n)
 {
-    switch (n) {
-        case DC1394_COLOR_CODING_MONO8:     return strdup ("DC1394_COLOR_CODING_MONO8");
-        case DC1394_COLOR_CODING_YUV411:    return strdup ("DC1394_COLOR_CODING_YUV411");
-        case DC1394_COLOR_CODING_YUV422:    return strdup ("DC1394_COLOR_CODING_YUV422");
-        case DC1394_COLOR_CODING_YUV444:    return strdup ("DC1394_COLOR_CODING_YUV444");
-        case DC1394_COLOR_CODING_RGB8:      return strdup ("DC1394_COLOR_CODING_RGB8");
-        case DC1394_COLOR_CODING_MONO16:    return strdup ("DC1394_COLOR_CODING_MONO16");
-        case DC1394_COLOR_CODING_RGB16:     return strdup ("DC1394_COLOR_CODING_RGB16");
-        case DC1394_COLOR_CODING_MONO16S:   return strdup ("DC1394_COLOR_CODING_MONO16S");
-        case DC1394_COLOR_CODING_RGB16S:    return strdup ("DC1394_COLOR_CODING_RGB16S");
-        case DC1394_COLOR_CODING_RAW8:      return strdup ("DC1394_COLOR_CODING_RAW8");
-        case DC1394_COLOR_CODING_RAW16:      return strdup ("DC1394_COLOR_CODING_RAW16");
-        default: return NULL;
+    switch (n)
+    {
+    case DC1394_COLOR_CODING_MONO8:
+        return strdup ("DC1394_COLOR_CODING_MONO8");
+    case DC1394_COLOR_CODING_YUV411:
+        return strdup ("DC1394_COLOR_CODING_YUV411");
+    case DC1394_COLOR_CODING_YUV422:
+        return strdup ("DC1394_COLOR_CODING_YUV422");
+    case DC1394_COLOR_CODING_YUV444:
+        return strdup ("DC1394_COLOR_CODING_YUV444");
+    case DC1394_COLOR_CODING_RGB8:
+        return strdup ("DC1394_COLOR_CODING_RGB8");
+    case DC1394_COLOR_CODING_MONO16:
+        return strdup ("DC1394_COLOR_CODING_MONO16");
+    case DC1394_COLOR_CODING_RGB16:
+        return strdup ("DC1394_COLOR_CODING_RGB16");
+    case DC1394_COLOR_CODING_MONO16S:
+        return strdup ("DC1394_COLOR_CODING_MONO16S");
+    case DC1394_COLOR_CODING_RGB16S:
+        return strdup ("DC1394_COLOR_CODING_RGB16S");
+    case DC1394_COLOR_CODING_RAW8:
+        return strdup ("DC1394_COLOR_CODING_RAW8");
+    case DC1394_COLOR_CODING_RAW16:
+        return strdup ("DC1394_COLOR_CODING_RAW16");
+    default:
+        return NULL;
     }
 }
 
 char *
 dc1394_framerate_int_to_string (int n)
 {
-    switch (n) {
-        case DC1394_FRAMERATE_1_875:    return strdup ("DC1394_FRAMERATE_1_875");
-        case DC1394_FRAMERATE_3_75:     return strdup ("DC1394_FRAMERATE_3_75");
-        case DC1394_FRAMERATE_7_5:      return strdup ("DC1394_FRAMERATE_7_5");
-        case DC1394_FRAMERATE_15:       return strdup ("DC1394_FRAMERATE_15");
-        case DC1394_FRAMERATE_30:       return strdup ("DC1394_FRAMERATE_30");
-        case DC1394_FRAMERATE_60:       return strdup ("DC1394_FRAMERATE_60");
-        case DC1394_FRAMERATE_120:      return strdup ("DC1394_FRAMERATE_120");
-        case DC1394_FRAMERATE_240:      return strdup ("DC1394_FRAMERATE_240");
-        default: return NULL;
+    switch (n)
+    {
+    case DC1394_FRAMERATE_1_875:
+        return strdup ("DC1394_FRAMERATE_1_875");
+    case DC1394_FRAMERATE_3_75:
+        return strdup ("DC1394_FRAMERATE_3_75");
+    case DC1394_FRAMERATE_7_5:
+        return strdup ("DC1394_FRAMERATE_7_5");
+    case DC1394_FRAMERATE_15:
+        return strdup ("DC1394_FRAMERATE_15");
+    case DC1394_FRAMERATE_30:
+        return strdup ("DC1394_FRAMERATE_30");
+    case DC1394_FRAMERATE_60:
+        return strdup ("DC1394_FRAMERATE_60");
+    case DC1394_FRAMERATE_120:
+        return strdup ("DC1394_FRAMERATE_120");
+    case DC1394_FRAMERATE_240:
+        return strdup ("DC1394_FRAMERATE_240");
+    default:
+        return NULL;
     }
 }
 
 double
 dc1394_framerate_int_to_double (int n)
 {
-    switch (n) {
-        case DC1394_FRAMERATE_1_875:    return 1.875;
-        case DC1394_FRAMERATE_3_75:     return 3.75;
-        case DC1394_FRAMERATE_7_5:      return 7.5;
-        case DC1394_FRAMERATE_15:       return 15;
-        case DC1394_FRAMERATE_30:       return 30;
-        case DC1394_FRAMERATE_60:       return 60;
-        case DC1394_FRAMERATE_120:      return 120;
-        case DC1394_FRAMERATE_240:      return 240;
-        default: return -1;
+    switch (n)
+    {
+    case DC1394_FRAMERATE_1_875:
+        return 1.875;
+    case DC1394_FRAMERATE_3_75:
+        return 3.75;
+    case DC1394_FRAMERATE_7_5:
+        return 7.5;
+    case DC1394_FRAMERATE_15:
+        return 15;
+    case DC1394_FRAMERATE_30:
+        return 30;
+    case DC1394_FRAMERATE_60:
+        return 60;
+    case DC1394_FRAMERATE_120:
+        return 120;
+    case DC1394_FRAMERATE_240:
+        return 240;
+    default:
+        return -1;
     }
 }
 

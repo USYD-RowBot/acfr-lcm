@@ -22,11 +22,12 @@
 #include "perls-vision/botimage.h"
 
 typedef struct options options_t;
-struct options {
+struct options
+{
     char         *outdir;           // where?
     const char   *prefix;           // Prefix output image files with this
     bool         force;             // overwrite filenames
-    bool         eightbit;          // convert 16-bit to 8-bit 
+    bool         eightbit;          // convert 16-bit to 8-bit
     unsigned int compression;       // TIFF compression scheme
     unsigned int quality;           // 0-100 compression quality, for use with jpeg compression
     bool         nobayerfilt;       // if bayer image, just write raw bayer pattern w/o interpolation
@@ -38,7 +39,8 @@ convert (options_t *opts, const char *ifile, const char *ofile)
 {
     bot_core_image_t *ibot=NULL, *bayer=NULL, *eight=NULL;
     char *description = NULL, *channel = NULL;
-    if (0 != vis_botimage_read_tiff (&ibot, &channel, &description, ifile, 0)) {
+    if (0 != vis_botimage_read_tiff (&ibot, &channel, &description, ifile, 0))
+    {
         ERROR ("unable to read file %s", ifile);
         goto on_error;
     }
@@ -53,7 +55,8 @@ convert (options_t *opts, const char *ifile, const char *ofile)
     else
         eight = bot_core_image_t_copy (bayer);
 
-    if (0 != vis_botimage_write_tiff (eight, ofile, channel, description, opts->compression)) {
+    if (0 != vis_botimage_write_tiff (eight, ofile, channel, description, opts->compression))
+    {
         ERROR ("unable to write file %s", ofile);
         goto on_error;
     }
@@ -66,7 +69,7 @@ convert (options_t *opts, const char *ifile, const char *ofile)
 
     return 0;
 
-  on_error:
+on_error:
     if (ibot)
         bot_core_image_t_destroy (ibot);
     if (bayer)
@@ -99,11 +102,13 @@ main (int argc, char *argv[])
     getopt_add_help   (gopt, NULL);
     getopt_add_example (gopt, "%s *.tif --outdir ~/foo/bar/.", argv[0]);
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len < 1) {
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len < 1)
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -124,7 +129,8 @@ main (int argc, char *argv[])
              1 == sscanf (compression_str, "jpeg:%u", &quality) &&
              0 < quality && quality <= 100)
         opts->compression = VIS_BOTIMAGE_TIFF_COMPRESSION_JPEG | quality;
-    else {
+    else
+    {
         fprintf (stderr, "unrecognized compression format\n");
         exit (EXIT_FAILURE);
     }
@@ -134,7 +140,8 @@ main (int argc, char *argv[])
 
     const char *outdir = getopt_get_string (gopt, "outdir");
     if (outdir[strlen (outdir)-1] != '/' &&
-        outdir[strlen (outdir)-1] != '.') {
+            outdir[strlen (outdir)-1] != '.')
+    {
         ERROR ("[%s] does not specify a fully qualified directory path", outdir);
         exit (EXIT_FAILURE);
     }
@@ -148,13 +155,15 @@ main (int argc, char *argv[])
     opts->quiet = getopt_get_bool (gopt, "quiet");
 
     // convert images
-    for (int i=0; i<gopt->extraargs->len; i++) {
+    for (int i=0; i<gopt->extraargs->len; i++)
+    {
         const char *ifullfile = gopt->extraargs->pdata[i];
         char *ifile = g_path_get_basename (ifullfile);
         char ofile[NAME_MAX], ofullfile[PATH_MAX];
         snprintf (ofile, sizeof ofile, "%s%s", opts->prefix, ifile);
         snprintf (ofullfile, sizeof ofullfile, "%s/%s", opts->outdir, ifile);
-        if (g_file_test (ofullfile, G_FILE_TEST_EXISTS) && !opts->force) {
+        if (g_file_test (ofullfile, G_FILE_TEST_EXISTS) && !opts->force)
+        {
             printf ("file already exists, not overwriting: %s\n", ofullfile);
             free (ifile);
             continue;

@@ -15,7 +15,7 @@ main (int argc, char *argv[])
        file for our key and then setting up the i/o type based upon that */
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, "foo.bar", NULL);
 
-    /* configure for either line-based ascii reading, 
+    /* configure for either line-based ascii reading,
        or if binary data, character-based output */
     //gsd->ascii = 1;
     //gsd_canonical (gsd, eol, eol2);
@@ -28,12 +28,14 @@ main (int argc, char *argv[])
 
     /* create lcm object */
     lcm_t *lcm = lcm_create (NULL);
-    if (!lcm) {
+    if (!lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
 
-    while (1) {
+    while (1)
+    {
         char buf[1024];
         int64_t timestamp;
         int len;

@@ -34,7 +34,7 @@ main (int argc, char *argv[])
     gsl_matrix_fscanf (fd, K);
     fclose (fd);
     gslu_matrix_printf (K, "K");
-    
+
     // uv1
     gsl_matrix *uv1 = gsl_matrix_alloc (2, NPOINTS);
     fd = fopen ("uv1.txt", "r");

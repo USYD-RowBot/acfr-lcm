@@ -31,12 +31,14 @@ int
 easydaq_open (const char *device)
 {
     int fd = serial_open (device, B9600, PARITY_8N1, 1);
-    if (fd < 0) {
+    if (fd < 0)
+    {
         ERROR ("serial_open");
         return -1;
     }
-    
-    if (serial_set_noncanonical (fd, 0, 1) != 0) {
+
+    if (serial_set_noncanonical (fd, 0, 1) != 0)
+    {
         ERROR ("serial_set_noncanonical");
         return -1;
     }
@@ -116,9 +118,10 @@ void
 easydaq_printf (const senlcm_easydaq_t *easydaq)
 {
     stdiou_printf_bold ("%-6s  %-25s %-25s %s (*=EA)\n", "Relay#", "Label", "Group", "State");
-    for (int i=0; i<8; i++) {
+    for (int i=0; i<8; i++)
+    {
         printf ("%6d  %-25s %-25s %s%c\n", i+1,
-                easydaq->relay[i].label, easydaq->relay[i].group, 
+                easydaq->relay[i].label, easydaq->relay[i].group,
                 easydaq->relay[i].state ? "ON" : "OFF",
                 easydaq->relay[i].exclude_all ? '*' : ' ');
     }
