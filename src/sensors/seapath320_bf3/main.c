@@ -21,7 +21,8 @@
 
 #include "perls-lcmtypes/acfrlcm_ship_status_t.h"
 
-static float read_swapped_float(char *buf) {
+static float read_swapped_float(char *buf)
+{
     char swapped[4];
 
     swapped[0] = buf[3];
@@ -35,7 +36,8 @@ static float read_swapped_float(char *buf) {
 // 2^31 == 1.0, twos complement
 // multiply the output by 180 or pi to get deg or radians
 // we use doubles here for the extra precision
-static double fixed_double(uint32_t original) {
+static double fixed_double(uint32_t original)
+{
 
     uint64_t exponent = 1023;
     uint64_t sign = 0;
@@ -46,7 +48,8 @@ static double fixed_double(uint32_t original) {
     // check the sign bit
     // convert to positive if necessary - makes it simpler
     // to not have to deal with twos complement for the conversion
-    if (original & 0x80000000) {
+    if (original & 0x80000000)
+    {
         sign = 1;
         original = -original;
     }
@@ -57,13 +60,17 @@ static double fixed_double(uint32_t original) {
 
     // get the exponent and significand
     // basically shift until the top place bit is a 1
-    for (i=31;i>=0;--i) {
-        if ((1 << 31) & significand) {
+    for (i=31; i>=0; --i)
+    {
+        if ((1 << 31) & significand)
+        {
             // we have found where we want to be...
             // put all in place
             (*output_bits) = ((sign << 63) & 0x8000000000000000) + ((exponent << 52) & 0x7FF0000000000000) + ((significand << 21) & 0x000FFFFFFFFFFFFF);
             break;
-        } else {
+        }
+        else
+        {
             significand <<= 1;
             exponent -= 1;
         }
@@ -72,12 +79,13 @@ static double fixed_double(uint32_t original) {
     return output;
 }
 
-static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status) {
+static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status)
+{
     int valid = 0;
 
     // quick check that this packet matches expected fields
     if (buf[0] != 'q' || buf[1] != 49)
-      return 0;
+        return 0;
 
     //status->north_velocity = read_swapped_float(buf + 23);
     //status->east_velocity = read_swapped_float(buf + 27);
@@ -95,11 +103,13 @@ static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status
 
     uint8_t sum = 0;
     int i = 0;
-    for (i = 2;i<51;++i) {
+    for (i = 2; i<51; ++i)
+    {
         sum += buf[i];
     }
 
-    if (sum == buf[51]) {
+    if (sum == buf[51])
+    {
         valid = 1;
     }
 
@@ -112,27 +122,28 @@ int broken_pipe;
 void
 signal_handler(int sig_num)
 {
-   // do a safe exit
+    // do a safe exit
     if(sig_num == SIGPIPE)
         broken_pipe = 1;
     else
         program_exit = 1;
 }
 
-int main (int argc, char *argv[]) {
-		
+int main (int argc, char *argv[])
+{
+
     // install the signal handler
     program_exit = 0;
     broken_pipe = 0;
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
-	
-	//Initalise LCM object - specReading
+
+    //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
 
     char rootkey[64];
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
-    
+
     acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
     if(sensor == NULL)
         return 0;
@@ -144,7 +155,7 @@ int main (int argc, char *argv[]) {
     char *ship_name = bot_param_get_str_or_fail(sensor->param, key);
     sprintf(key, "%s.ship_id", rootkey);
     int8_t ship_id = bot_param_get_int_or_fail(sensor->param, key);
- 	
+
     char buf[52];
     acfrlcm_ship_status_t status;
 
@@ -154,38 +165,43 @@ int main (int argc, char *argv[]) {
 
     fd_set rfds;
     // loop to collect data, parse and send it on its way
-    while(!program_exit) {
+    while(!program_exit)
+    {
         // check for broken pipes, if it is broken make sure it is closed and then reopen it
-	if(broken_pipe) {
+        if(broken_pipe)
+        {
             sensor->port_open = 0;
             fprintf(stderr, "Pipe broken\n");
             continue;
         }
 
-		memset(buf, 0, sizeof(buf));
-		
-		FD_ZERO(&rfds);
+        memset(buf, 0, sizeof(buf));
+
+        FD_ZERO(&rfds);
         FD_SET(sensor->fd, &rfds);
-	
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-	    
-	    int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1)
             perror("Select failure: ");
         else if(ret != 0)
         {
-			int len;			
+            int len;
             status.utime = timestamp_now();
             len = acfr_sensor_read(sensor, buf, 52);
-            if(len == 52) {
-	        if (parseShipStatus(buf, len, &status))
+            if(len == 52)
+            {
+                if (parseShipStatus(buf, len, &status))
                     acfrlcm_ship_status_t_publish (lcm, channel, &status);
-            } else {
-              fprintf(stderr, "Message incorrect size!");
             }
-					
+            else
+            {
+                fprintf(stderr, "Message incorrect size!");
+            }
+
         }
         else
         {
@@ -195,6 +211,6 @@ int main (int argc, char *argv[]) {
     }
 
     acfr_sensor_destroy(sensor);
-    
+
     return 0;
 }

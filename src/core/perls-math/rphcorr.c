@@ -22,29 +22,34 @@ rphcorr_create (BotParam *param, char *rootkey)
 
     sprintf (key, "%s.rphcorr.publish", rootkey);
     bot_param_get_int (param, key, &rphcorr->publish);
-    if (rphcorr->publish) {
+    if (rphcorr->publish)
+    {
         char *model_type = NULL;
         sprintf (key, "%s.rphcorr.model", rootkey);
         bot_param_get_str (param, key, &model_type);
 
-        if (0==strcmp (model_type,"UVC")) {
+        if (0==strcmp (model_type,"UVC"))
+        {
             rphcorr->model = rphcorr_model_uvc;
             sprintf (key, "%s.rphcorr.coeffs", rootkey);
             int ncoeffs = bot_param_get_array_len (param, key);
-            if (ncoeffs != RPHCORR_MODEL_UVC_NCOEFFS) {
-                ERROR ("rphcorr model requires %d coeffs, not %d as in config", 
-                        RPHCORR_MODEL_UVC_NCOEFFS, ncoeffs);
+            if (ncoeffs != RPHCORR_MODEL_UVC_NCOEFFS)
+            {
+                ERROR ("rphcorr model requires %d coeffs, not %d as in config",
+                       RPHCORR_MODEL_UVC_NCOEFFS, ncoeffs);
                 return NULL;
             }
             rphcorr->ncoeffs = ncoeffs;
             rphcorr->coeffs = calloc (1, ncoeffs*sizeof (double));
             bot_param_get_double_array_or_fail (param, key, rphcorr->coeffs, ncoeffs);
-            for (int i=0;i<ncoeffs;++i) rphcorr->coeffs[i] *= DTOR;
+            for (int i=0; i<ncoeffs; ++i) rphcorr->coeffs[i] *= DTOR;
         }
-        else if (0==strcmp (model_type,"NONE")) {
+        else if (0==strcmp (model_type,"NONE"))
+        {
             rphcorr->model = rphcorr_model_none;
         }
-        else {
+        else
+        {
             ERROR ("unrecognized heading correction model in config!");
             free (model_type);
             return NULL;
@@ -59,11 +64,12 @@ rphcorr_create (BotParam *param, char *rootkey)
 
         sprintf (key, "%s.x_vs", rootkey);
         bot_param_get_double_array_or_fail (param, key, rphcorr->x_vs, 6);
-        for (int i=3;i<6;++i) rphcorr->x_vs[i] *= DTOR;
+        for (int i=3; i<6; ++i) rphcorr->x_vs[i] *= DTOR;
         double J_inv[6*6];
         ssc_inverse (rphcorr->x_sv, J_inv, rphcorr->x_vs);
     }
-    else {
+    else
+    {
         rphcorr->ncoeffs = 0;
         rphcorr->channel = strdup ("");
         rphcorr->model = rphcorr_model_none;
@@ -74,14 +80,15 @@ rphcorr_create (BotParam *param, char *rootkey)
 void
 rphcorr_destroy (rphcorr_t *rphcorr)
 {
-    if (rphcorr) {
+    if (rphcorr)
+    {
         if (rphcorr->channel) free (rphcorr->channel);
         if (rphcorr->coeffs) free (rphcorr->coeffs);
         free (rphcorr);
     }
 }
 
-static void 
+static void
 uvc_correction (double rph[3], const double raw_rph[3], rphcorr_t *rphcorr)
 {
     // transmform sensor frame rph into vehicle frame
@@ -111,13 +118,16 @@ publish_rphcorr (lcm_t *lcm, rphcorr_t *rphcorr, int64_t utime, const double raw
     if (!rphcorr->publish) return;
 
     double cor_rph[3] = {0};
-    if (rphcorr->model == rphcorr_model_uvc) { // UVC model
+    if (rphcorr->model == rphcorr_model_uvc)   // UVC model
+    {
         uvc_correction (cor_rph, raw_rph, rphcorr);
     }
-    else if (rphcorr->model == rphcorr_model_none) {
+    else if (rphcorr->model == rphcorr_model_none)
+    {
         memcpy (cor_rph, raw_rph, 3*sizeof (double));
     }
-    else {
+    else
+    {
         ERROR ("unrecognized heading correction model!");
         memcpy (cor_rph, raw_rph, 3*sizeof (double));
         return;

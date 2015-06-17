@@ -58,39 +58,44 @@ botu_param_get_int_or_default (BotParam *param, const char *key, const int def)
 
 void
 botu_param_read_covariance (gsl_matrix *cov_out, BotParam *param, char *base_key)
-{    
+{
     int len = cov_out->size1;
     char key[256];
-    
+
     //try to read full version
     sprintf (key, "%s.full", base_key);
     double *cov = calloc (len*len, sizeof (*cov));
     int ret = bot_param_get_double_array (param, key, cov, len*len);
-    if (len*len == ret) {
+    if (len*len == ret)
+    {
         memcpy (cov_out->data, cov, len*len*sizeof (*cov_out->data));
         free (cov);
         return;
-    } else
+    }
+    else
         free (cov);
-    
+
     // try to read diagonal human readable std devation version
     sprintf (key, "%s.diag_std", base_key);
     double *diag_std = calloc (len, sizeof (*diag_std));
     ret = bot_param_get_double_array (param, key, diag_std, len);
-    if (len==ret) {
+    if (len==ret)
+    {
         //check for a dtor vector if we need to convert some elements to radians
         sprintf (key, "%s.dtor", base_key);
         int *dtor = calloc (len, sizeof (*dtor));
         ret = bot_param_get_int_array (param, key, dtor, len);
-        if (len==ret) {
-            for (int i=0; i<len; i++) {
+        if (len==ret)
+        {
+            for (int i=0; i<len; i++)
+            {
                 if (dtor[i])
                     diag_std[i] = diag_std[i]*UNITS_DEGREE_TO_RADIAN;
 
                 diag_std[i] = diag_std[i]*diag_std[i];
             }
         }
-        
+
         gsl_vector_view diag_v = gsl_matrix_diagonal (cov_out);
         gsl_vector_view diag_std_v = gsl_vector_view_array (diag_std, len);
         gsl_vector_memcpy (&diag_v.vector, &diag_std_v.vector);
@@ -101,7 +106,7 @@ botu_param_read_covariance (gsl_matrix *cov_out, BotParam *param, char *base_key
     }
     else
         free (diag_std);
-    
+
     ERROR ("Failed to read noise covariance %s", base_key);
 }
 
@@ -121,7 +126,8 @@ botu_param_new_from_getopt_or_fail (getopt_t *gopt, lcm_t *lcm)
     BotParam *param = NULL;
     int keep_updated = 1;
 
-    if (getopt_get_bool (gopt, BOTU_PARAM_LONG_OPT_USE_SERVER)) {
+    if (getopt_get_bool (gopt, BOTU_PARAM_LONG_OPT_USE_SERVER))
+    {
         printf ("Creating param from server\n");
         const char *server_name = getopt_get_string (gopt, BOTU_PARAM_LONG_OPT_SERVER_NAME);
         if (strcmp (server_name, ""))
@@ -129,7 +135,8 @@ botu_param_new_from_getopt_or_fail (getopt_t *gopt, lcm_t *lcm)
         else
             param = bot_param_new_from_server (lcm, keep_updated);
     }
-    else {
+    else
+    {
         const char *cfg_file = getopt_get_string (gopt, BOTU_PARAM_LONG_OPT_MASTER_CFG);
         printf ("Creating param from file %s\n", cfg_file);
         param = bot_param_new_from_file (cfg_file);

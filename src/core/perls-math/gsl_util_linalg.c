@@ -17,7 +17,8 @@ gslu_linalg_SV_decomp_full_alloc (const gsl_matrix *A)
     gslu_linalg_SV *sv = malloc (sizeof (*sv));
 
     // check if M >= N
-    if (M >= N) {
+    if (M >= N)
+    {
         sv->U = gsl_matrix_alloc (M, N);
         sv->S = gsl_vector_alloc (N);
         sv->V = gsl_matrix_alloc (N, N);
@@ -28,8 +29,9 @@ gslu_linalg_SV_decomp_full_alloc (const gsl_matrix *A)
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
 
         int ret = gsl_linalg_SV_decomp (sv->U, sv->V, sv->S, work);
-        if (ret != GSL_SUCCESS) {
-            fprintf (stderr, "error in gslu_linalg_SV_decomp_alloc: %s\n", 
+        if (ret != GSL_SUCCESS)
+        {
+            fprintf (stderr, "error in gslu_linalg_SV_decomp_alloc: %s\n",
                      gsl_strerror (ret));
 
             gslu_linalg_SV_free (sv);
@@ -44,8 +46,9 @@ gslu_linalg_SV_decomp_full_alloc (const gsl_matrix *A)
         gsl_set_error_handler (default_handler);
 
         gslu_vector_free (work);
-     }
-    else { // M < N
+    }
+    else   // M < N
+    {
 
         // RUN gsl svd first
         sv->U = gsl_matrix_alloc (M, M);
@@ -61,10 +64,11 @@ gslu_linalg_SV_decomp_full_alloc (const gsl_matrix *A)
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
 
         int ret = gsl_linalg_SV_decomp (&Vsub.matrix, sv->U, sv->S, work);
-        if (ret != GSL_SUCCESS) {
-            fprintf (stderr, "error in gslu_linalg_SV_decomp_alloc: %s\n", 
+        if (ret != GSL_SUCCESS)
+        {
+            fprintf (stderr, "error in gslu_linalg_SV_decomp_alloc: %s\n",
                      gsl_strerror (ret));
-            
+
             gslu_linalg_SV_free (sv);
             gslu_vector_free (work);
             gslu_matrix_free (AT);
@@ -105,7 +109,8 @@ gslu_linalg_LU_decomp_alloc (const gsl_matrix *A)
     lu->LU = gsl_matrix_alloc (A->size1, A->size2);
     gsl_matrix_memcpy (lu->LU, A);
     lu->p = gsl_permutation_alloc (A->size2);
-    if (gsl_linalg_LU_decomp (lu->LU, lu->p, &lu->signum) != GSL_SUCCESS) {
+    if (gsl_linalg_LU_decomp (lu->LU, lu->p, &lu->signum) != GSL_SUCCESS)
+    {
         gslu_linalg_LU_free (lu);
         return NULL;
     }
@@ -120,7 +125,8 @@ gslu_linalg_QR_decomp_alloc (const gsl_matrix *A)
     qr->QR = gsl_matrix_alloc (A->size1, A->size2);
     gsl_matrix_memcpy (qr->QR, A);
     qr->tau = gsl_vector_alloc (GSL_MIN (A->size1, A->size2));
-    if (gsl_linalg_QR_decomp (qr->QR, qr->tau) != GSL_SUCCESS) {
+    if (gsl_linalg_QR_decomp (qr->QR, qr->tau) != GSL_SUCCESS)
+    {
         gslu_linalg_QR_free (qr);
         return NULL;
     }
@@ -129,11 +135,12 @@ gslu_linalg_QR_decomp_alloc (const gsl_matrix *A)
 
 int
 gslu_linalg_cholesky_decomp_lower (gsl_matrix *A)
-{    
+{
     int ret = gsl_linalg_cholesky_decomp (A);
     if (ret == GSL_EDOM)
         GSL_ERROR ("Input matrix is not positive definite!", GSL_EDOM);
-    else {
+    else
+    {
         // decomp returns L and LT in full matrix
         // set upper triangular part 0 so only lower is returned
         for (size_t i=0 ; i < A->size1 ; i++)
@@ -152,7 +159,8 @@ gslu_linalg_SV_decomp_econ_alloc (const gsl_matrix *A)
     size_t N = A->size2;
 
     // check if M >= N
-    if (M >= N) {
+    if (M >= N)
+    {
         gslu_linalg_SV *sv = malloc (sizeof (*sv));
         sv->U = gsl_matrix_alloc (M, N);
         gsl_matrix_memcpy (sv->U, A);
@@ -164,7 +172,8 @@ gslu_linalg_SV_decomp_econ_alloc (const gsl_matrix *A)
         gsl_error_handler_t *default_handler = gsl_set_error_handler_off ();
 
         int ret = gsl_linalg_SV_decomp (sv->U, sv->V, sv->S, work);
-        if (ret != GSL_SUCCESS) {
+        if (ret != GSL_SUCCESS)
+        {
             fprintf (stderr, "error in gslu_linalg_SV_decomp_alloc: %s\n",
                      gsl_strerror (ret));
 
@@ -182,13 +191,15 @@ gslu_linalg_SV_decomp_econ_alloc (const gsl_matrix *A)
         gslu_vector_free (work);
         return sv;
     }
-    else {
+    else
+    {
         // if M < N, implemetation from
         // http://ugrad.stat.ubc.ca/R/library/GeneTS/html/fast.svd.html
 
         gsl_matrix *AAT = gslu_blas_mmT_alloc (A, A);
         gslu_eigen *eig = gslu_eigen_decomp_alloc (AAT);
-        if (!eig) {
+        if (!eig)
+        {
             gslu_matrix_free (AAT);
             gslu_eigen_free (eig);
             return NULL;
@@ -197,11 +208,12 @@ gslu_linalg_SV_decomp_econ_alloc (const gsl_matrix *A)
         // A A' = U S^2 U'
         gslu_linalg_SV *sv = malloc (sizeof (*sv));
         sv->U = gslu_matrix_clone (eig->V);
-        sv->S = gslu_vector_clone (eig->D); 
+        sv->S = gslu_vector_clone (eig->D);
         gslu_vector_sqrt (sv->S);
 
         // V = A' U D^(-1)
-        gsl_matrix *Sinv = gsl_matrix_alloc (M, M); gsl_matrix_set_zero (Sinv);
+        gsl_matrix *Sinv = gsl_matrix_alloc (M, M);
+        gsl_matrix_set_zero (Sinv);
         gsl_vector_view Sinv_vec = gsl_matrix_diagonal (Sinv);
         gsl_vector_memcpy (&Sinv_vec.vector, sv->S);
         gslu_vector_inv (&Sinv_vec.vector);
@@ -225,20 +237,23 @@ gslu_linalg_rref (gsl_matrix *A, const int m2)
 
     if (m2 > 0 && m2 <=M)
         max_rowcount = m2;
-        
+
     size_t col, rix, iix;
 
     // workspace
     gsl_vector *row_work = gsl_vector_alloc (N);
- 
+
     col = 0;
-    for (rix=0; rix<max_rowcount; rix++) {
+    for (rix=0; rix<max_rowcount; rix++)
+    {
         if (col >= N) return;
         iix = rix;
-        while (fabs (gsl_matrix_get (A, iix, col)) < GSL_DBL_EPSILON) {
+        while (fabs (gsl_matrix_get (A, iix, col)) < GSL_DBL_EPSILON)
+        {
             // if pivot candidate == 0 we need to swap. iix is the index to swap
             iix++;
-            if (iix == M) {
+            if (iix == M)
+            {
                 iix = rix;
                 col++;
                 if (col == N) return;
@@ -246,7 +261,8 @@ gslu_linalg_rref (gsl_matrix *A, const int m2)
         }
 
         // Swap i-th and r-th rows.
-        if ( iix != rix ) {
+        if ( iix != rix )
+        {
             gsl_vector_view A_i_row = gsl_matrix_row (A, iix);
             gsl_vector_view A_r_row = gsl_matrix_row (A, rix);
             gsl_vector_memcpy (row_work, &A_r_row.vector);          // r -> temp
@@ -259,8 +275,10 @@ gslu_linalg_rref (gsl_matrix *A, const int m2)
         gsl_vector_scale (&A_r_row.vector, 1.0/gsl_matrix_get (A, rix, col));
 
         // Subtract multiples of the pivot row from all the other rows.
-        for (iix=0; iix<max_rowcount; iix++) {
-            if ( iix != rix ) {
+        for (iix=0; iix<max_rowcount; iix++)
+        {
+            if ( iix != rix )
+            {
                 gsl_vector_memcpy (row_work, &A_r_row.vector);
                 gsl_vector_scale (row_work, gsl_matrix_get (A, iix, col));
                 gsl_vector_view A_i_row = gsl_matrix_row (A, iix);
@@ -275,7 +293,7 @@ gslu_linalg_rref (gsl_matrix *A, const int m2)
 }
 
 #ifdef GSL_VER_LESS_THAN_1_12
-int 
+int
 gsl_linalg_cholesky_invert (gsl_matrix *cholesky)
 {
     printf ("Using workaround for gsl_linalg_cholesky_invert()");
@@ -323,7 +341,8 @@ gslu_linalg_sqrtm (const gsl_matrix *R, gsl_matrix *sqrtmR)
     gsl_eigen_symmv_free (w);
 
     int evalIndex = 0;
-    for (evalIndex = 0; evalIndex < n; evalIndex++) {
+    for (evalIndex = 0; evalIndex < n; evalIndex++)
+    {
         gsl_vector_set(sqrtEval, evalIndex, sqrt(gsl_vector_get(eval, evalIndex)));
     }
 

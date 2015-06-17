@@ -45,10 +45,13 @@ gslu_vector_printfc (const gsl_vector *a, const char *name, const char *fmt, CBL
         __default__ = 0;
 
     size_t size1, size2;
-    if (Trans == CblasNoTrans) {     
+    if (Trans == CblasNoTrans)
+    {
         size1 = a->size;
         size2 = 1;
-    } else {
+    }
+    else
+    {
         size1 = 1;
         size2 = a->size;
     }
@@ -65,11 +68,13 @@ gslu_vector_printfc (const gsl_vector *a, const char *name, const char *fmt, CBL
     else
         sci = 0;
 
-    if (sci < scimin) {
+    if (sci < scimin)
+    {
         sci++;
         scifmt = 1;
-    } 
-    else if (sci > scimax) {
+    }
+    else if (sci > scimax)
+    {
         sci--;
         scifmt = 1;
     }
@@ -78,15 +83,19 @@ gslu_vector_printfc (const gsl_vector *a, const char *name, const char *fmt, CBL
         printf ("   1.0e%+03d *\n", sci);
 
     // print matrix
-    for (size_t n=0; n < size2; n+=ncols) {
-        if (ncols < size2) {
+    for (size_t n=0; n < size2; n+=ncols)
+    {
+        if (ncols < size2)
+        {
             if (n == (size2 - 1))
                 printf ("    Column %zd\n", n);
             else
                 printf ("    Columns %zd through %zd\n", n, GSL_MIN(n+ncols, size2)-1);
         }
-        for (size_t i=0; i<size1; i++) {
-            for (size_t j=GSL_MIN(n, size2); j<GSL_MIN(n+ncols, size2); j++) {
+        for (size_t i=0; i<size1; i++)
+        {
+            for (size_t j=GSL_MIN(n, size2); j<GSL_MIN(n+ncols, size2); j++)
+            {
                 double v;
                 if (Trans == CblasNoTrans)
                     v = gsl_vector_get (a, i);
@@ -122,9 +131,12 @@ gslu_vector_complex_printfc (const gsl_vector_complex *a, const char *name, cons
     // figure out our terminal window size
     int ncols = 0;
     struct winsize w;
-    if (ioctl (0, TIOCGWINSZ, &w)) {
+    if (ioctl (0, TIOCGWINSZ, &w))
+    {
         ncols = 80;
-    } else {
+    }
+    else
+    {
         ncols = round (w.ws_col / 12.0);
     }
 
@@ -142,11 +154,13 @@ gslu_vector_complex_printfc (const gsl_vector_complex *a, const char *name, cons
     const char *imaginary = "i";
 
     int __default__ = 1;
-    if (fmt == NULL) {
+    if (fmt == NULL)
+    {
         fmt_real = "%10.4f";
         fmt_imag = "%+10.4fi";
     }
-    else {
+    else
+    {
         __default__ = 0;
         strcpy (fmt_real, fmt);
         strcpy (fmt_imag, fmt);
@@ -170,11 +184,13 @@ gslu_vector_complex_printfc (const gsl_vector_complex *a, const char *name, cons
     else
         sci = 0;
 
-    if (sci < scimin) {
+    if (sci < scimin)
+    {
         sci++;
         scifmt = 1;
-    } 
-    else if (sci > scimax) {
+    }
+    else if (sci > scimax)
+    {
         sci--;
         scifmt = 1;
     }
@@ -183,15 +199,19 @@ gslu_vector_complex_printfc (const gsl_vector_complex *a, const char *name, cons
         printf ("   1.0e%+03d *\n", sci);
 
     // print matrix
-    for (size_t n=0; n < size2; n+=ncols) {
-        if (ncols < size2) {
+    for (size_t n=0; n < size2; n+=ncols)
+    {
+        if (ncols < size2)
+        {
             if (n == (size2 - 1))
                 printf ("    Column %zd\n", n);
             else
                 printf ("    Columns %zd through %zd\n", n, GSL_MIN(n+ncols, size2)-1);
         }
-        for (size_t i=0; i<size1; i++) {
-            for (size_t j=GSL_MIN(n, size2); j<GSL_MIN(n+ncols, size2); j++) {
+        for (size_t i=0; i<size1; i++)
+        {
+            for (size_t j=GSL_MIN(n, size2); j<GSL_MIN(n+ncols, size2); j++)
+            {
                 double v;
                 if (j==0)
                     v = gsl_vector_get (&a_real.vector, i);
@@ -201,18 +221,22 @@ gslu_vector_complex_printfc (const gsl_vector_complex *a, const char *name, cons
                 if (scifmt)
                     v /= tens;
 
-                if (__default__ && fabs (v) < ZERO) {
+                if (__default__ && fabs (v) < ZERO)
+                {
                     if (j==0)
                         printf (fmt_real, 0.0);
                     else //if (j==1)
                         printf (fmt_imag, 0.0);
                     printf (" ");
                 }
-                else {
-                    if (j==0) {
+                else
+                {
+                    if (j==0)
+                    {
                         printf (fmt_real, v);
                     }
-                    else {//if (j==1)
+                    else  //if (j==1)
+                    {
                         printf (fmt_imag, v);
                         printf (" ");
                     }
@@ -229,7 +253,8 @@ int
 gslu_vector_is_equal (const gsl_vector *a, const gsl_vector *b)
 {
     assert (a->size == b->size);
-    for (size_t i=0; i<a->size; i++) {
+    for (size_t i=0; i<a->size; i++)
+    {
         double epsilon = gsl_vector_get (a, i) - gsl_vector_get (b, i);
         if (fabs (epsilon) > 1e-14)
             return 0;
@@ -244,9 +269,11 @@ gslu_vector_circ_dist (const gsl_vector *a, const gsl_vector *b, const gslu_inde
     assert (a->size == b->size && 0 < c->size && c->size <= a->size);
     double dist2 = 0.0;
     size_t k = 0, c_k = gslu_index_get (c, k);
-    for (size_t i=0; i<a->size; i++) {
+    for (size_t i=0; i<a->size; i++)
+    {
         double delta = gsl_vector_get (a, i) - gsl_vector_get (b, i);
-        if (i == c_k) {
+        if (i == c_k)
+        {
             delta = gslu_math_minimized_angle (delta);
             c_k = ++k < c->size ? gslu_index_get (c, k) : c_k;
         }
@@ -260,9 +287,11 @@ gslu_vector_mahal_dist (const gsl_vector *a, const gsl_vector *b, const gsl_matr
 {
     assert (Sinv->size1 == Sinv->size2 && a->size == b->size && a->size == Sinv->size1);
     double dist2 = 0.0;
-    for (size_t i=0; i<Sinv->size1; i++) {
+    for (size_t i=0; i<Sinv->size1; i++)
+    {
         double ei = gsl_vector_get (a, i) - gsl_vector_get (b, i);
-        for (size_t j=i; j<Sinv->size2; j++) {
+        for (size_t j=i; j<Sinv->size2; j++)
+        {
             double ej = gsl_vector_get (a, j) - gsl_vector_get (b, j);
             if (i == j)
                 dist2 += ei * gsl_matrix_get (Sinv, i, j) * ei;
@@ -279,19 +308,23 @@ gslu_vector_mahal_circ_dist (const gsl_vector *a, const gsl_vector *b, const gsl
     assert (Sinv->size1 == Sinv->size2 && a->size == b->size && a->size == Sinv->size1 && 0 < c->size && c->size <= a->size);
     gsl_vector *nu = gsl_vector_alloc (a->size);
     size_t k = 0, c_k = gslu_index_get (c, k);
-    for (size_t i=0; i<a->size; i++) {
+    for (size_t i=0; i<a->size; i++)
+    {
         double delta = gsl_vector_get (a, i) - gsl_vector_get (b, i);
-        if (i == c_k) {
+        if (i == c_k)
+        {
             delta = gslu_math_minimized_angle (delta);
             c_k = ++k < c->size ? gslu_index_get (c, k) : c_k;
         }
         gsl_vector_set (nu, i, delta);
     }
-    
+
     double dist2 = 0.0;
-    for (size_t i=0; i<Sinv->size1; i++) {
+    for (size_t i=0; i<Sinv->size1; i++)
+    {
         double ei = gsl_vector_get (nu, i);
-        for (size_t j=i; j<Sinv->size2; j++) {
+        for (size_t j=i; j<Sinv->size2; j++)
+        {
             double ej = gsl_vector_get (nu, j);
             if (i == j)
                 dist2 += ei * gsl_matrix_get (Sinv, i, j) * ei;
@@ -308,7 +341,8 @@ int
 gslu_vector_reshape (gsl_matrix *A, const gsl_vector *a, CBLAS_TRANSPOSE_t TransA)
 {
     assert (A->size1*A->size2 == a->size);
-    switch (TransA) {
+    switch (TransA)
+    {
     case CblasNoTrans: // column order
         for (size_t j=0, k=0; j<A->size2; j++)
             for (size_t i=0; i<A->size1; i++, k++)

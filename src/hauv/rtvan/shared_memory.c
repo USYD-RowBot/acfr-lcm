@@ -111,7 +111,8 @@ shared_memory_init (int argc, char *argv[])
     // lcm
     // ---------------------------------------------- //
     shm->lcm = lcm_create (NULL);
-    if (!shm->lcm) {
+    if (!shm->lcm)
+    {
         ERROR ("lcm_create() failed!");
         exit (EXIT_FAILURE);
     }
@@ -119,9 +120,10 @@ shared_memory_init (int argc, char *argv[])
     // parse our config file
     // ---------------------------------------------- //
     shm->param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-    if (! shm->param) {
-      ERROR ("Could not get config parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
-      exit(EXIT_FAILURE);
+    if (! shm->param)
+    {
+        ERROR ("Could not get config parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
+        exit(EXIT_FAILURE);
     }
 
     shm->cameraUw_rootkey   = bot_param_get_str_or_fail (shm->param, "rtvan.cameraUw");
@@ -181,7 +183,7 @@ shared_memory_free (shm_t *shm)
     // free memory in reverse order of allocation
     getopt_destroy (shm->gopt);
     cache_destroy (shm->imgcache);
-    
+
     /* clean up underwater camera parameters */
     vis_cvu_map_free (shm->waterUw.map);
     cvReleaseImage (&shm->waterUw.mask);

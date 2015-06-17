@@ -14,7 +14,7 @@
 #include "perls-lcmtypes/perllcm_van_example_t.h"
 
 static void
-my_handler (const lcm_recv_buf_t *rbuf, const char * channel, 
+my_handler (const lcm_recv_buf_t *rbuf, const char * channel,
             const perllcm_van_example_t * msg, void * user)
 {
     int i;

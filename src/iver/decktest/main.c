@@ -30,7 +30,8 @@
 #define DURATION      10.0    // seconds
 
 typedef struct _state_t state_t;
-struct _state_t {
+struct _state_t
+{
     BotParam *param;
     getopt_t *gopt;
     lcm_t *lcm;
@@ -74,7 +75,8 @@ wiggle_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     // use acks with iver_rh_pub_omp to test that UVC acks are working
     static int64_t t0 = 0;
-    if (t0 == 0) {
+    if (t0 == 0)
+    {
         t0 = beat->utime;
         struct timeval start_to = {.tv_sec = 2};
         iver_rh_pub_omp (state->lcm, state->omp_channel, &cmd, state->param, &start_to);
@@ -83,19 +85,20 @@ wiggle_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     int64_t utime_dt = beat->utime - t0;
     double dt = timestamp_to_double (utime_dt);
-    
+
     double freq = 0.4; // Hz
     double sine = sin (2.0*M_PI*freq * dt);
     int motor = dt < DURATION/2.0 ? MOTOR_NULL + 2 : MOTOR_NULL - 2;
     int finpos = FIN_NULL + round (120 * sine);
     int finneg = FIN_NULL - round (120 * sine);
 
-    cmd = (senlcm_uvc_omp_t) {
+    cmd = (senlcm_uvc_omp_t)
+    {
         .yaw_top = finpos,
-        .yaw_bot = finneg,
-        .pitch_left = finpos,
-        .pitch_right = finneg,
-        .motor = motor,
+         .yaw_bot = finneg,
+          .pitch_left = finpos,
+           .pitch_right = finneg,
+            .motor = motor,
     };
     struct timeval cmd_to = {.tv_sec = 2};
     iver_rh_pub_omp (state->lcm, state->omp_channel, &cmd, state->param, &cmd_to);
@@ -104,7 +107,8 @@ wiggle_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     if ((i++ % 10)==0)
         printf (".");
 
-    if (dt > DURATION) {
+    if (dt > DURATION)
+    {
         state->done = 1;
         omp_zero (&cmd);
         struct timeval done_to = {.tv_sec = 2};
@@ -124,7 +128,8 @@ battery_callback (const lcm_recv_buf_t *rbuf, const char *channel,
     if (msg->percent < 30)
         printf ("WARNING battery low!  ");
 
-    switch (msg->batt_state) {
+    switch (msg->batt_state)
+    {
     case SENLCM_UVC_OPI_T_BS_CHARGING:
     case SENLCM_UVC_OPI_T_BS_DISCHARGING:
         printf ("OK  %s, ", msg->current > 0 ? "charging" : "discharging");
@@ -196,8 +201,10 @@ check_temperature (state_t *state)
         senlcm_dstar_ssp1_t_subscribe (state->lcm, state->dstar_ssp1_channel, &temp2_callback, &dstar_ssp1);
 
     struct timeval tv = { .tv_sec = 2 };
-    while (!os_compass || !dstar_ssp1) {
-        switch (lcmu_handle_timeout (state->lcm, &tv)) {
+    while (!os_compass || !dstar_ssp1)
+    {
+        switch (lcmu_handle_timeout (state->lcm, &tv))
+        {
         case -1:
             printf ("ERROR\n");
             exit (EXIT_FAILURE);
@@ -212,10 +219,10 @@ check_temperature (state_t *state)
         }
     }
 
-    if ((os_compass && os_compass->T > 35) || 
-        (dstar_ssp1 && dstar_ssp1->temperature > 35))
+    if ((os_compass && os_compass->T > 35) ||
+            (dstar_ssp1 && dstar_ssp1->temperature > 35))
         printf ("WARNING, temp high!  ");
-    else if ((os_compass && os_compass->T < 0) || 
+    else if ((os_compass && os_compass->T < 0) ||
              (dstar_ssp1 && dstar_ssp1->temperature < 0))
         printf ("WARNING, temp low!  ");
     else
@@ -242,7 +249,7 @@ main (int argc, char *argv[])
 {
     // so that redirected stdout won't be insanely buffered.
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
-    
+
     state_t *state = calloc (1, sizeof (*state));
 
     // TODO: getopts -- just fins, just motor, wiggle, ...
@@ -259,16 +266,19 @@ main (int argc, char *argv[])
     botu_param_add_pserver_to_getopt (state->gopt);
 
     state->lcm = lcm_create (NULL);
-    if (!state->lcm) {
+    if (!state->lcm)
+    {
         ERROR ("lcm_create() failed!");
         exit (EXIT_FAILURE);
     }
 
-    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0) {
+    if (!getopt_parse (state->gopt, argc, argv, 1) || state->gopt->extraargs->len!=0)
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (state->gopt, "help")) {
+    else if (getopt_get_bool (state->gopt, "help"))
+    {
         getopt_do_usage (state->gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -278,7 +288,7 @@ main (int argc, char *argv[])
     // lcm channels
     state->opi_channel = lcmu_channel_get_os_conduit (state->param, LCMU_CHANNEL_OS_CONDUIT_OPI);
     state->omp_channel = lcmu_channel_get_os_conduit (state->param, LCMU_CHANNEL_OS_CONDUIT_OMP);
-  
+
     state->os_compass_channel = bot_param_get_str_or_fail (state->param, "sensors.os-compass.gsd.channel");
     state->dstar_ssp1_channel = bot_param_get_str_or_fail (state->param, "sensors.dstar-ssp1.gsd.channel");
 
@@ -291,12 +301,14 @@ main (int argc, char *argv[])
 
     // check for battery level, and therefore heartbeat, os-conduit, and uvc
     bool done_batt = false;
-    senlcm_uvc_opi_t_subscription_t *sub_opi = 
+    senlcm_uvc_opi_t_subscription_t *sub_opi =
         senlcm_uvc_opi_t_subscribe (state->lcm, state->opi_channel, &battery_callback, &done_batt);
     printf (FORMAT, "checking batteries:");
-    while (!done_batt) {
+    while (!done_batt)
+    {
         struct timeval tv = { .tv_sec = 2 };
-        switch (lcmu_handle_timeout (state->lcm, &tv)) {
+        switch (lcmu_handle_timeout (state->lcm, &tv))
+        {
         case -1:
             printf ("ERROR\n");
             exit (EXIT_FAILURE);
@@ -314,9 +326,11 @@ main (int argc, char *argv[])
     senlcm_os_compass_t_subscription_t *sub_os_compass =
         senlcm_os_compass_t_subscribe (state->lcm, state->os_compass_channel, &vacuum_callback, &done_pvolts);
     printf (FORMAT, "checking vacuum:");
-    while (!done_pvolts) {
+    while (!done_pvolts)
+    {
         struct timeval tv = { .tv_sec = 2 };
-        switch (lcmu_handle_timeout (state->lcm, &tv)) {
+        switch (lcmu_handle_timeout (state->lcm, &tv))
+        {
         case -1:
             printf ("ERROR\n");
             exit (EXIT_FAILURE);
@@ -334,21 +348,24 @@ main (int argc, char *argv[])
 
     // check modem
     if (getopt_get_bool (state->gopt, "modem") ||
-        getopt_get_bool (state->gopt, "all")) {
+            getopt_get_bool (state->gopt, "all"))
+    {
         printf (FORMAT, "checking modem");
         printf ("not implemented yet\n");
     }
 
     // check led strobe
     if (getopt_get_bool (state->gopt, "strobe") ||
-        getopt_get_bool (state->gopt, "all")) {
+            getopt_get_bool (state->gopt, "all"))
+    {
         printf (FORMAT, "checking strobe");
         printf ("not implemented yet\n");
     }
 
     // check props and fins
     if (getopt_get_bool (state->gopt, "wiggle") ||
-        getopt_get_bool (state->gopt, "all")) {
+            getopt_get_bool (state->gopt, "all"))
+    {
 
         printf (FORMAT, "checking props/fins:");
         perllcm_heartbeat_t_subscribe (state->lcm, state->hb10_channel, &wiggle_callback, state);
@@ -356,7 +373,7 @@ main (int argc, char *argv[])
         while (!state->done)
             lcm_handle (state->lcm);
     }
-        
+
     // prompt user to check remaining hardware
     printf ("\n");
     printf ("check that RF beacon, Sonotronics pinger, and NightGear light are on\n");

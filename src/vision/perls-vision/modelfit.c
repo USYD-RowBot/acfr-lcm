@@ -31,25 +31,30 @@ _modelfit_compute_gic (const gsl_vector *reprojection_error, vis_modelfit_model_
     // assing dof struct and model according to model_type
     int dof_struct, dof_model;
 
-    if (model_type == VIS_MODELFIT_H) {
+    if (model_type == VIS_MODELFIT_H)
+    {
         dof_struct = 2;  // 2D structure
         dof_model  = 8;  // 8 dof for homograpy
     }
-    else if (model_type == VIS_MODELFIT_F) {
+    else if (model_type == VIS_MODELFIT_F)
+    {
         dof_struct = 3;  // 3D structure
         dof_model  = 7;  // 7 dof for fundamental matrix
     }
-    else if (model_type == VIS_MODELFIT_E) {
+    else if (model_type == VIS_MODELFIT_E)
+    {
         dof_struct = 3;  // 3D structure
         dof_model  = 5;  // 5 dof for essential matrix
     }
-    else {
+    else
+    {
         ERROR ("Unknown model type to compute gic.");
         abort ();
     }
 
     // compute GIC score
-    if (reprojection_error) {
+    if (reprojection_error)
+    {
         int N = reprojection_error->size;
 
         // gic = sum of reprj error + lambda1*dof_struct*N + lambda2*dof_model
@@ -67,7 +72,7 @@ _modelfit_reprojection_error_H (const gsl_matrix *uv1, const gsl_matrix *uv2,
                                 const gsl_matrix *H)
 {
     assert (uv1->size1 == 2 && uv1->size2 == uv2->size2);
-   
+
     int N = uv1->size2;
 
     // err = (u1-u2p)^2 + (v1-v2p)^2 + (u2-u1p)^2 + (v2-v1p)^2
@@ -105,7 +110,7 @@ _modelfit_reprojection_error_F (const gsl_matrix *uv1, const gsl_matrix *uv2,
                                 const gsl_matrix *F)
 {
     assert (uv1->size1 == 2 && uv1->size2 == uv2->size2);
-   
+
     int N = uv1->size2;
     gsl_vector *err = gsl_vector_alloc (N);
 
@@ -113,11 +118,13 @@ _modelfit_reprojection_error_F (const gsl_matrix *uv1, const gsl_matrix *uv2,
     GSLU_MATRIX_VIEW (F_trans, 3,3);
     gsl_matrix_transpose_memcpy (&F_trans.matrix, F);
 
-    GSLU_VECTOR_VIEW (lon1, 3); GSLU_VECTOR_VIEW (lon2, 3);
+    GSLU_VECTOR_VIEW (lon1, 3);
+    GSLU_VECTOR_VIEW (lon2, 3);
     GSLU_VECTOR_VIEW (uv1_h, 3, {0, 0, 1});
     GSLU_VECTOR_VIEW (uv2_h, 3, {0, 0, 1});
 
-    for (size_t i=0; i<N; i++) {
+    for (size_t i=0; i<N; i++)
+    {
         gsl_vector_set (&uv1_h.vector, 0, gsl_matrix_get (uv1, 0, i));
         gsl_vector_set (&uv1_h.vector, 1, gsl_matrix_get (uv1, 1, i));
         gsl_vector_set (&uv2_h.vector, 0, gsl_matrix_get (uv2, 0, i));
@@ -149,7 +156,7 @@ _modelfit_sampson_error_F (const gsl_matrix *xy1, const gsl_matrix *xy2,
                            const gsl_matrix *D, const gsl_matrix *F)
 {
     assert (xy1->size1 == 2 && xy1->size2 == xy2->size2);
-   
+
     int N = xy1->size2;
     gsl_vector *err = gsl_vector_alloc (N);
 
@@ -163,7 +170,8 @@ _modelfit_sampson_error_F (const gsl_matrix *xy1, const gsl_matrix *xy2,
     GSLU_VECTOR_VIEW (xy2_h, 3, {0, 0, 1});
     GSLU_VECTOR_VIEW (F_col, 9);
 
-    for (size_t i=0; i<N; i++) {
+    for (size_t i=0; i<N; i++)
+    {
         gsl_vector_set (&xy1_h.vector, 0, gsl_matrix_get (xy1, 0, i));
         gsl_vector_set (&xy1_h.vector, 1, gsl_matrix_get (xy1, 1, i));
         gsl_vector_set (&xy2_h.vector, 0, gsl_matrix_get (xy2, 0, i));
@@ -174,12 +182,12 @@ _modelfit_sampson_error_F (const gsl_matrix *xy1, const gsl_matrix *xy2,
         gslu_blas_mv (&J2_row.vector, F, &xy2_h.vector);
 
         double jacob = gsl_vector_get (&J1_row.vector, 0)*gsl_vector_get (&J1_row.vector, 0)
-                     + gsl_vector_get (&J1_row.vector, 1)*gsl_vector_get (&J1_row.vector, 1)
-                     + gsl_vector_get (&J2_row.vector, 0)*gsl_vector_get (&J2_row.vector, 0)
-                     + gsl_vector_get (&J2_row.vector, 1)*gsl_vector_get (&J2_row.vector, 1);
+                       + gsl_vector_get (&J1_row.vector, 1)*gsl_vector_get (&J1_row.vector, 1)
+                       + gsl_vector_get (&J2_row.vector, 0)*gsl_vector_get (&J2_row.vector, 0)
+                       + gsl_vector_get (&J2_row.vector, 1)*gsl_vector_get (&J2_row.vector, 1);
 
         gsl_vector_const_view D_row = gsl_matrix_const_row (D, i);
-        gslu_matrix_stack (&F_col.vector, F, CblasNoTrans); 
+        gslu_matrix_stack (&F_col.vector, F, CblasNoTrans);
         double eps = gslu_vector_dot (&F_col.vector, &D_row.vector);
 
         gsl_vector_set (err, i, eps/jacob);
@@ -190,7 +198,7 @@ _modelfit_sampson_error_F (const gsl_matrix *xy1, const gsl_matrix *xy2,
 
 double
 vis_modelfit_gic (const gsl_matrix* model, vis_modelfit_model_t model_type,
-                  const gsl_matrix* uv1, const gsl_matrix* uv2,  
+                  const gsl_matrix* uv1, const gsl_matrix* uv2,
                   double lambda1, double lambda2)
 {
     double gic = GSL_POSINF;
@@ -203,21 +211,25 @@ vis_modelfit_gic (const gsl_matrix* model, vis_modelfit_model_t model_type,
 }
 
 gsl_vector *
-vis_modelfit_reprojection_error (const gsl_matrix *uv1, const gsl_matrix *uv2, 
+vis_modelfit_reprojection_error (const gsl_matrix *uv1, const gsl_matrix *uv2,
                                  const gsl_matrix *model, vis_modelfit_model_t model_type)
 {
     gsl_vector *err_ret = NULL;
-    if (model_type == VIS_MODELFIT_H) {
+    if (model_type == VIS_MODELFIT_H)
+    {
         err_ret = _modelfit_reprojection_error_H (uv1, uv2, model);
     }
-    else if (model_type == VIS_MODELFIT_F) {
+    else if (model_type == VIS_MODELFIT_F)
+    {
         err_ret = _modelfit_reprojection_error_F (uv1, uv2, model);
     }
-    else if (model_type == VIS_MODELFIT_E) {
+    else if (model_type == VIS_MODELFIT_E)
+    {
         ERROR ("VIS_MODELFIT_E reprojection error not implemented.");
         abort ();
     }
-    else {
+    else
+    {
         ERROR ("Unknown model type to compute reprojection error.");
         abort ();
     }
@@ -226,7 +238,7 @@ vis_modelfit_reprojection_error (const gsl_matrix *uv1, const gsl_matrix *uv2,
 }
 
 /*
- * computes the [Nx9] measurement matrix D used for SVD calculation 
+ * computes the [Nx9] measurement matrix D used for SVD calculation
  * of the fundamental matrix f or essential matrix E
  * D = [xj.*xi, xj.*yi, xj, yj.*xi, yj.*yi, yj, xi, yi, ones(n,1)];
  *
@@ -293,7 +305,7 @@ _F_meas_matrix_alloc (const gsl_matrix *xy1, const gsl_matrix *xy2)
 gsl_matrix *
 _demazure_constraints_triggs_alloc (gsl_matrix *Ea, gsl_matrix *Eb, gsl_matrix *Ec)
 {
-    GSLU_MATRIX_VIEW (Eac, 3,3); 
+    GSLU_MATRIX_VIEW (Eac, 3,3);
     gsl_matrix_memcpy (&Eac.matrix, Ea);
     gsl_matrix_sub (&Eac.matrix, Ec);       // Ex = Ea-Ec, Ey = Eb, Ez = Ec
 
@@ -304,7 +316,8 @@ _demazure_constraints_triggs_alloc (gsl_matrix *Ea, gsl_matrix *Eb, gsl_matrix *
 
     GSLU_MATRIX_VIEW (I, 3, 3, {1.0, 0.0, 0.0,
                                 0.0, 1.0, 0.0,
-                                0.0, 0.0, 1.0});
+                                0.0, 0.0, 1.0
+                               });
 
     GSLU_MATRIX_VIEW (WORK, 3, 3);
     GSLU_MATRIX_VIEW (TRANS_TEMP, 3, 3);
@@ -390,17 +403,27 @@ _demazure_constraints_triggs_alloc (gsl_matrix *Ea, gsl_matrix *Eb, gsl_matrix *
     // allocation N matrix to return
     // N = reshape([Nxxx,Nxxy,Nxxz,Nxyy,Nxyz,Nxzz,Nyyy,Nyyz,Nyzz,Nzzz],9,10);
     gsl_matrix *N = gsl_matrix_alloc (9, 10);
-    gsl_vector_view Nxxx_vec = gsl_matrix_column (N, 0); gslu_matrix_stack (&Nxxx_vec.vector, Nxxx_mat, CblasNoTrans);
-    gsl_vector_view Nxxy_vec = gsl_matrix_column (N, 1); gslu_matrix_stack (&Nxxy_vec.vector, Nxxy_mat, CblasNoTrans);
-    gsl_vector_view Nxxz_vec = gsl_matrix_column (N, 2); gslu_matrix_stack (&Nxxz_vec.vector, Nxxz_mat, CblasNoTrans);
-    gsl_vector_view Nxyy_vec = gsl_matrix_column (N, 3); gslu_matrix_stack (&Nxyy_vec.vector, Nxyy_mat, CblasNoTrans);
-    gsl_vector_view Nxyz_vec = gsl_matrix_column (N, 4); gslu_matrix_stack (&Nxyz_vec.vector, Nxyz_mat, CblasNoTrans);
-    gsl_vector_view Nxzz_vec = gsl_matrix_column (N, 5); gslu_matrix_stack (&Nxzz_vec.vector, Nxzz_mat, CblasNoTrans);
-    gsl_vector_view Nyyy_vec = gsl_matrix_column (N, 6); gslu_matrix_stack (&Nyyy_vec.vector, Nyyy_mat, CblasNoTrans);
-    gsl_vector_view Nyyz_vec = gsl_matrix_column (N, 7); gslu_matrix_stack (&Nyyz_vec.vector, Nyyz_mat, CblasNoTrans);
-    gsl_vector_view Nyzz_vec = gsl_matrix_column (N, 8); gslu_matrix_stack (&Nyzz_vec.vector, Nyzz_mat, CblasNoTrans);
-    gsl_vector_view Nzzz_vec = gsl_matrix_column (N, 9); gslu_matrix_stack (&Nzzz_vec.vector, Nzzz_mat, CblasNoTrans);
-    
+    gsl_vector_view Nxxx_vec = gsl_matrix_column (N, 0);
+    gslu_matrix_stack (&Nxxx_vec.vector, Nxxx_mat, CblasNoTrans);
+    gsl_vector_view Nxxy_vec = gsl_matrix_column (N, 1);
+    gslu_matrix_stack (&Nxxy_vec.vector, Nxxy_mat, CblasNoTrans);
+    gsl_vector_view Nxxz_vec = gsl_matrix_column (N, 2);
+    gslu_matrix_stack (&Nxxz_vec.vector, Nxxz_mat, CblasNoTrans);
+    gsl_vector_view Nxyy_vec = gsl_matrix_column (N, 3);
+    gslu_matrix_stack (&Nxyy_vec.vector, Nxyy_mat, CblasNoTrans);
+    gsl_vector_view Nxyz_vec = gsl_matrix_column (N, 4);
+    gslu_matrix_stack (&Nxyz_vec.vector, Nxyz_mat, CblasNoTrans);
+    gsl_vector_view Nxzz_vec = gsl_matrix_column (N, 5);
+    gslu_matrix_stack (&Nxzz_vec.vector, Nxzz_mat, CblasNoTrans);
+    gsl_vector_view Nyyy_vec = gsl_matrix_column (N, 6);
+    gslu_matrix_stack (&Nyyy_vec.vector, Nyyy_mat, CblasNoTrans);
+    gsl_vector_view Nyyz_vec = gsl_matrix_column (N, 7);
+    gslu_matrix_stack (&Nyyz_vec.vector, Nyyz_mat, CblasNoTrans);
+    gsl_vector_view Nyzz_vec = gsl_matrix_column (N, 8);
+    gslu_matrix_stack (&Nyzz_vec.vector, Nyzz_mat, CblasNoTrans);
+    gsl_vector_view Nzzz_vec = gsl_matrix_column (N, 9);
+    gslu_matrix_stack (&Nzzz_vec.vector, Nzzz_mat, CblasNoTrans);
+
     // clean up
     gslu_matrix_free (Nxx);
     gslu_matrix_free (Nyy);
@@ -430,17 +453,19 @@ vis_modelfit_weight_6p (const gsl_matrix *A, gsl_vector *xroots, gsl_vector *yro
 
     gslu_linalg_SV *SVD = gslu_linalg_SV_decomp_full_alloc (A);
 
-    if (SVD) {
+    if (SVD)
+    {
         gsl_matrix_view Ast = gsl_matrix_submatrix (SVD->V, 0, 0, 10, 4);
         gsl_matrix *As = gslu_matrix_transpose_alloc (&Ast.matrix);
 
         gslu_linalg_rref (As, 4); // Ar = rref2(As,4);
 
         // last 3 equations x^2*y x^2 x*y^2 x*y x y^3 y^2 y 1 B = Ar(2:4,2:10);
-        gsl_matrix_view B = gsl_matrix_submatrix (As, 1, 1, 3, 9); 
+        gsl_matrix_view B = gsl_matrix_submatrix (As, 1, 1, 3, 9);
 
         // expand to x^2*y x^2 x*y^2 x*y x y^6 y^5 y^4 y^3 y^2 y 1
-        gsl_matrix *C = gsl_matrix_alloc (3, 12); gsl_matrix_set_zero (C);
+        gsl_matrix *C = gsl_matrix_alloc (3, 12);
+        gsl_matrix_set_zero (C);
         gsl_matrix_view C_sub = gsl_matrix_submatrix (C, 0, 0, 3, 5);
         gsl_matrix_view B_sub = gsl_matrix_submatrix (&B.matrix, 0, 0, 3, 5);
         gsl_matrix_memcpy (&C_sub.matrix, &B_sub.matrix);
@@ -453,12 +478,13 @@ vis_modelfit_weight_6p (const gsl_matrix *A, gsl_vector *xroots, gsl_vector *yro
         gsl_matrix_view D = gsl_matrix_submatrix (C, 0, 2, 2, 10);
         gsl_matrix *M = &D.matrix; // just a pointer no mem alloc !
 
-        for (size_t j=2; j<12; j++) {
+        for (size_t j=2; j<12; j++)
+        {
             if (j<11)
                 gsl_matrix_set (M, 0, j-2, gsl_matrix_get (C, 0, j) - gsl_matrix_get (C, 1, j+1));
             gsl_matrix_set (M, 1, j-2, gsl_matrix_get (C, 2, j));
         }
-    
+
         // make first equation a function of x*y^2  0   x y^6 y^5 y^4 y^3 y^2 y 1
         // and second equation a function of   0   x*y  x y^6 y^5 y^4 y^3 y^2 y 1
         gslu_linalg_rref (M, 0);
@@ -483,7 +509,7 @@ vis_modelfit_weight_6p (const gsl_matrix *A, gsl_vector *xroots, gsl_vector *yro
         // extract polynomial of order 6 from first row and solve for roots
         gsl_poly_complex_workspace * w = gsl_poly_complex_workspace_alloc (7);
 
-        double ypoly[7]; 
+        double ypoly[7];
         double yroots_data[12]; // (7-1)*2
 
         for (size_t i=0; i<7; i++)
@@ -493,8 +519,10 @@ vis_modelfit_weight_6p (const gsl_matrix *A, gsl_vector *xroots, gsl_vector *yro
         gsl_poly_complex_workspace_free (w);
 
         // store y roots and to return
-        for (size_t i=0; i<6; i++) {
-            if (fabs(yroots_data[2*i+1]) < GSL_DBL_EPSILON) {
+        for (size_t i=0; i<6; i++)
+        {
+            if (fabs(yroots_data[2*i+1]) < GSL_DBL_EPSILON)
+            {
                 gsl_vector_set (yroots, n_realroot, yroots_data[2*i]);
                 n_realroot ++;
             }
@@ -534,7 +562,8 @@ vis_modelfit_E_6p (const gsl_matrix *D, gsl_matrix *E_set)
 
     size_t n_realroot = 0;
 
-    if (SVD) {
+    if (SVD)
+    {
         //gslu_matrix_printf (SVD->U, "U");
         //gslu_matrix_printf (SVD->V, "V");
         //gslu_vector_printf (SVD->S, "S");
@@ -553,7 +582,7 @@ vis_modelfit_E_6p (const gsl_matrix *D, gsl_matrix *E_set)
 #ifdef MODELFIT_VERBOSE
         gslu_matrix_printf (N,"N");
 #endif
-    
+
         GSLU_VECTOR_VIEW (xroots, 6);
         GSLU_VECTOR_VIEW (yroots, 6);
 
@@ -563,16 +592,17 @@ vis_modelfit_E_6p (const gsl_matrix *D, gsl_matrix *E_set)
         GSLU_MATRIX_VIEW (work, 3, 3);
 
         // the above solution for alpha and beta can have up to six roots
-        for (size_t k=0; k<n_realroot; k++) {
+        for (size_t k=0; k<n_realroot; k++)
+        {
             //E = alpha(k)*(Ea-Ec) + beta(k)*Eb + Ec;
             gsl_matrix_memcpy (&E.matrix, &Ec.matrix);
             gsl_matrix_memcpy (&work.matrix, &Ea.matrix);
             gsl_matrix_sub (&work.matrix, &Ec.matrix);
             double alpha = gsl_vector_get (&xroots.vector, k);
-            double beta = gsl_vector_get (&yroots.vector, k);        
-            
+            double beta = gsl_vector_get (&yroots.vector, k);
+
             gsl_blas_dgemm (CblasNoTrans, CblasNoTrans, alpha, &work.matrix, &Eb.matrix, beta, &E.matrix);
-            gsl_vector_view E_set_col = gsl_matrix_column (E_set, k); 
+            gsl_vector_view E_set_col = gsl_matrix_column (E_set, k);
             gslu_matrix_stack (&E_set_col.vector, &E.matrix, CblasNoTrans);
         }
     }
@@ -587,7 +617,7 @@ vis_modelfit_E_6p (const gsl_matrix *D, gsl_matrix *E_set)
 
 
 double
-vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2, 
+vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
                        gsl_matrix *E, gslu_index **isel, gsl_vector **error)
 {
     // check the input size first
@@ -618,7 +648,8 @@ vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
     GSLU_MATRIX_VIEW (E_set, 9, 6);
     GSLU_MATRIX_VIEW (E_temp, 3, 3);
 
-    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++) {
+    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++)
+    {
         // draw samples
         gslu_rand_index (r, &rsel.vector, n_total);
         gslu_matrix_selrow (&D_samples.matrix, D, &rsel.vector);
@@ -626,7 +657,8 @@ vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
         // fit essential matrix model
         size_t n_E = vis_modelfit_E_6p (&D_samples.matrix, &E_set.matrix);
 
-        for (size_t k=0; k<n_E; k++) {
+        for (size_t k=0; k<n_E; k++)
+        {
             gsl_vector_view E_col = gsl_matrix_column (&E_set.matrix, k);
             gslu_vector_reshape (&E_temp.matrix, &E_col.vector, CblasNoTrans);
 
@@ -636,24 +668,28 @@ vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
             error_i = _modelfit_sampson_error_F (xy1, xy2, D, &E_temp.matrix);
 
             size_t n_in = 0;
-            for (size_t i=0; i<n_total; i++) {
-                if (fabs(gsl_vector_get(error_i,i)) < thresh) {
+            for (size_t i=0; i<n_total; i++)
+            {
+                if (fabs(gsl_vector_get(error_i,i)) < thresh)
+                {
                     //printf ("found smaller %g\b", fabs(gsl_vector_get(error_i,i)));
                     sel_in[n_in++] = i;
                 }
             }
 
             // check for consensus
-            if (n_in > n_inlier) {
+            if (n_in > n_inlier)
+            {
                 n_inlier = n_in;
                 gsl_matrix_memcpy (E, &E_temp.matrix);
                 itr_max = GSL_MIN (itr_max, ransac_adapt_trials (n_inlier, n_total, p, VIS_MODELFIT_H_RANSAC_SAMPLE_SIZE));
-                
+
                 // only stuff if the user requests the following outputs
                 if (error)
                     gsl_vector_memcpy (*error, error_i);
 
-                if (isel) {
+                if (isel)
+                {
                     for (size_t i=0; i<n_inlier; i++)
                         sel[i] = sel_in[i];
                 }
@@ -662,7 +698,8 @@ vis_modelfit_E_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
     }
 
     // assign inlier set only if user requests it
-    if (isel && n_inlier) {
+    if (isel && n_inlier)
+    {
         *isel = gslu_index_alloc (n_inlier);
         for (size_t i=0; i<n_inlier; i++)
             gslu_index_set (*isel, i, sel[i]);
@@ -685,7 +722,8 @@ vis_modelfit_F_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
 {
     size_t N = uv1_gsl->size2;
 
-    if (N < 6) {
+    if (N < 6)
+    {
         ERROR ("need more than 6 points.");
         return 0;
     }
@@ -703,7 +741,7 @@ vis_modelfit_F_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
     CvMat F_cv = vis_cvu_gsl_matrix_to_cvmat_view (F_gsl);
 
     /* estim_F_RANSAC
-     * cvFindFundamentalMat(const CvMat* points1, const CvMat* points2, CvMat* fundamentalMatrix, 
+     * cvFindFundamentalMat(const CvMat* points1, const CvMat* points2, CvMat* fundamentalMatrix,
      *                      int method=CV_FM_RANSAC, double param1=1., double param2=0.99, CvMat* status=NULL)
      */
     double param1 = 0.1;    // maximum pixel distance from point to epipolar line
@@ -712,10 +750,12 @@ vis_modelfit_F_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
     int fm_count = cvFindFundamentalMat (&uv1_cv, &uv2_cv, &F_cv, cv_method, param1, param2, inliers_cv);
 
     size_t n_inliers = 0;
-    if (fm_count) {
+    if (fm_count)
+    {
         // find indices of inlier uv1 and uv2
         gslu_index *sel_tmp = gslu_index_alloc (N);
-        for (size_t i=0; i<N; i++) {
+        for (size_t i=0; i<N; i++)
+        {
             if (cvGetReal2D (inliers_cv, 0, i) > 0)
                 gslu_index_set (sel_tmp, n_inliers++, i);
         }
@@ -820,12 +860,14 @@ vis_modelfit_H_svd (const gsl_matrix *D, gsl_matrix *H)
 
     gslu_linalg_SV *SVD = gslu_linalg_SV_decomp_econ_alloc (D);
 
-    if (SVD) {
+    if (SVD)
+    {
         gsl_vector_view v = gsl_matrix_column (SVD->V, 8);
         gslu_vector_reshape (H, &v.vector, CblasTrans);
         gsl_matrix_scale (H, 1.0/gsl_matrix_get(H,2,2));
     }
-    else {
+    else
+    {
         printf ("ERROR in estim_H_svd\n");
 #ifdef MODELFIT_VERBOSE
         gslu_matrix_printf (D, "D");
@@ -835,7 +877,7 @@ vis_modelfit_H_svd (const gsl_matrix *D, gsl_matrix *H)
 }
 
 double
-vis_modelfit_H_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2, 
+vis_modelfit_H_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
                        gsl_matrix *H, gslu_index **isel, gsl_vector **error)
 {
     // check the input size first
@@ -866,7 +908,8 @@ vis_modelfit_H_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
 
     gsl_rng *r = gslu_rand_rng_alloc ();
 
-    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++) {
+    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++)
+    {
         // draw samples
         gslu_rand_index (r, &rsel.vector, n_total);
         for (size_t i=0; i<VIS_MODELFIT_H_RANSAC_SAMPLE_SIZE; i++)
@@ -883,24 +926,28 @@ vis_modelfit_H_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
         size_t n_in = 0;
         error_i = _modelfit_reprojection_error_H (xy1, xy2, &H_temp.matrix);
 
-        for (size_t i=0; i<n_total; i++) {
-            if (fabs(gsl_vector_get(error_i,i)) < thresh) {
+        for (size_t i=0; i<n_total; i++)
+        {
+            if (fabs(gsl_vector_get(error_i,i)) < thresh)
+            {
                 //printf ("found smaller %g\b", fabs(gsl_vector_get(error_i,i)));
                 sel_in[n_in++] = i;
             }
         }
 
         // check for consensus
-        if (n_in > n_inlier) {
+        if (n_in > n_inlier)
+        {
             n_inlier = n_in;
             gsl_matrix_memcpy (H, &H_temp.matrix);
             itr_max = GSL_MIN (itr_max, ransac_adapt_trials (n_inlier, n_total, p, VIS_MODELFIT_H_RANSAC_SAMPLE_SIZE));
-            
+
             // only stuff if the user requests the following outputs
             if (error)
                 gsl_vector_memcpy (*error, error_i);
 
-            if (isel) {
+            if (isel)
+            {
                 for (size_t i=0; i<n_inlier; i++)
                     sel[i] = sel_in[i];
             }
@@ -908,7 +955,8 @@ vis_modelfit_H_ransac (const gsl_matrix *xy1, const gsl_matrix *xy2,
     }
 
     // assign inlier set only if user requests it
-    if (isel && n_inlier) {
+    if (isel && n_inlier)
+    {
         *isel = gslu_index_alloc (n_inlier);
         for (size_t i=0; i<n_inlier; i++)
             gslu_index_set (*isel, i, sel[i]);
@@ -933,7 +981,8 @@ vis_modelfit_H_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
 
     int N = uv1_gsl->size2;        // uv = [2xN]
 
-    if (N < 4) {
+    if (N < 4)
+    {
         ERROR ("need more than 4 points.");
         return 0;
     }
@@ -951,7 +1000,7 @@ vis_modelfit_H_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
     CvMat H_cv = vis_cvu_gsl_matrix_to_cvmat_view (H_gsl);
 
     /* estim_H_RANSAC
-     * cvFindHomography(const CvMat* srcPoints, const CvMat* dstPoints, CvMat* H 
+     * cvFindHomography(const CvMat* srcPoints, const CvMat* dstPoints, CvMat* H
      *                  int method=0, double ransacReprojThreshold=0, CvMat* status=NULL)
      */
     double ransacReprojThreshold= 1.0;            // RANSAC threshold
@@ -959,22 +1008,25 @@ vis_modelfit_H_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
     cvFindHomography (&uv1_cv, &uv2_cv, &H_cv, H_method, ransacReprojThreshold, inliers_h_cv);
 
 
-    // check if H is zero matrix 
+    // check if H is zero matrix
     int h_valid = 0;
     for (size_t i=0; i<3; i++)
         for (size_t j=0; j<3; j++)
             h_valid = h_valid + gsl_matrix_get (H_gsl, i,j);
 
     size_t n_inliers = 0;
-    if (h_valid) {
+    if (h_valid)
+    {
         gslu_index *sel_tmp = gslu_index_alloc (N);
-        for (size_t i=0; i<N; i++) {
+        for (size_t i=0; i<N; i++)
+        {
             if (cvGetReal2D (inliers_h_cv, 0, i) > 0)
                 gslu_index_set (sel_tmp, n_inliers++, i);
         }
 
         // check number of inliers
-        if (n_inliers > 4) {
+        if (n_inliers > 4)
+        {
             (*sel) = gslu_index_alloc (n_inliers);
             gslu_index_view sel_tmp_in = gslu_index_subvector (sel_tmp, 0, n_inliers);
             gslu_index_memcpy (*sel, &sel_tmp_in.vector);
@@ -991,12 +1043,12 @@ vis_modelfit_H_ocv (const gsl_matrix *uv1_gsl, const gsl_matrix *uv2_gsl,
 /**
  * @brief Fit a 3D model (E or F) to find inliers, model, and gic score.
  *
- * @param uvi_sel 
+ * @param uvi_sel
  *
  * @return gic score
  */
 double
-vis_modelfit_inliers_gic_3D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel, 
+vis_modelfit_inliers_gic_3D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
                              gslu_index **sel_f, gsl_matrix **uvi_f, gsl_matrix **uvj_f,
                              gsl_matrix *F_or_E,
                              vis_modelfit_method_t method)
@@ -1015,7 +1067,8 @@ vis_modelfit_inliers_gic_3D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
     else
         printf ("ERROR (model fit) Unknown method");
 
-    if (n_in_f > 0) {
+    if (n_in_f > 0)
+    {
         (*uvi_f) = gslu_matrix_selcol_alloc (uvi_sel, (*sel_f));
         (*uvj_f) = gslu_matrix_selcol_alloc (uvj_sel, (*sel_f));
         gic_f = vis_modelfit_gic (F_or_E, VIS_MODELFIT_F, uvi_sel, uvj_sel, lambda1, lambda2);
@@ -1025,10 +1078,10 @@ vis_modelfit_inliers_gic_3D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
 }
 
 double
-vis_modelfit_inliers_gic_2D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel, 
-                            gslu_index **sel_h, gsl_matrix **uvi_h, gsl_matrix **uvj_h,
-                            gsl_matrix *H,
-                            vis_modelfit_method_t method)
+vis_modelfit_inliers_gic_2D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
+                             gslu_index **sel_h, gsl_matrix **uvi_h, gsl_matrix **uvj_h,
+                             gsl_matrix *H,
+                             vis_modelfit_method_t method)
 {
     // set the default value
     double lambda1 = VIS_MODELFIT_TORR_LAMBDA1;
@@ -1044,7 +1097,8 @@ vis_modelfit_inliers_gic_2D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
     else
         printf ("ERROR (model fit) Unknown method");
 
-    if (n_in_h > 0) {
+    if (n_in_h > 0)
+    {
         (*uvi_h) = gslu_matrix_selcol_alloc (uvi_sel, (*sel_h));
         (*uvj_h) = gslu_matrix_selcol_alloc (uvj_sel, (*sel_h));
         n_in_h = (*sel_h)->size;
@@ -1058,14 +1112,14 @@ vis_modelfit_inliers_gic_2D (gsl_matrix *uvi_sel, gsl_matrix *uvj_sel,
 
 // SVD
 extern int F77_FUNC(dgesvd)(char *jobu, char *jobvt, int *m, int *n,
-           double *a, int *lda, double *s, double *u, int *ldu,
-           double *vt, int *ldvt, double *work, int *lwork,
-           int *info);
+                            double *a, int *lda, double *s, double *u, int *ldu,
+                            double *vt, int *ldvt, double *work, int *lwork,
+                            int *info);
 
 // lapack 3.0 routine, faster than dgesvd()
 extern int F77_FUNC(dgesdd)(char *jobz, int *m, int *n, double *a, int *lda,
-           double *s, double *u, int *ldu, double *vt, int *ldvt,
-           double *work, int *lwork, int *iwork, int *info);
+                            double *s, double *u, int *ldu, double *vt, int *ldvt,
+                            double *work, int *lwork, int *iwork, int *info);
 
 gslu_linalg_SV *
 _SV_decomp_full_alloc_fortran (const gsl_matrix *A)
@@ -1096,7 +1150,8 @@ _SV_decomp_full_alloc_fortran (const gsl_matrix *A)
     lwork = (int) wkopt;
     work = (double*) malloc (lwork * sizeof (double));
 
-    if(!work){
+    if(!work)
+    {
         printf ("ERROR: memory allocation in svd failed!\n");
         if (a) free(a);
         if (u) free(u);
@@ -1118,15 +1173,18 @@ _SV_decomp_full_alloc_fortran (const gsl_matrix *A)
     F77_FUNC (dgesvd) ("A", "A", (int*) &m, (int*) &n, a, (int*) &lda, s, u, (int*) &ldu, vt, (int*) &ldvt, work, &lwork, &info );
 
     // error treatment
-    if (info!=0) {
-        if (info<0) {
-          fprintf (stderr, "LAPACK error: illegal value for argument %d of dgesdd/dgesvd in sba_Axb_SVD()\n", -info);
-          return NULL;
+    if (info!=0)
+    {
+        if (info<0)
+        {
+            fprintf (stderr, "LAPACK error: illegal value for argument %d of dgesdd/dgesvd in sba_Axb_SVD()\n", -info);
+            return NULL;
         }
-        else {
-          fprintf (stderr, "LAPACK error: dgesdd (dbdsdc)/dgesvd (dbdsqr) failed to converge in sba_Axb_SVD() [info=%d]\n", info);
+        else
+        {
+            fprintf (stderr, "LAPACK error: dgesdd (dbdsdc)/dgesvd (dbdsqr) failed to converge in sba_Axb_SVD() [info=%d]\n", info);
 
-          return NULL;
+            return NULL;
         }
     }
 

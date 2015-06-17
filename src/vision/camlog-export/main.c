@@ -20,7 +20,8 @@
 
 /* logging opts */
 typedef struct opts opts_t;
-struct opts {
+struct opts
+{
     char       channel[LCM_MAX_CHANNEL_NAME_LENGTH];
     char       logdir[PATH_MAX];  // where?
     int        compression;       // TIFF compression scheme
@@ -34,15 +35,18 @@ struct opts {
 static opts_t
 process_options (getopt_t *gopt, int argc, char *argv[])
 {
-    opts_t opt = {
+    opts_t opt =
+    {
         .quality = 95,
     };
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=1) {
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=1)
+    {
         getopt_do_usage (gopt, "LCMLOG");
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, "LCMLOG");
         exit (EXIT_SUCCESS);
     }
@@ -60,9 +64,10 @@ process_options (getopt_t *gopt, int argc, char *argv[])
     const char *compression = getopt_get_string (gopt, "compression");
     if (0==strcasecmp (compression, "none"))
         opt.compression = VIS_BOTIMAGE_TIFF_COMPRESSION_NONE;
-    else if (0==strcasecmp (compression, "jpeg")) 
+    else if (0==strcasecmp (compression, "jpeg"))
         opt.compression = VIS_BOTIMAGE_TIFF_COMPRESSION_JPEG;
-    else if (0==strncasecmp (compression, "jpeg:", 5)) {
+    else if (0==strncasecmp (compression, "jpeg:", 5))
+    {
         opt.compression = VIS_BOTIMAGE_TIFF_COMPRESSION_JPEG;
         unsigned int q;
         if (1==sscanf (compression, "jpeg:%u", &q))
@@ -74,7 +79,8 @@ process_options (getopt_t *gopt, int argc, char *argv[])
         opt.compression = VIS_BOTIMAGE_TIFF_COMPRESSION_LZW;
     else if (0==strcasecmp (compression, "deflate"))
         opt.compression = VIS_BOTIMAGE_TIFF_COMPRESSION_DEFLATE;
-    else {
+    else
+    {
         ERROR ("unrecognized argument to --compression");
         exit (EXIT_FAILURE);
     }
@@ -84,7 +90,7 @@ process_options (getopt_t *gopt, int argc, char *argv[])
 
     // 8-bit
     opt.eight = getopt_get_bool (gopt, "8bit");
-    
+
     // bayer
     opt.bayer = getopt_get_bool (gopt, "bayer");
 
@@ -92,8 +98,8 @@ process_options (getopt_t *gopt, int argc, char *argv[])
 }
 
 void
-bot_core_image_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                        const bot_core_image_t *msg, void *user)
+bot_core_image_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const bot_core_image_t *msg, void *user)
 {
     opts_t *opt = user;
 
@@ -108,14 +114,16 @@ bot_core_image_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     unix_mkpath (logdir, 0775);
 
     bot_core_image_t *bot8;
-    if (opt->eight) {
+    if (opt->eight)
+    {
         vis_botimage_16_to_8 (&bot8, msg);
     }
     else
         bot8 = (bot_core_image_t *) msg;
 
     bot_core_image_t *botc;
-    if (opt->bayer) {
+    if (opt->bayer)
+    {
         vis_botimage_bayerfilt (&botc, bot8);
     }
     else
@@ -152,7 +160,7 @@ main (int argc, char *argv[])
     getopt_add_bool   (gopt, 'q',  "quiet",       0,                  "Don't print to screen");
 
     opts_t opt = process_options (gopt, argc, argv);
-    
+
     // setup lcm log file for playback
     const char *lcmlog_fullname = g_ptr_array_index (gopt->extraargs, 0);
     char *lcmlog_dir = dirname (strdup (lcmlog_fullname));

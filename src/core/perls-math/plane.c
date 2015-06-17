@@ -68,7 +68,8 @@ plane_estim_svd (const gsl_matrix *xyz, gsl_vector *coeff, gsl_vector **error)
     gsl_matrix *A = gslu_matrix_transpose_alloc (xyz_h); // [xi yi zi 1]
     gslu_linalg_SV *SVD = gslu_linalg_SV_decomp_econ_alloc (A);
 
-    if (SVD) {
+    if (SVD)
+    {
         gsl_vector_view v = gsl_matrix_column (SVD->V, 3); // [a,b,c,d]
         const double a = gsl_vector_get (&v.vector, 0);
         const double b = gsl_vector_get (&v.vector, 1);
@@ -83,7 +84,7 @@ plane_estim_svd (const gsl_matrix *xyz, gsl_vector *coeff, gsl_vector **error)
         if (error)
             *error = gslu_blas_mv_alloc (A, coeff); /* orthogonal error = (a*x+b*y+c*z+d)/sqrt(a^2+b^2+c^2)
                                                   note: a^2+b^2+c^2=1 */
-    }   
+    }
 
     // clean up
     gslu_linalg_SV_free (SVD);
@@ -119,7 +120,8 @@ plane_estim_ransac (const gsl_matrix *xyz, double percent_outliers,
     GSLU_MATRIX_VIEW (xyz_samples, 3, RANSAC_SAMPLE_SIZE);
     gsl_rng *r = gslu_rand_rng_alloc ();
 
-    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++) {
+    for (size_t itr=0; (itr < itr_min) || (itr < itr_max); itr++)
+    {
         // draw samples
         gslu_rand_index (r, &rsel.vector, n_total);
         gslu_matrix_selcol (&xyz_samples.matrix, xyz, &rsel.vector);
@@ -131,7 +133,8 @@ plane_estim_ransac (const gsl_matrix *xyz, double percent_outliers,
 
         // orthogonal error = (a*x + b*y + c*z + d) / sqrt (a^2 + b^2 +c^2)    note: a^2+b^2+c^2=1
         size_t n_in = 0;
-        for (size_t i=0; i<n_total; i++) {
+        for (size_t i=0; i<n_total; i++)
+        {
             gsl_vector_const_view xyz_i = gsl_matrix_const_column (xyz, i);
             double e = gslu_vector_dot (&xyz_i.vector, &abc_i.vector) + d_i;
             gsl_vector_set (error_i, i, e);
@@ -140,16 +143,18 @@ plane_estim_ransac (const gsl_matrix *xyz, double percent_outliers,
         }
 
         // check for consensus
-        if (n_in > n_inlier) {
+        if (n_in > n_inlier)
+        {
             n_inlier = n_in;
             gsl_vector_memcpy (coeff, &coeff_i.vector);
             itr_max = GSL_MIN (itr_max, ransac_adapt_trials (n_inlier, n_total, p, RANSAC_SAMPLE_SIZE));
-            
+
             // only stuff if the user requests the following outputs
             if (error)
                 gsl_vector_memcpy (*error, error_i);
 
-            if (isel) {
+            if (isel)
+            {
                 for (size_t i=0; i<n_inlier; i++)
                     sel[i] = sel_in[i];
             }
@@ -157,7 +162,8 @@ plane_estim_ransac (const gsl_matrix *xyz, double percent_outliers,
     }
 
     // assign inlier set only if user requests it
-    if (isel && n_inlier) {
+    if (isel && n_inlier)
+    {
         *isel = gslu_index_alloc (n_inlier);
         for (size_t i=0; i<n_inlier; i++)
             gslu_index_set (*isel, i, sel[i]);
@@ -170,7 +176,7 @@ plane_estim_ransac (const gsl_matrix *xyz, double percent_outliers,
     free (sel_in);
 
     return n_inlier;
-}   
+}
 
 void
 plane_ray_intersection (const gsl_vector *coeff, const gsl_matrix *n_rays, gsl_matrix *xyz)
@@ -185,7 +191,8 @@ plane_ray_intersection (const gsl_vector *coeff, const gsl_matrix *n_rays, gsl_m
 
     // returns 3xN matrix, each column contains an intersection point (xi,yi,zi)
     size_t npts = n_rays->size2;
-    for (size_t i=0; i<npts; i++) {
+    for (size_t i=0; i<npts; i++)
+    {
         gsl_vector_view xyz_i = gsl_matrix_column (xyz, i);
         gsl_vector_const_view ray_i = gsl_matrix_const_column (n_rays, i);
         double t = -d / gslu_vector_dot (&ray_i.vector, &plane_normal.vector);

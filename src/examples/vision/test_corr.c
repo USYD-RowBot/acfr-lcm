@@ -40,29 +40,36 @@ print_pccs_results (gslu_index *sel1, gslu_index *sel2, gsl_vector *info)
 {
 
     printf("\npccs results (n=%d)------------------\n\n", (int) sel1->size);
-    gslu_index_printfc (sel1,"sel1","%g", CblasTrans); 
-    gslu_index_printfc (sel2,"sel2","%g", CblasTrans); 
+    gslu_index_printfc (sel1,"sel1","%g", CblasTrans);
+    gslu_index_printfc (sel2,"sel2","%g", CblasTrans);
 
     int n = (int) gsl_vector_get (info, 0);
     printf("\nmatlab results (n=%d)------------------\n\n", n);
     gsl_vector* ans_sel1 = gsl_vector_alloc (n);
     gsl_vector* ans_sel2 = gsl_vector_alloc (n);
-    FILE *fsel1_ans = fopen ("../share/examples/_test_corr_files/ans_pccs_sel1.txt", "rb");  gsl_vector_fscanf (fsel1_ans, ans_sel1);  fclose(fsel1_ans);
-    FILE *fsel2_ans = fopen ("../share/examples/_test_corr_files/ans_pccs_sel2.txt", "rb");  gsl_vector_fscanf (fsel2_ans, ans_sel2);  fclose(fsel2_ans);
+    FILE *fsel1_ans = fopen ("../share/examples/_test_corr_files/ans_pccs_sel1.txt", "rb");
+    gsl_vector_fscanf (fsel1_ans, ans_sel1);
+    fclose(fsel1_ans);
+    FILE *fsel2_ans = fopen ("../share/examples/_test_corr_files/ans_pccs_sel2.txt", "rb");
+    gsl_vector_fscanf (fsel2_ans, ans_sel2);
+    fclose(fsel2_ans);
 
     //gsl_vector_scale(p12,RTOD);
     gsl_vector_add_constant (ans_sel1, -1.0);
     gsl_vector_add_constant (ans_sel2, -1.0);
-    gslu_vector_printfc (ans_sel1,"sel1","%g", CblasTrans); 
-    gslu_vector_printfc (ans_sel2,"sel2","%g", CblasTrans); 
+    gslu_vector_printfc (ans_sel1,"sel1","%g", CblasTrans);
+    gslu_vector_printfc (ans_sel2,"sel2","%g", CblasTrans);
 
     int thresh = 5;     // number allowed to mismatch
     int mismatch_count = 0;
-    for (size_t i =0; i<sel1->size; i++) {
+    for (size_t i =0; i<sel1->size; i++)
+    {
         bool mismatch = 1;
-        for (size_t j =0; j<n; j++) {
+        for (size_t j =0; j<n; j++)
+        {
             if (gslu_index_get (sel1, i) == (int) gsl_vector_get (ans_sel1, j)
-                && gslu_index_get (sel2, i) == (int) gsl_vector_get (ans_sel2, j) ) {
+                    && gslu_index_get (sel2, i) == (int) gsl_vector_get (ans_sel2, j) )
+            {
                 mismatch = 0;
                 break;
             }
@@ -102,20 +109,42 @@ int main(int argc, char *argv[])
     gsl_vector_set_all (cov_z, 0.01);
 
     // to generate these files, do make examples
-    FILE *fk = fopen ("../share/examples/_test_corr_files/k.txt", "rb");  gsl_matrix_fscanf (fk, K_gsl); fclose(fk);
-    FILE *fuv1 = fopen ("../share/examples/_test_corr_files/uv1.txt", "rb");  gsl_matrix_fscanf (fuv1, uv1);  fclose(fuv1);
-    FILE *fuv2 = fopen ("../share/examples/_test_corr_files/uv2.txt", "rb");  gsl_matrix_fscanf (fuv2, uv2);  fclose(fuv2);
-    FILE *fkey1 = fopen ("../share/examples/_test_corr_files/key1.txt", "rb");  gsl_matrix_float_fscanf (fkey1, key1);  fclose(fkey1);
-    FILE *fkey2 = fopen ("../share/examples/_test_corr_files/key2.txt", "rb");  gsl_matrix_float_fscanf (fkey2, key2);  fclose(fkey2);
-    FILE *fz = fopen ("../share/examples/_test_corr_files/z1.txt", "rb");  gsl_vector_fscanf (fz, z);  fclose(fz);
-    FILE *fx12 = fopen ("../share/examples/_test_corr_files/x12.txt", "rb");  gsl_vector_fscanf (fx12, x12);  fclose(fx12);
-    FILE *fx21 = fopen ("../share/examples/_test_corr_files/x21.txt", "rb");  gsl_vector_fscanf (fx21, x21);  fclose(fx21);
-    FILE *fp12 = fopen ("../share/examples/_test_corr_files/p12.txt", "rb");  gsl_matrix_fscanf (fp12, p12);  fclose(fp12);
-    FILE *fp21 = fopen ("../share/examples/_test_corr_files/p21.txt", "rb");  gsl_matrix_fscanf (fp21, p21);  fclose(fp21);
+    FILE *fk = fopen ("../share/examples/_test_corr_files/k.txt", "rb");
+    gsl_matrix_fscanf (fk, K_gsl);
+    fclose(fk);
+    FILE *fuv1 = fopen ("../share/examples/_test_corr_files/uv1.txt", "rb");
+    gsl_matrix_fscanf (fuv1, uv1);
+    fclose(fuv1);
+    FILE *fuv2 = fopen ("../share/examples/_test_corr_files/uv2.txt", "rb");
+    gsl_matrix_fscanf (fuv2, uv2);
+    fclose(fuv2);
+    FILE *fkey1 = fopen ("../share/examples/_test_corr_files/key1.txt", "rb");
+    gsl_matrix_float_fscanf (fkey1, key1);
+    fclose(fkey1);
+    FILE *fkey2 = fopen ("../share/examples/_test_corr_files/key2.txt", "rb");
+    gsl_matrix_float_fscanf (fkey2, key2);
+    fclose(fkey2);
+    FILE *fz = fopen ("../share/examples/_test_corr_files/z1.txt", "rb");
+    gsl_vector_fscanf (fz, z);
+    fclose(fz);
+    FILE *fx12 = fopen ("../share/examples/_test_corr_files/x12.txt", "rb");
+    gsl_vector_fscanf (fx12, x12);
+    fclose(fx12);
+    FILE *fx21 = fopen ("../share/examples/_test_corr_files/x21.txt", "rb");
+    gsl_vector_fscanf (fx21, x21);
+    fclose(fx21);
+    FILE *fp12 = fopen ("../share/examples/_test_corr_files/p12.txt", "rb");
+    gsl_matrix_fscanf (fp12, p12);
+    fclose(fp12);
+    FILE *fp21 = fopen ("../share/examples/_test_corr_files/p21.txt", "rb");
+    gsl_matrix_fscanf (fp21, p21);
+    fclose(fp21);
 
     // answer from matlab to be compared
     gsl_vector* ans_info = gsl_vector_alloc (2);
-    FILE *finfo = fopen ("../share/examples/_test_corr_files/ans_info.txt", "rb");  gsl_vector_fscanf (finfo, ans_info);  fclose(finfo);
+    FILE *finfo = fopen ("../share/examples/_test_corr_files/ans_info.txt", "rb");
+    gsl_vector_fscanf (finfo, ans_info);
+    fclose(finfo);
 
     IplImage *img1 = cvLoadImage ("../share/examples/_test_corr_files/color1.jpg", 1);
     IplImage *img2 = cvLoadImage ("../share/examples/_test_corr_files/color2.jpg", 1);
@@ -124,14 +153,14 @@ int main(int argc, char *argv[])
     // pccs
     // --------------------------------------------------------- //
     // value to be returned
-    gslu_index *sel1 = NULL; 
+    gslu_index *sel1 = NULL;
     gslu_index *sel2 = NULL;
     double simAB_thres = gsl_vector_get (ans_info, 1);
 
     //tic();
-    ret = vis_pccs_corrset_gsl_alloc (uv1, uv2, z, z, cov_z, cov_z, K_gsl, 
-                                      x21, p21, key1, key2, &sel1, &sel2, 
-                                      simAB_thres, VIS_PCCS_SIMSCORE_MIN); 
+    ret = vis_pccs_corrset_gsl_alloc (uv1, uv2, z, z, cov_z, cov_z, K_gsl,
+                                      x21, p21, key1, key2, &sel1, &sel2,
+                                      simAB_thres, VIS_PCCS_SIMSCORE_MIN);
     //toc();
     //cvWaitKey(0);
     gsl_matrix *uv1_sel = gslu_matrix_selcol_alloc (uv1, sel1);
@@ -146,7 +175,7 @@ int main(int argc, char *argv[])
     /* NOTE: The rest of the code is not directly related to the pccs
      * but I left it for further debugging purpose (gic, gnuplot with pccs)
      * because there is no matlab file to compare for BA and opencv modelfit part
-     */  
+     */
     printf ("\n\n * NOTE: No comparison will be conducted for BA\n");
 
     gsl_matrix *uv1_h = NULL;
@@ -169,7 +198,7 @@ int main(int argc, char *argv[])
     gslu_matrix_free (UV2);
     gslu_matrix_free (XY1);
     gslu_matrix_free (XY2);
- 
+
     // H estim
     // --------------------------------------------------------- //
     GSLU_MATRIX_VIEW (H,3,3);
@@ -187,12 +216,14 @@ int main(int argc, char *argv[])
     GSLU_MATRIX_VIEW (E,3,3);
 
     gsl_matrix *A = gsl_matrix_alloc(10,10);
-    FILE *fA = fopen ("../share/examples/_test_corr_files/V.txt", "rb");  gsl_matrix_fscanf (fA, A); fclose(fA);
+    FILE *fA = fopen ("../share/examples/_test_corr_files/V.txt", "rb");
+    gsl_matrix_fscanf (fA, A);
+    fclose(fA);
 
     gslu_matrix_printf (A,"A");
     gsl_vector *xroots = gsl_vector_alloc (6);
     gsl_vector *yroots = gsl_vector_alloc (6);
-    tic();        
+    tic();
     vis_modelfit_weight_6p (A, xroots, yroots);
     toc();
     gslu_matrix_free (A);
@@ -227,7 +258,8 @@ int main(int argc, char *argv[])
     gsl_vector *rel_pose21 = gsl_vector_alloc (5);
     gsl_matrix *rel_pose_cov21 = gsl_matrix_alloc (5,5);
 
-    if (gic_f < gic_h) {// fundamental matrix
+    if (gic_f < gic_h)  // fundamental matrix
+    {
         // triangulate
         GSLU_MATRIX_VIEW (R, 3,3);
         gsl_vector_view t = gsl_vector_subvector (x21,0,3);
@@ -242,10 +274,12 @@ int main(int argc, char *argv[])
         size_t n_accepted = tri_const_idx->size;
         //printf(" -- rejecting %d points out of %d points\n", n_in_f-n_accepted, n_in_f);
 
-        if (n_accepted == n_in_f) {
+        if (n_accepted == n_in_f)
+        {
             ret_ba = vis_sba_2v_rae(x21, K_gsl, uv1_f, uv2_f, tri->X1, rel_pose21, rel_pose_cov21, verbose, NULL, NULL);  // X_c2c1 = [xyzrph]
         }
-        else {
+        else
+        {
             gsl_matrix* uv1_f_triconst = gslu_matrix_selcol_alloc (uv1_f, tri_const_idx);
             gsl_matrix* uv2_f_triconst = gslu_matrix_selcol_alloc (uv2_f, tri_const_idx);
             gsl_matrix* X1_triconst = gslu_matrix_selcol_alloc (tri->X1, tri_const_idx);
@@ -257,16 +291,17 @@ int main(int argc, char *argv[])
             gslu_matrix_free (uv2_f_triconst);
             gslu_matrix_free (X1_triconst);
         }
-        
+
         gslu_index_free (tri_const_idx);
         vis_triangulate_free (tri);
     }
-    else { // homography
-        GSLU_MATRIX_VIEW (invH, 3, 3); 
+    else   // homography
+    {
+        GSLU_MATRIX_VIEW (invH, 3, 3);
         gslu_matrix_inv (&invH.matrix, &H.matrix);
 
         gsl_matrix *uv2_h_h = homogenize_alloc(uv2_h);
-        gsl_matrix *uv1p_h = gsl_matrix_alloc (3, n_in_h);    
+        gsl_matrix *uv1p_h = gsl_matrix_alloc (3, n_in_h);
         gslu_blas_mm (uv1p_h, &invH.matrix, uv2_h_h);
         gsl_matrix *uv1p = dehomogenize_alloc (uv1p_h);
 
@@ -278,7 +313,7 @@ int main(int argc, char *argv[])
 
         // clean up
         gslu_matrix_free (uv2_h_h);
-        gslu_matrix_free (uv1p_h);    
+        gslu_matrix_free (uv1p_h);
         gslu_matrix_free (uv1p);
     }
 

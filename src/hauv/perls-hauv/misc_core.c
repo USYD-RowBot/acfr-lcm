@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// 
+//
 //  Levenberg - Marquardt non-linear minimization algorithm
 //  Copyright (C) 2004-05  Manolis Lourakis (lourakis at ics forth gr)
 //  Institute of Computer Science, Foundation for Research & Technology - Hellas
@@ -76,7 +76,7 @@ static int LEVMAR_LUINVERSE(LM_REAL *A, LM_REAL *B, int m);
  * Since a^T a is symmetric, its computation can be sped up by computing only its
  * upper triangular part and copying it to the lower part.
  *
- * More details on blocking can be found at 
+ * More details on blocking can be found at
  * http://www-2.cs.cmu.edu/afs/cs/academic/class/15213-f02/www/R07/section_a/Recitation07-SectionA.pdf
  */
 void LEVMAR_TRANS_MAT_MAT_MULT(LM_REAL *a, LM_REAL *b, int n, int m)
@@ -100,19 +100,25 @@ void LEVMAR_TRANS_MAT_MAT_MULT(LM_REAL *a, LM_REAL *b, int n, int m)
 #define __MAX__(x, y) (((x)>=(y))? (x) : (y))
 
     /* compute upper triangular part using blocking */
-    for(jj=0; jj<m; jj+=bsize){
-        for(i=0; i<m; ++i){
+    for(jj=0; jj<m; jj+=bsize)
+    {
+        for(i=0; i<m; ++i)
+        {
             bim=b+i*m;
             for(j=__MAX__(jj, i); j<__MIN__(jj+bsize, m); ++j)
                 bim[j]=0.0; //b[i*m+j]=0.0;
         }
 
-        for(kk=0; kk<n; kk+=bsize){
-            for(i=0; i<m; ++i){
+        for(kk=0; kk<n; kk+=bsize)
+        {
+            for(i=0; i<m; ++i)
+            {
                 bim=b+i*m;
-                for(j=__MAX__(jj, i); j<__MIN__(jj+bsize, m); ++j){
+                for(j=__MAX__(jj, i); j<__MIN__(jj+bsize, m); ++j)
+                {
                     sum=0.0;
-                    for(k=kk; k<__MIN__(kk+bsize, n); ++k){
+                    for(k=kk; k<__MIN__(kk+bsize, n); ++k)
+                    {
                         akm=a+k*m;
                         sum+=akm[i]*akm[j]; //a[k*m+i]*a[k*m+j];
                     }
@@ -150,7 +156,8 @@ void LEVMAR_FDIF_FORW_JAC_APPROX(
     LM_REAL tmp;
     register LM_REAL d;
 
-    for(j=0; j<m; ++j){
+    for(j=0; j<m; ++j)
+    {
         /* determine d=max(1E-04*|p[j]|, delta), see HZ */
         d=LM_CNST(1E-04)*p[j]; // force evaluation
         d=FABS(d);
@@ -165,7 +172,8 @@ void LEVMAR_FDIF_FORW_JAC_APPROX(
         p[j]=tmp; /* restore */
 
         d=LM_CNST(1.0)/d; /* invert so that divisions can be carried out faster as multiplications */
-        for(i=0; i<n; ++i){
+        for(i=0; i<n; ++i)
+        {
             jac[i*m+j]=(hxx[i]-hx[i])*d;
         }
     }
@@ -188,7 +196,8 @@ void LEVMAR_FDIF_CENT_JAC_APPROX(
     LM_REAL tmp;
     register LM_REAL d;
 
-    for(j=0; j<m; ++j){
+    for(j=0; j<m; ++j)
+    {
         /* determine d=max(1E-04*|p[j]|, delta), see HZ */
         d=LM_CNST(1E-04)*p[j]; // force evaluation
         d=FABS(d);
@@ -204,13 +213,14 @@ void LEVMAR_FDIF_CENT_JAC_APPROX(
         p[j]=tmp; /* restore */
 
         d=LM_CNST(0.5)/d; /* invert so that divisions can be carried out faster as multiplications */
-        for(i=0; i<n; ++i){
+        for(i=0; i<n; ++i)
+        {
             jac[i*m+j]=(hxp[i]-hxm[i])*d;
         }
     }
 }
 
-/* 
+/*
  * Check the Jacobian of a n-valued nonlinear function in m variables
  * evaluated at a point p, for consistency with the function itself.
  *
@@ -266,7 +276,8 @@ void LEVMAR_CHKJAC(
     eps=(LM_REAL)sqrt(epsmch);
 
     buf=(LM_REAL *)malloc((fvec_sz + fjac_sz + pp_sz + fvecp_sz)*sizeof(LM_REAL));
-    if(!buf){
+    if(!buf)
+    {
         fprintf(stderr, LCAT(LEVMAR_CHKJAC, "(): memory allocation request failed\n"));
         exit(1);
     }
@@ -282,7 +293,8 @@ void LEVMAR_CHKJAC(
     (*jacf)(p, fjac, m, n, adata);
 
     /* compute pp */
-    for(j=0; j<m; ++j){
+    for(j=0; j<m; ++j)
+    {
         temp=eps*FABS(p[j]);
         if(dblcmp(temp, zero) == 0) temp=eps;
         pp[j]=p[j]+temp;
@@ -297,7 +309,8 @@ void LEVMAR_CHKJAC(
     for(i=0; i<n; ++i)
         err[i]=zero;
 
-    for(j=0; j<m; ++j){
+    for(j=0; j<m; ++j)
+    {
         temp=FABS(p[j]);
         if(dblcmp(temp, zero) == 0) temp=one;
 
@@ -305,7 +318,8 @@ void LEVMAR_CHKJAC(
             err[i]+=temp*fjac[i*m+j];
     }
 
-    for(i=0; i<n; ++i){
+    for(i=0; i<n; ++i)
+    {
         temp=one;
         if(dblcmp(fvec[i], zero) != 0 && dblcmp(fvecp[i], zero) != 0 && FABS(fvecp[i]-fvec[i])>=epsf*FABS(fvec[i]))
             temp=eps*FABS((fvecp[i]-fvec[i])/eps - err[i])/(FABS(fvec[i])+FABS(fvecp[i]));
@@ -324,7 +338,7 @@ void LEVMAR_CHKJAC(
 /*
  * This function computes the pseudoinverse of a square matrix A
  * into B using SVD. A and B can coincide
- * 
+ *
  * The function returns 0 in case of error (e.g. A is singular),
  * the rank of A if successful
  *
@@ -349,13 +363,16 @@ static int LEVMAR_PSEUDOINVERSE(LM_REAL *A, LM_REAL *B, int m)
     //worksz=m*(7*m+4); // min worksize for GESDD
     iworksz=8*m;
     a_sz=m*m;
-    u_sz=m*m; s_sz=m; vt_sz=m*m;
+    u_sz=m*m;
+    s_sz=m;
+    vt_sz=m*m;
 
     tot_sz=(a_sz + u_sz + s_sz + vt_sz + worksz)*sizeof(LM_REAL) + iworksz*sizeof(int); /* should be arranged in that order for proper doubles alignment */
 
     buf_sz=tot_sz;
     buf=(LM_REAL *)malloc(buf_sz);
-    if(!buf){
+    if(!buf)
+    {
         fprintf(stderr, RCAT("memory allocation in ", LEVMAR_PSEUDOINVERSE) "() failed!\n");
         return 0; /* error */
     }
@@ -377,18 +394,22 @@ static int LEVMAR_PSEUDOINVERSE(LM_REAL *A, LM_REAL *B, int m)
     //GESDD("A", (int *)&m, (int *)&m, a, (int *)&m, s, u, (int *)&m, vt, (int *)&m, work, (int *)&worksz, iwork, &info);
 
     /* error treatment */
-    if(info!=0){
-        if(info<0){
+    if(info!=0)
+    {
+        if(info<0)
+        {
             fprintf(stderr, RCAT(RCAT(RCAT("LAPACK error: illegal value for argument %d of ", GESVD), "/" GESDD) " in ", LEVMAR_PSEUDOINVERSE) "()\n", -info);
         }
-        else{
+        else
+        {
             fprintf(stderr, RCAT("LAPACK error: dgesdd (dbdsdc)/dgesvd (dbdsqr) failed to converge in ", LEVMAR_PSEUDOINVERSE) "() [info=%d]\n", info);
         }
         free(buf);
         return 0;
     }
 
-    if(eps<0.0){
+    if(eps<0.0)
+    {
         LM_REAL aux;
 
         /* compute machine epsilon */
@@ -398,8 +419,9 @@ static int LEVMAR_PSEUDOINVERSE(LM_REAL *A, LM_REAL *B, int m)
     }
 
     /* compute the pseudoinverse in B */
-	for(i=0; i<a_sz; i++) B[i]=0.0; /* initialize to zero */
-    for(rank=0, thresh=eps*s[0]; rank<m && s[rank]>thresh; rank++){
+    for(i=0; i<a_sz; i++) B[i]=0.0; /* initialize to zero */
+    for(rank=0, thresh=eps*s[0]; rank<m && s[rank]>thresh; rank++)
+    {
         one_over_denom=LM_CNST(1.0)/s[rank];
 
         for(j=0; j<m; j++)
@@ -409,7 +431,7 @@ static int LEVMAR_PSEUDOINVERSE(LM_REAL *A, LM_REAL *B, int m)
 
     free(buf);
 
-	return rank;
+    return rank;
 }
 #else // no LAPACK
 
@@ -442,7 +464,8 @@ static int LEVMAR_LUINVERSE(LM_REAL *A, LM_REAL *B, int m)
 
     buf_sz=tot_sz;
     buf=(void *)malloc(tot_sz);
-    if(!buf){
+    if(!buf)
+    {
         fprintf(stderr, RCAT("memory allocation in ", LEVMAR_LUINVERSE) "() failed!\n");
         return 0; /* error */
     }
@@ -456,77 +479,88 @@ static int LEVMAR_LUINVERSE(LM_REAL *A, LM_REAL *B, int m)
     for(i=0; i<a_sz; ++i) a[i]=A[i];
 
     /* compute the LU decomposition of a row permutation of matrix a; the permutation itself is saved in idx[] */
-	for(i=0; i<m; ++i){
-		max=0.0;
-		for(j=0; j<m; ++j)
-			if((tmp=FABS(a[i*m+j]))>max)
+    for(i=0; i<m; ++i)
+    {
+        max=0.0;
+        for(j=0; j<m; ++j)
+            if((tmp=FABS(a[i*m+j]))>max)
                 max=tmp;
-        if(max==0.0){
+        if(max==0.0)
+        {
             fprintf(stderr, RCAT("Singular matrix A in ", LEVMAR_LUINVERSE) "()!\n");
             free(buf);
 
             return 0;
         }
         work[i]=LM_CNST(1.0)/max;
-	}
+    }
 
-	for(j=0; j<m; ++j){
-		for(i=0; i<j; ++i){
-			sum=a[i*m+j];
-			for(k=0; k<i; ++k)
+    for(j=0; j<m; ++j)
+    {
+        for(i=0; i<j; ++i)
+        {
+            sum=a[i*m+j];
+            for(k=0; k<i; ++k)
                 sum-=a[i*m+k]*a[k*m+j];
-			a[i*m+j]=sum;
-		}
-		max=0.0;
-		for(i=j; i<m; ++i){
-			sum=a[i*m+j];
-			for(k=0; k<j; ++k)
+            a[i*m+j]=sum;
+        }
+        max=0.0;
+        for(i=j; i<m; ++i)
+        {
+            sum=a[i*m+j];
+            for(k=0; k<j; ++k)
                 sum-=a[i*m+k]*a[k*m+j];
-			a[i*m+j]=sum;
-			if((tmp=work[i]*FABS(sum))>=max){
-				max=tmp;
-				maxi=i;
-			}
-		}
-		if(j!=maxi){
-			for(k=0; k<m; ++k){
-				tmp=a[maxi*m+k];
-				a[maxi*m+k]=a[j*m+k];
-				a[j*m+k]=tmp;
-			}
-			work[maxi]=work[j];
-		}
-		idx[j]=maxi;
-		if(a[j*m+j]==0.0)
+            a[i*m+j]=sum;
+            if((tmp=work[i]*FABS(sum))>=max)
+            {
+                max=tmp;
+                maxi=i;
+            }
+        }
+        if(j!=maxi)
+        {
+            for(k=0; k<m; ++k)
+            {
+                tmp=a[maxi*m+k];
+                a[maxi*m+k]=a[j*m+k];
+                a[j*m+k]=tmp;
+            }
+            work[maxi]=work[j];
+        }
+        idx[j]=maxi;
+        if(a[j*m+j]==0.0)
             a[j*m+j]=LM_REAL_EPSILON;
-		if(j!=m-1){
-			tmp=LM_CNST(1.0)/(a[j*m+j]);
-			for(i=j+1; i<m; ++i)
+        if(j!=m-1)
+        {
+            tmp=LM_CNST(1.0)/(a[j*m+j]);
+            for(i=j+1; i<m; ++i)
                 a[i*m+j]*=tmp;
-		}
-	}
+        }
+    }
 
     /* The decomposition has now replaced a. Solve the m linear systems using
      * forward and back substitution
      */
-    for(l=0; l<m; ++l){
+    for(l=0; l<m; ++l)
+    {
         for(i=0; i<m; ++i) x[i]=0.0;
         x[l]=LM_CNST(1.0);
 
-        for(i=k=0; i<m; ++i){
+        for(i=k=0; i<m; ++i)
+        {
             j=idx[i];
             sum=x[j];
             x[j]=x[i];
             if(k!=0)
                 for(j=k-1; j<i; ++j)
                     sum-=a[i*m+j]*x[j];
-            else
-                if(sum!=0.0)
-                    k=i+1;
+            else if(sum!=0.0)
+                k=i+1;
             x[i]=sum;
         }
 
-        for(i=m-1; i>=0; --i){
+        for(i=m-1; i>=0; --i)
+        {
             sum=x[i];
             for(j=i+1; j<m; ++j)
                 sum-=a[i*m+j]*x[j];
@@ -549,7 +583,7 @@ static int LEVMAR_LUINVERSE(LM_REAL *A, LM_REAL *B, int m)
  * J is the Jacobian at the solution), sumsq is the sum of squared residuals
  * (i.e. goodnes of fit) at the solution, m is the number of parameters (variables)
  * and n the number of observations. JtJ can coincide with C.
- * 
+ *
  * if JtJ is of full rank, C is computed as sumsq/(n-m)*(JtJ)^-1
  * otherwise and if LAPACK is available, C=sumsq/(n-r)*(JtJ)^+
  * where r is JtJ's rank and ^+ denotes the pseudoinverse
@@ -594,7 +628,7 @@ int LEVMAR_COVAR(LM_REAL *JtJ, LM_REAL *C, LM_REAL sumsq, int m, int n)
 /*  standard deviation of the best-fit parameter i.
  *  covar is the mxm covariance matrix of the best-fit parameters (see also LEVMAR_COVAR()).
  *
- *  The standard deviation is computed as \sigma_{i} = \sqrt{C_{ii}} 
+ *  The standard deviation is computed as \sigma_{i} = \sqrt{C_{ii}}
  */
 LM_REAL LEVMAR_STDDEV(LM_REAL *covar, int m, int i)
 {
@@ -619,12 +653,13 @@ LM_REAL LEVMAR_R2(void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adat
 {
     register int i;
     register LM_REAL tmp;
-    LM_REAL SSerr,  // sum of squared errors, i.e. residual sum of squares \sum_i (x_i-hx_i)^2 
-        SStot, // \sum_i (x_i-xavg)^2
-        *hx, xavg;
+    LM_REAL SSerr,  // sum of squared errors, i.e. residual sum of squares \sum_i (x_i-hx_i)^2
+            SStot, // \sum_i (x_i-xavg)^2
+            *hx, xavg;
 
 
-    if((hx=(LM_REAL *)malloc(n*sizeof(LM_REAL)))==NULL){
+    if((hx=(LM_REAL *)malloc(n*sizeof(LM_REAL)))==NULL)
+    {
         fprintf(stderr, RCAT("memory allocation request failed in ", LEVMAR_R2) "()\n");
         exit(1);
     }
@@ -635,8 +670,9 @@ LM_REAL LEVMAR_R2(void (*func)(LM_REAL *p, LM_REAL *hx, int m, int n, void *adat
     for(i=0, tmp=0.0; i<n; ++i)
         tmp+=x[i];
     xavg=tmp/(LM_REAL)n;
-  
-    for(i=0, SSerr=SStot=0.0; i<n; ++i){
+
+    for(i=0, SSerr=SStot=0.0; i<n; ++i)
+    {
         tmp=x[i]-hx[i];
         SSerr+=tmp*tmp;
 
@@ -679,14 +715,17 @@ int LEVMAR_CHOLESKY(LM_REAL *C, LM_REAL *W, int m)
     /* Cholesky decomposition */
     POTF2("U", (int *)&m, W, (int *)&m, (int *)&info);
     /* error treatment */
-    if(info!=0){
-		if(info<0){
+    if(info!=0)
+    {
+        if(info<0)
+        {
             fprintf(stderr, "LAPACK error: illegal value for argument %d of dpotf2 in %s\n", -info, LCAT(LEVMAR_CHOLESKY, "()"));
-		}
-		else{
-			fprintf(stderr, "LAPACK error: the leading minor of order %d is not positive definite,\n%s()\n", info,
+        }
+        else
+        {
+            fprintf(stderr, "LAPACK error: the leading minor of order %d is not positive definite,\n%s()\n", info,
                     RCAT("and the Cholesky factorization could not be completed in ", LEVMAR_CHOLESKY));
-		}
+        }
         return LM_ERROR;
     }
 
@@ -695,7 +734,8 @@ int LEVMAR_CHOLESKY(LM_REAL *C, LM_REAL *W, int m)
      * W in row-major order
      */
     for(i=0; i<m; i++)
-        for(j=0; j<i; j++){
+        for(j=0; j<i; j++)
+        {
             W[i+j*m]=W[j+i*m];
             W[j+i*m]=0.0;
         }
@@ -720,79 +760,159 @@ LM_REAL LEVMAR_L2NRMXMY(LM_REAL *e, LM_REAL *x, LM_REAL *y, int n)
     int blockn;
     register LM_REAL sum0=0.0, sum1=0.0, sum2=0.0, sum3=0.0;
 
-    /* n may not be divisible by blocksize, 
+    /* n may not be divisible by blocksize,
      * go as near as we can first, then tidy up.
-     */ 
+     */
     blockn = (n>>bpwr)<<bpwr; /* (n / blocksize) * blocksize; */
 
     /* unroll the loop in blocks of `blocksize'; looping downwards gains some more speed */
-    if(x){
-        for(i=blockn-1; i>0; i-=blocksize){
-            e[i ]=x[i ]-y[i ]; sum0+=e[i ]*e[i ];
-            j1=i-1; e[j1]=x[j1]-y[j1]; sum1+=e[j1]*e[j1];
-            j2=i-2; e[j2]=x[j2]-y[j2]; sum2+=e[j2]*e[j2];
-            j3=i-3; e[j3]=x[j3]-y[j3]; sum3+=e[j3]*e[j3];
-            j4=i-4; e[j4]=x[j4]-y[j4]; sum0+=e[j4]*e[j4];
-            j5=i-5; e[j5]=x[j5]-y[j5]; sum1+=e[j5]*e[j5];
-            j6=i-6; e[j6]=x[j6]-y[j6]; sum2+=e[j6]*e[j6];
-            j7=i-7; e[j7]=x[j7]-y[j7]; sum3+=e[j7]*e[j7];
+    if(x)
+    {
+        for(i=blockn-1; i>0; i-=blocksize)
+        {
+            e[i ]=x[i ]-y[i ];
+            sum0+=e[i ]*e[i ];
+            j1=i-1;
+            e[j1]=x[j1]-y[j1];
+            sum1+=e[j1]*e[j1];
+            j2=i-2;
+            e[j2]=x[j2]-y[j2];
+            sum2+=e[j2]*e[j2];
+            j3=i-3;
+            e[j3]=x[j3]-y[j3];
+            sum3+=e[j3]*e[j3];
+            j4=i-4;
+            e[j4]=x[j4]-y[j4];
+            sum0+=e[j4]*e[j4];
+            j5=i-5;
+            e[j5]=x[j5]-y[j5];
+            sum1+=e[j5]*e[j5];
+            j6=i-6;
+            e[j6]=x[j6]-y[j6];
+            sum2+=e[j6]*e[j6];
+            j7=i-7;
+            e[j7]=x[j7]-y[j7];
+            sum3+=e[j7]*e[j7];
         }
 
         /*
          * There may be some left to do.
-         * This could be done as a simple for() loop, 
-         * but a switch is faster (and more interesting) 
-         */ 
+         * This could be done as a simple for() loop,
+         * but a switch is faster (and more interesting)
+         */
 
         i=blockn;
-        if(i<n){ 
+        if(i<n)
+        {
             /* Jump into the case at the place that will allow
-             * us to finish off the appropriate number of items. 
-             */ 
+             * us to finish off the appropriate number of items.
+             */
 
-            switch(n - i){ 
-            case 7 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 6 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 5 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 4 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 3 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 2 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 1 : e[i]=x[i]-y[i]; sum0+=e[i]*e[i]; ++i;
+            switch(n - i)
+            {
+            case 7 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 6 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 5 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 4 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 3 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 2 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 1 :
+                e[i]=x[i]-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
             }
         }
     }
-    else{ /* x==0 */
-        for(i=blockn-1; i>0; i-=blocksize){
-            e[i ]=-y[i ]; sum0+=e[i ]*e[i ];
-            j1=i-1; e[j1]=-y[j1]; sum1+=e[j1]*e[j1];
-            j2=i-2; e[j2]=-y[j2]; sum2+=e[j2]*e[j2];
-            j3=i-3; e[j3]=-y[j3]; sum3+=e[j3]*e[j3];
-            j4=i-4; e[j4]=-y[j4]; sum0+=e[j4]*e[j4];
-            j5=i-5; e[j5]=-y[j5]; sum1+=e[j5]*e[j5];
-            j6=i-6; e[j6]=-y[j6]; sum2+=e[j6]*e[j6];
-            j7=i-7; e[j7]=-y[j7]; sum3+=e[j7]*e[j7];
+    else  /* x==0 */
+    {
+        for(i=blockn-1; i>0; i-=blocksize)
+        {
+            e[i ]=-y[i ];
+            sum0+=e[i ]*e[i ];
+            j1=i-1;
+            e[j1]=-y[j1];
+            sum1+=e[j1]*e[j1];
+            j2=i-2;
+            e[j2]=-y[j2];
+            sum2+=e[j2]*e[j2];
+            j3=i-3;
+            e[j3]=-y[j3];
+            sum3+=e[j3]*e[j3];
+            j4=i-4;
+            e[j4]=-y[j4];
+            sum0+=e[j4]*e[j4];
+            j5=i-5;
+            e[j5]=-y[j5];
+            sum1+=e[j5]*e[j5];
+            j6=i-6;
+            e[j6]=-y[j6];
+            sum2+=e[j6]*e[j6];
+            j7=i-7;
+            e[j7]=-y[j7];
+            sum3+=e[j7]*e[j7];
         }
 
         /*
          * There may be some left to do.
-         * This could be done as a simple for() loop, 
-         * but a switch is faster (and more interesting) 
-         */ 
+         * This could be done as a simple for() loop,
+         * but a switch is faster (and more interesting)
+         */
 
         i=blockn;
-        if(i<n){ 
+        if(i<n)
+        {
             /* Jump into the case at the place that will allow
-             * us to finish off the appropriate number of items. 
-             */ 
+             * us to finish off the appropriate number of items.
+             */
 
-            switch(n - i){ 
-            case 7 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 6 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 5 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 4 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 3 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 2 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
-            case 1 : e[i]=-y[i]; sum0+=e[i]*e[i]; ++i;
+            switch(n - i)
+            {
+            case 7 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 6 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 5 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 4 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 3 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 2 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
+            case 1 :
+                e[i]=-y[i];
+                sum0+=e[i]*e[i];
+                ++i;
             }
         }
     }

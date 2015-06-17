@@ -21,33 +21,33 @@
 void
 dir_mgmt_load_cfg (BotParam *param, dir_mgmt_t *dm)
 {
-    dm->base_dir = botu_param_get_str_or_default (param, 
-                                                  "os-remotehelm.dir-mgmt.base_dir", 
-                                                  "/home/auv/mission-data");
+    dm->base_dir = botu_param_get_str_or_default (param,
+                   "os-remotehelm.dir-mgmt.base_dir",
+                   "/home/auv/mission-data");
 
     dm->perls_dir = botu_param_get_str_or_default (param,
-                                                   "os-remotehelm.dir-mgmt.perls_dir", 
-                                                   "/home/auv/perls");
+                    "os-remotehelm.dir-mgmt.perls_dir",
+                    "/home/auv/perls");
 
-    dm->wafer_mis_dir = botu_param_get_str_or_default (param, 
-                                                       "os-remotehelm.dir-mgmt.wafer_mis_dir",
-                                                       "C:\\Missions");
+    dm->wafer_mis_dir = botu_param_get_str_or_default (param,
+                        "os-remotehelm.dir-mgmt.wafer_mis_dir",
+                        "C:\\Missions");
 
     dm->mounted_wafer = botu_param_get_str_or_default (param,
-                                                       "os-remotehelm.dir-mgmt.mounted_wafer",
-                                                       "/home/auv/wafer-missions");
+                        "os-remotehelm.dir-mgmt.mounted_wafer",
+                        "/home/auv/wafer-missions");
 
     dm->auv_name = botu_param_get_str_or_default (param,
-                                                  "vehicle.name",
-                                                  "noname");
+                   "vehicle.name",
+                   "noname");
 }
 
 
 //----------------------------------------------------------------------
 // Find the next dive number based off of the local directory structure
-// make a new dive directory, set dir_mgmt dm vars 
+// make a new dive directory, set dir_mgmt dm vars
 //----------------------------------------------------------------------
-void 
+void
 dir_mgmt_next_dive (dir_mgmt_t * dm)
 {
     char *tmp = g_strconcat (dm->base_dir, "/" ,dm->auv_name, NULL);
@@ -55,7 +55,8 @@ dir_mgmt_next_dive (dir_mgmt_t * dm)
     free(tmp);
     struct dirent *pent;
 
-    if (!pdir) {
+    if (!pdir)
+    {
         printf ("opendir() failure: Unable to open base_dir: %s \r\n",
                 dm->base_dir);
         exit (EXIT_FAILURE);
@@ -63,13 +64,15 @@ dir_mgmt_next_dive (dir_mgmt_t * dm)
 
     errno=0;
     int max = 0; //start at 1 if we dont find anything we start at dive001
-    while ((pent=readdir (pdir))) {
+    while ((pent=readdir (pdir)))
+    {
         int tmp=0;
         //format yyyy-mm-dd-dive.ddd (just scan until the '.' character)
         if (1==sscanf (pent->d_name, "%*[^.].%d", &tmp))
             max = (tmp > max ? tmp : max);
     }
-    if (errno) {
+    if (errno)
+    {
         printf ("readdir() failure: Unable to read base_dir: %s  \r\n",
                 dm->base_dir);
         exit (EXIT_FAILURE);
@@ -80,13 +83,14 @@ dir_mgmt_next_dive (dir_mgmt_t * dm)
 
     char time_str[14];
     timeutil_strftime (time_str, sizeof time_str, "%Y-%m-%d", timestamp_now ());
-    
+
     dm->dive_dir = malloc (PATH_MAX * sizeof (char));
     snprintf (dm->dive_dir, PATH_MAX * sizeof (char), "%s/%s/%s-dive.%03d",
               dm->base_dir, dm->auv_name, time_str, dm->dive_num );
     printf ("dive dir %s\n",dm->dive_dir);
 
-    if (unix_mkpath (dm->dive_dir, 0755)) {
+    if (unix_mkpath (dm->dive_dir, 0755))
+    {
         printf ("unix_mkpath() failure: Failed to make dive dir: %s  \r\n",
                 dm->dive_dir);
         exit (EXIT_FAILURE);
@@ -96,11 +100,11 @@ dir_mgmt_next_dive (dir_mgmt_t * dm)
 //----------------------------------------------------------------------
 // Copy the mission file into the dive directory
 //----------------------------------------------------------------------
-void 
+void
 dir_mgmt_cpy_mis (dir_mgmt_t *dm, const char *mission_file)
 {
     char cmd[512];
-    snprintf (cmd, sizeof cmd, "cp -p %s %s/.", 
+    snprintf (cmd, sizeof cmd, "cp -p %s %s/.",
               mission_file, dm->dive_dir);
     if (system (cmd))
         printf ("Error in cp cmd: %s\n\r", cmd);
@@ -109,7 +113,7 @@ dir_mgmt_cpy_mis (dir_mgmt_t *dm, const char *mission_file)
 //----------------------------------------------------------------------
 // Copy lcm_defs and config to mission dir
 //----------------------------------------------------------------------
-void 
+void
 dir_mgmt_cpy_config (dir_mgmt_t *dm)
 {
     char cmd[1024];
@@ -130,7 +134,7 @@ dir_mgmt_cpy_config (dir_mgmt_t *dm)
 //----------------------------------------------------------------------
 // Move UVC log to mission dir
 //----------------------------------------------------------------------
-void 
+void
 dir_mgmt_mv_uvc_log (dir_mgmt_t *dm, const char *mission_file)
 {
     char cmd[512];

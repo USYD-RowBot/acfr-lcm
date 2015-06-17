@@ -39,8 +39,8 @@ typedef struct
     udp_info_t gps_udp_info;
     int osi_mode;
     char *base_path;
-	int send_opos;
-	double vx_knots;
+    int send_opos;
+    double vx_knots;
 } state_t;
 
 
@@ -227,14 +227,14 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             .mission_name	= mission_name,
             .mission_time_remaining = mission_time_remaining,
         };
-		
+
         senlcm_uvc_osi_t_publish (state->lcm, "UVC_OSI", &data);
 
         // start or stop the logger
         start_lcm_logger(&data, state);
 
-		// Save this for later		
-		state->vx_knots = speed;
+        // Save this for later
+        state->vx_knots = speed;
 
         return 1;
     }
@@ -426,34 +426,34 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
 
 
 void omstart_handler (const lcm_recv_buf_t *rbuf, const char *channel,
-                  const senlcm_uvc_omstart_t *cmd, void *user)
+                      const senlcm_uvc_omstart_t *cmd, void *user)
 {
     state_t *state = user;
     char msg[256];
-	if(strlen(cmd->srp_name) == 0)
-		nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s*",
-                  cmd->msg_flag_gps,
-                  cmd->msg_flag_sounder,
-                  cmd->msg_flag_cal_pressure,
-                  cmd->mission_type,
-                  cmd->mission_name);
-	else
-		nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s,%s*",
-                  cmd->msg_flag_gps,
-                  cmd->msg_flag_sounder,
-                  cmd->msg_flag_cal_pressure,
-                  cmd->mission_type,
-                  cmd->mission_name,
-				  cmd->srp_name);
-printf("OMSTART msg: %s\n", msg);
+    if(strlen(cmd->srp_name) == 0)
+        nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s*",
+                      cmd->msg_flag_gps,
+                      cmd->msg_flag_sounder,
+                      cmd->msg_flag_cal_pressure,
+                      cmd->mission_type,
+                      cmd->mission_name);
+    else
+        nmea_sprintf (msg, "$OMSTART,%d,%d,%d,%d,%s,%s*",
+                      cmd->msg_flag_gps,
+                      cmd->msg_flag_sounder,
+                      cmd->msg_flag_cal_pressure,
+                      cmd->mission_type,
+                      cmd->mission_name,
+                      cmd->srp_name);
+    printf("OMSTART msg: %s\n", msg);
     acfr_sensor_write(state->sensor, msg, strlen(msg));
 
-	if(cmd->msg_flag_gps)
-		state->send_opos = 1;
+    if(cmd->msg_flag_gps)
+        state->send_opos = 1;
 }
 
 void omstop_handler (const lcm_recv_buf_t *rbuf, const char *channel,
-                 const senlcm_uvc_omstop_t *cmd, void *user)
+                     const senlcm_uvc_omstop_t *cmd, void *user)
 {
     state_t *state = user;
 
@@ -469,17 +469,17 @@ void usbl_fix_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_u
 {
     // We have loaded a mission whilst under water so we need to send an OPOS message
     state_t *state = (state_t *)u;
-	char msg[256];
-	if(state->send_opos)
-	{
-		nmea_sprintf (msg, "$OPOS,%3.7f,%3.7f,%3.7f,0,20,*",
-						uf->latitude * RTOD,
-						uf->longitude * RTOD,
-						state->vx_knots);
-		acfr_sensor_write(state->sensor, msg, strlen(msg));
+    char msg[256];
+    if(state->send_opos)
+    {
+        nmea_sprintf (msg, "$OPOS,%3.7f,%3.7f,%3.7f,0,20,*",
+                      uf->latitude * RTOD,
+                      uf->longitude * RTOD,
+                      state->vx_knots);
+        acfr_sensor_write(state->sensor, msg, strlen(msg));
 
-		state->send_opos = 0;
-	}
+        state->send_opos = 0;
+    }
 }
 
 
@@ -530,13 +530,13 @@ int main (int argc, char *argv[])
     sprintf(key, "%s.base_path", rootkey);
     state.base_path = bot_param_get_str_or_fail(state.sensor->param, key);
     state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
-	state.send_opos = 0;
+    state.send_opos = 0;
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-	senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART", &omstart_handler, &state);
-	senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP", &omstop_handler, &state);
-	senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX", &usbl_fix_handler, &state);
+    senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART", &omstart_handler, &state);
+    senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP", &omstop_handler, &state);
+    senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX", &usbl_fix_handler, &state);
 
     // create a UDP socket to send the GPRMC message out on
     create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);

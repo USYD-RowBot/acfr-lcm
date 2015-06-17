@@ -1,7 +1,7 @@
 #include "perls-math/gsl_util.h"
 #include "perls-vision/opencv_util.h"
 
-int 
+int
 main (int argc, char *argv[])
 {
     // OpenCV test matrix
@@ -52,7 +52,7 @@ main (int argc, char *argv[])
     // connvert to CvMat (deep copy)
     CvMat *cvec_copy = vis_cvu_gsl_vector_to_cvmat_copy (gvec);
     vis_cvu_vector_printf (cvec_copy, "cvec_copy");
-    
+
     // convert to CvMat (light copy)
     CvMat cvec_view = vis_cvu_gsl_vector_to_cvmat_view (gvec);
     vis_cvu_vector_printf (&cvec_view, "cvec_view");

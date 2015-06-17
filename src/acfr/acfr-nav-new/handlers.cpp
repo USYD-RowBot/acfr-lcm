@@ -366,9 +366,9 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     usbl_data.ship_roll = usbl->ship_roll * RTOD;
     usbl_data.ship_pitch = usbl->ship_pitch * RTOD;
     usbl_data.ship_heading = usbl->ship_heading * RTOD;
-    //usbl_data.target_x = usbl->target_x;
-    //usbl_data.target_y = usbl->target_y;
-    //usbl_data.target_z = usbl->target_z;
+    usbl_data.target_x = usbl->target_x;
+    usbl_data.target_y = usbl->target_y;
+    usbl_data.target_z = usbl->target_z;
     
     if(state->mode == NAV)
        	state->slam->handle_evologicsfix_data(usbl_data);
@@ -460,4 +460,44 @@ void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
         state->raw_out << endl;
     }
 }
+
+void on_seabotix_sensors(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabotix_sensors_t *ss, state_c* state)
+{
+    // spoof an OS compass
+    auv_data_tools::OS_Compass_Data osc_data;
+    osc_data.roll = ss->roll;
+    osc_data.pitch = ss->pitch;
+    osc_data.heading = ss->heading;
+    
+    // The handler in seabed interface assumes the depth of this message is in feet.
+    osc_data.depth = ss->depth / UNITS_FEET_TO_METER;
+    
+    osc_data.set_raw_timestamp((double)ss->utime/1e6);
+
+    if(state->mode == NAV)
+       	state->slam->handle_OS_compass_data(osc_data);
+    else if(state->mode == RAW)
+    {
+        osc_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+}
+
+// This is not complete, it spoofs the RDI DVL and only fills in the altitude variable to be used with processing the images 
+void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state)
+{
+    if(fabs(ms->altitude) < 0.000001)
+        return;
+    auv_data_tools::RDI_Data rdi_data;
+    memset(&rdi_data, 0, sizeof(auv_data_tools::RDI_Data));
+    rdi_data.set_raw_timestamp((double)ms->utime/1e6);
+    rdi_data.alt = ms->altitude;
+    if(state->mode == RAW)
+    {
+        rdi_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+}
+
+
 

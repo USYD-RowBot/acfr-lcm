@@ -8,11 +8,11 @@ unsigned long CRC32Value(int i)
     unsigned long ulCRC;
     ulCRC = i;
     for ( j = 8 ; j > 0; j-- )
-        {
+    {
         if ( ulCRC & 1 )
             ulCRC = ( ulCRC >> 1 ) ^ CRC32_POLYNOMIAL;
         else
-        ulCRC >>= 1;
+            ulCRC >>= 1;
     }
     return ulCRC;
 }
@@ -21,7 +21,7 @@ unsigned long CRC32Value(int i)
 Calculates the CRC-32 of a block of data all at once
 -------------------------------------------------------------------------- */
 unsigned long CalculateBlockCRC32(
-unsigned long ulCount,
+    unsigned long ulCount,
     /* Number of bytes in the data block */
     unsigned char *ucBuffer ) /* Data block */
 {

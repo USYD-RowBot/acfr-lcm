@@ -21,7 +21,7 @@ int
 rdi_verify_checksum (const char *buf, int len)
 {
     /* Bytes 3,4 contain the number of bytes from the start
-       of the current ensemble up to, but no including, the 2-byte checksum 
+       of the current ensemble up to, but no including, the 2-byte checksum
     */
     uint16_t nbytes = *((uint16_t *) (buf+2));
     if (nbytes != (len-2))
@@ -35,10 +35,11 @@ rdi_verify_checksum (const char *buf, int len)
 
     uint16_t mychecksum = 0;
     const char *mybuf=buf;
-    for (int i=0; i < nbytes; i++) {
+    for (int i=0; i < nbytes; i++)
+    {
         mychecksum += *((uint8_t *) mybuf++);
     }
-    
+
     if (mychecksum == checksum)
         return 0;
     else
@@ -81,11 +82,13 @@ rdi_pd4_to_lcm_pd4 (const rdi_pd4_t *pd4)
     const double cos30 = cos (30*DTOR);
     int nbeams = 0;
     double altsum = 0.0;
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<4; i++)
+    {
         lcm_pd4.btv[i] = pd4->btv[i] * UNITS_MILLI_TO_ONE; // mm/s to m/s
         lcm_pd4.wtv[i] = pd4->wtv[i] * UNITS_MILLI_TO_ONE; // mm/s to m/s
 
-        if (pd4->altitude[i] > 0) {
+        if (pd4->altitude[i] > 0)
+        {
             altsum += pd4->altitude[i] * UNITS_CENTI_TO_ONE; // cm to m
             nbeams++;
             lcm_pd4.range[i] = pd4->altitude[i] * UNITS_CENTI_TO_ONE / cos30; // cm to m
@@ -125,12 +128,13 @@ rdi_pd5_to_lcm_pd5 (const rdi_pd5_t *pd5)
 
     lcm_pd5.salinity = pd5->salinity; // ppt
     lcm_pd5.depth    = pd5->depth * UNITS_DECI_TO_ONE; // dm to m
-    
+
     lcm_pd5.pitch   = pd5->pitch * UNITS_CENTI_TO_ONE * DTOR;   // .01 deg to rad
     lcm_pd5.roll    = pd5->roll * UNITS_CENTI_TO_ONE * DTOR;    // .01 deg to rad
     lcm_pd5.heading = pd5->heading * UNITS_CENTI_TO_ONE * DTOR; // .01 deg to rad
 
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<4; i++)
+    {
         lcm_pd5.dmg_btv[i] = pd5->dmg_btv[i] * UNITS_DECI_TO_ONE; // dm to m
         lcm_pd5.dmg_wtv[i] = pd5->dmg_wtv[i] * UNITS_DECI_TO_ONE; // dm to m
     }
@@ -144,7 +148,8 @@ rdi_bathy_janus30 (double r1, double r2, double r3, double r4, const double x_ws
     perllcm_rdi_bathy_t bathy = {0};
 
     static double c = 100.0, s = 100.0;
-    if (c > 1.0) {
+    if (c > 1.0)
+    {
         s = sin (30.0*DTOR);
         c = cos (30.0*DTOR);
     }
@@ -169,7 +174,7 @@ rdi_bathy_janus30 (double r1, double r2, double r3, double r4, const double x_ws
     bathy.xyz[2][0] =  0.0;
     bathy.xyz[2][1] =  r3*s;
     bathy.xyz[2][2] = -r3*c;
-    
+
     // b4_hat = [0, -s, -c]
     bathy.xyz[3][0] =  0.0;
     bathy.xyz[3][1] = -r4*s;
@@ -182,15 +187,17 @@ rdi_bathy_janus30 (double r1, double r2, double r3, double r4, const double x_ws
     bathy.range[3] = r4;
 
     // transform to desired reference frame
-    if (x_ws) {
+    if (x_ws)
+    {
         GSLU_MATRIX_VIEW (H_ws, 4, 4);
         ssc_homo4x4 (H_ws.data, x_ws);
 
-        for (size_t i=0; i<4; i++) {
+        for (size_t i=0; i<4; i++)
+        {
             GSLU_VECTOR_VIEW (X_s_h, 4, {bathy.xyz[i][0], bathy.xyz[i][1], bathy.xyz[i][2], 1.0});
             GSLU_VECTOR_VIEW (X_w_h, 4);
             gslu_blas_mv (&X_w_h.vector, &H_ws.matrix, &X_s_h.vector);
-        
+
             bathy.xyz[i][0] = X_w_h.data[0];
             bathy.xyz[i][1] = X_w_h.data[1];
             bathy.xyz[i][2] = X_w_h.data[2];

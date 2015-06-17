@@ -14,7 +14,7 @@
  *
  * and changes made by Jonathan Howland (jhowland@whoi.edu) to accept
  * a specifier as to the type of histogram to use.  This actually turns
- * CLAHE into CLAHS, histogram specification. 
+ * CLAHE into CLAHS, histogram specification.
  *
  * reference:
  * Digital Image Processing by Gonzalez and Woods, pp 180+, Handbook
@@ -48,7 +48,8 @@ static void
 MakeLut (uint16_t *LUT, size_t Min, size_t Max, size_t nBins, size_t NR_OF_GREY)
 {
     const size_t BinSize = (1 + (Max - Min) / nBins);
-    for (size_t i = 0; i < NR_OF_GREY; i++) {
+    for (size_t i = 0; i < NR_OF_GREY; i++)
+    {
         if (i < Min)
             LUT[i] = 0;
         else if (i <= Max)
@@ -68,9 +69,10 @@ MakeHistogram8U (uint8_t *Image, size_t XRes, size_t SizeX, size_t SizeY,
                  uint32_t *Histogram, size_t NrGreylevels, uint16_t *LookupTable)
 {
     memset (Histogram, 0L, sizeof(0L)*NrGreylevels); // clear histogram
-    
+
     uint8_t *Tile = Image;
-    for (size_t i=0; i < SizeY; i++) {
+    for (size_t i=0; i < SizeY; i++)
+    {
         uint8_t *TileEnd = Tile + SizeX;
         while (Tile < TileEnd)
             Histogram[LookupTable[*Tile++]]++;
@@ -87,7 +89,8 @@ MakeHistogram16U (uint16_t *Image, size_t XRes, size_t SizeX, size_t SizeY,
     memset (Histogram, 0L, sizeof(0L)*NrGreylevels); // clear histogram
 
     uint16_t *Tile = Image;
-    for (size_t i=0; i < SizeY; i++) {
+    for (size_t i=0; i < SizeY; i++)
+    {
         uint16_t *TileEnd = Tile + SizeX;
         while (Tile < TileEnd)
             Histogram[LookupTable[*Tile++]]++;
@@ -107,7 +110,8 @@ ClipHistogram (uint32_t *Histogram, size_t NrGreylevels, size_t ClipLimit)
 {
     /* 1) calculate total number of excess pixels */
     size_t NrExcess = 0;
-    for (size_t i = 0; i < NrGreylevels; i++) {
+    for (size_t i = 0; i < NrGreylevels; i++)
+    {
         long BinExcess = Histogram[i] - ClipLimit;
         if (BinExcess > 0)
             NrExcess += BinExcess; // excess in current bin
@@ -116,30 +120,37 @@ ClipHistogram (uint32_t *Histogram, size_t NrGreylevels, size_t ClipLimit)
     /* 2) clip histogram and redistribute excess pixels in each bin */
     size_t BinIncr = NrExcess / NrGreylevels; // average bin increment
     size_t Upper = ClipLimit - BinIncr; // bins largers than Upper set to cliplimit
-    for (size_t i=0; i < NrGreylevels; i++) {
+    for (size_t i=0; i < NrGreylevels; i++)
+    {
         if (Histogram[i] > ClipLimit)
             Histogram[i] = ClipLimit; // clip bin
-        else if (Histogram[i] > Upper) { // high bin count
-                NrExcess -= Histogram[i] - Upper;
-                Histogram[i] = ClipLimit;
+        else if (Histogram[i] > Upper)   // high bin count
+        {
+            NrExcess -= Histogram[i] - Upper;
+            Histogram[i] = ClipLimit;
         }
-        else {
+        else
+        {
             NrExcess -= BinIncr;
             Histogram[i] += BinIncr;
         }
     }
 
     /* 3) redistribute remaining excess */
-    while (NrExcess) {
+    while (NrExcess)
+    {
         uint32_t *EndPointer = Histogram + NrGreylevels;
         uint32_t *Histo = Histogram;
-        while (NrExcess && Histo < EndPointer) {
+        while (NrExcess && Histo < EndPointer)
+        {
             size_t StepSize = NrGreylevels / NrExcess;
             StepSize = (StepSize > 1) ? StepSize : 1; // stepsize at least 1
-            for (uint32_t *BinPointer=Histo; BinPointer < EndPointer && NrExcess; BinPointer += StepSize) {
-                if (*BinPointer < ClipLimit) { // reduce excess
+            for (uint32_t *BinPointer=Histo; BinPointer < EndPointer && NrExcess; BinPointer += StepSize)
+            {
+                if (*BinPointer < ClipLimit)   // reduce excess
+                {
                     (*BinPointer)++;
-                    NrExcess--; 
+                    NrExcess--;
                 }
             }
             Histo++; // restart redistributing on other bin location
@@ -159,11 +170,13 @@ MapHistogram (uint32_t *Histogram, size_t Min, size_t Max, size_t NrGreylevels,
     const double eps = DBL_EPSILON;
     size_t valSpread = Max - Min;
 
-    switch (heq_type) {
-    case VIS_CLAHS_DIST_UNIFORM: 
+    switch (heq_type)
+    {
+    case VIS_CLAHS_DIST_UNIFORM:
     {
         const float Scale = ((float)valSpread) / ((float)NrOfPixels);
-        for (size_t i = 0; i < NrGreylevels; i++) {
+        for (size_t i = 0; i < NrGreylevels; i++)
+        {
             Sum += Histogram[i];
             Histogram[i] = GSL_MIN (Min + Sum*Scale, Max);
         }
@@ -173,29 +186,31 @@ MapHistogram (uint32_t *Histogram, size_t Min, size_t Max, size_t NrGreylevels,
     case VIS_CLAHS_DIST_EXPONENTIAL:
     {
         /* pdf = alpha*exp(-alpha*t)*U(t)
-         * cdf = 1-exp(-alpha*t) 
+         * cdf = 1-exp(-alpha*t)
          */
         double vmax = 1.0 - exp (-alpha);
-        for (size_t i=0; i < NrGreylevels; i++) {
+        for (size_t i=0; i < NrGreylevels; i++)
+        {
             Sum += Histogram[i];
             double val = (vmax*Sum) / ((float)NrOfPixels);
             if (val >= 1) val = 1.0-eps; // avoid log(0)
             double temp = -1.0/alpha * log (1.0-val);
             Histogram[i] = GSL_MIN (Min + temp * valSpread, Max);
         }
-    }   
+    }
     break;
 
-    case VIS_CLAHS_DIST_RAYLEIGH: 
+    case VIS_CLAHS_DIST_RAYLEIGH:
     {
         /* suitable for underwater imagery
          * pdf = (t./alpha^2).*exp(-t.^2/(2*alpha^2))*U(t)
-         * cdf = 1-exp(-t.^2./(2*alpha^2)) 
+         * cdf = 1-exp(-t.^2./(2*alpha^2))
          */
         double temp;
         double hconst = 2.0 * alpha * alpha;
         double vmax = 1.0 - exp (-1.0/hconst);
-        for (size_t i=0; i < NrGreylevels; i++) {
+        for (size_t i=0; i < NrGreylevels; i++)
+        {
             Sum += Histogram[i];
             double val = (vmax*Sum) / (float)NrOfPixels;
             if (val >= 1) val = 1.0-eps; // avoid log(0)
@@ -221,22 +236,25 @@ MapHistogram (uint32_t *Histogram, size_t Min, size_t Max, size_t NrGreylevels,
  * LUT	     - lookup table containing mapping greyvalues to bins
  */
 static void
-Interpolate (void *pImage, image_type_t ImageType, size_t XRes, 
+Interpolate (void *pImage, image_type_t ImageType, size_t XRes,
              uint32_t *MapLU, uint32_t *MapRU, uint32_t *MapLB, uint32_t *MapRB,
              size_t XSize, size_t YSize, uint16_t *LUT)
 {
     const size_t Incr = XRes - XSize; // pointer increment after processing row
     const size_t NormFactor = XSize*YSize;
 
-    switch (ImageType) {
+    switch (ImageType)
+    {
     case IMAGE_8U:
     {
         uint8_t *Image = pImage;
-        for (size_t YCoef = 0, YInvCoef = YSize; YCoef < YSize; YCoef++, YInvCoef--, Image += Incr) {
-            for (size_t XCoef = 0, XInvCoef = XSize; XCoef < XSize; XCoef++, XInvCoef--) {
+        for (size_t YCoef = 0, YInvCoef = YSize; YCoef < YSize; YCoef++, YInvCoef--, Image += Incr)
+        {
+            for (size_t XCoef = 0, XInvCoef = XSize; XCoef < XSize; XCoef++, XInvCoef--)
+            {
                 uint8_t GreyValue = LUT[*Image];
                 *Image++ = (YInvCoef * (XInvCoef*MapLU[GreyValue] + XCoef*MapRU[GreyValue]) +
-                               YCoef * (XInvCoef*MapLB[GreyValue] + XCoef*MapRB[GreyValue]) ) / NormFactor;
+                            YCoef * (XInvCoef*MapLB[GreyValue] + XCoef*MapRB[GreyValue]) ) / NormFactor;
             }
         }
     }
@@ -245,11 +263,13 @@ Interpolate (void *pImage, image_type_t ImageType, size_t XRes,
     case IMAGE_16U:
     {
         uint16_t *Image = pImage;
-        for (size_t YCoef = 0, YInvCoef = YSize; YCoef < YSize; YCoef++, YInvCoef--, Image += Incr) {
-            for (size_t XCoef = 0, XInvCoef = XSize; XCoef < XSize; XCoef++, XInvCoef--) {
+        for (size_t YCoef = 0, YInvCoef = YSize; YCoef < YSize; YCoef++, YInvCoef--, Image += Incr)
+        {
+            for (size_t XCoef = 0, XInvCoef = XSize; XCoef < XSize; XCoef++, XInvCoef--)
+            {
                 uint16_t GreyValue = LUT[*Image];
                 *Image++ = (YInvCoef * (XInvCoef*MapLU[GreyValue] + XCoef*MapRU[GreyValue]) +
-                               YCoef * (XInvCoef*MapLB[GreyValue] + XCoef*MapRB[GreyValue]) ) / NormFactor;
+                            YCoef * (XInvCoef*MapLB[GreyValue] + XCoef*MapRB[GreyValue]) ) / NormFactor;
             }
         }
     }
@@ -275,31 +295,35 @@ PadImage (void *Image, size_t width, size_t height, image_type_t ImageType,
     bool colEven = ((*XSize % 2) == 0);
 
     void *pImage = NULL;
-    if (rowDiv && colDiv && rowEven && colEven) {
+    if (rowDiv && colDiv && rowEven && colEven)
+    {
         pImage = Image;
         *XRes = width;
         *YRes = height;
     }
-    else {
+    else
+    {
         size_t padRow=0, padCol=0;
 
-        if (!rowDiv) {
+        if (!rowDiv)
+        {
             *YSize = ceil ((double)height / (double)NrY);
             padRow = (*YSize)*NrY - height;
         }
 
-        if (!colDiv) {
+        if (!colDiv)
+        {
             *XSize = ceil ((double)width / (double)NrX);
             padCol = (*XSize)*NrX - width;
         }
-        
+
         // check if tile dimensions are even numbers
         rowEven = ((*YSize % 2) == 0);
         colEven = ((*XSize % 2) == 0);
 
         if (!rowEven) padRow += NrY;
         if (!colEven) padCol += NrX;
-        
+
         *YRes = height + padRow;
         *XRes = width + padCol;
 
@@ -312,7 +336,8 @@ PadImage (void *Image, size_t width, size_t height, image_type_t ImageType,
         // copy and symmetrically pad bottom row and right column image data
         uint8_t *Image8U = Image;
         uint8_t *pImage8U = pImage;
-        for (size_t i=0; i<height; i++, Image8U+=width*bpp, pImage8U+=(*XRes)*bpp) {
+        for (size_t i=0; i<height; i++, Image8U+=width*bpp, pImage8U+=(*XRes)*bpp)
+        {
             memcpy (pImage8U, Image8U, width*bpp);
             for (size_t j=width, k=width-1; j<*XRes; j++, k--)
                 memcpy (pImage8U+j*bpp, Image8U+k*bpp, bpp);
@@ -346,19 +371,20 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
 
     // check if we should set output intensity to full range for image type
     const size_t NR_OF_GREY = pow (2, depth);
-    if (opts.range[0] == opts.range[1]) {
-        opts.range[0] = 0; 
+    if (opts.range[0] == opts.range[1])
+    {
+        opts.range[0] = 0;
         opts.range[1] = NR_OF_GREY - 1;
     }
 
     // error check input args
     if (opts.tiles[1] < 2 || opts.tiles[1] > MAX_NTILESC)  // at least 4 contextual regions req'd
         return VIS_CLAHS_RET_ERROR_NTILESC;
-    if (opts.tiles[0] < 2 || opts.tiles[0] > MAX_NTILESR) 
+    if (opts.tiles[0] < 2 || opts.tiles[0] > MAX_NTILESR)
         return VIS_CLAHS_RET_ERROR_NTILESR;
     if (opts.range[1] > NR_OF_GREY)                      // output range too large for image type
         return VIS_CLAHS_RET_ERROR_RANGEMAX;
-    if (opts.range[0] > opts.range[1]) 
+    if (opts.range[0] > opts.range[1])
         return VIS_CLAHS_RET_ERROR_RANGEMIN;
     if (opts.cliplimit < 0.0 || opts.cliplimit > 1.0)    // must be in the range [0, 1]
         return VIS_CLAHS_RET_ERROR_CLIPLIMIT;
@@ -375,7 +401,7 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
     const size_t Max = opts.range[1];
     size_t XRes, YRes, XSize, YSize;
     void *pImage = PadImage (Image, width, height, ImageType, NrX, NrY, &XSize, &YSize, &XRes, &YRes);
-    const size_t NrPixels = XSize*YSize; // # of pixels per tile    
+    const size_t NrPixels = XSize*YSize; // # of pixels per tile
 
     // pointer to histogram mappings
     uint32_t *MapArray = malloc (sizeof(uint64_t) * NrX * NrY * NrBins);
@@ -390,14 +416,17 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
     uint16_t LUT[NR_OF_GREY];
     MakeLut (LUT, Min, Max, NrBins, NR_OF_GREY);
 
-    
+
     // calculate greylevel mappings for each contextual region
-    switch (ImageType) {
+    switch (ImageType)
+    {
     case IMAGE_8U:
     {
         uint8_t *ImPointer8U = pImage;
-        for (int Y = 0; Y < NrY; Y++) {
-            for (int X = 0; X < NrX; X++, ImPointer8U += XSize) {
+        for (int Y = 0; Y < NrY; Y++)
+        {
+            for (int X = 0; X < NrX; X++, ImPointer8U += XSize)
+            {
                 uint32_t *Hist = &MapArray[NrBins * (Y * NrX + X)];
                 MakeHistogram8U (ImPointer8U, XRes, XSize, YSize, Hist, NrBins, LUT);
                 ClipHistogram (Hist, NrBins, ClipLimit);
@@ -411,8 +440,10 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
     case IMAGE_16U:
     {
         uint16_t *ImPointer16U = pImage;
-        for (size_t Y = 0; Y < NrY; Y++) {
-            for (size_t X = 0; X < NrX; X++, ImPointer16U += XSize) {
+        for (size_t Y = 0; Y < NrY; Y++)
+        {
+            for (size_t X = 0; X < NrX; X++, ImPointer16U += XSize)
+            {
                 uint32_t *Hist = &MapArray[NrBins * (Y * NrX + X)];
                 MakeHistogram16U (ImPointer16U, XRes, XSize, YSize, Hist, NrBins, LUT);
                 ClipHistogram (Hist, NrBins, ClipLimit);
@@ -427,28 +458,48 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
     // interpolate greylevel mappings to get CLAHS image
     uint8_t *ImPointer = pImage;    // 8-bit pointer
     const int bpp = ImageType / 8; // bytes per pixel
-    for (size_t Y = 0; Y <= NrY; Y++) {
+    for (size_t Y = 0; Y <= NrY; Y++)
+    {
         size_t SubY, YU, YB;
-        if (Y == 0) { /* top row */
-            SubY = YSize/2; YU = 0; YB = YU;
+        if (Y == 0)   /* top row */
+        {
+            SubY = YSize/2;
+            YU = 0;
+            YB = YU;
         }
-        else if (Y == NrY) { /* bottom row */
-            SubY = YSize/2; YU = NrY-1; YB = YU;
+        else if (Y == NrY)   /* bottom row */
+        {
+            SubY = YSize/2;
+            YU = NrY-1;
+            YB = YU;
         }
-        else {
-            SubY = YSize; YU = Y-1; YB = YU+1;
+        else
+        {
+            SubY = YSize;
+            YU = Y-1;
+            YB = YU+1;
         }
 
-        for (size_t X = 0; X <= NrX; X++) {
+        for (size_t X = 0; X <= NrX; X++)
+        {
             size_t SubX, XL, XR;
-            if (X == 0) { /* left column */
-                SubX = XSize/2; XL = 0; XR = 0;
+            if (X == 0)   /* left column */
+            {
+                SubX = XSize/2;
+                XL = 0;
+                XR = 0;
             }
-            else if (X == NrX) { /* right column */
-                SubX = XSize/2; XL = NrX-1; XR = XL;
+            else if (X == NrX)   /* right column */
+            {
+                SubX = XSize/2;
+                XL = NrX-1;
+                XR = XL;
             }
-            else {
-                SubX = XSize; XL = X-1; XR = XL+1;
+            else
+            {
+                SubX = XSize;
+                XL = X-1;
+                XR = XL+1;
             }
 
             uint32_t *LU = &MapArray[NrBins * (YU * NrX + XL)];
@@ -462,9 +513,11 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
         ImPointer += (SubY - 1)*XRes * bpp;
     }
 
-    if (pImage != Image) {
+    if (pImage != Image)
+    {
         // copy padded image back to source image
-        switch (ImageType) {
+        switch (ImageType)
+        {
         case IMAGE_8U:
         {
             uint8_t *Image8U = Image;
@@ -496,7 +549,8 @@ vis_clahs (void *Image, size_t width, size_t height, size_t depth, const vis_cla
 vis_clahs_opts_t
 vis_clahs_default_opts (void)
 {
-    vis_clahs_opts_t opts = {
+    vis_clahs_opts_t opts =
+    {
         .tiles = {8, 8},
         .cliplimit = 0.01,
         .bins = 256,

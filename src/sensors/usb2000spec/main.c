@@ -25,8 +25,8 @@
 //#define PORT_ADDR "/dev/tty.PL2303-0010121A"
 enum {io_socket, io_serial};
 int program_exit;
-void 
-signal_handler(int sigNum) 
+void
+signal_handler(int sigNum)
 {
     // do a safe exit
     program_exit = 1;
@@ -35,12 +35,12 @@ signal_handler(int sigNum)
 int main(int argc, const char * argv[])
 {
     printf("Spectrometer Starting\n");
-    
+
 
     // install the signal handler
-	program_exit = 0;
-    signal(SIGINT, signal_handler);   
-    
+    program_exit = 0;
+    signal(SIGINT, signal_handler);
+
 
 
     int error = 0;
@@ -51,13 +51,14 @@ int main(int argc, const char * argv[])
     int meanStartIdx = 172;
     int meanWidth = 891;
     int autoGainOn = 0;
-    
-    
+
+
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
-       
-    
-    senlcm_usb2000_spec_t specReading = {
+
+
+    senlcm_usb2000_spec_t specReading =
+    {
         .timestamp = timestamp_now(),
         .id = "DownwardSpec",
         .numSamples = 2048,
@@ -66,42 +67,42 @@ int main(int argc, const char * argv[])
     };
     int32_t dd[10] = {0,1,2,3,4};
     specReading.specData = dd;
-    
+
     // Read the LCM config file
     BotParam *param;
-	char rootkey[64];
-	char key[64];
-	
+    char rootkey[64];
+    char key[64];
+
     param = bot_param_new_from_server (lcm, 1);
-    
+
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
     // read the config file
     int io;
-	sprintf(key, "%s.io", rootkey);
-	char *io_str = bot_param_get_str_or_fail(param, key);
+    sprintf(key, "%s.io", rootkey);
+    char *io_str = bot_param_get_str_or_fail(param, key);
     if(!strcmp(io_str, "serial"))
         io = io_serial;
     else if(!strcmp(io_str, "socket"))
         io = io_socket;
-    
+
     char *serial_dev, *parity;
     int baud;
     char *ip, *inet_port;
-       
-    
+
+
     if(io == io_serial)
     {
         sprintf(key, "%s.serial_dev", rootkey);
         serial_dev = bot_param_get_str_or_fail(param, key);
 
-    	sprintf(key, "%s.baud", rootkey);
-	    baud = bot_param_get_int_or_fail(param, key);
+        sprintf(key, "%s.baud", rootkey);
+        baud = bot_param_get_int_or_fail(param, key);
 
-	    sprintf(key, "%s.parity", rootkey);
-	    parity = bot_param_get_str_or_fail(param, key);
+        sprintf(key, "%s.parity", rootkey);
+        parity = bot_param_get_str_or_fail(param, key);
     }
-    
+
     if(io == io_socket)
     {
         sprintf(key, "%s.ip", rootkey);
@@ -110,26 +111,26 @@ int main(int argc, const char * argv[])
         sprintf(key, "%s.port", rootkey);
         inet_port = bot_param_get_str_or_fail(param, key);
     }
-    
-    
+
+
     sprintf(key, "%s.checkRate", rootkey);
     CHECKRATE = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.meanThres_autoGain", rootkey);
     meanThres_autoGain = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.meanStartIdx", rootkey);
     meanStartIdx = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.meanWidth", rootkey);
     meanWidth = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.autoGainOn", rootkey);
     autoGainOn = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.intTimeIntial", rootkey);
     INTTIME = (long) bot_param_get_int_or_fail(param, key);
-    
+
     // Open either the serial port or the socket
     struct addrinfo hints, *spec_addr;
     int spec_fd;
@@ -141,20 +142,20 @@ int main(int argc, const char * argv[])
             printf("Error opening port %s\n", serial_dev);
             return 0;
         }
-    }        
+    }
     else if(io == io_socket)
     {
         memset(&hints, 0, sizeof hints);
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_STREAM;
         getaddrinfo(ip, inet_port, &hints, &spec_addr);
-    	spec_fd = socket(spec_addr->ai_family, spec_addr->ai_socktype, spec_addr->ai_protocol);
-        if(connect(spec_fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0) 
+        spec_fd = socket(spec_addr->ai_family, spec_addr->ai_socktype, spec_addr->ai_protocol);
+        if(connect(spec_fd, spec_addr->ai_addr, spec_addr->ai_addrlen) < 0)
         {
-	        printf("Could not connect to %s on port %s\n", ip, inet_port);
-    		return 1;
+            printf("Could not connect to %s on port %s\n", ip, inet_port);
+            return 1;
         }
-    
+
     }
 
 //    error = getSpectra(spec_fd, specData);
@@ -170,7 +171,7 @@ int main(int argc, const char * argv[])
     //init int time
     error = setIntTime(spec_fd, INTTIME);
     printf("Int time set - error = %u\n",error);
-  
+
     //Set trigger mode
     error = setTriggerMode(spec_fd, 4);
     printf("Trigger mode set - error = %u\n",error);
@@ -180,55 +181,60 @@ int main(int argc, const char * argv[])
     thresholds[2] = meanThres_autoGain;
     thresholds[3] = meanStartIdx;
     thresholds[4] = meanWidth;
-    
+
     //Acquisition Loop
     int i = 0;
-    while (!program_exit) {
+    while (!program_exit)
+    {
 
-            
+
         error = getSpectra(spec_fd, specData);
         specReading.startEndIdx[0] = error;
         specReading.timestamp = timestamp_now();
         specReading.specData = specData;
-        
+
         specReading.numSamples = 2048;
         specReading.intTime = INTTIME;
-        
-	if (error == 0) {
+
+        if (error == 0)
+        {
             senlcm_usb2000_spec_t_publish(lcm, "SPEC_DOWN", &specReading);
         }
-        else {
+        else
+        {
             printf("Error = %u, cameras triggering?", error);
         }
         i++;
-        if (i > CHECKRATE && autoGainOn == 1) {
-        //check for correct gain every CHECKRATE samples
-        
+        if (i > CHECKRATE && autoGainOn == 1)
+        {
+            //check for correct gain every CHECKRATE samples
+
             long newIntTime = checkIntTime(specData, 2048, INTTIME, thresholds);
-                        
+
             printf("Old Int: %ums, New Int: %ums\n", INTTIME, newIntTime);
-            if (newIntTime != INTTIME) {
+            if (newIntTime != INTTIME)
+            {
                 //we have a new Int time
                 setIntTime(spec_fd, newIntTime);
                 INTTIME = newIntTime;
             }
-            
+
             i = 0;
         }
-        
+
     }
-    
+
     error = setTriggerMode(spec_fd, 0);
     printf("Trigger mode set - error = %u\n",error);
-    
+
     close(spec_fd);
     lcm_destroy(lcm);
 
 
-    
-    
-    
-    
+
+
+
+
     return 0;
 }
 

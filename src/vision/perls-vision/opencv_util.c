@@ -33,12 +33,14 @@ IplImage *
 vis_cvu_iplimg_pop (cache_t *imgcache, const char *logdir, int64_t utime)
 {
     IplImage *img_warp = cache_pop (imgcache, utime);
-    if (!img_warp) {
+    if (!img_warp)
+    {
         IplImage *img_warp = vis_cvu_iplimg_load (logdir, utime);
-        if (!img_warp) {
+        if (!img_warp)
+        {
             ERROR ("unable to load img_warp %"PRId64" from disk!\n", utime);
             return NULL;
-        } 
+        }
         else
             cache_push (imgcache, utime, cvCloneImage (img_warp));
     }
@@ -48,13 +50,13 @@ vis_cvu_iplimg_pop (cache_t *imgcache, const char *logdir, int64_t utime)
 void
 vis_cvu_map_free (vis_cvu_map_t *map)
 {
-/* printf ("1\n"); */
+    /* printf ("1\n"); */
     cvReleaseMat (&map->mapu);
-/* printf ("2\n"); */
+    /* printf ("2\n"); */
     cvReleaseMat (&map->mapv);
-/* printf ("3\n"); */
+    /* printf ("3\n"); */
     free (map);
-/* printf ("4\n"); */
+    /* printf ("4\n"); */
 }
 
 void
@@ -75,31 +77,38 @@ vis_cvu_get_pixel_value_1c (const IplImage *image, double x, double y)
     double val = 0.0;
 
     int xl, xu, yl, yu;
-    xl = floor (x); xu = ceil (x);
-    yl = floor (y); yu = ceil (y);
+    xl = floor (x);
+    xu = ceil (x);
+    yl = floor (y);
+    yu = ceil (y);
 
     if (image->depth > 8)
         ERROR ("vis_cvu_get_pixel_value for > 8 bit is not implemented yet.");
-    else {
+    else
+    {
         // if the value is out of image size, return 0.0
         if (x < 0.0 || y < 0.0 || x > image->width || y > image->height)
             return 0.0;
 
         // 8 bit, I(x,y) ~ ((uchar*)(img->imageData + img->widthStep*y))[x]
         int xpt, ypt;
-        if (xl == xu && yl == yu) {  // x and y are integers
-            xpt = xl; ypt = yl;
+        if (xl == xu && yl == yu)    // x and y are integers
+        {
+            xpt = xl;
+            ypt = yl;
             val = ((uchar*)(image->imageData + image->widthStep*ypt))[xpt];
             val = (double) val;
         }
-        else if (xl == xu) { // only x is integer
+        else if (xl == xu)   // only x is integer
+        {
             xpt = xl;
             uchar val_yl = ((uchar*)(image->imageData + image->widthStep*yl))[xpt];
             uchar val_yu = ((uchar*)(image->imageData + image->widthStep*yu))[xpt];
-        
+
             val = (double) val_yl + (double) (val_yu - val_yl) * (double) (y - yl) / (double) (yu - yl);
         }
-        else if (yl == yu) { // only y is integer
+        else if (yl == yu)   // only y is integer
+        {
             ypt = yl;
 
             uchar val_xl = ((uchar*)(image->imageData + image->widthStep*ypt))[xl];
@@ -107,7 +116,8 @@ vis_cvu_get_pixel_value_1c (const IplImage *image, double x, double y)
 
             val = (double) val_xl + (double) (val_xu - val_xl) * (double) (x - xl) / (double) (xu - xl);
         }
-        else { // either x or y are integer
+        else   // either x or y are integer
+        {
             uchar val_xlyl = ((uchar*)(image->imageData + image->widthStep*yl))[xl];
             uchar val_xlyu = ((uchar*)(image->imageData + image->widthStep*yu))[xl];
             uchar val_xuyl = ((uchar*)(image->imageData + image->widthStep*yl))[xu];
@@ -117,7 +127,7 @@ vis_cvu_get_pixel_value_1c (const IplImage *image, double x, double y)
             double val_yl = (double) val_xlyl + (double) (val_xuyl - val_xlyl) * (double) (x - xl) / (double) (xu - xl);
 
             val = (double) val_yl + (double) (val_yu - val_yl) * (double) (y - yl) / (double) (yu - yl);
-            
+
             //printf ("(%d~%d),(%d~%d),%d,%d,%d,%d ", xl,xu, yl,yu, val_xlyl, val_xuyl, val_xlyu, val_xuyu);
             //printf ("then %g,%g==> %g\n", val_yl, val_yu, val);
         }
@@ -136,7 +146,7 @@ vis_cvu_cvmat_to_gsl_matrix_copy (const CvMat *cmat)
 
     gsl_matrix_view gmat_view = vis_cvu_cvmat_to_gsl_matrix_view (cmat);
     gsl_matrix_memcpy (gmat_copy, &gmat_view.matrix);
-    
+
     return gmat_copy;
 }
 
@@ -148,7 +158,7 @@ vis_cvu_gsl_matrix_to_cvmat_copy (const gsl_matrix *gmat)
 
     CvMat cmat_view = vis_cvu_gsl_matrix_to_cvmat_view (gmat);
     cvCopy (&cmat_view, cmat_copy, NULL);
-    
+
     return cmat_copy;
 }
 
@@ -201,7 +211,7 @@ vis_cvu_gsl_vector_to_cvmat_copy (const gsl_vector *gvec)
 /*-------------------VECTOR VIEW---------------------------*/
 gsl_vector_view
 vis_cvu_cvmat_to_gsl_vector_view (const CvMat *cvec)
-{    
+{
     assert (cvec->rows==1 || cvec->cols==1);
     int type = CV_MAT_TYPE (cvec->type);
     assert (type == CV_64FC1);
@@ -230,7 +240,7 @@ void
 vis_cvu_matrix_printfc (const CvMat *cmat, const char *name, const char *fmt, CBLAS_TRANSPOSE_t Trans)
 {
     gsl_matrix_view gmat = vis_cvu_cvmat_to_gsl_matrix_view (cmat);
-    gslu_matrix_printfc (&gmat.matrix, name, fmt, Trans);    
+    gslu_matrix_printfc (&gmat.matrix, name, fmt, Trans);
 }
 
 void
@@ -245,5 +255,5 @@ void
 vis_cvu_vector_printfc (const CvMat *cvec, const char *name, const char *fmt, CBLAS_TRANSPOSE_t Trans)
 {
     gsl_vector_view gvec = vis_cvu_cvmat_to_gsl_vector_view (cvec);
-    gslu_vector_printfc (&gvec.vector, name, fmt, Trans);    
+    gslu_vector_printfc (&gvec.vector, name, fmt, Trans);
 }

@@ -9,10 +9,10 @@
 
 void
 perllcm_est_navigator_debug_meas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
-                                            const perllcm_est_navigator_debug_meas_t *msg, void *user) 
+        const perllcm_est_navigator_debug_meas_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
-    
+
     char *channel_id = g_strconcat (channel, "_", msg->id_str, NULL);
     textread_t *tr = lle_get_textread (lle, channel_id);
     g_free (channel_id);
@@ -23,9 +23,10 @@ perllcm_est_navigator_debug_meas_t_handler (const lcm_recv_buf_t *rbuf, const ch
     TEXTREAD_ADD_FIELD (tr, "meas_len",           "%d",       msg->meas_len);
     TEXTREAD_ADD_FIELD (tr, "nis",                "%.15f",    msg->nis);
     TEXTREAD_ADD_FIELD (tr, "mahal_innov_passed", "%.d",      msg->mahal_innov_passed);
-    
+
     int sl = msg->meas_len;
-    for (int i = 0; i < sl; i++) {
+    for (int i = 0; i < sl; i++)
+    {
         char z_str[128],  eta_str[128];
         snprintf (z_str, sizeof z_str, "z(:,%d)", i+1);
         snprintf (eta_str, sizeof eta_str, "nu(:,%d)", i+1);
@@ -37,8 +38,8 @@ perllcm_est_navigator_debug_meas_t_handler (const lcm_recv_buf_t *rbuf, const ch
 
 
 void
-perllcm_est_navigator_debug_pred_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                                            const perllcm_est_navigator_debug_pred_t *msg, void *user)
+perllcm_est_navigator_debug_pred_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+        const perllcm_est_navigator_debug_pred_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -51,7 +52,7 @@ perllcm_est_navigator_debug_pred_t_handler (const lcm_recv_buf_t *rbuf, const ch
 
 
 void
-perllcm_auv_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+perllcm_auv_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                                  const perllcm_auv_navigator_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -66,24 +67,26 @@ perllcm_auv_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
     TEXTREAD_ADD_FIELD (tr, "Sigma_len",        "%d",       msg->Sigma_len);
 
     int sl = msg->state_len;
-    for (int i = 0; i < sl; i++) {
+    for (int i = 0; i < sl; i++)
+    {
         char tmp[128];
         snprintf (tmp, sizeof tmp, "mu(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", msg->mu_len==sl ? msg->mu[i] : 0.0);
     }
 
     int sl2 = sl*sl;
-    for (int i = 0; i < sl2 ; i++) {
+    for (int i = 0; i < sl2 ; i++)
+    {
         char tmp[128];
         snprintf (tmp, sizeof tmp, "Sigma(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", msg->Sigma_len==sl2 ? msg->Sigma[i] : 0.0);
     }
-    
+
     TEXTREAD_ADD_FIELD (tr, "mu_latitude",      "%.15f",    msg->mu_latitude);
     TEXTREAD_ADD_FIELD (tr, "mu_longitude",     "%.15f",    msg->mu_longitude);
     TEXTREAD_ADD_FIELD (tr, "org_latitude",     "%.15f",    msg->org_latitude);
     TEXTREAD_ADD_FIELD (tr, "org_longitude",    "%.15f",    msg->org_longitude);
-    
+
     // index fields
     TEXTREAD_ADD_FIELD (tr, "index_proc_state_len", "%d",   msg->index.proc_state_len);
     TEXTREAD_ADD_FIELD (tr, "index_u_len",      "%d",       msg->index.u_len);
@@ -110,8 +113,8 @@ perllcm_auv_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
 
 
 void
-perllcm_segway_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                                 const perllcm_segway_navigator_t *msg, void *user)
+perllcm_segway_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                                    const perllcm_segway_navigator_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -128,54 +131,64 @@ perllcm_segway_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *chan
     TEXTREAD_ADD_FIELD (tr, "max_delayed_states",   "%d",       msg->max_delayed_states);
     TEXTREAD_ADD_FIELD (tr, "delayed_states_cnt",   "%d",       msg->delayed_states_cnt);
 
-    if (-1 == msg->max_delayed_states) {// no limit on the maximum state lenght, just do one delayed state worth
-        
+    if (-1 == msg->max_delayed_states)  // no limit on the maximum state lenght, just do one delayed state worth
+    {
+
         int sl = msg->delayed_state_len;
-        for (int i = 0; i < sl; i++) {
+        for (int i = 0; i < sl; i++)
+        {
             char tmp[128];
             snprintf (tmp, sizeof tmp, "mu(:,%d)", i+1);
             TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", msg->mu_len >= sl ? msg->mu[i] : 0.0);
         }
-    
+
         int sl2 = sl*sl;
-        for (int i = 0; i < sl ; i++) {
-            for (int j = 0; j < sl ; j++) {
+        for (int i = 0; i < sl ; i++)
+        {
+            for (int j = 0; j < sl ; j++)
+            {
                 char tmp[128];
                 snprintf (tmp, sizeof tmp, "Sigma(:,%d)", i*sl+j+1);
                 TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", msg->Sigma_len>=sl2 ? msg->Sigma[i*sl+j] : 0.0);
             }
         }
-        
-    } else { // known maximum delayed state length
-        
+
+    }
+    else     // known maximum delayed state length
+    {
+
         int sl = msg->state_len;
         int ml = msg->delayed_state_len * msg->max_delayed_states;
-        for (int i = 0; i < ml; i++) {
+        for (int i = 0; i < ml; i++)
+        {
             char tmp[128];
             snprintf (tmp, sizeof tmp, "mu(:,%d)", i+1);
             TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", (i < sl) ? msg->mu[i] : 0.0);
         }
-        for (int i = 0; i < ml ; i++) {
-            for (int j = 0; j < ml ; j++) {
+        for (int i = 0; i < ml ; i++)
+        {
+            for (int j = 0; j < ml ; j++)
+            {
                 char tmp[128];
                 snprintf (tmp, sizeof tmp, "Sigma(:,%d)", i*ml+j+1);
                 TEXTREAD_ADD_FIELD (tr, tmp, "%.15f", (i < sl && j < sl) ? msg->Sigma[i*sl+j] : 0.0);
             }
         }
     }
-    
-    
-    for (int i = 0; i < msg->max_delayed_states ; i++) {
+
+
+    for (int i = 0; i < msg->max_delayed_states ; i++)
+    {
         char tmp[128];
         snprintf (tmp, sizeof tmp, "delayed_states_utime(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, tmp, "%.15f",
-            (i < msg->delayed_states_cnt) ? msg->delayed_states_utime[i] : 0.0);
+                            (i < msg->delayed_states_cnt) ? msg->delayed_states_utime[i] : 0.0);
     }
-    
-    
+
+
     TEXTREAD_ADD_FIELD (tr, "org_latitude",     "%.15f",    msg->org_latitude);
     TEXTREAD_ADD_FIELD (tr, "org_longitude",    "%.15f",    msg->org_longitude);
-    
+
     // index fields
     TEXTREAD_ADD_FIELD (tr, "index_proc_state_len", "%d",   msg->index.proc_state_len);
     TEXTREAD_ADD_FIELD (tr, "index_u_len",      "%d",       msg->index.u_len);
@@ -201,14 +214,14 @@ perllcm_segway_navigator_t_handler (const lcm_recv_buf_t *rbuf, const char *chan
 }
 
 void
-perllcm_segway_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+perllcm_segway_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                                 const perllcm_segway_state_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
 
     textread_start (tr);
-    TEXTREAD_ADD_FIELD (tr, "utime",                    "%"PRId64,  msg->utime);    
+    TEXTREAD_ADD_FIELD (tr, "utime",                    "%"PRId64,  msg->utime);
     TEXTREAD_ADD_FIELD (tr, "pitch_angle",              "%.15f",    msg->pitch_angle);
     TEXTREAD_ADD_FIELD (tr, "pitch_rate",               "%.15f",    msg->pitch_rate);
     TEXTREAD_ADD_FIELD (tr, "roll_angle",               "%.15f",    msg->roll_angle);
@@ -230,14 +243,14 @@ perllcm_segway_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
 
 void
-perllcm_ardrone_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                                const perllcm_ardrone_state_t *msg, void *user)
+perllcm_ardrone_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                                 const perllcm_ardrone_state_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
 
     textread_start (tr);
-    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);    
+    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);
     TEXTREAD_ADD_FIELD (tr, "pitch",              "%.15f",    msg->pitch);
     TEXTREAD_ADD_FIELD (tr, "yaw",                "%.15f",    msg->yaw);
     TEXTREAD_ADD_FIELD (tr, "roll",               "%.15f",    msg->roll);
@@ -251,14 +264,14 @@ perllcm_ardrone_state_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
 }
 
 void
-perllcm_ardrone_drive_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                                const perllcm_ardrone_drive_t *msg, void *user)
+perllcm_ardrone_drive_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                                 const perllcm_ardrone_drive_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
 
     textread_start (tr);
-    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);    
+    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);
     TEXTREAD_ADD_FIELD (tr, "vx",                 "%.15f",    msg->vx);
     TEXTREAD_ADD_FIELD (tr, "vy",                 "%.15f",    msg->vy);
     TEXTREAD_ADD_FIELD (tr, "vz",                 "%.15f",    msg->vz);
@@ -267,21 +280,21 @@ perllcm_ardrone_drive_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
 }
 
 void
-perllcm_position_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                                const perllcm_position_t *msg, void *user)
+perllcm_position_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                            const perllcm_position_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
 
     textread_start (tr);
-    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);    
+    TEXTREAD_ADD_FIELD (tr, "utime",              "%"PRId64,  msg->utime);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,1)",        "%.15f",    msg->xyzrph[0]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,2)",        "%.15f",    msg->xyzrph[1]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,3)",        "%.15f",    msg->xyzrph[2]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,4)",        "%.15f",    msg->xyzrph[3]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,5)",        "%.15f",    msg->xyzrph[4]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph(:,6)",        "%.15f",    msg->xyzrph[5]);
-    
+
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,1)",        "%.15f",    msg->xyzrph_cov[0]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,2)",        "%.15f",    msg->xyzrph_cov[1]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,3)",        "%.15f",    msg->xyzrph_cov[2]);
@@ -318,7 +331,7 @@ perllcm_position_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,34)",        "%.15f",    msg->xyzrph_cov[33]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,35)",        "%.15f",    msg->xyzrph_cov[34]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_cov(:,36)",        "%.15f",    msg->xyzrph_cov[35]);
-    
+
     TEXTREAD_ADD_FIELD (tr, "xyzrph_dot(:,1)",        "%.15f",    msg->xyzrph_dot[0]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_dot(:,2)",        "%.15f",    msg->xyzrph_dot[1]);
     TEXTREAD_ADD_FIELD (tr, "xyzrph_dot(:,3)",        "%.15f",    msg->xyzrph_dot[2]);
@@ -329,7 +342,7 @@ perllcm_position_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-perllcm_van_vlink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+perllcm_van_vlink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                              const perllcm_van_vlink_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -374,7 +387,7 @@ perllcm_van_vlink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-perllcm_van_plink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+perllcm_van_plink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                              const perllcm_van_plink_t *msg, void *user)
 {
 
@@ -394,6 +407,6 @@ perllcm_van_plink_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "utime_j",       "%"PRId64,  msg->utime_j);
     TEXTREAD_ADD_FIELD (tr, "Ig",        "%.15f",        msg->Ig);
     TEXTREAD_ADD_FIELD (tr, "S_L",        "%.15f",        msg->S_L);
-    
+
     textread_stop (tr);
 }
