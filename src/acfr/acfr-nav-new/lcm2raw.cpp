@@ -61,8 +61,8 @@ int main(int argc, char **argv) {
         state.mode = RAW;
         //state.raw_out.open(argv[2]);
         // open the files
-        state->raw_out.open(argv[2], ofstream::out);
-        if(!state->raw_out.is_open()) {
+        state.raw_out.open(argv[2], ofstream::out);
+        if(!state.raw_out.is_open()) {
             cerr << "Could not open input file: " << argv[2] << endl;
             return 1;
         }
