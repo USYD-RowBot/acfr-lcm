@@ -40,7 +40,27 @@ int program_novatel(acfr_sensor_t *s, int rate)
 {
     char msg[256];
 
-    sprintf(msg, "unlogall\r\n");
+
+    // Find oput which port we are on
+    sprintf(msg, "log com\r\n");
+    acfr_sensor_write(s, msg, strlen(msg));
+    
+    int i = 0;
+    while(i < 10)
+    {
+        i = acfr_sensor_read(s, msg, sizeof(msg));
+	printf("%s\n", msg);
+    }
+    i = 0;
+    while(msg[i] != '[')
+        i++;
+
+    char com_port[5] = {0};
+    strncpy(com_port, &msg[i+1], 4);
+    printf("Using com port %s\n", com_port);
+
+
+    sprintf(msg, "unlogall %s\r\n", com_port);
     acfr_sensor_write(s, msg, strlen(msg));
 
     sprintf(msg, "log inspvab ontime %f\r\n", 1.0/(double)rate);
@@ -116,7 +136,7 @@ main (int argc, char *argv[])
     if(sensor == NULL)
         return 0;
 
-    acfr_sensor_noncanonical(sensor, 1, 0);
+    acfr_sensor_canonical(sensor, '\r', '\n');
 
     // read some additional config
     char key[64];
@@ -125,6 +145,8 @@ main (int argc, char *argv[])
 
 
     program_novatel(sensor, rate);
+
+    acfr_sensor_noncanonical(sensor, 1, 0);
 
     fd_set rfds;
     char buf[512];
