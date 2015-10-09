@@ -43,7 +43,8 @@ dehomogenize (const gsl_matrix *src, gsl_matrix *dst)
     gsl_matrix_memcpy (dst, &src_sub.matrix);
 
     gsl_vector_const_view w = gsl_matrix_const_row (src, src->size1-1);
-    for (size_t i=0; i<dst->size1; i++) {
+    for (size_t i=0; i<dst->size1; i++)
+    {
         gsl_vector_view v = gsl_matrix_row (dst, i);
         gsl_vector_div (&v.vector, &w.vector);
     }

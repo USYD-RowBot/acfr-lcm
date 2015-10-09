@@ -8,7 +8,8 @@ uint16_t
 ms_compute_checksum (const char *buf, int buflen)
 {
     uint16_t checksum = buf[0];
-    for (int i=1; i<buflen-2; i+=2) {
+    for (int i=1; i<buflen-2; i+=2)
+    {
         uint16_t *val = (uint16_t *) &buf[i];
         checksum += ntohs (*val);
     }
@@ -36,7 +37,8 @@ ms_parseGyroVector (char buf[], int buflen,
     if (buflen != LEN_GYRO_VECTOR || !ms_verify_checksum (buf, buflen))
         return 0;
 
-    struct rawpkt {
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t StabMagField[3];
         int16_t StabAccel[3];
@@ -65,7 +67,8 @@ ms_parseInstVector (char buf[], int buflen,
     if (buflen != LEN_INST_VECTOR || !ms_verify_checksum (buf, buflen))
         return 0;
 
-    struct rawpkt {
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t MagField[3];
         int16_t Accel[3];
@@ -92,8 +95,9 @@ ms_parseInstQuat (char buf[], int buflen,
 {
     if (buflen != LEN_INST_QUAT || !ms_verify_checksum (buf, buflen))
         return 0;
-    
-    struct rawpkt {
+
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t Q[4];
         uint16_t TimerTicks;
@@ -105,7 +109,7 @@ ms_parseInstQuat (char buf[], int buflen,
     //ms_convert_TimerTicks (data.TimerTicks, TimerTicks);
     *TimerTicks = ntohs (data.TimerTicks);
 
-    return 1;    
+    return 1;
 
 }
 
@@ -118,7 +122,8 @@ ms_parseGyroQuat (char buf[], int buflen,
     if (buflen != LEN_GYRO_QUAT || !ms_verify_checksum (buf, buflen))
         return 0;
 
-    struct rawpkt {
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t StabQ[4];
         uint16_t TimerTicks;
@@ -130,12 +135,12 @@ ms_parseGyroQuat (char buf[], int buflen,
     //ms_convert_TimerTicks (data.TimerTicks, TimerTicks);
     *TimerTicks = ntohs (data.TimerTicks);
 
-    return 1;    
+    return 1;
 }
 
 int
 ms_parseGyroQuatVector (char buf[], int buflen,
-                        double StabQ[], 
+                        double StabQ[],
                         double MagField[], uint16_t MagGainScale,
                         double Accel[],    uint16_t AccelGainScale,
                         double CompAngRate[], uint16_t GyroGainScale,
@@ -144,7 +149,8 @@ ms_parseGyroQuatVector (char buf[], int buflen,
     if (buflen != LEN_GYRO_QUAT_VECTOR || !ms_verify_checksum (buf, buflen))
         return 0;
 
-    struct rawpkt {
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t StabQ[4];
         int16_t MagField[3];
@@ -172,8 +178,9 @@ ms_parseTemperature (char buf[], int buflen,
 {
     if (buflen != LEN_TEMPERATURE || !ms_verify_checksum (buf, buflen))
         return 0;
-    
-    struct rawpkt {
+
+    struct rawpkt
+    {
         uint8_t Header;
         int16_t Temp;
         uint16_t TimerTicks;
@@ -184,7 +191,7 @@ ms_parseTemperature (char buf[], int buflen,
     ms_convert_Temperature (data.Temp, Temp);
     //ms_convert_TimerTicks (data.TimerTicks, TimerTicks);
     *TimerTicks = ntohs (data.TimerTicks);
-    
+
     return 1;
 }
 
@@ -196,7 +203,8 @@ ms_parseReadEepromWithChecksum (char buf[], int buflen,
     if (buflen != LEN_READ_EEPROM_WITH_CHECKSUM || !ms_verify_checksum (buf, buflen))
         return 0;
 
-    struct rawpkt {
+    struct rawpkt
+    {
         uint8_t Header;
         uint16_t Value;
         uint16_t TimerTicks;

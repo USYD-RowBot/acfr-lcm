@@ -1,0 +1,8 @@
+package senlcm;
+
+struct micron_sounder_t
+{
+    int64_t utime;
+   
+    double altitude;
+}

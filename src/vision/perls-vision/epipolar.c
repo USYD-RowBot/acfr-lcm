@@ -17,7 +17,8 @@ int
 vis_epi_F_from_KRT (gsl_matrix *F, const gsl_matrix *K, const gsl_matrix *R, const gsl_vector *t)
 {
     // check input format if K 3x3 and X 6 dof vector
-    if (K->size1 != 3 || K->size2 != 3 || R->size1 != 3 || R->size2 != 3 || t->size != 3) {
+    if (K->size1 != 3 || K->size2 != 3 || R->size1 != 3 || R->size2 != 3 || t->size != 3)
+    {
         printf ("Error in vis_epi_F_from_KRT: wrong input format.\n");
         return -1;
     }
@@ -41,7 +42,8 @@ int
 vis_epi_F_from_KX (gsl_matrix *F, const gsl_matrix *K, const gsl_vector *X)
 {
     // check input format if K 3x3 and X 6 dof vector
-    if (K->size1 != 3 || K->size2 != 3 || X->size != 6) {
+    if (K->size1 != 3 || K->size2 != 3 || X->size != 6)
+    {
         printf ("Error in vis_epi_F_from_KX: wrong input format.\n");
         return -1;
     }
@@ -68,43 +70,50 @@ vis_epi_F_from_KX (gsl_matrix *F, const gsl_matrix *K, const gsl_vector *X)
 }
 
 int
-vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2, 
+vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2,
                   int num_point, int dim,  gsl_matrix* R, gsl_vector* t)
 {
     //check the size of matrices
-    if (corres_point1->size1 != dim || corres_point1->size2 != num_point) {
+    if (corres_point1->size1 != dim || corres_point1->size2 != num_point)
+    {
         printf ("Dimensions of matrix 1 should be [%d, %d]\n", dim, num_point);
         return -1;
     }
 
-    if (corres_point2->size1 != dim || corres_point2->size2 != num_point) {
+    if (corres_point2->size1 != dim || corres_point2->size2 != num_point)
+    {
         printf ("Dimensions of matrix 1 should be [%d, %d]\n", dim, num_point);
         return -1;
     }
 
-    if (R->size1 != dim || R->size2 != dim) {
+    if (R->size1 != dim || R->size2 != dim)
+    {
         printf ("Dimensions of matrix R should be [%d, %d]\n", dim, dim);
         return -1;
     }
 
-    if (t->size != dim) {
+    if (t->size != dim)
+    {
         printf ("Dimensions of vector t should be [%d, 1]\n", dim);
         return -1;
     }
-  
-    //Find the mean of points 
+
+    //Find the mean of points
     // mean_pts1 = mean(corres_points1);
     // mean_pts2 = mean(corres_points2);
     double *mean_pts1 = malloc (sizeof (double) * dim);
     double *mean_pts2 = malloc (sizeof (double) * dim);
-    for (int i = 0; i < num_point; i++) {
-        for (int j = 0 ; j < dim; j++) {
+    for (int i = 0; i < num_point; i++)
+    {
+        for (int j = 0 ; j < dim; j++)
+        {
             mean_pts1[j] = mean_pts1[j] + gsl_matrix_get(corres_point1, j, i);
             mean_pts2[j] = mean_pts2[j] + gsl_matrix_get(corres_point2, j, i);
         }
     }
 
-    for (int i = 0; i < dim; i++) {
+    for (int i = 0; i < dim; i++)
+    {
         mean_pts1[i] = mean_pts1[i]/num_point;
         mean_pts2[i] = mean_pts2[i]/num_point;
     }
@@ -115,10 +124,12 @@ vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2,
     // mean shifted point set
     double **Pts1_ms = malloc (num_point*sizeof(double*));
     double **Pts2_ms = malloc (num_point*sizeof(double*));
-    for (int i = 0; i < num_point; i++) {
+    for (int i = 0; i < num_point; i++)
+    {
         Pts1_ms[i] = malloc (dim*sizeof(double));
         Pts2_ms[i] = malloc (dim*sizeof(double));
-        for (int j = 0; j < dim ; j++) {
+        for (int j = 0; j < dim ; j++)
+        {
             Pts1_ms[i][j] = gsl_matrix_get(corres_point1, j, i) - mean_pts1[j];
             Pts2_ms[i][j] = gsl_matrix_get(corres_point2, j, i) - mean_pts2[j];
         }
@@ -127,8 +138,10 @@ vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2,
     //Multiply the array of points to get [3x3] matrix
     // H = Pts1_ms * Pts2_ms' { [3xN]*[Nx3] }
     gsl_matrix *H = gsl_matrix_alloc (dim, dim);
-    for (int i = 0; i < dim; i++) {
-        for (int j = 0; j < dim; j++) {
+    for (int i = 0; i < dim; i++)
+    {
+        for (int j = 0; j < dim; j++)
+        {
             double temp_val = 0;
             for (int k = 0; k < num_point; k++)
                 temp_val = temp_val + Pts1_ms[i][k]*Pts2_ms[j][k];
@@ -157,21 +170,23 @@ vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2,
 
     //t = mean_pts1 - R_times_mean_pts2;
     double temp;
-    for (int i = 0; i < dim; i++) {
+    for (int i = 0; i < dim; i++)
+    {
         temp = mean_pts1[i] - R_times_mean_pts2[i];
         gsl_vector_set (t, i, temp);
     }
-    
+
     //free memory before returning
     //free Pts1_ms, Pts2_ms
-    for (int i = 0; i < num_point; i++) {
+    for (int i = 0; i < num_point; i++)
+    {
         free (Pts1_ms[i]);
         free (Pts2_ms[i]);
     }
     free (Pts1_ms);
     free (Pts2_ms);
 
-    //free H, R, USV, U_transpose 
+    //free H, R, USV, U_transpose
     gsl_matrix_free (H);
     gsl_matrix_free (U_transpose);
     gslu_linalg_SV_free (USV);
@@ -183,14 +198,14 @@ vis_epi_rbt_arun (gsl_matrix *corres_point1, gsl_matrix* corres_point2,
  *  update r1_prime_mat, r1_prime_r2 for later use
  *  return baseline direction b and residual error E
  */
-double 
+double
 _lsq_baseline_direction (const gsl_matrix *r1_mat, const gsl_matrix *r2_mat, const gsl_matrix *R,
                          gsl_matrix *r1_prime_mat, gsl_matrix *r1_prime_r2,
                          gsl_vector *b)
 {
     // workspaces
     GSLU_MATRIX_VIEW (C, 3,3);         // c*c'
-    GSLU_MATRIX_VIEW (work_mat, 3,3);  // for all 3x3 mat operations 
+    GSLU_MATRIX_VIEW (work_mat, 3,3);  // for all 3x3 mat operations
     GSLU_VECTOR_VIEW (work_vec, 3);    // for all vec operations
 
     size_t N = r1_mat->size2;
@@ -199,12 +214,13 @@ _lsq_baseline_direction (const gsl_matrix *r1_mat, const gsl_matrix *r2_mat, con
 
     // rotate the ray from camera 1 into orientation of camera 2 frame
     gslu_blas_mm (r1_prime_mat, R, r1_mat);
-    for (size_t i=0; i<N; i++) {
-        gsl_vector_const_view r2 = gsl_matrix_const_column (r2_mat, i); 
-        gsl_vector_view r1_prime = gsl_matrix_column (r1_prime_mat, i); 
-        
+    for (size_t i=0; i<N; i++)
+    {
+        gsl_vector_const_view r2 = gsl_matrix_const_column (r2_mat, i);
+        gsl_vector_view r1_prime = gsl_matrix_column (r1_prime_mat, i);
+
         // c = r1_prime x r2
-        gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i); 
+        gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i);
         gslu_vector_cross (&c.vector, &r1_prime.vector, &r2.vector);
     }
     gslu_blas_mmT (&C.matrix, r1_prime_r2, r1_prime_r2);
@@ -220,10 +236,11 @@ _lsq_baseline_direction (const gsl_matrix *r1_mat, const gsl_matrix *r2_mat, con
     gslu_blas_mv (&work_vec.vector, &C.matrix, b);
     double E = gslu_vector_dot (b, &work_vec.vector);    // E is the error cost associated with b
 
-    for (size_t i=0; i<N; i++) {
-        gsl_vector_const_view r2 = gsl_matrix_const_column (r2_mat, i); 
+    for (size_t i=0; i<N; i++)
+    {
+        gsl_vector_const_view r2 = gsl_matrix_const_column (r2_mat, i);
         gsl_vector_view r1_prime = gsl_matrix_column (r1_prime_mat, i);
-        gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i); 
+        gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i);
         double c_norm = gslu_vector_norm (&c.vector);
 
         // magnitudes along rays r1_prime and r2 where closest intersection occurs
@@ -237,7 +254,7 @@ _lsq_baseline_direction (const gsl_matrix *r1_mat, const gsl_matrix *r2_mat, con
         if (beta > 0)
             beta_valid_count ++;
     }
-    
+
     if ( (alpha_valid_count < N/2) || (beta_valid_count < N/2) )
         gsl_vector_scale (b, -1.0);     // wrong sign! fix it.
 
@@ -258,7 +275,7 @@ _lsq_baseline_direction (const gsl_matrix *r1_mat, const gsl_matrix *r2_mat, con
  * This algorithm is based upon:
  *   Horn, B.K.P.  Relative Orientation, MIT A.I. Memo #994 September 1987
  */
-double 
+double
 vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_matrix *uv2, const gsl_matrix *Ro,
                         gsl_matrix *R, gsl_vector *t,
                         bool verbose)
@@ -286,17 +303,18 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
 
     // workspaces
     GSLU_VECTOR_VIEW (b, 3);            // baseline vector
-    GSLU_MATRIX_VIEW (work_mat, 3,3);   // for all 3x3 mat operations 
+    GSLU_MATRIX_VIEW (work_mat, 3,3);   // for all 3x3 mat operations
     GSLU_VECTOR_VIEW (work_vec, 3);     // for all vec operations
 
     // normalize ray1 and ray2
-    for (size_t i=0; i<N; i++) {
+    for (size_t i=0; i<N; i++)
+    {
         // normalize the rays to unit magnitude
         gsl_vector_view r1 = gsl_matrix_column (r1_mat, i);
         double r1_norm = gslu_vector_norm (&r1.vector);
         gsl_vector_scale (&r1.vector, 1.0/r1_norm); // r1_hat
 
-        gsl_vector_view r2 = gsl_matrix_column (r2_mat, i); 
+        gsl_vector_view r2 = gsl_matrix_column (r2_mat, i);
         double r2_norm = gslu_vector_norm (&r2.vector);
         gsl_vector_scale (&r2.vector, 1.0/r2_norm); // r2_hat
     }
@@ -311,21 +329,22 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
     int itr = 0;
     GSLU_VECTOR_VIEW (delta_b, 3, {1, 1, 1});
     GSLU_VECTOR_VIEW (delta_w, 3, {1, 1, 1}); // delta_w = delta_b;
-    double Eprev = 1e4; 
+    double Eprev = 1e4;
     E = Eprev-1;
 
     // workspaces for H and g: for g = Hx equation
     GSLU_MATRIX_VIEW (C, 3,3);          // c*c'
     GSLU_MATRIX_VIEW (B, 3,3);
     GSLU_MATRIX_VIEW (D, 3,3);
-    GSLU_MATRIX_VIEW (F, 3,3); 
+    GSLU_MATRIX_VIEW (F, 3,3);
     GSLU_VECTOR_VIEW (d_bar, 3);
     GSLU_VECTOR_VIEW (c_bar, 3);
 
     gsl_matrix *r1prime_x_r2_x_b = gsl_matrix_alloc (r1_mat->size1, r1_mat->size2); // where d's are stored
     gsl_vector *t_vec = gsl_vector_alloc (r1_mat->size2);   // where t's are stored
 
-    while (itr < VIS_EPI_MAX_ITERATIONS) {
+    while (itr < VIS_EPI_MAX_ITERATIONS)
+    {
 
         // init
         gsl_matrix_set_zero (&C.matrix);
@@ -333,7 +352,7 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
         gsl_matrix_set_zero (&F.matrix);
         gsl_vector_set_zero (&d_bar.vector);
         gsl_vector_set_zero (&c_bar.vector);
-       
+
         // B
         gslu_blas_vvT (&work_mat.matrix, &b.vector, &b.vector);
         gsl_matrix_scale (&work_mat.matrix, -1.0);
@@ -341,14 +360,15 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
         gsl_matrix_add (&B.matrix, &work_mat.matrix); // B = eye(3) - b*b'
 
         gslu_blas_mm (r1_prime_mat, R, r1_mat);
-        for (size_t i=0; i<N; i++) {
+        for (size_t i=0; i<N; i++)
+        {
             gsl_vector_view r2 = gsl_matrix_column (r2_mat, i);
-            gsl_vector_view r1_prime = gsl_matrix_column (r1_prime_mat, i); 
-    
+            gsl_vector_view r1_prime = gsl_matrix_column (r1_prime_mat, i);
+
             // update r1_prime & r1prime_x_r2_x_b
-            gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i); 
+            gsl_vector_view c = gsl_matrix_column (r1_prime_r2, i);
             gslu_vector_cross (&c.vector, &r1_prime.vector, &r2.vector);
-            gsl_vector_view d = gsl_matrix_column (r1prime_x_r2_x_b, i);  
+            gsl_vector_view d = gsl_matrix_column (r1prime_x_r2_x_b, i);
             gslu_vector_triple_prod (&d.vector, &r1_prime.vector, &r2.vector, &b.vector);
         }
 
@@ -385,18 +405,23 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
         GSLU_VECTOR_VIEW (g, 6);
         gsl_vector_view g1 = gsl_vector_subvector (&g.vector, 0,3);
         gsl_vector_view g2 = gsl_vector_subvector (&g.vector, 3,3);
-        gslu_blas_mv (&g1.vector, &B.matrix, &c_bar.vector); gsl_vector_scale (&g1.vector, -1.0);
-        gsl_vector_memcpy (&g2.vector, &d_bar.vector); gsl_vector_scale (&g2.vector, -1.0);
+        gslu_blas_mv (&g1.vector, &B.matrix, &c_bar.vector);
+        gsl_vector_scale (&g1.vector, -1.0);
+        gsl_vector_memcpy (&g2.vector, &d_bar.vector);
+        gsl_vector_scale (&g2.vector, -1.0);
 
         // B is singular (b is an eigenvector with zero eigenvalue), thus the first
         // three equations in the system above are not independent.  one of them
         // will have to be removed.  for best numerical accuracy we eliminate the
         // equation with the smallest coefficients and replace it with the linear
         // constraint b'*delta_b = 0
-        double min_sum = GSL_POSINF; int mindex = 0;
-        for (size_t i=0; i<3; i++) {
+        double min_sum = GSL_POSINF;
+        int mindex = 0;
+        for (size_t i=0; i<3; i++)
+        {
             gsl_vector_view H_row = gsl_matrix_row (&H.matrix, i);
-            if (gslu_vector_abs_sum (&H_row.vector) < min_sum) {
+            if (gslu_vector_abs_sum (&H_row.vector) < min_sum)
+            {
                 min_sum = gslu_vector_abs_sum (&H_row.vector);
                 mindex = i;
             }
@@ -414,23 +439,26 @@ vis_epi_relorient_horn (const gsl_matrix *K, const gsl_matrix *uv1, const gsl_ma
         gslu_blas_mv (&x.vector, &Hinv.matrix, &g.vector);
 
         // update error
-        Eprev = E; E = 0;
+        Eprev = E;
+        E = 0;
         gslu_vector_get_subvector (&delta_b.vector, &x.vector, 0, 3);
         gslu_vector_get_subvector (&delta_w.vector, &x.vector, 3, 3);
 
         gsl_vector *N_vec = gsl_vector_alloc (r1_mat->size2);   // work vector
-        gslu_blas_vTm (N_vec, r1_prime_r2, &delta_b.vector); 
+        gslu_blas_vTm (N_vec, r1_prime_r2, &delta_b.vector);
         gsl_vector_add (t_vec, N_vec);
-        gslu_blas_vTm (N_vec, r1prime_x_r2_x_b, &delta_w.vector); 
+        gslu_blas_vTm (N_vec, r1prime_x_r2_x_b, &delta_w.vector);
         gsl_vector_add (t_vec, N_vec);
         E = gslu_vector_dot (t_vec, t_vec);
         gslu_vector_free (N_vec);
 
         // check termination criteria
-        if ((itr > VIS_EPI_MIN_ITERATIONS) && (E > Eprev)) {
+        if ((itr > VIS_EPI_MIN_ITERATIONS) && (E > Eprev))
+        {
             break; // terminate iteration if error has increased
         }
-        else { // update R
+        else   // update R
+        {
             gsl_vector_add (&b.vector, &delta_b.vector);
             gslu_vector_normalize (&b.vector);
             GSLU_VECTOR_VIEW (q, 4, {1,0,0,0}); // quaternion
@@ -520,8 +548,10 @@ _vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix *R_mats[2], gsl_vector *t_
     /* find the maximum norm and max index corresponding to that norm */
     double maxNorm = 0;
     int maxNormInd;
-    for (int i=0; i<norms->size; i++) {
-        if (gsl_vector_get (norms, i) > maxNorm) {
+    for (int i=0; i<norms->size; i++)
+    {
+        if (gsl_vector_get (norms, i) > maxNorm)
+        {
             maxNorm = gsl_vector_get (norms, i);
             maxNormInd = i;
         }
@@ -562,7 +592,8 @@ _vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix *R_mats[2], gsl_vector *t_
 
     /* dot product */
     double c1 = 0, c2 = 0;
-    for (int i=0; i<b1->size; i++) {
+    for (int i=0; i<b1->size; i++)
+    {
         c1 += gsl_vector_get (b1, i) * gsl_vector_get (b1, i);
         c2 += gsl_vector_get (b2, i) * gsl_vector_get (b2, i);
     }
@@ -573,7 +604,7 @@ _vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix *R_mats[2], gsl_vector *t_
     cofET = gslu_matrix_transpose_alloc (cofE);
     gsl_matrix_memcpy (R1, cofET);
     gsl_matrix_memcpy (R2, cofET);
-    
+
     gsl_matrix_sub (R1, B1E);
     gsl_matrix_sub (R2, B2E);
 
@@ -601,7 +632,7 @@ _vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix *R_mats[2], gsl_vector *t_
     gsl_vector_free (norms);
     gsl_vector_free (b1);
     gsl_vector_free (b2);
-    
+
     return EXIT_SUCCESS;
 }
 
@@ -626,7 +657,8 @@ vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix **R_mats, gsl_vector **t_ve
     gsl_vector *relPoseInv = gsl_vector_calloc (6);
     gsl_vector_view rph = gsl_vector_subvector (relPose, 3, 3);
     gsl_vector_view xyz = gsl_vector_subvector (relPose, 0, 3);
-    for (int i=0; i<VIS_EPI_NUM_POSES_FROM_E; i++) {
+    for (int i=0; i<VIS_EPI_NUM_POSES_FROM_E; i++)
+    {
         so3_rot2rph_gsl (R_mats[i], &rph.vector);
         gsl_vector_memcpy (&xyz.vector, t_vecs[i]);
         ssc_inverse_gsl (relPoseInv, NULL, relPose);
@@ -636,7 +668,7 @@ vis_epi_horn_decomp (const gsl_matrix *E, gsl_matrix **R_mats, gsl_vector **t_ve
         gsl_vector_memcpy (t_vecs[i], &xyzInv.vector);
         gslu_vector_normalize (t_vecs[i]);
     }
-    
+
     /* Clean up */
     gsl_matrix_free (negE);
     gsl_vector_free (relPose);

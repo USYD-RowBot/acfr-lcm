@@ -7,9 +7,9 @@
 #include "lcmlog_export.h"
 #include "senlcm.h"
 
-void 
-senlcm_acomms_range_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_acomms_range_t *msg, void *user)
+void
+senlcm_acomms_range_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const senlcm_acomms_range_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -21,7 +21,8 @@ senlcm_acomms_range_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "src",     "%"PRId8,   msg->src);
 
     TEXTREAD_ADD_FIELD (tr, "nowtt",   "%"PRId32,  msg->nowtt);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++)
+    {
         char buf[32];
         snprintf (buf, sizeof buf, "owtt(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%f", i < msg->nowtt ? msg->owtt[i] : 0);
@@ -45,8 +46,8 @@ senlcm_acomms_range_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-void 
-senlcm_dstar_ssp1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_dstar_ssp1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                              const senlcm_dstar_ssp1_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -60,12 +61,12 @@ senlcm_dstar_ssp1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "depth",       "%f",     msg->depth);
     TEXTREAD_ADD_FIELD (tr, "temperature", "%f",     msg->temperature);
     textread_stop (tr);
-        
-}        
+
+}
 
 
-void 
-senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                         const senlcm_gpsd3_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -93,7 +94,8 @@ senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "status",             "%"PRId16,  msg->status);
     TEXTREAD_ADD_FIELD (tr, "satellites_used",    "%"PRId16,  msg->satellites_used);
 
-    for (int i_used=0;i_used<12;i_used++) {
+    for (int i_used=0; i_used<12; i_used++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "used(:,%d)", i_used+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_used < msg->satellites_used ? msg->used[i_used] : 0);
@@ -109,25 +111,29 @@ senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "epe",           "%f",         msg->epe);
     TEXTREAD_ADD_FIELD (tr, "satellites_visible", "%"PRId16, msg->satellites_visible);
 
-    for (int i_PRN=0;i_PRN<12;i_PRN++) {
+    for (int i_PRN=0; i_PRN<12; i_PRN++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "PRN(:,%d)", i_PRN+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_PRN < msg->satellites_visible ? msg->PRN[i_PRN] : 0);
     }
 
-    for (int i_elevation=0;i_elevation<12;i_elevation++) {
+    for (int i_elevation=0; i_elevation<12; i_elevation++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "elevation(:,%d)", i_elevation+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16,    i_elevation < msg->satellites_visible ? msg->elevation[i_elevation] : 0);
     }
 
-    for (int i_azimuth=0;i_azimuth<12;i_azimuth++) {
+    for (int i_azimuth=0; i_azimuth<12; i_azimuth++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "azimuth(:,%d)", i_azimuth+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16,    i_azimuth < msg->satellites_visible ? msg->azimuth[i_azimuth] : 0);
     }
 
-    for (int i_ss=0;i_ss<12;i_ss++) {
+    for (int i_ss=0; i_ss<12; i_ss++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "ss(:,%d)", i_ss+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_ss < msg->satellites_visible ? msg->ss[i_ss] : 0);
@@ -143,7 +149,7 @@ senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "cycle",         "%f",    msg->dev.cycle);
     TEXTREAD_ADD_FIELD (tr, "mincycle",      "%f",    msg->dev.mincycle);
     TEXTREAD_ADD_FIELD (tr, "driver_mode",   "%d",    msg->dev.driver_mode);
-  
+
 
     TEXTREAD_ADD_CONST (tr, "MODE_NOT_SEEN", SENLCM_GPSD3_FIX_T_MODE_NOT_SEEN);
     TEXTREAD_ADD_CONST (tr, "MODE_NO_FIX", SENLCM_GPSD3_FIX_T_MODE_NO_FIX);
@@ -159,8 +165,8 @@ senlcm_gpsd3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                        const senlcm_gpsd_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -187,7 +193,8 @@ senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "status",             "%"PRId16,  msg->status);
     TEXTREAD_ADD_FIELD (tr, "satellites_used",    "%"PRId16,  msg->satellites_used);
 
-    for (int i_used=0;i_used<12;i_used++) {
+    for (int i_used=0; i_used<12; i_used++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "used(:,%d)", i_used+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_used < msg->satellites_used ? msg->used[i_used] : 0);
@@ -200,25 +207,29 @@ senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "epe",           "%f",         msg->epe);
     TEXTREAD_ADD_FIELD (tr, "satellites_visible", "%"PRId16, msg->satellites_visible);
 
-    for (int i_PRN=0;i_PRN<12;i_PRN++) {
+    for (int i_PRN=0; i_PRN<12; i_PRN++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "PRN(:,%d)", i_PRN+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_PRN < msg->satellites_visible ? msg->PRN[i_PRN] : 0);
     }
 
-    for (int i_elevation=0;i_elevation<12;i_elevation++) {
+    for (int i_elevation=0; i_elevation<12; i_elevation++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "elevation(:,%d)", i_elevation+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16,    i_elevation < msg->satellites_visible ? msg->elevation[i_elevation] : 0);
     }
 
-    for (int i_azimuth=0;i_azimuth<12;i_azimuth++) {
+    for (int i_azimuth=0; i_azimuth<12; i_azimuth++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "azimuth(:,%d)", i_azimuth+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16,    i_azimuth < msg->satellites_visible ? msg->azimuth[i_azimuth] : 0);
     }
 
-    for (int i_ss=0;i_ss<12;i_ss++) {
+    for (int i_ss=0; i_ss<12; i_ss++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "ss(:,%d)", i_ss+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId16, i_ss < msg->satellites_visible ? msg->ss[i_ss] : 0);
@@ -227,7 +238,8 @@ senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "gps_device",    "%s",         msg->gps_device);
     TEXTREAD_ADD_FIELD (tr, "gps_id",        "%s",         msg->gps_id);
     TEXTREAD_ADD_FIELD (tr, "ndevices",      "%"PRId16,    msg->ndevices);
-    for (int num_devices = 0; num_devices < msg->ndevices; num_devices++) {
+    for (int num_devices = 0; num_devices < msg->ndevices; num_devices++)
+    {
         char buf[64];
         snprintf (buf, sizeof buf, "devicelist(:,%d)", num_devices+1);
         TEXTREAD_ADD_FIELD (tr, buf,    "%s",        msg->devicelist[num_devices]);
@@ -245,8 +257,8 @@ senlcm_gpsd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-senlcm_kvh_dsp3000_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_kvh_dsp3000_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                               const senlcm_kvh_dsp3000_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -263,9 +275,9 @@ senlcm_kvh_dsp3000_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-void 
-senlcm_mocap_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_mocap_t *msg, void *user)
+void
+senlcm_mocap_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                        const senlcm_mocap_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -283,9 +295,9 @@ senlcm_mocap_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-    
-void 
-senlcm_ms_gx1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+
+void
+senlcm_ms_gx1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                          const senlcm_ms_gx1_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -366,8 +378,8 @@ senlcm_ms_gx1_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-void 
-senlcm_ms_gx3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_ms_gx3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                          const senlcm_ms_gx3_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -433,8 +445,8 @@ senlcm_ms_gx3_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 
-void 
-senlcm_ms_gx3_25_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_ms_gx3_25_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                             const senlcm_ms_gx3_25_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -473,7 +485,7 @@ senlcm_ms_gx3_25_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_os_compass_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+senlcm_os_compass_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                              const senlcm_os_compass_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -500,8 +512,8 @@ senlcm_os_compass_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
 
 
-void 
-senlcm_ppsboard_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+void
+senlcm_ppsboard_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                            const senlcm_ppsboard_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -525,7 +537,7 @@ senlcm_ppsboard_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
 
 void
-senlcm_prosilica_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+senlcm_prosilica_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                             const senlcm_prosilica_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -533,7 +545,8 @@ senlcm_prosilica_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime", "%"PRId64, msg->utime);
-    for (int n = 0; n < msg->n_attributes; ++n) {
+    for (int n = 0; n < msg->n_attributes; ++n)
+    {
         const char *fieldd = NULL, *fields = NULL;
         if (0 == strcmp (msg->PvAttributes[n].label, "ExposureValue"))
             fieldd = "ExposureValue";
@@ -541,8 +554,8 @@ senlcm_prosilica_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
             fieldd = "FrameRate";
         else if (0 == strcmp (msg->PvAttributes[n].label, "GainValue"))
             fieldd = "GainValue";
-        
-        if (fieldd) 
+
+        if (fieldd)
             TEXTREAD_ADD_STRFIELD (tr, fieldd, "%d", msg->PvAttributes[n].value);
         if (fields)
             TEXTREAD_ADD_STRFIELD (tr, fields, "%s", msg->PvAttributes[n].value);
@@ -550,9 +563,9 @@ senlcm_prosilica_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-        
+
 void
-senlcm_rdi_pd4_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+senlcm_rdi_pd4_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                           const senlcm_rdi_pd4_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -641,8 +654,8 @@ senlcm_tritech_es_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_uvc_osi_t *msg, void *user)
+senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_uvc_osi_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -668,8 +681,8 @@ senlcm_uvc_osi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-        const senlcm_uvc_rphtd_t *msg, void *user)
+senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                            const senlcm_uvc_rphtd_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -691,8 +704,8 @@ senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 ////////////////////////////////////////////////////////////////////////////////
 
 void
-senlcm_seabird_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_seabird_t *msg, void *user)
+senlcm_seabird_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_seabird_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -705,14 +718,14 @@ senlcm_seabird_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "salinity",    "%f", msg->salinity);
     TEXTREAD_ADD_FIELD (tr, "speed_of_sound",    "%f", msg->speed_of_sound);
     TEXTREAD_ADD_FIELD (tr, "pump",    "%d", msg->pump);
-    
+
     textread_stop (tr);
 }
 
 // FIXME: What else do we need to extract for the processing scripts
 void
-senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_rdi_pd0_t *msg, void *user)
+senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_rdi_pd0_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -720,8 +733,8 @@ senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
     TEXTREAD_ADD_FIELD (tr, "num_velocities",    "%d", msg->num_velocities);
-    
-    for (int num_vels = 0; num_vels < msg->num_velocities; num_vels++) 
+
+    for (int num_vels = 0; num_vels < msg->num_velocities; num_vels++)
     {
         char buf[64];
         snprintf (buf, sizeof buf, "velocity(:,%d)", num_vels+1);
@@ -732,8 +745,8 @@ senlcm_rdi_pd0_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_os_power_system_t *msg, void *user)
+senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                                  const senlcm_os_power_system_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -746,16 +759,16 @@ senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channe
     TEXTREAD_ADD_FIELD (tr, "capacity",    "%f", msg->capacity);
     TEXTREAD_ADD_FIELD (tr, "capacity_full",    "%f", msg->capacity_full);
     TEXTREAD_ADD_FIELD (tr, "minutes_tef",    "%d", msg->minutes_tef);
-    
+
     TEXTREAD_ADD_FIELD (tr, "num_controllers",    "%d", msg->num_controllers);
-    
+
     char buf[64];
     for(int i=0; i<msg->num_controllers; i++)
     {
         snprintf (buf, sizeof buf, "num_batteries(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, buf,    "%d", msg->controller[i].num_batteries);
     }
-    
+
     int battery_number = 1;
     for(int i=0; i<msg->num_controllers; i++)
     {
@@ -764,13 +777,13 @@ senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channe
             // for each battery read the temp, voltage and current
             snprintf (buf, sizeof buf, "voltage(:,%d)", battery_number);
             TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].voltage);
-            
+
             snprintf (buf, sizeof buf, "current(:,%d)", battery_number);
             TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].current);
-            
+
             snprintf (buf, sizeof buf, "temperature(:,%d)", battery_number);
             TEXTREAD_ADD_FIELD (tr, buf,    "%f", msg->controller[i].battery[j].temperature);
-            
+
             battery_number++;
         }
     }
@@ -778,8 +791,8 @@ senlcm_os_power_system_t_handler (const lcm_recv_buf_t *rbuf, const char *channe
 }
 
 void
-senlcm_ecopuck_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_ecopuck_t *msg, void *user)
+senlcm_ecopuck_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_ecopuck_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -793,8 +806,8 @@ senlcm_ecopuck_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_oas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_oas_t *msg, void *user)
+senlcm_oas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                      const senlcm_oas_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -808,8 +821,8 @@ senlcm_oas_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_parosci_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_parosci_t *msg, void *user)
+senlcm_parosci_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_parosci_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -822,8 +835,8 @@ senlcm_parosci_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_lq_modem_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_lq_modem_t *msg, void *user)
+senlcm_lq_modem_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                           const senlcm_lq_modem_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -846,8 +859,8 @@ senlcm_lq_modem_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
 
 void
-senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_ysi_t *msg, void *user)
+senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                      const senlcm_ysi_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -862,13 +875,13 @@ senlcm_ysi_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "oxygen","%f",      msg->oxygen);
     TEXTREAD_ADD_FIELD (tr, "battery","%f",      msg->battery);
     TEXTREAD_ADD_FIELD (tr, "salinity","%f",      msg->salinity);
-    
+
     textread_stop (tr);
 }
 
 void
-senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_micron_ping_t *msg, void *user)
+senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                              const senlcm_micron_ping_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -881,24 +894,24 @@ senlcm_micron_ping_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "slope","%f",      msg->slope);
     TEXTREAD_ADD_FIELD (tr, "AD_interval","%f",      msg->AD_interval);
     TEXTREAD_ADD_FIELD (tr, "left_limit","%f",      msg->left_limit);
-    TEXTREAD_ADD_FIELD (tr, "right_limit","%f",      msg->right_limit);    
+    TEXTREAD_ADD_FIELD (tr, "right_limit","%f",      msg->right_limit);
     TEXTREAD_ADD_FIELD (tr, "angle","%f",      msg->angle);
-    TEXTREAD_ADD_FIELD (tr, "range_resolution","%f",      msg->range_resolution);    
+    TEXTREAD_ADD_FIELD (tr, "range_resolution","%f",      msg->range_resolution);
 
-    TEXTREAD_ADD_FIELD (tr, "num_bins","%d",      msg->num_bins);    
-    
+    TEXTREAD_ADD_FIELD (tr, "num_bins","%d",      msg->num_bins);
+
     char buf[64];
     for(int i=0; i<msg->num_bins; i++)
     {
         snprintf (buf, sizeof buf, "bins(:,%d)", i+1);
         TEXTREAD_ADD_FIELD (tr, buf,    "%d", msg->bins[i]);
     }
-        
+
     textread_stop (tr);
 }
 
 void
-senlcm_rdi_pd5_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
+senlcm_rdi_pd5_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                           const senlcm_rdi_pd5_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
@@ -906,7 +919,7 @@ senlcm_rdi_pd5_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     textread_start (tr);
     TEXTREAD_ADD_FIELD (tr, "utime",             "%"PRId64, msg->utime);
-    
+
     TEXTREAD_ADD_FIELD (tr, "system_config",     "%"PRIu8,  msg->pd4.system_config);
     TEXTREAD_ADD_FIELD (tr, "btv(:,1)",          "%f",      msg->pd4.btv[0]);
     TEXTREAD_ADD_FIELD (tr, "btv(:,2)",          "%f",      msg->pd4.btv[1]);
@@ -987,8 +1000,8 @@ senlcm_rdi_pd5_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 void
-senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_tcm_t *msg, void *user)
+senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                      const senlcm_tcm_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1002,13 +1015,13 @@ senlcm_tcm_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 //    TEXTREAD_ADD_FIELD (tr, "mag_x","%f",      msg->mag_x);
 //    TEXTREAD_ADD_FIELD (tr, "mag_y","%f",      msg->mag_y);
 //    TEXTREAD_ADD_FIELD (tr, "mag_z","%f",      msg->mag_z);
-    
+
     textread_stop (tr);
 }
 
 void
-senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                             const senlcm_kvh1750_t *msg, void *user)
+senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_kvh1750_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1028,9 +1041,9 @@ senlcm_kvh1750_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
-void 
-senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_usb2000_spec_t *msg, void *user)
+void
+senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const senlcm_usb2000_spec_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1039,8 +1052,9 @@ senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
     TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
     TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
-    
-    for (int i_spec=0;i_spec<2048;i_spec++) {
+
+    for (int i_spec=0; i_spec<2048; i_spec++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
@@ -1049,15 +1063,15 @@ senlcm_usb2000_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "startEndIdx1",     "%"PRId8,   msg->startEndIdx);
     TEXTREAD_ADD_FIELD (tr, "startEndIdx2",     "%"PRId8,   msg->startEndIdx);
     TEXTREAD_ADD_FIELD (tr, "intTime",     "%"PRId16,   msg->intTime);
-    
+
     textread_stop (tr);
 }
 
 
 
-void 
-senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_sts_spec_t *msg, void *user)
+void
+senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                           const senlcm_sts_spec_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1066,8 +1080,9 @@ senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "timestamp",   "%"PRId64,  msg->timestamp);
     TEXTREAD_ADD_FIELD (tr, "numSamples", "%"PRId16, msg->numSamples);
     TEXTREAD_ADD_FIELD (tr, "id",     "%s",   msg->id);
-    
-    for (int i_spec=0;i_spec<1024;i_spec++) {
+
+    for (int i_spec=0; i_spec<1024; i_spec++)
+    {
         char buf[20];
         snprintf (buf, sizeof buf, "specData(:,%d)", i_spec+1);
         TEXTREAD_ADD_FIELD (tr, buf, "%"PRId32,    i_spec < msg->numSamples ? msg->specData[i_spec] : 0);
@@ -1076,15 +1091,15 @@ senlcm_sts_spec_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "boardTemp", "%f", msg->boardTemp);
     TEXTREAD_ADD_FIELD (tr, "detectTemp", "%f", msg->detectTemp);
     TEXTREAD_ADD_FIELD (tr, "newTemps", "%"PRId8, msg->newTemps);
-    
-    
+
+
     textread_stop (tr);
 }
 
 
-void 
-senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_usbl_fix_t *msg, void *user)
+void
+senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                           const senlcm_usbl_fix_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1101,14 +1116,17 @@ senlcm_usbl_fix_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "ship_roll","%6.4f",      msg->ship_roll);
     TEXTREAD_ADD_FIELD (tr, "ship_pitch","%6.4f",      msg->ship_pitch);
     TEXTREAD_ADD_FIELD (tr, "ship_heading","%6.4f",      msg->ship_heading);
+    TEXTREAD_ADD_FIELD (tr, "target_x","%6.4f",      msg->target_x);
+    TEXTREAD_ADD_FIELD (tr, "target_y","%6.4f",      msg->target_y);
+    TEXTREAD_ADD_FIELD (tr, "target_z","%6.4f",      msg->target_z);
 
     textread_stop (tr);
 }
- 
- 
-void 
-senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_novatel_t *msg, void *user)
+
+
+void
+senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_novatel_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1127,13 +1145,13 @@ senlcm_novatel_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "east_velocity","%6.3f",      msg->east_velocity);
     TEXTREAD_ADD_FIELD (tr, "north_velocity","%6.3f",      msg->north_velocity);
     TEXTREAD_ADD_FIELD (tr, "up_velocity","%6.3f",      msg->up_velocity);
-    
-    textread_stop (tr);
-}   
 
-void 
-senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_evologics_usbl_t *msg, void *user)
+    textread_stop (tr);
+}
+
+void
+senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                                 const senlcm_evologics_usbl_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1157,13 +1175,13 @@ senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
     TEXTREAD_ADD_FIELD (tr, "accuracy","%f",      msg->accuracy);
     TEXTREAD_ADD_FIELD (tr, "integrity","%d",      msg->integrity);
     TEXTREAD_ADD_FIELD (tr, "depth","%f",      msg->depth);
-    
-    textread_stop (tr);
-}    
 
-void 
-senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_ahrs_t *msg, void *user)
+    textread_stop (tr);
+}
+
+void
+senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                       const senlcm_ahrs_t *msg, void *user)
 {
     lcmlog_export_t *lle = user;
     textread_t *tr = lle_get_textread (lle, channel);
@@ -1172,8 +1190,8 @@ senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
     TEXTREAD_ADD_FIELD (tr, "roll","%f",      msg->roll);
     TEXTREAD_ADD_FIELD (tr, "pitch","%f",      msg->pitch);
-    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);   
-        
+    TEXTREAD_ADD_FIELD (tr, "heading","%f",      msg->heading);
+
     textread_stop (tr);
-}    
+}
 

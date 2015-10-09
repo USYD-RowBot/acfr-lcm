@@ -20,7 +20,8 @@
 int
 vis_botimage_is_gray (const bot_core_image_t *bot)
 {
-    switch (bot->pixelformat) {
+    switch (bot->pixelformat)
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_GRAY16:
@@ -35,7 +36,8 @@ vis_botimage_is_gray (const bot_core_image_t *bot)
 int
 vis_botimage_is_bayer (const bot_core_image_t *bot)
 {
-    switch (bot->pixelformat) {
+    switch (bot->pixelformat)
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG:
@@ -57,7 +59,8 @@ vis_botimage_is_bayer (const bot_core_image_t *bot)
 int
 vis_botimage_is_color (const bot_core_image_t *bot)
 {
-    switch (bot->pixelformat) {
+    switch (bot->pixelformat)
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGR:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_RGB16:
@@ -81,18 +84,21 @@ vis_botimage_is_color (const bot_core_image_t *bot)
 
 
 IplImage *
-vis_botimage_to_iplimage_copy (const bot_core_image_t *bot) {
+vis_botimage_to_iplimage_copy (const bot_core_image_t *bot)
+{
     IplImage img = vis_botimage_to_iplimage_view (bot);
     return cvCloneImage (&img);
 }
 
 IplImage
-vis_botimage_to_iplimage_view (const bot_core_image_t *bot) {
+vis_botimage_to_iplimage_view (const bot_core_image_t *bot)
+{
 
     IplImage img;
     CvSize size = {bot->width, bot->height};
 
-    switch (bot->pixelformat) {
+    switch (bot->pixelformat)
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY:
         cvInitImageHeader (&img, size, IPL_DEPTH_8U, 1, IPL_ORIGIN_TL, 4);
         break;
@@ -180,7 +186,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
     CvSize size = cvGetSize (&img_cv);
 
     IplImage *img_out = NULL, *img_tmp = NULL;
-    switch (code) {
+    switch (code)
+    {
     case VIS_BOT2CVGRAY:
         img_out = cvCreateImage (size, img_cv.depth, 1);
         if (vis_botimage_is_bayer (bot))
@@ -197,11 +204,13 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
     }
 
 
-    switch (bot->pixelformat) {
+    switch (bot->pixelformat)
+    {
     // gray
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCopy (&img_cv, img_out, NULL);
             break;
@@ -225,7 +234,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
 
     // color
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_out, CV_RGB2GRAY);
             break;
@@ -236,7 +246,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGR:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_out, CV_BGR2GRAY);
             break;
@@ -248,7 +259,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_RGB16:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_out, CV_RGB2GRAY);
             break;
@@ -259,18 +271,20 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGBA:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_out, CV_RGBA2GRAY);
             break;
         case VIS_BOT2CVBGR:
             cvCvtColor (&img_cv, img_out, CV_RGBA2BGR);
-            break;            
+            break;
         }
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGRA:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_out, CV_BGRA2GRAY);
             break;
@@ -294,7 +308,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
 
     // bayer
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_tmp, CV_BayerBG2BGR);
             cvCvtColor (img_tmp, img_out, CV_BGR2GRAY);
@@ -306,7 +321,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_tmp, CV_BayerGB2BGR);
             cvCvtColor (img_tmp, img_out, CV_BGR2GRAY);
@@ -318,7 +334,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_tmp, CV_BayerGR2BGR);
             cvCvtColor (img_tmp, img_out, CV_BGR2GRAY);
@@ -330,7 +347,8 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         break;
 
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB:
-        switch (code) {
+        switch (code)
+        {
         case VIS_BOT2CVGRAY:
             cvCvtColor (&img_cv, img_tmp, CV_BayerRG2BGR);
             cvCvtColor (img_tmp, img_out, CV_BGR2GRAY);
@@ -352,7 +370,7 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
         goto unimplemented;
         break;
 
-    unimplemented:
+unimplemented:
         ERROR ("unimplemented pixel format");
         exit (-1);
         break;
@@ -368,14 +386,14 @@ vis_botimage_to_iplimage_convert (const bot_core_image_t *bot, vis_bot2cv_color_
 }
 
 bot_core_image_t *
-vis_iplimage_to_botimage_copy (const IplImage *ipl) 
+vis_iplimage_to_botimage_copy (const IplImage *ipl)
 {
     bot_core_image_t bot = vis_iplimage_to_botimage_view (ipl);
     return bot_core_image_t_copy (&bot);
 }
 
 bot_core_image_t
-vis_iplimage_to_botimage_view (const IplImage *ipl) 
+vis_iplimage_to_botimage_view (const IplImage *ipl)
 {
     bot_core_image_t bot;
 
@@ -397,7 +415,8 @@ vis_iplimage_to_botimage_view (const IplImage *ipl)
     int nchannel = ipl->nChannels;
     bot.row_stride = nchannel * Bpp * ipl->width;
 
-    if (nchannel == 1) {
+    if (nchannel == 1)
+    {
         if (ipl->depth == IPL_DEPTH_8U)
             bot.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
         else if (ipl->depth == IPL_DEPTH_16U)
@@ -408,13 +427,14 @@ vis_iplimage_to_botimage_view (const IplImage *ipl)
         //case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_BAYER16_RGGB:
         //    cvInitImageHeader (&img, size, IPL_DEPTH_16U, 1, IPL_ORIGIN_TL, 4);
     }
-    else if (nchannel == 3) {
+    else if (nchannel == 3)
+    {
         if (ipl->depth == IPL_DEPTH_8U)
             bot.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BGR;
         else if (ipl->depth == IPL_DEPTH_16U)
             bot.pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16;
     }
-    else 
+    else
         printf ("Unknown channel \n");
 
     bot.size = ipl->imageSize;
@@ -441,47 +461,50 @@ _vis_pvframe_to_botimage (bot_core_image_t *dest, const tPvFrame *src, int64_t u
 
     int Bpp = (Frame->BitDepth == 12 ? 2 : 1); // bytes per pixel
     if (Frame->Format == ePvFmtMono8  || Frame->Format == ePvFmtBayer8 ||
-        Frame->Format == ePvFmtMono16 || Frame->Format == ePvFmtBayer16)
+            Frame->Format == ePvFmtMono16 || Frame->Format == ePvFmtBayer16)
         bot->row_stride = Bpp * Frame->Width;
     else
         bot->row_stride = 3 * Bpp * Frame->Width; // rgb, yuv
 
 
     // translate tPvFrame's Format to bot's pixelformat
-    switch (Frame->Format) {
-        // mono
-    case ePvFmtMono8:   
+    switch (Frame->Format)
+    {
+    // mono
+    case ePvFmtMono8:
         bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY;
         break;
     case ePvFmtMono16:
         bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16;
         break;
 
-        // bayer8
-    case ePvFmtBayer8:  
-        switch (Frame->BayerPattern) {
-        case ePvBayerRGGB: 
+    // bayer8
+    case ePvFmtBayer8:
+        switch (Frame->BayerPattern)
+        {
+        case ePvBayerRGGB:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB;
             break;
-        case ePvBayerGBRG: 
+        case ePvBayerGBRG:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG;
             break;
-        case ePvBayerGRBG: 
+        case ePvBayerGRBG:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG;
             break;
-        case ePvBayerBGGR: 
+        case ePvBayerBGGR:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR;
             break;
-        default: 
+        default:
             ERROR ("unrecognized BayerPattern");
             return -1;
         }
         break;
 
-        // bayer16
+    // bayer16
     case ePvFmtBayer16:
-        switch (Frame->BayerPattern) { 
-        case ePvBayerRGGB: 
+        switch (Frame->BayerPattern)
+        {
+        case ePvBayerRGGB:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_RGGB;
             break;
         case ePvBayerGBRG:
@@ -493,13 +516,13 @@ _vis_pvframe_to_botimage (bot_core_image_t *dest, const tPvFrame *src, int64_t u
         case ePvBayerBGGR:
             bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_BGGR;
             break;
-        default: 
+        default:
             ERROR ("unrecognized BayerPattern");
-            return -1;            
+            return -1;
         }
         break;
 
-        // color
+    // color
     case ePvFmtRgb24:
         bot->pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB;
         break;
@@ -526,13 +549,15 @@ _vis_pvframe_to_botimage (bot_core_image_t *dest, const tPvFrame *src, int64_t u
         break;
     default:
         ERROR ("unrecognized pixelformat");
-        return -1;        
+        return -1;
     }
 
     bot->size = Frame->ImageBufferSize;
-    if (copy) {
+    if (copy)
+    {
         bot->data = malloc (Frame->ImageBufferSize);
-        if (!bot->data) {
+        if (!bot->data)
+        {
             ERROR ("malloc() failed");
             bot->size = 0;
             return -1;
@@ -562,7 +587,8 @@ vis_pvframe_to_botimage_view (const tPvFrame *src, int64_t src_utime)
     bot_core_image_t dest = {0};
     if (0 == _vis_pvframe_to_botimage (&dest, src, src_utime, 0))
         return dest;
-    else {
+    else
+    {
         bot_core_image_t foo = {0};
         return foo;
     }
@@ -593,17 +619,18 @@ _vis_botimage_to_pvframe (tPvFrame *dest, const bot_core_image_t *src, bool copy
 
 
     // translate bot pixel format
-    switch (bot->pixelformat) {
-        // mono
-    case BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY: 
+    switch (bot->pixelformat)
+    {
+    // mono
+    case BOT_CORE_IMAGE_T_PIXEL_FORMAT_GRAY:
         Frame->Format = ePvFmtMono8;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_GRAY16:
         Frame->Format = ePvFmtMono16;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
 
-        // bayer8
+    // bayer8
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_RGGB:
         Frame->Format = ePvFmtBayer8;
         Frame->BayerPattern = ePvBayerRGGB;
@@ -621,35 +648,35 @@ _vis_botimage_to_pvframe (tPvFrame *dest, const bot_core_image_t *src, bool copy
         Frame->BayerPattern = ePvBayerBGGR;
         break;
 
-        // bayer16
+    // bayer16
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_RGGB:
         Frame->Format = ePvFmtBayer16;
         Frame->BayerPattern = ePvBayerRGGB;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GBRG:
         Frame->Format = ePvFmtBayer16;
         Frame->BayerPattern = ePvBayerGBRG;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_GRBG:
         Frame->Format = ePvFmtBayer16;
         Frame->BayerPattern = ePvBayerGRBG;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_BAYER16_BGGR:
         Frame->Format = ePvFmtBayer16;
         Frame->BayerPattern = ePvBayerBGGR;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
 
-        // color
+    // color
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_RGB:
         Frame->Format = ePvFmtRgb24;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_LE_RGB16:
         Frame->Format = ePvFmtRgb48;
-	Frame->BitDepth = 12;
+        Frame->BitDepth = 12;
         break;
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_IYU1:
         Frame->Format = ePvFmtYuv411;
@@ -670,16 +697,18 @@ _vis_botimage_to_pvframe (tPvFrame *dest, const bot_core_image_t *src, bool copy
         Frame->Format = ePvFmtBgra32;
         break;
 
-    default: 
+    default:
         ERROR ("no equivalent pixelformat in pvFrame [%d]", bot->pixelformat);
         return -1;
     }
 
     // copy or point at bot's image buffer?
     Frame->ImageSize = Frame->ImageBufferSize = bot->size;
-    if (copy) {
+    if (copy)
+    {
         Frame->ImageBuffer = malloc (bot->size);
-        if (!Frame->ImageBuffer) {
+        if (!Frame->ImageBuffer)
+        {
             ERROR ("malloc() failed");
             Frame->ImageBufferSize = 0;
             return -1;
@@ -710,7 +739,8 @@ vis_botimage_to_pvframe_view (const bot_core_image_t *src)
     tPvFrame dest = {0};
     if (0 == _vis_botimage_to_pvframe (&dest, src, 0))
         return dest;
-    else {
+    else
+    {
         tPvFrame foo = {0};
         return foo;
     }
@@ -718,7 +748,7 @@ vis_botimage_to_pvframe_view (const bot_core_image_t *src)
 
 
 int
-vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, const char *channel, 
+vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, const char *channel,
                          const char *description, uint32_t compression)
 {
     // TIFF pixel properties
@@ -726,7 +756,8 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
     int32_t cpp=1;  // channels per pixel
     int32_t photometric=PHOTOMETRIC_MINISBLACK, fillorder=FILLORDER_MSB2LSB;
     const char *unsupported_format;
-    switch (bot->pixelformat) { // keep in sync with bot_core_image_t.lcm
+    switch (bot->pixelformat)   // keep in sync with bot_core_image_t.lcm
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_UYVY:
         unsupported_format = "UYVY";
         goto unsupported_pixelformat;
@@ -838,7 +869,8 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
 
     // open TIFF file
     TIFF *tif = TIFFOpen (filename, "w");
-    if (!tif) {
+    if (!tif)
+    {
         ERROR ("TIFFOpen() failed");
         return -1;
     }
@@ -856,7 +888,8 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
     // TIFF compression attributes
     uint32_t type = compression & 0xffff0000;
     uint32_t quality = compression & 0x0000ffff;
-    switch (type) {
+    switch (type)
+    {
     case VIS_BOTIMAGE_TIFF_COMPRESSION_NONE:
         TIFFSetField (tif, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
         break;
@@ -869,11 +902,13 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
         TIFFSetField (tif, TIFFTAG_PREDICTOR, PREDICTOR_HORIZONTAL);
         break;
     case VIS_BOTIMAGE_TIFF_COMPRESSION_JPEG:
-        if (bpp != 8) {
+        if (bpp != 8)
+        {
             ERROR ("COMPRESSION_JPEG does not support 16-bit imagery");
             goto tiff_error;
         }
-        else {
+        else
+        {
             TIFFSetField (tif, TIFFTAG_COMPRESSION, COMPRESSION_JPEG);
             TIFFSetField (tif, TIFFTAG_JPEGQUALITY, quality);
             TIFFSetField (tif, TIFFTAG_ROWSPERSTRIP, 64); /* must be multiple of 8 for jpeg */
@@ -892,7 +927,7 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
     timeutil_strftime (buf, sizeof buf, "%Y:%m:%d %H:%M:%S", bot->utime);
     TIFFSetField (tif, TIFFTAG_DATETIME, buf);
 
-    snprintf (buf, sizeof buf, "%"PRId64".%06"PRId64, 
+    snprintf (buf, sizeof buf, "%"PRId64".%06"PRId64,
               timestamp_seconds (bot->utime), timestamp_useconds (bot->utime));
     TIFFSetField (tif, TIFFTAG_COPYRIGHT, buf);
 
@@ -911,10 +946,12 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
 
     // write TIFF buffer to disk
     uint8_t *row_ptr = bot->data;
-    for (size_t i=0; i<bot->size/bot->row_stride; i++) {
-        if (!TIFFWriteScanline (tif, row_ptr, i, 0)) {
+    for (size_t i=0; i<bot->size/bot->row_stride; i++)
+    {
+        if (!TIFFWriteScanline (tif, row_ptr, i, 0))
+        {
             ERROR ("error writing TIFF buffer to disk");
-            goto tiff_error;            
+            goto tiff_error;
         }
         else
             row_ptr += bot->row_stride;
@@ -923,11 +960,11 @@ vis_botimage_write_tiff (const bot_core_image_t *bot, const char *filename, cons
 
     return 0;
 
-  unsupported_pixelformat:
+unsupported_pixelformat:
     ERROR ("unsupported pixelformat: %s", unsupported_format);
-    return -1;    
+    return -1;
 
-  tiff_error:
+tiff_error:
     TIFFClose (tif);
     return -1;
 }
@@ -938,44 +975,51 @@ vis_botimage_read_tiff (bot_core_image_t **_bot, char **channel, char **descript
 {
     // open TIFF file
     TIFF *tif = TIFFOpen (filename, "r");
-    if (!tif) {
+    if (!tif)
+    {
         ERROR ("TIFFOpen() failed");
         return -1;
     }
-    
+
     // TIFF generic attributes
     unsigned int width = 0;
-    if (!TIFFGetField (tif, TIFFTAG_IMAGEWIDTH, &width) || width < 1) {
+    if (!TIFFGetField (tif, TIFFTAG_IMAGEWIDTH, &width) || width < 1)
+    {
         ERROR ("Either undefined or unsupported IMAGEWIDTH, width=%d", width);
         goto on_error;
     }
 
     unsigned int height = 0;
-    if (!TIFFGetField (tif, TIFFTAG_IMAGELENGTH, &height) || height < 1) {
+    if (!TIFFGetField (tif, TIFFTAG_IMAGELENGTH, &height) || height < 1)
+    {
         ERROR ("Either undefined or unsupported IMAGELENGTH, height=%d", height);
         goto on_error;
     }
 
     unsigned short planarconfig = 0;
-    if (!TIFFGetField (tif, TIFFTAG_PLANARCONFIG, &planarconfig) || planarconfig != PLANARCONFIG_CONTIG) {
+    if (!TIFFGetField (tif, TIFFTAG_PLANARCONFIG, &planarconfig) || planarconfig != PLANARCONFIG_CONTIG)
+    {
         ERROR ("Either undefined or unsupported PLANARCONFIG, planarconfig=%d", planarconfig);
         goto on_error;
     }
 
     unsigned short photometric = 0;
-    if (!TIFFGetField (tif, TIFFTAG_PHOTOMETRIC, &photometric)) {
+    if (!TIFFGetField (tif, TIFFTAG_PHOTOMETRIC, &photometric))
+    {
         ERROR ("Either undefined or unsupported PHOTOMETRIC, photometric=%d", photometric);
         goto on_error;
-    }    
+    }
 
     unsigned short cpp = 0; // channels per pixel
-    if (!TIFFGetField (tif, TIFFTAG_SAMPLESPERPIXEL, &cpp) || !(cpp == 1 || cpp == 3)){
+    if (!TIFFGetField (tif, TIFFTAG_SAMPLESPERPIXEL, &cpp) || !(cpp == 1 || cpp == 3))
+    {
         ERROR ("Either undefined or unsupported SAMPLESPERPIXEL, cpp=%d", cpp);
         goto on_error;
     }
-    
+
     unsigned short bpp = 0; // bits per pixel
-    if (!TIFFGetField (tif, TIFFTAG_BITSPERSAMPLE, &bpp) || !(bpp == 8 || bpp == 16)) {
+    if (!TIFFGetField (tif, TIFFTAG_BITSPERSAMPLE, &bpp) || !(bpp == 8 || bpp == 16))
+    {
         ERROR ("Either undefined or unsupported BITSPERSAMPLE, bpp=%d", bpp);
         goto on_error;
     }
@@ -988,15 +1032,18 @@ vis_botimage_read_tiff (bot_core_image_t **_bot, char **channel, char **descript
     int pixelformat = BOT_CORE_IMAGE_T_PIXEL_FORMAT_INVALID;//909199180;
     int64_t utime = -1, utime_sec = -1, utime_usec = -1;
 
-    if (ignore_bot_tif_tags) {
+    if (ignore_bot_tif_tags)
+    {
         // we only need pixel format
         uint16 depth, nchannel;
-        if (!TIFFGetField (tif, TIFFTAG_BITSPERSAMPLE, &depth)) {
+        if (!TIFFGetField (tif, TIFFTAG_BITSPERSAMPLE, &depth))
+        {
             ERROR ("Either undefined or unsupported IMAGEDEPTH, depth=%d", depth);
             goto on_error;
         }
 
-        if (!TIFFGetField (tif, TIFFTAG_SAMPLESPERPIXEL, &nchannel)) {
+        if (!TIFFGetField (tif, TIFFTAG_SAMPLESPERPIXEL, &nchannel))
+        {
             ERROR ("Either undefined or unsupported NCHANNEL, nchannel=%d", nchannel);
             goto on_error;
         }
@@ -1014,49 +1061,57 @@ vis_botimage_read_tiff (bot_core_image_t **_bot, char **channel, char **descript
             ERROR ("Either undefined or unsupported pixel format from tiff tag");
 
     }
-    else { // use bot specific tiff tags
-        if (!TIFFGetField (tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip) || rowsperstrip != 1) {
+    else   // use bot specific tiff tags
+    {
+        if (!TIFFGetField (tif, TIFFTAG_ROWSPERSTRIP, &rowsperstrip) || rowsperstrip != 1)
+        {
             ERROR ("Either undefined or unsupported ROWSPERSTRIP, rowsperstrip=%d", rowsperstrip);
             goto on_error;
         }
 
-        if (!TIFFGetField (tif, TIFFTAG_FILLORDER, &fillorder)) {
+        if (!TIFFGetField (tif, TIFFTAG_FILLORDER, &fillorder))
+        {
             ERROR ("Either undefined or unsupported FILLORDER, fillorder=%d", fillorder);
             goto on_error;
         }
-        
-        if (!TIFFGetField (tif, TIFFTAG_COMPRESSION, &compression) || 
-            !(compression == COMPRESSION_NONE || compression == COMPRESSION_LZW ||
-              compression == COMPRESSION_JPEG || compression == COMPRESSION_ADOBE_DEFLATE)) {
+
+        if (!TIFFGetField (tif, TIFFTAG_COMPRESSION, &compression) ||
+                !(compression == COMPRESSION_NONE || compression == COMPRESSION_LZW ||
+                  compression == COMPRESSION_JPEG || compression == COMPRESSION_ADOBE_DEFLATE))
+        {
             ERROR ("Either undefined or unsupported COMPRESSION, compression=%d", compression);
             goto on_error;
         }
 
-        if (!TIFFGetField (tif, TIFFTAG_SOFTWARE, &buf) || 
-            (1 != sscanf (buf, "pixelformat=%d", &pixelformat))) {
+        if (!TIFFGetField (tif, TIFFTAG_SOFTWARE, &buf) ||
+                (1 != sscanf (buf, "pixelformat=%d", &pixelformat)))
+        {
             ERROR ("Either undefined or unsupported SOFTWARE, buf=%s, pixelformat=%d", buf, pixelformat);
             goto on_error;
         }
 
-        if (!TIFFGetField (tif, TIFFTAG_COPYRIGHT, &buf) || 
-            (2 != sscanf (buf, "%"PRId64".%06"PRId64, &utime_sec, &utime_usec))) {
+        if (!TIFFGetField (tif, TIFFTAG_COPYRIGHT, &buf) ||
+                (2 != sscanf (buf, "%"PRId64".%06"PRId64, &utime_sec, &utime_usec)))
+        {
             ERROR ("Either undefined or unsupported COPYRIGHT, utime_sec=%"PRId64", utime_usec=%06"PRId64,
                    utime_sec, utime_usec);
             goto on_error;
         }
         utime = utime_sec*1000000 + utime_usec;
 
-        if (!TIFFGetField (tif, TIFFTAG_ARTIST, &buf)) {
+        if (!TIFFGetField (tif, TIFFTAG_ARTIST, &buf))
+        {
             ERROR ("Either undefined or unsupported ARTIST, buf=%s", buf);
             goto on_error;
         }
 
-        if (!TIFFGetField (tif, TIFFTAG_IMAGEDESCRIPTION, &buf)) {
+        if (!TIFFGetField (tif, TIFFTAG_IMAGEDESCRIPTION, &buf))
+        {
             ERROR ("Either undefined or unsupported IMAGEDESCRIPTION, buf=%s", buf);
             goto on_error;
         }
     }
-    
+
     if (channel)
         *channel = strdup (buf);
 
@@ -1074,8 +1129,10 @@ vis_botimage_read_tiff (bot_core_image_t **_bot, char **channel, char **descript
     bot->utime = utime;
 
     uint8_t *row_ptr = bot->data;
-    for (size_t i=0; i<bot->height; i++) {
-        if (!TIFFReadScanline (tif, row_ptr, i, 0)) {
+    for (size_t i=0; i<bot->height; i++)
+    {
+        if (!TIFFReadScanline (tif, row_ptr, i, 0))
+        {
             ERROR ("error reading TIFF buffer from disk");
             bot_core_image_t_destroy (bot);
             goto on_error;
@@ -1087,7 +1144,7 @@ vis_botimage_read_tiff (bot_core_image_t **_bot, char **channel, char **descript
 
     return 0;
 
-  on_error:
+on_error:
     TIFFClose (tif);
     return -1;
 }
@@ -1099,7 +1156,8 @@ vis_botimage_bayerfilt (bot_core_image_t **dest, const bot_core_image_t *src)
     /* is this a bayer pattern bot image?, if so map it to a tPvFrame,
      * do the interpolation there, and then map it back
      */
-    switch (src->pixelformat) {
+    switch (src->pixelformat)
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_BGGR:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GBRG:
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BAYER_GRBG:
@@ -1119,35 +1177,40 @@ vis_botimage_bayerfilt (bot_core_image_t **dest, const bot_core_image_t *src)
     }
 
     tPvFrame srcFrame = vis_botimage_to_pvframe_view (src);
-    if (srcFrame.ImageBuffer == NULL) {
+    if (srcFrame.ImageBuffer == NULL)
+    {
         ERROR ("unable to map to a tPvFrame");
         return -1;
     }
     const int npixels = srcFrame.Height * srcFrame.Width;
 
     tPvFrame destFrame = srcFrame;
-    if (srcFrame.Format == ePvFmtBayer8) {
+    if (srcFrame.Format == ePvFmtBayer8)
+    {
         destFrame.Format = ePvFmtRgb24;
         destFrame.ImageBufferSize = 3 * npixels * sizeof (uint8_t);
         destFrame.ImageBuffer = g_malloc (destFrame.ImageBufferSize);
         uint8_t *RGB = destFrame.ImageBuffer;
         PvUtilityColorInterpolate (&srcFrame, RGB, RGB+1, RGB+2, 2, 0);
     }
-    else if (srcFrame.Format == ePvFmtBayer16) {
+    else if (srcFrame.Format == ePvFmtBayer16)
+    {
         destFrame.Format = ePvFmtRgb48;
         destFrame.ImageBufferSize = 3 * npixels * sizeof (uint16_t);
         destFrame.ImageBuffer = g_malloc (destFrame.ImageBufferSize);
         uint16_t *RGB = destFrame.ImageBuffer;
         PvUtilityColorInterpolate (&srcFrame, RGB, RGB+1, RGB+2, 2, 0);
     }
-    else {
+    else
+    {
         ERROR ("non-bayer Frame format [%d]", srcFrame.Format);
         return -1;
     }
 
     *dest = vis_pvframe_to_botimage_copy (&destFrame, src->utime);
     free (destFrame.ImageBuffer);
-    if (dest == NULL) {
+    if (dest == NULL)
+    {
         ERROR ("unable to map to a bot_core_image_t");
         return -1;
     }
@@ -1160,7 +1223,8 @@ vis_botimage_16_to_8 (bot_core_image_t **dest, const bot_core_image_t *src)
 {
     bool bigendian = 0;
     int npixels=src->width*src->height, nchannels=1, pixelformat=0;
-    switch (src->pixelformat) { // keep in sync with bot_core_image_t.lcm
+    switch (src->pixelformat)   // keep in sync with bot_core_image_t.lcm
+    {
     case BOT_CORE_IMAGE_T_PIXEL_FORMAT_BE_BAYER16_BGGR:
         bigendian = 1;
         nchannels = 1;
@@ -1237,7 +1301,8 @@ vis_botimage_16_to_8 (bot_core_image_t **dest, const bot_core_image_t *src)
     (*dest)->data = g_malloc ((*dest)->size * sizeof (uint8_t));
     const uint16_t *pixel16 = (uint16_t *) src->data;
     uint8_t *pixel8 = (*dest)->data;
-    for (int i=0; i<(nchannels*npixels); i++, pixel16++, pixel8++) {
+    for (int i=0; i<(nchannels*npixels); i++, pixel16++, pixel8++)
+    {
         if (bigendian)
             *pixel8 = (*pixel16) & 0x00ff;
         else
@@ -1256,13 +1321,16 @@ vis_botimage_filename (char *filename, size_t len, const char *format, int64_t u
 
     // handle %f arg if present
     char *Istr = strstr (format, "%f");
-    if (Istr != NULL) {
-        if (Istr > format) {
+    if (Istr != NULL)
+    {
+        if (Istr > format)
+        {
             memset (tmp, '\0', sizeof (tmp));
             strncpy (tmp, format, Istr - format);
             sprintf (format2, "%s%d%s", tmp, framecount, Istr+2 < formatend ? Istr+2 : "");
         }
-        else {
+        else
+        {
             sprintf (format2, "%d%s", framecount, format+2);
         }
     }

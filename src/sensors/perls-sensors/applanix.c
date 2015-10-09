@@ -36,7 +36,8 @@ applanix_decode (applanix_data_t *out, const uint8_t *data, int len)
     if (len < payload_len + 8)
         return -1;
 
-    if (applanix_compute_checksum (data) != applanix_checksum (data)) {
+    if (applanix_compute_checksum (data) != applanix_checksum (data))
+    {
         fprintf (stderr, "Warning: bad applanix checksum\n");
         return -1;
     }
@@ -50,57 +51,61 @@ applanix_decode (applanix_data_t *out, const uint8_t *data, int len)
 
     out->id = applanix_groupid (data);
 
-    if (out->type == APPLANIX_DATA_GRP) {
-        switch (out->id) {
-            case 1:
-                applanix_decode_grp1 (&out->grp1, data);
-                break;
-            case 2:
-                applanix_decode_grp2 (&out->grp2, data);
-                break;
-            case 3:
-            case 11:
-                applanix_decode_grp3 (&out->grp3, data);
-                break;
-            case 4:
-                applanix_decode_grp4 (&out->grp4, data);
-                break;
-            case 10:
-                applanix_decode_grp10 (&out->grp10, data);
-                break;
-            case 14:
-                applanix_decode_grp14 (&out->grp14, data);
-                break;
-            case 15:
-                applanix_decode_grp15 (&out->grp15, data);
-                break;
-            case 10002:
-                applanix_decode_grp10002 (&out->grp10002, data);
-                break;
-            case 10006:
-                applanix_decode_grp10006 (&out->grp10006, data);
-                break;
+    if (out->type == APPLANIX_DATA_GRP)
+    {
+        switch (out->id)
+        {
+        case 1:
+            applanix_decode_grp1 (&out->grp1, data);
+            break;
+        case 2:
+            applanix_decode_grp2 (&out->grp2, data);
+            break;
+        case 3:
+        case 11:
+            applanix_decode_grp3 (&out->grp3, data);
+            break;
+        case 4:
+            applanix_decode_grp4 (&out->grp4, data);
+            break;
+        case 10:
+            applanix_decode_grp10 (&out->grp10, data);
+            break;
+        case 14:
+            applanix_decode_grp14 (&out->grp14, data);
+            break;
+        case 15:
+            applanix_decode_grp15 (&out->grp15, data);
+            break;
+        case 10002:
+            applanix_decode_grp10002 (&out->grp10002, data);
+            break;
+        case 10006:
+            applanix_decode_grp10006 (&out->grp10006, data);
+            break;
         }
     }
-    else if (out->type == APPLANIX_DATA_MSG) {
-        switch (out->id) {
-            case 0:
-                applanix_decode_msg0 (&out->msg0, data);
-                break;
-            case 20:
-                applanix_decode_msg20 (&out->msg20, data);
-                break;
-            case 22:
-                applanix_decode_msg22 (&out->msg22, data);
-                break;
-            case 50:
-                applanix_decode_msg50 (&out->msg50, data);
-                break;
-            case 51:
-            case 52:
-            case 61:
-                applanix_decode_msg52 (&out->msg52, data);
-                break;
+    else if (out->type == APPLANIX_DATA_MSG)
+    {
+        switch (out->id)
+        {
+        case 0:
+            applanix_decode_msg0 (&out->msg0, data);
+            break;
+        case 20:
+            applanix_decode_msg20 (&out->msg20, data);
+            break;
+        case 22:
+            applanix_decode_msg22 (&out->msg22, data);
+            break;
+        case 50:
+            applanix_decode_msg50 (&out->msg50, data);
+            break;
+        case 51:
+        case 52:
+        case 61:
+            applanix_decode_msg52 (&out->msg52, data);
+            break;
         }
     }
     return payload_len + 8;
@@ -109,7 +114,8 @@ applanix_decode (applanix_data_t *out, const uint8_t *data, int len)
 void
 applanix_print (FILE *f, const applanix_data_t *a)
 {
-    if (a->type == APPLANIX_DATA_GRP) {
+    if (a->type == APPLANIX_DATA_GRP)
+    {
         if (a->id == 1)
             applanix_print_grp1 (f, &a->grp1);
         else if (a->id == 2)
@@ -129,7 +135,8 @@ applanix_print (FILE *f, const applanix_data_t *a)
         else if (a->id == 10006)
             applanix_print_grp10006 (f, &a->grp10006);
     }
-    else if (a->type == APPLANIX_DATA_MSG) {
+    else if (a->type == APPLANIX_DATA_MSG)
+    {
         if (a->id == 0)
             applanix_print_msg0 (f, &a->msg0);
         else if (a->id == 20)
@@ -179,14 +186,14 @@ void
 applanix_print_timedist (FILE *f, const applanix_timedist_t *tidi)
 {
     fprintf (f, "  %s time: %.3lf,",
-            time_types[tidi->time_type & 0xf], tidi->time1);
+             time_types[tidi->time_type & 0xf], tidi->time1);
     fprintf (f, " %s time: %.3lf,",
-            time_types[(tidi->time_type & 0xf0) >> 4], tidi->time2);
+             time_types[(tidi->time_type & 0xf0) >> 4], tidi->time2);
     fprintf (f, " %s dist: %.3lf\n",
-            dist_types[tidi->dist_type], tidi->dist_tag);
+             dist_types[tidi->dist_type], tidi->dist_tag);
 }
 
-int 
+int
 applanix_decode_grp1(applanix_grp1_t *grp, const uint8_t *data)
 {
     applanix_decode_timedist (&grp->tidi, &data[4+4]);
@@ -195,7 +202,7 @@ applanix_decode_grp1(applanix_grp1_t *grp, const uint8_t *data)
     grp->alt = F64 (&data[4+46]);
 
     // This offset is now in position read from configfile
-	// NAD83 -> IRTF00 hack for site visit
+    // NAD83 -> IRTF00 hack for site visit
     // Waymouth offset
     //grp->lat += 12.1944e-6;
     //grp->lon += 2.6528e-6;
@@ -221,7 +228,8 @@ applanix_decode_grp1(applanix_grp1_t *grp, const uint8_t *data)
     return 0;
 }
 
-static char *alignment_str[] = {
+static char *alignment_str[] =
+{
     "Full navigation",
     "Fine alignment is active (head. err < 15 deg)",
     "GC CHI 2 (w/ GPS, head. err > 15 deg)",
@@ -244,17 +252,17 @@ applanix_print_grp1 (FILE *f, const applanix_grp1_t *grp)
 {
     applanix_print_timedist (f, &grp->tidi);
     fprintf (f, "  Lat: %13.8f  Lon: %13.8f  Alt: %11.3f\n",
-            grp->lat, grp->lon, grp->alt);
+             grp->lat, grp->lon, grp->alt);
     fprintf (f, "  Vel N: %9.2f  E: %10.2f  D: %10.2f\n",
-            grp->vn, grp->ve, grp->vd);
+             grp->vn, grp->ve, grp->vd);
     fprintf (f, "  Roll: %10.2f  Pitch: %6.2f  Head: %7.2f\n",
-            grp->roll, grp->pitch, grp->heading);
+             grp->roll, grp->pitch, grp->heading);
     fprintf (f, "  Wander: %8.2f  Track: %6.2f  Speed: %6.2f\n",
-            grp->wander, grp->track, grp->speed);
+             grp->wander, grp->track, grp->speed);
     fprintf (f, "  Rates L: %7.2f  T: %10.2f  D: %10.2f\n",
-            grp->rate_lon, grp->rate_trans, grp->rate_down);
+             grp->rate_lon, grp->rate_trans, grp->rate_down);
     fprintf (f, "  Accel L: %7.2f  T: %10.2f  D: %10.2f\n",
-            grp->acc_lon, grp->acc_trans, grp->acc_down);
+             grp->acc_lon, grp->acc_trans, grp->acc_down);
     fprintf (f, "  Status: %d  %s\n", grp->status, alignment_str[grp->status]);
     fprintf (f, "\n");
 }
@@ -285,13 +293,13 @@ applanix_print_grp2 (FILE *f, const applanix_grp2_t *grp)
 {
     applanix_print_timedist (f, &grp->tidi);
     fprintf (f, "  Pos RMS  N: %7.2f  E: %7.2f  D: %7.2f\n",
-            grp->np_err, grp->ep_err, grp->dp_err);
+             grp->np_err, grp->ep_err, grp->dp_err);
     fprintf (f, "  Vel RMS  N: %7.2f  E: %7.2f  D: %7.2f\n",
-            grp->nv_err, grp->ev_err, grp->dv_err);
+             grp->nv_err, grp->ev_err, grp->dv_err);
     fprintf (f, "  Att RMS  R: %7.2f  P: %7.2f  H: %7.2f\n",
-            grp->roll_err, grp->pitch_err, grp->heading_err);
+             grp->roll_err, grp->pitch_err, grp->heading_err);
     fprintf (f, "  Ellipse Maj: %6.2f  Min: %6.2f  Ang: %6.2f\n",
-            grp->ellipse_maj, grp->ellipse_min, grp->ellipse_ang);
+             grp->ellipse_maj, grp->ellipse_min, grp->ellipse_ang);
 }
 
 int
@@ -315,11 +323,11 @@ applanix_print_grp3 (FILE *f, const applanix_grp3_t *grp)
     fprintf (f, " Num SV: %d\n", grp->num_sv);
     fprintf (f, "  Status bytes: %d\n", grp->status_bytes);
     fprintf (f, "  GPS Type: %d, GPS Status: 0x%x\n", grp->gps_type,
-            grp->gps_status);
+             grp->gps_status);
     fprintf (f, "\n");
 }
 
-int 
+int
 applanix_decode_grp4(applanix_grp4_t *grp, const uint8_t *data)
 {
     applanix_decode_timedist (&grp->tidi, &data[4+4]);
@@ -342,16 +350,16 @@ applanix_print_grp4 (FILE *f, const applanix_grp4_t *grp)
 {
     applanix_print_timedist (f, &grp->tidi);
     fprintf (f, "  Dv:  x: %9d  y: %9d  z: %9d\n",
-            grp->dx, grp->dy, grp->dz);
+             grp->dx, grp->dy, grp->dz);
     fprintf (f, "  Dth: x: %9d  y: %9d  z: %9d\n",
-            grp->dthx, grp->dthy, grp->dthz);
+             grp->dthx, grp->dthy, grp->dthz);
     fprintf (f, "  Data Status: 0x%x,", grp->data_status);
     fprintf (f, " IMU Type: %d,", grp->imu_type);
     fprintf (f, " IMU Status: 0x%x\n", grp->imu_status);
     fprintf (f, "\n");
 }
 
-int 
+int
 applanix_decode_grp10 (applanix_grp10_t *grp, const uint8_t *data)
 {
     applanix_decode_timedist(&grp->tidi, &data[4+4]);
@@ -369,7 +377,8 @@ applanix_decode_grp10 (applanix_grp10_t *grp, const uint8_t *data)
     return 0;
 }
 
-static const char *status_A_desc[] = {
+static const char *status_A_desc[] =
+{
     "Coarse leveling active",
     "Coarse leveling failed",
     "Quadrant resolved",
@@ -394,7 +403,8 @@ static const char *status_A_desc[] = {
     "CPU loading exceeds 85% threshold",
 };
 
-static const char *status_B_desc[] = {
+static const char *status_B_desc[] =
+{
     "User attitude RMS performance",
     "User heading RMS performance",
     "User position RMS performance",
@@ -429,7 +439,8 @@ static const char *status_B_desc[] = {
     "Primary GPS in P-code mode",
 };
 
-static const char *status_C_desc[] = {
+static const char *status_C_desc[] =
+{
     "Reserved",
     "Reserved",
     "DMI data in use",
@@ -460,7 +471,8 @@ static const char *status_C_desc[] = {
     "Reserved",
 };
 
-static const char *FDIR1_desc[] = {
+static const char *FDIR1_desc[] =
+{
     "IMU-POS checksum error",
     "IMU status bit set by IMU",
     "Successive IMU failures",
@@ -495,7 +507,8 @@ static const char *FDIR1_desc[] = {
     "IIN NL ambiguity error",
 };
 
-static const char *FDIR2_desc[] = {
+static const char *FDIR2_desc[] =
+{
     "Inertial speed exceeds maximum",
     "Primary GPS velocity exceeds maximum",
     "Primary GPS position error exceeds maximum",
@@ -503,7 +516,8 @@ static const char *FDIR2_desc[] = {
     "DMI speed exceeds maximum",
 };
 
-static const char *FDIR4_desc[] = {
+static const char *FDIR4_desc[] =
+{
     "Primary GPS position rejected",
     "Primary GPS velocity rejected",
     "GAMS heading rejected",
@@ -512,7 +526,8 @@ static const char *FDIR4_desc[] = {
     "Primary GPS observables rejected",
 };
 
-static const char *FDIR5_desc[] = {
+static const char *FDIR5_desc[] =
+{
     "X accelerometer failure",
     "Y accelerometer failure",
     "Z accelerometer failure",
@@ -541,35 +556,43 @@ applanix_print_grp10 (FILE *f, const applanix_grp10_t *grp)
 {
     applanix_print_timedist (f, &grp->tidi);
 
-    if (grp->status_A) {
+    if (grp->status_A)
+    {
         fprintf (f, "  Status A (0x%x):\n", grp->status_A);
         print_bitfield_desc (f, grp->status_A, status_A_desc, 22);
     }
-    if (grp->status_B) {
+    if (grp->status_B)
+    {
         fprintf (f, "  Status B (0x%x):\n", grp->status_B);
         print_bitfield_desc (f, grp->status_B, status_B_desc, 32);
     }
-    if (grp->status_C) {
+    if (grp->status_C)
+    {
         fprintf (f, "  Status C (0x%x):\n", grp->status_C);
         print_bitfield_desc (f, grp->status_C, status_C_desc, 28);
     }
-    if (grp->FDIR1) {
+    if (grp->FDIR1)
+    {
         fprintf (f, "  Faults 1 (0x%x):\n", grp->FDIR1);
         print_bitfield_desc (f, grp->FDIR1, FDIR1_desc, 32);
     }
     fprintf (f, "  Number of IMU status failures: %d\n", grp->FDIR1_imu);
-    if (grp->FDIR2) {
+    if (grp->FDIR2)
+    {
         fprintf (f, "  Faults 2 (0x%x):\n", grp->FDIR2);
         print_bitfield_desc (f, grp->FDIR2, FDIR2_desc, 5);
     }
-    if (grp->FDIR3) {
+    if (grp->FDIR3)
+    {
         fprintf (f, "  Faults 3 (0x%x)\n", grp->FDIR3);
     }
-    if (grp->FDIR4) {
+    if (grp->FDIR4)
+    {
         fprintf (f, "  Faults 4 (0x%x):\n", grp->FDIR4);
         print_bitfield_desc (f, grp->FDIR4, FDIR4_desc, 6);
     }
-    if (grp->FDIR5) {
+    if (grp->FDIR5)
+    {
         fprintf (f, "  Faults 5 (0x%x):\n", grp->FDIR5);
         print_bitfield_desc (f, grp->FDIR5, FDIR5_desc, 12);
     }
@@ -608,7 +631,8 @@ applanix_decode_grp14 (applanix_grp14_t *grp, const uint8_t *data)
     return 0;
 }
 
-static const char *calib_status_desc[] = {
+static const char *calib_status_desc[] =
+{
     "Ref to Primary GPS lever arm calibration in progress",
     "Ref to Aux 1 GPS lever arm calibration in progress",
     "Ref to Aux 2 GPS lever arm calibration in progress",
@@ -634,24 +658,25 @@ applanix_print_grp14 (FILE *f, const applanix_grp14_t *grp)
 
     fprintf (f, "  Status: %04x\n", grp->status);
     int i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < 16; i++)
+    {
         if ((grp->status >> i) & 0x1)
             fprintf (f, "    %s\n", calib_status_desc[i]);
     }
     fprintf (f, "  Ref to GPS          X: %6.3f  Y: %6.3f  Z: %6.3f  FOM: %d\n",
-            grp->primary_GPS[0], grp->primary_GPS[1], grp->primary_GPS[2],
-            grp->primary_GPS_FOM);
+             grp->primary_GPS[0], grp->primary_GPS[1], grp->primary_GPS[2],
+             grp->primary_GPS_FOM);
     fprintf (f, "  Ref to Aux 1 GPS    X: %6.3f  Y: %6.3f  Z: %6.3f  FOM: %d\n",
-            grp->aux_GPS1[0], grp->aux_GPS1[1], grp->aux_GPS1[2],
-            grp->aux_GPS1_FOM);
+             grp->aux_GPS1[0], grp->aux_GPS1[1], grp->aux_GPS1[2],
+             grp->aux_GPS1_FOM);
     fprintf (f, "  Ref to Aux 2 GPS    X: %6.3f  Y: %6.3f  Z: %6.3f  FOM: %d\n",
-            grp->aux_GPS2[0], grp->aux_GPS2[1], grp->aux_GPS2[2],
-            grp->aux_GPS2_FOM);
+             grp->aux_GPS2[0], grp->aux_GPS2[1], grp->aux_GPS2[2],
+             grp->aux_GPS2_FOM);
     fprintf (f, "  Ref to DMI          X: %6.3f  Y: %6.3f  Z: %6.3f  FOM: %d\n",
-            grp->DMI_lever[0], grp->DMI_lever[1], grp->DMI_lever[2],
-            grp->DMI_lever_FOM);
+             grp->DMI_lever[0], grp->DMI_lever[1], grp->DMI_lever[2],
+             grp->DMI_lever_FOM);
     fprintf (f, "  DMI scale:  %7.2f   FOM: %d\n",
-            grp->DMI_scale, grp->DMI_scale_FOM);
+             grp->DMI_scale, grp->DMI_scale_FOM);
     fprintf (f, "\n");
 }
 
@@ -669,13 +694,15 @@ applanix_decode_grp15 (applanix_grp15_t *grp, const uint8_t *data)
     return 0;
 }
 
-static const char *dmi_types[] = {
+static const char *dmi_types[] =
+{
     "None",
     "Pulse and Dir",
     "Quadrature",
 };
 
-static const char *dmi_rates[] = {
+static const char *dmi_rates[] =
+{
     "50 Hz",
     "100 Hz",
     "200 Hz",
@@ -689,10 +716,10 @@ applanix_print_grp15 (FILE *f, const applanix_grp15_t *grp)
     applanix_print_timedist (f, &grp->tidi);
 
     fprintf (f, "  Signed dist: %.3f  Unsigned dist: %.3f  Scale: %d\n",
-            grp->dist_signed, grp->dist_unsigned, grp->scale);
+             grp->dist_signed, grp->dist_unsigned, grp->scale);
     fprintf (f, "  Status: %d  Type: %d (%s)  Rate: %d (%s)\n",
-            grp->status, grp->type, dmi_types[grp->type],
-            grp->rate, grp->rate < 5 ? dmi_rates[grp->rate] : "N/A");
+             grp->status, grp->type, dmi_types[grp->type],
+             grp->rate, grp->rate < 5 ? dmi_rates[grp->rate] : "N/A");
     fprintf (f, "\n");
 }
 
@@ -740,9 +767,9 @@ applanix_print_grp10006 (FILE *f, const applanix_grp10006_t *grp)
     applanix_print_timedist (f, &grp->tidi);
 
     fprintf (f, "  Signed count: %11d    Unsigned count: %10d\n",
-            grp->count_signed, grp->count_unsigned);
+             grp->count_signed, grp->count_unsigned);
     fprintf (f, "  Event count:  %11d    Reserved count: %10d\n",
-            grp->event_count, grp->reserved_count);
+             grp->event_count, grp->reserved_count);
     fprintf (f, "\n");
 }
 
@@ -757,7 +784,8 @@ applanix_decode_msg0 (applanix_msg0_t *msg, const uint8_t *data)
     return 0;
 }
 
-static const char *response_desc[] = {
+static const char *response_desc[] =
+{
     "Not applicable",
     "Message accepted",
     "Message accepted -- too long",
@@ -776,9 +804,9 @@ applanix_print_msg0 (FILE *f, const applanix_msg0_t *msg)
 {
     fprintf (f, "  Transaction: %d  Msg ID: %d\n", msg->transaction, msg->id);
     fprintf (f, "  Response Code: %d (%s)\n", msg->response_code,
-            response_desc[msg->response_code]);
+             response_desc[msg->response_code]);
     fprintf (f, "  %s\n", msg->parameters_status ? "Some parameters changed" :
-            "No change in parameters");
+             "No change in parameters");
     if (strlen ((char *) msg->parameter_name))
         fprintf (f, "  Error in parameter: %s\n", msg->parameter_name);
     fprintf (f, "\n");
@@ -813,7 +841,8 @@ applanix_decode_msg20 (applanix_msg20_t *msg, const uint8_t *data)
     return 0;
 }
 
-static const char *multipath_types[] = {
+static const char *multipath_types[] =
+{
     "Low",
     "Medium",
     "High",
@@ -824,29 +853,29 @@ applanix_print_msg20 (FILE *f, const applanix_msg20_t *msg)
 {
     fprintf (f, "  Transaction: %d\n", msg->transaction);
     fprintf (f, "  Time 1 type: %d (%s)  Time 2 type: %d (%s)  Dist type: %d (%s)\n",
-            msg->time_types & 0xf, time_types[msg->time_types & 0xf],
-            (msg->time_types & 0xf0) >> 4,
-            time_types[(msg->time_types & 0xf0) >> 4],
-            msg->dist_type, dist_types[msg->dist_type]);
+             msg->time_types & 0xf, time_types[msg->time_types & 0xf],
+             (msg->time_types & 0xf0) >> 4,
+             time_types[(msg->time_types & 0xf0) >> 4],
+             msg->dist_type, dist_types[msg->dist_type]);
     fprintf (f, "  Autostart: %s     Multipath: %d (%s)\n",
-            msg->autostart ? "Enabled " : "Disabled",
-            msg->multipath, multipath_types[msg->multipath]);
+             msg->autostart ? "Enabled " : "Disabled",
+             msg->multipath, multipath_types[msg->multipath]);
     fprintf (f, "  Ref to IMU          X: %6.3f  Y: %6.3f  Z: %6.3f\n",
-            msg->ref_to_IMU[0], msg->ref_to_IMU[1], msg->ref_to_IMU[2]);
+             msg->ref_to_IMU[0], msg->ref_to_IMU[1], msg->ref_to_IMU[2]);
     fprintf (f, "  Ref to GPS          X: %6.3f  Y: %6.3f  Z: %6.3f\n",
-            msg->ref_to_GPS[0], msg->ref_to_GPS[1], msg->ref_to_GPS[2]);
+             msg->ref_to_GPS[0], msg->ref_to_GPS[1], msg->ref_to_GPS[2]);
     fprintf (f, "  Ref to Aux 1 GPS    X: %6.3f  Y: %6.3f  Z: %6.3f\n",
-            msg->ref_to_aux1_GPS[0], msg->ref_to_aux1_GPS[1],
-            msg->ref_to_aux1_GPS[2]);
+             msg->ref_to_aux1_GPS[0], msg->ref_to_aux1_GPS[1],
+             msg->ref_to_aux1_GPS[2]);
     fprintf (f, "  Ref to Aux 2 GPS    X: %6.3f  Y: %6.3f  Z: %6.3f\n",
-            msg->ref_to_aux2_GPS[0], msg->ref_to_aux2_GPS[1],
-            msg->ref_to_aux2_GPS[2]);
+             msg->ref_to_aux2_GPS[0], msg->ref_to_aux2_GPS[1],
+             msg->ref_to_aux2_GPS[2]);
     fprintf (f, "  IMU wrt Ref angles  X: %6.2f  Y: %6.2f  Z: %6.2f\n",
-            msg->IMU_wrt_ref_angles[0], msg->IMU_wrt_ref_angles[1],
-            msg->IMU_wrt_ref_angles[1]);
+             msg->IMU_wrt_ref_angles[0], msg->IMU_wrt_ref_angles[1],
+             msg->IMU_wrt_ref_angles[1]);
     fprintf (f, "  Ref wrt Veh angles  X: %6.2f  Y: %6.2f  Z: %6.2f\n",
-            msg->ref_wrt_vehicle_angles[0], msg->ref_wrt_vehicle_angles[1],
-            msg->ref_wrt_vehicle_angles[1]);
+             msg->ref_wrt_vehicle_angles[0], msg->ref_wrt_vehicle_angles[1],
+             msg->ref_wrt_vehicle_angles[1]);
     fprintf (f, "\n");
 }
 
@@ -904,7 +933,7 @@ applanix_print_msg22 (FILE *f, const applanix_msg22_t *msg)
     fprintf (f, "  Transaction: %d\n", msg->transaction);
     fprintf (f, "  DMI scale: %.2f\n", msg->DMI_scale);
     fprintf (f, "  Ref. to DMI  X: %.3f  Y: %.3f  Z: %.3f\n",
-            msg->ref_to_DMI[0], msg->ref_to_DMI[1], msg->ref_to_DMI[2]);
+             msg->ref_to_DMI[0], msg->ref_to_DMI[1], msg->ref_to_DMI[2]);
     fprintf (f, "\n");
 }
 
@@ -916,7 +945,8 @@ applanix_decode_msg50 (applanix_msg50_t *msg, const uint8_t *data)
     return 0;
 }
 
-static const char *navigation_mode_desc[] = {
+static const char *navigation_mode_desc[] =
+{
     "No operation",
     "Standby",
     "Navigate",
@@ -927,13 +957,13 @@ applanix_print_msg50 (FILE *f, const applanix_msg50_t *msg)
 {
     fprintf (f, "  Transaction: %d\n", msg->transaction);
     fprintf (f, "  Navigation mode: %d (%s)\n", msg->navigation_mode,
-            navigation_mode_desc[msg->navigation_mode]);
+             navigation_mode_desc[msg->navigation_mode]);
     fprintf (f, "\n");
 }
 
 int
 applanix_encode_msg50 (const applanix_msg50_t *msg, uint8_t *data,
-        int length)
+                       int length)
 {
     int out_len = 16;
 
@@ -1001,7 +1031,8 @@ applanix_print_msg52 (FILE *f, const applanix_msg52_t *msg)
     fprintf (f, "  Transaction: %d\n", msg->transaction);
     fprintf (f, "  Groups: ");
     int i;
-    for (i = 0; i < msg->num_groups; i++) {
+    for (i = 0; i < msg->num_groups; i++)
+    {
         if (i > 0)
             fprintf (f, ", ");
         fprintf (f, "%d", msg->groups[i]);
@@ -1052,7 +1083,8 @@ applanix_encode_msg57 (const applanix_msg57_t *msg, uint8_t *data, int length)
     return out_len;
 }
 
-static const char *grp_desc[] = {
+static const char *grp_desc[] =
+{
     "Vehicle navigation solution",              // 1
     "Vehicle navigation performance metrics",   // 2
     "Primary GPS status",                       // 3
@@ -1060,7 +1092,7 @@ static const char *grp_desc[] = {
     "Event 1 data",                             // 5
     "Event 2 data",                             // 6
     "PPS data",                                 // 7
-    "Logging status",                           // 8    
+    "Logging status",                           // 8
     "GAMS solution status",                     // 9
     "General and FDIR status",                  // 10
     "Secondary GPS status",                     // 11
@@ -1090,7 +1122,8 @@ static const char *grp_desc[] = {
     "Base 2 GPS data stream",                   // 10012
 };
 
-static const char *msg_desc[] = {
+static const char *msg_desc[] =
+{
     "Acknowledge",                              // 0
     "General installation parameters",          // 20
     "GAMS installation parameters",             // 21
@@ -1188,73 +1221,75 @@ applanix_msg_desc (int id)
 }
 
 #if 0
-int 
-applanix_grp1_to_imu_t(const applanix_grp1_t *grp1, 
-                       imu_t *imu, uint64_t utime) 
+int
+applanix_grp1_to_imu_t(const applanix_grp1_t *grp1,
+                       imu_t *imu, uint64_t utime)
 {
-	imu->utime = utime;
-	imu->linear_accel[0] = grp1->acc_lon;
-	imu->linear_accel[1] = -grp1->acc_trans;
-	imu->linear_accel[2] = -grp1->acc_down;
-	imu->rotation_rate[0] = to_radians (grp1->rate_lon);
-	imu->rotation_rate[1] = -to_radians (grp1->rate_trans);
-	imu->rotation_rate[2] = -to_radians (grp1->rate_down);
-	imu->imu_serial_number = 1;
+    imu->utime = utime;
+    imu->linear_accel[0] = grp1->acc_lon;
+    imu->linear_accel[1] = -grp1->acc_trans;
+    imu->linear_accel[2] = -grp1->acc_down;
+    imu->rotation_rate[0] = to_radians (grp1->rate_lon);
+    imu->rotation_rate[1] = -to_radians (grp1->rate_trans);
+    imu->rotation_rate[2] = -to_radians (grp1->rate_down);
+    imu->imu_serial_number = 1;
 
-	quat_from_roll_pitch_yaw (to_radians (grp1->roll),-to_radians (grp1->pitch),
-				  -to_radians (grp1->heading-grp1->wander),
-				  imu->q);
+    quat_from_roll_pitch_yaw (to_radians (grp1->roll),-to_radians (grp1->pitch),
+                              -to_radians (grp1->heading-grp1->wander),
+                              imu->q);
 
-	imu->has_heading = 1;
-	imu->heading = to_radians (grp1->wander - 90);
-	return 0;
+    imu->has_heading = 1;
+    imu->heading = to_radians (grp1->wander - 90);
+    return 0;
 }
 
 
-int 
-applanix_grp1_to_nmea_t(const applanix_grp1_t *grp1, 
-                        nmea_t *nm, uint64_t utime) 
+int
+applanix_grp1_to_nmea_t(const applanix_grp1_t *grp1,
+                        nmea_t *nm, uint64_t utime)
 {
     nm->utime=utime;
     // FAA Mode Indicator:
     char faa_mode ='N'; // N = Data Not Valid
-	if (grp1->status<8) {
-	  faa_mode='D'; // D = Differential Mode
-	}
-	//faa_mode='E'; // E = Estimated (dead-reckoning) mode
-	//faa_mode='M'; // M = Manual Input Mode
-	//faa_mode='S'; // S = Simulated Mode
-	
-	time_t t = time(NULL);
-	struct tm *tmp = localtime(&t);
-	char loc_time[16];
-	strftime(loc_time,16,"%H%M%S",tmp);
-	char loc_date[16];
-	strftime(loc_date,16,"%d%m%y",tmp);
-	// FIX ME: HACK TO CORRECT FOR NAD83 => ITRF00 for sitevisit course for yoshi 5/23/07
+    if (grp1->status<8)
+    {
+        faa_mode='D'; // D = Differential Mode
+    }
+    //faa_mode='E'; // E = Estimated (dead-reckoning) mode
+    //faa_mode='M'; // M = Manual Input Mode
+    //faa_mode='S'; // S = Simulated Mode
 
-	double lat_deg = floor (fabs (grp1->lat));
-	double lon_deg = floor (fabs (grp1->lon));
+    time_t t = time(NULL);
+    struct tm *tmp = localtime(&t);
+    char loc_time[16];
+    strftime(loc_time,16,"%H%M%S",tmp);
+    char loc_date[16];
+    strftime(loc_date,16,"%d%m%y",tmp);
+    // FIX ME: HACK TO CORRECT FOR NAD83 => ITRF00 for sitevisit course for yoshi 5/23/07
 
-	// $GPRMC,214345.00,V,4209.185245,N,07056.278929,W,0.00,0.0,280307,0.0,E,N*0F
-	sprintf(nm->nmea,"$GPRMC,%s.00,%c,%02.0f%010.7f,%c,%03.0f%010.7f,%c,%03.3f,%09.5f,%s,0.0,N,%c*0F",
-			loc_time, (grp1->status<8)?'A':'V',
-			lat_deg, 60.0*(fabs(grp1->lat)-lat_deg),
-			(grp1->lat>=0.0)?'N':'S',
-			lon_deg, 60.0*(fabs(grp1->lon)-lon_deg),
-			(grp1->lon>=0.0)?'E':'W',
-			grp1->speed, grp1->heading, loc_date, faa_mode);
-	
-	// compute check sum.
-	unsigned char cksum=0;
-	unsigned char *ptr=(unsigned char *)nm->nmea+1;
-	while (*ptr!='*') {
-	    cksum^=*ptr;
-	    ptr++;
-	}
-	sprintf((char *)ptr+1,"%02X",cksum);
+    double lat_deg = floor (fabs (grp1->lat));
+    double lon_deg = floor (fabs (grp1->lon));
 
-	return 0;
+    // $GPRMC,214345.00,V,4209.185245,N,07056.278929,W,0.00,0.0,280307,0.0,E,N*0F
+    sprintf(nm->nmea,"$GPRMC,%s.00,%c,%02.0f%010.7f,%c,%03.0f%010.7f,%c,%03.3f,%09.5f,%s,0.0,N,%c*0F",
+            loc_time, (grp1->status<8)?'A':'V',
+            lat_deg, 60.0*(fabs(grp1->lat)-lat_deg),
+            (grp1->lat>=0.0)?'N':'S',
+            lon_deg, 60.0*(fabs(grp1->lon)-lon_deg),
+            (grp1->lon>=0.0)?'E':'W',
+            grp1->speed, grp1->heading, loc_date, faa_mode);
+
+    // compute check sum.
+    unsigned char cksum=0;
+    unsigned char *ptr=(unsigned char *)nm->nmea+1;
+    while (*ptr!='*')
+    {
+        cksum^=*ptr;
+        ptr++;
+    }
+    sprintf((char *)ptr+1,"%02X",cksum);
+
+    return 0;
 }
 
 
@@ -1262,36 +1297,36 @@ applanix_grp1_to_nmea_t(const applanix_grp1_t *grp1,
 // return the result in [-180.0,180]
 double angle_diff (double a, double b)
 {
-  double c = a-b;
-  if (c>180.0)
-    c-=360.0;
-  else if (c<-180.0)
-    c+=360.0;
-  return c;
+    double c = a-b;
+    if (c>180.0)
+        c-=360.0;
+    else if (c<-180.0)
+        c+=360.0;
+    return c;
 }
 
 
-int 
-applanix_grp1_to_speed (const applanix_grp1_t *grp1, double *speed) 
+int
+applanix_grp1_to_speed (const applanix_grp1_t *grp1, double *speed)
 {
     if (abs (angle_diff (grp1->heading,grp1->track))<90.0)
         *speed = grp1->speed;
     else
         *speed = -grp1->speed;
 
-	return 0;
+    return 0;
 }
 #endif
 
 
 int
-applanix_nad83_itrf00_compute_constants (double R[3][3], double T[3], int64_t utime) 
+applanix_nad83_itrf00_compute_constants (double R[3][3], double T[3], int64_t utime)
 {
     const double M_r=4.84813681e-9;
-    const double T_t0[3]={+0.9956, -1.9013, -0.5215};
-    const double dT[3]={+0.0007, -0.0007, +0.0005};
-    const double E_t0[3]={+25.915, +9.426, +11.599};
-    const double dE[3]={+0.067, -0.757, -0.051};
+    const double T_t0[3]= {+0.9956, -1.9013, -0.5215};
+    const double dT[3]= {+0.0007, -0.0007, +0.0005};
+    const double E_t0[3]= {+25.915, +9.426, +11.599};
+    const double dE[3]= {+0.067, -0.757, -0.051};
     const double S_t0=+0.62e-9;
     const double dS=-0.18e-9;
     const double t0=1997.00;
@@ -1329,16 +1364,17 @@ applanix_nad83_itrf00_compute_constants (double R[3][3], double T[3], int64_t ut
 }
 
 // all coords in meters.
-int 
-applanix_nad83_2_itrf00 (double nad83[3], double itrf00[3], int64_t utime) 
+int
+applanix_nad83_2_itrf00 (double nad83[3], double itrf00[3], int64_t utime)
 {
     static int firsttime=1;
     static double R[3][3];
     static double T[3];
 
     // compute constants
-    if (firsttime) {
-        applanix_nad83_itrf00_compute_constants (R, T, utime); 
+    if (firsttime)
+    {
+        applanix_nad83_itrf00_compute_constants (R, T, utime);
         firsttime=0;
     }
 
@@ -1350,16 +1386,17 @@ applanix_nad83_2_itrf00 (double nad83[3], double itrf00[3], int64_t utime)
 }
 
 // all coords in meters.
-int 
-applanix_itrf00_2_nad83 (double itrf00[3], double nad83[3], int64_t utime) 
+int
+applanix_itrf00_2_nad83 (double itrf00[3], double nad83[3], int64_t utime)
 {
     static int firsttime=1;
     static double R[3][3];
     static double T[3];
 
     // compute constants
-    if (firsttime) {
-        applanix_nad83_itrf00_compute_constants (R, T, utime); 
+    if (firsttime)
+    {
+        applanix_nad83_itrf00_compute_constants (R, T, utime);
         firsttime=0;
     }
 
@@ -1369,14 +1406,14 @@ applanix_itrf00_2_nad83 (double itrf00[3], double nad83[3], int64_t utime)
     return 0;
 }
 
-uint16_t 
+uint16_t
 applanix_groupid (const uint8_t *data)
 {
     return data[4] + (data[5]<<8);
 }
 
 
-uint16_t 
+uint16_t
 applanix_payload_length (const uint8_t *data)
 {
     return data[6] + (data[7]<<8);
@@ -1389,13 +1426,14 @@ applanix_checksum (const uint8_t *data)
     return data[len+4] | (data[len+5] << 8);
 }
 
-uint16_t 
+uint16_t
 applanix_compute_checksum (const uint8_t *data)
 {
     int payloadlen = applanix_payload_length(data);
     uint16_t sum = 0;
 
-    for (int i = 0; i < 4+payloadlen; i+=2) {
+    for (int i = 0; i < 4+payloadlen; i+=2)
+    {
         sum+=(data[i]+(data[i+1]<<8));
     }
     sum+=(data[6+payloadlen]+(data[7+payloadlen]<<8));
@@ -1405,13 +1443,13 @@ applanix_compute_checksum (const uint8_t *data)
 
 struct applanix_msg90
 {
-    char start[4];             //Message start   4     char $MSG 
+    char start[4];             //Message start   4     char $MSG
     uint16_t id;               //Message ID     2     ushort 90
     uint16_t len;              //Byte count     2     ushort 8
-    uint16_t trans;            // Transaction number    2            
-                               //Input:     Transaction number          N/A
-                               //             Output: [65533, 65535]
-     uint16_t control;      // Control        2     ushort
+    uint16_t trans;            // Transaction number    2
+    //Input:     Transaction number          N/A
+    //             Output: [65533, 65535]
+    uint16_t control;      // Control        2     ushort
     // 000        Controller alive
     // 001        Terminate TCP/IP connection
     // 100        Reset GAMS
@@ -1419,15 +1457,15 @@ struct applanix_msg90
     // 102        Shutdown POS
     // all other values are reserved
 
-  uint16_t chksum;          //60 Checksum  2 ushort N/A N/A
-  char end[2];              //62 Group end 2  char  $#  N/A
+    uint16_t chksum;          //60 Checksum  2 ushort N/A N/A
+    char end[2];              //62 Group end 2  char  $#  N/A
 
 } __attribute__ ((packed));
 typedef struct applanix_msg90 applanix_msg90_t;
 
 
 
-int applanix_encode_msg90 (uint8_t *data, int mode) 
+int applanix_encode_msg90 (uint8_t *data, int mode)
 {
     static uint16_t count=1;
     applanix_msg90_t msg;

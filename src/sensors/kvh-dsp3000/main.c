@@ -29,7 +29,8 @@ static void
 kvh_init (generic_sensor_driver_t *gsd, int mode)
 {
     printf ("\n");
-    switch (mode) {
+    switch (mode)
+    {
     case SENLCM_KVH_DSP3000_T_RATE_MODE:
         printf ("RATE MODE\n");
         gsd_write (gsd, "R", 1);
@@ -47,7 +48,8 @@ kvh_init (generic_sensor_driver_t *gsd, int mode)
         exit (EXIT_FAILURE);
     }
 
-    if (getopt_get_bool (gsd->gopt, "zero")) {
+    if (getopt_get_bool (gsd->gopt, "zero"))
+    {
         printf ("ZERO\n");
         gsd_write (gsd, "Z", 1);
     }
@@ -69,7 +71,8 @@ main (int argc, char *argv[])
         mode = SENLCM_KVH_DSP3000_T_DELTA_MODE;
     else if (0==strcasecmp (mode_str, "angle"))
         mode = SENLCM_KVH_DSP3000_T_ANGLE_MODE;
-    else {
+    else
+    {
         ERROR ("unknown mode option");
         exit (EXIT_FAILURE);
     }
@@ -77,7 +80,8 @@ main (int argc, char *argv[])
     int64_t utime=0, utime_prev=0;
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
-    while (1) {
+    while (1)
+    {
         // read stream
         char buf[128];
         utime_prev = utime;
@@ -87,7 +91,8 @@ main (int argc, char *argv[])
         // a) the first time through, or
         // b) the sensor get powered on *after* the driver was already started
         const int64_t MAX_USEC = 1e6/100 * 50; // 50 misses @ 100Hz
-        if ((utime - utime_prev) > MAX_USEC) {
+        if ((utime - utime_prev) > MAX_USEC)
+        {
             kvh_init (gsd, mode);
             continue;
         }
@@ -95,7 +100,8 @@ main (int argc, char *argv[])
         double data;
         int valid;
         int ret = sscanf (buf, "%lf %d", &data, &valid);
-        if (ret == 2 && valid == 1) {
+        if (ret == 2 && valid == 1)
+        {
             senlcm_kvh_dsp3000_t kvh;
             kvh.utime = utime;
             kvh.mode = mode;

@@ -34,7 +34,8 @@ uint16_t gen_crc16(const char *data, uint16_t size)
 
     // item b) "push out" the last 16 bits
     int i;
-    for (i = 0; i < 16; ++i) {
+    for (i = 0; i < 16; ++i)
+    {
         bit_flag = out >> 15;
         out <<= 1;
         if(bit_flag)
@@ -45,7 +46,8 @@ uint16_t gen_crc16(const char *data, uint16_t size)
     uint16_t crc = 0;
     i = 0x8000;
     int j = 0x0001;
-    for (; i != 0; i >>=1, j <<= 1) {
+    for (; i != 0; i >>=1, j <<= 1)
+    {
         if (i & out) crc |= j;
     }
 

@@ -21,17 +21,21 @@ lat_to_earth_rate (const double latitude_rad)
 //------------------------------------------------------------------------------
 // Push the most recent predict time onto the delayed state utime buffer
 void
-push_utime_delayed_states (int64_t *utime_ds, int64_t utime) {
-    
-    for (int i=MAX_DELAYED_STATES ; i>0 ; i--) {
+push_utime_delayed_states (int64_t *utime_ds, int64_t utime)
+{
+
+    for (int i=MAX_DELAYED_STATES ; i>0 ; i--)
+    {
         utime_ds[i] = utime_ds[i-1];
     }
     utime_ds[0] = utime;
 }
 
 void
-remove_utime_delayed_states (int64_t *utime_ds, int index) {
-    for (int i=index ; i<MAX_DELAYED_STATES ; i++) {
+remove_utime_delayed_states (int64_t *utime_ds, int index)
+{
+    for (int i=index ; i<MAX_DELAYED_STATES ; i++)
+    {
         utime_ds[i] = utime_ds[i+1];
     }
     utime_ds[MAX_DELAYED_STATES] = 0;

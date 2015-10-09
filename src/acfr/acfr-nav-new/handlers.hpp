@@ -29,6 +29,8 @@
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_short_t.hpp"
+#include "perls-lcmtypes++/senlcm/seabotix_sensors_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
 
 #define RTOD (UNITS_RADIAN_TO_DEGREE)
 #define DTOR (UNITS_DEGREE_TO_RADIAN)
@@ -51,4 +53,6 @@ void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IM
 void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const usbl_fix_t *usbl, state_c* state);
 void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_dvl_t *dvl, state_c* state);
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state);
+void on_seabotix_sensors(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabotix_sensors_t *ss, state_c* state);
+void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state);
 #endif

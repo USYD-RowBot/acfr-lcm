@@ -6,7 +6,8 @@
 #include "perls-common/timestamp.h"
 #include "perls-common/timeutil.h"
 
-struct data {
+struct data
+{
     double hz;
     int64_t utime_prev;
 };
@@ -27,7 +28,8 @@ callback (void *user)
 int
 main (int argc, char *argv[])
 {
-    struct data data[] = {
+    struct data data[] =
+    {
         {.hz = 3},
         {.hz = 2},
         {.hz = 1},
@@ -35,7 +37,8 @@ main (int argc, char *argv[])
 
     size_t ntimers = sizeof (data) / sizeof (struct data);
     timeutil_timer_t timers[ntimers];
-    for (size_t i=0; i<ntimers; i++) {
+    for (size_t i=0; i<ntimers; i++)
+    {
         struct timespec spec = timeutil_hz_to_timespec (data[i].hz);
         timers[i] = timeutil_timer_create (spec, callback, &data[i]);
     }
@@ -45,7 +48,7 @@ main (int argc, char *argv[])
 
     timeutil_timer_destroy (&timers[0]);
 
-    printf ("timeutil_timer_destroy (th[0])\n");    
+    printf ("timeutil_timer_destroy (th[0])\n");
     while (1)
         sleep (1);
 }

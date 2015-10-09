@@ -1,0 +1,67 @@
+RUNNING MISSIONS
+* start vmware (xp)
+* start Ocean Server/VectorMap
+* plan mission
+* explorer to //192.168.154.80
+* copy new missions and srp to Missions directory on vehicle
+
+* rdesktop 192.168.154.80
+
+* click on 'ACFR stereo linux shell' terra term
+* should automatically log into our linux box
+* test cameras 
+    - cam-test
+    - > e1 (starts trigger)
+    - > e0 (stops trigger)
+    - > q (quit)
+
+* start UVC
+* verify instrumentshttp://www.linuxmint.com/start/maya
+* check manual control
+    
+* > ssh -YC 172.16.154.206 (to yellowbox)
+* > ~/start_lcm
+* > bot-procman-sheriff
+* > cd git/maptracker
+* > ./start_webserver.py acfrauv
+
+* Check connection to server from Collins
+* Firefox to 172.16.154.206:8080
+    
+ABORT MISSION
+* > git/acfr_lcm/mission/uvc_stop.py *should* send a stop message to the vehicle.  This should work if a tunnel is set up but should also work over the acoustic link.  This has not been tested.
+
+CHECKING IMAGES OVER WIFI
+* open redesktop session to 192.168.154.80
+* open explorer window to acfr_server/data
+* find images to look at and copy to local Images directory
+* in VM on Collins open explorer to //192.168.154.80/Images and copy images to local directory (using the mapped directory for the host OS - I was putting them in ~/Downloads)
+* use Geeqie to look at the images and Gimp to edit them and do an auto equalise 
+DOWNLOAD and PROCESSING
+* ~/git/scripts/lcmdata/getlcmdata.sh
+* ~/git/scripts/lcmdata/processlcmdata.sh
+*   - lcm2raw (can also run lcmlog-export -m /media/data/RAW_DATA/<campaign>/<dive>/r*.lcm to generate csv files that can be loaded into Matlab)
+*   - images_pixel
+*   - slam
+*   - mesh
+* To set up on a new machine, you need to have a <machine name>.cfg file in the cfgs/servers directory.  You also need an iverAME.cfg in cfgs/platforms.  This is on Collins but appears not have been checked in.  To set up another laptop it's probably best to ensure the iverAME.cfg is added to git.
+* You also need default files for slam and the stereo calibration.  These shoud go in default_cfgs/default_config_hh.  The script will prompt for which config files to use.
+
+CAPTURINGS IMAGES FOR A CALIBRATION
+* Create a directory under /media/data/r<date_time>_calibration
+* > ~/git/acfr_lcm/src/acfr/python/cam_control path /media/data/r<date_time>_calibration
+* > ~/git/acfr_lcm/src/acfr/python_cam_control start
+* > cam-test
+* - > e1 (to start caputring images)
+* - > e0 (to stop caputring images)
+* - > q (to quit)
+* > ~/git/acfr_lcm/src/acfr/python_cam_control stop
+    
+DEBUG TOOLS
+* > cd git/acfr_lcm/build
+* > bin/perls-core-spy
+* > bot-procman-sheriff
+* Set up  tunnel through Windows machine to get lcm-tunnel set up over wifi
+p0     
+* > bot-lcm-tunnel 192.168.154.80 -r "AUVSTAT.*" -s ""
+

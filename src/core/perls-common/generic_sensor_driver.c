@@ -60,7 +60,8 @@ gsd_open (generic_sensor_driver_t *gsd)
     const char *io;
     if (getopt_has_flag (gsd->gopt, "io"))
         io = getopt_get_string (gsd->gopt, "io");
-    else {
+    else
+    {
         snprintf (key, 255, "%s.gsd.%s", gsd->rootkey, "io");
         io = botu_param_get_str_or_default (gsd->params, key, "unknown");
     }
@@ -77,20 +78,25 @@ gsd_open (generic_sensor_driver_t *gsd)
         gsd->io = GSD_IO_TCPIP;
     else if (!strcasecmp (io, "playback"))
         gsd->io = GSD_IO_PLAYBACK;
-    else {
+    else
+    {
         ERROR ("unknown io");
         exit (EXIT_FAILURE);
     }
 
-    switch (gsd->io) {
-    case GSD_IO_NONE: {
+    switch (gsd->io)
+    {
+    case GSD_IO_NONE:
+    {
         break;
     }
-    case GSD_IO_SERIAL: {
+    case GSD_IO_SERIAL:
+    {
         const char *device;
         if (getopt_has_flag (gsd->gopt, "device"))
             device = getopt_get_string (gsd->gopt, "device");
-        else {
+        else
+        {
             snprintf (key, 255, "%s.gsd.%s", gsd->rootkey, "device");
             device = botu_param_get_str_or_default (gsd->params, key, "/dev/ttyS99");
         }
@@ -98,44 +104,50 @@ gsd_open (generic_sensor_driver_t *gsd)
         int baud;
         if (getopt_has_flag (gsd->gopt, "baud"))
             baud = getopt_get_int (gsd->gopt, "baud");
-        else {
+        else
+        {
             snprintf (key, 255, "%s.gsd.%s", gsd->rootkey, "baud");
-	    baud = 9600;
-	    bot_param_get_int (gsd->params, key, &baud);
+            baud = 9600;
+            bot_param_get_int (gsd->params, key, &baud);
         }
 
         const char *parity;
         if (getopt_has_flag (gsd->gopt, "parity"))
             parity = getopt_get_string (gsd->gopt, "parity");
-        else {
+        else
+        {
             snprintf (key, 255, "%s.gsd.%s", gsd->rootkey, "parity");
             parity = botu_param_get_str_or_default (gsd->params, key, "8N1");
         }
 
         printf ("Opening %s %d %s\n", device, baud, parity);
 
-        gsd->fd = serial_open (device, serial_translate_speed (baud), 
+        gsd->fd = serial_open (device, serial_translate_speed (baud),
                                serial_translate_parity (parity), 1);
-        if (gsd->fd == -1) 
+        if (gsd->fd == -1)
             exit (EXIT_FAILURE);
         break;
     }
-    case GSD_IO_UDP: {
+    case GSD_IO_UDP:
+    {
         ERROR ("GSD_IO_UDP not implemented yet");
         exit (EXIT_FAILURE);
         break;
     }
-    case GSD_IO_UDP2: {
+    case GSD_IO_UDP2:
+    {
         ERROR ("GSD_IO_UDP2 not implemented yet");
         exit (EXIT_FAILURE);
         break;
     }
-    case GSD_IO_TCPIP: {
+    case GSD_IO_TCPIP:
+    {
         ERROR ("GSD_IO_TCPIP not implemented yet");
         exit (EXIT_FAILURE);
         break;
     }
-    case GSD_IO_PLAYBACK: {
+    case GSD_IO_PLAYBACK:
+    {
         break;
     }
     default:
@@ -145,7 +157,7 @@ gsd_open (generic_sensor_driver_t *gsd)
 }
 
 static void
-gsd_write_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
+gsd_write_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                     const senlcm_raw_t *raw, void *user)
 {
     generic_sensor_driver_t *gsd = user;
@@ -153,7 +165,7 @@ gsd_write_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 }
 
 static void
-gsd_playback_callback (const lcm_recv_buf_t *rbuf, const char *channel, 
+gsd_playback_callback (const lcm_recv_buf_t *rbuf, const char *channel,
                        const senlcm_raw_t *raw, void *user)
 {
     generic_sensor_driver_t *gsd = user;
@@ -171,13 +183,14 @@ static gpointer
 gsd_thread (gpointer context)
 {
     generic_sensor_driver_t *gsd = context;
-    
+
     /* identify that we are using queue */
     g_async_queue_ref (gsd->gq);
-    
+
     /* create and subscribe to lcm */
     lcm_t *lcm = lcm_create (NULL);
-    if (!lcm) {
+    if (!lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
@@ -188,7 +201,8 @@ gsd_thread (gpointer context)
 
     int32_t ntimeouts_prev = 0;
     int64_t timestamp_prev = timestamp_now ();
-    while (!gsd->done) {
+    while (!gsd->done)
+    {
         /* Watch fd and lcm to see who has input. */
         fd_set rfds;
         FD_ZERO (&rfds);
@@ -196,7 +210,8 @@ gsd_thread (gpointer context)
         FD_SET (lcm_fd, &rfds);
 
         /* Wait up to some period of time. */
-        struct timeval tv = {
+        struct timeval tv =
+        {
             .tv_sec = 1,
             .tv_usec = 0,
         };
@@ -205,18 +220,22 @@ gsd_thread (gpointer context)
         int64_t timestamp = timestamp_now ();
         if (ret < 0)
             PERROR ("select()");
-        else if (ret == 0) {/* Timeout */
+        else if (ret == 0)  /* Timeout */
+        {
             gsd->stats.dt = timestamp - timestamp_prev;
             gsd->stats.latency = 0;
             gsd_update_stats (gsd, 0);
         }
-        else { /* We have data. */
+        else   /* We have data. */
+        {
             if (FD_ISSET (lcm_fd, &rfds))
                 lcm_handle (lcm);
-            else if (FD_ISSET (gsd->fd, &rfds)) {
+            else if (FD_ISSET (gsd->fd, &rfds))
+            {
                 gsd_data_t *data = calloc (1, sizeof (*data));
 
-                switch (gsd->io) {
+                switch (gsd->io)
+                {
                 case GSD_IO_NONE:
                     ERROR ("GSD_IO_NONE");
                     break;
@@ -241,7 +260,8 @@ gsd_thread (gpointer context)
 
                 /* update our statistics */
                 gsd->stats.dt = timestamp - timestamp_prev;
-                if (ntimeouts_prev == gsd->stats.ntimeouts) {// last time wasn't a timeout
+                if (ntimeouts_prev == gsd->stats.ntimeouts)  // last time wasn't a timeout
+                {
                     gsd->stats.dtmax = MAX (gsd->stats.dt, gsd->stats.dtmax);
                     gsd->stats.dtmin = gsd->stats.dtmin ? MIN (gsd->stats.dt, gsd->stats.dtmin) : gsd->stats.dt;
                 }
@@ -269,13 +289,14 @@ gsd_thread (gpointer context)
 
 static void
 gsd_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
-{   
-    if (GSD != NULL) {
-        
-	if (GSD->destroy_callback)
-	    (*GSD->destroy_callback) (GSD, GSD->destroy_callback_user);
-	
-	gsd_destroy (GSD);
+{
+    if (GSD != NULL)
+    {
+
+        if (GSD->destroy_callback)
+            (*GSD->destroy_callback) (GSD, GSD->destroy_callback_user);
+
+        gsd_destroy (GSD);
     }
     exit (EXIT_SUCCESS);
 }
@@ -297,7 +318,8 @@ gsd_create (int argc, char *argv[], const char *rootkey, gsd_getopt_callback cal
     gsd->basename = strdup (basename (argv[0]));
 
     /* Add custom command-line options */
-    if (callback != NULL && callback (gsd) != 0) {
+    if (callback != NULL && callback (gsd) != 0)
+    {
         ERROR ("user callback error.");
         exit (EXIT_FAILURE);
     }
@@ -306,7 +328,8 @@ gsd_create (int argc, char *argv[], const char *rootkey, gsd_getopt_callback cal
     char myrootkey[256];
     if (rootkey)
         strncpy (myrootkey, rootkey, 255);
-    else {
+    else
+    {
         const char *token = "perls-sen-";
         const char *found = strstr (gsd->basename, token);
         if (found)
@@ -328,11 +351,13 @@ gsd_create (int argc, char *argv[], const char *rootkey, gsd_getopt_callback cal
     botu_param_add_pserver_to_getopt (gsd->gopt);
 
     /* parse our flags */
-    if (!getopt_parse (gsd->gopt, argc, argv, 1) || gsd->gopt->extraargs->len!=0) {
+    if (!getopt_parse (gsd->gopt, argc, argv, 1) || gsd->gopt->extraargs->len!=0)
+    {
         getopt_do_usage (gsd->gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gsd->gopt, "help")) {
+    else if (getopt_get_bool (gsd->gopt, "help"))
+    {
         getopt_do_usage (gsd->gopt, NULL);
         exit (EXIT_SUCCESS);
     }
@@ -343,25 +368,29 @@ gsd_create (int argc, char *argv[], const char *rootkey, gsd_getopt_callback cal
 
     /* create lcm parent object */
     gsd->lcm = lcm_create (NULL);
-    if (!gsd->lcm) {
+    if (!gsd->lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
 
     /* param server or file? */
     gsd->params = botu_param_new_from_getopt_or_fail (gsd->gopt, gsd->lcm);
-    if (!gsd->params) {
+    if (!gsd->params)
+    {
         ERROR ("botu_param_new_from_getopt_or_fail() failed");
         exit (EXIT_FAILURE);
     }
 
     /* lcm channel names */
     char channel[LCM_MAX_CHANNEL_NAME_LENGTH];
-    if (getopt_has_flag (gsd->gopt, "channel")) {
+    if (getopt_has_flag (gsd->gopt, "channel"))
+    {
         const char *opt = getopt_get_string (gsd->gopt, "channel");
         snprintf (channel, LCM_MAX_CHANNEL_NAME_LENGTH, "%s", opt);
     }
-    else {
+    else
+    {
         char key[255];
         snprintf (key, 255, "%s.gsd.%s", gsd->rootkey, "channel");
         char *opt = botu_param_get_str_or_default (gsd->params, key, "SENSOR_UNSPECIFIED");
@@ -380,7 +409,8 @@ gsd_create (int argc, char *argv[], const char *rootkey, gsd_getopt_callback cal
         daemon_fork ();
 
     /* Install custom signal handler */
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = gsd_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -409,7 +439,7 @@ gsd_destroy (generic_sensor_driver_t *gsd)
 {
     gsd->done = 1;
     if (gsd->th)
-      g_thread_join (gsd->th);
+        g_thread_join (gsd->th);
 
     lcm_destroy (gsd->lcm);
     bot_param_destroy (gsd->params);
@@ -429,7 +459,8 @@ gsd_canonical (generic_sensor_driver_t *gsd, char eol, char eol2)
 {
     int ret = 0;
 
-    switch (gsd->io) {
+    switch (gsd->io)
+    {
     case GSD_IO_NONE:
         break;
     case GSD_IO_SERIAL:
@@ -449,7 +480,7 @@ gsd_canonical (generic_sensor_driver_t *gsd, char eol, char eol2)
     default:
         ERROR ("unknown io type");
     }
-    
+
     return ret;
 }
 
@@ -459,7 +490,8 @@ gsd_noncanonical (generic_sensor_driver_t *gsd, int min, int time)
 {
     int ret = 0;
 
-    switch (gsd->io) {
+    switch (gsd->io)
+    {
     case GSD_IO_NONE:
         break;
     case GSD_IO_SERIAL:
@@ -479,7 +511,7 @@ gsd_noncanonical (generic_sensor_driver_t *gsd, int min, int time)
     default:
         ERROR ("unknown io type");
     }
-    
+
     return ret;
 }
 
@@ -495,16 +527,18 @@ gsd_read (generic_sensor_driver_t *gsd, char *buf, int len, int64_t *timestamp)
 
     if (timestamp != NULL)
         *timestamp = data->timestamp;
-    
+
 
     memset (buf, 0, len);
-    if (len < data->len) {
+    if (len < data->len)
+    {
         memcpy (buf, data->buf, len);
         memmove (data->buf, &data->buf[len], data->len -= len);
         g_async_queue_push (gsd->gq, data);
         return len;
     }
-    else {
+    else
+    {
         memcpy (buf, data->buf, data->len);
         int len = data->len;
         g_free (data);
@@ -514,10 +548,10 @@ gsd_read (generic_sensor_driver_t *gsd, char *buf, int len, int64_t *timestamp)
 
 
 int
-gsd_read_timeout (generic_sensor_driver_t *gsd, char *buf, int len, 
+gsd_read_timeout (generic_sensor_driver_t *gsd, char *buf, int len,
                   int64_t *timestamp, long usTimeout)
 {
-    
+
     GTimeVal end_time;
     g_get_current_time (&end_time);
     g_time_val_add (&end_time, usTimeout);
@@ -525,23 +559,25 @@ gsd_read_timeout (generic_sensor_driver_t *gsd, char *buf, int len,
     gsd_data_t *data = g_async_queue_timed_pop (gsd->gq, &end_time);
 
     if (data == NULL) /* timeout */
-	return 0;
+        return 0;
 
     gsd->stats.latency = timestamp_now () - data->timestamp;
     gsd->stats.latencymax = MAX (gsd->stats.latency, gsd->stats.latencymax);
 
     if (timestamp != NULL)
         *timestamp = data->timestamp;
-    
+
 
     memset (buf, 0, len);
-    if (len < data->len) {
+    if (len < data->len)
+    {
         memcpy (buf, data->buf, len);
         memmove (data->buf, &data->buf[len], data->len -= len);
         g_async_queue_push (gsd->gq, data);
         return len;
     }
-    else {
+    else
+    {
         memcpy (buf, data->buf, data->len);
         int len = data->len;
         g_free (data);
@@ -556,7 +592,8 @@ gsd_flush (generic_sensor_driver_t *gsd)
 
     // clear out the g_async_queue
     bool empty=0;
-    while (!empty) {
+    while (!empty)
+    {
         GTimeVal end_time;
         g_get_current_time (&end_time);
         g_time_val_add (&end_time, 0);
@@ -575,7 +612,8 @@ gsd_write (generic_sensor_driver_t *gsd, const char *buf, int len)
 
     g_static_mutex_lock (&gsd_write_mutex);
 
-    switch (gsd->io) {
+    switch (gsd->io)
+    {
     case GSD_IO_NONE:
         break;
     case GSD_IO_SERIAL:
@@ -620,8 +658,9 @@ gsd_update_stats (generic_sensor_driver_t *gsd, int good)
 #endif
 
     gsd->stats_dt_stdout += gsd->stats.utime - utime_prev;
-    if (gsd->print_stats && gsd->stats_dt_stdout > GSD_STDOUT_MIN_PERIOD) {
-        printf ("\rgood:%"PRId32" bad:%"PRId32" timeout:%"PRId32, 
+    if (gsd->print_stats && gsd->stats_dt_stdout > GSD_STDOUT_MIN_PERIOD)
+    {
+        printf ("\rgood:%"PRId32" bad:%"PRId32" timeout:%"PRId32,
                 gsd->stats.ngood, gsd->stats.nbad, gsd->stats.ntimeouts);
         gsd->stats_dt_stdout = 0;
     }
@@ -634,15 +673,17 @@ gsd_reset_stats (generic_sensor_driver_t *gsd)
 }
 
 void
-gsd_print_stats (generic_sensor_driver_t *gsd, int print_stats) {
+gsd_print_stats (generic_sensor_driver_t *gsd, int print_stats)
+{
     gsd->print_stats = print_stats;
 }
 
 void
 gsd_attach_destroy_callback (generic_sensor_driver_t *gsd,
                              void (*destroy_callback) (generic_sensor_driver_t *gsd, void *user),
-                             void *destroy_callback_user) {
+                             void *destroy_callback_user)
+{
     gsd->destroy_callback = destroy_callback;
     gsd->destroy_callback_user = destroy_callback_user;
-    
+
 }

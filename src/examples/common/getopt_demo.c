@@ -27,15 +27,16 @@ int main (int argc, char *argv[])
     getopt_add_int (gopt,    'b',  "baud",            "500000", "Baud rate");
     getopt_add_int (gopt,    'r',  "resolution",      "25",     "Angular resolution (hundredths of a degree)");
     getopt_add_double (gopt, 'f',  "fov",             "180",    "Field of view (Degrees)");
-    getopt_add_bool (gopt,   'i',  "interlaced",      1,        "Interlaced (required for most high-res modes)"); 
+    getopt_add_bool (gopt,   'i',  "interlaced",      1,        "Interlaced (required for most high-res modes)");
     getopt_add_bool (gopt,   '\0', "intensities",     0,        "Request intensities");
-    getopt_add_bool (gopt,   '\0', "exit-on-failure", 1,        "Exit -1 if sick connection fails"); 
+    getopt_add_bool (gopt,   '\0', "exit-on-failure", 1,        "Exit -1 if sick connection fails");
     getopt_add_bool (gopt,   '\0', "dump",            0,        "Dump all packets to stdout");
     getopt_add_spacer (gopt, "");
 
-    if (!getopt_parse (gopt, argc, argv, 1) 
-        || getopt_get_bool (gopt,"help")
-        || gopt->extraargs->len!=0) {
+    if (!getopt_parse (gopt, argc, argv, 1)
+            || getopt_get_bool (gopt,"help")
+            || gopt->extraargs->len!=0)
+    {
 
         getopt_do_usage (gopt, NULL);
         return 0;

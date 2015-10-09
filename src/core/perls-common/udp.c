@@ -18,7 +18,8 @@ udp_socket_listen (int port)
     if (sock < 0)
         return -1;
 
-    struct sockaddr_in listen_addr = {
+    struct sockaddr_in listen_addr =
+    {
         .sin_family = AF_INET,
         .sin_port = htons (port),
         .sin_addr.s_addr = INADDR_ANY,
@@ -39,7 +40,8 @@ udp_socket_create (void)
     if (sock < 0)
         return -1;
 
-    struct sockaddr_in listen_addr = {
+    struct sockaddr_in listen_addr =
+    {
         .sin_family = AF_INET,
         .sin_port = INADDR_ANY, // ephemeral port, please
         .sin_addr.s_addr = INADDR_ANY,
@@ -68,17 +70,19 @@ udp_socket_get_port (int sock)
 }
 
 // return 0 on success
-int 
+int
 udp_send(const char *ipaddr, int port, const void *data, int datalen)
 {
     // fill in address structure
-    struct sockaddr_in remote_addr = {
+    struct sockaddr_in remote_addr =
+    {
         .sin_family = AF_INET,
         .sin_port = htons (port),
     };
 
     struct hostent *host = gethostbyname (ipaddr);
-    if (host == NULL) {
+    if (host == NULL)
+    {
         printf("Couldn't resolve host %s\n", ipaddr);
         return -1;
     }

@@ -8,7 +8,8 @@
 #include "perls-math/plane.h"
 
 void
-usage (int argc, char *argv[]) {
+usage (int argc, char *argv[])
+{
     printf ("usage: %s {real|synthetic}\n", argv[0]);
 }
 
@@ -18,18 +19,26 @@ main (int argc, char *argv[])
 
     int n = 0;
     FILE *fxyz = NULL;
-    if (argc == 2) {
-        if (0==strcasecmp (argv[1], "real")) {
+    if (argc == 2)
+    {
+        if (0==strcasecmp (argv[1], "real"))
+        {
             n = 396;    // xyz_fitplane.txt has 4xN xyz points to fit a plane
             fxyz = fopen ("plane_demo_xyz_real.txt", "rb");
-        } else if (0==strcasecmp (argv[1], "synthetic")) {
+        }
+        else if (0==strcasecmp (argv[1], "synthetic"))
+        {
             n = 1681;
             fxyz = fopen ("plane_demo_xyz_synthetic.txt", "rb");
-        } else {
+        }
+        else
+        {
             usage (argc, argv);
             return 0;
         }
-    } else {
+    }
+    else
+    {
         usage (argc, argv);
         return 0;
     }
@@ -52,18 +61,19 @@ main (int argc, char *argv[])
     plane_estim_svd (&xyz.matrix, coeff_svd, &error_svd);
 
     printf ("Results---------------\n");
-    printf ("residual_ransac =  %g, residual_svd = %g, n_inliers = %zd \n", 
+    printf ("residual_ransac =  %g, residual_svd = %g, n_inliers = %zd \n",
             gslu_vector_norm (error_ransac), gslu_vector_norm (error_svd), n_inliers);
     gslu_vector_printf (coeff_ransac, "coeff_ransac");
     gslu_vector_printf (coeff_svd, "coeff_svd");
 
     gslu_index_printfc (isel, "isel", NULL, CblasTrans);
 
-    // Test 2: 
+    // Test 2:
     double coeff_data[4] = {0.0478, -0.0161, -0.8858, 1.0000};
-    double ray_data[12] = {0.1000, 0.2000, 0.1000, 0.3000, 
+    double ray_data[12] = {0.1000, 0.2000, 0.1000, 0.3000,
                            0.2000, 0.1000, 0.1000, 0.1000,
-                           0.5000, 0.5000, 0.5000, 0.3000};
+                           0.5000, 0.5000, 0.5000, 0.3000
+                          };
     gsl_vector_view plane = gsl_vector_view_array (coeff_data, 4);
     gsl_matrix_view rays = gsl_matrix_view_array (ray_data, 3, 4);
     gsl_matrix *pts = gsl_matrix_alloc (3, 4);

@@ -20,7 +20,7 @@
 
 // Original Iver config
 
-enum 
+enum
 {
     RC_THROTTLE = 0,
     RC_AILERON,
@@ -33,7 +33,7 @@ enum
 
 /*
 // Config using the borrowed controller from Mitch
-enum 
+enum
 {
     RC_THROTTLE = 0,
     RC_RUDDER,
@@ -54,7 +54,7 @@ enum
 
 int
 create_udp_listen(char *port)
-{    
+{
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int ret;
@@ -63,34 +63,39 @@ create_udp_listen(char *port)
     hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
-    
-    if((ret = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+
+    if((ret = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
+    {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
         return -1;
     }
     // loop through all the results and bind to the first we can
-    for(p = servinfo; p != NULL; p = p->ai_next) {
+    for(p = servinfo; p != NULL; p = p->ai_next)
+    {
         if((sockfd = socket(p->ai_family, p->ai_socktype,
-                p->ai_protocol)) == -1) {
+                            p->ai_protocol)) == -1)
+        {
             perror("listener: socket");
             continue;
         }
-        if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+        if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        {
             close(sockfd);
             perror("listener: bind");
             continue;
         }
         break;
     }
-    
-    if(p == NULL) {
+
+    if(p == NULL)
+    {
         fprintf(stderr, "listener: failed to bind socket\n");
         return -2;
     }
     freeaddrinfo(servinfo);
-    
+
     printf("UDP listen socket open on port %s\n", port);
-    
+
     return sockfd;
 }
 
@@ -98,31 +103,31 @@ create_udp_listen(char *port)
 int
 parse_rc(char *buf, lcm_t *lcm)
 {
-    
+
     unsigned short channel_value;
     char channel_id;
     int channel_values[7];
-    
+
     if(buf[0] != 3 && buf[1] != 1)
         return 0;
-        
+
 
     for(int i=1; i<8; i++)
     {
         channel_id = (buf[i*2] & 0xFC) >> 2;
         channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
-            
+
         channel_values[channel_id] = channel_value;
-        
+
     }
 
 #ifdef DEBUG
     for(int i=1; i<8; i++)
         printf("Channel %d: value %d\n", i, channel_values[i] & 0xFFFF);
-#endif        
+#endif
 
-    
-    
+
+
     // create the LCM message to send
     if(channel_values[RC_GEAR] > 500)
     {
@@ -138,12 +143,13 @@ parse_rc(char *buf, lcm_t *lcm)
         rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
         acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
     }
-    
+
     return 1;
 }
 
 int main_exit;
-void signal_handler(int sigNum) {
+void signal_handler(int sigNum)
+{
     // do a safe exit
     main_exit = 1;
 }
@@ -152,41 +158,41 @@ int
 main(int argc, char **argv)
 {
     // install the signal handler
-	main_exit = 0;
-	signal(SIGINT, signal_handler);
+    main_exit = 0;
+    signal(SIGINT, signal_handler);
 
     lcm_t *lcm = lcm_create(NULL);
     BotParam *param = bot_param_new_from_server (lcm, 1);
-    
+
     if(param == NULL)
-        return 0;    
-    
+        return 0;
+
     // Read the config params
     char rootkey[64];
     char key[64];
     sprintf(rootkey, "acfr.%s", basename(argv[0]));
-	
-	sprintf(key, "%s.control_port", rootkey);
-	char *control_port = bot_param_get_str_or_fail(param, key);
-	
-	// Create the UDP listener
-	int control_sockfd = create_udp_listen(control_port);
-	fd_set rfds;	
-	struct timeval tv;
-	int data_len;
-	char buf[16];
-	
-	while(!main_exit)
-	{
-    	FD_ZERO(&rfds);
+
+    sprintf(key, "%s.control_port", rootkey);
+    char *control_port = bot_param_get_str_or_fail(param, key);
+
+    // Create the UDP listener
+    int control_sockfd = create_udp_listen(control_port);
+    fd_set rfds;
+    struct timeval tv;
+    int data_len;
+    char buf[16];
+
+    while(!main_exit)
+    {
+        FD_ZERO(&rfds);
         FD_SET(control_sockfd, &rfds);
         tv.tv_sec = 1.0;
-        tv.tv_usec = 0;    
-        
+        tv.tv_usec = 0;
+
         int ret = select (control_sockfd + 1, &rfds, NULL, NULL, &tv);
         if(ret != -1)
         {
-        	data_len = 0;
+            data_len = 0;
             while(data_len < 16)
                 data_len += recvfrom(control_sockfd, &buf[data_len], 16 - data_len, 0, NULL, NULL);
             parse_rc(buf, lcm);
@@ -196,7 +202,7 @@ main(int argc, char **argv)
 
     return 1;
 }
-            
-            
-            
-            
+
+
+
+

@@ -68,7 +68,8 @@ void
 mocap_load_cfg (config_t *config)
 {
     BotParam *param = bot_param_new_from_file (BOTU_PARAM_DEFAULT_CFG);
-    if (!param) {
+    if (!param)
+    {
         ERROR ("Could not create configuration parameters from file %s", BOTU_PARAM_DEFAULT_CFG);
         exit (EXIT_FAILURE);
     }
@@ -86,13 +87,14 @@ mocap_load_cfg (config_t *config)
 }
 
 //----------------------------------------------------------------------------------
-// Called when program shuts down 
+// Called when program shuts down
 //----------------------------------------------------------------------------------
 static void
 my_signal_handler (int signum, siginfo_t *siginfo, void *ucontext_t)
 {
     printf ("\nmy_signal_handler()\n");
-    if (state.done) {
+    if (state.done)
+    {
         printf ("Goodbye\n");
         exit (EXIT_FAILURE);
     }
@@ -104,18 +106,21 @@ int
 connect_to_server (const char* server_ipaddr, int server_port)
 {
     int sock;
-    if ((sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+    if ((sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+    {
         PERROR ("socket() failed");
         return EXIT_FAILURE;
     }
 
-    struct sockaddr_in servAddr = {
+    struct sockaddr_in servAddr =
+    {
         .sin_family = AF_INET,
         .sin_addr.s_addr = server_ipaddr ? inet_addr (server_ipaddr) : inet_addr ("127.0.0.1"),
         .sin_port = server_port > 0 ? htons (server_port) : htons (1221),
     };
 
-    if (connect (sock, (struct sockaddr *) &servAddr, sizeof (servAddr)) < 0) {
+    if (connect (sock, (struct sockaddr *) &servAddr, sizeof (servAddr)) < 0)
+    {
         PERROR ("connect() failed: is mocap running?");
         close (sock);
         return EXIT_FAILURE;
@@ -125,13 +130,14 @@ connect_to_server (const char* server_ipaddr, int server_port)
 }
 
 //----------------------------------------------------------------------------------
-// Reads on tcp connection until byte b is reached 
+// Reads on tcp connection until byte b is reached
 //----------------------------------------------------------------------------------
 int
 read_until_byte (char b)
 {
     char buf[1024];
-    while (1) {
+    while (1)
+    {
         if (recv (state.sock, buf, 1, MSG_WAITALL) != 1)
             return -1;
 
@@ -169,7 +175,8 @@ read_packet (void)
     int data_left = frame_size;
 
     // loop to catch data in 1024 byte blocks
-    while (data_left > 0) {
+    while (data_left > 0)
+    {
         if (recv (state.sock, buf, GSL_MIN (data_left, 1024), MSG_WAITALL) != GSL_MIN (data_left, 1024))
             return -1;
 
@@ -177,7 +184,8 @@ read_packet (void)
         data_left = data_left - GSL_MIN (data_left, 1024);
     }
 
-    if (state.n_bodies != ((int) total_data[5])) {
+    if (state.n_bodies != ((int) total_data[5]))
+    {
         if (state.bodies != 0)
             free (state.bodies);
 
@@ -202,24 +210,28 @@ void
 mocap_publish (config_t *config)
 {
     int64_t utime = timestamp_now ();
-    
-    for (int i=0; i<state.n_bodies; i++) {
-        senlcm_mocap_t mocap = {
+
+    for (int i=0; i<state.n_bodies; i++)
+    {
+        senlcm_mocap_t mocap =
+        {
             .utime = utime,
 
-            .xyzrph = {state.bodies[i].x/1000.0, // millimeters to meters
-                       state.bodies[i].y/1000.0,
-                       state.bodies[i].z/1000.0,
-                       state.bodies[i].r,
-                       state.bodies[i].p,
-                       state.bodies[i].h},
+            .xyzrph = {
+                state.bodies[i].x/1000.0, // millimeters to meters
+                state.bodies[i].y/1000.0,
+                state.bodies[i].z/1000.0,
+                state.bodies[i].r,
+                state.bodies[i].p,
+                state.bodies[i].h
+            },
 
             .residual = state.bodies[i].residual,
 
             .valid = (state.bodies[i].residual > 0) ? 1 : 0,
         };
 
-        char channel[256];        
+        char channel[256];
         if (i < config->mocap_num_bodies)
             snprintf (channel, sizeof channel, "%s%s", config->mocap_channel_prefix, config->mocap_bodies[i]);
         else
@@ -240,7 +252,8 @@ main (int argc, char *argv[])
     setvbuf (stdout, (char *) NULL, _IONBF, 0);
 
     // install custom signal handler
-    struct sigaction act = {
+    struct sigaction act =
+    {
         .sa_sigaction = my_signal_handler,
     };
     sigfillset (&act.sa_mask);
@@ -250,7 +263,8 @@ main (int argc, char *argv[])
 
     // init lcm
     state.lcm = lcm_create (NULL);
-    if (!state.lcm) {
+    if (!state.lcm)
+    {
         ERROR ("lcm_create() failed");
         exit (EXIT_FAILURE);
     }
@@ -273,19 +287,22 @@ main (int argc, char *argv[])
     getopt_add_bool   (gopt,    'D',    "daemon",   0,   	            "Run as system daemon");
     getopt_add_bool   (gopt,    'h',    "help",     0,             	    "Display Help");
 
-    if (!getopt_parse (gopt, argc, argv, 1)) {
+    if (!getopt_parse (gopt, argc, argv, 1))
+    {
         getopt_do_usage (gopt,"");
         bot_param_str_array_free (config.mocap_bodies);
         return EXIT_FAILURE;
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt,"");
         bot_param_str_array_free (config.mocap_bodies);
         return EXIT_SUCCESS;
     }
- 
+
     //start as daemon if asked
-    if (getopt_get_bool (gopt, "daemon")) {
+    if (getopt_get_bool (gopt, "daemon"))
+    {
         daemon_fork ();
         state.is_daemon = 1;
     }
@@ -297,15 +314,17 @@ main (int argc, char *argv[])
 
     if (getopt_has_flag (gopt, "port"))
         config.server_port = getopt_get_int (gopt, "port");
-  
+
     // connect to server
-    if ((state.sock = connect_to_server (config.server_ip, config.server_port)) < 0) {
+    if ((state.sock = connect_to_server (config.server_ip, config.server_port)) < 0)
+    {
         bot_param_str_array_free (config.mocap_bodies);
         exit (EXIT_FAILURE);
     }
 
     // send server request
-    if (send (state.sock, request_cmd, strlen (request_cmd), MSG_NOSIGNAL) != strlen (request_cmd)) {
+    if (send (state.sock, request_cmd, strlen (request_cmd), MSG_NOSIGNAL) != strlen (request_cmd))
+    {
         PERROR ("send request failure");
         bot_param_str_array_free (config.mocap_bodies);
         exit (EXIT_FAILURE);
@@ -313,28 +332,32 @@ main (int argc, char *argv[])
 
     int status = EXIT_SUCCESS;
     // loop and capture data
-    while (!state.done) {
+    while (!state.done)
+    {
         // read until start of packet
-        if (read_until_byte (message_start_byte) < 0 ) {
+        if (read_until_byte (message_start_byte) < 0 )
+        {
             PERROR ("recv error");
             status = EXIT_FAILURE;
             break;
         }
 
         // read frame size
-        if (read_size () < 0) {
+        if (read_size () < 0)
+        {
             PERROR ("recv error");
             status = EXIT_FAILURE;
             break;
         }
 
         // read rest of packet
-        if (read_packet() < 0) {
+        if (read_packet() < 0)
+        {
             PERROR ("recv error");
             status = EXIT_FAILURE;
             break;
         }
-        
+
         mocap_publish (&config);
     }
 

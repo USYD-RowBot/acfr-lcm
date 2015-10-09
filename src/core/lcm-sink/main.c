@@ -10,12 +10,13 @@
 #include "perls-common/timestamp.h"
 
 typedef struct value value_t;
-struct value {
+struct value
+{
     int64_t utime;
     int64_t jitter;
 };
 
-static void 
+static void
 message_handler (const lcm_recv_buf_t *rbuf, const char *channel, void *user)
 {
     GHashTable *hash = user;
@@ -24,7 +25,8 @@ message_handler (const lcm_recv_buf_t *rbuf, const char *channel, void *user)
 
     int64_t utime = timestamp_now ();
     int64_t utime_last = ov ? ov->utime : 0;
-    value_t nv = {
+    value_t nv =
+    {
         .utime = utime,
         .jitter = utime - utime_last,
     };
@@ -47,24 +49,28 @@ main (int argc, char *argv[])
                         "Monitor EASYDAQ and all HEARTBEAT channels\n"
                         "%s --channels EASYDAQ,HEARTBEAT_.*HZ", argv[0]);
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=0) {
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=0)
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, NULL);
         exit (EXIT_SUCCESS);
     }
 
     lcm_t *lcm = lcm_create (NULL);
-    if (!lcm) {
+    if (!lcm)
+    {
         ERROR ("lcm_create()");
         exit (EXIT_FAILURE);
     }
 
     GHashTable *hash = g_hash_table_new_full (&g_str_hash, &g_str_equal, &g_free, &g_free);
     char **channels = g_strsplit (getopt_get_string (gopt, "channels"), ",", -1);
-    for (int i=0; channels[i]!=NULL; i++) {
+    for (int i=0; channels[i]!=NULL; i++)
+    {
         const char *channel = channels[i];
         printf ("Adding channel %s\n", channel);
         lcm_subscribe (lcm, channel, message_handler, hash);

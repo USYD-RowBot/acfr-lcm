@@ -60,7 +60,8 @@
 #define USER_VERIFY          0      // periscope mode testing
 
 typedef struct verify_set verify_set_t;
-struct verify_set {
+struct verify_set
+{
     int64_t utime1;
     int64_t utime2;
     se_publish_link_t *se_vlink;
@@ -68,7 +69,8 @@ struct verify_set {
 };
 
 typedef struct thread_data thread_data_t;
-struct thread_data {
+struct thread_data
+{
     cache_t     *fc_cache; // feature collection cache
 
     GThreadPool *pool;     // thread pool
@@ -96,11 +98,12 @@ struct thread_data {
     // post-process
     bool    save_corrset;       // photo mosaic
     bool    save_link_info;     // bookkeeping
-    GSList *linklist;   
+    GSList *linklist;
 };
 
 typedef struct pool_data pool_data_t;
-struct pool_data {
+struct pool_data
+{
     perllcm_van_plink_t *plink;
     perllcm_van_feature_collection_t *fci;
     perllcm_van_feature_collection_t *fcj;
@@ -153,7 +156,8 @@ static void
 printf_vslist (GList *list)
 {
     size_t listlen = g_list_length (list);
-    for (size_t i=0; i < listlen; i++) {
+    for (size_t i=0; i < listlen; i++)
+    {
         GList *event = g_list_nth (list, i);
         verify_set_t *vs = event->data;
         printf ("vs.t1 = %"PRId64", t2 = %"PRId64"\n", vs->utime1, vs->utime2);
@@ -170,7 +174,7 @@ request_verify (GList *verifyset_list)
     verify_set_t *vs = event->data;
     //printf ("%"PRId64", %"PRId64"\n", utime1, utime2);
 
-    if (vs->pd) 
+    if (vs->pd)
         perllcm_van_plot_debug_t_publish (shm->lcm, VAN_PLOT_DEBUG_CHANNEL, vs->pd);
     else
         idle = true;
@@ -185,14 +189,16 @@ perllcm_van_verify_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *chann
     thread_data_t *tdata = user;
 
     size_t listlen = g_list_length (tdata->verifyset_list);
-    //printf ("length %zu\n", listlen); 
+    //printf ("length %zu\n", listlen);
 
     size_t idx = 0;
     tdata->plot_thread_idle = true;
 
-    if (v_ack->stop_verifying || !shm->van_opts.manual_corr) {
+    if (v_ack->stop_verifying || !shm->van_opts.manual_corr)
+    {
         // publish ALL in the list
-        for (size_t i=0; i < listlen; i++) {
+        for (size_t i=0; i < listlen; i++)
+        {
             GList *event = g_list_nth (tdata->verifyset_list, idx);
             verify_set_t *vs = event->data;
             if (!vs) return;
@@ -204,14 +210,17 @@ perllcm_van_verify_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *chann
             tdata->verifyset_list = g_list_delete_link (tdata->verifyset_list, event);
         }
     }
-    else {
-        for (size_t i=0; i < listlen; i++) {
+    else
+    {
+        for (size_t i=0; i < listlen; i++)
+        {
             GList *event = g_list_nth (tdata->verifyset_list, idx);
             verify_set_t *vs = event->data;
             if (!vs) return;
 
             //printf ("%"PRId64", %"PRId64"\n", vs->utime1, vs->utime2);
-            if (vs->utime1 == v_ack->utime1 && vs->utime2 == v_ack->utime2) {           
+            if (vs->utime1 == v_ack->utime1 && vs->utime2 == v_ack->utime2)
+            {
                 if (!v_ack->valid) vs->se_vlink->accept = 0;      // could not pass verification
                 se_publish_link_t_publish (shm->lcm, SE_VLINK_CHANNEL, vs->se_vlink);
 
@@ -231,7 +240,7 @@ perllcm_van_verify_ack_t_callback (const lcm_recv_buf_t *rbuf, const char *chann
 
 static void
 perllcm_van_options_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                               const perllcm_van_options_t *msg, void *user)
+                                const perllcm_van_options_t *msg, void *user)
 {
     thread_data_t *tdata = user;
     tdata->vanopts = *msg;
@@ -240,7 +249,7 @@ perllcm_van_options_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
 static void
 perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                                      const perllcm_van_feature_collection_t *fc, void *user)
+        const perllcm_van_feature_collection_t *fc, void *user)
 {
     thread_data_t *tdata = user;
 
@@ -250,13 +259,14 @@ perllcm_van_feature_collection_t_callback (const lcm_recv_buf_t *rbuf, const cha
 
 static void
 perllcm_van_plink_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
-                         const perllcm_van_plink_t *plink, void *user)
+                              const perllcm_van_plink_t *plink, void *user)
 {
     thread_data_t *tdata = user;
 
     // fci
     perllcm_van_feature_collection_t *fci = cache_pop (tdata->fc_cache, plink->utime_i);
-    if (!fci) {
+    if (!fci)
+    {
         char filename[PATH_MAX];
         snprintf (filename, sizeof filename, "%s/%"PRId64".feat", shm->logdir, plink->utime_i);
         int32_t ret = LCMU_FREAD (filename, &fci, perllcm_van_feature_collection_t);
@@ -268,7 +278,8 @@ perllcm_van_plink_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     // fcj
     perllcm_van_feature_collection_t *fcj = cache_pop (tdata->fc_cache, plink->utime_j);
-    if (!fcj) {
+    if (!fcj)
+    {
         char filename[PATH_MAX];
         snprintf (filename, sizeof filename, "%s/%"PRId64".feat", shm->logdir, plink->utime_j);
         int32_t ret = LCMU_FREAD (filename, &fcj, perllcm_van_feature_collection_t);
@@ -280,13 +291,15 @@ perllcm_van_plink_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     // warn if number of concurrent pool threads is unable to keep up
     guint ntasks = g_thread_pool_unprocessed (tdata->pool);
-    if (ntasks >= g_thread_pool_get_max_threads (tdata->pool)) {
+    if (ntasks >= g_thread_pool_get_max_threads (tdata->pool))
+    {
         printf ("Warning: number of unprocessed tasks (%u) exceeds queue (%u)\n",
                 ntasks, g_thread_pool_get_max_threads (tdata->pool));
     }
 
     // fire off pool thread
-    if (fci && fcj) {
+    if (fci && fcj)
+    {
         pool_data_t *pdata = malloc (sizeof (*pdata));
         pdata->plink = perllcm_van_plink_t_copy (plink);
         pdata->fci   = perllcm_van_feature_collection_t_copy (fci);
@@ -304,13 +317,15 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
     printf ("Processing (%"PRId64",%"PRId64") dt = %"PRId64"\n", pdata->plink->utime_i, pdata->plink->utime_j, pdata->plink->utime_j - pdata->plink->utime_i);
 
 #if 0
-    if (0) {
+    if (0)
+    {
         // read image from stack/disk
         IplImage *imgi = vis_cvu_iplimg_pop (shm->imgcache, shm->logdir, pdata->fci->utime);
         IplImage *imgj = vis_cvu_iplimg_pop (shm->imgcache, shm->logdir, pdata->fcj->utime);
 
         // plot pair
-        if (imgi && imgj) {
+        if (imgi && imgj)
+        {
             CvScalar color = CV_RGB (255, 255, 0);
             vis_plot_add_utime (imgi, pdata->fci->utime, NULL, NULL, &color);
             vis_plot_add_utime (imgj, pdata->fcj->utime, NULL, NULL, &color);
@@ -325,7 +340,8 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         if (imgj) cvReleaseImage (&imgj);
     }
 
-    if (0) {
+    if (0)
+    {
         // publish fake registration
         gsl_vector_view X_c2c1 = gsl_vector_view_array (pdata->plink->x_ji.mu, 6);
         gsl_matrix_view P_c2c1 = gsl_matrix_view_array (pdata->plink->x_ji.Sigma, 6, 6);
@@ -334,14 +350,16 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         GSLU_MATRIX_VIEW (nav_cov21_5dof, 5, 5);
         dm_trans2dm_pose_cov (&X_c2c1.vector, &P_c2c1.matrix, &nav_p21_5dof.vector, &nav_cov21_5dof.matrix, NULL);
 
-        if (tdata->use_se_vlink) {
+        if (tdata->use_se_vlink)
+        {
             perllcm_isam_vlink_t *vlink = vis_twoview_isam_vlink (pdata->fci->utime, pdata->fcj->utime,
-                                                                  pdata->plink,
-                                                                  PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR, 
-                                                                  PERLLCM_VAN_VLINK_T_MSG_NO_ERROR,
-                                                                  pdata->plink->link_id,
-                                                                  &nav_p21_5dof.vector, &nav_cov21_5dof.matrix);
-            if (vlink) {
+                                          pdata->plink,
+                                          PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR,
+                                          PERLLCM_VAN_VLINK_T_MSG_NO_ERROR,
+                                          pdata->plink->link_id,
+                                          &nav_p21_5dof.vector, &nav_cov21_5dof.matrix);
+            if (vlink)
+            {
                 perllcm_isam_vlink_t_publish (shm->lcm, "VLINKS", vlink);
                 perllcm_isam_vlink_t_destroy(vlink);
             }
@@ -378,16 +396,17 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
     gsl_matrix *X1_plot = NULL;
     gsl_vector *rel_pose21 = gsl_vector_alloc (5);         // BA return pose
     gsl_matrix *rel_pose_cov21 = gsl_matrix_alloc (5,5);   // BA return cov
-  
+
     perllcm_van_plot_debug_t *pd = vis_tv_init_plot_debug (tdata->vanopts, pdata->fci, pdata->fcj, &pdata->fci->calib);
 
     // PCCS
     // -------------------------------------------------------------- //
     size_t offset_i = 0, offset_j = 0;
-    for (int n=0; n<pdata->fci->ntypes; n++) {
+    for (int n=0; n<pdata->fci->ntypes; n++)
+    {
         perllcm_van_feature_t *fi = &pdata->fci->f[n];
         perllcm_van_feature_t *fj = &pdata->fcj->f[n];
-       
+
         gsl_matrix *uvi = vis_feature_get_uv_alloc (fi);
         gsl_matrix *uvj = vis_feature_get_uv_alloc (fj);
 
@@ -397,7 +416,8 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         // sim AB thres
         double simAB_thres = 1.0;
 
-        switch (fi->attrtype) {
+        switch (fi->attrtype)
+        {
         case PERLLCM_VAN_FEATURE_T_ATTRTYPE_SURFGPU:
         case PERLLCM_VAN_FEATURE_T_ATTRTYPE_CVSURF:
             simAB_thres = tdata->pccs_sift_simAB_thres;
@@ -414,14 +434,15 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
         t0 = timestamp_now ();
         int n_pcorr = vis_pccs_corrset_feat_alloc (fi, fj, pdata->plink->x_ji, &Ki_view.matrix,
-                                                      simAB_thres, tdata->pccs_chiSquare2dof,
-                                                      &seli, &selj, pd);
+                      simAB_thres, tdata->pccs_chiSquare2dof,
+                      &seli, &selj, pd);
 
         dt = timestamp_now () - t0;
         printf ("pccs (%d/%d)\t\tnpts=%d\tdt=%"PRId64"\n", n+1, pdata->fci->ntypes, n_pcorr, dt);
 
-        if (n_pcorr > 0) {
-            n_pcorr_sum += n_pcorr; // sum up all number of corr 
+        if (n_pcorr > 0)
+        {
+            n_pcorr_sum += n_pcorr; // sum up all number of corr
             vis_feature_uv_isel_collection_add (uvi, seli, &uvic, &selic, offset_i);
             vis_feature_uv_isel_collection_add (uvj, selj, &uvjc, &seljc, offset_j);
         }
@@ -458,18 +479,21 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
     // GIC test
     // -------------------------------------------------------------- //
-    GSLU_MATRIX_VIEW (F,3,3); GSLU_MATRIX_VIEW (H,3,3);
+    GSLU_MATRIX_VIEW (F,3,3);
+    GSLU_MATRIX_VIEW (H,3,3);
 
     t0 = timestamp_now ();
     double gic_f = vis_modelfit_inliers_gic_3D (uvic, uvjc, &sel_f, &uvi_f, &uvj_f, &F.matrix, VIS_MODELFIT_OCV_RANSAC);
     double gic_h = vis_modelfit_inliers_gic_2D (uvic, uvjc, &sel_h, &uvi_h, &uvj_h, &H.matrix, VIS_MODELFIT_OCV_RANSAC);
     dt = timestamp_now () - t0;
 
-    if (sel_h) {
+    if (sel_h)
+    {
         featscalei_h = gslu_vector_sel_alloc (featscalei, sel_h);
         featscalej_h = gslu_vector_sel_alloc (featscalej, sel_h);
     }
-    if (sel_f) {
+    if (sel_f)
+    {
         featscalei_f = gslu_vector_sel_alloc (featscalei, sel_f);
         featscalej_f = gslu_vector_sel_alloc (featscalej, sel_f);
     }
@@ -486,8 +510,10 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
     GSLU_MATRIX_VIEW (K_or_H, 3, 3);    // will be used in debugplot
 
-    if (gic_f < gic_h && sel_f) { // CHOOSE F
-        size_t n_in_h = 0; if (sel_h) n_in_h = sel_h->size;
+    if (gic_f < gic_h && sel_f)   // CHOOSE F
+    {
+        size_t n_in_h = 0;
+        if (sel_h) n_in_h = sel_h->size;
         printf ("gic: F =%3.2g / n=%zu (%3.2g/%zu) \tdt=%"PRId64"\n", gic_f, sel_f->size, gic_h, n_in_h, dt);
         model_gic = PERLLCM_VAN_PLOT_DEBUG_T_GIC_F;
         gsl_matrix_memcpy (&K_or_H.matrix, &Ki_view.matrix);
@@ -498,7 +524,7 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         // init BA & check mahalanobis distance
         errmsg = vis_sba_init_relorient (&Ki_view.matrix, uvi_f, uvj_f, &X_c2c1.vector, &P_c2c1.matrix,
                                          tri_min_dist, tri_max_dist,
-                                         tdata->tv_mdist_nav_thres, verbose, 
+                                         tdata->tv_mdist_nav_thres, verbose,
                                          &x21_o.vector);
         if (errmsg) goto ON_ERROR;
 
@@ -524,28 +550,30 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         //Jacobian of the two-view reprojection function
         gsl_vector *params = gsl_vector_calloc (10 + 3*uvi_f_dist_triconst->size2);
         ret_sba = vis_sba_2v_rae_nonlin_from_model_with_tri (&Ki_view.matrix, &distCoeffs_view.vector,
-                                                             &x21_o.vector, uvi_f_dist_triconst, uvj_f_dist_triconst,
-                                                             tdata->tv_min_npts, pt3d_debug_mode,
-                                                             tri_min_dist, tri_max_dist,
-                                                             rel_pose21, rel_pose_cov21, params, verbose,
-                                                             &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
+                  &x21_o.vector, uvi_f_dist_triconst, uvj_f_dist_triconst,
+                  tdata->tv_min_npts, pt3d_debug_mode,
+                  tri_min_dist, tri_max_dist,
+                  rel_pose21, rel_pose_cov21, params, verbose,
+                  &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
 
         /* calibration uncertainty */
         gsl_matrix *sigmaCalib = sigma_calib_alloc ();
 
         /* Haralick covariance estimate code */
         gsl_matrix *S21_haralick = NULL;
-        if (ret_sba > 0) {
+        if (ret_sba > 0)
+        {
             S21_haralick = vis_sba_haralick_cov_2v_Rae_alloc (sigmaCalib, params, uvi_f_dist_triconst, uvj_f_dist_triconst,
-                                                              &Ki_view.matrix, &distCoeffs_view.vector,
-                                                              featscalei_f, featscalej_f);
+                           &Ki_view.matrix, &distCoeffs_view.vector,
+                           featscalei_f, featscalej_f);
             /* gsl_matrix_memcpy (rel_pose_cov21, S21_haralick); */
             gsl_matrix_free (S21_haralick);
         }
 
         /* ut-based covariance estimate code */
         gsl_matrix *S21_ut = NULL;
-        if (ret_sba > 0) {
+        if (ret_sba > 0)
+        {
             S21_ut = vis_sba_ut_cov_2v_Rae_alloc (sigmaCalib, params, uvi_f_dist_triconst, uvj_f_dist_triconst,
                                                   &Ki_view.matrix, &distCoeffs_view.vector, featscalei_f, featscalej_f, tdata->sba_mutex);
             gsl_matrix_add (rel_pose_cov21, S21_ut);
@@ -561,20 +589,20 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         gsl_matrix_free (uvj_f_dist_triconst);
 #else
         ret_sba = vis_sba_2v_rae_from_model_with_tri (&Ki_view.matrix, &x21_o.vector, uvi_f, uvj_f,
-                                                      tdata->tv_min_npts, pt3d_debug_mode,
-                                                      tri_min_dist, tri_max_dist,
-                                                      rel_pose21, rel_pose_cov21, NULL, verbose,
-                                                      &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
+                  tdata->tv_min_npts, pt3d_debug_mode,
+                  tri_min_dist, tri_max_dist,
+                  rel_pose21, rel_pose_cov21, NULL, verbose,
+                  &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
 #endif
         dt = timestamp_now () - t0;
 #else
         // run BA
         t0 = timestamp_now ();
         ret_sba = vis_sba_2v_rae_from_model_wo_tri (&Ki_view.matrix, &x21_o.vector, uvi_f, uvj_f,
-                                                    tdata->tv_min_npts, pt3d_debug_mode, 
-                                                    tri_min_dist, tri_max_dist,
-                                                    rel_pose21, rel_pose_cov21, verbose,
-                                                    &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
+                  tdata->tv_min_npts, pt3d_debug_mode,
+                  tri_min_dist, tri_max_dist,
+                  rel_pose21, rel_pose_cov21, verbose,
+                  &X1_plot, tdata->sba_mutex, featscalei_f, featscalej_f);
         dt = timestamp_now () - t0;
 #endif
 
@@ -584,8 +612,10 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         else
             type = PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR;
     }
-    else if (gic_f > gic_h && sel_h) { // CHOOSE H
-        size_t n_in_f = 0; if (sel_f) n_in_f = sel_f->size;
+    else if (gic_f > gic_h && sel_h)   // CHOOSE H
+    {
+        size_t n_in_f = 0;
+        if (sel_f) n_in_f = sel_f->size;
         printf ("gic: H =%3.2g / n=%zu (%g/%zu) \tdt=%"PRId64"\n", gic_h, sel_h->size, gic_f, n_in_f, dt);
         model_gic = PERLLCM_VAN_PLOT_DEBUG_T_GIC_H;
         gsl_matrix_memcpy (&K_or_H.matrix, &H.matrix);
@@ -602,7 +632,7 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         // run BA
         t0 = timestamp_now ();
 #if USE_PROJ_NONLIN
-        
+
         /* Distort the detected feature points */
         gsl_matrix *uvi_h_dist = gsl_matrix_calloc(uvi_h->size1, uvi_h->size2);
         gsl_matrix *uvj_h_dist = gsl_matrix_calloc(uvj_h->size1, uvj_h->size2);
@@ -611,19 +641,20 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
         gsl_vector *params = gsl_vector_calloc (16 + 2*uvi_h_dist->size2);
 
-        ret_sba = vis_sba_2v_h_nonlin_from_model (&H.matrix, &distCoeffs_view.vector, uvi_h_dist, uvj_h_dist, 
-                                                  &Ki_view.matrix, &pdata->fci->f[0], &X_c2c1.vector, 
-                                                  rel_pose21, rel_pose_cov21, params, verbose, 
-                                                  tdata->sba_mutex, featscalei_h, featscalej_h);
+        ret_sba = vis_sba_2v_h_nonlin_from_model (&H.matrix, &distCoeffs_view.vector, uvi_h_dist, uvj_h_dist,
+                  &Ki_view.matrix, &pdata->fci->f[0], &X_c2c1.vector,
+                  rel_pose21, rel_pose_cov21, params, verbose,
+                  tdata->sba_mutex, featscalei_h, featscalej_h);
 
         /* calibration uncertainty */
         gsl_matrix *sigmaCalib = sigma_calib_alloc ();
 
         /* haralick-based estimate */
         gsl_matrix *haralick = NULL;
-        if (ret_sba > 0) {
-            vis_sba_haralick_cov_2v_H_alloc (sigmaCalib, params, uvi_h_dist, uvj_h_dist, 
-                                             &Ki_view.matrix, &distCoeffs_view.vector, 
+        if (ret_sba > 0)
+        {
+            vis_sba_haralick_cov_2v_H_alloc (sigmaCalib, params, uvi_h_dist, uvj_h_dist,
+                                             &Ki_view.matrix, &distCoeffs_view.vector,
                                              featscalei_h, featscalej_h);
             /* gsl_matrix_memcpy (rel_pose_cov21, haralick); */
             gsl_matrix_free (haralick);
@@ -631,9 +662,10 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
         /* get ut-based estimate for covariance */
         gsl_matrix *covEstUt = NULL;
-        if (ret_sba > 0) {
-            vis_sba_ut_cov_2v_H_alloc (sigmaCalib, params, &H.matrix, uvi_h_dist, uvj_h_dist, 
-                                       &Ki_view.matrix, &distCoeffs_view.vector, &pdata->fci->f[0], 
+        if (ret_sba > 0)
+        {
+            vis_sba_ut_cov_2v_H_alloc (sigmaCalib, params, &H.matrix, uvi_h_dist, uvj_h_dist,
+                                       &Ki_view.matrix, &distCoeffs_view.vector, &pdata->fci->f[0],
                                        featscalei_h, featscalej_h, tdata->sba_mutex);
             gsl_matrix_add (rel_pose_cov21, covEstUt);
             gsl_matrix_free (covEstUt);
@@ -657,14 +689,16 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
             type = PERLLCM_VAN_VLINK_T_TYPE_5DOF_HOMOGRAPHY;
 
     }
-    else {// ERROR in model fitting
+    else  // ERROR in model fitting
+    {
         errmsg = PERLLCM_VAN_VLINK_T_MSG_NO_MODEL_FIT;
     }
 
 
     // Check mahal dist to nav prior
     // -------------------------------------------------------------- //
-    if (type != PERLLCM_VAN_VLINK_T_TYPE_ERROR) {
+    if (type != PERLLCM_VAN_VLINK_T_TYPE_ERROR)
+    {
         printf ("motion estimation summary...\n");
 
         // HACK --- START
@@ -694,7 +728,7 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
         vis_tv_print_motion (&X_c2c1.vector, &P_c2c1.matrix, &x21_o.vector, rel_pose21, rel_pose_cov21);
 
         if (!tdata->vanopts.manual_corr)
-            errmsg = vis_tv_mdist_check_error (&X_c2c1.vector, &P_c2c1.matrix, rel_pose21, rel_pose_cov21, 
+            errmsg = vis_tv_mdist_check_error (&X_c2c1.vector, &P_c2c1.matrix, rel_pose21, rel_pose_cov21,
                                                tdata->tv_mdist_nav_thres, NULL);
 
         if (errmsg) // case of error
@@ -703,22 +737,25 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
             vis_tv_print_sba (rel_pose21, rel_pose_cov21, dt);
     }
 
-  ON_ERROR:;
+ON_ERROR:
+    ;
 
     // publish
     //--------------------------------------------------------------------
-    if (tdata->use_se_vlink) {
-        perllcm_isam_vlink_t *vlink = vis_twoview_isam_vlink (pdata->fci->utime, pdata->fcj->utime, 
-                                                              pdata->plink,
-                                                              type, errmsg, pdata->plink->link_id,
-                                                              rel_pose21, rel_pose_cov21);
+    if (tdata->use_se_vlink)
+    {
+        perllcm_isam_vlink_t *vlink = vis_twoview_isam_vlink (pdata->fci->utime, pdata->fcj->utime,
+                                      pdata->plink,
+                                      type, errmsg, pdata->plink->link_id,
+                                      rel_pose21, rel_pose_cov21);
 
-        if (vlink) {
+        if (vlink)
+        {
             /*if (tdata->vanopts.manual_corr && !errmsg)  { // don't publish before verifying
                 size_t listlen = g_list_length (tdata->verifyset_list);
                 vis_tv_prepare_plot_debug (pd, tdata->vanopts, type, errmsg,
                                            selic, seljc, sel_h, sel_f, model_gic, &K_or_H.matrix,
-                                           rel_pose21, rel_pose_cov21, X1_plot, pdata->plink->x_ji, listlen);             
+                                           rel_pose21, rel_pose_cov21, X1_plot, pdata->plink->x_ji, listlen);
 
                 verify_set_t *vs = malloc (sizeof (*vs));
                 vs->utime1 = pdata->fci->utime;
@@ -729,7 +766,7 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
                 tdata->verifyset_list = g_list_prepend (tdata->verifyset_list, vs);
                 //printf_glist (tdata->verifyset_list);
 
-                if (tdata->plot_thread_idle) 
+                if (tdata->plot_thread_idle)
                     tdata->plot_thread_idle = request_verify (tdata->verifyset_list);
             }
             else { // publish it now*/
@@ -738,10 +775,11 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
             //}
         }
     }
-    else {
-        perllcm_van_vlink_t *vlink = vis_twoview_vlink (pdata->fci->utime, pdata->fcj->utime, type, errmsg, 
-                                                        selic, seljc, sel_h, sel_f,
-                                                        rel_pose21, rel_pose_cov21);
+    else
+    {
+        perllcm_van_vlink_t *vlink = vis_twoview_vlink (pdata->fci->utime, pdata->fcj->utime, type, errmsg,
+                                     selic, seljc, sel_h, sel_f,
+                                     rel_pose21, rel_pose_cov21);
         if (vlink) perllcm_van_vlink_t_publish (shm->lcm, VAN_VLINK_CHANNEL, vlink);
         if (vlink) perllcm_van_vlink_t_destroy(vlink);
     }
@@ -756,7 +794,8 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
     // write some data for photo mosaic
     //--------------------------------------------------------------------
-    if (tdata->save_corrset && !errmsg) {
+    if (tdata->save_corrset && !errmsg)
+    {
         if (type == PERLLCM_VAN_VLINK_T_TYPE_5DOF_EPIPOLAR)
             vanu_corrset_save2disk (pdata->fci->utime, pdata->fcj->utime, shm->logdir, rel_pose21, rel_pose_cov21, uvi_f, uvj_f);
         else if (type == PERLLCM_VAN_VLINK_T_TYPE_5DOF_HOMOGRAPHY)
@@ -767,10 +806,11 @@ twoview_pool_thread (gpointer pooldata, gpointer user)
 
     // write plink information for JOE
     //--------------------------------------------------------------------
-    if (tdata->save_link_info) {
-        perllcm_van_vlink_t *vlink = vis_twoview_vlink (pdata->fci->utime, pdata->fcj->utime, type, errmsg, 
-                                                        selic, seljc, sel_h, sel_f,
-                                                        rel_pose21, rel_pose_cov21);
+    if (tdata->save_link_info)
+    {
+        perllcm_van_vlink_t *vlink = vis_twoview_vlink (pdata->fci->utime, pdata->fcj->utime, type, errmsg,
+                                     selic, seljc, sel_h, sel_f,
+                                     rel_pose21, rel_pose_cov21);
         vlink->S_L = pdata->plink->S_L;
         vlink->Ig = pdata->plink->Ig;
         if (vlink) perllcm_van_vlink_t_publish (shm->lcm, VAN_LINK_INFO_CHANNEL, vlink);
@@ -811,7 +851,8 @@ se_save_isam_t_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 {
     thread_data_t *tdata = user;
 
-    if (msg->type == SE_SAVE_ISAM_T_TYPE_DONE && tdata->save_link_info) { // SAVE via lcm
+    if (msg->type == SE_SAVE_ISAM_T_TYPE_DONE && tdata->save_link_info)   // SAVE via lcm
+    {
         printf ("saving link info into ./link.data ... ");
         vanu_link_info_save2disk (".", tdata->linklist);
         printf ("done\n");
@@ -824,7 +865,7 @@ perllcm_van_vlink_info_t_callback (const lcm_recv_buf_t *rbuf, const char *chann
                                    const perllcm_van_vlink_t *link, void *user)
 {
     thread_data_t *tdata = user;
-    
+
     perllcm_van_vlink_t *link_cpy = perllcm_van_vlink_t_copy (link);
     tdata->linklist = g_slist_append (tdata->linklist, link_cpy);
     //printf (".... and save done\n");
@@ -870,7 +911,7 @@ twoview_thread (gpointer user)
     tdata->tv_tri_const_min_dist = 0.0;      // default = no minus scene depth
     bot_param_get_double (shm->param, "rtvan.twoview_thread.tv_tri_const_min_dist", &tdata->tv_tri_const_min_dist);
 
-    tdata->tv_tri_const_max_dist = 100.0;    // default = accept upto 100m 
+    tdata->tv_tri_const_max_dist = 100.0;    // default = accept upto 100m
     bot_param_get_double (shm->param, "rtvan.twoview_thread.tv_tri_const_max_dist", &tdata->tv_tri_const_max_dist);
 
     double ocv_scale_double = 1.0;
@@ -880,34 +921,34 @@ twoview_thread (gpointer user)
     tdata->sba_mutex = g_mutex_new();
 
     tdata->use_se_vlink = 0; // default = use van_vlink lcmtype
-    botu_param_get_boolean_to_bool (shm->param, "rtvan.link_thread.use_se_vlink", &tdata->use_se_vlink);  
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.link_thread.use_se_vlink", &tdata->use_se_vlink);
 
     tdata->plot_thread_idle = true;
 
     tdata->save_corrset = 0; // default = no corrset published
-    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_corrset", &tdata->save_corrset); 
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_corrset", &tdata->save_corrset);
 
     tdata->save_link_info = 0; // default = no plink published
-    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_link_info", &tdata->save_link_info); 
-    
+    botu_param_get_boolean_to_bool (shm->param, "rtvan.post_process.save_link_info", &tdata->save_link_info);
+
     // helper thread pool
     tdata->pool = g_thread_pool_new (twoview_pool_thread, tdata, POOL_THREADS_MAX, 1, NULL);
-    
+
     // lcm subscriptions
-    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub = 
-        perllcm_van_feature_collection_t_subscribe (shm->lcm, VAN_FEATURE_COLLECTION_CHANNEL, 
-                                               &perllcm_van_feature_collection_t_callback, tdata);
+    perllcm_van_feature_collection_t_subscription_t *perllcm_van_feature_collection_t_sub =
+        perllcm_van_feature_collection_t_subscribe (shm->lcm, VAN_FEATURE_COLLECTION_CHANNEL,
+                &perllcm_van_feature_collection_t_callback, tdata);
 
     perllcm_van_plink_t_subscription_t *perllcm_van_plink_t_sub =
         perllcm_van_plink_t_subscribe (shm->lcm, VAN_PLINK_CHANNEL, &perllcm_van_plink_t_callback, tdata);
 
-    perllcm_van_options_t_subscription_t *perllcm_van_options_t_sub = 
+    perllcm_van_options_t_subscription_t *perllcm_van_options_t_sub =
         perllcm_van_options_t_subscribe (shm->lcm, VAN_OPTIONS_CHANNEL, &perllcm_van_options_t_callback, tdata);
 
-    se_save_isam_t_subscription_t *se_save_isam_t_cmd_sub = 
+    se_save_isam_t_subscription_t *se_save_isam_t_cmd_sub =
         se_save_isam_t_subscribe (shm->lcm, SE_SAVE_ISAM_CHANNEL, &se_save_isam_t_callback, tdata);
 
-    perllcm_van_vlink_t_subscription_t *perllcm_van_vlink_info_sub = 
+    perllcm_van_vlink_t_subscription_t *perllcm_van_vlink_info_sub =
         perllcm_van_vlink_t_subscribe (shm->lcm, VAN_LINK_INFO_CHANNEL, &perllcm_van_vlink_info_t_callback, tdata);
 
 #if USER_VERIFY
@@ -915,8 +956,10 @@ twoview_thread (gpointer user)
         perllcm_van_verify_ack_t_subscribe (shm->lcm, VAN_VERIFY_CHANNEL, &perllcm_van_verify_ack_t_callback, tdata);
 #endif
 
-    while (!shm->done) {
-        struct timeval timeout = {
+    while (!shm->done)
+    {
+        struct timeval timeout =
+        {
             .tv_sec = 0,
             .tv_usec = 500000,
         };
@@ -931,7 +974,7 @@ twoview_thread (gpointer user)
     perllcm_van_plink_t_unsubscribe (shm->lcm, perllcm_van_plink_t_sub);
     perllcm_van_options_t_unsubscribe (shm->lcm, perllcm_van_options_t_sub);
     se_save_isam_t_unsubscribe (shm->lcm, se_save_isam_t_cmd_sub);
-    perllcm_van_vlink_t_unsubscribe (shm->lcm, perllcm_van_vlink_info_sub);        
+    perllcm_van_vlink_t_unsubscribe (shm->lcm, perllcm_van_vlink_info_sub);
 #if USER_VERIFY
     perllcm_van_verify_ack_t_unsubscribe (shm->lcm, perllcm_van_verify_ack_t_sub);
 #endif

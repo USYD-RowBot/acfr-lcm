@@ -25,7 +25,8 @@ send_message (lcm_t * lcm, long length)
     gettimeofday(&tv, &tz);
 
     uint8_t *data = malloc (length);
-    bot_core_raw_t raw = {
+    bot_core_raw_t raw =
+    {
         .utime = tv.tv_sec*1E6+tv.tv_usec,
         .length = length,
         .data = data,

@@ -19,7 +19,8 @@ static int parse_buf (const char *buf, int len, senlcm_tritech_es_t *tritech)
 {
     double range = -1;
     sscanf(buf, "%lfm", &range);
-    if (range > -1) {
+    if (range > -1)
+    {
         tritech->range = range;
         return 1;
     }
@@ -40,13 +41,15 @@ int main (int argc, char *argv[])
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_canonical (gsd, '\r','\n');
     gsd_launch (gsd);
-    
-    while (1) {
+
+    while (1)
+    {
         char buf[15];
         int64_t timestamp;
         int len = gsd_read (gsd, buf, 128, &timestamp);
         senlcm_tritech_es_t tritech;
-        if (parse_buf (buf, len, &tritech)) {
+        if (parse_buf (buf, len, &tritech))
+        {
             tritech.utime = timestamp;
             senlcm_tritech_es_t_publish (gsd->lcm, gsd->channel, &tritech);
             gsd_update_stats (gsd, 1);

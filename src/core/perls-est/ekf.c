@@ -14,12 +14,12 @@
 
 void
 ekf_predict (est_estimator_t *state, est_pred_t *pred)
-{    
+{
     // allocate variables for returns
     gsl_vector *x_bar = gsl_vector_calloc (state->state_len);  // updated state vector
     gsl_matrix *F = gsl_matrix_calloc (state->state_len, state->state_len);  // process jacobian with respect to state
     gsl_matrix *Q = gsl_matrix_calloc (state->state_len, state->state_len);  // process noise
-    
+
     // if Q is set in pred_t use it
     if (pred->Q != NULL)
         gsl_matrix_memcpy (Q, pred->Q);
@@ -28,13 +28,13 @@ ekf_predict (est_estimator_t *state, est_pred_t *pred)
     (*pred->pmf_ekf) (state, pred->u, pred->dt, x_bar, F, Q, pred->user);
 
     // perform prediction
-    gsl_vector_memcpy (state->mu, x_bar);     
-    gsl_matrix *cov_tmp = gsl_matrix_calloc (state->state_len, state->state_len);  
+    gsl_vector_memcpy (state->mu, x_bar);
+    gsl_matrix *cov_tmp = gsl_matrix_calloc (state->state_len, state->state_len);
 
     //cov_pred = F*Sigma*F' + Q
     gslu_blas_mmmT (cov_tmp, F, state->Sigma, F, NULL);
     gsl_matrix_add (cov_tmp, Q);
-    gsl_matrix_memcpy (state->Sigma, cov_tmp);  
+    gsl_matrix_memcpy (state->Sigma, cov_tmp);
 
     // clean up
     gsl_vector_free (x_bar);
@@ -43,7 +43,7 @@ ekf_predict (est_estimator_t *state, est_pred_t *pred)
     gsl_matrix_free (cov_tmp);
 }
 
-void 
+void
 ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
 {
     // allocate variables for returns
@@ -52,22 +52,23 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
     // process jacobian with respect to state
     gsl_matrix *F = gsl_matrix_calloc (state->delayed_state_len, state->delayed_state_len);
     // process noise
-    gsl_matrix *Q = gsl_matrix_calloc (state->delayed_state_len, state->delayed_state_len);  
-    
+    gsl_matrix *Q = gsl_matrix_calloc (state->delayed_state_len, state->delayed_state_len);
+
     // if Q is set in pred_t use it
     if (pred->Q != NULL)
         gsl_matrix_memcpy (Q, pred->Q);
 
     // call user process model function
-    (*pred->pmf_ekf) (state, pred->u, pred->dt, x_bar, F, Q, pred->user);    
-   
-// looks like F is correct   
+    (*pred->pmf_ekf) (state, pred->u, pred->dt, x_bar, F, Q, pred->user);
+
+// looks like F is correct
 //gslu_matrix_printf (F, "F");
 
     int old_inc_start = 0;
     int state_len_aug = 0;
     int state_len_old_inc = 0;
-    if (do_augment) {
+    if (do_augment)
+    {
         // find new state length (if augmenting and have not reached max_delayed_states)
         if (-1 == state->max_delayed_states || state->delayed_states_cnt < state->max_delayed_states)
             state->delayed_states_cnt++;
@@ -79,7 +80,7 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
 
     state_len_aug = state->delayed_states_cnt * state->delayed_state_len;
     state_len_old_inc = state_len_aug - state->delayed_state_len; //the length of the old state to include
-    
+
     // allocate new augmented mu and covariance
     gsl_vector *mu_aug = gsl_vector_calloc (state_len_aug);
     gsl_matrix *Sigma_aug = gsl_matrix_calloc (state_len_aug, state_len_aug);
@@ -87,13 +88,14 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
 //gslu_vector_printf (state->mu, "mu_start");
 //gslu_matrix_printf (state->Sigma, "Sigma_start");
 
-    
+
     // fill mu_aug
     // new augmented pose
     gsl_vector_view mu_aug_v = gsl_vector_subvector (mu_aug, 0 ,state->delayed_state_len);
     gsl_vector_memcpy (&mu_aug_v.vector, x_bar);
-    
-    if (state_len_old_inc > 0) {
+
+    if (state_len_old_inc > 0)
+    {
         // old poses
         mu_aug_v = gsl_vector_subvector (mu_aug, state->delayed_state_len, state_len_old_inc);
         gsl_vector_view mu_v = gsl_vector_subvector (state->mu, old_inc_start, state_len_old_inc);
@@ -105,10 +107,10 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
     // fill augmented covariance
     gsl_matrix_view Sigma_aug_v;
     gsl_matrix_view Sigma_v;
-    
+
     //upper left = F*Sigma*F' + Q, the new pose covariance
     Sigma_aug_v = gsl_matrix_submatrix(Sigma_aug,
-                                       0, 0, 
+                                       0, 0,
                                        state->delayed_state_len, state->delayed_state_len);
     Sigma_v = gsl_matrix_submatrix (state->Sigma,
                                     0, 0,
@@ -118,7 +120,8 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
 
 //gslu_matrix_printf (Sigma_aug, "Sigma 1");
 
-    if (state_len_old_inc > 0) {
+    if (state_len_old_inc > 0)
+    {
         //lower right, the old poses covariance
         Sigma_aug_v = gsl_matrix_submatrix(Sigma_aug,
                                            state->delayed_state_len, state->delayed_state_len,
@@ -138,9 +141,9 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
                                         0, old_inc_start,
                                         state->delayed_state_len, state_len_old_inc);
         gslu_blas_mm (&Sigma_aug_v.matrix, F, &Sigma_v.matrix);
-    
-//gslu_matrix_printf (Sigma_aug, "Sigma 3");    
-    
+
+//gslu_matrix_printf (Sigma_aug, "Sigma 3");
+
         //lower left cross covariance, new old poses with new pose
         Sigma_aug_v = gsl_matrix_submatrix(Sigma_aug,
                                            state->delayed_state_len, 0,
@@ -151,13 +154,13 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
         gslu_blas_mmT (&Sigma_aug_v.matrix, &Sigma_v.matrix, F);
     }
 
-    
+
     //free old mu and sigma and reassign pointer
     gsl_vector_free (state->mu);
     gsl_matrix_free (state->Sigma);
     state->mu = mu_aug;
     state->Sigma = Sigma_aug;
-    
+
     // save increased state length
     state->state_len = state_len_aug;
 
@@ -171,66 +174,69 @@ ekf_predict_ds (est_estimator_t *state, est_pred_t *pred, int do_augment)
 
 void
 ekf_marginalize_d (est_estimator_t * state, int ds_ind)
-{    
-    if (ds_ind >= state->delayed_states_cnt) {
+{
+    if (ds_ind >= state->delayed_states_cnt)
+    {
         ERROR ("ERROR: Marginalize index %d > delayed state cnt %d", ds_ind, state->delayed_states_cnt);
         return;
     }
-    
+
     // allocate new augmented mu and covariance
     int new_state_len = (state->delayed_states_cnt - 1) * state->delayed_state_len;
     gsl_vector *mu_new = gsl_vector_calloc (new_state_len);
     gsl_matrix *Sigma_new= gsl_matrix_calloc (new_state_len, new_state_len);
-    
+
     // inds
     int before_len = ds_ind*state->delayed_state_len;
     int after_start_old = (ds_ind+1)*state->delayed_state_len;
     int after_start_new = ds_ind*state->delayed_state_len;
     int after_len = (state->delayed_states_cnt-(ds_ind+1))*state->delayed_state_len;
 
-    
+
     // update mu
     gsl_vector_view mu_before = gsl_vector_subvector (state->mu,
-                                                      0,
-                                                      before_len);
+                                0,
+                                before_len);
     gslu_vector_set_subvector (mu_new, 0, &mu_before.vector);
-    if (after_len > 0) {
+    if (after_len > 0)
+    {
         gsl_vector_view mu_after = gsl_vector_subvector (state->mu,
-                                                         after_start_old,
-                                                         after_len);
+                                   after_start_old,
+                                   after_len);
         gslu_vector_set_subvector (mu_new, after_start_new, &mu_after.vector);
     }
-    
+
     // update Sigma
     // upper left
     gsl_matrix_view upper_left = gsl_matrix_submatrix (state->Sigma,
-                                                       0, 0,
-                                                       before_len, before_len);
+                                 0, 0,
+                                 before_len, before_len);
     gslu_matrix_set_submatrix (Sigma_new, 0, 0, &upper_left.matrix);
-    
-    if (after_len > 0) {
+
+    if (after_len > 0)
+    {
         // upper right
         gsl_matrix_view upper_right = gsl_matrix_submatrix (state->Sigma,
-                                                            0, after_start_old,
-                                                            before_len, after_len);
+                                      0, after_start_old,
+                                      before_len, after_len);
         gslu_matrix_set_submatrix (Sigma_new, 0, after_start_new, &upper_right.matrix);
-        
-        
+
+
         // lower left
         gsl_matrix_view lower_left = gsl_matrix_submatrix (state->Sigma,
-                                                           after_start_old, 0,
-                                                           after_len, before_len);
+                                     after_start_old, 0,
+                                     after_len, before_len);
         gslu_matrix_set_submatrix (Sigma_new, after_start_new, 0, &lower_left.matrix);
-        
-        
+
+
         // lower right
         gsl_matrix_view lower_right = gsl_matrix_submatrix (state->Sigma,
-                                                            after_start_old, after_start_old,
-                                                            after_len, after_len);
+                                      after_start_old, after_start_old,
+                                      after_len, after_len);
         gslu_matrix_set_submatrix (Sigma_new, after_start_new, after_start_new, &lower_right.matrix);
     }
-    
-//printf ("len_before=%d, len_after=%d \n", state->mu->size, mu_new->size);      
+
+//printf ("len_before=%d, len_after=%d \n", state->mu->size, mu_new->size);
 //gslu_vector_printf (state->mu, "mu before");
 //gslu_vector_printf (mu_new, "mu after");
     //free old mu and sigma and reassign pointer
@@ -238,14 +244,14 @@ ekf_marginalize_d (est_estimator_t * state, int ds_ind)
     gsl_matrix_free (state->Sigma);
     state->mu = mu_new;
     state->Sigma = Sigma_new;
-        
+
     state->delayed_states_cnt--;
     state->state_len = new_state_len;
 }
 
 void
 ekf_correct_raw (est_estimator_t *state, est_meas_t *meas,
-        const gsl_vector *nu, const gsl_matrix *H)
+                 const gsl_vector *nu, const gsl_matrix *H)
 {
     // perform correction -----------------------------------------------------
     // TODO: make sure efficient and numericaly stable, enforce symmetry
@@ -262,14 +268,15 @@ ekf_correct_raw (est_estimator_t *state, est_meas_t *meas,
     // calculate nis
     // nis = nu'*inv(S)*nu;
     double nis = gslu_blas_vTmv (nu, Sinv ,nu);
-    
+
 
     // don't use mahal test if use_innov_mahal_test == 0
     // or passed mahal test
-    if ( !meas->use_innov_mahal_test || 
-         nis < gsl_cdf_chisq_Pinv (meas->innov_mahal_test_thresh, nu->size)) { 
+    if ( !meas->use_innov_mahal_test ||
+            nis < gsl_cdf_chisq_Pinv (meas->innov_mahal_test_thresh, nu->size))
+    {
 
-        // update covariance (Joseph form)   
+        // update covariance (Joseph form)
         // Sigma = (I - K*H)*Sigma*(I - K*H)' + K*R*K';
         gsl_matrix * tmp4 = gsl_matrix_calloc (state->state_len, state->state_len);
         gsl_matrix * tmp5 = gsl_matrix_calloc (state->state_len, state->state_len);
@@ -279,21 +286,22 @@ ekf_correct_raw (est_estimator_t *state, est_meas_t *meas,
         gslu_blas_mmmT (tmp4, tmp5, state->Sigma, tmp5, NULL); // (I - K*H)*Sigma*(I - K*H)'
         gslu_blas_mmmT (state->Sigma, K, meas->R, K, NULL); // K*R*K'
         gsl_matrix_add (state->Sigma, tmp4); // (I - K*H)*Sigma*(I - K*H)' + K*R*K'
-    
+
         // update mean
         // mu = mu + K*nu;
         gsl_vector * tmp3 = gsl_vector_calloc (state->state_len);
         gslu_blas_mv (tmp3, K, nu);
         gsl_vector_add (state->mu, tmp3);
-        
+
         // clean up
         gsl_vector_free (tmp3);
         gsl_matrix_free (tmp4);
         gsl_matrix_free (tmp5);
-        
+
         state->last_mahal_innov_passed = 1;
     }
-    else {
+    else
+    {
         //printf ("Innovation mahalanobis distance threshold exceded for %s \n", meas->id_str);
         //printf("MAHAL_THRESH = %f, nis = %f, thresh = %f, %s\n",
         //    meas->innov_mahal_test_thresh,
@@ -323,15 +331,15 @@ ekf_correct_raw (est_estimator_t *state, est_meas_t *meas,
 
 void
 ekf_correct (est_estimator_t *state, est_meas_t *meas)
-{    
+{
     // allocate variables for returns
     gsl_vector * nu = gsl_vector_calloc (meas->z->size);  // output: state update vector
     gsl_matrix * H = gsl_matrix_calloc (meas->z->size, state->state_len);  // output: jacobian with respect to state
     // TODO, currently assumes R is allocated outside, could check and allocate it here if not
-    
+
     // call user process model function
     (*meas->omf_ekf) (state, meas->z, meas->index_map, meas->R, nu, H, meas->user);
- 
+
     // **run actual correction**
     ekf_correct_raw (state, meas, nu, H);
 
@@ -343,7 +351,8 @@ ekf_correct (est_estimator_t *state, est_meas_t *meas)
 void
 ekf_correct_ds (est_estimator_t *state, est_meas_t *meas, int ds_ind)
 {
-    if (ds_ind >= state->delayed_states_cnt) {
+    if (ds_ind >= state->delayed_states_cnt)
+    {
         ERROR ("ERROR: Delayed state index %d > delayed state cnt %d", ds_ind, state->delayed_states_cnt);
         return;
     }
@@ -359,11 +368,11 @@ ekf_correct_ds (est_estimator_t *state, est_meas_t *meas, int ds_ind)
     gsl_vector * mu_ds = gslu_vector_get_subvector_alloc (state->mu, ds_start, state->delayed_state_len);
     gsl_matrix * Sigma_ds = gsl_matrix_calloc (state->delayed_state_len, state->delayed_state_len);
     gsl_matrix_view Sigma_ds_v = gsl_matrix_submatrix (state->Sigma, ds_start, ds_start,
-            state->delayed_state_len, state->delayed_state_len);
+                                 state->delayed_state_len, state->delayed_state_len);
     gsl_matrix_memcpy (Sigma_ds, &Sigma_ds_v.matrix);
 
     est_estimator_t *state_ds = est_init_ekf (state->delayed_state_len, mu_ds, Sigma_ds);
-    
+
     // call user process model function on spoofed state
     (*meas->omf_ekf) (state_ds, meas->z, meas->index_map, meas->R, nu, &H_ds.matrix, meas->user);
 

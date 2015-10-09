@@ -4,7 +4,7 @@
 #include "gsl_util_blas.h"
 #include "gsl_util_linalg.h"
 
-unscented_transform_opts_t * 
+unscented_transform_opts_t *
 unscented_transform_def_opts ()
 {
     unscented_transform_opts_t *opts = calloc (1, sizeof(*opts));
@@ -28,7 +28,8 @@ unscented_transform_alloc (const gsl_vector *mu, const gsl_matrix *R, const unsc
 
     if (opts)
         unscented_transform (mu, R, opts, *sigmaPoints, *meanWeights, *covWeights);
-    else {
+    else
+    {
         unscented_transform_opts_t *defaultOpts = unscented_transform_def_opts();
         unscented_transform (mu, R, defaultOpts, *sigmaPoints, *meanWeights, *covWeights);
         free (defaultOpts);
@@ -50,7 +51,7 @@ unscented_transform (const gsl_vector *mu, const gsl_matrix *R, const unscented_
     double lambda = pow(opts->alpha, 2) * (n+opts->kappa) - n;
 
     gsl_matrix *RCopy = gsl_matrix_alloc(R->size1, R->size2);
-	gsl_matrix_memcpy(RCopy, R);
+    gsl_matrix_memcpy(RCopy, R);
     gsl_matrix_scale(RCopy, n+lambda);
     gsl_matrix *U = gslu_linalg_sqrtm_alloc(RCopy);
 
@@ -65,7 +66,8 @@ unscented_transform (const gsl_vector *mu, const gsl_matrix *R, const unscented_
     gsl_vector_set (meanWeights, 0, lambda / (n+lambda));
     gsl_vector_set (covWeights, 0, lambda / (n+lambda) + (1 - opts->alpha*opts->alpha + opts->beta));
 
-    for (i=1; i<=n; i++) {
+    for (i=1; i<=n; i++)
+    {
         /* Compute sigma point */
         UColumn = gsl_matrix_column(U, i-1);
         ithSigmaPoint = gsl_matrix_column(sigmaPoints, i);
@@ -79,7 +81,8 @@ unscented_transform (const gsl_vector *mu, const gsl_matrix *R, const unscented_
         gsl_vector_set (covWeights, i, 1/(2*(n+lambda)));
     }
 
-    for (i=n+1; i<=2*n; i++) {
+    for (i=n+1; i<=2*n; i++)
+    {
         /* Compute sigma point */
         UColumn = gsl_matrix_column(U, i-n-1);
         ithSigmaPoint = gsl_matrix_column(sigmaPoints, i);
@@ -96,7 +99,7 @@ unscented_transform (const gsl_vector *mu, const gsl_matrix *R, const unscented_
     //clean up
     gsl_matrix_free(RCopy);
     gsl_matrix_free(U);
-    
+
     return EXIT_SUCCESS;
 
 }

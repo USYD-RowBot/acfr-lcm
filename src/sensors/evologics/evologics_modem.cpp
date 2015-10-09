@@ -332,7 +332,7 @@ int Evologics_Modem::init()
     usleep(1e6);
     
     lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
-    lcm->subscribeFunction("EVO_CONTROL", on_evo_control, this);
+    lcm->subscribeFunction("EVOLOGICS_CONTROL", on_evo_control, this);
     
     int lcm_channel_ndx = 0;
     while(lcm_channels != NULL && lcm_channels[lcm_channel_ndx] != NULL)
@@ -1188,7 +1188,9 @@ int Evologics_Modem::send_lcm_data(unsigned char *d, int size, int target, const
        // FIXME: Lock out sending of more than one USBL_FIX per IM ping.  This
        //        could be more elegantly handled with a state machine or
        //        some other mechanism.
-       if(strstr(dest_channel, "USBL_FIX") == NULL || sent_usbl_fix == false)
+       // Send the data.  If this is a USBL_FIX, check if it should be sent.
+       if(strstr(dest_channel, "USBL_FIX") == NULL || 
+          (sent_usbl_fix == false && send_fixes == true))
        {
            char im_msgbuf[128];
            memset(im_msgbuf, 0, 128);

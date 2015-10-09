@@ -15,8 +15,8 @@
 
 
 /*
-    Output Units:  
-	Send to sensor: 
+    Output Units:
+	Send to sensor:
 	  #G1 for mPSI
 	  #G1000 for PSI
 	  #G1458 for m_sw
@@ -40,16 +40,19 @@ static int parse_buf (const char *buf, int len, senlcm_dstar_ssp1_t *dstar, bool
     if (!nmea_validate_checksum (buf))
         return 0;
 
-    if (0==strncmp (buf, "$YXDPT", 6)) {
+    if (0==strncmp (buf, "$YXDPT", 6))
+    {
         double pressure_psi;
-        if (1 == sscanf (buf, "$YXDPT,%lf,0.0", &pressure_psi)) {
+        if (1 == sscanf (buf, "$YXDPT,%lf,0.0", &pressure_psi))
+        {
             // on startup, init p_atm to ambient pressure
-            if (nsamples <= 10) {
+            if (nsamples <= 10)
+            {
                 nsamples++;
 
                 double pressure_Pa = pressure_psi * UNITS_PSI_TO_PASCAL;
                 double dfs = dfs_simple (DFS_RHO_FRESHWATER, pressure_Pa - DFS_P_ATM_NOMINAL);
-                
+
                 // Check that we are on the surface
                 if (-1.5 < dfs && dfs < 1.5)
                     p_atm_avg = ((nsamples-1.0)/nsamples)*p_atm_avg + (1.0/nsamples)*pressure_Pa; // tare
@@ -69,12 +72,14 @@ static int parse_buf (const char *buf, int len, senlcm_dstar_ssp1_t *dstar, bool
         else
             return 0;
     }
-    else if (0==strncmp (buf, "$YXTMP", 6)) {
+    else if (0==strncmp (buf, "$YXTMP", 6))
+    {
         double T;
-	if (1 == sscanf (buf, "$YXTMP,%lf,0.0", &T)) {
+        if (1 == sscanf (buf, "$YXTMP,%lf,0.0", &T))
+        {
             dstar->temperature = T;
             return 1;
-    	}
+        }
         else
             return 0;
     }
@@ -112,18 +117,21 @@ int main (int argc, char *argv[])
         gsd_write (gsd, "#Z0\n", 4);
 
     */
-	
+
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
-    while (1) {
+    while (1)
+    {
         char buf[128];
         int64_t timestamp;
         int len = gsd_read (gsd, buf, sizeof buf, &timestamp);
 
         senlcm_dstar_ssp1_t dstar;
-        if (parse_buf (buf, len, &dstar, freshwater)) {
+        if (parse_buf (buf, len, &dstar, freshwater))
+        {
             dstar.utime = timestamp;
-            if (0==strncmp (buf, "$YXDPT", 6)) {// publish on depth event
+            if (0==strncmp (buf, "$YXDPT", 6))  // publish on depth event
+            {
                 if (0.0 <= dstar.temperature && dstar.temperature <= 35.0)
                     senlcm_dstar_ssp1_t_publish (gsd->lcm, gsd->channel, &dstar);
                 else

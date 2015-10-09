@@ -15,7 +15,7 @@
 
 
 void
-vis_homog_matrix_plane_induced (gsl_matrix *H, const gsl_matrix *K, const gsl_matrix *R, 
+vis_homog_matrix_plane_induced (gsl_matrix *H, const gsl_matrix *K, const gsl_matrix *R,
                                 const gsl_vector *t, const gsl_vector *n, const double d)
 {
     assert (H->size1 == 3 && H->size2 == 3 &&
@@ -52,17 +52,20 @@ vis_homog_project (const gsl_matrix *H, const gsl_matrix *uv1, gsl_matrix *uv2)
     assert ( gslu_matrix_is_same_size (uv1, uv2) && H->size1 == 3 && H->size2 == 3);
 
     gsl_matrix *uv1_h, *uv2_h;
-    if (uv1->size1 == 2) {
+    if (uv1->size1 == 2)
+    {
         uv1_h = homogenize_alloc (uv1);
         uv2_h = gsl_matrix_alloc (3, uv2->size2);
-    } 
-    else {
+    }
+    else
+    {
         uv1_h = (gsl_matrix*) uv1;
         uv2_h = uv2;
     }
     gslu_blas_mm (uv2_h, H, uv1_h);
 
-    if (uv1->size1 == 2) { 
+    if (uv1->size1 == 2)
+    {
         dehomogenize (uv2_h, uv2);
         gsl_matrix_free (uv1_h);
         gsl_matrix_free (uv2_h);
@@ -97,14 +100,16 @@ vis_homog_project_alloc (const gsl_matrix *H, const gsl_matrix *uv1)
 
     gslu_blas_mm (uv2_h, H, uv1_h);
 
-    if (uv1->size1 == 2) { 
+    if (uv1->size1 == 2)
+    {
         dehomogenize (uv2_h, uv2);
         gsl_matrix_free (uv1_h);
         gsl_matrix_free (uv2_h);
 
         return uv2;
     }
-    else {
+    else
+    {
         gsl_matrix_free (uv1_h);
         gsl_matrix_free (uv2);
 
@@ -125,9 +130,15 @@ vis_homog_single_gsl_pt_project (const gsl_matrix *H, const gsl_vector *uv1, gsl
     double u = gsl_vector_get (uv1,0);
     double v = gsl_vector_get (uv1,1);
 
-    double H11 = gsl_matrix_get (H, 0,0); double H12 = gsl_matrix_get (H, 0,1); double H13 = gsl_matrix_get (H, 0,2);
-    double H21 = gsl_matrix_get (H, 1,0); double H22 = gsl_matrix_get (H, 1,1); double H23 = gsl_matrix_get (H, 1,2);
-    double H31 = gsl_matrix_get (H, 2,0); double H32 = gsl_matrix_get (H, 2,1); double H33 = gsl_matrix_get (H, 2,2);
+    double H11 = gsl_matrix_get (H, 0,0);
+    double H12 = gsl_matrix_get (H, 0,1);
+    double H13 = gsl_matrix_get (H, 0,2);
+    double H21 = gsl_matrix_get (H, 1,0);
+    double H22 = gsl_matrix_get (H, 1,1);
+    double H23 = gsl_matrix_get (H, 1,2);
+    double H31 = gsl_matrix_get (H, 2,0);
+    double H32 = gsl_matrix_get (H, 2,1);
+    double H33 = gsl_matrix_get (H, 2,2);
 
     double up = (H11*u+H12*v+H13) / (H31*u+H32*v+H33);
     double vp = (H21*u+H22*v+H23) / (H31*u+H32*v+H33);
@@ -151,9 +162,15 @@ vis_homog_single_gsl_pt_project_alloc (const gsl_matrix *H, const gsl_vector *uv
     double v = gsl_vector_get (uv1,1);
 
     gsl_vector *uv2 = gsl_vector_alloc (2);
-    double H11 = gsl_matrix_get (H, 0,0); double H12 = gsl_matrix_get (H, 0,1); double H13 = gsl_matrix_get (H, 0,2);
-    double H21 = gsl_matrix_get (H, 1,0); double H22 = gsl_matrix_get (H, 1,1); double H23 = gsl_matrix_get (H, 1,2);
-    double H31 = gsl_matrix_get (H, 2,0); double H32 = gsl_matrix_get (H, 2,1); double H33 = gsl_matrix_get (H, 2,2);
+    double H11 = gsl_matrix_get (H, 0,0);
+    double H12 = gsl_matrix_get (H, 0,1);
+    double H13 = gsl_matrix_get (H, 0,2);
+    double H21 = gsl_matrix_get (H, 1,0);
+    double H22 = gsl_matrix_get (H, 1,1);
+    double H23 = gsl_matrix_get (H, 1,2);
+    double H31 = gsl_matrix_get (H, 2,0);
+    double H32 = gsl_matrix_get (H, 2,1);
+    double H33 = gsl_matrix_get (H, 2,2);
 
     double up = (H11*u+H12*v+H13) / (H31*u+H32*v+H33);
     double vp = (H21*u+H22*v+H23) / (H31*u+H32*v+H33);
@@ -175,9 +192,15 @@ vis_homog_single_pt_project (const gsl_matrix *H, const double u, double v, doub
         [uvp_h3]    [H31 H32 H33] [1] + [K11 K12 K13] [t3/z]
     */
 
-    double H11 = gsl_matrix_get (H, 0,0); double H12 = gsl_matrix_get (H, 0,1); double H13 = gsl_matrix_get (H, 0,2);
-    double H21 = gsl_matrix_get (H, 1,0); double H22 = gsl_matrix_get (H, 1,1); double H23 = gsl_matrix_get (H, 1,2);
-    double H31 = gsl_matrix_get (H, 2,0); double H32 = gsl_matrix_get (H, 2,1); double H33 = gsl_matrix_get (H, 2,2);
+    double H11 = gsl_matrix_get (H, 0,0);
+    double H12 = gsl_matrix_get (H, 0,1);
+    double H13 = gsl_matrix_get (H, 0,2);
+    double H21 = gsl_matrix_get (H, 1,0);
+    double H22 = gsl_matrix_get (H, 1,1);
+    double H23 = gsl_matrix_get (H, 1,2);
+    double H31 = gsl_matrix_get (H, 2,0);
+    double H32 = gsl_matrix_get (H, 2,1);
+    double H33 = gsl_matrix_get (H, 2,2);
 
     *up = (H11*u+H12*v+H13) / (H31*u+H32*v+H33);
     *vp = (H21*u+H22*v+H23) / (H31*u+H32*v+H33);
@@ -318,9 +341,11 @@ vis_homog_pose_decomp (const gsl_matrix *H,
     gsl_vector *N = gsl_vector_calloc (3);
     gsl_matrix *HScaledMinusR;
     int j=0;
-    for (int i=0; i<4; i++) {
-        
-        switch (i) {
+    for (int i=0; i<4; i++)
+    {
+
+        switch (i)
+        {
         case 0:
             gslu_blas_mmT (R, W1, U1);
             gslu_vector_cross (N, &v2.vector, u1);
@@ -357,7 +382,8 @@ vis_homog_pose_decomp (const gsl_matrix *H,
             break;
         }
 
-        if (gsl_vector_get (N, 2) > 0) {
+        if (gsl_vector_get (N, 2) > 0)
+        {
             if (j == 3)
                 return EXIT_FAILURE;
             gsl_matrix_memcpy (R_mats[j], R);

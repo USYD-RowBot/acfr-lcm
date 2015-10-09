@@ -16,12 +16,12 @@ pid(pid_gains_t *gains, double pos, double vel, double pos_goal, double vel_goal
     double u;
     double perror = pos_goal - pos;
     double verror = vel_goal - vel;
-    
+
     u = gains->kp * perror + gains->ki * gains->integral + gains->kd * verror;
-    
+
     if(fabs(u) < gains->sat)
         gains->integral += perror * dt;
-        
+
     return u;
 }
 

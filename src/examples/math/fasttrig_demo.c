@@ -12,7 +12,8 @@ main (int argc, char *argv[])
 {
     fasttrig_init ();
 
-    if (1) {
+    if (1)
+    {
         printf ("\nfasttrig accuracy test:\n");
         fasttrig_test_trig ();
         printf ("\n");
@@ -28,13 +29,15 @@ main (int argc, char *argv[])
 
     /* sincos */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         sincos (timestamp_now (), &s, &c);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         fsincos (timestamp_now (), &s, &c);
     }
     dt2 = timestamp_now () - start;
@@ -43,14 +46,16 @@ main (int argc, char *argv[])
 
     /* fsin */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         s = sin (d);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         s = fsin (d);
     }
@@ -60,14 +65,16 @@ main (int argc, char *argv[])
 
     /* ftan */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         t = tan (d);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         t = ftan (d);
     }
@@ -77,14 +84,16 @@ main (int argc, char *argv[])
 
     /* facos */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         c = acos (d);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         c = facos (d);
     }
@@ -93,14 +102,16 @@ main (int argc, char *argv[])
 
     /* fasin */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         s = asin (d);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         s = fasin (d);
     }
@@ -110,14 +121,16 @@ main (int argc, char *argv[])
 
     /* fatan2 */
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         t = atan2 (d, d);
     }
     dt1 = timestamp_now () - start;
 
     start = timestamp_now ();
-    for (size_t i=0; i<MAX_ITERS; i++) {
+    for (size_t i=0; i<MAX_ITERS; i++)
+    {
         int64_t d = timestamp_now ();
         t = fatan2 (d, d);
     }

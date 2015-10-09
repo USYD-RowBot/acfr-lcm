@@ -8,7 +8,7 @@
 
 uint16_t
 pelic_crcUpdate (uint16_t crc, uint8_t data)
-{  
+{
     data ^= (crc & 0xff);
     data ^= data << 4;
 
@@ -17,11 +17,12 @@ pelic_crcUpdate (uint16_t crc, uint8_t data)
 
 uint16_t
 pelic_crc16 (void *data, uint16_t cnt)
-{  
+{
     uint16_t crc = 0xff;
     uint8_t *ptr = data;
 
-    for (int i=0; i<cnt; i++) {
+    for (int i=0; i<cnt; i++)
+    {
         crc = pelic_crcUpdate (crc, *ptr);
         ptr++;
     }
@@ -44,20 +45,21 @@ pelic_verifyChecksum (uint8_t *buf, int bufLen)
 
 void
 pelic_parseImuRawData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
-{  
+{
     puts ("WTF");
     return;
 }
 
 uint8_t
 pelic_parsePacket (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
-{  
+{
     if (!pelic_verifyChecksum (buf, bufLen))
         return 0;
 
     uint8_t packetDescriptor = buf[5]; // see manual
 
-    switch (packetDescriptor) {
+    switch (packetDescriptor)
+    {
     case PELIC_LLSTATUS_ID :
         pelic_parseLlStatus (buf, bufLen, pelic);
         break;
@@ -84,7 +86,7 @@ pelic_parsePacket (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
 
 void
 pelic_parseGpsData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
-{  
+{
     pelic_GpsDataStruct rawPacket;
     uint16_t length = (uint16_t)buf[3];
     uint8_t *structPointer = buf + 6;
@@ -107,7 +109,7 @@ pelic_parseGpsData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
 
 void
 pelic_parseLlStatus (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
-{  
+{
     pelic_LlStatusStruct rawPacket;
     uint16_t length = (uint16_t)buf[3];
     uint8_t *structPointer = buf + 6;
@@ -147,7 +149,7 @@ pelic_parseImuCalcData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
     pelic->acc_calib[0] = rawPacket.acc_x_calib / 10000.0;
     pelic->acc_calib[1] = rawPacket.acc_y_calib / 10000.0;
     pelic->acc_calib[2] = rawPacket.acc_z_calib / 10000.0;
-  
+
     pelic->acc[0] = rawPacket.acc_x / 10000.0;
     pelic->acc[1] = rawPacket.acc_y / 10000.0;
     pelic->acc[2] = rawPacket.acc_z / 10000.0;
@@ -176,7 +178,7 @@ pelic_parseImuCalcData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
 
 void
 pelic_parseRcData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
-{  
+{
     pelic_RcDataStruct rawPacket;
 
     uint16_t length = (uint16_t)buf[3];
@@ -185,7 +187,7 @@ pelic_parseRcData (uint8_t *buf, int bufLen, senlcm_pelican_t *pelic)
     memcpy (&rawPacket, structPointer, length);
 
     //We only care about the normalized RC data, which ranges from 0 to
-    //4095 for each channel 
+    //4095 for each channel
     for (int i=0; i<7; i++)
         pelic->rcData[i] = rawPacket.channels_out[i];
 }

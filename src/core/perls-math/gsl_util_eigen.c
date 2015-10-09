@@ -25,7 +25,8 @@ gslu_eigen_decomp_alloc (const gsl_matrix *A)
     if (w) gsl_eigen_symmv_free (w);
     gsl_eigen_symmv_sort (eigen->D, eigen->V, GSL_EIGEN_SORT_ABS_DESC);
 
-    if (status != GSL_SUCCESS) {
+    if (status != GSL_SUCCESS)
+    {
         fprintf (stderr, "error in gslu_linalg_EIGEN_decomp_alloc: %s\n",
                  gsl_strerror (status));
 

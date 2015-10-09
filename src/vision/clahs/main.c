@@ -57,23 +57,27 @@ main (int argc, char *argv[])
     getopt_add_bool   (gopt, 'd',  "display",   0,          "Display results in window");
     getopt_add_description (gopt, DESCRIPTION);
 
-    if (!getopt_parse (gopt, argc, argv, 1) || getopt_get_bool (gopt, "help") || gopt->extraargs->len != 2) {
+    if (!getopt_parse (gopt, argc, argv, 1) || getopt_get_bool (gopt, "help") || gopt->extraargs->len != 2)
+    {
         getopt_do_usage (gopt, "input-file output-file");
         return -1;
     }
 
     // parse command line args
-    vis_clahs_opts_t opts = {
+    vis_clahs_opts_t opts =
+    {
         .cliplimit = getopt_get_double (gopt, "cliplimit"),
         .bins = getopt_get_int (gopt, "bins"),
         .alpha = getopt_get_double (gopt, "alpha"),
     };
 
-    if (2 != sscanf (getopt_get_string (gopt, "tiles"), "[%zd,%zd]", &opts.tiles[0], &opts.tiles[1])) {
+    if (2 != sscanf (getopt_get_string (gopt, "tiles"), "[%zd,%zd]", &opts.tiles[0], &opts.tiles[1]))
+    {
         printf ("can't parse arg: --ntiles\n");
         return -1;
     }
-    if (2 != sscanf (getopt_get_string (gopt, "range"), "[%zd,%zd]", &opts.range[0], &opts.range[1])) {
+    if (2 != sscanf (getopt_get_string (gopt, "range"), "[%zd,%zd]", &opts.range[0], &opts.range[1]))
+    {
         printf ("can't parse arg: --range\n");
         return -1;
     }
@@ -85,7 +89,8 @@ main (int argc, char *argv[])
         opts.dist = VIS_CLAHS_DIST_EXPONENTIAL;
     else if (0 == strcasecmp (getopt_get_string (gopt, "dist"), "uniform"))
         opts.dist = VIS_CLAHS_DIST_UNIFORM;
-    else {
+    else
+    {
         printf ("can't parse arg: --dist\n");
         return -1;
     }
@@ -95,7 +100,8 @@ main (int argc, char *argv[])
 
     // process image
     IplImage *I = cvLoadImage (ifile, CV_LOAD_IMAGE_UNCHANGED);
-    if (I->nChannels > 1) {
+    if (I->nChannels > 1)
+    {
         printf ("clahs only works on grayscale images\n");
         cvReleaseImage (&I);
         return -1;
@@ -108,13 +114,15 @@ main (int argc, char *argv[])
         J = I;
 
     int ret = vis_clahs (J->imageData, J->width, J->height, J->depth, &opts);
-    if (ret < 0 ) {
+    if (ret < 0 )
+    {
         printf ("clahs error, ret=%d\n", ret);
     }
-    
+
     // map CLAHS output to 8-bit since opencv save only supports 8-bit images
     IplImage *K = NULL;
-    if (I->depth > 8) {
+    if (I->depth > 8)
+    {
         CvSize size = {J->width, J->height};
         K = cvCreateImage (size, IPL_DEPTH_8U, 1);
         cvConvertImage (J, K, 0);
@@ -124,7 +132,8 @@ main (int argc, char *argv[])
     cvSaveImage (ofile, K, 0);
 
     // display?
-    if (getopt_get_bool (gopt, "display")) {
+    if (getopt_get_bool (gopt, "display"))
+    {
         cvNamedWindow ("Original", CV_WINDOW_AUTOSIZE);
         cvShowImage ("Original", I);
 

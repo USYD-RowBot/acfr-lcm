@@ -6,14 +6,15 @@
 
 #include "lcmlog_export.h"
 
-struct lcmlog_export {
+struct lcmlog_export
+{
     // output CSV related
     char *csvlog_dir;
     char *csvlog_prefix;
 
     // LCM channel related
     char *channel_strip;
-    
+
     char *delim_string;
 
     GHashTable *hash;
@@ -26,7 +27,7 @@ wrapper_textread_destroy (gpointer data)
 }
 
 lcmlog_export_t *
-lle_create (const char *csvlog_dir, const char *csvlog_prefix, const char *channel_strip, 
+lle_create (const char *csvlog_dir, const char *csvlog_prefix, const char *channel_strip,
             const char *delim_string)
 {
     lcmlog_export_t *lle = calloc (1, sizeof (*lle));
@@ -55,10 +56,13 @@ lle_get_textread (lcmlog_export_t *lle, const char *_channel)
     const char *channel = strdup (_channel);
 
     // strip | separated list of channel prefixes
-    if (lle->channel_strip) {
+    if (lle->channel_strip)
+    {
         char **split = g_strsplit (lle->channel_strip, "|", -1);
-        for (char **prefix=split; *prefix; prefix++) {
-            if (g_str_has_prefix (_channel, *prefix)) {
+        for (char **prefix=split; *prefix; prefix++)
+        {
+            if (g_str_has_prefix (_channel, *prefix))
+            {
                 strip = true;
                 channel += strlen (*prefix);
                 break;
@@ -68,11 +72,12 @@ lle_get_textread (lcmlog_export_t *lle, const char *_channel)
     }
 
     // change all delimiter strings to underscores
-    if (lle->delim_string) 
-        channel = g_strdelimit ((gchar *) channel, lle->delim_string, '_');   
+    if (lle->delim_string)
+        channel = g_strdelimit ((gchar *) channel, lle->delim_string, '_');
 
     textread_t *tr = g_hash_table_lookup (lle->hash, channel);
-    if (!tr) {
+    if (!tr)
+    {
         if (strip)
             printf ("export %-32s\t[%s]\n", channel, _channel);
         else

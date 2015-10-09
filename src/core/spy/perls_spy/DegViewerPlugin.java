@@ -44,6 +44,7 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                 fingerprint == senlcm.ahrs_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.usbl_fix_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.rt3202_t.LCM_FINGERPRINT ||
+                fingerprint == senlcm.seabotix_sensors_t.LCM_FINGERPRINT ||
                 fingerprint == acfrlcm.auv_status_t.LCM_FINGERPRINT ||
 
                 fingerprint == hauv.bs_cnv_t.LCM_FINGERPRINT ||
@@ -312,6 +313,15 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     acfrlcm.auv_status_t as = new acfrlcm.auv_status_t(dis);
                     as.latitude = Math.toDegrees(as.latitude);
                     as.longitude = Math.toDegrees(as.longitude);
+                   
+                    o = as;
+                }
+                /* seabotix_sensors_t */
+                else if (cd.fingerprint == senlcm.seabotix_sensors_t.LCM_FINGERPRINT) {
+                    senlcm.seabotix_sensors_t as = new senlcm.seabotix_sensors_t(dis);
+                    as.heading = Math.toDegrees(as.heading);
+                    as.roll = Math.toDegrees(as.roll);
+                    as.pitch = Math.toDegrees(as.pitch);
                    
                     o = as;
                 }

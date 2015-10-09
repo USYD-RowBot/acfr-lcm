@@ -38,16 +38,17 @@
  * @return length of buf
  */
 static int
-poll_data (generic_sensor_driver_t *gsd, 
+poll_data (generic_sensor_driver_t *gsd,
            uint16_t len,
-           pelic_query_t *msq, uint8_t buf[], 
+           pelic_query_t *msq, uint8_t buf[],
            int64_t *utime)
 {
     gsd_noncanonical (gsd, len, 0);
 
     int length = 0;
 
-    while (length == 0) {
+    while (length == 0)
+    {
         gsd_write (gsd, (char*)&msq->preamble, 4);
         gsd_write (gsd, (char*)&msq->packetType, sizeof(uint16_t));
         length = gsd_read_timeout (gsd, (char*)buf, PELIC_MAX_LEN, utime, 100000);
@@ -60,7 +61,7 @@ poll_data (generic_sensor_driver_t *gsd,
  * @brief Wrapper to poll_data, update GSD stats for "good" and "bad"
  * packets
  *
- * @param  gsd 
+ * @param  gsd
  *
  * @param packetType : The type of packet we wish to poll (see
  * documentation for Pelican)
@@ -72,16 +73,18 @@ poll_data (generic_sensor_driver_t *gsd,
  *
  * @return None
  */
-static void 
+static void
 pollPelic (generic_sensor_driver_t *gsd,
            uint16_t packetType,
            uint16_t len,
-           senlcm_pelican_t      *pelic) {
-  
+           senlcm_pelican_t      *pelic)
+{
+
     uint8_t buf[PELIC_MAX_LEN];
     int bufLen, success;
 
-    pelic_query_t queryMsg = {
+    pelic_query_t queryMsg =
+    {
         .preamble	= PELIC_QUERY_STR,
         .packetType = packetType,
     };
@@ -90,7 +93,8 @@ pollPelic (generic_sensor_driver_t *gsd,
 
     success = pelic_parsePacket (buf, bufLen, pelic);
 
-    if (success > 0) {
+    if (success > 0)
+    {
         pelic->utime = timestamp_now ();
         senlcm_pelican_t_publish (gsd->lcm, gsd->channel, pelic);
         gsd_update_stats (gsd,1);
@@ -108,7 +112,7 @@ pollPelic (generic_sensor_driver_t *gsd,
  */
 static int
 getOpts (generic_sensor_driver_t* gsd)
-{  
+{
     getopt_add_description (gsd->gopt, "Pelican pelican sensor driver.");
     return 0;
 }
@@ -121,7 +125,7 @@ getOpts (generic_sensor_driver_t* gsd)
  */
 int
 main (int argc, char *argv[])
-{  
+{
     generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, getOpts);
 
     gsd_launch (gsd);
@@ -129,8 +133,9 @@ main (int argc, char *argv[])
     senlcm_pelican_t pelic = {0};
 
     uint8_t iteration = 0;
-    while (1) {
-    
+    while (1)
+    {
+
         pollPelic(gsd, PELIC_LLSTATUS_CMD,
                   sizeof (pelic_LlStatusStruct) + 11, &pelic);
 
@@ -143,7 +148,7 @@ main (int argc, char *argv[])
         if (iteration % 5 == 0)
             pollPelic(gsd, PELIC_RC_DATA_CMD,
                       sizeof (pelic_RcDataStruct) + 11, &pelic);
-    
+
         iteration++;
     }
 

@@ -14,7 +14,6 @@
 #include <iostream>
 #include <unistd.h>
 #include <turbojpeg.h>
-#include <jpeglib.h>
 
 using namespace std;
 using namespace bot_core;
@@ -37,44 +36,6 @@ void onCompressedImage(const lcm::ReceiveBuffer* rbuf, const std::string& channe
     int width, height, jpeg_sub_samp;
     int ret;
 
-/*
-    // Using libjpeg
-    Mat *img;
-    struct jpeg_decompress_struct cinfo = {0};
-    struct jpeg_error_mgr jerr;
-    cinfo.err = jpeg_std_error(&jerr);
-    jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, (unsigned char *)&lcmImage->image[0], lcmImage->size);
-    ret = jpeg_read_header(&cinfo, 1);
-    int channels = 1;
-    if(ret == JPEG_HEADER_OK) {
-        // we have a valid image, we can continue with the decompression
-        
-        // create an image container
-        if(cinfo.out_color_space == JCS_GRAYSCALE) {
-            img = new Mat(Size(cinfo.image_width, cinfo.image_height), CV_8U);
-            channels = 1;
-        }    
-        else if(cinfo.out_color_space == JCS_RGB) {
-            img = new Mat(Size(cinfo.image_width, cinfo.image_height), CV_8UC3);
-            channels = 3;
-        }
-            
-        // get a pointer to the image data
-        unsigned char *image_ptr = &img->at<unsigned char>(0);
-        JSAMPROW row_ptr[1];
-        int row_stride = cinfo.image_width * channels;
-    
-        for(unsigned int i=0; i< cinfo.image_height; i++) {
-            row_ptr[0] = image_ptr + (i * row_stride);
-            jpeg_read_scanlines(&cinfo, row_ptr, 1);
-        }
- 
-        imshow("LCMDisplay", *img);
-        waitKey(10);
-        img->release();
-    }
-*/       
     tjhandle jhandle = tjInitDecompress();
     ret = tjDecompressHeader2(jhandle, (unsigned char *)&lcmImage->image[0], lcmImage->size, &width, &height, &jpeg_sub_samp);
     if(ret == -1) {

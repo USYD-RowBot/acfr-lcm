@@ -45,15 +45,15 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_uvc_rphtd_t_subscribe (lcm, "^.*UVC_RPH$", &senlcm_uvc_rphtd_t_handler, lle);
     // senlcm added by ACFR
     senlcm_ecopuck_t_subscribe (lcm, "ECOPUCK", &senlcm_ecopuck_t_handler, lle);
-	senlcm_oas_t_subscribe (lcm, "OAS", &senlcm_oas_t_handler, lle);
-	senlcm_parosci_t_subscribe (lcm, "PAROSCI", &senlcm_parosci_t_handler, lle);
-	senlcm_lq_modem_t_subscribe (lcm, "LQ_MODEM", &senlcm_lq_modem_t_handler, lle);
-	senlcm_ysi_t_subscribe (lcm, "YSI", &senlcm_ysi_t_handler, lle);
+    senlcm_oas_t_subscribe (lcm, "OAS", &senlcm_oas_t_handler, lle);
+    senlcm_parosci_t_subscribe (lcm, "PAROSCI", &senlcm_parosci_t_handler, lle);
+    senlcm_lq_modem_t_subscribe (lcm, "LQ_MODEM", &senlcm_lq_modem_t_handler, lle);
+    senlcm_ysi_t_subscribe (lcm, "YSI", &senlcm_ysi_t_handler, lle);
     senlcm_rdi_pd0_t_subscribe (lcm, "RDI_PD0", &senlcm_rdi_pd0_t_handler, lle);
     senlcm_os_power_system_t_subscribe (lcm, "BATTERY", &senlcm_os_power_system_t_handler, lle);
-	senlcm_micron_ping_t_subscribe (lcm, "MICRON", &senlcm_micron_ping_t_handler, lle);
-	senlcm_tcm_t_subscribe (lcm, "TCM", &senlcm_tcm_t_handler, lle);
-	senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
+    senlcm_micron_ping_t_subscribe (lcm, "MICRON", &senlcm_micron_ping_t_handler, lle);
+    senlcm_tcm_t_subscribe (lcm, "TCM", &senlcm_tcm_t_handler, lle);
+    senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
     senlcm_usb2000_spec_t_subscribe (lcm, "SPEC_DOWN", &senlcm_usb2000_spec_t_handler, lle);
     senlcm_sts_spec_t_subscribe (lcm, "SPEC_UP", &senlcm_sts_spec_t_handler, lle);
     senlcm_usbl_fix_t_subscribe (lcm, "USBL_FIX.*", &senlcm_usbl_fix_t_handler, lle);
@@ -106,7 +106,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     acfrlcm_auv_path_response_t_subscribe(lcm, "PATH_RESPONSE", &acfrlcm_auv_path_response_t_handler, lle);
     acfrlcm_auv_iver_motor_command_t_subscribe(lcm, "IVER_MOTOR", &acfrlcm_auv_iver_motor_command_t_handler, lle);
     acfrlcm_auv_global_planner_t_subscribe(lcm, "TASK_PLANNER_COMMAND", &acfrlcm_auv_global_planner_t_handler, lle);
-    acfrlcm_ship_status_t_subscribe(lcm, "SHIP_STATUS", &acfrlcm_ship_status_t_handler, lle);
+    acfrlcm_ship_status_t_subscribe(lcm, "SHIP_STATUS.*", &acfrlcm_ship_status_t_handler, lle);
 }
 
 int
@@ -124,16 +124,18 @@ main (int argc, char *argv[])
     getopt_add_string  (gopt, 'F', "fname",  "",       "Output filename for .csv's (default lcmlog filename)");
     getopt_add_string  (gopt, 's', "strip",  "",       "| separated list of channel name prefixes to strip");
     getopt_add_string  (gopt, 'r', "delim_replace",  "",       "string containing delimiters to replace with underscores");
-    getopt_add_example (gopt, 
+    getopt_add_example (gopt,
                         "Strip IVER28_, IVER31_ and TOPSIDE_ channel prefixes when exporting a LCM log file to Matlab\n"
                         "%s -m --strip \"IVER28_|IVER31_|TOPSIDE_\" lcmlog", argv[0]);
-                        
 
-    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=1) {
+
+    if (!getopt_parse (gopt, argc, argv, 1) || gopt->extraargs->len!=1)
+    {
         getopt_do_usage (gopt, "LCMLOG");
         exit (EXIT_FAILURE);
     }
-    else if (getopt_get_bool (gopt, "help")) {
+    else if (getopt_get_bool (gopt, "help"))
+    {
         getopt_do_usage (gopt, "LCMLOG");
         exit (EXIT_SUCCESS);
     }
@@ -143,7 +145,7 @@ main (int argc, char *argv[])
     unix_mkpath (csvlog_dir, 0775);
 
     char *lcmlog_fullname = g_ptr_array_index (gopt->extraargs, 0);
-    
+
     const char *lcmlog_dir = dirname (strdup (lcmlog_fullname));
     const char *lcmlog_fname = basename (strdup (lcmlog_fullname));
 
@@ -162,14 +164,15 @@ main (int argc, char *argv[])
         delim_string = getopt_get_string (gopt, "delim_replace");
 
     lcmlog_export_t *lle = lle_create (csvlog_dir, csvlog_prefix,
-        channel_strip, delim_string);
+                                       channel_strip, delim_string);
 
 
     // setup LCM log file for playback
     char lcm_url[PATH_MAX];
     snprintf (lcm_url, sizeof lcm_url, "file://%s/%s?speed=0", lcmlog_dir, lcmlog_fname);
     lcm_t *lcm = lcm_create (lcm_url);
-    if (!lcm) {
+    if (!lcm)
+    {
         ERROR ("lcm_create() failed!\n");
         exit (EXIT_FAILURE);
     }
@@ -177,17 +180,20 @@ main (int argc, char *argv[])
 
     // export LCM events to CSV
     int64_t events = 0;
-    while (0==lcm_handle (lcm)) {
+    while (0==lcm_handle (lcm))
+    {
         if ((++events % 200000)==0)
             printf (".");
     };
     printf ("\n");
 
     // generate matlab load script?
-    if (getopt_get_bool (gopt, "matlab")) {
+    if (getopt_get_bool (gopt, "matlab"))
+    {
         char mfile_fname[NAME_MAX];
         sprintf (mfile_fname, "%s", lcmlog_fname);
-        for (int i=0; i<strlen (mfile_fname); i++) {
+        for (int i=0; i<strlen (mfile_fname); i++)
+        {
             if (!isalnum (mfile_fname[i]))
                 mfile_fname[i] = '_';
         }

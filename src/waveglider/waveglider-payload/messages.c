@@ -44,47 +44,47 @@ void handle_packet(glider_state_t *glider, char *message, size_t length)
     printf("%d: Packet Type (0x%X)\n", time(0), header->message_type);
     switch (header->message_type)
     {
-        case 0x0010:
-            // request id/enumerate (broadcast)
-            printf("%d: received enumeration request\n", time(0));
-            enumerate_t *enumeration = (enumerate_t *)message;
-            handle_enumerate(glider, enumeration, suppress_ack);
-            break;
-        case 0x0015:
-            // telemetry (broadcast)
-            printf("%d: received telemetry notifcation\n", time(0));
-            telemetry_t *telemetry = (telemetry_t *)message;
-            break;
-        case 0x0022:
-            // request status
-            printf("%d: received status request\n", time(0));
-            request_status_t *request_status = (request_status_t *)message;
-            handle_status(glider, request_status, suppress_ack);
-            break;
-        case 0x0024:
-            // send/forward message (broadcast)
-            
-            break;
-        case 0x0030:
-            // power status and control (broadcast)
-            printf("%d: received power status message\n", time(0));
-            break;
-        case 0x0040:
-            // request queued message
-            printf("%d: request for queued message\n", time(0));
-            request_queued_message_t *request = (request_queued_message_t *)message;
-            handle_request_queued(glider, request, suppress_ack);
-            break;
-        case 0x0041:
-            // ack/nak queued message
-            printf("%d: received response to queued message\n", time(0));
-            response_queued_message_t *response = (response_queued_message_t *)message;
-            handle_queued_response(glider, response, suppress_ack);
-            break;
-        default:
-            // no idea what type of message this is
-            printf("%d: unknown message type.\n", time(0));
-            break;
+    case 0x0010:
+        // request id/enumerate (broadcast)
+        printf("%d: received enumeration request\n", time(0));
+        enumerate_t *enumeration = (enumerate_t *)message;
+        handle_enumerate(glider, enumeration, suppress_ack);
+        break;
+    case 0x0015:
+        // telemetry (broadcast)
+        printf("%d: received telemetry notifcation\n", time(0));
+        telemetry_t *telemetry = (telemetry_t *)message;
+        break;
+    case 0x0022:
+        // request status
+        printf("%d: received status request\n", time(0));
+        request_status_t *request_status = (request_status_t *)message;
+        handle_status(glider, request_status, suppress_ack);
+        break;
+    case 0x0024:
+        // send/forward message (broadcast)
+
+        break;
+    case 0x0030:
+        // power status and control (broadcast)
+        printf("%d: received power status message\n", time(0));
+        break;
+    case 0x0040:
+        // request queued message
+        printf("%d: request for queued message\n", time(0));
+        request_queued_message_t *request = (request_queued_message_t *)message;
+        handle_request_queued(glider, request, suppress_ack);
+        break;
+    case 0x0041:
+        // ack/nak queued message
+        printf("%d: received response to queued message\n", time(0));
+        response_queued_message_t *response = (response_queued_message_t *)message;
+        handle_queued_response(glider, response, suppress_ack);
+        break;
+    default:
+        // no idea what type of message this is
+        printf("%d: unknown message type.\n", time(0));
+        break;
     }
 
 
@@ -197,7 +197,7 @@ void handle_request_queued(glider_state_t *glider, request_queued_message_t *req
     ack_queued_message_t *response_header = (ack_queued_message_t *)next_chunk;
     next_chunk += sizeof(ack_queued_message_t);
 
-    memcpy(next_chunk, glider->pending_data, glider->pending_data_length); 
+    memcpy(next_chunk, glider->pending_data, glider->pending_data_length);
     next_chunk += glider->pending_data_length;
     glider->pending_data_length = 0;
 
