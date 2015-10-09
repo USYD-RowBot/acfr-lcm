@@ -12,5 +12,5 @@ lc = lcm.LCM();
 msg = uvc_omstop_t()
 
 
-lc.publish('UVC_OMSTOP', msg.encode())
+lc.publish('UVC_OMSTOP.IVERAME', msg.encode())
 
