@@ -256,7 +256,7 @@ void heartBeatHandler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_
     {
         if (brokenPipe)
         {
-            cout << "Detected broken pipe. Reconnecting." << endl;
+            printf("Detected broken pipe. Reconnecting.");
             close(state->triggerFd);
             triggerConnect(state);
         }
