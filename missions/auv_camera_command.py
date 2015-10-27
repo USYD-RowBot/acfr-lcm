@@ -15,5 +15,5 @@ msg.command = auv_camera_trigger_t.SET_STATE
 msg.enabled = int(float(sys.argv[1])) # 0=stop, 1=start
     
     
-lc.publish('CAMERA_TRIGGER', msg.encode())
+lc.publish('CAMERA_TRIGGER.SIRIUS', msg.encode())
 
