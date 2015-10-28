@@ -259,12 +259,7 @@ void heartBeatHandler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_
             printf("Detected broken pipe. Reconnecting.");
             close(state->triggerFd);
             triggerConnect(state);
-            // now restart the cameras
-            triggerMsg_t *triggerMsg;
-            triggerMsg = (triggerMsg_t *)malloc(sizeof(triggerMsg_t));
-            triggerMsg->size = enableTrigger(triggerMsg->msg);
-            triggerWrite(state, triggerMsg);
-            brokenPipe = 0;
+           brokenPipe = 0;
         }
 //		printf("KA = %d\n", state->keepAliveCount);
         if(state->keepAliveCount == 14)
@@ -276,7 +271,14 @@ void heartBeatHandler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_
             state->keepAliveCount = 0;
         }
         else
+        {
             state->keepAliveCount++;
+        }
+        // now restart the cameras
+        triggerMsg_t *triggerMsg;
+        triggerMsg = (triggerMsg_t *)malloc(sizeof(triggerMsg_t));
+        triggerMsg->size = enableTrigger(triggerMsg->msg);
+        triggerWrite(state, triggerMsg);
     }
 
     // publish a copy of the camera trigger message on CAMERA_TRIGGER.OUT
