@@ -459,6 +459,7 @@ void omstop_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
     char msg[256];
     nmea_sprintf (msg, "$OMSTOP,%d*", cmd->msg_flag);
+    printf("Received OMSTOP message: %s\n", msg);
 
     acfr_sensor_write(state->sensor, msg, strlen(msg));
 }
@@ -534,9 +535,9 @@ int main (int argc, char *argv[])
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART", &omstart_handler, &state);
-    senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP", &omstop_handler, &state);
-    senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX", &usbl_fix_handler, &state);
+	senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART.IVERAME", &omstart_handler, &state);
+	senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP.IVERAME", &omstop_handler, &state);
+	senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX.IVERAME", &usbl_fix_handler, &state);
 
     // create a UDP socket to send the GPRMC message out on
     create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);

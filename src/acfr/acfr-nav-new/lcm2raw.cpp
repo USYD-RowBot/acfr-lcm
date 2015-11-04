@@ -59,7 +59,13 @@ int main(int argc, char **argv) {
         state_c state;
         state.lcm = new lcm::LCM(url);
         state.mode = RAW;
-        state.raw_out.open(argv[2]);
+        //state.raw_out.open(argv[2]);
+        // open the files
+        state.raw_out.open(argv[2], ofstream::out);
+        if(!state.raw_out.is_open()) {
+            cerr << "Could not open input file: " << argv[2] << endl;
+            return 1;
+        }
         
         // subscribe to all the channels
         state.lcm->subscribeFunction("GPSD_CLIENT", on_gps, &state);
@@ -77,6 +83,8 @@ int main(int argc, char **argv) {
         state.lcm->subscribeFunction("UVC_RPH", on_uvc_rph, &state);
         state.lcm->subscribeFunction("SEABOTIX_SENSORS", on_seabotix_sensors, &state);
         //state.lcm->subscribeFunction("MICRON_SOUNDER", on_micron_sounder, &state);
+        cout << "Done subscribing" << endl;
+
         
         
         while(!state.lcm->handle());

@@ -51,6 +51,7 @@ Evologics_Usbl::~Evologics_Usbl()
 // The Evologics reference frame is Y forward, X right, Z down
 int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_usbl_t *ef)
 {
+    // convert to vehicle local coordinate frame (x fwd, y stdb, z down)
     SMALL::Vector3D target;
     target = ef->y, ef->x, -ef->z;
     
