@@ -29,6 +29,9 @@
 #include "perls-lcmtypes/senlcm_uvc_omstart_t.h"
 #include "perls-lcmtypes/senlcm_uvc_omstop_t.h"
 
+// For commands from the surface
+#include "perls-lcmtypes/acfrlcm_auv_global_planner_t.h"
+
 
 #define GPS_PORT 10066
 
@@ -41,6 +44,8 @@ typedef struct
     char *base_path;
     int send_opos;
     double vx_knots;
+    double latitude;
+    double longitude;
 } state_t;
 
 
@@ -118,7 +123,7 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
             mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
         else if (0==strncmp (mode_str, "P", 1))
             mode = SENLCM_UVC_OSI_T_MODE_PARK;
-        else if (0==strncmp (mode_str, "Mp", 2))
+        else if (0==strncmp (mode_str, "mP", 2))
             mode = SENLCM_UVC_OSI_T_MODE_MANUAL_PARK;
         else if (0==strncmp (mode_str, "M", 1))
             mode = SENLCM_UVC_OSI_T_MODE_MANUAL_OVERRIDE;
@@ -127,7 +132,7 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
         else if (0==strncmp (mode_str, "W", 1))
             mode = SENLCM_UVC_OSI_T_MODE_MISSION;
         else
-            ERROR ("unable to parse OSI mode");
+            ERROR ("unable to parse OSI mode, %s", mode_str);
 
         int nextwp = 0;
         if (!nmea_argi (msg, 3, &nextwp))
@@ -235,6 +240,8 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
 
         // Save this for later
         state->vx_knots = speed;
+	state->latitude = latitude;
+	state->longitude = longitude;
 
         return 1;
     }
@@ -495,6 +502,24 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     acfr_sensor_write(state->sensor, msg, strlen(msg));
 }
 
+void task_planner_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_global_planner_t *tp, void *u)
+{
+	// At this point we are just going to send a stop as there is no abort command in the 
+	// remote helm specifications
+	state_t *state = (state_t *)u;
+	char msg[256];
+	
+	if(tp->command == ACFRLCM_AUV_GLOBAL_PLANNER_T_ABORT)
+	{
+		nmea_sprintf (msg, "$OMSTOP,0*");
+		acfr_sensor_write(state->sensor, msg, strlen(msg));		
+		
+		// Now tell it to park in the current location, we are assuming this is on the surface
+		nmea_sprintf (msg, "$OPK,%3.5f,%3.5f,30,1*", state->latitude, state->longitude);
+		acfr_sensor_write(state->sensor, msg, strlen(msg));		
+	}
+}
+
 int program_exit;
 int broken_pipe;
 void
@@ -535,9 +560,10 @@ int main (int argc, char *argv[])
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-	senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART.IVERAME", &omstart_handler, &state);
-	senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP.IVERAME", &omstop_handler, &state);
-	senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX.IVERAME", &usbl_fix_handler, &state);
+    senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART.IVERAME", &omstart_handler, &state);
+    senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP.IVERAME", &omstop_handler, &state);
+    senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX.IVERAME", &usbl_fix_handler, &state);
+    acfrlcm_auv_global_planner_t_subscribe(state.lcm, "TASK_PLANNER_COMMAND.IVERAME", &task_planner_handler, &state);
 
     // create a UDP socket to send the GPRMC message out on
     create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);
