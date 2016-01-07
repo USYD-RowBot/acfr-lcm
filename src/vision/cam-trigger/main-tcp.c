@@ -318,13 +318,14 @@ static void *listenThread (void *u)
     int i,j;
     char buffer[32], temp_str[32];
     float temp;
+	struct timeval tv;
 
     while(!progExit)
     {
         FD_ZERO(&read_fds);
         FD_SET(state->triggerFd, &read_fds);
-
-        if(select(state->triggerFd+1, &read_fds, NULL, NULL, NULL) > 0)
+		tv.tv_sec = 1;
+        if(select(state->triggerFd+1, &read_fds, NULL, NULL, &tv) > 0)
         {
             len = recv(state->triggerFd, buffer, sizeof(buffer), 0);
             if((buffer[0] == STX) && (buffer[1] == TRIGGER_TEMP))
