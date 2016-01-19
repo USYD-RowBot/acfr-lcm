@@ -30,7 +30,7 @@ int acfr_nav::initialise()
     state->slam->configure_interface_without_mag_variation(slam_config_filename);
     calculate_mag();   
     
-    if(depth_source == YSI)
+    if(depth_source == DEPTH_YSI)
         state->slam->set_tare_depth("/home/auv/mission.cfg");    
     
     // subscribe to the relevant LCM channel based on our configuration
@@ -39,24 +39,33 @@ int acfr_nav::initialise()
     state->lcm->subscribeFunction("GPSD_CLIENT", on_gps, state);
     
     // Are we using the TCM compass
-    if(attitude_source == TCM)
+    if(attitude_source == ATT_TCM)
         state->lcm->subscribeFunction("TCM", on_tcm_compass, state);
-    else if(attitude_source == OS)
+    else if(attitude_source == ATT_OS)
         state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
+    else if(attitude_source == ATT_UVC)
+	state->lcm->subscribeFunction("UVC_RPH", on_uvc_rph, state);
         
     // Which depth sensor are we using
-    if(depth_source == YSI)
+    if(depth_source == DEPTH_YSI)
         state->lcm->subscribeFunction("YSI", on_ysi, state);
-    else if(depth_source == PAROSCI)
+    else if(depth_source == DEPTH_PAROSCI)
         state->lcm->subscribeFunction("PAROSCI", on_parosci, state);
-    else if(depth_source == SEABIRD)
+    else if(depth_source == DEPTH_SEABIRD)
         state->lcm->subscribeFunction("SEABIRD", on_seabird_depth, state);
     
     // We always subscribe to this as our velocity source
-    state->lcm->subscribeFunction("RDI", on_rdi, state);
+    if(velocity_source == VEL_RDI)
+	state->lcm->subscribeFunction("RDI", on_rdi, state);
+    else if(velocity_source == VEL_UVC)
+	    state->lcm->subscribeFunction("UVC_DVL", on_uvc_dvl, state);
 
     // Always subscribe to the IMU
     state->lcm->subscribeFunction("IMU", on_imu, state);
+    
+    // Subscribe to the Evologics USBL
+    if(evologics_channel != NULL)
+	    state->lcm->subscribeFunction(evologics_channel, on_evologics, state);
     
     state->lowRateCount = 0;
     
@@ -81,22 +90,49 @@ int acfr_nav::load_config(char *program_name)
     sprintf(key, "%s.attitude_source", rootkey);
     char *att_source_str = bot_param_get_str_or_fail(param, key);
     if(!strcmp(att_source_str, "TCM"))
-        attitude_source = TCM;
+        attitude_source = ATT_TCM;
     else if(!strcmp(att_source_str, "RDI"))
-        attitude_source = RDI;
+        attitude_source = ATT_RDI;
     else if(!strcmp(att_source_str, "OS"))
-        attitude_source = OS;
+        attitude_source = ATT_OS;
+    else if(!strcmp(att_source_str, "UVC"))
+	attitude_source = ATT_UVC;
 
+    
     // Depth source
     sprintf(key, "%s.depth_source", rootkey);
     char *depth_source_str = bot_param_get_str_or_fail(param, key);
     if(!strcmp(depth_source_str, "YSI"))
-        depth_source = YSI;
+        depth_source = DEPTH_YSI;
     else if(!strcmp(depth_source_str, "PAROSCI"))
-        depth_source = PAROSCI;
+        depth_source = DEPTH_PAROSCI;
     else if(!strcmp(depth_source_str, "SEABIRD"))
-        depth_source = SEABIRD;
-        
+        depth_source = DEPTH_SEABIRD;
+     else if(!strcmp(depth_source_str, "UVC"))
+        depth_source = DEPTH_OS;   
+    
+    // Velocity source
+    sprintf(key, "%s.velocity_source", rootkey);
+    if(bot_param_has_key(param, key))
+    {	    
+	    
+	char *velocity_source_str;
+	bot_param_get_str( param, key, &velocity_source_str);
+	 
+	if(!strcmp(velocity_source_str, "RDI"))
+            velocity_source = VEL_RDI;
+        else if(!strcmp(velocity_source_str, "UVC"))
+            velocity_source = VEL_UVC;
+    }
+    else
+	    velocity_source = VEL_RDI;
+
+    evologics_channel = NULL;
+    sprintf(key, "%s.evologics_channel", rootkey);
+    if(bot_param_has_key(param, key))
+	    bot_param_get_str( param, key, &evologics_channel);
+    
+    
     return 1;    
 
 }
