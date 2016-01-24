@@ -83,7 +83,10 @@ Ship_Status::Ship_Status(char *rootkey)
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gps, this);
     
-    lcm->subscribeFunction("HEARTBEAT_1HZ", on_heartbeat, this);
+    if(att_source == ATT_AHRS)
+        lcm->subscribeFunction("AHRS", on_ahrs, this);
+
+    lcm->subscribeFunction("HEARTBEAT_10HZ", on_heartbeat, this);
 
 }
 
@@ -132,8 +135,9 @@ int Ship_Status::send_status()
             ss.heading = ahrs.heading;
             break;
     }
-    
-    lcm->publish("SHIP_STATUS", &ss);
+    char channel[64] = {0};
+    sprintf(channel, "SHIP_STATUS.%s", ship_name);    
+    lcm->publish(channel, &ss);
     
     return 1;
 }

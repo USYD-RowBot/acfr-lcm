@@ -36,30 +36,11 @@ static char *novatel_status[] =
 };
 
 
-int program_novatel(acfr_sensor_t *s, int rate)
+int program_novatel(acfr_sensor_t *s, int rate, char *com_port)
 {
     char msg[256];
 
-
-    // Find oput which port we are on
-    sprintf(msg, "log com\r\n");
-    acfr_sensor_write(s, msg, strlen(msg));
-    
-    int i = 0;
-    while(i < 10)
-    {
-        i = acfr_sensor_read(s, msg, sizeof(msg));
-	printf("%s\n", msg);
-    }
-    i = 0;
-    while(msg[i] != '[')
-        i++;
-
-    char com_port[5] = {0};
-    strncpy(com_port, &msg[i+1], 4);
     printf("Using com port %s\n", com_port);
-
-
     sprintf(msg, "unlogall %s\r\n", com_port);
     acfr_sensor_write(s, msg, strlen(msg));
 
@@ -143,8 +124,10 @@ main (int argc, char *argv[])
     sprintf(key, "%s.rate", rootkey);
     int rate = bot_param_get_int_or_fail(sensor->param, key);
 
+    sprintf(key, "%s.com_port", rootkey);
+    char * com_port = bot_param_get_str_or_fail(sensor->param, key);
 
-    program_novatel(sensor, rate);
+    program_novatel(sensor, rate, com_port);
 
     acfr_sensor_noncanonical(sensor, 1, 0);
 
@@ -225,7 +208,7 @@ main (int argc, char *argv[])
     }
 
     char msg[256];
-    sprintf(msg, "unlogall\r\n");
+    sprintf(msg, "unlogall %s\r\n", com_port);
     acfr_sensor_write(sensor, msg, strlen(msg));
     acfr_sensor_destroy(sensor);
 
