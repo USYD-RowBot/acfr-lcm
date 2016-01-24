@@ -4,7 +4,7 @@
 import lcm
 import sys
 
-sys.path.append('/home/clees/auv/acfr_lcm/build/lib/python2.6/dist-packages/perls/lcmtypes')
+sys.path.append('/home/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
 from acfrlcm.auv_global_planner_t import auv_global_planner_t
 
@@ -24,7 +24,7 @@ msg.str = "/home/clees/auv/acfr_lcm/src/acfr/global-planner/test.xml"
 #    msg.waypoint[6] = float(sys.argv[4])
     
     
-lc.publish('TASK_PLANNER_COMMAND', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.SIRIUS', msg.encode())
 #else:
 #    print 'Wrong number of args'
 

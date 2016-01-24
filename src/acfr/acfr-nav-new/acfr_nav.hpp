@@ -28,17 +28,28 @@ using namespace acfrlcm;
 // Attitude source
 typedef enum 
 {
-    TCM,
-    RDI,
-    OS
+    ATT_TCM,
+    ATT_RDI,
+    ATT_OS,
+    ATT_UVC	
 } attitude_source_t;  
+
+
+// Velocity source
+typedef enum 
+{
+    VEL_RDI,
+    VEL_UVC	
+} velocity_source_t;  
+
 
 // Depth source
 typedef enum 
 {
-    YSI,
-    PAROSCI,
-    SEABIRD
+    DEPTH_YSI,
+    DEPTH_PAROSCI,
+    DEPTH_SEABIRD,
+    DEPTH_OS
 } depth_source_t;
 
 typedef enum 
@@ -85,9 +96,10 @@ class acfr_nav
         
         // config parameters
         attitude_source_t attitude_source;
+        velocity_source_t velocity_source;
         depth_source_t depth_source;
         char *slam_config_filename;
-
+	char *evologics_channel;
                 
 };
 

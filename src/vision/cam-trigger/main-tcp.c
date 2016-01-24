@@ -69,6 +69,23 @@
 #define SET_STATE				4
 #define SET_ALL					5
 
+int progExit;
+int brokenPipe;
+void signalHandler(int sigNum)
+{
+    // do a safe exit
+    if(sigNum == SIGINT)
+        progExit = 1;
+    if(sigNum == SIGPIPE)
+    {
+        printf("Broken pipe\n");
+        brokenPipe = 1;
+        fflush(NULL);
+    }
+}
+
+
+
 typedef struct
 {
     int triggerFd;
@@ -76,6 +93,8 @@ typedef struct
     lcm_t *lcm;
     int enabled;
     int keepAliveCount;
+    char *triggerAddress;
+    char *triggerPort;
 } state_t;
 
 typedef struct
@@ -85,6 +104,22 @@ typedef struct
 } triggerMsg_t;
 
 
+
+int triggerConnect(state_t *state)
+{
+    // open the port to the sonar head
+    struct addrinfo hints, *triggerAddr;
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    getaddrinfo(state->triggerAddress, state->triggerPort, &hints, &triggerAddr);
+
+    state->triggerFd = socket(triggerAddr->ai_family, triggerAddr->ai_socktype, triggerAddr->ai_protocol);
+    fcntl(state->triggerFd, F_SETFL, O_NONBLOCK);
+    return connect(state->triggerFd, triggerAddr->ai_addr, triggerAddr->ai_addrlen);
+}
+ 
 unsigned short ui_sprintf(char * loc, const char *format, ...)
 {
     unsigned short num = 0;
@@ -219,6 +254,13 @@ void heartBeatHandler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_
     state_t *state = (state_t *)u;
     if(state->enabled)
     {
+        if (brokenPipe)
+        {
+            printf("Detected broken pipe. Reconnecting.");
+            close(state->triggerFd);
+            triggerConnect(state);
+           brokenPipe = 0;
+        }
 //		printf("KA = %d\n", state->keepAliveCount);
         if(state->keepAliveCount == 14)
         {
@@ -229,7 +271,14 @@ void heartBeatHandler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_
             state->keepAliveCount = 0;
         }
         else
+        {
             state->keepAliveCount++;
+        }
+        // now restart the cameras
+        triggerMsg_t *triggerMsg;
+        triggerMsg = (triggerMsg_t *)malloc(sizeof(triggerMsg_t));
+        triggerMsg->size = enableTrigger(triggerMsg->msg);
+        triggerWrite(state, triggerMsg);
     }
 
     // publish a copy of the camera trigger message on CAMERA_TRIGGER.OUT
@@ -297,19 +346,6 @@ void cameraTriggerHandler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
 
 
 
-int progExit;
-void signalHandler(int sigNum)
-{
-    // do a safe exit
-    if(sigNum == SIGINT)
-        progExit = 1;
-    if(sigNum == SIGPIPE)
-    {
-        printf("Broken pipe\n");
-        fflush(NULL);
-    }
-}
-
 static void *listenThread (void *u)
 {
     state_t *state = (state_t *)u;
@@ -349,6 +385,7 @@ int main(int argc, char **argv)
 
     // install the signal handler
     progExit = 0;
+    brokenPipe = 0;
     signal(SIGINT, signalHandler);
     signal(SIGPIPE, signalHandler);
 
@@ -362,17 +399,15 @@ int main(int argc, char **argv)
     sprintf (rootkey, "acfr.%s", basename (argv[0]));
     char key[128];
 
-    char *triggerPort;
     sprintf(key, "%s.port", rootkey);
-    if(bot_param_get_str(cfg, key, &triggerPort) == -1)
+    if(bot_param_get_str(cfg, key, &state.triggerPort) == -1)
     {
         printf("No port variable found\n");
         return 1;
     }
 
-    char *triggerAddress;
     sprintf(key, "%s.IP", rootkey);
-    if(bot_param_get_str(cfg, key, &triggerAddress) == -1)
+    if(bot_param_get_str(cfg, key, &state.triggerAddress) == -1)
     {
         printf("No IP variable found\n");
         return 1;
@@ -402,19 +437,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // open the port to the sonar head
-    struct addrinfo hints, *triggerAddr;
+    triggerConnect(&state);
 
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    getaddrinfo(triggerAddress, triggerPort, &hints, &triggerAddr);
-
-    state.triggerFd = socket(triggerAddr->ai_family, triggerAddr->ai_socktype, triggerAddr->ai_protocol);
-    fcntl(state.triggerFd, F_SETFL, O_NONBLOCK);
-    connect(state.triggerFd, triggerAddr->ai_addr, triggerAddr->ai_addrlen);
-
-    fd_set fdset;
+   fd_set fdset;
     struct timeval tv;
 
     FD_ZERO(&fdset);
