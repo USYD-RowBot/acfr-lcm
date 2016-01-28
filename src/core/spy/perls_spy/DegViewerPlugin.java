@@ -46,6 +46,7 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                 fingerprint == senlcm.rt3202_t.LCM_FINGERPRINT ||
                 fingerprint == senlcm.seabotix_sensors_t.LCM_FINGERPRINT ||
                 fingerprint == acfrlcm.auv_status_t.LCM_FINGERPRINT ||
+                fingerprint == acfrlcm.ship_status_t.LCM_FINGERPRINT ||
 
                 fingerprint == hauv.bs_cnv_t.LCM_FINGERPRINT ||
                 fingerprint == hauv.bs_imu_t.LCM_FINGERPRINT ||
@@ -308,13 +309,24 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
                     rt.arz = Math.toDegrees(rt.arz);
                     o = rt;
                 }
-                /* rt3202_t */
+                /* auv_status_t */
                 else if (cd.fingerprint == acfrlcm.auv_status_t.LCM_FINGERPRINT) {
                     acfrlcm.auv_status_t as = new acfrlcm.auv_status_t(dis);
                     as.latitude = Math.toDegrees(as.latitude);
                     as.longitude = Math.toDegrees(as.longitude);
                    
                     o = as;
+                }
+                /* ship_status_t */
+                else if (cd.fingerprint == acfrlcm.ship_status_t.LCM_FINGERPRINT) {
+                    acfrlcm.ship_status_t ss = new acfrlcm.ship_status_t(dis);
+                    ss.latitude = Math.toDegrees(ss.latitude);
+                    ss.longitude = Math.toDegrees(ss.longitude);
+                    ss.roll = Math.toDegrees(ss.roll);
+                    ss.pitch = Math.toDegrees(ss.pitch);
+                    ss.heading = Math.toDegrees(ss.heading);
+                   
+                    o = ss;
                 }
                 /* seabotix_sensors_t */
                 else if (cd.fingerprint == senlcm.seabotix_sensors_t.LCM_FINGERPRINT) {
