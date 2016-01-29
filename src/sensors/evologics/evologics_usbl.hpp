@@ -17,6 +17,7 @@
 #include "perls-common/serial.h"
 #include "perls-lcmtypes++/acfrlcm/ship_status_t.hpp"
 #include "perls-lcmtypes++/senlcm/usbl_fix_t.hpp"
+#include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"

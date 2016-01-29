@@ -143,6 +143,9 @@ int Evologics_Modem::load_config(char *program_name)
     char key[128];
     sprintf (rootkey, "sensors.%s", program_name);
 
+    use_serial_comm = false;
+    use_ip_comm = false;
+
     // check if we are using an serial connection
     sprintf(key, "%s.device", rootkey);
     if (bot_param_has_key(param, key))
@@ -227,6 +230,9 @@ int Evologics_Modem::load_config(char *program_name)
     lcm_pbm_channels = NULL;
     lcm_pbm_channels = bot_param_get_str_array_alloc(param, key);
 
+    sprintf(key, "%s.sound_speed", rootkey);
+    sound_speed = bot_param_get_int_or_fail(param, key);
+
     return 1;    
 
 }
@@ -295,6 +301,10 @@ int Evologics_Modem::init()
     sprintf(cmd, "AT!L%d", source_level);
     send_command(cmd);
     sprintf(cmd, "AT!G%d", gain);
+    send_command(cmd);
+
+	
+    sprintf(cmd, "AT!CA%d", sound_speed);
     send_command(cmd);
 
     if(auto_gain)

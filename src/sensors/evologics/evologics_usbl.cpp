@@ -20,6 +20,30 @@ void on_ship_status(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
     memcpy(&ev->ship_status, nov, sizeof(ship_status_t));
 }
 
+void on_novatel(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const novatel_t *nov, Evologics_Usbl* ev) 
+{
+    //cout << "nov size " << ev->ship_statusq.size() << endl;
+        
+    ship_status_t *n = (ship_status_t *)malloc(sizeof(ship_status_t));
+    n->latitude = nov->latitude;
+    n->longitude = nov->longitude;
+    n->roll = nov->roll;
+    n->pitch = nov->pitch;
+    n->heading = nov->heading;
+    n->utime = nov->utime;
+
+    memcpy(&ev->ship_status, n, sizeof(ship_status_t));
+
+    ev->ship_statusq.push_front(n);        
+    
+    if(ev->ship_statusq.size() > 40)
+    {
+        free(ev->ship_statusq.back());
+        ev->ship_statusq.pop_back();
+    }
+        
+}
+
 // Used by the AHRS routine
 int readline(int fd, char *buf, int max_len)
 {
@@ -95,6 +119,7 @@ int Evologics_Usbl::process_usblfix(const std::string& channel, const evologics_
         cout << "ship attitude" <<  ship.getAxisAngle() * RTOD << endl;
         cout << "target xyz (sensor)" << target << endl;
         
+        cout << "usbl_ins_pose " << usbl_ins_pose << endl;
     
         SMALL::Vector3D target_ship = usbl_ins_pose.transformFrom(target);
         cout << "target xyz (ship)" << target_ship << endl;
@@ -201,6 +226,8 @@ int Evologics_Usbl::load_config(char *program_name)
     bot_param_get_double_array_or_fail(param, key, d, 6);
     usbl_ins_pose.setPosition(d[0], d[1], d[2]);
     usbl_ins_pose.setRollPitchYawRad(d[3], d[4], d[5]);
+    cout << "d " << d[0] << " " << d[1] << " " << d[2] << " " << d[3] << " " << d[4] << " " << d[5] << endl;
+    cout << "usbl_ins_pose " << usbl_ins_pose << endl;
 
     sprintf(key, "%s.ins_ship", rootkey);
     bot_param_get_double_array_or_fail(param, key, d, 6);
@@ -221,6 +248,7 @@ int Evologics_Usbl::init()
     usleep(1e6);
     
     lcm->subscribeFunction(ship_status_channel_str, on_ship_status, this);
+    //lcm->subscribeFunction("NOVATEL", on_novatel, this);
 
     lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
     

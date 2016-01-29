@@ -133,6 +133,7 @@ class Evologics_Modem
         int gain;
         int source_level;
         bool auto_gain;
+        int sound_speed;
         
         //int open_port(const char *port);
         
