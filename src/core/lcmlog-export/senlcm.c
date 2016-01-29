@@ -697,6 +697,25 @@ senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_uvc_dvl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                          const senlcm_uvc_dvl_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",            "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "vx",          "%f",       msg->vx);
+    TEXTREAD_ADD_FIELD (tr, "vy",          "%f",       msg->vy);
+	TEXTREAD_ADD_FIELD (tr, "vz",       	"%f",       msg->vz);
+	TEXTREAD_ADD_FIELD (tr, "xdist",          "%f",       msg->xdist);
+	TEXTREAD_ADD_FIELD (tr, "ydist",          "%f",       msg->ydist);
+	TEXTREAD_ADD_FIELD (tr, "dfs",          "%f",       msg->dfs);
+	TEXTREAD_ADD_FIELD (tr, "alt",          "%f",       msg->alt);
+    textread_stop (tr);
+}
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
