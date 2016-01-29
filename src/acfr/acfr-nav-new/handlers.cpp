@@ -382,7 +382,7 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_dvl_t *dvl, state_c* state)
 {
-    auv_data_tools::Evologics_Fix_Data usbl_data;
+
 
     const double bad_value = 999.99;
 
@@ -402,6 +402,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	}
 
 	state->bottomLock = btv_ok;
+	state->altitude = dvl->alt;
 	
 	//if( btv_ok )
 	{
