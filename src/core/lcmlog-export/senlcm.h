@@ -65,6 +65,9 @@ void
 senlcm_uvc_rphtd_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
        const senlcm_uvc_rphtd_t *msg, void *user);
 
+void
+senlcm_uvc_dvl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+       const senlcm_uvc_dvl_t *msg, void *user);
 
 
 

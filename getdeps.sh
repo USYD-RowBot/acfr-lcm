@@ -18,5 +18,15 @@ sudo apt-get install libglib2.0-dev \
 	libgsl0-dev \
 	gtk-doc-tools \
         libgps-dev \
-	libqt4-svg
+	libqt4-svg \
+	liblapack-dev \
+	libblas-dev \
+	build-essential \
+	subversion \
+	libatlas-base-dev \
+	libcvaux-dev \
+	libhighgui-dev \
+	libcv-dev \
+	libreadline6-dev \
+	libncurses5-dev
 
