@@ -43,6 +43,7 @@ typedef struct
     udp_info_t gps_udp_info;
     int osi_mode;
     char *base_path;
+    char *lcmdefs_path;
     int send_opos;
     double vx_knots;
     double latitude;
@@ -87,6 +88,23 @@ int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
 
         sprintf(cmd_str, "mkdir -p %s\n", path_name);
         system(cmd_str);
+	
+
+	// copy the mission file to the data directory
+	char mission_filename[64] = {0};
+	strftime(mission_filename, sizeof(mission_filename), acfr_format_r, &tm);
+	strcat(mission_filename, osi->mission_name);
+	sprintf(cmd_str, "cp  /media/Missions/%s.* %s\n", osi->mission_name, path_name);
+	system(cmd_str);
+	
+	// make a copy of the lcmdefs directory
+	char lcmdefs_filename[64] = {0};
+        char lcmdefs_format[64] = "r%Y%m%d_%H%M%S_lcmdefs.tgz";
+        strftime(lcmdefs_filename, sizeof(lcmdefs_filename), lcmdefs_format, &tm);
+
+	sprintf(cmd_str, "tar czf %s/%s %s", path_name, lcmdefs_filename, state->lcmdefs_path);
+	system(cmd_str);
+	
         //sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
         sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 %s/%s &\n", path_name, lcm_file_name);
         system(cmd_str);
@@ -575,7 +593,11 @@ int main (int argc, char *argv[])
     sprintf(key, "%s.base_path", rootkey);
     state.base_path = bot_param_get_str_or_fail(state.sensor->param, key);
     state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
-    
+
+    // get the lcmdefs path
+    sprintf(key, "%s.lcmdefs_path", rootkey);
+    state.lcmdefs_path = bot_param_get_str_or_fail(state.sensor->param, key);
+
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
