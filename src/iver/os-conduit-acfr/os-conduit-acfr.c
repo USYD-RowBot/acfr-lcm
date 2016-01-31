@@ -28,6 +28,7 @@
 #include "perls-lcmtypes/senlcm_usbl_fix_t.h"
 #include "perls-lcmtypes/senlcm_uvc_omstart_t.h"
 #include "perls-lcmtypes/senlcm_uvc_omstop_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_acfr_nav_t.h"
 
 // For commands from the surface
 #include "perls-lcmtypes/acfrlcm_auv_global_planner_t.h"
@@ -42,6 +43,7 @@ typedef struct
     udp_info_t gps_udp_info;
     int osi_mode;
     char *base_path;
+    char *lcmdefs_path;
     int send_opos;
     double vx_knots;
     double latitude;
@@ -86,6 +88,23 @@ int start_lcm_logger(senlcm_uvc_osi_t *osi, state_t *state)
 
         sprintf(cmd_str, "mkdir -p %s\n", path_name);
         system(cmd_str);
+	
+
+	// copy the mission file to the data directory
+	char mission_filename[64] = {0};
+	strftime(mission_filename, sizeof(mission_filename), acfr_format_r, &tm);
+	strcat(mission_filename, osi->mission_name);
+	sprintf(cmd_str, "cp  /media/Missions/%s.* %s\n", osi->mission_name, path_name);
+	system(cmd_str);
+	
+	// make a copy of the lcmdefs directory
+	char lcmdefs_filename[64] = {0};
+        char lcmdefs_format[64] = "r%Y%m%d_%H%M%S_lcmdefs.tgz";
+        strftime(lcmdefs_filename, sizeof(lcmdefs_filename), lcmdefs_format, &tm);
+
+	sprintf(cmd_str, "tar czf %s/%s %s", path_name, lcmdefs_filename, state->lcmdefs_path);
+	system(cmd_str);
+	
         //sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 -i --split-mb=64 %s &\n", path_name);
         sprintf(cmd_str, "lcm-logger -v -c PROSILICA_..16 %s/%s &\n", path_name, lcm_file_name);
         system(cmd_str);
@@ -488,6 +507,7 @@ void usbl_fix_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_u
 
         state->send_opos = 0;
     }
+	
 }
 
 
@@ -518,6 +538,20 @@ void task_planner_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
 		nmea_sprintf (msg, "$OPK,%3.5f,%3.5f,30,1*", state->latitude, state->longitude);
 		acfr_sensor_write(state->sensor, msg, strlen(msg));		
 	}
+}
+
+
+
+void acfr_nav_handler (const lcm_recv_buf_t *rbuf, const char *channel, const acfrlcm_auv_acfr_nav_t *nav, void *u)
+{
+	
+	state_t *state = (state_t *)u;
+	char msg[256];
+	if(state->send_opos)
+	{
+	    nmea_sprintf(msg, "$OPOS,%3.7f,%3.7f,%3.7f,50.0,18.0*",nav->latitude, nav->longitude, nav->vx / 0.51444);
+            acfr_sensor_write(state->sensor, msg, strlen(msg));		
+        }
 }
 
 int program_exit;
@@ -552,18 +586,26 @@ int main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
 
+    sprintf(key, "%s.send_opos", rootkey);
+    state.send_opos = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    
     // get the base image path
     sprintf(key, "%s.base_path", rootkey);
     state.base_path = bot_param_get_str_or_fail(state.sensor->param, key);
     state.osi_mode = SENLCM_UVC_OSI_T_MODE_STOPPED;
-    state.send_opos = 0;
+
+    // get the lcmdefs path
+    sprintf(key, "%s.lcmdefs_path", rootkey);
+    state.lcmdefs_path = bot_param_get_str_or_fail(state.sensor->param, key);
+
 
     acfr_sensor_canonical(state.sensor, '\n', '\r');
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
     senlcm_uvc_omstart_t_subscribe(state.lcm, "UVC_OMSTART.IVERAME", &omstart_handler, &state);
     senlcm_uvc_omstop_t_subscribe(state.lcm, "UVC_OMSTOP.IVERAME", &omstop_handler, &state);
-    senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX.IVERAME", &usbl_fix_handler, &state);
+    //senlcm_usbl_fix_t_subscribe(state.lcm, "USBL_FIX.IVERAME", &usbl_fix_handler, &state);
     acfrlcm_auv_global_planner_t_subscribe(state.lcm, "TASK_PLANNER_COMMAND.IVERAME", &task_planner_handler, &state);
+    acfrlcm_auv_acfr_nav_t_subscribe(state.lcm, "ACFR_NAV.TOP", &acfr_nav_handler, &state);
 
     // create a UDP socket to send the GPRMC message out on
     create_udp_send(&state.gps_udp_info, "127.0.0.1", GPS_PORT);

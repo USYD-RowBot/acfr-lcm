@@ -382,7 +382,7 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_dvl_t *dvl, state_c* state)
 {
-    auv_data_tools::Evologics_Fix_Data usbl_data;
+
 
     const double bad_value = 999.99;
 
@@ -402,8 +402,9 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	}
 
 	state->bottomLock = btv_ok;
-
-	if( btv_ok )
+	state->altitude = dvl->alt;
+	
+	//if( btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)dvl->utime/1e6);
@@ -423,7 +424,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	    rdi_data.vz = dvl->vz;
 	    rdi_data.COG = 0;   // FIXME
 	    rdi_data.SOG = 0;   // FIXME
-	    rdi_data.bt_status = 0;
+	    rdi_data.bt_status = btv_ok ? 0 : 1;
 	    rdi_data.h_true = 0;   // FIXME
 	    rdi_data.p_gimbal = 0;   // FIXME
 	    rdi_data.sv = 1500;
@@ -437,6 +438,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
             rdi_data.print(state->raw_out);
 	        state->raw_out << endl;
 	    }
+	
     }
 }
 
@@ -498,6 +500,5 @@ void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channe
         state->raw_out << endl;
     }
 }
-
 
 

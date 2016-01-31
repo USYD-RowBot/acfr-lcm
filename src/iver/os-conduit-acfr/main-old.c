@@ -472,7 +472,7 @@ acfr_nav_callback (const lcm_recv_buf_t *rbuf, const char *channel,
 
     if(state->sendOPOS)
     {
-        nmea_sprintf(msg, "$OPOS,%3.7f,%3.7f,%3.7f*",nav->latitude, nav->longitude, nav->vx / 0.51444);
+        nmea_sprintf(msg, "$OPOS,%3.7f,%3.7f,%3.7f,0.0,0.0*",nav->latitude, nav->longitude, nav->vx / 0.51444);
         gsd_write (state->gsd, msg, strlen (msg));
     }
 

@@ -1,5 +1,6 @@
 macro (perlsx_opencv)
-  perlsx_find_package (OpenCV "on ubuntu `sudo apt-get install libcv-dev libcvaux-dev libhighgui-dev`" ${ARGN})
+    find_package(OpenCV REQUIRED)
+  #perlsx_find_package (OpenCV "on ubuntu `sudo apt-get install libcv-dev libcvaux-dev libhighgui-dev`" ${ARGN})
   if (OpenCV_FOUND)
     include_directories (${OpenCV_INCLUDE_DIR})
     set (PERLSX_OPENCV ${OpenCV_LIBS})
