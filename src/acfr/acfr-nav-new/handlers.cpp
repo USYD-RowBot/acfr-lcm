@@ -384,7 +384,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 {
 
 
-    const double bad_value = 999.99;
+    const double bad_value = 999.999;
 
 	/*
 	 * Check the status of the bottom tracking
