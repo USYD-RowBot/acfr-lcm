@@ -124,7 +124,9 @@ class Evologics_Modem
         char *ip;
         char *port;
         bool use_ip_comm;
-        char term;
+        char *term;
+        char term_char;
+	int term_len;
 
         // logging of received modem data
         int received_logging; // 0 == off, 1 == RECV*, 2 == all

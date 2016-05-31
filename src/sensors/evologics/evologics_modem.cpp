@@ -174,6 +174,35 @@ int Evologics_Modem::load_config(char *program_name)
         exit(1);
     }
 
+    sprintf(key, "%s.term", rootkey);
+    if (bot_param_has_key(param, key))
+    {
+	int terms[4];
+	int num_term = bot_param_get_int_array(param, key, terms, 4);
+	term = (char *)malloc(num_term);
+	for(int i=0; i<num_term; i++)
+	    term[i] = terms[i] & 0xFF;
+	term_len = num_term;
+
+//	bot_param_get_str(param, key, &term);
+//	term_len = strlen(term);
+    }
+    else
+    {
+	term = (char *)malloc(1);
+        if (use_serial_comm)
+        {
+	    *term = '\r';
+            term_len = 1;
+        }
+            
+        if (use_ip_comm)
+        {
+	    *term = '\n';
+            term_len = 1;
+        }
+    }
+
     // check if we are using an IP connection
     sprintf(key, "%s.logging_level", rootkey);
     received_logging = 0; // set default to off
@@ -276,16 +305,28 @@ int Evologics_Modem::init()
     {
        //evo = new Evologics(device, baud, parity, lcm, ping_timeout);
        fd = open_serial_port();
-       term = '\r';
+//       if(term == NULL)
+//       {
+//           term_char = '\r';
+//           term = &term_char;
+//           term_len = 1;
+//       }
+//       term = '\r';
     } else if (use_ip_comm) {
        //evo = new Evologics(ip, inet_port, lcm, ping_timeout);
        fd = open_port(ip, port);
-       term = '\n';
+//       term = '\n';
+//       if(term == NULL)
+//       {
+//           term_char = '\n';
+//           term = &term_char;
+//           term_len = 1;
+//      }
     } else {
        printf("Unknown communications protocol.  Can't initialise Evologics object.\n");
        exit(1);
     } 
-
+printf("Term char = 0x%02X\n", (unsigned int)*term);
     thread_exit = 0;
     pthread_mutex_init(&flags_lock, NULL);
     pthread_mutex_init(&write_lock, NULL);
@@ -515,7 +556,7 @@ Evologics_Modem::Evologics(char *_device, int _baud, char *_parity, lcm::LCM *_l
 
     init(_lcm, _ping_timeout);
     fd = open_serial_port();
-    term = '\r';
+    term = NULL;
     start_threads();
 }
 
@@ -528,7 +569,7 @@ Evologics_Modem::Evologics(char *_ip, char *_port, lcm::LCM *_lcm, int _ping_tim
 
     init(_lcm, _ping_timeout);
     fd = open_port(ip.c_str(), port.c_str());
-    term = '\n';
+    term = NULL;
     start_threads();
 }
 
@@ -791,7 +832,7 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
         command_sent = "";
         pthread_mutex_unlock(&flags_lock);
         im_sent++;
-        //send_command("AT?T");
+        send_command("AT?T");
     }
     else if(strstr((const char *)d, "DELIVERED") != NULL)
     {
@@ -807,7 +848,9 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
         cout << "Evologics: Received AT?T reply " << d << endl;
         char *tokens[4];
         evologics_range_t er;
-        if(chop_string(d, tokens, 4) == 4)
+	er.time = atoi(d);
+/*
+        if(chop_string(d, tokens, 4) == 1)
         {
             er.time = atoi(tokens[3]);
         } else if(chop_string(d, tokens, 1) == 1) {
@@ -815,6 +858,7 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
         } else {
             return 0;
         }
+*/
         er.target = last_im_target;
         er.source = local_address;
         er.utime = last_im_timestamp;
@@ -823,6 +867,7 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
         char usbl_range_channel_name[64];
         get_target_name(er.target, target_name);
         sprintf(usbl_range_channel_name, "EVO_RANGE.%s", target_name.c_str());
+
         lcm->publish(usbl_range_channel_name, &er);
         
         pthread_mutex_lock(&flags_lock);
@@ -1188,7 +1233,8 @@ int Evologics_Modem::send_lcm_data(unsigned char *d, int size, int target, const
        pthread_mutex_lock(&(write_lock));
        write(fd, im_msgbuf, strlen(im_msgbuf));
        write(fd, dout, data_size);
-       write(fd, &term, 1);
+       write(fd, term, term_len);
+       //write(fd, &term, 1);
        pthread_mutex_lock(&flags_lock);
        sending_command = true;
        sending_im = true;
@@ -1209,7 +1255,8 @@ int Evologics_Modem::send_lcm_data(unsigned char *d, int size, int target, const
            pthread_mutex_lock(&(write_lock));
            write(fd, im_msgbuf, strlen(im_msgbuf));
            write(fd, dout, data_size);
-           write(fd, &term, 1);
+       //    write(fd, &term, 1);
+           write(fd, term, term_len);
            pthread_mutex_lock(&flags_lock);
            sending_command = true;
            sending_data = true;
@@ -1228,7 +1275,10 @@ int Evologics_Modem::send_lcm_data(unsigned char *d, int size, int target, const
 int Evologics_Modem::send_command(const char *d)
 {
     char msg[32];
-    sprintf(msg, "%s%c", d, term);
+    memset(msg, 0, 32);
+    memcpy(msg, d, strlen(d));
+    memcpy(&msg[strlen(d)], term, term_len);
+  //  sprintf(msg, "%s%s", d, term);
     cout << "Queuing command " << msg;
     //send_data((unsigned char *)msg, strlen(msg), evo_command, 0, 0);
     //DEBUG_PRINTF(("Sending command: %.*s\n", strlen(msg), &msg));
