@@ -1,0 +1,18 @@
+package acfrlcm;
+
+struct auv_nextGen_motor_command_t
+{
+    int64_t utime;
+	
+    double vertFwd;         // RPM
+    double vertRear;
+    double latFwd;
+    double latRear;	
+    double tailThruster;    // RPM
+    double tailRudder;      // Rad
+    double tailElevator;    // Rad
+    
+    const int16_t AUTO=0;
+    const int16_t REMOTE=1;
+    int16_t source;         // either remote or auto
+}

@@ -155,7 +155,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("RDI", handle_rdi, this);
 	lcm.subscribeFunction("PAROSCI", handle_parosci, this);
 	lcm.subscribeFunction("YSI", handle_ysi, this);
-	lcm.subscribeFunction("ACFR_NAV", handle_nav, this);
+	lcm.subscribeFunction("ACFR_NAV.*", handle_nav, this);
 	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
 	lcm.subscribeFunction("LEAK", handle_leak, this);
 	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
@@ -197,10 +197,6 @@ int HealthMonitor::loadConfig(char *program_name)
 		abort_on_out_of_bound = false;
 		std::cout << "We will NOT abort when out ot bounds!!\n\n\n";
 	}
-
-	sprintf(key, "%s.max_depth", rootkey);
-	max_depth = bot_param_get_double_or_fail(param, key);
-	std::cout << "Set max depth to: " << max_depth << std::endl;
 
 	sprintf(key, "%s.max_depth", rootkey);
 	max_depth = bot_param_get_double_or_fail(param, key);
@@ -270,6 +266,9 @@ int HealthMonitor::loadConfig(char *program_name)
 	if (0 == bot_param_get_double(param, key, &tmp_double))
 		oas_timeout = tmp_double;
 
+        sprintf(key, "%s.vehicle_name", rootkey);
+        vehicle_name = bot_param_get_str_or_fail(param, key);
+ 
 	return 1;
 }
 
@@ -352,7 +351,9 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	status.heading = (short)(nav.heading * 10.0);
 	status.img_count = image_count;
 
-	lcm.publish("AUVSTAT.IVERACFR", &status);
+        char channel_name[128];
+        snprintf(channel_name, 128, "AUVSTAT.%s", vehicle_name);
+	lcm.publish(channel_name, &status);
 
 	return 1;
 }

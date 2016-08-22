@@ -27,7 +27,7 @@ TaskPlanner::TaskPlanner()
     // install the LCM handlers we need
     lcm.subscribeFunction("TASK_PLANNER_RESPONSE", onTaskPlannerResponse, this);
     lcm.subscribeFunction("AUV_COMMAND", onTaskCommand, this);
-    lcm.subscribeFunction("ACFR_NAV", onAcfrNav, this);
+    lcm.subscribeFunction("ACFR_NAV.*", onAcfrNav, this);
     
     inAbort = false;
 }

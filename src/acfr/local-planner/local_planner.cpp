@@ -84,7 +84,7 @@ LocalPlanner::LocalPlanner() :
 {
 
 	// sunscribe to the required LCM messages
-	lcm.subscribeFunction("ACFR_NAV", onNavLCM, this);
+	lcm.subscribeFunction("ACFR_NAV.*", onNavLCM, this);
 	lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
 	lcm.subscribeFunction("GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);

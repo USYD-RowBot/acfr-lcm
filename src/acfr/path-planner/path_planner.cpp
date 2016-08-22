@@ -99,7 +99,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 path_planner::path_planner()
 {
-    lcm.subscribeFunction("ACFR_NAV", on_nav, this);
+    lcm.subscribeFunction("ACFR_NAV.*", on_nav, this);
     lcm.subscribeFunction("HEARTBEAT_1HZ", calculate, this);                                
     lcm.subscribeFunction("LEG_COMMAND", on_path_command, this);
 }

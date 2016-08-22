@@ -12,7 +12,7 @@
 #include "perls-common/lcm_util.h"
 #include "perls-lcmtypes/acfrlcm_auv_acfr_nav_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_control_t.h"
-#include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_nextGen_motor_command_t.h"
 
 // set the delta T to 0.1s, 10Hz loop rate
 #define CONTROL_DT 0.1
@@ -203,12 +203,12 @@ static void control_callback(const lcm_recv_buf_t *rbuf, const char *channel,
 
 // Remote control callback
 void motor_callback(const lcm_recv_buf_t *rbuf, const char *ch,
-                    const acfrlcm_auv_iver_motor_command_t *mc, void *u)
+                    const acfrlcm_auv_nextGen_motor_command_t *mc, void *u)
 {
     state_t *state = (state_t *)u;
 
     // we got a remote command, set the time and mode
-    if(mc->source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
+    if(mc->source == ACFRLCM_AUV_NEXTGEN_MOTOR_COMMAND_T_REMOTE)
     {
         state->remote_time = mc->utime;
         state->remote = 1;
@@ -306,19 +306,18 @@ int main(int argc, char **argv)
                                      &state);
     acfrlcm_auv_control_t_subscribe(state.lcm, "AUV_CONTROL", &control_callback,
                                     &state);
-    acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, "IVER_MOTOR",
+    acfrlcm_auv_nextGen_motor_command_t_subscribe(state.lcm, "NEXTGEN_MOTOR",
             &motor_callback, &state);
 
     periodic_info timer_info;
     make_periodic(CONTROL_DT * 1000000, &timer_info);
 
     double prop_rpm = 0.0;
-    double roll_offset = 0.0;
     double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
     long loopCount = 0;
 
-    acfrlcm_auv_iver_motor_command_t mc;
+    acfrlcm_auv_nextGen_motor_command_t mc;
 
     // main loop
     while (!main_exit)
@@ -326,7 +325,7 @@ int main(int argc, char **argv)
         loopCount++;
 
         // reset the motor command
-        memset(&mc, 0, sizeof(acfrlcm_auv_iver_motor_command_t));
+        memset(&mc, 0, sizeof(acfrlcm_auv_nextGen_motor_command_t));
 
         if( state.remote )
         {
@@ -463,7 +462,6 @@ int main(int argc, char **argv)
             if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
             {
                 rudder_angle = 0;
-                roll_offset = 0;
             }
             else
             {
@@ -471,17 +469,8 @@ int main(int argc, char **argv)
                 // Account for side slip by making the velocity bearing weighted
                 // 	on the desired heading
                 rudder_angle = pid(&state.gains_heading, diff_heading, 0.0, CONTROL_DT);
-
-                // Roll compenstation
-                // We try to keep the AUV level, ie roll = 0
-                roll_offset = pid(&state.gains_roll, nav.roll, 0.0, CONTROL_DT);
             }
 
-            // Add in the roll offset
-            double top       = rudder_angle - roll_offset;
-            double bottom    = rudder_angle + roll_offset;
-            double port      = plane_angle  - roll_offset;
-            double starboard = plane_angle  + roll_offset;
 
             //	printf("prop_rpm: %f\n",prop_rpm);
             // Reverse all the fin angles for reverse direction (given rpm is
@@ -492,37 +481,38 @@ int main(int argc, char **argv)
             if ((nav.vx < -0.05) && (prop_rpm < -100))
             {
                 printf("reversing, flipping fin control\n");
-                top       = -top;
-                bottom    = -bottom;
-                port      = -port;
-                starboard = -starboard;
+                rudder_angle       = -rudder_angle;
+                plane_angle      = -plane_angle;
             }
 
-            //printf("hnav:%f, hcmd:%f, rangle:%f t:%.1f b:%.1f p:%.1f s:%.1f\n",
-            // state.nav.heading, state.command.heading, rudder_angle, top, bottom, port, starboard);
+            //printf("hnav:%f, hcmd:%f, rangle:%f r:%.1f p:%.1f \n",
+            // state.nav.heading, state.command.heading, rudder_angle, plane_angle);
 
             // Set motor controller values
-            mc.main = prop_rpm;
-            mc.top = top;
-            mc.bottom = bottom;
-            mc.port = port;
-            mc.starboard = starboard;
+            mc.tailThruster = prop_rpm;
+            mc.tailRudder = rudder_angle;
+            mc.tailElevator = plane_angle;
+            mc.vertFwd = 0;
+            mc.vertRear = 0;
+            mc.latFwd = 0;
+            mc.latRear = 0;
 
-            // Print out and publish IVER_MOTOR.TOP status message every 10 loops
+
+            // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
             if( loopCount % 10 == 0 )
             {
-                acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR.TOP", &mc);
+                acfrlcm_auv_nextGen_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
                 printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                         nav.vx, cmd.vx, (cmd.vx - nav.vx) );
                 printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
                         nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
                 printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
                         nav.pitch/M_PI*180, pitch/M_PI*180, (pitch - nav.pitch)/M_PI*180 );
-                printf( "Roll: curr=%3.2f, des=%3.2f, diff=%3.2f offset: %3.2f\n",
-                        nav.roll/M_PI*180, 0.0, -nav.roll/M_PI*180, roll_offset/M_PI*180 );
-                printf( "Motor   : main=%4d\n", (int)mc.main);
-                printf( "Fins    : top=%.2f, bot=%.2f, port=%.2f star=%.2f\n",
-                        mc.top, mc.bottom, mc.port, mc.starboard);
+                printf( "Roll: curr=%3.2f, des=%3.2f, diff=%3.2f \n",
+                        nav.roll/M_PI*180, 0.0, -nav.roll/M_PI*180 );
+                printf( "Motor   : main=%4d\n", (int)mc.tailThruster);
+                printf( "Fins    : rudder_angle=%.2f, plane_angle=%.2f \n",
+                        mc.tailRudder, mc.tailElevator);
                 printf( "\n" );
             }
 
@@ -545,8 +535,8 @@ int main(int argc, char **argv)
 
         }
         mc.utime = timestamp_now();
-        mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
-        acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
+        mc.source = ACFRLCM_AUV_NEXTGEN_MOTOR_COMMAND_T_AUTO;
+        acfrlcm_auv_nextGen_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR", &mc);
 
         // wait for a timer event
         wait_period(&timer_info);

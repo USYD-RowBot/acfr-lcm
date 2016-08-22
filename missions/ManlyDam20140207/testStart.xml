@@ -5,6 +5,7 @@
         This is a test mission
     </desc>
     <global>
+        <location lat="-33.7763" lon="151.2475" />
         <turn_radius m='5' />
         <drop_distance m="4" />
         <drop_angle rad="0.7" />

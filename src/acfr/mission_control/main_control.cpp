@@ -22,7 +22,7 @@ main_control::main_control(lcm::LCM *_lcm)
     lcm = _lcm;
     
     // install the LCM handlers we need
-    lcm->subscribeFunction("ACFR_NAV", on_acfr_nav, this);
+    lcm->subscribeFunction("ACFR_NAV.*", on_acfr_nav, this);
     lcm->subscribeFunction("MISSION_COMMAND", on_mission_command, this);
     
     // Create the mission control object

@@ -91,6 +91,7 @@ private:
 
     int64_t dvlbl_utime;
     
+    char *vehicle_name;
     
 };
 

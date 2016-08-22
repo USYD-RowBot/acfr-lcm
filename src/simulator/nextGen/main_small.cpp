@@ -1,4 +1,4 @@
-// Iver simulator
+// nextGen AUV simulator
 
 
 #include <iostream>
@@ -12,7 +12,7 @@
 #include <libplankton/auv_map_projection.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_nextGen_motor_command_t.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
@@ -69,7 +69,8 @@ SMALL::Vector3D grav;
 
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
-SMALL::Vector6D in;
+//SMALL::Vector6D in;
+auv_nextGen_motor_command_t in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
@@ -130,21 +131,21 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 
     // Prop force calculations
     double prop_alpha = 0.02290; //0.01; // advance ratio
-    double prop_diameter = 0.085;
+    double prop_diameter = 0.25;
     double rho = 1030;              // Water density
     double J0 = 0; // open water advance coefficient
     double Kt = 0; // propeller torque coefficient
     
     // Sanity check on input
-    if(in(0) != in(0))
+    /*if(in(0) != in(0))
     {
         in(0) = 0;
         cerr << "In 0 NaN" << endl;
-    }
+    }*/
     
     // propeller revolutions per second (rps)
     // converting desired rpm to rps
-    double n = in(0)/60;
+    double n = in.tailThruster/60;
     
     // limit the max rpm to 1500 = 25 rps
     if(fabs(n) > 25)
@@ -181,28 +182,17 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     if(fabs(prop_force) > 10.0)
         prop_force = prop_force / fabs(prop_force) * 10;
     
-    // set the fins to zero is we aren't moving as the model doesn't behave
-    double top, bottom, port, starboard;
-    top = in(2);
-    bottom = in(3);
-    port = in(4);
-    starboard = in(5);
-
     // external applied forces
     double X, Y, Z, K, M, N;
-    X = prop_force;
+    X = prop_force * cos(in.tailRudder) * cos(in.tailElevator);
 
-//    Y = Ydr * pow(u, 2) * (top + bottom);
-//    Z = Zdp * pow(u, 2) * (port + starboard);
-//    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
-//    M = Mdp * pow(u, 2) * (port + starboard);
-//    N = Ndr * pow(u, 2) * (top + bottom);
+    Y = prop_force * sin(in.tailRudder) * cos(in.tailElevator);
+    Z = prop_force * sin(in.tailElevator);
+    K = 0;        // assume zero roll moment - should account for roll moment of thruster
 
-    Y = 0.25 * Ydr * fabs(u) * u * (top + bottom);
-    Z = 0.25 * Zdp * fabs(u) * u * (port + starboard);
-    K = 0.25 * Kdp * fabs(u) * u * ((top - bottom) + (port - starboard));
-    M = 0.25 * Mdp * fabs(u) * u * (port + starboard);
-    N = 0.25 * Ndr * fabs(u) * u * (top + bottom);
+    // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
+    M = 7.5 * Z * 1.25; // moment from vertical force on pitch about CoG
+    N = 7.5 * Y * 1.25; // moment from lateral force on heading about CoG
 
 
 
@@ -304,10 +294,11 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     t2 = latDv * latV;
     //    t2 = (latF - latGn - latCv * latV - latDv * latV);
     //    cout << "F = " << t1(1) << " " << t2(1) << " " << t1(2) << " " << t2(2) << " " << t1(3) << " " << t2(3) << " "<< endl;
-    
     static int count = 0;
     if (count++ > 999)
-    {
+    { 
+        cout << count << endl;
+        cout << "propF = " << prop_force << endl;
         cout << "longF = " << longF.toString() << endl;
         cout << "longGn = " << longGn.toString() << endl;
         cout << "longDv = " << t1.toString() << endl;
@@ -353,234 +344,13 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     dxdt[11] = nu_dot[5];
 
 }
-/*
-void auv_accel(SMALL::Vector3D &acc) // determine the acceleration on the vehicle given the vehicle states (used for IMU sensor simulation)
-{
-
-    double Xa, Ya, Za;
-    double u, v, w, p, q, r;
-    double phi, theta, psi;
-    Xa = state[0];
-    Ya = state[1];
-    Za = state[2];
-    phi = state[3];
-    theta = state[4];
-    psi = state[5];
-    u = state[6];
-    v = state[7];
-    w = state[8];
-    p = state[9];
-    q = state[10];
-    r = state[11];
-
-    SMALL::Vector4D nuLinear, nuRotational;
-    nuLinear = u, v, w, 0.0;
-    nuRotational = p, q, r, 0.0;
-
-    // adjustments for a constant water current (or wind)
-
-    SMALL::Rotation3D Cbn;
-    Cbn.setRollPitchYawRad(phi, theta, psi);
-
-    SMALL::Vector3D vc_n;
-    vc_n = CURRENT,0,0;
-    SMALL::Vector3D vc_b;
-    vc_b = (Cbn.i() * vc_n);
-
-    nuLinear(1) = nuLinear(1) - vc_b(1);
-    nuLinear(2) = nuLinear(2) - vc_b(2);
-    nuLinear(3) = nuLinear(3) - vc_b(3);
-
-    u = u - vc_b(1);
-    v = v - vc_b(2);
-    w = w - vc_b(3);
-
-
-    // make heading 0 to 2pi
-    while(psi < 0)
-        psi += 2 * M_PI;
-    while(psi > (2 * M_PI))
-        psi -= 2 * M_PI;
-
-    // Where we are at, ie the auv pose
-    SMALL::Pose3D auvPose;
-    auvPose.setPosition(Xa, Ya, Za);
-    auvPose.setRollPitchYawRad(phi, theta, psi);
-
-    // Prop force calculations
-    double prop_alpha = 0.02290; //0.01;
-    double prop_diameter = 0.085;
-    double rho = 1030;              // Water density
-    double J0 = 0; // open water advance coefficient
-    double Kt = 0; // propeller torque coefficient
-
-    // Sanity check on input
-    if(in(0) != in(0))
-    {
-        in(0) = 0;
-        cerr << "In 0 NaN" << endl;
-    }
-
-    // propeller revolutions per second (rps)
-    // converting desired rpm to rps
-    double n = in(0)/60;
-
-    // limit the max rpm to 1500 = 25 rps
-    if(fabs(n) > 25)
-        n = n / fabs(n) * 25;
-
-    // advance velocity as per Fossen eq 4.6
-    double omega = 0.1;
-    double Va = (1 - omega) * u;
-
-    if(fabs(n) > 1e-3)
-        J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
-
-    double alpha1 = 0.5;
-    double alpha2 = -4.0/11.0;
-    double alpha3 = (0.45 - alpha1)/(-0.2);
-    double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
-    double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
-
-    if (J0 > 0)
-        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
-    else if (J0 > -0.2)
-        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
-    else
-        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
-
-    double prop_force;
-    prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
-    if(prop_force !=  prop_force)
-    {
-        cerr << "Prop force error" << endl;
-        prop_force = 0;
-    }
-    if(fabs(prop_force) > 10.0)
-        prop_force = prop_force / fabs(prop_force) * 10;
-
-    // set the fins to zero is we aren't moving as the model doesn't behave
-    double top, bottom, port, starboard;
-    top = in(2);
-    bottom = in(3);
-    port = in(4);
-    starboard = in(5);
-
-    // external applied forces
-    double X, Y, Z, K, M, N;
-    X = prop_force;
-    //    Y = Ydr * pow(u, 2) * (top + bottom);
-    //    Z = Zdp * pow(u, 2) * (port + starboard);
-    //    K = Kdp * pow(u, 2) * ((top - bottom) + (port - starboard));
-    //    M = Mdp * pow(u, 2) * (port + starboard);
-    //    N = Ndr * pow(u, 2) * (top + bottom);
-
-        Y = Ydr * fabs(u) * u * (top + bottom);
-        Z = Zdp * fabs(u) * u * (port + starboard);
-        K = Kdp * fabs(u) * u * ((top - bottom) + (port - starboard));
-        M = Mdp * fabs(u) * u * (port + starboard);
-        N = Ndr * fabs(u) * u * (top + bottom);
-
-
-    // Force vectors, props and control surfaces
-    SMALL::Vector3D longF, latF;
-    longF = X, Z, M;
-    latF = Y, K, N;
-
-
-    // Hydrodynamic Forces and Moments
-    
-//    X = Xuu * u * fabs(u) + (Xwq - m) * w * q
-//        + (Xqq + m * xG) * pow(q, 2) + (Xvr + m) * v * r
-//        + (Xrr + m * xG) * pow(r, 2) - m * yG * p * q
-//        - m * zG * p * r + prop_force;
-//
-//    Y = Yvv * v * fabs(v) + Yrr * r * fabs(r)
-//        + m * yG * pow(r, 2) + (Yur - m) * u * r
-//        + (Ywp + m) * w * p + (Ypq - m * xG) * p * q
-//        + Yuv * u * v + m * yG * pow(p, 2) - m * zG * q * r
-//        + Ydr * pow(u, 2) * rudder;
-//
-//    Z = Zww * w * fabs(w) + Zqq * q * fabs(q)
-//        + (Zuq + m) * u * q + (Zvp - m) * v * p
-//        + (Zrp - m * xG) * r * p + Zuw * u * w
-//        + m * zG * (pow(p, 2) + pow(q, 2)) - m * yG * r * q
-//        + Zdp * pow(u, 2) * plane;
-//
-//    K = Kpp * p * fabs(p) - (Izz - Iyy) * q * r
-//        + m * yG * (u * q - v * p) - m * zG * (w * p - u * r)
-//        + in(1);
-//
-//    M = Mww * w * fabs(w) + Mqq * q * fabs(q)
-//        + (Muq - m * xG) * u * q + (Mvp + m * xG) * v * p
-//        + (Mrp - (Ixx - Izz)) * r * p
-//        + m * zG * (v * r - w * q) + Muw * u * w
-//        + Mdp * pow(u, 2) * plane;
-//
-//    N = Nvv * v * fabs(v) + Nrr * r * fabs(r)
-//        + (Nur - m * xG) * u * r + (Nwp + m * xG) * w * p
-//        + (Npq - (Iyy - Ixx)) * p * q
-//        - m * yG * (v * r - w * q) + Nuv * u * v
-//        + Ndr * pow(u, 2) * rudder;
-
-
-    // For decoupled lateral and longitudinal forces as per Fossen 7.5.6
-
-    // Velocity vectors, current state
-    SMALL::Vector3D longV, latV;
-    longV = u, w, q;
-    latV = v, p, r;
-
-    // Damping matrices modified to match the above equations
-    SMALL::Matrix33 longDv, latDv;
-    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q),
-            -Zuq * q - Zuw * w, 					-Zww * fabs(w), 			-Zqq * fabs(q),
-            - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
-
-    latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0,// new addition based on above equations
-//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
-            -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
-
-    // Coriolis matrices
-    SMALL::Matrix33 longCv, latCv;
-    longCv = 	0.0, 		0.0, 					0.0,
-            0.0, 		0.0, 					-(m - Xudot) * u,
-            0.0, 		(Zwdot - Xudot) * u, 	m * xG * u;
-
-    latCv = 	0.0, 		0.0, 					(m- Xudot) * u,
-            0.0, 		0.0, 					0.0,
-            (Xudot - Yvdot) * u, 	0.0, 		m * xG * u;
-
-    // Gravity and buoyancy
-    SMALL::Vector3D longGn, latGn;
-    longGn = 0.0, 0.0, W * zG  * sin(theta);
-    latGn = 0.0, W * zG * sin(phi), 0.0;
-
-    SMALL::Vector3D t1, t2;
-
-    t1 = longDv * longV;
-    t2 = latDv * latV;
-
-    SMALL::Vector3D longDot, latDot;
-    longDot = (longF - longGn - longCv * longV - longDv * longV) / longM;
-    latDot = (latF - latGn - latCv * latV - latDv * latV) / latM;
-
-    acc = longDot[0], latDot[0], longDot[1];
-
-}
-*/
 
 // motor command callback
-void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_iver_motor_command_t *mc, lcm::LCM *lcm) 
+void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nextGen_motor_command_t *mc, lcm::LCM *lcm) 
 {
-    in(0) = mc->main;
-    in(1) = 0;
-    in(2) = -mc->top;// / 180.0 * M_PI;
-    in(3) = -mc->bottom;
-    in(4) = -mc->port;// / 180.0 * M_PI;
-    in(5) = -mc->starboard;
+    in = *mc;
 }
+
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
 {
@@ -636,10 +406,18 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             printf("%2.3f ", state(i));
             fp << state(i) << " ";
         }
-        for(int i=0; i<6; i++) {
-            printf("%2.3f ", in(i));
-            fp << in(i) << " ";
-        }
+        printf("%2.3f ", in.vertFwd);
+        fp << in.vertFwd << " ";
+        printf("%2.3f ", in.vertRear);
+        fp << in.vertRear << " ";
+        printf("%2.3f ", in.latFwd);
+        fp << in.latFwd << " ";
+        printf("%2.3f ", in.tailThruster);
+        fp << in.tailThruster << " ";
+        printf("%2.3f ", in.tailRudder);
+        fp << in.tailRudder << " ";
+        printf("%2.3f ", in.tailElevator);
+        fp << in.tailElevator << " ";
         fp << "\n";
         fp.close();
         printf("\n");
@@ -648,7 +426,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.IVERSIM", &nav);
+        lcm->publish("ACFR_NAV.NEXTGENSIM", &nav);
 
     }
     //	lcm->publish("ACFR_NAV", &nav);
@@ -947,7 +725,7 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
+    lcm.subscribeFunction("NEXTGEN_MOTOR", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
     lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
@@ -977,10 +755,13 @@ int main(int argc, char **argv)
     state(10) = 0;
     state(11) = 0;
 
-    in(0) = 0;
-    in(1) = 0;
-    in(2) = 0;
-    in(3) = 0;
+    in.vertFwd = 0;
+    in.vertRear = 0;
+    in.latFwd = 0;
+    in.latRear = 0;
+    in.tailThruster = 0;
+    in.tailRudder = 0;
+    in.tailElevator = 0;
 
     fp_nav.open( "/tmp/log_nav.txt", ios::out);
     fp.open("/tmp/log.txt", ios::out);
