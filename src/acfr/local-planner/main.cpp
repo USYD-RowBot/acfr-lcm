@@ -1,23 +1,22 @@
-/*
- *  Local trajectory planner
- * 
- *  Takes in either one or two way points and sends the AUV along the
- *  line.  It is the responsibility of the module above to determine
- *  if we have reached out goal.
- *
- *  Christian Lees
- *  Navid Nourani-Vatani
- *
- *  ACFR
- *  21/11/12
- */
+#include "local_planner.hpp"
 
-#include <lcm/lcm-cpp.hpp>
-#include <signal.h>
-#include <string>
-#include <libgen.h>
-#include <fstream>
-#include <bot_param/param_client.h>
-#include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
+int main(int argc, char **argv)
+{
+	// install the signal handler
+
+	LocalPlanner *lp = new LocalPlanner();
+	if (!lp->loadConfig(basename(argv[0])))
+	{
+		cerr << "Failed loading config" << endl;
+		return 0;
+	}
+
+    // this is a blocking call that only returns when
+    // the program signals an exit condition
+	lp->process();
+
+	delete lp;
+
+	return 0;
+}
+

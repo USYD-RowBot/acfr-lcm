@@ -1,30 +1,16 @@
 #include <lcm/lcm-cpp.hpp>
-#include <signal.h>
-#include <string>
-#include <iomanip>
 #include <iostream>
-#include <libgen.h>
-#include <pthread.h>
-#include <error.h>
-#include <unistd.h>
-#include <bot_param/param_client.h>
+#include <fstream>
+
 #include "DubinsPath.h"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
-#include <fstream>
 
-#include <cstdio>
+#pragma once
 
-#ifndef LOCAL_PLANNER_HPP
-#define LOCAL_PLANNER_HPP
-
-using namespace std;
 
 #define DOUBLE_MAX std::numeric_limits< double >::max()
 #define ITERATION_NUM 3
@@ -152,10 +138,10 @@ public:
 	void printWaypoints( void ) const;
 	bool publishWaypoints(void);
 
-	vector<Pose3D> waypoints;
+	std::vector<Pose3D> waypoints;
 
 	lcm::LCM lcm;
-	ofstream fp, fp_wp;
+	std::ofstream fp, fp_wp;
 
 private:
 
@@ -165,7 +151,7 @@ private:
 
 		if ((pRel.getX() < forwardBound) &&
 			(pRel.getX() > -2 * forwardBound) &&
-			(fabs(pRel.getY()) < sideBound))
+			(std::fabs(pRel.getY()) < sideBound))
 		{
 			return true;
 		}
@@ -198,6 +184,7 @@ private:
 	acfrlcm::auv_global_planner_state_t gpState;
 
 	double turningRadius;
+	double minAltitude;
 	double maxPitch;
 	double lookaheadVelScale;
 	double maxDistFromLine;
@@ -220,4 +207,3 @@ private:
 	int64_t replanTime;
 
 };
-#endif
