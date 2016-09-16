@@ -46,11 +46,14 @@ enum
 */
 #define RC_OFFSET 505
 //#define RC_THROTTLE_OFFSET 415    // Iver
-#define RC_THROTTLE_OFFSET 507      // Mitch's
+#define RC_THROTTLE_OFFSET 493      // Testing 16092016 JJM
 #define RC_TO_RAD (0.071875*M_PI/180)*2
 //#define RC_TO_RPM 3.8             // Iver
 #define RC_TO_RPM 8              // Mitch
-
+#define RC_MAX_PROP_RPM 1500
+//#define RC_HALF_INPUT_RANGE 350 // Testing 160902016 JJM
+#define RC_DEADZONE 40 // Testing 160902016 JJM
+#define RCMULT 4.8 //RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE-RC_DEADZONE)
 
 int
 create_udp_listen(char *port)
@@ -91,9 +94,7 @@ create_udp_listen(char *port)
     {
         fprintf(stderr, "listener: failed to bind socket\n");
         return -2;
-    }
-    freeaddrinfo(servinfo);
-
+	}
     printf("UDP listen socket open on port %s\n", port);
 
     return sockfd;
@@ -107,6 +108,9 @@ parse_rc(char *buf, lcm_t *lcm)
     unsigned short channel_value;
     char channel_id;
     int channel_values[7];
+    int rcval = 0;
+
+    //float rcmult = RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE - RC_DEADZONE);
 
     if(buf[0] != 3 && buf[1] != 1)
         return 0;
@@ -117,7 +121,7 @@ parse_rc(char *buf, lcm_t *lcm)
         channel_id = (buf[i*2] & 0xFC) >> 2;
         channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
 
-        channel_values[channel_id] = channel_value;
+        channel_values[(int)channel_id] = channel_value;
 
     }
 
@@ -127,23 +131,67 @@ parse_rc(char *buf, lcm_t *lcm)
 #endif
 
 
-
+    // Controller Spektrum DX5e 3 postion switch used for mode
+    // marked: 0/1/2 output: 852/596/170 (approx) tested 16092016
+    // postion 2: automated (path planner) control, so do nothing
+    // postion 1: send zeroed lcm control messages stop prop, centre fins
+    // postion 0: RC control, send control messages based on RC input
     // create the LCM message to send
-    if(channel_values[RC_GEAR] > 500)
+    if(channel_values[RC_GEAR] > 724) // POS 0: RC 724 = cutoff between pos 0, pos1
     {
+#ifdef DEBUG       
+        printf("POS 0: %d\n", channel_values[RC_GEAR]);
+#endif
         acfrlcm_auv_iver_motor_command_t rc;
         rc.utime = timestamp_now();
         rc.top = -(channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
         rc.bottom = rc.top;
         rc.port = -(channel_values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
         rc.starboard = rc.port;
-        rc.main = (channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET) * RC_TO_RPM;
-        if(abs(rc.main) < 40)
+        
+        rcval = channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET;
+
+        // if in deadzone at centre
+        if (abs(rcval) < RC_DEADZONE)
+        {
             rc.main = 0;
+        }
+        else
+        {
+            rc.main = (rcval - RC_DEADZONE) * RCMULT;
+            if (rc.main > RC_MAX_PROP_RPM)
+                rc.main = RC_MAX_PROP_RPM;
+            else if (rc.main < -RC_MAX_PROP_RPM)
+                rc.main = -RC_MAX_PROP_RPM;
+        }        
+
+//       rc.main = (channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET) * RC_TO_RPM;
+//       if(abs(rc.main) < 40) #DEADZONE 
+//            rc.main = 0;
+
         rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
         acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
     }
-
+    else
+    {
+       // Use position 1 on rc gear switch to send zero movement command
+       if(channel_values[RC_GEAR] > 383) // POS 1: ZEROED 383 = cutoff between pos 1, pos 2
+        {
+#ifdef DEBUG       
+            printf("POS 1: %d\n", channel_values[RC_GEAR]);
+#endif
+            acfrlcm_auv_iver_motor_command_t rc;
+            rc.utime = timestamp_now();
+            rc.top = 0;
+            rc.bottom = 0;
+            rc.port = 0;
+            rc.starboard = 0;
+            rc.main = 0;
+            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
+            acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
+        }
+    }    
+    
     return 1;
 }
 
