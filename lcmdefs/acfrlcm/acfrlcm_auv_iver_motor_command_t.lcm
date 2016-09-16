@@ -12,5 +12,6 @@ struct auv_iver_motor_command_t
 	
 	const int16_t AUTO=0;
 	const int16_t REMOTE=1;
+	const int16_t RCZERO=2;
 	int16_t source;         // either remote or auto
 }
