@@ -16,7 +16,7 @@
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
-//#define DEBUG
+#define DEBUG
 
 // Original Iver config
 
@@ -165,32 +165,38 @@ parse_rc(char *buf, lcm_t *lcm)
                 rc.main = -RC_MAX_PROP_RPM;
         }        
 
-//       rc.main = (channel_values[RC_THROTTLE] - RC_THROTTLE_OFFSET) * RC_TO_RPM;
-//       if(abs(rc.main) < 40) #DEADZONE 
-//            rc.main = 0;
-
         rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
         acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
     }
     else
     {
-       // Use position 1 on rc gear switch to send zero movement command
-       if(channel_values[RC_GEAR] > 383) // POS 1: ZEROED 383 = cutoff between pos 1, pos 2
+        // Fill payload with zeros for either other position 1 or 2
+        acfrlcm_auv_iver_motor_command_t rc;
+        rc.utime = timestamp_now();
+        rc.top = 0;
+        rc.bottom = 0;
+        rc.port = 0;
+        rc.starboard = 0;
+        rc.main = 0;
+ 
+        // Use position 1 on rc gear switch to send zero movement command
+        if(channel_values[RC_GEAR] > 383) // POS 1: ZEROED 383 = cutoff between pos 1, pos 2
         {
 #ifdef DEBUG       
             printf("POS 1: %d\n", channel_values[RC_GEAR]);
 #endif
-            acfrlcm_auv_iver_motor_command_t rc;
-            rc.utime = timestamp_now();
-            rc.top = 0;
-            rc.bottom = 0;
-            rc.port = 0;
-            rc.starboard = 0;
-            rc.main = 0;
-            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
+            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO;
             acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
         }
-    }    
+        else
+        {
+#ifdef DEBUG       
+            printf("POS 2: %d\n", channel_values[RC_GEAR]);
+#endif
+            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE;
+        }
+        acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
+    }   
     
     return 1;
 }
