@@ -147,32 +147,41 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
 
     acfrlcm_auv_iver_motor_command_t mc = *mc_;
 
-    // we got a remote command, set the time and mode
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
+    switch (mc.source)
     {
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE:
+        // set to remote controlled, use values
         state->remote_time = mc.utime;
         state->source_state = REMOTE;
-    }
+        break;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO:
+        // set to dead, use values (which are zero...
+        // possibly could override/set to zero in case
+        // of unexpected error/message contents)
+        mc.top = 0.0;
+        mc.bottom = 0.0;
+        mc.port = 0.0;
+        mc.starboard = 0.0;
+        mc.main = 0.0;
 
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO)
-    {
         state->remote_time = mc.utime;
         state->source_state = DEAD;
-    }
-
-    // we got a remote command telling us to go to auto mode
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE)
-    {
-        // change the internal state, but we don't want to
-        // command/change the motor state
+        break;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE:
+        // release manual control, resume mission
+        // so don't use values in message
+        state->remote_time = mc.utime;
         state->source_state = MISSION;
         return;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO:
+        // automatic control message
+        // only use if in mission mode
+        if (state->source_state != MISSION)
+        {
+            return;
+        }
+        break;
     }
-
-    // if we got an auto command but we are not in mission mode skip
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO &&
-        state->source_state != MISSION)
-        return;
 
     // limit check
     mc.top = mc.top * TOP_SCALE;
@@ -180,7 +189,6 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         mc.top = MAX_SERVO_ANGLE;
     else if(mc.top <= -MAX_SERVO_ANGLE)
         mc.top = -MAX_SERVO_ANGLE;
-
 
     if(mc.bottom >= MAX_SERVO_ANGLE)
         mc.bottom = MAX_SERVO_ANGLE;
