@@ -157,7 +157,10 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     // we got a remote command telling us to go to auto mode
     if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE)
     {
+        // change the internal state, but we don't want to
+        // command/change the motor state
         state->source_state = MISSION;
+        return;
     }
 
     // if we got an auto command but we are not in mission mode skip

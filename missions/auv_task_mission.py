@@ -21,5 +21,5 @@ msg.command = auv_global_planner_t.GOTO
 msg.str = missionString
     
     
-lc.publish('TASK_PLANNER_COMMAND.SIRIUS', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.IVERAME', msg.encode())
 

@@ -357,6 +357,7 @@ int GlobalPlanner::sendLeg()
 	// Put together the Waypoint message for the path planner
 	acfrlcm::auv_path_command_t pc;
 	pc.utime = timestamp_now();
+	pc.goal_id = (*currPoint).id;
 	pc.waypoint[0] = (*currPoint).pose.getX();
 	pc.waypoint[1] = (*currPoint).pose.getY();
 	pc.waypoint[2] = (*currPoint).pose.getZ();

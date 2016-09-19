@@ -8,7 +8,7 @@
 #include <bot_param/param_client.h>
 #include <cstdio>
 #include <iomanip>
-#include <atomic>
+//#include <atomic>
 
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
@@ -18,7 +18,7 @@ using namespace std;
 
 
 // Exit handler, I swear this is the only global
-atomic_bool mainExit;
+bool mainExit;
 void signalHandler(int sig)
 {
 	mainExit = true;

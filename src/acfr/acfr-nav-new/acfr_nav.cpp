@@ -31,7 +31,7 @@ int acfr_nav::initialise()
     calculate_mag();   
     
     if(depth_source == DEPTH_YSI)
-        state->slam->set_tare_depth("/home/stefanw/mission.cfg");    
+        state->slam->set_tare_depth("/home/auv/mission.cfg");    
     
     // subscribe to the relevant LCM channel based on our configuration
     

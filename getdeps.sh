@@ -28,5 +28,7 @@ sudo apt-get install libglib2.0-dev \
 	libhighgui-dev \
 	libcv-dev \
 	libreadline6-dev \
-	libncurses5-dev
+	libncurses5-dev \
+	libproj-dev \
+	libturbojpeg1-dev
 
