@@ -154,6 +154,12 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         state->source_state = REMOTE;
     }
 
+    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO)
+    {
+        state->remote_time = mc.utime;
+        state->source_state = DEAD;
+    }
+
     // we got a remote command telling us to go to auto mode
     if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE)
     {
