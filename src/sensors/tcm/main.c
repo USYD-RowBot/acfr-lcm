@@ -10,15 +10,14 @@
 #include <signal.h>
 #include <libgen.h>
 
-#include "perls-common/timestamp.h"
+#include "acfr-common/timestamp.h"
 #include "perls-lcmtypes/senlcm_tcm_t.h"
 #include "acfr-common/sensor.h"
+#include "acfr-common/units.h"
 
 #include "tcm.h"
 
 #define update_rate 0.1
-
-#define DTOR 3.141592/180
 
 int parse_tcm(char *buf, senlcm_tcm_t *tcm)
 {
@@ -171,7 +170,6 @@ int broken_pipe;
 void
 signal_handler(int sig_num)
 {
-    printf("Got a signal\n");
     // do a safe exit
     if(sig_num == SIGPIPE)
         broken_pipe = 1;
@@ -206,8 +204,6 @@ main (int argc, char *argv[])
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
 
-    // signal(SIGINT, signal_handler);
-    //signal(SIGPIPE, signal_handler);
 
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);

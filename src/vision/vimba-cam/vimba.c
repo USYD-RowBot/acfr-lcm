@@ -13,6 +13,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 #include <tiffio.h>
+#include <time.h>
 
 #include <bot_param/param_client.h>
 //#include "perls-common/lcm_util.h"
@@ -416,12 +417,11 @@ int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
     // Convert the utime to a timeval then to a tm structure
     struct timeval tv;
     timestamp_to_timeval (utime, &tv);
-    struct tm tm;
-    localtime_r (&tv.tv_sec, &tm);
+    struct tm *tm = localtime (&tv.tv_sec);
 
     char filename[64];
     memset(filename, 0, sizeof(filename));
-    strftime(filename, sizeof(filename), acfr_format, &tm);
+    strftime(filename, sizeof(filename), acfr_format, tm);
 
     // append the milliseconds
     char suffix[16];
@@ -576,11 +576,13 @@ static void *write_thread(void *context)
     {
         // wait on a semaphone to see if we have a frame to write to disk
         struct timespec ts;
-        clock_gettime(CLOCK_REALTIME, &ts);
+	timespec_get(&ts, TIME_UTC);
+        //clock_gettime(CLOCK_REALTIME, &ts);
         ts.tv_sec += 1;
 
 
         if(sem_timedwait(&state->write_sem, &ts) != -1)
+        //if(sem_trywait(&state->write_sem) != -1)
         {
             int count = 0;
             qframe_t *cframe = state->frames_head;
@@ -725,6 +727,8 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
 
     state_t *state = in_frame->context[0];
     int64_t utime = timestamp_now();
+
+
     VmbError_t err;
     if(in_frame->receiveStatus != VmbFrameStatusComplete)
     {

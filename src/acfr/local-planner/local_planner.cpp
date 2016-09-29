@@ -1,11 +1,27 @@
 #include "local_planner.hpp"
+#include <string>
+#include <libgen.h>
+#include <signal.h>
+#include <pthread.h>
+#include <error.h>
+#include <unistd.h>
+#include <bot_param/param_client.h>
+#include <cstdio>
+#include <iomanip>
+//#include <atomic>
+
+#include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
+
+using namespace std;
 
 
 // Exit handler, I swear this is the only global
-int mainExit;
+bool mainExit;
 void signalHandler(int sig)
 {
-	mainExit = 1;
+	mainExit = true;
 }
 
 // Nav callback
@@ -323,6 +339,9 @@ int LocalPlanner::loadConfig(char *program_name)
 	sprintf(key, "%s.turning_radius", rootkey);
 	turningRadius = bot_param_get_double_or_fail(param, key);
 
+	sprintf(key, "%s.minimum_altitude", rootkey);
+	minAltitude = bot_param_get_double_or_fail(param, key);
+
 	sprintf(key, "%s.maximum_pitch", rootkey);
 	maxPitch = bot_param_get_double_or_fail(param, key);
 
@@ -376,7 +395,10 @@ int LocalPlanner::loadConfig(char *program_name)
 
 int LocalPlanner::process()
 {
-	//static void *processLCM(void *u) {
+    // setup signal handlers
+	mainExit = false;
+	signal(SIGINT, signalHandler);
+
 	int fd = lcm.getFileno();
 	fd_set rfds;
 	while (!mainExit)
@@ -391,7 +413,7 @@ int LocalPlanner::process()
 			lcm.handle();
 	}
 
-	return 1;
+	return 0;
 }
 
 /**
@@ -473,6 +495,12 @@ int LocalPlanner::processWaypoints()
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
+
+        // check we don't get closer to the bottom than our minimum
+		double curr_alt_ref = currPose.getZ() + (currAltitude - minAltitude);
+        if (curr_alt_ref < curr_depth_ref)
+            curr_depth_ref = curr_alt_ref;
+
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	else
@@ -541,32 +569,5 @@ bool LocalPlanner::publishWaypoints() {
 	lp.num_el = i;
 	lcm.publish("LOCAL_PATH", &lp);
 	return true;
-}
-
-int main(int argc, char **argv)
-{
-	// install the signal handler
-	mainExit = 0;
-	signal(SIGINT, signalHandler);
-
-	LocalPlanner *lp = new LocalPlanner();
-	if (!lp->loadConfig(basename(argv[0])))
-	{
-		cerr << "Failed loading config" << endl;
-		return 0;
-	}
-
-	//    pthread_t tidProcessWaypoints;
-	//    pthread_create(&tidProcessWaypoints, NULL, processWaypoints, lp);
-	//    pthread_detach(tidProcessWaypoints);
-
-	while (!mainExit)
-		lp->process();
-
-	//    pthread_join(tidProcessWaypoints, NULL);
-
-	delete lp;
-
-	return 1;
 }
 

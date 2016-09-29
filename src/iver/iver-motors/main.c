@@ -12,6 +12,8 @@
 #include <signal.h>
 #include <libgen.h>
 #include <math.h>
+#include <errno.h>
+#include <string.h>
 
 #include "perls-common/lcm_util.h"
 #include "perls-common/serial.h"
@@ -37,6 +39,24 @@
 
 #define REMOTE_TIMEOUT 2000000
 
+#define COMMAND_PERIOD 100000
+
+// only global for signalling exit
+int program_exit;
+
+void signal_handler(int sigNum)
+{
+    // do a safe exit
+    program_exit = 1;
+}
+
+
+typedef enum {
+    MISSION,
+    REMOTE,
+    DEAD
+} control_source_t;
+
 typedef struct
 {
     // serial port stuff
@@ -47,66 +67,24 @@ typedef struct
     lcm_t *lcm;
 
     int64_t remote_time;
-    int remote;
+    control_source_t source_state;
 
     int64_t last_data_time;
 
 } state_t;
 
 void
-motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc_, void *u)
+send_control(double top, double bottom, double port, double starboard, double main, state_t *state)
 {
-    state_t *state = (state_t *)u;
 
     // scale the motor commands from actual fin angles to value to send to the motors
     char rudder_top, rudder_bottom;
     char plane_port, plane_starboard;
 
-    acfrlcm_auv_iver_motor_command_t mc = *mc_;
-
-    // we got a remote command, set the time and mode
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE)
-    {
-        state->remote_time = mc.utime;
-        state->remote = 1;
-    }
-
-    // check the remote time out and set remote to off if required
-    if((timestamp_now() - state->remote_time) > REMOTE_TIMEOUT)
-        state->remote = 0;
-
-    // if we got a auto cammand but we are still in remote mode the return
-    if(mc.source == ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO && state->remote)
-        return;
-
-
-    // limit check and scale
-    mc.top = mc.top * TOP_SCALE;
-    if(mc.top >= MAX_SERVO_ANGLE)
-        mc.top = MAX_SERVO_ANGLE;
-    else if(mc.top <= -MAX_SERVO_ANGLE)
-        mc.top = -MAX_SERVO_ANGLE;
-
-    rudder_top = (char)((mc.top + 45*DTOR) * SERVO_SCALE);
-
-    if(mc.bottom >= MAX_SERVO_ANGLE)
-        mc.bottom = MAX_SERVO_ANGLE;
-    else if(mc.bottom <= -MAX_SERVO_ANGLE)
-        mc.bottom = -MAX_SERVO_ANGLE;
-    rudder_bottom = (char)((mc.bottom + 45*DTOR) * SERVO_SCALE);
-
-    if(mc.port >= MAX_SERVO_ANGLE)
-        mc.port = MAX_SERVO_ANGLE;
-    else if(mc.port <= -MAX_SERVO_ANGLE)
-        mc.port = -MAX_SERVO_ANGLE;
-    plane_port = (char)((mc.port + 45*DTOR) * SERVO_SCALE);
-
-    if(mc.starboard >= MAX_SERVO_ANGLE)
-        mc.starboard = MAX_SERVO_ANGLE;
-    else if(mc.starboard <= -MAX_SERVO_ANGLE)
-        mc.starboard = -MAX_SERVO_ANGLE;
-    plane_starboard = (char)((mc.starboard + 45*DTOR) * SERVO_SCALE);
-
+    rudder_top = (char)((top + 45*DTOR) * SERVO_SCALE);
+    rudder_bottom = (char)((bottom + 45*DTOR) * SERVO_SCALE);
+    plane_port = (char)((port + 45*DTOR) * SERVO_SCALE);
+    plane_starboard = (char)((starboard + 45*DTOR) * SERVO_SCALE);
 
 
     char servo_command[12];
@@ -125,42 +103,116 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     servo_command[10] = 0x03 + SERVO_RANGE;
     servo_command[11] = plane_port;
 
-    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(-mc.main * 32212.0 / 60.0));
+    sprintf(motor_string, "MV a=0 A=1000 V=%d G\n", (int)(-main * 32212.0 / 60.0));
 
-    // we don't want to send the data at to high a rate
-    if((timestamp_now() - state->last_data_time) > 100000)
+    // we don't want to send the data at too high a rate
+    if((timestamp_now() - state->last_data_time) > COMMAND_PERIOD)
     {
         static int throttle = 0;
 
         if (throttle++ > 10)
         {
-            printf("Motor cmd: %f %s\n", mc.main, motor_string);
+            printf("Motor cmd: %f %s\n", main, motor_string);
             printf("Servo cmd: t:%f %x b:%f %x s:%f %x p:%f %x\n",
-                   mc.top/DTOR, rudder_top,
-                   mc.bottom/DTOR, rudder_bottom,
-                   mc.starboard/DTOR, plane_starboard,
-                   mc.port/DTOR, plane_port);
+                   top/DTOR, rudder_top,
+                   bottom/DTOR, rudder_bottom,
+                   starboard/DTOR, plane_starboard,
+                   port/DTOR, plane_port);
             throttle = 0;
         }
         state->last_data_time = timestamp_now();
-        write(state->servo_fd, servo_command, 12);
-        write(state->motor_fd, motor_string, strlen(motor_string));
+        int res;
+        res = write(state->servo_fd, servo_command, 12);
+        if (res < 0)
+        {
+            fprintf(stderr, "Failed to write to servo control socket. %i - %s", errno, strerror(errno));
+            program_exit = 1;
+        }
+
+        res = write(state->motor_fd, motor_string, strlen(motor_string));
+        if (res < 0)
+        {
+            fprintf(stderr, "Failed to write to motor control socket. %i - %s", errno, strerror(errno));
+            program_exit = 1;
+        }
+
     }
 
 }
 
-int program_exit;
-void signal_handler(int sigNum)
+void
+motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc_, void *u)
 {
-    // do a safe exit
-    program_exit = 1;
+    state_t *state = (state_t *)u;
+
+    acfrlcm_auv_iver_motor_command_t mc = *mc_;
+
+    switch (mc.source)
+    {
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE:
+        // set to remote controlled, use values
+        state->remote_time = mc.utime;
+        state->source_state = REMOTE;
+        break;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO:
+        // set to dead, use values (which are zero...
+        // possibly could override/set to zero in case
+        // of unexpected error/message contents)
+        mc.top = 0.0;
+        mc.bottom = 0.0;
+        mc.port = 0.0;
+        mc.starboard = 0.0;
+        mc.main = 0.0;
+
+        state->remote_time = mc.utime;
+        state->source_state = DEAD;
+        break;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE:
+        // release manual control, resume mission
+        // so don't use values in message
+        state->remote_time = mc.utime;
+        state->source_state = MISSION;
+        return;
+    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO:
+        // automatic control message
+        // only use if in mission mode
+        if (state->source_state != MISSION)
+        {
+            return;
+        }
+        break;
+    }
+
+    // limit check
+    mc.top = mc.top * TOP_SCALE;
+    if(mc.top >= MAX_SERVO_ANGLE)
+        mc.top = MAX_SERVO_ANGLE;
+    else if(mc.top <= -MAX_SERVO_ANGLE)
+        mc.top = -MAX_SERVO_ANGLE;
+
+    if(mc.bottom >= MAX_SERVO_ANGLE)
+        mc.bottom = MAX_SERVO_ANGLE;
+    else if(mc.bottom <= -MAX_SERVO_ANGLE)
+        mc.bottom = -MAX_SERVO_ANGLE;
+
+    if(mc.port >= MAX_SERVO_ANGLE)
+        mc.port = MAX_SERVO_ANGLE;
+    else if(mc.port <= -MAX_SERVO_ANGLE)
+        mc.port = -MAX_SERVO_ANGLE;
+
+    if(mc.starboard >= MAX_SERVO_ANGLE)
+        mc.starboard = MAX_SERVO_ANGLE;
+    else if(mc.starboard <= -MAX_SERVO_ANGLE)
+        mc.starboard = -MAX_SERVO_ANGLE;
+
+    send_control(mc.top, mc.bottom, mc.port, mc.starboard, mc.main, state);
 }
 
 int
 main(int argc, char **argv)
 {
     state_t state;
-    state.remote = 0;
+    state.source_state = REMOTE;
 
     // install the signal handler
     program_exit = 0;
@@ -223,6 +275,20 @@ main(int argc, char **argv)
     // process
     while(!program_exit)
     {
+        // if we are in REMOTE mode
+        // check the remote time out and zero control (motors off) if required
+        if(state.source_state == REMOTE &&
+            (timestamp_now() - state.remote_time) > REMOTE_TIMEOUT)
+        {
+            state.source_state = DEAD;
+            // ensure we aren't limited by the command period
+            // from sending this
+            state.last_data_time -= COMMAND_PERIOD;
+
+            // set fins to null, motor to off
+            send_control(0.0, 0.0, 0.0, 0.0, 0.0, &state);
+        }
+
         struct timeval tv;
         tv.tv_sec = 1;
         tv.tv_usec = 0;

@@ -17,9 +17,8 @@
 #include <libgen.h>
 #include <bot_param/param_client.h>
 
-#include "perls-common/timestamp.h"
-//#include "perls-common/serial.h"
-#include "perls-common/nmea.h"
+#include "acfr-common/timestamp.h"
+#include "acfr-common/nmea.h"
 #include "acfr-common/sensor.h"
 
 #include "perls-lcmtypes/senlcm_ysi_t.h"
@@ -85,22 +84,27 @@ static int parseYsi(char *buf, int buf_len, senlcm_ysi_t *ysi)
 
 int program_ysi(acfr_sensor_t *s)
 {
+    // There is a quirk with the new terminal server and buad rate with this device
+    // To get around this we first send a CR then wait a bit
+    acfr_sensor_write(s, "\r\n", 2);
+    usleep(100000);
+
     // Set noncanonical mode
     acfr_sensor_noncanonical(s, 1, 0);
 
     // Send an escape and wait for the prompt
-    char buf;
-    sprintf(&buf, "%c\r\n", 27 );
-    acfr_sensor_write(s, &buf, 1);
+    char buf[8];
+    sprintf(buf, "%c\r\n", 27 );
+    acfr_sensor_write(s, buf, 1);
     printf("Sent escape character. ");
 
     do
     {
         printf("Waiting for command prompt.");
-        acfr_sensor_read(s, &buf, 1);
-        printf("Read in character %c.\n", buf);
+        acfr_sensor_read(s, buf, 1);
+        printf("Read in character %c.\n", buf[0]);
     }
-    while (buf != '#');
+    while (buf[0] != '#');
 
     // Put it in NMEA mode
     acfr_sensor_write(s, "nmea\r\n", 6); // put it in nmea mode
