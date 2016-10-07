@@ -44,4 +44,5 @@ perls_add_folder (rt3202 "Build Oxford RT3202 driver?" ON)
 perls_add_folder (seabotix "Build seabotix drivers?" ON)
 perls_add_folder (rmd-1 "Build RMD-1 Metal Detector driver?" ON)
 perls_add_folder (posmv "Build POSMV driver?" ON)
+perls_add_folder (acfr-psu "Build ACFR PSU driver?" ON)
 

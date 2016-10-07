@@ -1,0 +1,11 @@
+package acfrlcm;
+
+struct auv_bluefin_tail_command_t
+{
+    int64_t utime;
+    
+	int8_t enable;
+	int16_t main;
+	double elevator;
+	double rudder;	
+}

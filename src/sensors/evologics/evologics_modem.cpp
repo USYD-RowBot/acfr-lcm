@@ -339,6 +339,12 @@ printf("Term char = 0x%02X\n", (unsigned int)*term);
 
     char cmd[64];
     memset(cmd, 0, 64);
+
+	// As of firmware version 1.8 you need to enable global settings control before
+	// being able to change things like the gain
+    sprintf(cmd, "AT@CTRL", source_level);
+    send_command(cmd);
+	
     sprintf(cmd, "AT!L%d", source_level);
     send_command(cmd);
     sprintf(cmd, "AT!G%d", gain);

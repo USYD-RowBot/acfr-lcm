@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct tunnel_thruster_command_t
+{
+    int64_t utime;
+
+	int16_t fore_horiz;
+	int16_t fore_vert;
+	int16_t aft_horiz;
+	int16_t aft_vert;
+
+}
+
+
+
+
