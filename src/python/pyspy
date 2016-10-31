@@ -65,7 +65,16 @@ class Channel(object):
                 # don't want to append this
                 continue
             else:
-                value = unicode(value)
+                try:
+                    value = unicode(value)
+                except UnicodeDecodeError:
+		    line = u""
+                    for v in value:
+                        try:
+                            line += unicode(v)
+                        except UnicodeDecodeError:
+                            line += u"0x{:02X}".format(ord(v))
+		    value = line
 
             # need to escape this as well, remove non-printable
             # characters
