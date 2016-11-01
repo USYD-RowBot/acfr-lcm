@@ -64,6 +64,27 @@ Ship_Status::Ship_Status(char *rootkey)
         gps_source = GPS_RT3202;
     else if(!strcasecmp(gps_source_str, "gpsd"))
         gps_source = GPS_GPSD;
+	else if(!strcasecmp(gps_source_str, "static"))
+        gps_source = GPS_STATIC;
+        
+	// depending on the attitude source we need a mag declination
+	if(att_source == ATT_AHRS)
+	{
+		sprintf(key, "%s.mag_dec", rootkey);
+		mag_dec = bot_param_get_double_or_fail(param, key) * DTOR;
+	}
+	else
+		mag_dec = 0.0;
+
+	if(gps_source == GPS_STATIC)
+	{
+		sprintf(key, "%s.static_longitude", rootkey);
+		static_lon = bot_param_get_double_or_fail(param, key);
+		sprintf(key, "%s.static_latitude", rootkey);
+		static_lat = bot_param_get_double_or_fail(param, key);
+	}
+
+
 
     // ID
     sprintf(key, "%s.ship_name", rootkey);
@@ -115,6 +136,10 @@ int Ship_Status::send_status()
             ss.latitude = gpsd3.fix.latitude;
             ss.longitude = gpsd3.fix.longitude;
             break;
+        case GPS_STATIC:
+            ss.latitude = static_lat * DTOR;
+            ss.longitude = static_lon * DTOR;
+            break;
     }
     
     switch(att_source)
@@ -132,7 +157,7 @@ int Ship_Status::send_status()
         case ATT_AHRS:
             ss.roll = ahrs.roll;
             ss.pitch = ahrs.pitch;
-            ss.heading = ahrs.heading;
+            ss.heading = ahrs.heading + mag_dec;
             break;
     }
     char channel[64] = {0};
