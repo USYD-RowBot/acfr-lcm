@@ -1214,3 +1214,18 @@ senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_bk9115_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                       const senlcm_bk9115_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "voltage","%f",      msg->voltage);
+    TEXTREAD_ADD_FIELD (tr, "current","%f",      msg->current);
+
+    textread_stop (tr);
+}
+

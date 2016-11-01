@@ -32,5 +32,13 @@ acfrlcm_auv_global_planner_t_handler (const lcm_recv_buf_t *rbuf, const char *ch
 void
 acfrlcm_ship_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                              const acfrlcm_ship_status_t *msg, void *user);
+                             
+void
+acfrlcm_auv_bluefin_tail_command_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_bluefin_tail_command_t *msg, void *user);
+
+void
+acfrlcm_auv_bluefin_tail_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_bluefin_tail_status_t *msg, void *user);
 
 #endif
