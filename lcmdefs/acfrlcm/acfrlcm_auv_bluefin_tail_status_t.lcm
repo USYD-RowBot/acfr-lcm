@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct auv_bluefin_tail_status_t
+{
+    int64_t utime;
+    int64_t tail_utime;
+	
+	double voltage;
+	double current;	
+	double psu_temp;
+	
+	int8_t tail_temp;
+	int8_t comp1;
+	int8_t comp2;
+	int8_t leak;
+}

@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct tunnel_thruster_power_t
+{
+    int64_t utime;
+
+	int8_t addr;
+	double voltage;
+	double current;
+	double temperature;
+
+}
+
+
+
+

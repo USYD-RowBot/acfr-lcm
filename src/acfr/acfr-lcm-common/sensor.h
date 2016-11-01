@@ -40,6 +40,7 @@ int acfr_sensor_canonical(acfr_sensor_t *s, char t1, char t2);
 int acfr_sensor_write(acfr_sensor_t *s, char *d, int size);
 int acfr_sensor_read(acfr_sensor_t *s, char *d, int len);
 int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout);
+int acfr_sensor_read_timeoutms(acfr_sensor_t *s, char *d, int len, int timeout);
 int acfr_sensor_destroy(acfr_sensor_t *s);
 acfr_sensor_t *acfr_sensor_create(lcm_t *lcm, char *rootkey);
 

@@ -1,0 +1,9 @@
+package senlcm;
+
+struct bk9115_t
+{
+    int64_t utime;
+    
+    double voltage;
+    double current;
+}

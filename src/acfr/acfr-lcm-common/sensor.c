@@ -199,9 +199,17 @@ int acfr_sensor_read(acfr_sensor_t *s, char *d, int len)
     return acfr_sensor_read_timeout(s, d, len, -1);
 }
 
-// read from the port, the behavior is different depending on if the connection is canonical or not
-int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout)
+int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout) 
 {
+	return acfr_sensor_read_timeoutms(s, d, len, timeout*1000);
+}
+
+// read from the port, the behavior is different depending on if the connection is canonical or not
+int acfr_sensor_read_timeoutms(acfr_sensor_t *s, char *d, int len, int timeout)
+{
+	time_t timeout_sec = timeout / 1000;
+	suseconds_t timeout_usec = (timeout % 1000) * 1000;
+
     if(!s->port_open)
         acfr_sensor_open(s);
 
@@ -209,8 +217,8 @@ int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout)
     {
         fd_set rfds;
         struct timeval tv;
-        tv.tv_sec = timeout;
-        tv.tv_usec = 0;
+        tv.tv_sec = timeout_sec;
+        tv.tv_usec = timeout_usec;
         FD_ZERO(&rfds);
         FD_SET(s->fd, &rfds);
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
@@ -238,7 +246,7 @@ int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout)
                 break;
             }
             if(timeout > 0)
-                if(((timestamp_now() - start_time) / 1e6) > timeout)
+                if(((timestamp_now() - start_time) / 1e3) > timeout)
                     break;
         }
         if(term)
@@ -254,8 +262,8 @@ int acfr_sensor_read_timeout(acfr_sensor_t *s, char *d, int len, int timeout)
         socklen_t s_size = sizeof(struct timeval);
         getsockopt(s->fd, SOL_SOCKET, SO_RCVTIMEO, &old_tv, &s_size);
 
-        new_tv.tv_sec = timeout;
-        new_tv.tv_usec = 0;
+        new_tv.tv_sec = timeout_sec;
+        new_tv.tv_usec = timeout_usec;
         setsockopt(s->fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&new_tv, sizeof(struct timeval));
 
         int bytes = read(s->fd, d, len);
