@@ -1,0 +1,10 @@
+package acfrlcm;
+
+struct auv_control_goal_t
+{
+    int64_t utime;
+
+    
+    double pitch_goal;
+        
+}
