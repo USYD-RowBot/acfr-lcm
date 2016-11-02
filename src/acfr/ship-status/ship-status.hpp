@@ -4,6 +4,7 @@
 #include <signal.h>
 
 #include "acfr-common/timestamp.h"
+#include "acfr-common/units.h"
 
 // LCM types we will be listening to
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
@@ -16,6 +17,8 @@
 #ifndef _SHIP_STATUS_HPP
 #define _SHIP_STATUS_HPP
 
+ 
+
 using namespace senlcm;
 using namespace perllcm;
 using namespace acfrlcm;
@@ -24,7 +27,8 @@ using namespace std;
 typedef enum {  
         GPS_NOVATEL,
         GPS_GPSD,
-        GPS_RT3202 
+        GPS_RT3202,
+        GPS_STATIC 
     } gps_source_t;
         
 typedef enum {  
@@ -48,6 +52,9 @@ class Ship_Status
         rt3202_t rt3202;
         gpsd3_t gpsd3;
         ahrs_t ahrs;
+        double mag_dec;
+        double static_lat;
+        double static_lon;
         
         lcm::LCM *lcm;
         

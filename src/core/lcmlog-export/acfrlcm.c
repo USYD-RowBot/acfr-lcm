@@ -168,4 +168,41 @@ acfrlcm_ship_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+acfrlcm_auv_bluefin_tail_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_bluefin_tail_status_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "tail_utime", "%"PRId64, msg->tail_utime);
+    TEXTREAD_ADD_FIELD (tr, "voltage", "%f",      msg->voltage);
+    TEXTREAD_ADD_FIELD (tr, "current","%f",      msg->current);
+    TEXTREAD_ADD_FIELD (tr, "psu_temp","%f",      msg->psu_temp);
+    TEXTREAD_ADD_FIELD (tr, "tail_temp","%d",      msg->tail_temp);
+    TEXTREAD_ADD_FIELD (tr, "comp1","%d",      msg->comp1);
+    TEXTREAD_ADD_FIELD (tr, "comp2","%d",      msg->comp2);
+    TEXTREAD_ADD_FIELD (tr, "leak","%d",      msg->leak);
+    textread_stop (tr);
+}
+
+
+void
+acfrlcm_auv_bluefin_tail_command_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_bluefin_tail_command_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "main", "%d",      msg->main);
+    TEXTREAD_ADD_FIELD (tr, "elevator","%f",      msg->elevator);
+    TEXTREAD_ADD_FIELD (tr, "rudder","%f",      msg->rudder);
+    textread_stop (tr);
+}
+
+
 

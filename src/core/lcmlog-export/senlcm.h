@@ -146,6 +146,10 @@ senlcm_evologics_usbl_t_handler (const lcm_recv_buf_t *rbuf, const char *channel
 
 void 
 senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel, 
-                              const senlcm_ahrs_t *msg, void *user);                              
+                              const senlcm_ahrs_t *msg, void *user);         
+
+void
+senlcm_bk9115_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                       const senlcm_bk9115_t *msg, void *user);                   
 
 #endif //__HANDLERS_SENLCM_H__

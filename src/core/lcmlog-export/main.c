@@ -61,6 +61,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_novatel_t_subscribe (lcm, "NOVATEL", &senlcm_novatel_t_handler, lle);
     senlcm_evologics_usbl_t_subscribe (lcm, "EVO_USBL.*", &senlcm_evologics_usbl_t_handler, lle);
     senlcm_ahrs_t_subscribe (lcm, "AHRS", &senlcm_ahrs_t_handler, lle);
+    senlcm_bk9115_t_subscribe (lcm, "BK9115", &senlcm_bk9115_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);
@@ -108,6 +109,8 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     acfrlcm_auv_iver_motor_command_t_subscribe(lcm, "IVER_MOTOR", &acfrlcm_auv_iver_motor_command_t_handler, lle);
     acfrlcm_auv_global_planner_t_subscribe(lcm, "TASK_PLANNER_COMMAND", &acfrlcm_auv_global_planner_t_handler, lle);
     acfrlcm_ship_status_t_subscribe(lcm, "SHIP_STATUS.*", &acfrlcm_ship_status_t_handler, lle);
+    acfrlcm_auv_bluefin_tail_status_t_subscribe(lcm, "BLUEFIN_STATUS", &acfrlcm_auv_bluefin_tail_status_t_handler, lle);
+    acfrlcm_auv_bluefin_tail_command_t_subscribe(lcm, "BLUEFIN_COMMAND", &acfrlcm_auv_bluefin_tail_command_t_handler, lle);
 }
 
 int

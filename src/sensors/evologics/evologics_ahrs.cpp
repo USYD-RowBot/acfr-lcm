@@ -83,15 +83,15 @@ int Evologics_AHRS::process_ahrs_message(char *buf)
     // decode the AHRS message
     if(strstr(buf, "AHRS") != NULL)
     {
-        char *tokens[5];
-        if(chop_string(buf, tokens, 5) != 5)
+        char *tokens[6];
+        if(chop_string(buf, tokens, 6) != 6)
             return 0;
 
         ahrs.mtime = (int64_t)(atof(tokens[1]) * 1e6);
         ahrs.utime = timestamp_now();
-        ahrs.roll = atof(tokens[3]) * DTOR;
-        ahrs.pitch = atof(tokens[2]) * DTOR;
-        ahrs.heading = atof(tokens[4]) * DTOR;
+        ahrs.roll = atof(tokens[4]) * DTOR;
+        ahrs.pitch = atof(tokens[3]) * DTOR;
+        ahrs.heading = atof(tokens[5]) * DTOR;
         return 1;
     }
     else
