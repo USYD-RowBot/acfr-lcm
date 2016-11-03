@@ -10,14 +10,15 @@ CURRENT_DATE=$(date '+%Y%m%d_%H%M%S')
 
 LCMROOT="/home/auv/git/acfr-lcm"
 ORIGIN_DIR="$LCMROOT/config/origins/serpent"
-COUNTFILE="$ORIGINDIR/$REGION_NAME.count"
+COUNTFILE="$ORIGIN_DIR/$REGION_NAME.count"
 if [ -f $COUNTFILE ]; then
-    mkdir -p $ORIGIN_DIR
     COUNT=$((`cat $COUNTFILE` + 1))
 else
+    mkdir -p $ORIGIN_DIR
     COUNT=1
 fi
 echo $COUNT > $COUNTFILE
+MISSION_NUMBER=`printf "%03d" $COUNT`
 
 # Check that DIR is empty
 MISSION_DIR="$BASE_PATH/r${CURRENT_DATE}_${PLATFORM_NAME}${MISSION_NUMBER}_${REGION_NAME}"
