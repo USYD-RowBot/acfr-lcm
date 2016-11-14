@@ -26,7 +26,7 @@ foreach (PACKAGE ${PERLS_LCM_PACKAGES})
     
     add_custom_command (
       OUTPUT ${LCM_TYPE_HPP} ${INCLUDE_HEADER}
-      COMMAND ${LCM_GEN_EXE} ${LCM_DEF} --lazy --cpp --cpp-include "perls-lcmtypes++"
+      COMMAND ${LCM_GEN_EXE} ${LCM_DEF} --lazy --cpp-std=c++11 --cpp --cpp-include "perls-lcmtypes++"
       COMMAND cp -u -f ${LCM_TYPE_HPP} ${INCLUDE_HEADER}
       DEPENDS ${LCM_DEF}
       )

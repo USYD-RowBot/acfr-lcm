@@ -8,8 +8,8 @@ sudo apt-get install libglib2.0-dev \
     	libglu1-mesa-dev \
     	freeglut3-dev \
     	libjpeg-dev \
-	openjdk-7-jdk \
-	openjdk-7-jre \
+	openjdk-8-jdk \
+	openjdk-8-jre \
 	libcv-dev \
 	libxml++2.6-dev \
 	libglibmm-2.4-dev \
@@ -29,6 +29,6 @@ sudo apt-get install libglib2.0-dev \
 	libcv-dev \
 	libreadline6-dev \
 	libncurses5-dev \
-	libproj-dev \
-	libturbojpeg1-dev
+	libproj-dev #\
+	#libturbojpeg1-dev
 
