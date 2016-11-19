@@ -163,6 +163,8 @@ int Ship_Status::send_status()
     char channel[64] = {0};
     sprintf(channel, "SHIP_STATUS.%s", ship_name);    
     lcm->publish(channel, &ss);
+
+    //cout << "Published ship_status on chan " << channel << " with lat:" << ss.latitude << " lon:" << ss.longitude << " r:" << ss.roll << " p:" << ss.pitch << " h:" << ss.heading << endl; 
     
     return 1;
 }

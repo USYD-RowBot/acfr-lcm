@@ -38,4 +38,5 @@ struct auv_status_short_t
     float y;*/
     int16_t img_count;
     int8_t charge;
+    int8_t vel;         /* 0.01 m/s */
 }
