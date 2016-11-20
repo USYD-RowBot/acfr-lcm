@@ -22,6 +22,11 @@ void on_rt3202(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     memcpy(&ss->rt3202, rt, sizeof(rt3202_t));
 }
 
+void on_posmv(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const posmv_t *pmv, Ship_Status* ss) 
+{
+    memcpy(&ss->posmv, pmv, sizeof(posmv_t));
+}
+
 void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const heartbeat_t *hb, Ship_Status* ss) 
 {
     ss->send_status();
@@ -54,6 +59,8 @@ Ship_Status::Ship_Status(char *rootkey)
         att_source = ATT_RT3202;
     else if(!strcasecmp(att_source_str, "ahrs"))
         att_source = ATT_AHRS;
+    else if(!strcasecmp(att_source_str, "posmv"))
+        att_source = ATT_POSMV;
 
     // GPS source
     sprintf(key, "%s.gps_source", rootkey);
@@ -66,6 +73,9 @@ Ship_Status::Ship_Status(char *rootkey)
         gps_source = GPS_GPSD;
 	else if(!strcasecmp(gps_source_str, "static"))
         gps_source = GPS_STATIC;
+	else if(!strcasecmp(gps_source_str, "posmv"))
+        gps_source = GPS_POSMV;
+
         
 	// depending on the attitude source we need a mag declination
 	if(att_source == ATT_AHRS)
@@ -100,6 +110,9 @@ Ship_Status::Ship_Status(char *rootkey)
         
     if(gps_source == GPS_RT3202 || att_source == ATT_RT3202)
         lcm->subscribeFunction("RT3202", on_rt3202, this);
+        
+    if(gps_source == GPS_POSMV || att_source == ATT_POSMV)
+        lcm->subscribeFunction("POSMV", on_posmv, this);
    
     if(gps_source == GPS_GPSD)
         lcm->subscribeFunction("GPSD_CLIENT", on_gps, this);
@@ -132,6 +145,10 @@ int Ship_Status::send_status()
             ss.latitude = rt3202.lat;
             ss.longitude = rt3202.lon;
             break;
+        case GPS_POSMV:
+            ss.latitude = posmv.latitude;
+            ss.longitude = posmv.longitude;
+            break;
         case GPS_GPSD:
             ss.latitude = gpsd3.fix.latitude;
             ss.longitude = gpsd3.fix.longitude;
@@ -154,6 +171,12 @@ int Ship_Status::send_status()
             ss.pitch = rt3202.p;
             ss.heading = rt3202.h;
             break;
+        case ATT_POSMV:
+            ss.roll = posmv.roll;
+            ss.pitch = posmv.pitch;
+            ss.heading = posmv.heading;
+            break;
+
         case ATT_AHRS:
             ss.roll = ahrs.roll;
             ss.pitch = ahrs.pitch;
