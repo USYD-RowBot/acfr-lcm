@@ -12,6 +12,7 @@
 #include "perls-common/lcm_util.h"
 #include "perls-lcmtypes/acfrlcm_auv_acfr_nav_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_control_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_control_goal_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
 // set the delta T to 0.1s, 10Hz loop rate
@@ -319,6 +320,7 @@ int main(int argc, char **argv)
     long loopCount = 0;
 
     acfrlcm_auv_iver_motor_command_t mc;
+    acfrlcm_auv_control_goal_t cg;
 
     // main loop
     while (!main_exit)
@@ -364,6 +366,8 @@ int main(int argc, char **argv)
             else
                 pitch = -pid(&state.gains_depth, nav.depth, cmd.depth,
                              CONTROL_DT);
+
+
 
             if ((nav.vx > -0.05) || (prop_rpm > -100))
                 plane_angle = pid(&state.gains_pitch, nav.pitch, pitch,
@@ -545,8 +549,11 @@ int main(int argc, char **argv)
 
         }
         mc.utime = timestamp_now();
+        cg.utime = timestamp_now();
+	cg.pitch_goal = pitch;
         mc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO;
         acfrlcm_auv_iver_motor_command_t_publish(state.lcm, "IVER_MOTOR", &mc);
+        acfrlcm_auv_control_goal_t_publish(state.lcm, "CONTROL_GOAL", &cg);
 
         // wait for a timer event
         wait_period(&timer_info);

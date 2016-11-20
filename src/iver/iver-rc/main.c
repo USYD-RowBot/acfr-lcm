@@ -16,7 +16,7 @@
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
-#define DEBUG
+//#define DEBUG
 
 // Original Iver config
 
@@ -54,6 +54,8 @@ enum
 //#define RC_HALF_INPUT_RANGE 350 // Testing 160902016 JJM
 #define RC_DEADZONE 40 // Testing 160902016 JJM
 #define RCMULT 4.8 //RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE-RC_DEADZONE)
+#define LOOPTIMEOUT 20 // No of times to try read UDP message bits before continuing without read
+
 
 int
 create_udp_listen(char *port)
@@ -243,13 +245,20 @@ main(int argc, char **argv)
         tv.tv_sec = 1.0;
         tv.tv_usec = 0;
 
+        int loopcount = 0;
         int ret = select (control_sockfd + 1, &rfds, NULL, NULL, &tv);
         if(ret != -1)
         {
             data_len = 0;
-            while(data_len < 16)
+            while((data_len < 16)&&(loopcount < LOOPTIMEOUT))
+            {
                 data_len += recvfrom(control_sockfd, &buf[data_len], 16 - data_len, 0, NULL, NULL);
-            parse_rc(buf, lcm);
+                loopcount++;
+            }
+            if(data_len >= 16)
+            {
+                parse_rc(buf, lcm);
+            }
         }
     }
     close(control_sockfd);

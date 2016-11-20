@@ -18,7 +18,7 @@ set (CMAKE_C_FLAGS "-u MAIN__ -std=gnu99 -fopenmp -Wfloat-equal -Wall -Wundef -W
 
 # CONFIGURE C++
 #========================================================================
-set (CMAKE_CXX_FLAGS "-u MAIN__ -Wall -Wundef -Wno-strict-aliasing")
+set (CMAKE_CXX_FLAGS "-u MAIN__ -Wall -Wundef -Wno-strict-aliasing -std=c++11")
 
 # CONFIGURE JAVA
 #========================================================================
