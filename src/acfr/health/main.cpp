@@ -109,6 +109,12 @@ void handle_global_state(const lcm::ReceiveBuffer *rbuf, const std::string& chan
 	state->global_state = *sensor;
 }
 
+void handle_battery(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const senlcm::os_power_system_t *sensor, HealthMonitor *state)
+{
+	state->battery = *sensor;
+}
+
 HealthMonitor::HealthMonitor()
 {
 	// initialise member variables
@@ -125,6 +131,7 @@ HealthMonitor::HealthMonitor()
 	ysi.depth = 0;
 	oas.utime = 0;
 	image_count = 0;
+    
 
 	abort_on_no_compass = false;
 	abort_on_no_gps = false;
@@ -159,6 +166,7 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
 	lcm.subscribeFunction("LEAK", handle_leak, this);
 	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
+	lcm.subscribeFunction("BATTERY", handle_battery, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -339,17 +347,19 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 		sendAbortMessage("Leak");
 	}
     
-    if(global_state.state == 0)
-        status.status |= ABORT_BIT;
+        if(global_state.state == 0)
+            status.status |= ABORT_BIT;
 
 	status.latitude = (float)nav.latitude;	
 	status.longitude = (float)nav.longitude;
 	status.altitude = (unsigned char)(nav.altitude * 10.0);
 	status.depth = (short)(nav.depth * 10.0);
-	status.roll = (char)(nav.roll * 10.0);
-	status.pitch = (char)(nav.pitch * 10.0);
-	status.heading = (short)(nav.heading * 10.0);
+	status.roll = (char)(nav.roll * 10.0 * 180 / 3.1415);
+	status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415);
+	status.heading = (short)(fmod(nav.heading *  180 / 3.1415, 360)/2);
 	status.img_count = image_count;
+        status.charge = (char)(battery.avg_charge_p);
+        status.vel = (char)(nav.vx * 100.0);
 
         char channel_name[128];
         snprintf(channel_name, 128, "AUVSTAT.%s", vehicle_name);

@@ -21,6 +21,7 @@
 #include "perls-lcmtypes++/senlcm/parosci_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/leak_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_short_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
@@ -49,9 +50,10 @@ public:
     senlcm::rdi_pd5_t dvl;
     senlcm::parosci_t parosci;
     senlcm::ysi_t ysi;
-	senlcm::leak_t leak;
+    senlcm::leak_t leak;
     senlcm::micron_ping_t oas;
     acfrlcm::auv_global_planner_state_t global_state;
+    senlcm::os_power_system_t battery;
 
     //lcm_t *lcm;
     lcm::LCM lcm;

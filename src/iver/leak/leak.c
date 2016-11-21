@@ -58,7 +58,7 @@ leak_attach(struct parport *port)
         {
             printk(KERN_ERR
                    "Could not claim the " LEAK_DEV " parallel port device\n");
-            return -1;
+            return;
         }
 
         // set the direction to reverse, ie inputs
@@ -82,7 +82,7 @@ static struct parport_driver leak_driver =
     LEAK_NAME,
     leak_attach,
     leak_detach,
-    {NULL}
+    NULL
 };
 
 static ssize_t
@@ -162,10 +162,10 @@ leak_init(void)
 static void __exit
 leak_cleanup(void)
 {
-    if (misc_deregister(&leak_dev) != 0)
-        printk(KERN_ERR
-               "Cound not deregister the misc device " LEAK_DEV " (%d, %d)\n",
-               LEAK_MAJOR, LEAK_MINOR);
+    misc_deregister(&leak_dev);
+    //    printk(KERN_ERR
+    //           "Cound not deregister the misc device " LEAK_DEV " (%d, %d)\n",
+    //           LEAK_MAJOR, LEAK_MINOR);
 
     parport_unregister_device(parport_pins);
     parport_unregister_driver(&leak_driver);

@@ -237,9 +237,9 @@ int LocalPlanner::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
-	if ( destPoseRel.getX() < 0 ||
-			destPoseRel.getX() > 2*turningRadius ||
-			fabs(relAngle) > 45./180*M_PI )
+	if ( 0 ) // destPoseRel.getX() < 0 ||
+		//	destPoseRel.getX() > 2*turningRadius ||
+		//	fabs(relAngle) > 45./180*M_PI )
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);

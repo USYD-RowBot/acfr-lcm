@@ -27,7 +27,7 @@ struct auv_status_short_t
     
     int8_t  target_id;
     int8_t waypoint;
-    int16_t heading;    /* 0.1 deg */
+    int8_t heading;    /* 2 degree increments */
     int8_t roll;        /* 0.1 deg */
     int8_t pitch;       /* 0.1 deg */
     int16_t depth;      /* 0.1 m */
@@ -38,4 +38,5 @@ struct auv_status_short_t
     float y;*/
     int16_t img_count;
     int8_t charge;
+    int8_t vel;         /* 0.01 m/s */
 }
