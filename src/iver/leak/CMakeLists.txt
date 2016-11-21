@@ -6,11 +6,18 @@ perls_target_link_libraries (leak perls-lcmtypes perls-common perls-math ${PERLS
 
 
 # Build the module
+EXEC_PROGRAM(uname ARGS -r OUTPUT_VARIABLE KERNEL_VERSION)
+Set( MODULE_SOURCE_DIR  ${CMAKE_CURRENT_BINARY_DIR} )
 
-#ADD_CUSTOM_COMMAND(OUTPUT leak.ko
-#                   COMMAND make -f module.make
-                   #DEPENDS leak.c Kbuild
-#                   COMMENT "Building leak.ko"
-#                  )
+Set( KBUILD_CMD ${CMAKE_MAKE_PROGRAM}
+                 -C /lib/modules/${KERNEL_VERSION}/build
+                 M=${MODULE_SOURCE_DIR}
+                 modules )
+		 
+ADD_CUSTOM_COMMAND(OUTPUT leak.ko
+                   COMMAND ${KBUILD_CMD}
+                   COMMENT "Building leak.ko"
+		   DEPENDS leak.c
+                  )
 
-#ADD_CUSTOM_TARGET(kleak ALL DEPENDS leak.ko)
+ADD_CUSTOM_TARGET(kleak ALL DEPENDS leak.ko)
