@@ -342,7 +342,7 @@ printf("Term char = 0x%02X\n", (unsigned int)*term);
 
 	// As of firmware version 1.8 you need to enable global settings control before
 	// being able to change things like the gain
-    sprintf(cmd, "AT@CTRL", source_level);
+    sprintf(cmd, "AT@CTRL");
     send_command(cmd);
 	
     sprintf(cmd, "AT!L%d", source_level);
@@ -852,7 +852,7 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
     else if(strstr((const char *)d, "AT?T") != NULL || command_sent == "AT?T")
     {
         cout << "Evologics: Received AT?T reply " << d << endl;
-        char *tokens[4];
+//        char *tokens[4];
         evologics_range_t er;
 	er.time = atoi(d);
 /*

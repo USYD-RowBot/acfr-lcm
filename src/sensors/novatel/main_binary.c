@@ -56,7 +56,7 @@ int program_novatel(acfr_sensor_t *s, int rate, char *com_port)
 int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time, float lat_std, float lon_std)
 {
     senlcm_novatel_t nov;
-
+    memset(&nov, 0, sizeof(senlcm_novatel_t));
     nov.utime = timestamp;
     nov.gps_time = gps_time;
     nov.latitude = *(double *)&d[12] * DTOR;
@@ -135,7 +135,7 @@ main (int argc, char *argv[])
     char buf[512];
     int64_t timestamp;
 
-    float lat_std, lon_std;
+    float lat_std = 0, lon_std = 0;
 
     while(!program_exit)
     {
