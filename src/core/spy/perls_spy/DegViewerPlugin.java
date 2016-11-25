@@ -117,8 +117,15 @@ public class DegViewerPlugin implements lcm.spy.SpyPlugin
 
             if (viewer == null) {
                 this.viewerFrame.setTitle(cd.name+": Degrees");
-                viewer = new ObjectPanel(cd.name, chartData);
-                viewer.setObject(cd.last, cd.last_utime);
+		try {
+                	viewer = new ObjectPanel(cd.name, chartData);
+			viewer.setObject(cd.last, cd.last_utime);
+                }	
+		catch (NullPointerException e)
+		{
+			System.out.println("If this repeats constantly there is a problem in DegViewerPlugin!");
+		}
+		
 
                 this.viewerFrame.setLayout(new BorderLayout());
 
