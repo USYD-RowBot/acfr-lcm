@@ -1,0 +1,676 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+	<desc>
+		vic-bunurong-vct50-3023.txt.xml
+	</desc>
+	<global>
+		<location lat="-38.6808932128" lon="145.656022288" />
+		<turn_radius m="5" />
+		<drop_distance m="5" />
+		<drop_angle deg="40" />
+		<mission_timeout t = "1"/>
+		<!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+	</global>
+	<primitive>
+		<goto>
+			<position x="-0.00" y="-0.00" z="0.00"/>
+			<heading deg="0.00" />
+			<timeout t="0.00" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="19.65" y="3.76" z="0.00"/>
+			<heading deg="10.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="12.73" y="39.90" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="190.68" />
+			<velocity x="1.5" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="10.85" y="49.72" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="20.67" y="51.60" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="22.55" y="41.78" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="39.73" y="-16.03" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="29.91" y="-17.92" z="2.80"/>
+			<heading deg="190.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="28.03" y="-8.09" z="1.80"/>
+			<heading deg="100.84" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="8.88" y="49.35" z="2.80"/>
+			<heading deg="138.66" />
+			<timeout t="99.57" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="18.71" y="51.23" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="20.59" y="41.40" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="37.77" y="-16.41" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="35.93" y="-1.49" z="1.80"/>
+			<heading deg="96.19" />
+			<timeout t="116.89" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="20.21" y="-4.50" z="1.80"/>
+			<heading deg="190.00" />
+			<timeout t="124.41" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-15.93" y="-11.42" z="0.00"/>
+			<heading deg="190.00" />
+			<timeout t="190.68" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="9.63" y="-50.29" z="0.00"/>
+			<heading deg="302.48" />
+			<timeout t="241.09" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="29.28" y="-46.53" z="0.00"/>
+			<heading deg="10.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="22.13" y="-9.22" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="196.85" />
+			<velocity x="1.5" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="20.25" y="0.60" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="30.08" y="2.48" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="31.96" y="-7.34" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="49.14" y="-65.15" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="39.31" y="-67.03" z="2.80"/>
+			<heading deg="190.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="37.43" y="-57.21" z="1.80"/>
+			<heading deg="100.84" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="18.29" y="0.23" z="2.80"/>
+			<heading deg="138.66" />
+			<timeout t="99.57" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="28.11" y="2.11" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="29.99" y="-7.72" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="47.17" y="-65.53" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="45.33" y="-50.61" z="1.80"/>
+			<heading deg="96.19" />
+			<timeout t="116.89" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="29.62" y="-53.62" z="1.80"/>
+			<heading deg="190.00" />
+			<timeout t="124.41" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-7.69" y="-60.76" z="0.00"/>
+			<heading deg="190.00" />
+			<timeout t="196.85" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="19.08" y="-99.62" z="0.00"/>
+			<heading deg="303.72" />
+			<timeout t="244.55" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="38.72" y="-95.86" z="0.00"/>
+			<heading deg="10.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="31.54" y="-58.34" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="197.98" />
+			<velocity x="1.5" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="29.66" y="-48.52" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="39.48" y="-46.63" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="41.36" y="-56.46" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="58.54" y="-114.27" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="48.72" y="-116.15" z="2.80"/>
+			<heading deg="190.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="46.84" y="-106.33" z="1.80"/>
+			<heading deg="100.84" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="27.69" y="-48.89" z="2.80"/>
+			<heading deg="138.66" />
+			<timeout t="99.57" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="37.52" y="-47.01" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="39.40" y="-56.83" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="56.58" y="-114.65" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="54.74" y="-99.73" z="1.80"/>
+			<heading deg="96.19" />
+			<timeout t="116.89" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="39.02" y="-102.73" z="1.80"/>
+			<heading deg="190.00" />
+			<timeout t="124.41" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="1.50" y="-109.92" z="0.00"/>
+			<heading deg="190.00" />
+			<timeout t="197.98" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="28.76" y="-150.20" z="0.00"/>
+			<heading deg="303.25" />
+			<timeout t="252.06" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="48.41" y="-146.44" z="0.00"/>
+			<heading deg="10.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="40.94" y="-107.46" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="205.67" />
+			<velocity x="1.5" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="39.06" y="-97.63" z="2.80"/>
+			<heading deg="100.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="48.89" y="-95.75" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="50.77" y="-105.58" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="67.95" y="-163.39" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="58.13" y="-165.27" z="2.80"/>
+			<heading deg="190.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="56.24" y="-155.45" z="1.80"/>
+			<heading deg="100.84" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="37.10" y="-98.01" z="2.80"/>
+			<heading deg="138.66" />
+			<timeout t="99.57" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="46.92" y="-96.13" z="2.80"/>
+			<heading deg="10.00" />
+			<timeout t="77.75" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<leg>
+			<length m="50.01" />
+			<position x="48.80" y="-105.95" z="1.80"/>
+			<heading deg="-79.16" />
+			<timeout t="100.02" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</leg>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="65.98" y="-163.77" z="2.80"/>
+			<heading deg="310.96" />
+			<timeout t="90.68" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="64.15" y="-148.84" z="1.80"/>
+			<heading deg="96.19" />
+			<timeout t="116.89" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="48.43" y="-151.85" z="1.80"/>
+			<heading deg="190.00" />
+			<timeout t="124.41" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="9.45" y="-159.32" z="0.00"/>
+			<heading deg="190.00" />
+			<timeout t="205.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-10.20" y="-163.08" z="0.00"/>
+			<heading deg="190.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+</mission>
