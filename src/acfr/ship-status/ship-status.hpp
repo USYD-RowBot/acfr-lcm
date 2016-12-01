@@ -10,6 +10,7 @@
 #include "perls-lcmtypes++/senlcm/novatel_t.hpp"
 #include "perls-lcmtypes++/senlcm/ahrs_t.hpp"
 #include "perls-lcmtypes++/senlcm/rt3202_t.hpp"
+#include "perls-lcmtypes++/senlcm/posmv_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/ship_status_t.hpp"
@@ -28,13 +29,15 @@ typedef enum {
         GPS_NOVATEL,
         GPS_GPSD,
         GPS_RT3202,
-        GPS_STATIC 
+        GPS_STATIC,
+        GPS_POSMV 
     } gps_source_t;
         
 typedef enum {  
         ATT_NOVATEL,
         ATT_RT3202,
-        ATT_AHRS 
+        ATT_AHRS,
+        ATT_POSMV 
     } att_source_t;
     
 
@@ -52,6 +55,7 @@ class Ship_Status
         rt3202_t rt3202;
         gpsd3_t gpsd3;
         ahrs_t ahrs;
+        posmv_t posmv;
         double mag_dec;
         double static_lat;
         double static_lon;

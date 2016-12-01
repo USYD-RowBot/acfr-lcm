@@ -1,0 +1,302 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+	<desc>
+		Iver compass calibration mission
+	</desc>
+	<global>
+		<location lat="-33.839459" lon="151.25438" />
+		<turn_radius m="5" />
+		<drop_distance m="4" />
+		<drop_angle deg="40" />
+		<mission_timeout t = "1"/>
+		<!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+	</global>
+	<primitive>
+		<goto>
+			<position x="-115.0" y="-40.0" z="0.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-45.0" y="-40.0" z="0.0"/>
+			<heading deg="45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-35.0" y="-30.0" z="0.0"/>
+			<heading deg="90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-35.0" y="40.0" z="0.0"/>
+			<heading deg="135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-45.0" y="50.0" z="0.0"/>
+			<heading deg="180.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-115.0" y="50.0" z="0.0"/>
+			<heading deg="-135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-125.0" y="40.0" z="0.0"/>
+			<heading deg="-90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-125.0" y="-30.0" z="0.0"/>
+			<heading deg="-45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-115.0" y="-40.0" z="0.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-45.0" y="-40.0" z="0.0"/>
+			<heading deg="45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-35.0" y="-30.0" z="0.0"/>
+			<heading deg="90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-35.0" y="40.0" z="0.0"/>
+			<heading deg="135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-45.0" y="50.0" z="0.0"/>
+			<heading deg="180.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-115.0" y="50.0" z="0.0"/>
+			<heading deg="-135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-125.0" y="40.0" z="0.0"/>
+			<heading deg="-90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-125.0" y="-30.0" z="0.0"/>
+			<heading deg="112.5" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-136.568542495" y="-2.07106781187" z="0.0"/>
+			<heading deg="-45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-87.0710678119" y="-51.5685424949" z="0.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-72.9289321881" y="-51.5685424949" z="0.0"/>
+			<heading deg="45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-23.4314575051" y="-2.07106781187" z="0.0"/>
+			<heading deg="90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-23.4314575051" y="12.0710678119" z="0.0"/>
+			<heading deg="135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-72.9289321881" y="61.5685424949" z="0.0"/>
+			<heading deg="180.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-87.0710678119" y="61.5685424949" z="0.0"/>
+			<heading deg="-135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-136.568542495" y="12.0710678119" z="0.0"/>
+			<heading deg="-90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-136.568542495" y="-2.07106781187" z="0.0"/>
+			<heading deg="-45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-87.0710678119" y="-51.5685424949" z="0.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-72.9289321881" y="-51.5685424949" z="0.0"/>
+			<heading deg="45.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-23.4314575051" y="-2.07106781187" z="0.0"/>
+			<heading deg="90.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-23.4314575051" y="12.0710678119" z="0.0"/>
+			<heading deg="135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-72.9289321881" y="61.5685424949" z="0.0"/>
+			<heading deg="180.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-87.0710678119" y="61.5685424949" z="0.0"/>
+			<heading deg="-135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="-136.568542495" y="12.0710678119" z="0.0"/>
+			<heading deg="-135.0" />
+			<timeout t="3000" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+</mission>

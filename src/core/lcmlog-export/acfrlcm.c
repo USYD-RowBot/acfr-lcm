@@ -204,5 +204,17 @@ acfrlcm_auv_bluefin_tail_command_t_handler (const lcm_recv_buf_t *rbuf, const ch
     textread_stop (tr);
 }
 
+void
+acfrlcm_auv_control_goal_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_control_goal_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "pitch_goal","%f",      msg->pitch_goal);
+    textread_stop (tr);
+}
 
 

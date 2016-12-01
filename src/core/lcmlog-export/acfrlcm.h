@@ -40,5 +40,9 @@ acfrlcm_auv_bluefin_tail_command_t_handler (const lcm_recv_buf_t *rbuf, const ch
 void
 acfrlcm_auv_bluefin_tail_status_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
                                const acfrlcm_auv_bluefin_tail_status_t *msg, void *user);
+                               
+void
+acfrlcm_auv_control_goal_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_control_goal_t *msg, void *user);
 
 #endif
