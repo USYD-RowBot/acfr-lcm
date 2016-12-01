@@ -92,6 +92,13 @@ int Evologics_AHRS::process_ahrs_message(char *buf)
         ahrs.roll = atof(tokens[4]) * DTOR;
         ahrs.pitch = atof(tokens[3]) * DTOR;
         ahrs.heading = atof(tokens[5]) * DTOR;
+
+        static int count = 0;
+        if (++count > 10)
+        {
+            cout << "r: " << ahrs.roll << " p: " << ahrs.pitch << " h:" << ahrs.heading << endl;
+            count = 0;
+        }
         return 1;
     }
     else
@@ -192,7 +199,7 @@ int Evologics_AHRS::handle_heartbeat()
 int Evologics_AHRS::process()
 {
     int lcm_fd = lcm->getFileno();
-    fd_set rfds;
+    fd_set rfds, exceptfds;
     char buf[MAX_BUF_LEN];
     
     while(!loop_exit)
@@ -205,13 +212,13 @@ int Evologics_AHRS::process()
             if (open_port(ip, port) > 0)
 	            pipe_broken = false;
         }*/
-        
+
+        // check on LCM messages
         FD_ZERO (&rfds);
         FD_SET (lcm_fd, &rfds);
-        FD_SET (ahrs_fd, &rfds);
         struct timeval timeout;
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 1;
         memset(buf, 0, MAX_BUF_LEN);
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         if(ret > 0)
@@ -219,6 +226,22 @@ int Evologics_AHRS::process()
             if(FD_ISSET(lcm_fd, &rfds))
                 lcm->handle();
                         
+        } else if (ret == -1) {
+            cout << "lcm select timeout with return: " << ret << endl;
+            sleep(1);
+        } 
+        
+        // now check on AHRS messages
+        FD_ZERO (&rfds);
+        FD_SET (ahrs_fd, &rfds);
+        FD_ZERO (&exceptfds);
+        FD_SET (ahrs_fd, &exceptfds);
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+        memset(buf, 0, MAX_BUF_LEN);
+        ret = select (FD_SETSIZE, &rfds, NULL, &exceptfds, &timeout);
+        if(ret > 0)
+        {
             if(FD_ISSET(ahrs_fd, &rfds))
             {
                 // data to be read       
@@ -226,12 +249,23 @@ int Evologics_AHRS::process()
                 readline(ahrs_fd, buf, MAX_BUF_LEN);
                 process_ahrs_message(buf);
             }
+            if(FD_ISSET(ahrs_fd, &exceptfds))
+            {
+                cout << "ahrs select exception with return: " << ret << endl;
+                if (reopen_port() > 0)
+                    pipe_broken = false;
+                sleep(1);
+            }
         } else if (ret == -1) {
-            cout << "select timeout with return: " << ret << endl;
+            cout << "ahrs select timeout with return: " << ret << endl;
             if (reopen_port() > 0)
                 pipe_broken = false;
             sleep(1);
         } else {
+            cout << "ahrs select returned 0" << endl;
+            if (reopen_port() > 0)
+                pipe_broken = false;
+            sleep(1);
         }
     }
     //delete evo;
