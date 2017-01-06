@@ -6,6 +6,7 @@ set (SRC
 	nmea.c		nmea.h
 	socket.c	socket.h
 				units.h
+	dfs.c		dfs.h
 )
 
 

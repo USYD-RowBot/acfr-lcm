@@ -5,13 +5,21 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "perls-common/ascii.h"
-#include "perls-common/bot_util.h"
-#include "perls-common/dfs.h"
-#include "perls-common/error.h"
-#include "perls-common/generic_sensor_driver.h"
-#include "perls-common/nmea.h"
-#include "perls-common/units.h"
+#include <bot_param/param_client.h>
+
+#include "acfr-common/timestamp.h"
+#include "acfr-common/nmea.h"
+#include "acfr-common/sensor.h"
+#include "acfr-common/units.h"
+#include "acfr-common/dfs.h"
+
+//#include "perls-common/ascii.h"
+//#include "perls-common/bot_util.h"
+//#include "perls-common/dfs.h"
+//#include "perls-common/error.h"
+//#include "perls-common/generic_sensor_driver.h"
+//#include "perls-common/nmea.h"
+//#include "perls-common/units.h"
 
 #include "perls-math/rphcorr.h"
 
@@ -19,8 +27,7 @@
 
 #include "os5000.h"
 
-#define DTOR (UNITS_DEGREE_TO_RADIAN)
-#define RTOD (UNITS_RADIAN_TO_DEGREE)
+#define ASCII_ESC        0x1b // (escape)
 
 static int
 parse_buf (const char *buf, int len, senlcm_os_compass_t *osc, bool freshwater)
@@ -90,9 +97,9 @@ parse_buf (const char *buf, int len, senlcm_os_compass_t *osc, bool freshwater)
 }
 
 static int
-os_config (generic_sensor_driver_t *gsd)
+os_config (acfr_sensor_t *s)
 {
-#define SEND_TO_COMPASS(gsd, buf, len) gsd_write (gsd, buf, len); usleep (250e3)
+#define SEND_TO_COMPASS(s, buf, len) acfr_sensor_write (s, buf, len); usleep (250e3)
 
     int len = 0;
     char buf[2048];
@@ -101,24 +108,24 @@ os_config (generic_sensor_driver_t *gsd)
 
     /* raw volts output for depth */
     len = sprintf (buf, "%cM\r", ASCII_ESC);
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
     len = sprintf (buf, "0\r");
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
 
     /* select desired fields */
     const int desired =
         OS5000_BITMASK_H + OS5000_BITMASK_P + OS5000_BITMASK_R +
         OS5000_BITMASK_T + OS5000_BITMASK_D + OS5000_BITMASK_M_XYZ + OS5000_BITMASK_A_XYZ;
     len = sprintf (buf, "%cX\r", ASCII_ESC);
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
     len = sprintf (buf, "%d\r", desired);
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
 
     /* select desired output format */
     len = sprintf (buf, "%c*\r", ASCII_ESC);
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
     len = sprintf (buf, "1\r");
-    SEND_TO_COMPASS (gsd, buf, len);
+    SEND_TO_COMPASS (s, buf, len);
 
     printf ("ready!\n");
 
@@ -126,17 +133,94 @@ os_config (generic_sensor_driver_t *gsd)
 }
 
 
-static int
-myopts (generic_sensor_driver_t *gsd)
+
+int program_exit;
+int broken_pipe;
+void
+signal_handler(int sig_num)
 {
-    getopt_add_description (gsd->gopt, "Ocean-Server OS5500-USG digital compass sensor driver.");
-    return 0;
+    // do a safe exit
+    if(sig_num == SIGPIPE)
+        broken_pipe = 1;
+    else
+        program_exit = 1;
 }
 
-int
-main (int argc, char *argv[])
+int main (int argc, char *argv[])
 {
-    generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
+
+    // install the signal handler
+    program_exit = 0;
+    broken_pipe = 0;
+    signal(SIGINT, signal_handler);
+    //signal(SIGPIPE, signal_handler);
+
+    //Initalise LCM object - specReading
+    lcm_t *lcm = lcm_create(NULL);
+
+    char rootkey[64];
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
+    if(sensor == NULL)
+        return 0;
+
+
+    acfr_sensor_canonical(sensor, '\n', '\r');
+
+    os_config (sensor);
+    
+    fd_set rfds;
+    char buf[256];
+    senlcm_os_compass_t os_compass;
+    
+    // loop to collect data, parse and send it on its way
+    while(!program_exit)
+    {
+        // check for broken pipes, if it is broken make sure it is closed and then reopen it
+        if(broken_pipe)
+        {
+            sensor->port_open = 0;
+            fprintf(stderr, "Pipe broken\n");
+            continue;
+        }
+
+
+        memset(buf, 0, sizeof(buf));
+
+        FD_ZERO(&rfds);
+        FD_SET(sensor->fd, &rfds);
+
+        struct timeval tv;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret == -1)
+            perror("Select failure: ");
+        else if(ret != 0)
+        {
+            int len;
+            os_compass.utime = timestamp_now();
+            len = acfr_sensor_read(sensor, buf, 256);
+            if(len > 0)
+                if (parse_buf (buf, len, &os_compass, 0))
+			senlcm_os_compass_t_publish (lcm, "OS_COMPASS", &os_compass);
+
+        }
+        else
+        {
+            // timeout, check the connection
+            fprintf(stderr, "Timeout: Checking connection\n");
+            //acfr_sensor_write(sensor, "\n", 1);
+        }
+    }
+
+    acfr_sensor_destroy(sensor);
+
+    return 0;
+
+/*    generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
     gsd_canonical (gsd, '\r','\n');
     gsd_launch (gsd);
 
@@ -154,6 +238,8 @@ main (int argc, char *argv[])
 
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
+
+
     while (1)
     {
         // read stream
@@ -176,4 +262,6 @@ main (int argc, char *argv[])
     } // while
 
     rphcorr_destroy (rphcorr);
+    */
+    
 }
