@@ -320,7 +320,10 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
     osc_data.roll = osc->rph[0];
     osc_data.pitch = osc->rph[1];
     osc_data.heading = osc->rph[2];
-    osc_data.depth = osc->rph[4];
+    //osc_data.depth = osc->rph[4];
+
+    // The handler in seabed interface assumes the depth of this message is in feet.
+    osc_data.depth = osc->depth / UNITS_FEET_TO_METER;
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
     if(state->mode == NAV)

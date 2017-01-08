@@ -49,7 +49,8 @@ typedef enum
     DEPTH_YSI,
     DEPTH_PAROSCI,
     DEPTH_SEABIRD,
-    DEPTH_OS
+    DEPTH_OS,
+    DEPTH_OS_COMPASS
 } depth_source_t;
 
 typedef enum 

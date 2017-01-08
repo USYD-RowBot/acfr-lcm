@@ -38,11 +38,13 @@ int acfr_nav::initialise()
     // we always subscribe to the GPS
     state->lcm->subscribeFunction("GPSD_CLIENT", on_gps, state);
     
+    // Are we using the OS_COMPASS, attitude or depth
+    if(attitude_source == ATT_OS || DEPTH_OS_COMPASS)
+        state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
+    
     // Are we using the TCM compass
     if(attitude_source == ATT_TCM)
         state->lcm->subscribeFunction("TCM", on_tcm_compass, state);
-    else if(attitude_source == ATT_OS)
-        state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
     else if(attitude_source == ATT_UVC)
 	state->lcm->subscribeFunction("UVC_RPH", on_uvc_rph, state);
         
@@ -110,6 +112,8 @@ int acfr_nav::load_config(char *program_name)
         depth_source = DEPTH_SEABIRD;
      else if(!strcmp(depth_source_str, "UVC"))
         depth_source = DEPTH_OS;   
+    else if(!strcmp(depth_source_str, "OS_COMPASS"))
+        depth_source = DEPTH_OS_COMPASS;   
     
     // Velocity source
     sprintf(key, "%s.velocity_source", rootkey);
