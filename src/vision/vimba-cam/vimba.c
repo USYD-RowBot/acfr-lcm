@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
-#include <vimba/VimbaC.h>
+#include <vimba/VimbaC.h>strcpy
 #include <pthread.h>
 #include <semaphore.h>
 #include <tiffio.h>
@@ -643,14 +643,14 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
 
     char *key_exp = "ExposureValue";
     metadata.key =malloc(strlen(key_exp));
-    strcpy(metadata.key,key_exp);
+    strncpy(metadata.key,key_exp, strlen(key_exp));
     metadata.n = 4;
     metadata.value =  (uint8_t *)&exposure;
     memcpy(&image.metadata[0], &metadata, sizeof(bot_core_image_metadata_t));
 
     char *key_gain = "GainValue";
     metadata.key =realloc(metadata.key, strlen(key_gain));
-    strcpy(metadata.key,key_gain);
+    strncpy(metadata.key,key_gain, strlen(key_gain));
     metadata.n = 4;
     metadata.value =  (uint8_t *)&gain;
     memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
