@@ -1,5 +1,4 @@
-/* ACFR PSU driver
- * 1/8 brick 
+/* ACFR Tunnel Thruster Twin Controller
  *
  * Christian Lees
  * ACFR
@@ -84,6 +83,7 @@ int chop_string(char *data, char *delim, char **tokens)
         tokens[i++] = token;
         token = strtok(NULL, delim);
     }
+
     return i;
 }
 
@@ -100,14 +100,16 @@ int parse_thruster_response(state_t *state, char *d, int len)
     
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
-    	if(chop_string(d, ", ", tokens) == 5)
+    	if(chop_string(d, ", ", tokens) == 6)
     	{
 	    	acfrlcm_tunnel_thruster_power_t ttp;
 	    	ttp.utime = timestamp_now();
 	    	ttp.addr = addr;
-	    	ttp.voltage = atof(tokens[2]);
-	    	ttp.current = atof(tokens[3]);
-	    	ttp.temperature = atof(tokens[4]);
+	    	ttp.voltage[0] = atof(tokens[1]);
+	    	ttp.current[0] = atof(tokens[2]);
+	    	ttp.voltage[1] = atof(tokens[3]);
+	    	ttp.current[1] = atof(tokens[4]);
+	    	ttp.temperature = atof(tokens[5]);
 	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, "TUNNEL_THRUSTER_POWER", &ttp);
 	    	
 	    	return 1;
@@ -164,17 +166,12 @@ int send_tunnel_commands(state_t *state)
 	// Send the thrust values to the controllers
 	char msg[16];
 	
-	sprintf(msg, "#%02uT%d\r", state->addrs[0], state->tc.fore_horiz);
+	sprintf(msg, "#%02uT1 %d\r", state->addrs[0], state->tc.fore_horiz);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
-	sprintf(msg, "#%02uT%d\r", state->addrs[1], state->tc.fore_vert);
+	sprintf(msg, "#%02uT2 %d\r", state->addrs[0], state->tc.fore_vert);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 
-	sprintf(msg, "#%02uT%d\r", state->addrs[2], state->tc.aft_horiz);
-	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
-	
-	sprintf(msg, "#%02uT%d\r", state->addrs[3], state->tc.aft_vert);
-	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;
 }	
@@ -251,8 +248,8 @@ int main (int argc, char *argv[])
 	// Read the PSU addresses we are interested in
 	char key[64];
 	sprintf(key, "%s.addrs", rootkey);
-	int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 4);
-	if(num_thrusters != 4)
+	int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 2);
+	if(num_thrusters != 2)
 	{
 		printf("Wrong number of thruster addresses\n");
 		acfr_sensor_destroy(state.sensor);
