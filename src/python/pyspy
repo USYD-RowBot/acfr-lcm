@@ -68,7 +68,7 @@ class Channel(object):
                 try:
                     value = unicode(value)
                 except UnicodeDecodeError:
-		    line = u""
+                    line = u""
                     for v in value:
                         try:
                             line += unicode(v)
