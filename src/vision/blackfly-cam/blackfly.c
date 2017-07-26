@@ -66,13 +66,19 @@ typedef struct
 
     int serial;
     char *mac;
+    char *ip;
+    char *netmask;
+    char *gateway;
     char *channel;
     char *camera_name;
 
     fc2Context fc_context;
-    //VmbHandle_t camera;
+	fc2MACAddress fc_mac;
+	fc2IPAddress fc_ip;
+	fc2IPAddress fc_netmask;
+	fc2IPAddress fc_gateway;
+
     timestamp_sync_private_state_t tss;
-    //VmbInt64_t frame_size;
     char *path;
     int write_files;
     qframe_t *frames_head, *frames_tail;
@@ -902,6 +908,55 @@ int main(int argc, char **argv)
 
     sprintf(key, "%s.mac", state.root_key);
     state.mac = bot_param_get_str_or_fail(state.params, key);
+    // parse into int format
+	char *token = strtok(state.mac, ":");
+    int i = 0;
+	while ( token != NULL && i < 6)
+	{
+        long val = strtol(token, NULL, 16);
+        state.fc_mac.octets[i] = val;
+        token = strtok(NULL, ":");
+        ++i;
+	}
+
+    sprintf(key, "%s.ip", state.root_key);
+    state.ip = bot_param_get_str_or_fail(state.params, key);
+    // parse into int format
+	token = strtok(state.ip, ".");
+    i = 0;
+	while ( token != NULL && i < 4)
+	{
+        long val = strtol(token, NULL, 10);
+        state.fc_ip.octets[i] = val;
+        token = strtok(NULL, ".");
+        ++i;
+	}
+
+    sprintf(key, "%s.netmask", state.root_key);
+    state.netmask = bot_param_get_str_or_fail(state.params, key);
+    // parse into int format
+	token = strtok(state.netmask, ".");
+    i = 0;
+	while ( token != NULL && i < 4)
+	{
+        long val = strtol(token, NULL, 10);
+        state.fc_netmask.octets[i] = val;
+        token = strtok(NULL, ".");
+        ++i;
+	}
+
+    sprintf(key, "%s.gateway", state.root_key);
+    state.gateway = bot_param_get_str_or_fail(state.params, key);
+    // parse into int format
+	token = strtok(state.gateway, ".");
+    i = 0;
+	while ( token != NULL && i < 4)
+	{
+        long val = strtol(token, NULL, 10);
+        state.fc_gateway.octets[i] = val;
+        token = strtok(NULL, ".");
+        ++i;
+	}
 
     sprintf(key, "%s.channel", state.root_key);
     state.channel = bot_param_get_str_or_fail(state.params, key);
@@ -943,7 +998,21 @@ int main(int argc, char **argv)
     fc2RegisterCallback(state.fc_context, &bus_arrive, FC2_ARRIVAL, &state, &arrival_handle);
     fc2RegisterCallback(state.fc_context, &bus_remove, FC2_REMOVAL, &state, &removal_handle);
 
-    unsigned int cam_count;
+	fc2ForceIPAddressToCamera(state.fc_context, state.fc_mac, state.fc_ip, state.fc_netmask, state.fc_gateway);
+
+    printf("Finding cameras\n");
+    unsigned int cam_count = 2;
+
+    fc2CameraInfo *cameras = malloc(sizeof(fc2CameraInfo) * cam_count);
+    err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
+
+    if (err == FC2_ERROR_BUFFER_TOO_SMALL)
+	{
+		cameras = realloc(cameras, sizeof(fc2CameraInfo) * cam_count);
+        err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
+    }
+
+
     if (fc2GetNumOfCameras(state.fc_context, &cam_count) != FC2_ERROR_OK)
     {
         fprintf(stderr, "An error detectingn the number of cameras.\n");
@@ -967,8 +1036,6 @@ int main(int argc, char **argv)
     while (!program_exit)
     {
         lcm_handle_timeout(state.lcm, 1000);
-
-        fc2FireSoftwareTrigger(state.fc_context);
 
         // check the camera state
         pthread_mutex_lock(&state.camera_lock);
