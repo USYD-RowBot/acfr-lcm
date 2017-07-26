@@ -73,10 +73,10 @@ typedef struct
     char *camera_name;
 
     fc2Context fc_context;
-	fc2MACAddress fc_mac;
-	fc2IPAddress fc_ip;
-	fc2IPAddress fc_netmask;
-	fc2IPAddress fc_gateway;
+    fc2MACAddress fc_mac;
+    fc2IPAddress fc_ip;
+    fc2IPAddress fc_netmask;
+    fc2IPAddress fc_gateway;
 
     timestamp_sync_private_state_t tss;
     char *path;
@@ -398,7 +398,7 @@ int write_tiff_image(state_t *state, fc2Image *frame, int64_t utime)
             TIFFSetField(image, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
             break;
         case FC2_PIXEL_FORMAT_MONO8:
-		case FC2_PIXEL_FORMAT_RAW8:
+        case FC2_PIXEL_FORMAT_RAW8:
             printf("RAW8\n");
             bpp = 1;
             stride = bpp * frame->cols;
@@ -541,7 +541,7 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
     metadata.value =  (uint8_t *)&gain;
     memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
 
-    int bpp;    // bytes per pixel
+    int bpp = 2;    // bytes per pixel
     // TODO
     /*if(frame->pixelFormat & VmbPixelOccupy16Bit)
         bpp = 2;
@@ -724,6 +724,12 @@ int open_camera(state_t *state)
     embedded_info.exposure.onOff = 1;
     fc2SetEmbeddedImageInfo(state->fc_context, &embedded_info);
 
+    fc2GigEProperty prop;
+    prop.propType = PACKET_SIZE;
+    fc2GetGigEProperty(state->fc_context, &prop);
+    prop.value = packet_size;
+    fc2SetGigEProperty(state->fc_context, &prop);
+
 
     // existing/default settings should be full image
     // but we need to set the format we want to use
@@ -869,7 +875,7 @@ int main(int argc, char **argv)
     state.queue_length = 0;
     state.image_count = 0;
     sem_init(&state.write_sem, 0, 0);
-    state.write_files = 1;
+    state.write_files = 0;
     pthread_mutex_init(&state.frames_mutex, 0);
     state.publish = 1;
     state.tss.is_valid = 0;
@@ -909,54 +915,54 @@ int main(int argc, char **argv)
     sprintf(key, "%s.mac", state.root_key);
     state.mac = bot_param_get_str_or_fail(state.params, key);
     // parse into int format
-	char *token = strtok(state.mac, ":");
+    char *token = strtok(state.mac, ":");
     int i = 0;
-	while ( token != NULL && i < 6)
-	{
+    while ( token != NULL && i < 6)
+    {
         long val = strtol(token, NULL, 16);
         state.fc_mac.octets[i] = val;
         token = strtok(NULL, ":");
         ++i;
-	}
+    }
 
     sprintf(key, "%s.ip", state.root_key);
     state.ip = bot_param_get_str_or_fail(state.params, key);
     // parse into int format
-	token = strtok(state.ip, ".");
+    token = strtok(state.ip, ".");
     i = 0;
-	while ( token != NULL && i < 4)
-	{
+    while ( token != NULL && i < 4)
+    {
         long val = strtol(token, NULL, 10);
         state.fc_ip.octets[i] = val;
         token = strtok(NULL, ".");
         ++i;
-	}
+    }
 
     sprintf(key, "%s.netmask", state.root_key);
     state.netmask = bot_param_get_str_or_fail(state.params, key);
     // parse into int format
-	token = strtok(state.netmask, ".");
+    token = strtok(state.netmask, ".");
     i = 0;
-	while ( token != NULL && i < 4)
-	{
+    while ( token != NULL && i < 4)
+    {
         long val = strtol(token, NULL, 10);
         state.fc_netmask.octets[i] = val;
         token = strtok(NULL, ".");
         ++i;
-	}
+    }
 
     sprintf(key, "%s.gateway", state.root_key);
     state.gateway = bot_param_get_str_or_fail(state.params, key);
     // parse into int format
-	token = strtok(state.gateway, ".");
+    token = strtok(state.gateway, ".");
     i = 0;
-	while ( token != NULL && i < 4)
-	{
+    while ( token != NULL && i < 4)
+    {
         long val = strtol(token, NULL, 10);
         state.fc_gateway.octets[i] = val;
         token = strtok(NULL, ".");
         ++i;
-	}
+    }
 
     sprintf(key, "%s.channel", state.root_key);
     state.channel = bot_param_get_str_or_fail(state.params, key);
@@ -975,52 +981,69 @@ int main(int argc, char **argv)
 
     printf("Publish = %d, Scale = %d\n", state.publish, state.image_scale);
 
-    // start Vimba
-    if(fc2CreateGigEContext(&state.fc_context) != FC2_ERROR_OK)
-    {
-        fprintf(stderr, "An error occured creating FlyCapture2 context.\n");
-        return 0;
-    }
-
-    fc2Error err;
-
-    printf("Installing detection callback\n");
     state.camera_state = CAMERA_NONE;
     state.camera_state_change = 0;
     pthread_mutex_init(&state.camera_lock, 0);
-    // Register the callback to detect cameras
-    
-    fc2CallbackHandle all_handle;
-    fc2CallbackHandle arrival_handle;
-    fc2CallbackHandle removal_handle;
 
-    fc2RegisterCallback(state.fc_context, &bus_all, FC2_BUS_RESET, &state, &all_handle);
-    fc2RegisterCallback(state.fc_context, &bus_arrive, FC2_ARRIVAL, &state, &arrival_handle);
-    fc2RegisterCallback(state.fc_context, &bus_remove, FC2_REMOVAL, &state, &removal_handle);
-
-	fc2ForceIPAddressToCamera(state.fc_context, state.fc_mac, state.fc_ip, state.fc_netmask, state.fc_gateway);
-
+    fc2Error err;
     printf("Finding cameras\n");
-    unsigned int cam_count = 2;
-
-    fc2CameraInfo *cameras = malloc(sizeof(fc2CameraInfo) * cam_count);
-    err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
-
-    if (err == FC2_ERROR_BUFFER_TOO_SMALL)
-	{
-		cameras = realloc(cameras, sizeof(fc2CameraInfo) * cam_count);
-        err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
-    }
-
-
-    if (fc2GetNumOfCameras(state.fc_context, &cam_count) != FC2_ERROR_OK)
+    while (1)
     {
-        fprintf(stderr, "An error detectingn the number of cameras.\n");
-        return 0;
-    }
-    printf("Found %i cameras.\n", cam_count);
+        // open context for FlyCapture
+        if(fc2CreateGigEContext(&state.fc_context) != FC2_ERROR_OK)
+        {
+            fprintf(stderr, "An error occured creating FlyCapture2 context.\n");
+            return 0;
+        }
 
-    open_camera(&state);
+        printf("Forcing IP Address\n");
+        fc2ForceIPAddressToCamera(state.fc_context, state.fc_mac, state.fc_ip, state.fc_netmask, state.fc_gateway);
+        sleep(1);
+
+        unsigned int cam_count = 0;
+
+        fc2CameraInfo *cameras = malloc(sizeof(fc2CameraInfo) * cam_count);
+        err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
+
+        if (err == FC2_ERROR_BUFFER_TOO_SMALL)
+        {
+            cameras = realloc(cameras, sizeof(fc2CameraInfo) * cam_count);
+            err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
+        }
+
+        free(cameras);
+
+        if (fc2GetNumOfCameras(state.fc_context, &cam_count) != FC2_ERROR_OK)
+        {
+            fprintf(stderr, "An error detectingn the number of cameras.\n");
+            return 0;
+        }
+
+        printf("Found %i cameras.\n", cam_count);
+
+        if (cam_count > 0)
+        {
+            printf("Attempting to open camera.\n");
+            int open = open_camera(&state);
+
+            if (open)
+            {
+                printf("Opened camera.\n");
+                break;
+            }
+            
+            printf("Failed to open camera.\n");
+        }
+
+        // start again with a new context if we couldn't find the camera/connect
+        if (fc2DestroyContext(state.fc_context) != FC2_ERROR_OK)
+        {
+            fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
+            return 0;
+        }
+        sleep(1);
+    }
+
 
     // start the write thread and detach it
     //pthread_t tid;
