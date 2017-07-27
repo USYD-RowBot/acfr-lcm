@@ -66,7 +66,10 @@ class Channel(object):
                 continue
             else:
                 try:
-                    value = unicode(value)
+                    if attr == 'data':
+                        value = "Won't display"
+                    else:
+                        value = unicode(value)
                 except UnicodeDecodeError:
                     line = u""
                     for v in value:
