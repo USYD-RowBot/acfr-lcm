@@ -32,6 +32,7 @@ struct _qframe_t
     char *buffer;
     int rows;
     int cols;
+    char *suffix;
     fc2PixelFormat format;
     int64_t utime;
     struct _qframe_t *next;
@@ -61,11 +62,29 @@ typedef enum
 } camera_state_t;
 
 // state structure passed to all functions
+typedef struct camera_ camera_t;
 typedef struct
 {
     lcm_t *lcm;
     BotParam *params;
     char root_key[64];
+
+    int num_cameras;
+    camera_t *cameras;
+
+    char *path;
+    int write_files;
+    qframe_t *frames_head, *frames_tail;
+    pthread_mutex_t frames_mutex;
+    sem_t write_sem;
+    int queue_length;
+    int image_count;
+
+} state_t;
+
+struct camera_
+{
+    state_t *global_state;
 
     int serial;
     char *mac;
@@ -82,22 +101,15 @@ typedef struct
     fc2IPAddress fc_gateway;
 
     timestamp_sync_private_state_t tss;
-    char *path;
-    int write_files;
-    qframe_t *frames_head, *frames_tail;
-    pthread_mutex_t frames_mutex;
-    sem_t write_sem;
     int publish;
     int image_scale;
     int64_t previous_frame_utime;
-    int queue_length;
-    int image_count;
-    //VmbFrame_t frames[BUFFERS];
 
     camera_state_t camera_state;
     int camera_state_change;
     pthread_mutex_t camera_lock;
-} state_t;
+};
+
 
 
 // exit handler
@@ -365,7 +377,7 @@ int write_tiff_image(state_t *state, qframe_t *frame)
     // append the milliseconds
     char suffix[16];
     memset(suffix, 0, sizeof(suffix));
-    sprintf(suffix, "%03ld_%s.tif", tv.tv_usec/1000, (state->channel + strlen(state->channel) - 4));
+    sprintf(suffix, "%03ld_%s.tif", tv.tv_usec/1000, frame->suffix);
 
     // stick them together
     strcat(filename, suffix);
@@ -581,10 +593,11 @@ static void *write_thread(void *context)
 
 // If we are going to publish the image over LCM it happens here, this routine can also debayer and scale the image
 // only problem is it is CPU intensive and may not be worth it
-int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsigned int gain, int64_t frame_utime)
+int publish_image(camera_t *camera, fc2Image *frame, unsigned int exposure, unsigned int gain, int64_t frame_utime)
 {
     bot_core_image_t image;
     bot_core_image_metadata_t metadata;
+    state_t *state = camera->global_state;
 
     // allocate meta data for exposure time and gain
     image.nmetadata = 2;
@@ -614,14 +627,14 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
         bpp = 1;*/
 
     // fast image scale method, bayer images need to be scaled to 1/16, mono can be 1/4 or 1/16
-    if(state->image_scale != 1)
+    if(camera->image_scale != 1)
     {
         // allocate some memory to put the image in
         int scale;
         int step;
         if((frame->format == FC2_PIXEL_FORMAT_MONO8) || (frame->format == FC2_PIXEL_FORMAT_MONO12) || (frame->format == FC2_PIXEL_FORMAT_MONO16))
         {
-            scale = state->image_scale;
+            scale = camera->image_scale;
             if(scale == 4)
                 step = 2;
             else
@@ -654,7 +667,7 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
         image.height = frame->rows / step;
         image.row_stride = image.width * bpp;
 
-        bot_core_image_t_publish(state->lcm, state->channel, &image);
+        bot_core_image_t_publish(state->lcm, camera->channel, &image);
         free(img_resized);
     }
     else
@@ -664,7 +677,7 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
         image.row_stride = image.width * bpp;
         image.data = (unsigned char *)frame->pData;
         image.size = frame->cols * frame->rows * bpp;
-        bot_core_image_t_publish(state->lcm, state->channel, &image);
+        bot_core_image_t_publish(state->lcm, camera->channel, &image);
     }
 
     free(metadata.key);
@@ -676,7 +689,8 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
 // frame callback, called for every frame that is sent from the camera
 void image_callback(fc2Image *in_frame, void *callback_data)
 {
-    state_t *state = (state_t *)callback_data;
+    camera_t *camera = (camera_t *)callback_data;
+    state_t *state = camera->global_state;
     int64_t utime = timestamp_now();
 
     fc2Error err;
@@ -691,7 +705,7 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     fc2ImageMetadata meta;
     err = fc2GetImageMetadata(in_frame, &meta);
 
-    int64_t frame_utime = timestamp_sync_private(&state->tss, meta.embeddedTimeStamp, utime);
+    int64_t frame_utime = timestamp_sync_private(&camera->tss, meta.embeddedTimeStamp, utime);
 
     // Get a pointer to the start of the ancillary data, the Vimba API hasn't implemented this yet
     char *frame_buffer;
@@ -700,8 +714,8 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     int exposure = meta.embeddedExposure;
     int gain = meta.embeddedGain;
 
-    double fps = 1.0 / ((double)(frame_utime / 1e6) - (double)(state->previous_frame_utime / 1e6));
-    state->previous_frame_utime = frame_utime;
+    double fps = 1.0 / ((double)(frame_utime / 1e6) - (double)(camera->previous_frame_utime / 1e6));
+    camera->previous_frame_utime = frame_utime;
 
     // for now just save out the image
     printf("Exp: %u, Gain: %u, fps: %2.2f, utime: %"PRId64", size %d kB, buffer: %d kB, count: %d\n",
@@ -719,7 +733,7 @@ void image_callback(fc2Image *in_frame, void *callback_data)
             *d = *d << 4;
         }*/
 
-    if(state->publish)
+    if(camera->publish)
     {
         publish_image(state, in_frame, exposure, gain, frame_utime);
     }
@@ -732,6 +746,7 @@ void image_callback(fc2Image *in_frame, void *callback_data)
         qframe->cols = in_frame->cols;
         qframe->format = in_frame->format;
         qframe->buffer = malloc(in_frame->dataSize);
+        qframe->suffix = (camera->channel + strlen(camera->channel) - 4);
 
         char *frame_buffer;
         err = fc2GetImageData(in_frame, &frame_buffer);
@@ -794,57 +809,59 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
 }
 
 
-int open_camera(state_t *state)
+int open_camera(camera_t *camera_state)
 {
+    state_t *state = camera_state->global_state;
+
     fc2Error err;
     fc2PGRGuid guid;
 
-    fc2GetCameraFromSerialNumber(state->fc_context, state->serial, &guid);
+    fc2GetCameraFromSerialNumber(camera_state->fc_context, camera_state->serial, &guid);
 
-    if (fc2Connect(state->fc_context, &guid) != FC2_ERROR_OK)
+    if (fc2Connect(camera_state->fc_context, &guid) != FC2_ERROR_OK)
     {
         fprintf(stderr, "Could not connect to camera.\n");
         return 0;
     }
 
     unsigned int packet_size;
-    fc2DiscoverGigEPacketSize(state->fc_context, &packet_size);
+    fc2DiscoverGigEPacketSize(camera_state->fc_context, &packet_size);
 
     fc2GigEImageSettingsInfo gigesettingsinfo;
-    fc2GetGigEImageSettingsInfo(state->fc_context, &gigesettingsinfo);
+    fc2GetGigEImageSettingsInfo(camera_state->fc_context, &gigesettingsinfo);
     printf("formats: %x", gigesettingsinfo.pixelFormatBitField);
 
     fc2EmbeddedImageInfo embedded_info;
-    fc2GetEmbeddedImageInfo(state->fc_context, &embedded_info);
+    fc2GetEmbeddedImageInfo(camera_state->fc_context, &embedded_info);
     embedded_info.timestamp.onOff = 1;
     embedded_info.gain.onOff = 1;
     embedded_info.exposure.onOff = 1;
-    fc2SetEmbeddedImageInfo(state->fc_context, &embedded_info);
+    fc2SetEmbeddedImageInfo(camera_state->fc_context, &embedded_info);
 
     fc2GigEProperty prop;
     prop.propType = PACKET_SIZE;
-    fc2GetGigEProperty(state->fc_context, &prop);
+    fc2GetGigEProperty(camera_state->fc_context, &prop);
     prop.value = packet_size;
-    fc2SetGigEProperty(state->fc_context, &prop);
+    fc2SetGigEProperty(camera_state->fc_context, &prop);
 
 
     // existing/default settings should be full image
     // but we need to set the format we want to use
     fc2GigEImageSettings gigesettings;
-    fc2GetGigEImageSettings(state->fc_context, &gigesettings);
+    fc2GetGigEImageSettings(camera_state->fc_context, &gigesettings);
     gigesettings.pixelFormat = FC2_PIXEL_FORMAT_RAW16;
-    fc2SetGigEImageSettings(state->fc_context, &gigesettings);
+    fc2SetGigEImageSettings(camera_state->fc_context, &gigesettings);
 
 
     // set the trigger mode
     fc2TriggerMode tm;
-    fc2GetTriggerMode(state->fc_context, &tm); 
+    fc2GetTriggerMode(camera_state->fc_context, &tm); 
     tm.onOff = 1;
-    fc2SetTriggerMode(state->fc_context, &tm); 
+    fc2SetTriggerMode(camera_state->fc_context, &tm); 
 
     printf("Starting callback...\n");
 
-    if (fc2StartCaptureCallback(state->fc_context, &image_callback, state) != FC2_ERROR_OK)
+    if (fc2StartCaptureCallback(camera_state->fc_context, &image_callback, camera_state) != FC2_ERROR_OK)
     {
         fprintf(stderr, "Failed to start capture (via callback)\n");
     }
@@ -974,10 +991,6 @@ int main(int argc, char **argv)
     sem_init(&state.write_sem, 0, 0);
     state.write_files = 0;
     pthread_mutex_init(&state.frames_mutex, 0);
-    state.publish = 1;
-    state.tss.is_valid = 0;
-    state.tss.max_rate_error = 1.0;
-    state.previous_frame_utime = 0;
 
     // read the config file, we base the entry on a command line switch
     char opt;
@@ -1002,102 +1015,127 @@ int main(int argc, char **argv)
         return 0;
     }
 
-
     state.lcm = lcm_create(NULL);
     state.params = bot_param_new_from_server (state.lcm, 1);
 
-    sprintf(key, "%s.serial", state.root_key);
-    state.serial = bot_param_get_int_or_fail(state.params, key);
+    sprintf(key, "%s.num_cameras", state.root_key);
+    state.num_cameras = bot_param_get_int_or_fail(state.params, key);
 
-    sprintf(key, "%s.mac", state.root_key);
-    state.mac = bot_param_get_str_or_fail(state.params, key);
-    // parse into int format
-    char *token = strtok(state.mac, ":");
-    int i = 0;
-    while ( token != NULL && i < 6)
+    state.cameras = malloc(sizeof(camera_t) * state.num_cameras);
+
+    // now load config for each camera
+    for (int ii=0;ii<state.num_cameras;++ii)
     {
-        long val = strtol(token, NULL, 16);
-        state.fc_mac.octets[i] = val;
-        token = strtok(NULL, ":");
-        ++i;
+        state.cameras[ii].global_state = &state;
+        camera_t *camera = state.cameras + ii;
+
+        camera->publish = 1;
+        camera->tss.is_valid = 0;
+        camera->tss.max_rate_error = 1.0;
+        camera->previous_frame_utime = 0;
+
+        sprintf(key, "%s.cam%d.serial", state.root_key, ii+1);
+        camera->serial = bot_param_get_int_or_fail(state.params, key);
+
+        sprintf(key, "%s.cam%d.mac", state.root_key, ii+1);
+        camera->mac = bot_param_get_str_or_fail(state.params, key);
+        // parse into int format
+        char *token = strtok(camera->mac, ":");
+        int j = 0;
+        while ( token != NULL && j < 6)
+        {
+            long val = strtol(token, NULL, 16);
+            camera->fc_mac.octets[j] = val;
+            token = strtok(NULL, ":");
+            ++j;
+        }
+
+        sprintf(key, "%s.cam%d.ip", state.root_key, ii+1);
+        camera->ip = bot_param_get_str_or_fail(state.params, key);
+        // parse into int format
+        token = strtok(camera->ip, ".");
+        j = 0;
+        while ( token != NULL && j < 4)
+        {
+            long val = strtol(token, NULL, 10);
+            camera->fc_ip.octets[j] = val;
+            token = strtok(NULL, ".");
+            ++j;
+        }
+
+        sprintf(key, "%s.cam%d.netmask", state.root_key, ii+1);
+        camera->netmask = bot_param_get_str_or_fail(state.params, key);
+        // parse into int format
+        token = strtok(camera->netmask, ".");
+        j = 0;
+        while ( token != NULL && j < 4)
+        {
+            long val = strtol(token, NULL, 10);
+            camera->fc_netmask.octets[j] = val;
+            token = strtok(NULL, ".");
+            ++j;
+        }
+
+        sprintf(key, "%s.cam%d.gateway", state.root_key, ii+1);
+        camera->gateway = bot_param_get_str_or_fail(state.params, key);
+        // parse into int format
+        token = strtok(camera->gateway, ".");
+        j = 0;
+        while ( token != NULL && j < 4)
+        {
+            long val = strtol(token, NULL, 10);
+            camera->fc_gateway.octets[j] = val;
+            token = strtok(NULL, ".");
+            ++j;
+        }
+
+        sprintf(key, "%s.cam%d.channel", state.root_key, ii+1);
+        camera->channel = bot_param_get_str_or_fail(state.params, key);
+
+        sprintf(key, "%s.cam%d.publish", state.root_key, ii+1);
+        camera->publish = bot_param_get_boolean_or_fail(state.params, key);
+
+        sprintf(key, "%s.cam%d.scale", state.root_key, ii+1);
+        camera->image_scale = bot_param_get_int_or_fail(state.params, key);
+        if((camera->image_scale != 1) && (camera->image_scale != 4) && (camera->image_scale != 16))
+        {
+            fprintf(stderr, "scale must be 1, 4 or 16\n");
+            return 0;
+        }
+
+
+        printf("Publish = %d, Scale = %d\n", camera->publish, camera->image_scale);
+
+        camera->camera_state = CAMERA_NONE;
+        camera->camera_state_change = 0;
+        pthread_mutex_init(&camera->camera_lock, 0);
     }
-
-    sprintf(key, "%s.ip", state.root_key);
-    state.ip = bot_param_get_str_or_fail(state.params, key);
-    // parse into int format
-    token = strtok(state.ip, ".");
-    i = 0;
-    while ( token != NULL && i < 4)
-    {
-        long val = strtol(token, NULL, 10);
-        state.fc_ip.octets[i] = val;
-        token = strtok(NULL, ".");
-        ++i;
-    }
-
-    sprintf(key, "%s.netmask", state.root_key);
-    state.netmask = bot_param_get_str_or_fail(state.params, key);
-    // parse into int format
-    token = strtok(state.netmask, ".");
-    i = 0;
-    while ( token != NULL && i < 4)
-    {
-        long val = strtol(token, NULL, 10);
-        state.fc_netmask.octets[i] = val;
-        token = strtok(NULL, ".");
-        ++i;
-    }
-
-    sprintf(key, "%s.gateway", state.root_key);
-    state.gateway = bot_param_get_str_or_fail(state.params, key);
-    // parse into int format
-    token = strtok(state.gateway, ".");
-    i = 0;
-    while ( token != NULL && i < 4)
-    {
-        long val = strtol(token, NULL, 10);
-        state.fc_gateway.octets[i] = val;
-        token = strtok(NULL, ".");
-        ++i;
-    }
-
-    sprintf(key, "%s.channel", state.root_key);
-    state.channel = bot_param_get_str_or_fail(state.params, key);
-
-    sprintf(key, "%s.publish", state.root_key);
-    state.publish = bot_param_get_boolean_or_fail(state.params, key);
-
-    sprintf(key, "%s.scale", state.root_key);
-    state.image_scale = bot_param_get_int_or_fail(state.params, key);
-    if((state.image_scale != 1) && (state.image_scale != 4) && (state.image_scale != 16))
-    {
-        fprintf(stderr, "scale must be 1, 4 or 16\n");
-        return 0;
-    }
-
-
-    printf("Publish = %d, Scale = %d\n", state.publish, state.image_scale);
-
-    state.camera_state = CAMERA_NONE;
-    state.camera_state_change = 0;
-    pthread_mutex_init(&state.camera_lock, 0);
 
     fc2Error err;
     printf("Finding cameras\n");
     while (1)
     {
         // open context for FlyCapture
-        if(fc2CreateGigEContext(&state.fc_context) != FC2_ERROR_OK)
+        printf("Forcing IP Address(es)\n");
+        for (int i=0;i<state.num_cameras;++i)
         {
-            fprintf(stderr, "An error occured creating FlyCapture2 context.\n");
-            return 0;
+            if(fc2CreateGigEContext(&state.cameras[i].fc_context) != FC2_ERROR_OK)
+            {
+                fprintf(stderr, "An error occured creating FlyCapture2 context.\n");
+                return 0;
+            }
+            fc2ForceIPAddressToCamera(state.cameras[i].fc_context, state.cameras[i].fc_mac, state.cameras[i].fc_ip, state.cameras[i].fc_netmask, state.cameras[i].fc_gateway);
+            sleep(1);
+            if (fc2DestroyContext(state.cameras[i].fc_context) != FC2_ERROR_OK)
+            {
+                fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
+                return 0;
+            }
+            sleep(1);
         }
 
-        printf("Forcing IP Address\n");
-        fc2ForceIPAddressToCamera(state.fc_context, state.fc_mac, state.fc_ip, state.fc_netmask, state.fc_gateway);
-        sleep(1);
 
-        unsigned int cam_count = 0;
+        /*unsigned int cam_count = 0;
 
         fc2CameraInfo *cameras = malloc(sizeof(fc2CameraInfo) * cam_count);
         err = fc2DiscoverGigECameras(state.fc_context, cameras, &cam_count);
@@ -1117,26 +1155,45 @@ int main(int argc, char **argv)
         }
 
         printf("Found %i cameras.\n", cam_count);
+        */
 
-        if (cam_count > 0)
+        int cameras_initialised = 0;
+        for (int i=0;i<state.num_cameras;++i)
         {
-            printf("Attempting to open camera.\n");
-            int open = open_camera(&state);
+            camera_t *camera = &state.cameras[i];
+            printf("Attempting to open camera %d.\n", i+1);
+            if(fc2CreateGigEContext(&camera->fc_context) != FC2_ERROR_OK)
+            {
+                fprintf(stderr, "An error occured creating FlyCapture2 context.\n");
+                return 0;
+            }
+            int open = open_camera(camera);
 
             if (open)
             {
-                printf("Opened camera.\n");
-                break;
+                printf("Opened camera %d.\n", i+1);
+                ++cameras_initialised;
+            }
+            else
+            {
+                fprintf(stderr, "Failed to open camera. %d\n", i+1);
             }
             
-            printf("Failed to open camera.\n");
+        }
+
+        if (cameras_initialised == state.num_cameras)
+        {
+            break;
         }
 
         // start again with a new context if we couldn't find the camera/connect
-        if (fc2DestroyContext(state.fc_context) != FC2_ERROR_OK)
+        for (int i=0;i<state.num_cameras;++i)
         {
-            fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
-            return 0;
+            if (fc2DestroyContext(state.cameras[i].fc_context) != FC2_ERROR_OK)
+            {
+                fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
+                return 0;
+            }
         }
         sleep(1);
     }
@@ -1157,7 +1214,7 @@ int main(int argc, char **argv)
     {
         lcm_handle_timeout(state.lcm, 1000);
 
-        // check the camera state
+        /*// check the camera state
         pthread_mutex_lock(&state.camera_lock);
         if(state.camera_state_change)
         {
@@ -1175,12 +1232,16 @@ int main(int argc, char **argv)
             state.camera_state_change = 0;
         }
         pthread_mutex_unlock(&state.camera_lock);
+        */
     }
 
-    if (fc2DestroyContext(state.fc_context) != FC2_ERROR_OK)
+    for (int i=0;i<state.num_cameras;++i)
     {
-        fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
-        return 0;
+        if (fc2DestroyContext(state.cameras[i].fc_context) != FC2_ERROR_OK)
+        {
+            fprintf(stderr, "An error occured closing FlyCapture2 context.\n");
+            return 0;
+        }
     }
 
     pthread_join(tid, NULL);
