@@ -619,32 +619,64 @@ int publish_image(state_t *state, fc2Image *frame, unsigned int exposure, unsign
         // allocate some memory to put the image in
         int scale;
         int step;
+        int bayer = 0;
         if((frame->format == FC2_PIXEL_FORMAT_MONO8) || (frame->format == FC2_PIXEL_FORMAT_MONO12) || (frame->format == FC2_PIXEL_FORMAT_MONO16))
         {
             scale = state->image_scale;
-            if(scale == 4)
+            if (scale == 4)
+            {
                 step = 2;
+            }
             else
+            {
+                scale = 16;
                 step = 4;
+            }
         }
         else
         {
-            scale = 16;
-            step = 4;
+            bayer = 1;
+            scale = 4;
+            step = 2;
         }
 
-        unsigned char *img_resized = malloc(frame->cols * frame->rows * bpp / scale);
+        unsigned char *img_resized = malloc(frame->cols * frame->rows * bpp / 4);
 
         // do the fast loop rescale
         int count = 0;
         unsigned char *frame_buffer;
         fc2GetImageData(frame, &frame_buffer);
-        for(int y=0; y<frame->rows; y+=step)
-            for(int x=0; x<frame->cols; x+=step)
+
+        if (bayer)
+        {
+            // we want to take alternate blocks of 2x2 pixels, not every other row
+            // as that want ends up with incorrect colours/RG or GB lines only)
+            for(int y=0; y<frame->rows; y+=3)
             {
-                memcpy(&img_resized[count], &frame_buffer[(x + y * frame->cols) * bpp], bpp);
-                count += bpp;
+                for(int x=0; x<frame->cols; x+=4)
+                {
+                    memcpy(img_resized + count, &frame_buffer[(x + y * frame->cols) * bpp], bpp * 2);
+                    count += bpp * 2;
+                }
+                ++y;
+                for(int x=0; x<frame->cols; x+=4)
+                {
+                    memcpy(img_resized + count, &frame_buffer[(x + y * frame->cols) * bpp], bpp * 2);
+                    count += bpp * 2;
+                }
             }
+        }
+        else
+        {
+            for(int y=0; y<frame->rows; y+=step)
+            {
+                for(int x=0; x<frame->cols; x+=step)
+                {
+                    memcpy(&img_resized[count], &frame_buffer[(x + y * frame->cols) * bpp], bpp);
+                    count += bpp;
+                }
+            }
+        }
 
 
         // done, now publish the image
@@ -831,7 +863,8 @@ int open_camera(state_t *state)
     // apparently required with multiple cameras on one switch
     prop.propType = PACKET_DELAY;
     fc2GetGigEProperty(state->fc_context, &prop);
-    prop.value = prop.value * 3;
+    printf("Setting packet delay: %d\n", prop.value * 3);
+    prop.value = 10000;
     fc2SetGigEProperty(state->fc_context, &prop);
 
 
