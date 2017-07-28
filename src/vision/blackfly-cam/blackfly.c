@@ -863,7 +863,8 @@ int open_camera(state_t *state)
     // apparently required with multiple cameras on one switch
     prop.propType = PACKET_DELAY;
     fc2GetGigEProperty(state->fc_context, &prop);
-    prop.value = prop.value * 3;
+    printf("Setting packet delay: %d\n", prop.value * 3);
+    prop.value = 10000;
     fc2SetGigEProperty(state->fc_context, &prop);
 
 
