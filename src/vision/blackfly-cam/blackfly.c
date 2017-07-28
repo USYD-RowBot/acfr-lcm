@@ -827,6 +827,13 @@ int open_camera(state_t *state)
     prop.value = packet_size;
     fc2SetGigEProperty(state->fc_context, &prop);
 
+    // double the normal delay between packets
+    // apparently required with multiple cameras on one switch
+    prop.propType = PACKET_DELAY;
+    fc2GetGigEProperty(state->fc_context, &prop);
+    prop.value = prop.value * 3;
+    fc2SetGigEProperty(state->fc_context, &prop);
+
 
     // existing/default settings should be full image
     // but we need to set the format we want to use
