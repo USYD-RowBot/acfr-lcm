@@ -438,14 +438,12 @@ int write_tiff_image(state_t *state, qframe_t *frame)
     TIFFSetField (image, TIFFTAG_COMPRESSION, COMPRESSION_NONE);
 
     fc2ImageMetadata meta;
-    fc2Error err = fc2GetImageMetadata(frame, &meta);
-    unsigned int exposure = meta.embeddedExposure;
-    unsigned int gain = meta.embeddedGain;
+    //fc2Error err = fc2GetImageMetadata(frame, &meta);
+    unsigned int exposure = 0; //meta.embeddedExposure;
+    unsigned int gain = 0; //meta.embeddedGain;
 
     // Put some useful information in the TIFF description field
     char description[64];
-    char *frame_buffer;
-    fc2GetImageData(frame, &frame_buffer);
 
     snprintf(description, sizeof(description), "T:%"PRId64",W:%u,H:%u,E:%u,G:%u", frame->utime, frame->cols, frame->rows, exposure, gain);
     TIFFSetField (image, TIFFTAG_IMAGEDESCRIPTION, description);
@@ -488,12 +486,15 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
     int64_t dev_ticks_since_sync = dev_ticks - s->sync_dev_ticks;
 
     // overestimate device time by a factor of s->rate
-    double rate = 1000000.0; // / s->dev_ticks_per_second * s->max_rate_error;
+    double rate = 1.0; // / s->dev_ticks_per_second * s->max_rate_error;
 
     // estimate of the host's time corresponding to the device's time
     int64_t dev_utime = s->sync_host_time + (dev_ticks_since_sync * rate);
 
     int64_t time_err = host_utime - dev_utime;
+
+    printf("Time error: %li ", time_err);
+    printf("Ticks since sync: %li\n", dev_ticks_since_sync);
 
     /* If time_err is very large, resynchronize, emitting a warning. if
      * it is negative, we're just adjusting our timebase (it means
@@ -722,8 +723,13 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     // get the actual frame timestamp based on its clock and our clock
     fc2ImageMetadata meta;
     err = fc2GetImageMetadata(in_frame, &meta);
+    fc2TimeStamp ts = fc2GetImageTimeStamp(in_frame);
 
-    int64_t frame_utime = timestamp_sync_private(&state->tss, meta.embeddedTimeStamp, utime);
+    printf("ETS: %lx\n", meta.embeddedTimeStamp);
+    printf("s: %li, ms: %u, cs: %u, cc: %u, co: %u\n", ts.seconds, ts.microSeconds,
+            ts.cycleSeconds, ts.cycleCount, ts.cycleOffset);
+
+    int64_t frame_utime = timestamp_sync_private(&state->tss, ts.seconds * 1000000L + ts.microSeconds, utime);
 
     // Get a pointer to the start of the ancillary data, the Vimba API hasn't implemented this yet
     char *frame_buffer;
