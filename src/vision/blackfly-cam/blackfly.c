@@ -114,163 +114,44 @@ void signal_handler(int sig_num)
 // Set the camera attributes based on the LCM config file
 int set_camera_attributes(state_t *state)
 {
-    /*
-    // get the list of valid attributes from the camera
-    VmbFeatureInfo_t *features;
-    unsigned int feature_count = 0;
-    VmbError_t err;
-    char key[64];
+    fc2Error err;
     int ret = 0;
 
-    // Things that need to be set
-    VmbFeatureBoolSet(state->camera, "ChunkModeActive", 1); // so we get the exposure data
+    char *names[18] = {
+        "brightness", "auto_exposure", "sharpness", "white_balance",
+        "hue", "saturation", "gamma", "iris",
+        "focus", "zoom", "pan", "tilt",
+        "shutter", "gain", "trigger_mode", "trigger_delay",
+        "frame_rate", "temperature"};
 
-    // Things we need to get
-    VmbFeatureIntGet(state->camera, "GevTimestampTickFrequency", &state->tss.dev_ticks_per_second);
-    printf("Camera timer tick %lld\n", state->tss.dev_ticks_per_second);
+    int properties = 18;
 
-    err = VmbFeaturesList(state->camera, NULL, 0, &feature_count, sizeof(*features));
-    if((err == VmbErrorSuccess) && (feature_count > 0))
+    for (int ii=0;ii<properties;++ii)
     {
-        features = (VmbFeatureInfo_t *)malloc(sizeof(VmbFeatureInfo_t) * feature_count);
-        err = VmbFeaturesList(state->camera, features, feature_count, &feature_count, sizeof(*features));
+        fc2PropertyInfo pinfo;
+        fc2Property prop;
 
-        for(int i=0; i<feature_count; i++)
+        pinfo.type = ii;
+        prop.type = ii;
+
+        fc2GetPropertyInfo(state->fc_context, &pinfo);
+        fc2GetProperty(state->fc_context, &prop);
+
+        if (pinfo.present)
         {
 
-            // Look for each keyword in the config file and check to see if the value is valid
-            sprintf(key, "%s.features.%s", state->root_key, features[i].name);
-
-            if(bot_param_has_key(state->params, key))
+            printf("%s: (units) %s\n", names[ii], pinfo.pUnits);
+            printf("\tauto: %i\n\tmanual: %i\n", pinfo.autoSupported, pinfo.manualSupported);
+            printf("\tonoff: %i\n\tonepush: %i\n\treadout: %i\n", pinfo.onOffSupported, pinfo.onePushSupported, pinfo.readOutSupported);
+            printf("\traw min/max: %u %u\n", pinfo.min, pinfo.max);
+            printf("\traw value: %i\n", prop.valueA);
+            if (pinfo.absValSupported)
             {
-                // if the feature is an enum get the valid values for this key from the camera
-
-
-                if(features[i].featureDataType == VmbFeatureDataEnum)
-                {
-
-                    unsigned int enum_count;
-                    const char **enums;
-                    // get the number of enum values
-                    err = VmbFeatureEnumRangeQuery(state->camera, features[i].name, NULL, 0, &enum_count);
-                    if((err == VmbErrorSuccess) && (enum_count > 0))
-                    {
-                        enums = malloc(sizeof(char *) * enum_count);
-                        VmbFeatureEnumRangeQuery(state->camera, features[i].name, enums, enum_count, &enum_count);
-
-                        char *key_value;
-                        int key_found;
-                        if(bot_param_get_str(state->params, key, &key_value) == 0)
-                        {
-                            // check to see that is a valid key value
-                            key_found = 0;
-                            for(int j=0; j<enum_count; j++)
-                            {
-                                if(strncmp(enums[j], key_value, strlen(enums[j])) == 0)
-                                    key_found = 1;
-                            }
-
-                            if(key_found)
-                            {
-                                err = VmbFeatureEnumSet(state->camera, features[i].name, key_value);
-                                if(err != VmbErrorSuccess)
-                                {
-                                    printf("Error setting %s to %s, error num %d\n", features[i].name, key_value, err);
-                                    ret = -1;
-                                }
-                                else
-                                    printf("Setting %s = %s\n", features[i].name, key_value);
-                            }
-                            else
-                            {
-                                printf("Invalid key for feature %s, %s\nValid keys are:\n", features[i].name, key_value);
-                                for(int j=0; j<enum_count; j++)
-                                    printf("\t%s\n", enums[j]);
-                                ret = -1;
-                            }
-                        }
-                        free(key_value);
-                    }
-
-                    free(enums);
-                }
-
-                if(features[i].featureDataType == VmbFeatureDataInt)
-                {
-                    int key_value;
-                    if(bot_param_get_int(state->params, key, &key_value) == 0)
-                    {
-                        VmbInt64_t value = key_value;
-                        err = VmbFeatureIntSet(state->camera, features[i].name, value);
-                        if(err != VmbErrorSuccess)
-                        {
-                            printf("Error setting %s to %d\n", features[i].name, key_value);
-                            ret = -1;
-                        }
-                        else
-                            printf("Setting %s = %d\n", features[i].name, key_value);
-                    }
-                }
-
-                if(features[i].featureDataType == VmbFeatureDataFloat)
-                {
-                    double key_value;
-                    if(bot_param_get_double(state->params, key, &key_value) == 0)
-                    {
-                        err = VmbFeatureFloatSet(state->camera, features[i].name, key_value);
-                        if(err != VmbErrorSuccess)
-                        {
-                            printf("Error setting %s to %f\n", features[i].name, key_value);
-                            ret = -1;
-                        }
-                        else
-                            printf("Setting %s = %f\n", features[i].name, key_value);
-                    }
-                }
-
-                if(features[i].featureDataType == VmbFeatureDataString)
-                {
-                    char *key_value;
-                    if(bot_param_get_str(state->params, key, &key_value) == 0)
-                    {
-                        err = VmbFeatureStringSet(state->camera, features[i].name, key_value);
-                        if(err != VmbErrorSuccess)
-                        {
-                            printf("Error setting %s to %s\n", features[i].name, key_value);
-                            ret = -1;
-                        }
-                        else
-                            printf("Setting %s = %s\n", features[i].name, key_value);
-
-                        free(key_value);
-                    }
-                }
-
-                if(features[i].featureDataType == VmbFeatureDataBool)
-                {
-                    int key_value;
-                    if(bot_param_get_boolean(state->params, key, &key_value) == 0)
-                    {
-                        err = VmbFeatureBoolSet(state->camera, features[i].name, (VmbBool_t)key_value);
-                        if(err != VmbErrorSuccess)
-                        {
-                            printf("Error setting %s to %d\n", features[i].name, key_value);
-                            ret = -1;
-                        }
-                        else
-                            printf("Setting %s = %d\n", features[i].name, key_value);
-                    }
-                }
+                printf("\tabs min/max: %f %f\n", pinfo.absMin, pinfo.absMax);
+                printf("\tabs: %f\n", prop.absValue);
             }
-
         }
-        free(features);
-
     }
-    else
-        fprintf(stderr, "There was a problem getting the camera feature list, feature count: %d\n", feature_count);
-
-    */
 
     return 0; // ret;
 }
@@ -889,8 +770,8 @@ int open_camera(state_t *state)
     // apparently required with multiple cameras on one switch
     prop.propType = PACKET_DELAY;
     fc2GetGigEProperty(state->fc_context, &prop);
-    printf("Setting packet delay: %d\n", prop.value * 3);
     prop.value = 10000;
+    printf("Setting packet delay: %d\n", prop.value);
     fc2SetGigEProperty(state->fc_context, &prop);
 
 
@@ -907,6 +788,8 @@ int open_camera(state_t *state)
     fc2GetTriggerMode(state->fc_context, &tm); 
     tm.onOff = 1;
     fc2SetTriggerMode(state->fc_context, &tm); 
+
+    set_camera_attributes(state);
 
     printf("Starting callback...\n");
 
