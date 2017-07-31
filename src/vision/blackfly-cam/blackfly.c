@@ -92,7 +92,8 @@ typedef struct
     int64_t previous_frame_utime;
     int queue_length;
     int image_count;
-    //VmbFrame_t frames[BUFFERS];
+
+    int packet_delay;
 
     camera_state_t camera_state;
     int camera_state_change;
@@ -109,8 +110,79 @@ void signal_handler(int sig_num)
         program_exit = 1;
 }
 
-// Set the camera attributes based on the LCM config file
 int set_camera_attributes(state_t *state)
+{
+    fc2Error err;
+    int ret = 0;
+
+    int attributes[3] = {FC2_AUTO_EXPOSURE, FC2_SHUTTER, FC2_GAIN};
+    char *textnames[3] = {"exposure", "shutter", "gain"};
+
+    fc2PropertyInfo pinfo;
+    fc2Property prop;
+
+    char key[128];
+
+    for (int ii=0;ii < 3; ++ii)
+    {
+        pinfo.type = attributes[ii];
+        prop.type = attributes[ii];
+
+        fc2GetPropertyInfo(state->fc_context, &pinfo);
+        fc2GetProperty(state->fc_context, &prop);
+
+        printf("%s (min/max): (%f - %f) %s\n", textnames[ii], pinfo.absMin, pinfo.absMax, pinfo.pUnits);
+        printf("%s (auto: %i): %f %s\n", textnames[ii], prop.autoManualMode, prop.absValue, pinfo.pUnits);
+
+        sprintf(key, "%s.auto%s", state->root_key, textnames[ii]);
+        int autovalue = 2;
+        if (bot_param_get_boolean(state->params, key, &autovalue) == -1)
+        {
+            // key didn't exist, check if we tried to set a value anyway
+            // otherwise just go auto
+            sprintf(key, "%s.%s", state->root_key, textnames[ii]);
+            double absValue;
+            if (bot_param_get_double(state->params, key, &absValue) == -1)
+            {
+                // didn't find it, set to auto
+                prop.autoManualMode = 1;
+                printf("%s setting to AUTO\n", textnames[ii]);
+            }
+            else
+            {
+                // found it, set to manual with this value
+                prop.autoManualMode = 0;
+                prop.absValue = absValue;
+                printf("%s setting to %f\n", textnames[ii], prop.absValue);
+            }
+
+        }
+        else if (autovalue == 1)
+        {
+            // does exist, set to auto
+            prop.autoManualMode = 1;
+            printf("%s setting to AUTO\n", textnames[ii]);
+        }
+        else // does exist, set to manual
+        {
+            sprintf(key, "%s.%s", state->root_key, textnames[ii]);
+            prop.autoManualMode = 0;
+            prop.absValue = bot_param_get_double_or_fail(state->params, key);
+            printf("%s setting to %f\n", textnames[ii], prop.absValue);
+        }
+        err = fc2SetProperty(state->fc_context, &prop);
+
+        if (err != FC2_ERROR_OK)
+        {
+            fprintf(stderr, "Error setting %s: %s\n", textnames[ii], fc2ErrorToDescription(err));
+        }
+    }
+
+    return 0;
+}
+
+// Set the camera attributes based on the LCM config file
+int scan_camera_attributes(state_t *state)
 {
     fc2Error err;
     int ret = 0;
@@ -623,7 +695,7 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     printf("s: %li, ms: %u, cs: %u, cc: %u, co: %u\n", ts.seconds, ts.microSeconds,
             ts.cycleSeconds, ts.cycleCount, ts.cycleOffset);
 
-    int64_t frame_utime = timestamp_sync_private(&state->tss, ticks, utime);
+    int64_t frame_utime = utime; //timestamp_sync_private(&state->tss, ticks, utime);
 
     // Get a pointer to the start of the ancillary data, the Vimba API hasn't implemented this yet
     char *frame_buffer;
@@ -761,12 +833,14 @@ int open_camera(state_t *state)
     prop.value = packet_size;
     fc2SetGigEProperty(state->fc_context, &prop);
 
-    // double the normal delay between packets
-    // apparently required with multiple cameras on one switch
+    // we need to increase the packet delay from
+    // the normal settings as multiple cameras go
+    // through one switch
     prop.propType = PACKET_DELAY;
     fc2GetGigEProperty(state->fc_context, &prop);
-    prop.value = 2000;
-    printf("Setting packet delay: %d\n", prop.value);
+    printf("Old packet delay: %d\n", prop.value);
+    prop.value = state->packet_delay;
+    printf("New packet delay: %d\n", prop.value);
     fc2SetGigEProperty(state->fc_context, &prop);
 
 
@@ -776,6 +850,12 @@ int open_camera(state_t *state)
     fc2GetGigEImageSettings(state->fc_context, &gigesettings);
     gigesettings.pixelFormat = FC2_PIXEL_FORMAT_RAW16;
     fc2SetGigEImageSettings(state->fc_context, &gigesettings);
+
+    fc2Config config;
+    fc2GetConfiguration(state->fc_context, &config);
+    config.grabMode = FC2_DROP_FRAMES;
+    config.asyncBusSpeed = FC2_BUSSPEED_1000BASE_T;
+    fc2SetConfiguration(state->fc_context, &config);
 
 
     // set the trigger mode
@@ -954,6 +1034,12 @@ int main(int argc, char **argv)
     sprintf(key, "%s.serial", state.root_key);
     state.serial = bot_param_get_int_or_fail(state.params, key);
 
+    sprintf(key, "%s.packet_delat", state.root_key);
+    if (bot_param_get_int(state.params, key, &state.packet_delay) == -1)
+    {
+        state.packet_delay = 10000;
+    }
+
     sprintf(key, "%s.mac", state.root_key);
     state.mac = bot_param_get_str_or_fail(state.params, key);
     // parse into int format
@@ -1019,7 +1105,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "scale must be 1, 4 or 16\n");
         return 0;
     }
-
 
     printf("Publish = %d, Scale = %d\n", state.publish, state.image_scale);
 
