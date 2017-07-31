@@ -18,10 +18,8 @@
 #include <flycapture/C/FlyCapture2_C.h>
 
 #include <bot_param/param_client.h>
-//#include "perls-common/lcm_util.h"
 #include "acfr-common/timestamp.h"
 #include "perls-lcmtypes/bot_core_image_t.h"
-#include "perls-lcmtypes/senlcm_prosilica_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_camera_control_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_vis_rawlog_t.h"
 
@@ -379,20 +377,18 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
     // how many device ticks since the last sync?
     int64_t dev_ticks_since_sync = real_ticks - s->sync_dev_ticks;
 
-    // overestimate device time by a factor of s->rate
-
     // estimate of the host's time corresponding to the device's time
     int64_t dev_utime = s->sync_host_time + (dev_ticks_since_sync * 125);
 
     int64_t time_err = host_utime - dev_utime;
 
-    printf("Time error: %li ", time_err);
-    printf("Ticks since sync: %li\n", dev_ticks_since_sync);
+    printf("Error: %li Ticks: %li\n", time_err, dev_ticks_since_sync);
+    printf("host, devticks, error: %li %li %li\n", host_utime, dev_ticks, time_err);
 
     /* If time_err is very large, resynchronize, emitting a warning. if
      * it is negative, we're just adjusting our timebase (it means
      * we got a nice new low-latency measurement.) */
-    if (time_err > 1000000000LL)   /* 1000 seconds */
+    /*if (time_err > 1000000000LL)   // 1000 seconds
     {
         fprintf (stderr, "Warning: Time sync has drifted by more than 1000 seconds\n");
         s->sync_host_time = host_utime;
@@ -405,7 +401,7 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
         s->sync_host_time = host_utime;
         s->sync_dev_ticks = real_ticks;
         dev_utime = host_utime;
-    }
+    }*/
 
     return dev_utime;
 }
@@ -620,13 +616,10 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     fc2TimeStamp ts = fc2GetImageTimeStamp(in_frame);
 
     unsigned int ticks;
-    
-    ticks = (meta.embeddedTimeStamp >> 12) & 0x1FFF
-        + ((meta.embeddedTimeStamp >> 25) & 0x7F) * 8000;
-
+    //ticks = (meta.embeddedTimeStamp >> 12) & 0x1FFF
+    //    + ((meta.embeddedTimeStamp >> 25) & 0x7F) * 8000;
     ticks = ts.cycleSeconds * 8000 + ts.cycleCount;
 
-    printf("ETS: %lx, ticks: %i\n", meta.embeddedTimeStamp, ticks);
     printf("s: %li, ms: %u, cs: %u, cc: %u, co: %u\n", ts.seconds, ts.microSeconds,
             ts.cycleSeconds, ts.cycleCount, ts.cycleOffset);
 
@@ -643,7 +636,7 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     state->previous_frame_utime = frame_utime;
 
     // for now just save out the image
-    printf("Exp: %u, Gain: %u, fps: %2.2f, utime: %"PRId64", size %d kB, buffer: %d kB, count: %d\n",
+    printf("Exp: %u, Gain: %u, fps: %2.2f, utime: %"PRId64", image size %d kB, received data: %d kB, count: %d\n",
            exposure, gain, fps, frame_utime, in_frame->dataSize/1024, in_frame->receivedDataSize/1024, state->image_count);
 
     // work out the image stride
@@ -709,6 +702,8 @@ void camera_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const a
     switch(cc->command)
     {
     case ACFRLCM_AUV_CAMERA_CONTROL_T_LOG_START:
+        // reset the timing information as well
+        state->tss.is_valid = 0;
         state->write_files = 1;
         printf("Starting log to disk\n");
         state->image_count = 0;
@@ -770,7 +765,7 @@ int open_camera(state_t *state)
     // apparently required with multiple cameras on one switch
     prop.propType = PACKET_DELAY;
     fc2GetGigEProperty(state->fc_context, &prop);
-    prop.value = 10000;
+    prop.value = 2000;
     printf("Setting packet delay: %d\n", prop.value);
     fc2SetGigEProperty(state->fc_context, &prop);
 
