@@ -1,9 +1,10 @@
 /*
- *  AVT Vimba based camera driver
+ *  PointGrey/FLIR Blackfly Based Camera Driver
+ *  Based on AVT/Vimba driver by Christian Lees
  *
- *  Christian Lees
+ *  Lachlan Toohey
  *  ACFR
- *  27/2/14
+ *  29/7/2017
  */
 
 #include <stdio.h>
@@ -48,6 +49,7 @@ typedef struct
     int64_t sync_dev_ticks;       // when we last synced, what device tick was it for the sensor?
 
     int64_t last_dev_ticks;       // what device time was it when we were last called?
+    int64_t cycle_offset;
 
     uint8_t is_valid;             // have we ever synced?
 } timestamp_sync_private_state_t;
@@ -477,19 +479,29 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
         s->is_valid = 1;
 
         s->sync_host_time = host_utime;
-        s->last_dev_ticks = dev_ticks;
+        s->sync_dev_ticks = dev_ticks;
 
         return host_utime;
     }
+    
+    // this can all wrap around and in fact does every 128 seconds
+    int64_t tick_cycle = 128 * 8000;
+    if (dev_ticks < s->last_dev_ticks)
+    {
+        printf("Loop de loop\n");
+        s->cycle_offset += tick_cycle;
+    }
+
+    s->last_dev_ticks = dev_ticks;
+    int64_t real_ticks = dev_ticks + s->cycle_offset;
 
     // how many device ticks since the last sync?
-    int64_t dev_ticks_since_sync = dev_ticks - s->sync_dev_ticks;
+    int64_t dev_ticks_since_sync = real_ticks - s->sync_dev_ticks;
 
     // overestimate device time by a factor of s->rate
-    double rate = 1.0; // / s->dev_ticks_per_second * s->max_rate_error;
 
     // estimate of the host's time corresponding to the device's time
-    int64_t dev_utime = s->sync_host_time + (dev_ticks_since_sync * rate);
+    int64_t dev_utime = s->sync_host_time + (dev_ticks_since_sync * 125);
 
     int64_t time_err = host_utime - dev_utime;
 
@@ -503,13 +515,14 @@ static int64_t timestamp_sync_private (timestamp_sync_private_state_t *s, int64_
     {
         fprintf (stderr, "Warning: Time sync has drifted by more than 1000 seconds\n");
         s->sync_host_time = host_utime;
-        s->sync_dev_ticks = dev_ticks;
+        s->sync_dev_ticks = real_ticks;
         dev_utime = host_utime;
     }
     if (time_err < 0)
     {
+        printf("Reduce latency guess.\n");
         s->sync_host_time = host_utime;
-        s->sync_dev_ticks = dev_ticks;
+        s->sync_dev_ticks = real_ticks;
         dev_utime = host_utime;
     }
 
@@ -725,11 +738,18 @@ void image_callback(fc2Image *in_frame, void *callback_data)
     err = fc2GetImageMetadata(in_frame, &meta);
     fc2TimeStamp ts = fc2GetImageTimeStamp(in_frame);
 
-    printf("ETS: %lx\n", meta.embeddedTimeStamp);
+    unsigned int ticks;
+    
+    ticks = (meta.embeddedTimeStamp >> 12) & 0x1FFF
+        + ((meta.embeddedTimeStamp >> 25) & 0x7F) * 8000;
+
+    ticks = ts.cycleSeconds * 8000 + ts.cycleCount;
+
+    printf("ETS: %lx, ticks: %i\n", meta.embeddedTimeStamp, ticks);
     printf("s: %li, ms: %u, cs: %u, cc: %u, co: %u\n", ts.seconds, ts.microSeconds,
             ts.cycleSeconds, ts.cycleCount, ts.cycleOffset);
 
-    int64_t frame_utime = timestamp_sync_private(&state->tss, ts.seconds * 1000000L + ts.microSeconds, utime);
+    int64_t frame_utime = timestamp_sync_private(&state->tss, ticks, utime);
 
     // Get a pointer to the start of the ancillary data, the Vimba API hasn't implemented this yet
     char *frame_buffer;
@@ -1022,6 +1042,7 @@ int main(int argc, char **argv)
     pthread_mutex_init(&state.frames_mutex, 0);
     state.publish = 1;
     state.tss.is_valid = 0;
+    state.tss.cycle_offset = 0;
     state.tss.max_rate_error = 1.0;
     state.previous_frame_utime = 0;
 
