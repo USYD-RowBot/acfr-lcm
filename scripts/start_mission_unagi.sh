@@ -3,13 +3,25 @@
 # Every time a new folder YYYYMMDD_hhmmss_MISSION is created
 
 ## Parameters ##
-MISSION_NAME=sesoko
+REGION_NAME=sesoko
 BASE_PATH=/media/data
 PLATFORM_NAME="UG"
 CURRENT_DATE=$(date '+%Y%m%d_%H%M%S')
 
+LCMROOT="/home/auv/git/acfr-lcm"
+ORIGIN_DIR="$LCMROOT/config/origins/$PLATFORM_NAME"
+COUNTFILE="$ORIGIN_DIR/$REGION_NAME.count"
+if [ -f $COUNTFILE ]; then
+    COUNT=$((`cat $COUNTFILE` + 1))
+else
+    mkdir -p $ORIGIN_DIR
+    COUNT=1
+fi
+echo $COUNT > $COUNTFILE
+MISSION_NUMBER=`printf "%03d" $COUNT`
+
 # Check that DIR is empty
-MISSION_DIR="$BASE_PATH/r${CURRENT_DATE}_${PLATFORM_NAME}${MISSION_NUMBER}_${MISSION_NAME}"
+MISSION_DIR="$BASE_PATH/r${CURRENT_DATE}_${PLATFORM_NAME}${MISSION_NUMBER}_${REGION_NAME}"
 IMAGE_DIR="${MISSION_DIR}/i${CURRENT_DATE}"
 # Create the DIR and all subdirectories if necessary without prompting the user
 mkdir -p $MISSION_DIR

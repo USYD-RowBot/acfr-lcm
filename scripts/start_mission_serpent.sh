@@ -9,7 +9,7 @@ PLATFORM_NAME="ST"
 CURRENT_DATE=$(date '+%Y%m%d_%H%M%S')
 
 LCMROOT="/home/auv/git/acfr-lcm"
-ORIGIN_DIR="$LCMROOT/config/origins/serpent"
+ORIGIN_DIR="$LCMROOT/config/origins/$PLATFORM_NAME"
 COUNTFILE="$ORIGIN_DIR/$REGION_NAME.count"
 if [ -f $COUNTFILE ]; then
     COUNT=$((`cat $COUNTFILE` + 1))
