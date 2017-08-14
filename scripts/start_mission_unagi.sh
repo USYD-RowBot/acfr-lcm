@@ -5,7 +5,7 @@
 ## Parameters ##
 REGION_NAME=sesoko
 BASE_PATH=/media/data
-PLATFORM_NAME="ST"
+PLATFORM_NAME="UG"
 CURRENT_DATE=$(date '+%Y%m%d_%H%M%S')
 
 LCMROOT="/home/auv/git/acfr-lcm"

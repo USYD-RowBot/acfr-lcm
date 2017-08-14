@@ -5,6 +5,35 @@ import argparse
 
 from lcmplot import get_message_types, MessageDecoder
 
+def plot_path(data):
+    from matplotlib import pyplot as plt
+
+    x = data['ACFR_NAV->x']
+    y = data['ACFR_NAV->y']
+    z = data['ACFR_NAV->depth']
+
+    vx = data['ACFR_NAV->vx']
+    vy = data['ACFR_NAV->vy']
+
+    lat = data['ACFR_NAV->latitude']
+    lon = data['ACFR_NAV->longitude']
+    gps_lat = data['GPSD_CLIENT->fix.latitude']
+    gps_lon = data['GPSD_CLIENT->fix.longitude']
+
+    plt.plot(lon.data, lat.data, 'bo-')
+    import math
+    plt.plot(gps_lon.data * 180.0 / math.pi, gps_lat.data * 180.0 / math.pi, 'ro-')
+
+    plt.figure()
+    plt.plot(z.time, z.data * 100)
+    plt.plot(x.time, x.data)
+    plt.plot(y.time, y.data)
+    plt.figure()
+    plt.plot(vx.time, vx.data)
+    plt.plot(vy.time, vy.data)
+    plt.show()
+
+
 if __name__ == '__main__':
     sys.path.insert(0, '/home/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
@@ -52,3 +81,7 @@ if __name__ == '__main__':
 
     # print out the fields we can plot
     print sorted(data.keys())
+
+    plot_path(data)
+
+
