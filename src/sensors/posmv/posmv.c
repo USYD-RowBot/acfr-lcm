@@ -129,11 +129,15 @@ int parse_xxggk(state_t *state, char *d)
     
     ret += nmea_argf(d, 3, &val_d);
     ret += nmea_argc(d, 4, &val_c);
-    state->posmv.latitude = val_d * DTOR * (1 ? -1 : val_c == 'N');
+    int lat_deg_int = (double)((int)val_d / 100);
+    double lat_deg = (val_d - 100 * lat_deg_int) / 60 + (double)lat_deg_int;
+    state->posmv.latitude = lat_deg * DTOR * (val_c == 'N' ? 1 : -1);
     
     ret += nmea_argf(d, 5, &val_d);
     ret += nmea_argc(d, 6, &val_c);
-    state->posmv.longitude = val_d * DTOR * (1 ? -1 : val_c == 'E');
+    int lon_deg_int = (double)((int)val_d / 100);
+    double lon_deg = (val_d - 100 * lon_deg_int) / 60 + (double)lon_deg_int;
+    state->posmv.longitude = lon_deg * DTOR * (val_c == 'E' ? 1 : -1);
     
     ret += nmea_argi(d, 7, &val_i);
     state->posmv.gnss_quality = val_i;

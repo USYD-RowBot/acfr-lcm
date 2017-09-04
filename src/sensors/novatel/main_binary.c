@@ -25,14 +25,15 @@
 
 static char *novatel_status[] =
 {
-    "INS Inactive",
-    "INS Aligning",
-    "INS Solution Bad",
-    "INS Solution Good",
-    "Reserved",
-    "Reserved",
-    "Bad INS/GPS Agreement",
-    "INS Alignment Complete"
+    "INS Inactive\0",
+    "INS Aligning\0",
+    "INS Solution Bad\0",
+    "INS Solution Good\0",
+    "Reserved\0",
+    "Reserved\0",
+    "Bad INS/GPS Agreement\0",
+    "INS Alignment Complete\0",
+    "Undefined"
 };
 
 
@@ -68,7 +69,12 @@ int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time, floa
     nov.north_velocity = *(double *)&d[36];
     nov.east_velocity = *(double *)&d[44];
     nov.up_velocity = *(double *)&d[52];
-    nov.status = novatel_status[*(int *)&d[84]];
+    //int status = *(int *)&d[84];
+    //printf("Status: %d\n", status);
+    char *ns = malloc(strlen(novatel_status[*(int *)&d[84]]) + 1);
+    memset(ns, 0, strlen(novatel_status[*(int *)&d[84]]) + 1);
+    strncpy(ns, novatel_status[*(int *)&d[84]], strlen(novatel_status[*(int *)&d[84]]));
+    nov.status = ns; //novatel_status[*(int *)&d[84]];
     nov.latitude_sd = lat_std;
     nov.longitude_sd = lon_std;
 

@@ -17,6 +17,7 @@ locale.setlocale(locale.LC_ALL, '')    # set your locale
 
 # Import required lcm message types
 from bot_param import request_t    # for heartbeat
+from senlcm import os_power_system_t # for batteries
 from acfrlcm import auv_acfr_nav_t # for nav
         # for modem
 from senlcm import tcm_t        # for tcm
@@ -30,7 +31,7 @@ from senlcm import ysi_t        # for ysi
 # TODO - do we need these?
 # from acfrlcm.auv_global_planner_t import auv_global_planner_t
 # from acfrlcm.auv_iver_motor_command_t import auv_iver_motor_command_t
-# from senlcm import os_power_system_t, os_compass_t, airmar_t
+# from senlcm import os_compass_t, airmar_t
 # from acfrlcm import auv_vis_rawlog_t
 
 # create global dictionaries for incoming LCM messages
@@ -38,6 +39,7 @@ SUMMARYDATA = {}
 MSGCOUNTDATA = {}
 REQCOUNTDATA = {}
 HBDATA = {}
+BATTDATA = {}
 NAVDATA = {}
 MODEMDATA = {}
 TCMDATA = {}
@@ -313,16 +315,15 @@ class TimerThread(threading.Thread):
             x = 0
             # stop cameras strobes TODO
 
-
         # post processing
         test_complete = True
         test_started = False
         # kill thread
         pass
 
-
-
 # Generates and manages the set of tests required by options for the vehicle specified
+
+
 class Test_Set:
     def __init__(self, options, vehicle):
         self.options = options
@@ -453,6 +454,48 @@ def hb_handler(channel, data):
     HBDATA['PREV_TIME'] = HBDATA['TIME']
     HBDATA['TIME'] = msg.utime
     HBDATA['DIFF'] = HBDATA['TIME'] - HBDATA['PREV_TIME']
+
+# BATT Message IN
+def batt_handler(channel, data):
+    global BATTDATA
+    #print 'Handling BATT ... '
+    msg = os_power_system_t.decode(data)
+    BATTDATA['CHANNEL'] = channel
+    BATTDATA['TIME'] = msg.utime
+    BATTDATA['CURRENT'] = msg.current
+    BATTDATA['POWER'] = msg.power
+    BATTDATA['AVGCHARGE'] = msg.avg_charge
+    BATTDATA['CAPACITY'] = msg.capacity
+    BATTDATA['CAPACITYFULL'] = msg.capacity_full
+    BATTDATA['MINUTESTEF'] = msg.minutes_tef
+    BATTDATA['NUMCONTROLLERS'] = msg.num_controller
+    for int i in 1:BATTDATA['NUMCONTROLLERS']
+        BATTDATA['CONTROLLER_'i''] = msg.controller
+        self.utime = 0
+        self.current = 0.0
+        self.power = 0.0
+        self.avg_charge_p = 0
+        self.capacity = 0.0
+        self.capacity_full = 0.0
+        self.minutes_tef = 0
+        self.sys_message = ""
+        self.battery_state = ""
+        self.num_batteries = 0
+        self.battery = []
+        for int j in 1:BATTDATA['CONTROLLER_' + i]
+            BATTDATA['CONROLLER_' i '_BATTERY_' + j + '_TEMPERATURE'] = msg.controller[i].msg.temperature
+            self.temperature = 0.0
+            self.voltage = 0.0
+            self.current = 0.0
+            self.avg_current = 0.0
+            self.remaining_capacity = 0.0
+            self.full_capacity = 0.0
+            self.charge_state = 0
+            self.avg_tte = 0
+            self.avg_ttf = 0
+            self.serial_num = 0
+            self.cycles = 0
+
 
 
 # NAV Message IN
