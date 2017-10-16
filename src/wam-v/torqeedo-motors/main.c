@@ -1,5 +1,5 @@
 /*
-    Listens for a motor command message and sends it onto the corresponding thruster. 
+    Listens for an LCM motor command message and sends adjusts speed of the corresponding thruster via serial. 
     Two instances should be run, one per thruster, port and starboard.
     Jorja Martin 10/2007
     ACFR
@@ -47,8 +47,6 @@
 // Other contants
 #define CMD_TIMEOUT 2000000
 #define NUM_MSGS 2
-
-//#define COMMAND_PERIOD 1000000
 
 typedef struct
 {
@@ -1384,10 +1382,6 @@ void send_msg(int message_type, state_t *u)
 
 } // end send_msg
 
-//void read_msg(state_t *state)
-//{
-//}
-
 void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_asv_torqeedo_motor_command_t *mc, void *u)
 {
     state_t *state = (state_t *)u;
@@ -1400,13 +1394,14 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
         state->fwd_speed = mc->forward_speed;
         state->rev_speed = mc->reverse_speed;
     }
-
+    printf("TQ\n");
 }
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-
+    if (state->counter % 100 == 0)
+        printf("HB\n");
     // On the heart beat we will trigger writing messages to serial
     if (state->counter % NUM_MSGS == 0) // Alternate TODO and check timeouts
     {
@@ -1418,6 +1413,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         //read_msg(&state) // and read status msg
     }
     state->counter++;
+    
 }
  
 
@@ -1474,17 +1470,22 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    // Read the lcm channel names TODO - move these into state?
+    // Read the lcm channel names 
     sprintf(key, "%s.channel_control", state.root_key);
     printf("Requesting Parameter: %s\n", key);
     char *channel_control = bot_param_get_str_or_fail(param, key);
+    printf("Channel in: %s\n", (char *)channel_control);
     sprintf(key, "%s.channel_status", state.root_key);
+    printf("Requesting Parameter: %s\n", key);
     char *channel_status = bot_param_get_str_or_fail(param, key);
+    printf("Channel out: %s\n", (char *)channel_status);
+    sprintf(key, "%s.verbose", state.root_key);
+    bool verbose = bot_param_get_boolean_or_fail(param, key);
     
     // Subscribe to the LCM channels for incoming messages
     acfrlcm_asv_torqeedo_motor_command_t_subscribe(state.lcm, channel_control, &torqeedo_cmd_handler, &state);
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
-    
+
     // Read the serial config to setup serial connection to motor
     state.sensor = acfr_sensor_create(state.lcm, state.root_key);
     if(state.sensor == NULL)
@@ -1496,8 +1497,8 @@ int main(int argc, char **argv)
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Incoming message buffer
-    fd_set rfds; 
-    int len;
+    fd_set rfds; // list of file descriptors where we will listen for incoming messages
+    int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[256];
     struct timeval tv;
     tv.tv_sec = 1;
@@ -1506,61 +1507,81 @@ int main(int argc, char **argv)
     bool start_found = false;
     bool end_found = false;
     int i = 0;
+    printf("SETUP COMPLETE\n");
+
 
     // Main program loop - used to read status messages from the 
     while(!program_exit)
     {
+        // reset buffer and outgoing message 
         memset(buf, 0, sizeof(buf));
         memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
-    
-        // add the motor serial file descriptor to the set to watch
+
         FD_ZERO(&rfds);
-        FD_SET(state.sensor->fd, &rfds);
-    
+        FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
+        FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch 
+
         // watch for incoming message
         ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1) 
-            fprintf(stderr, "Torqeedo: Select failure: %i", errno);
-        else if(ret != 0)
         {
-            // while there are more characters to read
-            while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1)) && (i < MATCH_BYTE_LEN))
-            {   
-                // match message start
-                if (buf[i] == MATCH_BYTE_0)
-                {
-                    start_found = true;
-                    state.mot_status.utime = timestamp_now();
-                    end_found = false; // only count an end after a start
-                }
-                if (start_found && buf[i] == MATCH_BYTE_END)
-                {
-                    end_found = true;
-                }
-                if (start_found && buf[i] != MATCH_BYTE_RANDOM) // hack to ditch random 'AE's in msgs
-                {
-                    i++; // increment to next space in storage array
-                }
+            fprintf(stderr, "Torqeedo: Select failure: %i", errno);
+        }
+        else if(ret != 0) // there's an incoming message
+        {
+            if(FD_ISSET(lcm_fd, &rfds)) // if its an LCM message, call the handler
+            {
+                lcm_handle(state.lcm);
             }
-            if (start_found && end_found && i == (MATCH_BYTE_LEN - 1))
-            {    
-                if (buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
-                {
-                    // fill LCM motor status message from serial buffer
-                    state.mot_status.prop_speed = HEX_TO_DEC * buf[P_SPEED_POS] + buf[P_SPEED_POS + 1];
-                    state.mot_status.voltage = HEX_TO_DEC * buf[VOLT_POS] + buf[VOLT_POS + 1];
-                    state.mot_status.motor_temp = buf[TEMP_POS];
-                    state.mot_status.field_2 = HEX_TO_DEC * buf[F2_POS] + buf[F2_POS];
-                    state.mot_status.field_4 = HEX_TO_DEC * buf[F4_POS] + buf[F4_POS];
-                    // TODO - print values
-                }
-                start_found = false; // reset flags
-                end_found = false;
-                i = 0;
-                acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
-
-            }
+            else if(FD_ISSET(state.sensor->fd, &rfds)) // if its a serial, read the bytes
+            {
             
+                // while there are more characters to read
+                while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1)) && (i < MATCH_BYTE_LEN))
+                {   
+                    printf(".");
+                    
+                    // match message start
+                    if (buf[i] == MATCH_BYTE_0)
+                    {
+                        start_found = true;
+                        state.mot_status.utime = timestamp_now();
+                        end_found = false; // only count an end after a start
+                    }
+                    if (start_found && buf[i] == MATCH_BYTE_END)
+                    {
+                        end_found = true;
+                    }
+                    if (start_found && buf[i] != MATCH_BYTE_RANDOM) // hack to ditch random 'AE's in msgs
+                    {
+                        i++; // increment to next space in storage array
+                    }
+                }
+
+                if (start_found && end_found && i == (MATCH_BYTE_LEN - 1))
+                {    
+                    if (buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
+                    {
+                        // fill LCM motor status message from serial buffer
+                        state.mot_status.prop_speed = HEX_TO_DEC * buf[P_SPEED_POS] + buf[P_SPEED_POS + 1];
+                        state.mot_status.voltage = HEX_TO_DEC * buf[VOLT_POS] + buf[VOLT_POS + 1];
+                        state.mot_status.motor_temp = buf[TEMP_POS];
+                        state.mot_status.field_2 = HEX_TO_DEC * buf[F2_POS] + buf[F2_POS];
+                        state.mot_status.field_4 = HEX_TO_DEC * buf[F4_POS] + buf[F4_POS];
+                        // TODO - print values
+                        if (verbose)
+                        {
+                            //printf("Prop Speed: %05i   Voltage: %3.2f\n",  state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100);
+                            printf("Prop Speed: %05i   Voltage: %3.2f   Temperature: %3.1f   ?: %05i   ?: %05i\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.motor_temp)/10, state.mot_status.field_2, state.mot_status.field_4);
+                        }
+                    }
+                    start_found = false; // reset flags
+                    end_found = false;
+                    i = 0;
+                    acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
+                }
+
+            } // end serial            
         }
 
     } // end main loop
