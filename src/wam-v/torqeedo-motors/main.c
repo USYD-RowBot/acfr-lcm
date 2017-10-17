@@ -47,6 +47,7 @@
 // Other contants
 #define CMD_TIMEOUT 2000000
 #define NUM_MSGS 2
+#define BUFLENGTH 256
 
 typedef struct
 {
@@ -77,12 +78,13 @@ void send_msg(int message_type, state_t *u)
     state_t *state = (state_t *)u;
     int res;
     // string to send to request a status message
-    static int msg_3003[MSG3003_LEN] = {0xAC,0x30,0x03,0xCF,0xAD,0xFF};
+    //static char msg_3003[MSG3003_LEN] = {0xAC,0x30,0x03,0xCF,0xAD,0xFF};
+    static char msg_3003[MSG3003_LEN] = {172, 48, 3, 207, 173, 255};
     // string to send zero speed, stopped (must send a 3082 msg or motor -> non-responsive)
-    static int msg_3082_idle[MSG3082_LEN] = {0xAC, 0x30, 0x82, 0x00, 0x00, 0x00, 0x00, 0xA5, 0xAD, 0xFF, 0x00};
+    static char msg_3082_idle[MSG3082_LEN] = {0xAC, 0x30, 0x82, 0x00, 0x00, 0x00, 0x00, 0xA5, 0xAD, 0xFF, 0x00};
     // TODO - when we know the hash function, replace both tables with function
     // strings to send for forwards speeds from min to max
-    static int fwd_speed_list[NUM_3082_F_MSGS][MSG3082_LEN]=
+    static char fwd_speed_list[NUM_3082_F_MSGS][MSG3082_LEN]=
     {
 		{0xAC, 0x30, 0x82, 0x01, 0x64, 0x00, 0x03, 0xF3, 0xAD, 0xFF, 0x00},
         {0xAC, 0x30, 0x82, 0x01, 0x64, 0x00, 0x04, 0x70, 0xAD, 0xFF, 0x00},
@@ -743,7 +745,7 @@ void send_msg(int message_type, state_t *u)
     };
 
     // strings to send for reverse speeds from max to min
-    static int rev_speed_list[NUM_3082_R_MSGS][MSG3082_LEN]=
+    static char rev_speed_list[NUM_3082_R_MSGS][MSG3082_LEN]=
     {
         {0xAC, 0x30, 0x82, 0x01, 0x64, 0xFC, 0x18, 0x9A, 0xAD, 0xFF, 0x00},
         {0xAC, 0x30, 0x82, 0x01, 0x64, 0xFC, 0x1A, 0x26, 0xAD, 0xFF, 0x00},
@@ -1357,13 +1359,13 @@ void send_msg(int message_type, state_t *u)
                 res = acfr_sensor_write(state->sensor, (char *)fwd_speed_list[state->fwd_speed], MSG3082_LEN);
             }
             // if reverse, (and no forwards)
-            else if (state->rev_speed >=0 && state->fwd_speed < 0)
+            else if (state->rev_speed >0 && state->fwd_speed < 0)
             {
                 if (state->rev_speed >= NUM_3082_R_MSGS) // ensure value is in range of mesage array length
                 {
                     state->rev_speed = NUM_3082_R_MSGS -1;
                 }
-                res = acfr_sensor_write(state->sensor, (char *)rev_speed_list[state->rev_speed], MSG3082_LEN);
+                res = acfr_sensor_write(state->sensor, (char *)rev_speed_list[NUM_3082_R_MSGS - state->rev_speed], MSG3082_LEN);
             }
             // otherwise either idle or invalid - so treat as idle
             else
@@ -1394,14 +1396,14 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
         state->fwd_speed = mc->forward_speed;
         state->rev_speed = mc->reverse_speed;
     }
-    printf("TQ\n");
+    //printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
 }
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-    if (state->counter % 100 == 0)
-        printf("HB\n");
+//    if (state->counter % 100 == 0)
+//        printf("HB\n");
     // On the heart beat we will trigger writing messages to serial
     if (state->counter % NUM_MSGS == 0) // Alternate TODO and check timeouts
     {
@@ -1497,88 +1499,90 @@ int main(int argc, char **argv)
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Incoming message buffer
-    fd_set rfds; // list of file descriptors where we will listen for incoming messages
+    fd_set rfds, dup_rfds; // list of file descriptors where we will listen for incoming messages and duplicate set for use
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
-    char buf[256];
+    char buf[BUFLENGTH];
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = 1000;
     int ret;
     bool start_found = false;
     bool end_found = false;
     int i = 0;
+    FD_ZERO(&rfds);
+    FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
+    FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch 
+    memset(buf, 0, sizeof(buf));
+    memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
     printf("SETUP COMPLETE\n");
-
 
     // Main program loop - used to read status messages from the 
     while(!program_exit)
     {
-        // reset buffer and outgoing message 
-        memset(buf, 0, sizeof(buf));
-        memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
+        dup_rfds = rfds; // reset file descriptors
 
-        FD_ZERO(&rfds);
-        FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
-        FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch 
-
-        // watch for incoming message
-        ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        // check incoming message sources
+        ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
         if(ret == -1) 
         {
             fprintf(stderr, "Torqeedo: Select failure: %i", errno);
         }
-        else if(ret != 0) // there's an incoming message
+        else if(ret != 0) // check incoming message
         {
-            if(FD_ISSET(lcm_fd, &rfds)) // if its an LCM message, call the handler
+            if(FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
             {
                 lcm_handle(state.lcm);
             }
-            else if(FD_ISSET(state.sensor->fd, &rfds)) // if its a serial, read the bytes
+            if(FD_ISSET(state.sensor->fd, &dup_rfds)) // serial, read the bytes
             {
-            
                 // while there are more characters to read
-                while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1)) && (i < MATCH_BYTE_LEN))
+                while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1))) // && (i < MATCH_BYTE_LEN))
                 {   
-                    printf(".");
-                    
                     // match message start
-                    if (buf[i] == MATCH_BYTE_0)
+                    if ((uint8_t)buf[i] == (uint8_t)MATCH_BYTE_0)
                     {
                         start_found = true;
                         state.mot_status.utime = timestamp_now();
                         end_found = false; // only count an end after a start
                     }
-                    if (start_found && buf[i] == MATCH_BYTE_END)
+                    if (start_found && (uint8_t)buf[i] == MATCH_BYTE_END)
                     {
                         end_found = true;
                     }
-                    if (start_found && buf[i] != MATCH_BYTE_RANDOM) // hack to ditch random 'AE's in msgs
+                    if (start_found && (uint8_t)buf[i] != MATCH_BYTE_RANDOM) // hack to ditch random 'AE's in msgs
                     {
                         i++; // increment to next space in storage array
                     }
+                    if (i >= BUFLENGTH) // reset buffer in case of (invalid) long msg
+                        i = 0;
                 }
 
-                if (start_found && end_found && i == (MATCH_BYTE_LEN - 1))
+                if (start_found && end_found)
                 {    
-                    if (buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
+                    if (i == MATCH_BYTE_LEN && buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
                     {
                         // fill LCM motor status message from serial buffer
-                        state.mot_status.prop_speed = HEX_TO_DEC * buf[P_SPEED_POS] + buf[P_SPEED_POS + 1];
-                        state.mot_status.voltage = HEX_TO_DEC * buf[VOLT_POS] + buf[VOLT_POS + 1];
-                        state.mot_status.motor_temp = buf[TEMP_POS];
-                        state.mot_status.field_2 = HEX_TO_DEC * buf[F2_POS] + buf[F2_POS];
-                        state.mot_status.field_4 = HEX_TO_DEC * buf[F4_POS] + buf[F4_POS];
-                        // TODO - print values
-                        if (verbose)
+                        state.mot_status.prop_speed = HEX_TO_DEC * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
+                        state.mot_status.voltage = HEX_TO_DEC * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
+                        state.mot_status.motor_temp = (uint8_t)buf[TEMP_POS];
+                        state.mot_status.field_2 = HEX_TO_DEC * (uint8_t)buf[F2_POS] + (uint8_t)buf[F2_POS];
+                        state.mot_status.field_4 = HEX_TO_DEC * (uint8_t)buf[F4_POS] + (uint8_t)buf[F4_POS];
+
+                        // and publish status message
+                        acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
+
+                        if (verbose) // print motor status
                         {
-                            //printf("Prop Speed: %05i   Voltage: %3.2f\n",  state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100);
                             printf("Prop Speed: %05i   Voltage: %3.2f   Temperature: %3.1f   ?: %05i   ?: %05i\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.motor_temp)/10, state.mot_status.field_2, state.mot_status.field_4);
                         }
+                        // reset outgoing message 
+                        memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
                     }
-                    start_found = false; // reset flags
+                    // reset flags, buffer, index
+                    start_found = false;
                     end_found = false;
+                    memset(buf, 0, sizeof(buf));
                     i = 0;
-                    acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
                 }
 
             } // end serial            
@@ -1592,6 +1596,29 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
