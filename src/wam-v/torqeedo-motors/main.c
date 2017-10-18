@@ -78,10 +78,9 @@ void send_msg(int message_type, state_t *u)
     state_t *state = (state_t *)u;
     int res;
     // string to send to request a status message
-    //static char msg_3003[MSG3003_LEN] = {0xAC,0x30,0x03,0xCF,0xAD,0xFF};
-    static char msg_3003[MSG3003_LEN] = {172, 48, 3, 207, 173, 255};
+    static char msg_3003[MSG3003_LEN] = {0xAC,0x30,0x03,0xCF,0xAD,0xFF};
     // string to send zero speed, stopped (must send a 3082 msg or motor -> non-responsive)
-    static char msg_3082_idle[MSG3082_LEN] = {0xAC, 0x30, 0x82, 0x00, 0x00, 0x00, 0x00, 0xA5, 0xAD, 0xFF, 0x00};
+    static char msg_3082_idle[MSG3082_LEN-1] = {0xAC, 0x30, 0x82, 0x00, 0x00, 0x00, 0x00, 0xA5, 0xAD, 0xFF}; // has to be correct length or motor error
     // TODO - when we know the hash function, replace both tables with function
     // strings to send for forwards speeds from min to max
     static char fwd_speed_list[NUM_3082_F_MSGS][MSG3082_LEN]=
@@ -1370,7 +1369,7 @@ void send_msg(int message_type, state_t *u)
             // otherwise either idle or invalid - so treat as idle
             else
             {
-                res = acfr_sensor_write(state->sensor, (char *)msg_3082_idle, MSG3082_LEN);
+                res = acfr_sensor_write(state->sensor, (char *)msg_3082_idle, MSG3082_LEN-1);
             }
             break;
     }
@@ -1387,7 +1386,6 @@ void send_msg(int message_type, state_t *u)
 void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_asv_torqeedo_motor_command_t *mc, void *u)
 {
     state_t *state = (state_t *)u;
-    //acfrlcm_asv_torqeedo_motor_command_t mc = *mc_;
     // if message timestamp is latest received, and still valid (not older than 2s)
     if ((mc->utime >= state->prev_time) && ((timestamp_now() - CMD_TIMEOUT) <= mc->utime))
     {
@@ -1396,7 +1394,7 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
         state->fwd_speed = mc->forward_speed;
         state->rev_speed = mc->reverse_speed;
     }
-    //printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
+//    printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
 }
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
@@ -1412,7 +1410,6 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     else
     {
         send_msg(MSG_3003, state); // Status request
-        //read_msg(&state) // and read status msg
     }
     state->counter++;
     
@@ -1428,15 +1425,15 @@ int main(int argc, char **argv)
     signal(SIGTERM, signal_handler); 
 
     // Initialise state which holds all current data
-    // TODO - rest of initialisations
     state_t state;
     memset(&state.root_key, 0, 64);
-    state.fwd_speed = 20; // TODO - temp, return to -1 when testing complete
-    state.rev_speed = -1; // both negative for idle (stopped) 
+    state.fwd_speed = -1; 
+    state.rev_speed = -1; // both negative for idle (stopped) at start 
     state.counter = 0;
     state.prev_time = timestamp_now();
     memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_command_t));
     memset(&state.mot_status, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
+    
     // Initialise LCM
     state.lcm = lcm_create(NULL);
 
@@ -1503,8 +1500,8 @@ int main(int argc, char **argv)
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[BUFLENGTH];
     struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 1000;
+//    tv.tv_sec = 0;
+//    tv.tv_usec = 500;
     int ret;
     bool start_found = false;
     bool end_found = false;
@@ -1520,6 +1517,8 @@ int main(int argc, char **argv)
     while(!program_exit)
     {
         dup_rfds = rfds; // reset file descriptors
+        tv.tv_sec = 0;
+        tv.tv_usec = 1000;
 
         // check incoming message sources
         ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
@@ -1538,6 +1537,7 @@ int main(int argc, char **argv)
                 // while there are more characters to read
                 while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1))) // && (i < MATCH_BYTE_LEN))
                 {   
+//                    printf("%02X %i\n", (uint8_t)buf[i], i);
                     // match message start
                     if ((uint8_t)buf[i] == (uint8_t)MATCH_BYTE_0)
                     {
@@ -1586,6 +1586,7 @@ int main(int argc, char **argv)
                 }
 
             } // end serial            
+//            usleep(500);
         }
 
     } // end main loop
