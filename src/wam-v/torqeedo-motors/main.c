@@ -28,9 +28,9 @@
 // Position of info in Status Msg
 #define P_SPEED_POS 3
 #define VOLT_POS 7
-#define F2_POS  9
-#define TEMP_POS  12
-#define F4_POS  14
+#define F2_POS  9                   // TODO - is this Fwd/Rev indicator? noisey
+#define TEMP_POS  12                // TODO - confirm this is def temp, and units - drops too low in idle
+#define F4_POS  14                  // TODO - is this also temp? drops too low in idle
 // Message structure matching values
 #define MATCH_BYTE_0 172            // match header values AC 00 00 ... AD
 #define MATCH_BYTE_1 0
@@ -48,6 +48,7 @@
 #define CMD_TIMEOUT 2000000
 #define NUM_MSGS 2
 #define BUFLENGTH 256
+#define SELECT_TIMEOUT 10000        // usec block timeout on select for serial and LCM
 
 typedef struct
 {
@@ -1500,8 +1501,6 @@ int main(int argc, char **argv)
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[BUFLENGTH];
     struct timeval tv;
-//    tv.tv_sec = 0;
-//    tv.tv_usec = 500;
     int ret;
     bool start_found = false;
     bool end_found = false;
@@ -1518,7 +1517,7 @@ int main(int argc, char **argv)
     {
         dup_rfds = rfds; // reset file descriptors
         tv.tv_sec = 0;
-        tv.tv_usec = 1000;
+        tv.tv_usec = SELECT_TIMEOUT;
 
         // check incoming message sources
         ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
@@ -1586,7 +1585,6 @@ int main(int argc, char **argv)
                 }
 
             } // end serial            
-//            usleep(500);
         }
 
     } // end main loop

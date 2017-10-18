@@ -893,6 +893,7 @@ void signal_handler(int sig)
 
 int main(int argc, char **argv)
 {
+    cout << "Starting sim..." << endl;
 
     // install the signal handler
     main_exit = 0;
@@ -948,8 +949,8 @@ int main(int argc, char **argv)
 
 
     lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
-    //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
-    lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
+    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
+    //lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
     lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
