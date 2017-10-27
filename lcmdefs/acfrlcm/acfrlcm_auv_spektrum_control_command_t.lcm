@@ -1,0 +1,10 @@
+package acfrlcm;
+
+struct auv_spektrum_control_command_t
+{
+    int64_t utime;
+
+	int8_t channels;
+	int16_t values[channels];	
+	
+}
