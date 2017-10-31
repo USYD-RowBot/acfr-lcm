@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
 #include <unistd.h>
@@ -26,9 +27,10 @@ create_udp_listen(char *port)
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int ret;
+    char host[64];
 
     memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+    hints.ai_family = AF_INET; // set to AF_INET to force IPv4
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
@@ -37,9 +39,18 @@ create_udp_listen(char *port)
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
         return -1;
     }
-    // loop through all the results and bind to the first we can
+
     for(p = servinfo; p != NULL; p = p->ai_next)
     {
+	getnameinfo(p->ai_addr, sizeof(struct sockaddr_in), host, sizeof(host), NULL, 0,  NI_NUMERICHOST);
+        printf("Host name: %s\n", host);
+    }
+	// loop through all the results and bind to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next)
+    {
+	getnameinfo(p->ai_addr, sizeof(struct sockaddr_in), host, sizeof(host), NULL, 0,  NI_NUMERICHOST);
+        printf("Host name: %s\n", host);
+
         if((sockfd = socket(p->ai_family, p->ai_socktype,
                             p->ai_protocol)) == -1)
         {
@@ -75,15 +86,14 @@ parse_rc(char *buf, lcm_t *lcm, int channels)
     short channel_values[channels];
 
     //float rcmult = RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE - RC_DEADZONE);
+    //if(buf[0] != 0 && buf[1] != 162)
+    //    return 0;
 
-    if(buf[0] != 3 && buf[1] != 1)
-        return 0;
 
-
-    for(int i=1; i<channels; i++)
+    for(int i=1; i<8; i++)
     {
-        channel_id = (buf[i*2] & 0xFC) >> 2;
-        channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
+        channel_id = (buf[i*2] & 0xF8) >> 3;
+        channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
 
         channel_values[(int)channel_id] = channel_value;
 
@@ -92,7 +102,8 @@ parse_rc(char *buf, lcm_t *lcm, int channels)
     acfrlcm_auv_spektrum_control_command_t sc;
     sc.utime = timestamp_now();
     sc.channels = channels;
-    sc.values = channel_values;
+    for(int i=0; i<6; i++)
+	    sc.values[i] = channel_values[i];
     acfrlcm_auv_spektrum_control_command_t_publish(lcm, "SPEKTRUM_CONTROL", &sc);
 
     return 1;
@@ -135,6 +146,7 @@ main(int argc, char **argv)
     struct timeval tv;
     int data_len;
     char buf[16];
+    int count = 0;
 
     while(!main_exit)
     {
@@ -152,7 +164,9 @@ main(int argc, char **argv)
             {
                 data_len += recvfrom(control_sockfd, &buf[data_len], 16 - data_len, 0, NULL, NULL);
                 loopcount++;
+		count++;
             }
+//	    printf("Data len: %d, %d\n", data_len, count);
             if(data_len >= 16)
             {
                 parse_rc(buf, lcm, channels);
