@@ -25,6 +25,7 @@ typedef struct
     acfr_sensor_t *sensor;
     int num_psu;
     int psu_addrs[MAX_PSUS];
+    int psu;
 } state_t;
 
 #define RS485_SEALEVEL
@@ -57,7 +58,6 @@ int RS485_write(acfr_sensor_t *sensor, char *d)
 #endif
 
     int ret = acfr_sensor_write(sensor, d, strlen(d));
-
 #ifdef RS485_SEALEVEL
     // clear the RTS pin to enable receiving
 //    set_rts(sensor->fd, 0);
@@ -91,7 +91,6 @@ void parse_psu_response(state_t *state, char *d, int len)
     memcpy(addr_str, &d[1], 2);
     addr = atoi(addr_str);
     cmd_char = &d[3];
-    
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
     	if(chop_string( d, ", ", tokens) == 4)
@@ -121,12 +120,14 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 		memset(msg, 0, sizeof(msg));
 		sprintf(msg, "#%02dS\r", state->psu_addrs[i]);
 		RS485_write(state->sensor, msg);
-		
+	        usleep(100e3);	
 		// Wait for a response with a timeout
 		memset(resp, 0, sizeof(resp));
-		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 100);
+		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 200);
 		if(ret > 0)
 			parse_psu_response(state, resp, ret);
+
+		usleep(100e3);
 	}
         
         
@@ -171,7 +172,7 @@ int main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-
+state.psu = 0;
     
     while (!program_exit)
     {
