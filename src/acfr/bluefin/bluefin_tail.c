@@ -22,14 +22,15 @@
 #include "acfr-common/lcm_util.h"
 
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_nga_motor_command_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_bluefin_tail_command_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_bluefin_tail_status_t.h"
 
 
 #define RS485_WE(fd, x) set_rts(fd, x)
 
-#define BF_MAIN_MAX 100
-#define BF_MAIN_MIN -100
+#define BF_MAIN_MAX 1000
+#define BF_MAIN_MIN -1000
 #define BF_RE_MAX 12*DTOR
 #define BF_RE_MIN -12*DTOR
 #define COMMAND_TIMEOUT 10000000
@@ -41,8 +42,16 @@ typedef struct
     lcm_t *lcm;
     acfr_sensor_t *sensor;
     bool enabled;
-    acfrlcm_auv_bluefin_tail_command_t bf_command;
+//    acfrlcm_auv_bluefin_tail_command_t bf_command;
     acfrlcm_auv_bluefin_tail_status_t bf_status;
+    int64_t command_utime;
+    int64_t zero_time;
+    int64_t last_zero_time;
+    int thruster;
+    double rudder;
+    double elevator;
+    int max_rpm;
+
     bool error_main;
     bool error_rudder;
     bool error_elevator; 
@@ -99,7 +108,7 @@ int parse_bluefin_message(state_t *state, char *d, int len)
     addr = atoi(addr_str);
     memcpy(cmd_str, &d[3], 2);
     
-    printf("Got data: %d %s\n", addr, d);
+    //printf("Got data: %d %s\n", addr, d);
     
     // Main thruster reponses
     if(addr == 1)
@@ -226,7 +235,7 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->bf_status.utime = timestamp_now();
                 state->enabled = atoi(tok[1]);    
                 state->bf_status.voltage = atof(tok[2]);
-                state->bf_status.current = atof(tok[4]);
+                state->bf_status.current = atof(tok[3]);
                 state->bf_status.psu_temp = atof(tok[4]);
                 
                 acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "BLUEFIN_STATUS", &state->bf_status);
@@ -249,7 +258,7 @@ int bluefin_write(acfr_sensor_t *sensor, char *d)
 // Send a command and wait for a response and parse
 int bluefin_write_respond(state_t *state, char *d, int timeout)
 {
-    printf("****Sending data: %s\n", d);
+    //printf("****Sending data: %s\n", d);
     int ret = acfr_sensor_write(state->sensor, d, strlen(d));
     
     //usleep(10000);
@@ -260,7 +269,7 @@ int bluefin_write_respond(state_t *state, char *d, int timeout)
     if(ret > 0)
     {
         bytes =  acfr_sensor_read_timeout(state->sensor, buf, sizeof(buf), timeout);
-        printf("****Got %d bytes, response %s\n", bytes, buf);
+        //printf("****Got %d bytes, response %s\n", bytes, buf);
         if(bytes > 0)
             return parse_bluefin_message(state, buf, bytes);
         else
@@ -288,7 +297,8 @@ int send_bluefin_tail_commands(state_t *state)
     int ret;
     int retry;
 
-    printf("Sending values: %d, %f, %f\n", state->bf_command.main, state->bf_command.rudder * RTOD, state->bf_command.elevator * RTOD);
+    //printf("Sending values: %d, %f, %f\n", state->bf_command.main, state->bf_command.rudder * RTOD, state->bf_command.elevator * RTOD);
+    //printf("Sending values: %d, %f, %f\n", state->thruster, state->rudder * RTOD, state->elevator * RTOD);
     
     
     if(!state->enabled)
@@ -301,7 +311,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#01MV %d\n", state->bf_command.main);
+        sprintf(msg, "#01MV %d\n", state->thruster);
         //printf("Sending, attemp %d: %s\n", retry, msg);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_main)
@@ -319,7 +329,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#02MP %2.1f\n", state->bf_command.rudder * RTOD);
+        sprintf(msg, "#02MP %2.1f\n", state->rudder * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_rudder)
         {
@@ -337,7 +347,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
 
     {
-        sprintf(msg, "#03MP %2.1f\n", state->bf_command.elevator * RTOD);
+        sprintf(msg, "#03MP %2.1f\n", state->elevator * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_elevator)
         {
@@ -357,6 +367,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 {
     state_t *state = (state_t *)u;
     
+       // bluefin_write_respond(state, "#04S\n", 1);
     // On the heart beat we will get the ouput voltage and current if the thruster is enabled
     if(state->enabled)
     {
@@ -364,11 +375,11 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         
         // If we are enabled then we send the tail commands every second for the timeout period
         // after receiving a command
-        if((hb->utime - state->bf_command.utime) < COMMAND_TIMEOUT)
+        if((hb->utime - state->command_utime) < COMMAND_TIMEOUT)
            send_bluefin_tail_commands(state);
     }            
 }
-
+/*
 void bluefin_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_bluefin_tail_command_t *bf, void *u)
 {
     state_t *state = (state_t *)u;
@@ -402,8 +413,58 @@ void bluefin_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const a
     
     send_bluefin_tail_commands(state);
 }
-        
+ */       
 
+
+void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)
+{
+    state_t *state = (state_t *)u;
+
+    
+    // Copy the commands and set the limits
+    
+    state->command_utime = mot->utime;
+    if(abs(mot->tail_thruster) > state->max_rpm)
+        state->thruster = state->max_rpm;
+    else if(abs(mot->tail_thruster) > state->max_rpm)
+        state->thruster = -state->max_rpm;
+    else
+        state->thruster = mot->tail_thruster;
+        
+    if(mot->tail_rudder > BF_RE_MAX)
+        state->rudder = BF_RE_MAX;
+    else if(mot->tail_rudder < BF_RE_MIN)
+        state->rudder = BF_RE_MIN;
+    else
+        state->rudder = mot->tail_rudder;
+
+    if(mot->tail_elevator > BF_RE_MAX)
+        state->elevator = BF_RE_MAX;
+    else if(mot->tail_elevator < BF_RE_MIN)
+        state->elevator = BF_RE_MIN;
+    else
+        state->elevator = mot->tail_elevator;
+    
+
+    // Check for a zero condition, as the auv-control program continuously sends data this is how we will
+    // check for an idle condition to shut the power supply down.
+    if(fabs(state->rudder) < 1e-6 && fabs(state->elevator) < 1e-6 && fabs(state->thruster) < 1e-6)
+    {
+	int64_t time_now = timestamp_now();
+	state->zero_time += time_now - state->last_zero_time;
+	state->last_zero_time = time_now;
+    }
+    else
+    {
+	state->last_zero_time = timestamp_now();
+	state->zero_time = 0;
+    }
+
+    if(state->zero_time < 10e6)
+        send_bluefin_tail_commands(state);
+    else
+        state->enabled = false;
+}
 
 int main (int argc, char *argv[])
 {
@@ -413,7 +474,8 @@ int main (int argc, char *argv[])
     signal(SIGINT, signal_handler);
 
     state_t state;
-    memset(&state.bf_command, 0, sizeof(acfrlcm_auv_bluefin_tail_command_t));
+    memset(&state, 0, sizeof(state_t));
+//    memset(&state.bf_command, 0, sizeof(acfrlcm_auv_bluefin_tail_command_t));
     memset(&state.bf_status, 0, sizeof(acfrlcm_auv_bluefin_tail_status_t));
     state.enabled = false;
     
@@ -427,6 +489,11 @@ int main (int argc, char *argv[])
     state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
         return 0;
+
+    // Read the max RPM value from the config file
+    char key[64];
+    sprintf(key, "%s.max_rpm", rootkey);
+    state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
 
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
@@ -482,7 +549,8 @@ int main (int argc, char *argv[])
     }
 */
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    acfrlcm_auv_bluefin_tail_command_t_subscribe(state.lcm, "BLUEFIN_COMMAND", &bluefin_command_handler, &state);
+    //acfrlcm_auv_bluefin_tail_command_t_subscribe(state.lcm, "BLUEFIN_COMMAND", &bluefin_command_handler, &state);
+    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA_MOTOR", &nga_motor_command_handler, &state);
 
 
     // the main loop is for reading data from the serial port that isn't handled after a write and the LCM messages
@@ -508,7 +576,8 @@ int main (int argc, char *argv[])
                 lcm_handle(state.lcm);
             else
             {
-                bytes = acfr_sensor_read(state.sensor, buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
+                bytes = acfr_sensor_read_timeout(state.sensor, buf, sizeof(buf), 1);
                 if(bytes > 1)
                      parse_bluefin_message(&state, buf, bytes);
              }
