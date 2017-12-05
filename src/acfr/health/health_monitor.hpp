@@ -25,7 +25,7 @@
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_short_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
-
+#include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 
 
 class HealthMonitor
@@ -54,6 +54,7 @@ public:
     senlcm::micron_ping_t oas;
     acfrlcm::auv_global_planner_state_t global_state;
     senlcm::os_power_system_t battery;
+    acfrlcm::auv_path_response_t path_response;
 
     //lcm_t *lcm;
     lcm::LCM lcm;

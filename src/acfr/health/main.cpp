@@ -115,6 +115,12 @@ void handle_battery(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	state->battery = *sensor;
 }
 
+void handle_path_response(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+        const acfrlcm::auv_path_response_t *sensor, HealthMonitor *state)
+{
+        state->path_response = *sensor;
+}
+
 HealthMonitor::HealthMonitor()
 {
 	// initialise member variables
@@ -167,6 +173,9 @@ HealthMonitor::HealthMonitor()
 	lcm.subscribeFunction("LEAK", handle_leak, this);
 	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
 	lcm.subscribeFunction("BATTERY", handle_battery, this);
+
+    // Subscribe to path response to report waypoint progress in *.AUVSTAT
+    lcm.subscribeFunction("PATH_RESPONSE", handle_path_response, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -285,6 +294,9 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	acfrlcm::auv_status_short_t status;
 	memset(&status, 0, sizeof(acfrlcm::auv_status_short_t));
 	status.utime = timestamp_now();
+    float heading_temp = 0; // temp value to process heading before copy to char
+    float pitch_temp = 0; // temp value to process heading before copy to char
+    float roll_temp = 0; // temp value to process heading before copy to char
 
 	// check the age of the sensor data
 	if ((hbTime - compass.utime) < compass_timeout)
@@ -354,12 +366,35 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	status.longitude = (float)nav.longitude;
 	status.altitude = (unsigned char)(nav.altitude * 10.0);
 	status.depth = (short)(nav.depth * 10.0);
-	status.roll = (char)(nav.roll * 10.0 * 180 / 3.1415);
-	status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415);
-	status.heading = (short)(fmod(nav.heading *  180 / 3.1415, 360)/2);
+	//status.roll = (char)(nav.roll * 10.0 * 180 / 3.1415); //DONE below - undefined for values outside +/- 12.8 degrees
+    roll_temp = (nav.roll * 180 / 3.1415);
+    if (roll_temp > 30) // 30 max degrees reported
+        status.roll = 127; // over roll indicator
+    else if (roll_temp < -30)
+        status.roll = -127; // under roll indicator
+    else // abs(roll_temp) <= 30 
+        status.roll = (char)(roll_temp * 4); // sent in quarter degree units
+    //status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415); // DONE below - undefined for values outside +/- 12.8 degrees
+    pitch_temp = (nav.pitch * 180 / 3.1415); 
+    if (pitch_temp > 30) // 30 max degrees reported
+        status.pitch = 127; // over pitch indicator
+    else if (pitch_temp < -30)
+        status.pitch = -127; // under pitch indicator
+    else // abs(pitch_temp) <= 30
+        status.pitch = (char)(roll_temp * 4); // sent in quarter degree units
+
+	status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415); 
+    //status.heading = (short)(fmod(nav.heading *  180 / 3.1415, 360)/2); //DONE - this is a char, not a short, needs to be fixed /2 is not a solution 180 > 128
+    heading_temp = fmod(nav.heading *  180 / 3.1415, 360); // rad to deg, limit range to -360..+360
+    if (heading_temp >= 180) // limit to -180..180
+        heading_temp = (heading_temp - 360); 
+    if (heading_temp <= -180) // limit to -180..180 opposite case
+        heading_temp = (heading_temp + 360);
+    status.heading = (char)(heading_temp/2); // and halve to fit into signed char (sent as 2 degree incements)
 	status.img_count = image_count;
         status.charge = (char)(battery.avg_charge_p);
         status.vel = (char)(nav.vx * 100.0);
+        status.waypoint = path_response.goal_id;
 
         char channel_name[128];
         snprintf(channel_name, 128, "AUVSTAT.%s", vehicle_name);

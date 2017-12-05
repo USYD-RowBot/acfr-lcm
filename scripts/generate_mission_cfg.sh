@@ -12,8 +12,8 @@
 #####################################################################
 
 # Magnetic variation test_script
-MAGVARWMM="/home/auv/git/acfr_lcm/src/acfr/python/WMM.COF"
-MAGVARPROG="/home/auv/git/acfr_lcm/src/acfr/python/geomag.py"
+MAGVARWMM="/home/auv/git/acfr-lcm/src/acfr/python/WMM.COF"
+MAGVARPROG="/home/auv/git/acfr-lcm/src/acfr/python/geomag.py"
 
 
 # Check for right number of arguments, otherwise print usage.

@@ -578,8 +578,8 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
     in(1) = 0;
     in(2) = -mc->top;// / 180.0 * M_PI;
     in(3) = -mc->bottom;
-    in(4) = -mc->port;// / 180.0 * M_PI;
-    in(5) = -mc->starboard;
+    in(4) = mc->port;// / 180.0 * M_PI;
+    in(5) = mc->starboard;
 }
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
@@ -648,7 +648,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.IVERSIM", &nav);
+        //lcm->publish("ACFR_NAV.IVERSIM", &nav);
 
     }
     //	lcm->publish("ACFR_NAV", &nav);
@@ -949,8 +949,8 @@ int main(int argc, char **argv)
 
 
     lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
-    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
-    //lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
+    //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
+    lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
     lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
