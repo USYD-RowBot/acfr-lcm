@@ -9,8 +9,7 @@ try:
 except:
     from io import BytesIO
 
-#sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
-sys.path.insert(0, '/home/lachlan/Scratch/auvgit/acfrlcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
 import acfrlcm
 import senlcm
@@ -19,6 +18,43 @@ import bot_frames
 import bot_lcmgl
 import bot_param
 import bot_procman
+
+
+import numpy as np
+import math
+
+def compass_direction(heading):
+    headings = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+
+    for i, label in enumerate(headings):
+        angle = 2.0 * i * math.pi / len(headings)
+
+        diff = math.fabs(angle - heading)
+
+        if diff < math.pi / len(headings):
+            return label
+
+    else:
+        return "UNK"
+
+def dvl_rotation(raw_velocities, yaw_offset=math.pi/4.0, rolled=True):
+    if rolled:
+        rx = np.array([[1.0, 0.0, 0.0], [0.0, -1.0, 0.0], [0.0, 0.0, -1.0]])
+    else:
+        rx = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+
+    ry = np.eye(3)
+
+    cz = math.cos(yaw_offset)
+    sz = math.sin(yaw_offset)
+
+    rz = np.array([[cz, -sz, 0.0], [sz, cz, 0.0], [0.0, 0.0, 1.0]])
+
+    R = np.dot(rx, np.dot(ry, rz))
+
+    v = np.dot(R, np.array(raw_velocities))
+
+    return v
 
 class SensorCalibration(object):
     def __init__(self, lcmh):
@@ -54,8 +90,10 @@ class SensorCalibration(object):
 
     def print_status(self, channel_name, raw_data):
         print "======================"
-        print self.compass_angle
-        print self.velocity
+        print "[r, p, y]:    [{:< 10.4f}, {:< 10.4f}, {:< 10.4f}]".format(*self.compass_angle)
+        print "[vx, vy, vz]: [{:< 10.4f}, {:< 10.4f}, {:< 10.4f}]".format(*self.velocity)
+        print compass_direction(self.compass_angle[2])
+        print dvl_rotation(self.velocity, rolled=True)
 
 if __name__ == '__main__':
     lc = lcm.LCM()
