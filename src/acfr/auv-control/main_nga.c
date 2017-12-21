@@ -648,7 +648,7 @@ int main(int argc, char **argv)
                     nav.depth, cmd.depth, CONTROL_DT);
             double differential = pid(&state.gains_tunnel_pitch,
                     nav.pitch, target_pitch, CONTROL_DT);
-            double mutual = pid(&state.gains_tunnel_descent,
+            double mutual = -pid(&state.gains_tunnel_descent,
                     nav.vz, target_descent, CONTROL_DT);
 
             // Set motor controller values
