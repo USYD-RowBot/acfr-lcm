@@ -70,6 +70,9 @@ typedef struct
     pid_gains_t gains_pitch;
     pid_gains_t gains_pitch_r;
     pid_gains_t gains_heading;
+    pid_gains_t gains_tunnel_depth;
+    pid_gains_t gains_tunnel_descent;
+    pid_gains_t gains_tunnel_pitch;
 
     // Nav solution
     acfrlcm_auv_acfr_nav_t nav;
@@ -191,6 +194,48 @@ int load_config(state_t *state, char *rootkey)
     sprintf(key, "%s.heading.sat", rootkey);
     state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
 
+    // Heading gains
+    memset(&state->gains_tunnel_depth, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.tunnel_depth.kp", rootkey);
+    state->gains_tunnel_depth.kp = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_depth.ki", rootkey);
+    state->gains_tunnel_depth.ki = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_depth.kd", rootkey);
+    state->gains_tunnel_depth.kd = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_depth.sat", rootkey);
+    state->gains_tunnel_depth.sat = bot_param_get_double_or_fail(param, key);
+
+    // Heading gains
+    memset(&state->gains_tunnel_descent, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.tunnel_descent.kp", rootkey);
+    state->gains_tunnel_descent.kp = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_descent.ki", rootkey);
+    state->gains_tunnel_descent.ki = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_descent.kd", rootkey);
+    state->gains_tunnel_descent.kd = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_descent.sat", rootkey);
+    state->gains_tunnel_descent.sat = bot_param_get_double_or_fail(param, key);
+
+    // Heading gains
+    memset(&state->gains_tunnel_pitch, 0, sizeof(pid_gains_t));
+    sprintf(key, "%s.tunnel_pitch.kp", rootkey);
+    state->gains_tunnel_pitch.kp = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_pitch.ki", rootkey);
+    state->gains_tunnel_pitch.ki = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_pitch.kd", rootkey);
+    state->gains_tunnel_pitch.kd = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.tunnel_pitch.sat", rootkey);
+    state->gains_tunnel_pitch.sat = bot_param_get_double_or_fail(param, key);
+
     return 1;
 }
 
@@ -298,6 +343,9 @@ int main(int argc, char **argv)
     state.gains_pitch.integral = 0;
     state.gains_pitch_r.integral = 0;
     state.gains_heading.integral = 0;
+    state.gains_tunnel_depth.integral = 0;
+    state.gains_tunnel_descent.integral = 0;
+    state.gains_tunnel_pitch.integral = 0;
 
     
     char root_key[64];
@@ -397,8 +445,8 @@ int main(int argc, char **argv)
 
 
 	}        
-	else if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN ||
-                state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+	else if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)// ||
+                //state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
         {
             // lock the nav and command data and get a local copy
             pthread_mutex_lock(&state.nav_lock);
@@ -582,6 +630,52 @@ int main(int argc, char **argv)
             }
 
         }
+        if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+        {
+            // diving with NGA is a little special. we have tunnel thrusters
+            // to reach a target depth
+            pthread_mutex_lock(&state.nav_lock);
+            acfrlcm_auv_acfr_nav_t nav = state.nav;
+            pthread_mutex_unlock(&state.nav_lock);
+
+            pthread_mutex_lock(&state.command_lock);
+            command_t cmd = state.command;
+            pthread_mutex_unlock(&state.command_lock);
+
+            double target_pitch = 0.0;
+
+            double target_descent = pid(&state.gains_tunnel_depth, 
+                    nav.depth, cmd.depth, CONTROL_DT);
+            double differential = pid(&state.gains_tunnel_pitch,
+                    nav.pitch, target_pitch, CONTROL_DT);
+            double mutual = pid(&state.gains_tunnel_descent,
+                    nav.vz, target_descent, CONTROL_DT);
+
+            // Set motor controller values
+            mc.tail_thruster = 0;
+            mc.tail_rudder = 0;
+            mc.tail_elevator = 0;
+            mc.vert_fore = mutual + differential;
+            mc.vert_aft = mutual - differential;
+            mc.lat_fore = 0;
+            mc.lat_aft = 0;
+
+
+            // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
+            if( loopCount % 10 == 0 )
+            {
+                acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
+                printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                        nav.depth, cmd.depth, (cmd.depth - nav.depth) );
+                printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                        nav.vz, target_descent, (target_descent - nav.vz));
+                printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                        nav.pitch/M_PI*180, target_pitch/M_PI*180, (target_pitch - nav.pitch)/M_PI*180 );
+                printf( "Vert Tunnel: fore=%.2f, aft=%.2f \n",
+                        mc.vert_fore, mc.vert_aft);
+                printf( "\n" );
+            }
+        }
         else
         {
             // if we are not in RUN or DIVE mode, zero the integral terms
@@ -592,6 +686,9 @@ int main(int argc, char **argv)
             state.gains_pitch.integral = 0;
             state.gains_pitch_r.integral = 0;
             state.gains_heading.integral = 0;
+            state.gains_tunnel_depth.integral = 0;
+            state.gains_tunnel_descent.integral = 0;
+            state.gains_tunnel_pitch.integral = 0;
 
             if( loopCount % 10 == 0 )
             {
