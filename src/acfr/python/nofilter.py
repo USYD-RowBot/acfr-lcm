@@ -34,7 +34,11 @@ class NoFilter(object):
 
     def parosci(self, channel, data):
         msg = parosci_t.decode(data)
-        self.nav.depth = msg.depth
+        # we need to correct the depth reading based on the pitch
+        # roll should remain small and not truly effect the depth
+        # the depth sensor is about 1m ahead of the midpoint
+        # positive pitch makes it higher than the midpoint
+        self.nav.depth = msg.depth - math.sin(self.nav.pitch) * 1.0
 
         alpha = 0.1
 
