@@ -185,10 +185,11 @@ int send_tunnel_commands(state_t *state)
 	sprintf(msg, "#%02uT2 %d\r", state->addrs[0], state->vert_fore);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 
-	sprintf(msg, "#%02uT1 %d\r", state->addrs[1], state->lat_aft);
+	// these are the opposite direction to the fore motors
+	sprintf(msg, "#%02uT1 %d\r", state->addrs[1], -state->lat_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
-	sprintf(msg, "#%02uT2 %d\r", state->addrs[1], state->vert_aft);
+	sprintf(msg, "#%02uT2 %d\r", state->addrs[1], -state->vert_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;
