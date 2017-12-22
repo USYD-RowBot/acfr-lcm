@@ -28,16 +28,18 @@
 #define S_TO_MICROS 1000000         // 10^6 conversion to microsecond
 // Position of info in Status Msg
 #define P_SPEED_POS 3
+#define POWER_POS 5
 #define VOLT_POS 7
-#define F2_POS  9                   // TODO - is this Fwd/Rev indicator? noisey
-#define TEMP_POS  12                // TODO - confirm this is def temp, and units - drops too low in idle
-#define F4_POS  14                  // TODO - is this also temp? drops too low in idle
+#define CURRENT_POS 9              
+#define PCB_TEMP_POS 11             
+#define STATOR_TEMP_POS 13          
 // Message structure matching values
 #define MATCH_BYTE_0 172            // match header values AC 00 00 ... AD
 #define MATCH_BYTE_1 0
 #define MATCH_BYTE_2 0
 #define MATCH_BYTE_END 173
-#define MATCH_BYTE_RANDOM 174       // AE (for random AE's in messaages)
+#define MATCH_BYTE_ESCAPE 174       // AE escape character used where AC or AD occur in messages
+#define BYTE_MASK 128         		// mask used to hide AC or AD when occurs in messges
 #define MATCH_BYTE_LEN 17
 #define MSG_3003 3003
 #define MSG3003_LEN 6               // status request message length
@@ -46,8 +48,6 @@
 #define MAX_SUBS 3                  // maximum number of control character substitutions that could occur per message
 #define MAX_SPEED 1000              // maximum prop control speed value +&-
 #define MSG3082_SPEED_POS 5         // postion of speed value in outgoing serial msg
-//#define NUM_3082_F_MSGS 656         // number of forwards speed control messages
-//#define NUM_3082_R_MSGS 591         // number of reverse speed control messages
 // Other contants
 #define CMD_TIMEOUT 2000000
 #define NUM_MSGS 2
@@ -161,7 +161,6 @@ void send_msg(int message_type, state_t *u)
                     	state->rev_speed = MAX_SPEED;
 						fprintf(stderr, "Torqeedo: Speed control value (reverse) out of range.");
                 	}
-					//msg_3082_move[5] = (int16_t) -state->rev_speed; 
                     // set rev speed
                     msg_3082_move[MSG3082_SPEED_POS] = (int8_t)(-state->rev_speed >> BITS_PER_BYTE); // MSB
                     div_t divresult = div (-state->rev_speed, BYTE_MAX);
@@ -184,12 +183,12 @@ void send_msg(int message_type, state_t *u)
 						{
 							msg_3082_move[j] = msg_3082_move[j - 1]; // shift along one position - sufficient padding at end of array for us to do this
 						}
-						msg_3082_move[i+1] = msg_3082_move[i] - 0x80; // then shift original value with mask
+						msg_3082_move[i+1] = msg_3082_move[i] - BYTE_MASK; // then shift original value with mask
 						msg_3082_move[i] = 0xAE; // and add in the escape character
                         
 					}
 				}
-
+                // write to serial output, adding 1 extra byte of 0's for timing issue (in documentation) wont work owise
 				res = acfr_sensor_write(state->sensor, (char *)msg_3082_move, MSG3082_LEN + subs_count + 1);
             }
 
@@ -228,8 +227,7 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-//    if (state->counter % 100 == 0)
-        printf("HB\n");
+    //printf("HB\n");
     // On the heart beat we will trigger writing messages to serial
     if (state->counter % NUM_MSGS == 0) // Alternate TODO and check timeouts
     {
@@ -329,8 +327,9 @@ int main(int argc, char **argv)
     char buf[BUFLENGTH];
     struct timeval tv;
     int ret;
-    bool start_found = false;
-    bool end_found = false;
+    bool start_found = false; // start of message AC found
+    bool end_found = false; // end of message AD found
+    bool mask_next_value = false; // no escape characters currently detected
     int i = 0;
     FD_ZERO(&rfds);
     FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
@@ -360,10 +359,11 @@ int main(int argc, char **argv)
             }
             if(FD_ISSET(state.sensor->fd, &dup_rfds)) // serial, read the bytes
             {
+                mask_next_value = false; // no escape characters currently detected
                 // while there are more characters to read
                 while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1))) // && (i < MATCH_BYTE_LEN))
                 {   
-//                    printf("%02X %i\n", (uint8_t)buf[i], i);
+                    //printf("%02X %i\n", (uint8_t)buf[i], i);
                     // match message start
                     if ((uint8_t)buf[i] == (uint8_t)MATCH_BYTE_0)
                     {
@@ -375,32 +375,48 @@ int main(int argc, char **argv)
                     {
                         end_found = true;
                     }
-                    if (start_found && (uint8_t)buf[i] != MATCH_BYTE_RANDOM) // hack to ditch random 'AE's in msgs
+					// if an AE (escape character) has been detected and removed, we need to mask the next incoming character
+                    if (start_found && !end_found && mask_next_value)
+                    {
+                        buf[i] = buf[i] + BYTE_MASK;
+					    mask_next_value = false;
+                    }
+					if (start_found && (uint8_t)buf[i] != MATCH_BYTE_ESCAPE) // dont inrement to overwrite 'AE' control characters in msgs
                     {
                         i++; // increment to next space in storage array
+                    }
+                    else if (start_found && (uint8_t)buf[i] == MATCH_BYTE_ESCAPE)
+                    {
+                        // don't increment, set flag to apply mask to next character
+                        mask_next_value = true; 
                     }
                     if (i >= BUFLENGTH) // reset buffer in case of (invalid) long msg
                         i = 0;
                 }
 
                 if (start_found && end_found)
-                {    
+                {   
+                    //printf("Start & End\n"); 
                     if (i == MATCH_BYTE_LEN && buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
                     {
                         // fill LCM motor status message from serial buffer
-                        //state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
-                        state.mot_status.prop_speed = (int16_t) buf[P_SPEED_POS];
+               
+                        //state.mot_status.prop_speed = (int16_t) buf[P_SPEED_POS]; // copy MSB
+                        //state.mot_status.prop_speed =<< BITS_PER_BYTE; // shift one byte 
+                        //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
+                        state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
                         state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
-                        state.mot_status.motor_temp = (uint8_t)buf[TEMP_POS];
-                        state.mot_status.field_2 = BYTE_MAX * (uint8_t)buf[F2_POS] + (uint8_t)buf[F2_POS];
-                        state.mot_status.field_4 = BYTE_MAX * (uint8_t)buf[F4_POS] + (uint8_t)buf[F4_POS];
+                        state.mot_status.field_2 = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // TODO change this to current
+                        state.mot_status.motor_temp = (uint8_t)buf[PCB_TEMP_POS]; // TODO change this to PCB temp 16bit signed
+                        signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
+                        state.mot_status.field_4 = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // TODO change this to stator temp
 
                         // and publish status message
                         acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
 
                         if (verbose) // print motor status
                         {
-                            printf("Prop Speed: %05i   Voltage: %3.2f   Temperature: %3.1f   ?: %05i   ?: %05i\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.motor_temp)/10, state.mot_status.field_2, state.mot_status.field_4);
+                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.field_2)/10, ((double)pcb_temp)/10, (double)state.mot_status.field_4/10);
                         }
                         // reset outgoing message 
                         memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
@@ -423,50 +439,6 @@ int main(int argc, char **argv)
 
     return 0;
 } // end main
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
