@@ -41,9 +41,9 @@ def Main():
         if choice == 8:
             # increase speed ^
             if f_speed >= 0:
-                f_speed = (f_speed + 1)%(650)
+                f_speed = (f_speed + 1) #%(650)
             elif r_speed >= 0:
-                r_speed = (r_speed +1)%(590)
+                r_speed = (r_speed +1) #%(590)
         elif choice == 2:
             # decerease speed v
             if f_speed >= 0:
