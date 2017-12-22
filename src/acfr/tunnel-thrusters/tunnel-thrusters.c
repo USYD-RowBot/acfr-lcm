@@ -18,10 +18,16 @@
 #include "perls-lcmtypes/acfrlcm_tunnel_thruster_power_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_nga_motor_command_t.h"
 
-#define TUNNEL_MAX 2047
-#define TUNNEL_MIN -2048
+// actual max values supported
+//#define TUNNEL_MAX 2047
+//#define TUNNEL_MIN -2048
 
-#define COMMAND_TIMEOUT_THRUST 500
+// but with power issues...
+// 1024 is really slow, nowhere near the limit
+#define TUNNEL_MAX 1500
+#define TUNNEL_MIN -1500
+
+#define COMMAND_TIMEOUT_THRUST 10
 #define COMMAND_TIMEOUT 10
 
 typedef struct 
@@ -179,10 +185,11 @@ int send_tunnel_commands(state_t *state)
 	sprintf(msg, "#%02uT2 %d\r", state->addrs[0], state->vert_fore);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 
-	sprintf(msg, "#%02uT1 %d\r", state->addrs[1], state->lat_aft);
+	// these are the opposite direction to the fore motors
+	sprintf(msg, "#%02uT1 %d\r", state->addrs[1], -state->lat_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
-	sprintf(msg, "#%02uT2 %d\r", state->addrs[1], state->vert_aft);
+	sprintf(msg, "#%02uT2 %d\r", state->addrs[1], -state->vert_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;

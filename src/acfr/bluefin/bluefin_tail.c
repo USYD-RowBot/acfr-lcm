@@ -29,8 +29,7 @@
 
 #define RS485_WE(fd, x) set_rts(fd, x)
 
-#define BF_MAIN_MAX 1000
-#define BF_MAIN_MIN -1000
+
 #define BF_RE_MAX 12*DTOR
 #define BF_RE_MIN -12*DTOR
 #define COMMAND_TIMEOUT 10000000
@@ -379,42 +378,6 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
            send_bluefin_tail_commands(state);
     }            
 }
-/*
-void bluefin_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_bluefin_tail_command_t *bf, void *u)
-{
-    state_t *state = (state_t *)u;
-
-    
-    // Copy the commands and set the limits
-    
-    state->bf_command.utime = bf->utime;
-    if(bf->main > BF_MAIN_MAX)
-        state->bf_command.main = BF_MAIN_MAX;
-    else if(bf->main < BF_MAIN_MIN)
-        state->bf_command.main = BF_MAIN_MIN;
-    else
-        state->bf_command.main = bf->main;
-        
-    if(bf->rudder > BF_RE_MAX)
-        state->bf_command.rudder = BF_RE_MAX;
-    else if(bf->rudder < BF_RE_MIN)
-        state->bf_command.rudder = BF_RE_MIN;
-    else
-        state->bf_command.rudder = bf->rudder;
-
-    if(bf->elevator > BF_RE_MAX)
-        state->bf_command.elevator = BF_RE_MAX;
-    else if(bf->elevator < BF_RE_MIN)
-        state->bf_command.elevator = BF_RE_MIN;
-    else
-        state->bf_command.elevator = bf->elevator;
-    
-    printf("Rudder: %f, %f\n", bf->rudder, state->bf_command.rudder);
-    
-    send_bluefin_tail_commands(state);
-}
- */       
-
 
 void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)
 {
