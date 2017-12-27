@@ -1,4 +1,8 @@
 #include <math.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 #include "health_monitor.hpp"
 
 #define COMPASS_TIMEOUT	1000000
@@ -26,6 +30,7 @@
 #define LEAK_BIT        0b1000000000000000 //0x8000
 
 
+using namespace std;
 
 // Handlers
 
@@ -157,28 +162,32 @@ HealthMonitor::HealthMonitor()
 	dvlbl_timeout = DVLBL_TIMEOUT;
 	depth_timeout = DEPTH_TIMEOUT;
 	oas_timeout = OAS_TIMEOUT;
+}
 
-	//lcm = NULL;
+
+int HealthMonitor::subscribeChannels()
+{
 	// Subscribe to all the sensors we need to monitor
-	lcm.subscribeFunction("TCM", handle_tcm, this);
-	lcm.subscribeFunction("KVH1550", handle_imu, this);
-	lcm.subscribeFunction("GPSD_CLIENT", handle_gps, this);
-	lcm.subscribeFunction("ECOPUCK", handle_ecopuck, this);
-	lcm.subscribeFunction("MICRON", handle_micron, this);
-	lcm.subscribeFunction("RDI", handle_rdi, this);
-	lcm.subscribeFunction("PAROSCI", handle_parosci, this);
-	lcm.subscribeFunction("YSI", handle_ysi, this);
-	lcm.subscribeFunction("ACFR_NAV.*", handle_nav, this);
-	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
-	lcm.subscribeFunction("LEAK", handle_leak, this);
-	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
-	lcm.subscribeFunction("BATTERY", handle_battery, this);
+	lcm.subscribeFunction("TCM."+vehicle_name, handle_tcm, this);
+	lcm.subscribeFunction("KVH1550."+vehicle_name, handle_imu, this);
+	lcm.subscribeFunction("GPSD_CLIENT."+vehicle_name, handle_gps, this);
+	lcm.subscribeFunction("ECOPUCK."+vehicle_name, handle_ecopuck, this);
+	lcm.subscribeFunction("MICRON."+vehicle_name, handle_micron, this);
+	lcm.subscribeFunction("RDI."+vehicle_name, handle_rdi, this);
+	lcm.subscribeFunction("PAROSCI."+vehicle_name, handle_parosci, this);
+	lcm.subscribeFunction("YSI."+vehicle_name, handle_ysi, this);
+	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, handle_nav, this);
+	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG."+vehicle_name, handle_vis, this);
+	lcm.subscribeFunction("LEAK."+vehicle_name, handle_leak, this);
+	lcm.subscribeFunction("GLOBAL_STATE."+vehicle_name, handle_global_state, this);
+	lcm.subscribeFunction("BATTERY."+vehicle_name, handle_battery, this);
 
     // Subscribe to path response to report waypoint progress in *.AUVSTAT
-    lcm.subscribeFunction("PATH_RESPONSE", handle_path_response, this);
+    lcm.subscribeFunction("PATH_RESPONSE."+vehicle_name, handle_path_response, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
+        return 1;
 }
 
 int HealthMonitor::loadConfig(char *program_name)
@@ -283,8 +292,8 @@ int HealthMonitor::loadConfig(char *program_name)
 	if (0 == bot_param_get_double(param, key, &tmp_double))
 		oas_timeout = tmp_double;
 
-        sprintf(key, "%s.vehicle_name", rootkey);
-        vehicle_name = bot_param_get_str_or_fail(param, key);
+        //sprintf(key, "%s.vehicle_name", rootkey);
+        //vehicle_name = bot_param_get_str_or_fail(param, key);
  
 	return 1;
 }
@@ -396,9 +405,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
         status.vel = (char)(nav.vx * 100.0);
         status.waypoint = path_response.goal_id;
 
-        char channel_name[128];
-        snprintf(channel_name, 128, "AUVSTAT.%s", vehicle_name);
-	lcm.publish(channel_name, &status);
+	lcm.publish("AUVSTAT."+vehicle_name, &status);
 
 	return 1;
 }
@@ -408,7 +415,7 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	acfrlcm::auv_global_planner_t abortMsg;
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
-	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
+	lcm.publish("TASK_PLANNER_COMMAND."+vehicle_name, &abortMsg);
 
 	return 1;
 }
@@ -444,6 +451,36 @@ int HealthMonitor::checkAbortConditions()
 	return 0;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, HealthMonitor &state)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            state.setVehicleName((char*)optarg);
+            break;
+         }
+    }
+}
+
+
 int program_exit;
 void signal_handler(int sigNum)
 {
@@ -456,6 +493,8 @@ int main(int argc, char **argv)
 	program_exit = 0;
 
 	HealthMonitor state;
+        parse_args(argc, argv, state);
+        state.subscribeChannels();
 
 	if (!state.loadConfig(basename(argv[0])))
 	{

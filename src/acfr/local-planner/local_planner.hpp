@@ -21,6 +21,7 @@ class LocalPlanner
 public:
 	LocalPlanner();
 	~LocalPlanner();
+        int subscribeChannels();
 	int loadConfig(char *programName);
 	int onNav(const acfrlcm::auv_acfr_nav_t *nav);
 	int onPathCommand(const acfrlcm::auv_path_command_t *pc);
@@ -138,6 +139,10 @@ public:
 	void printWaypoints( void ) const;
 	bool publishWaypoints(void);
 
+        void setVehicleName(char *vn)
+        {
+                vehicle_name = vn;
+        }
 	std::vector<Pose3D> waypoints;
 
 	lcm::LCM lcm;
@@ -205,5 +210,7 @@ private:
 
 	int64_t waypointTime;
 	int64_t replanTime;
+
+        string vehicle_name = "DEFAULT";
 
 };
