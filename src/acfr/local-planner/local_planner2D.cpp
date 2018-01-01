@@ -1,4 +1,4 @@
-#include "local_planner.hpp"
+#include "local_planner2D.hpp"
 #include <string>
 #include <libgen.h>
 #include <signal.h>
@@ -11,7 +11,7 @@
 //#include <atomic>
 
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
 
 using namespace std;
@@ -26,7 +26,7 @@ void signalHandler(int sig)
 
 // Nav callback
 void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const acfrlcm::auv_acfr_nav_t *nav, LocalPlanner *lp)
+		const acfrlcm::auv_acfr_nav_t *nav, LocalPlanner2D *lp)
 {
 	lp->onNav(nav);
 }
@@ -34,7 +34,7 @@ void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
-		LocalPlanner *lp)
+		LocalPlanner2D *lp)
 {
 	lp->onPathCommand(pc);
 }
@@ -42,24 +42,21 @@ void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 // Global State command callback
 void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel,
-		const acfrlcm::auv_global_planner_state_t *gpState, LocalPlanner *lp)
+		const acfrlcm::auv_global_planner_state_t *gpState, LocalPlanner2D *lp)
 {
 	lp->onGlobalState(gpState);
 }
 
 // heartbeat callback
 void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp)
+		const perllcm::heartbeat_t *heartbeat, LocalPlanner2D *lp)
 {
 	// We haven't reached our goal but don't have any more waypoints.
 	// 	Let's recalculate a feasible path.
 	// Addition: Make the replanning stage occur at a set period
-	//        if( (lp->waypoints.size() == 0) && (lp->getDestReached() == false) && (lp->getNewDest() == true))// ||  (( timestamp_now() - lp->getReplanTime() )/1000000 > 5) ) // if we want faster replanning, or a different number than the heartbeat, this callback needs to be made faster and this variable can be used
 	static long count = 0;
-	//	double timeSinceReplan = (timestamp_now() - lp->getReplanTime()) / 1000000.;
 
 	if ((lp->getDestReached() == false && lp->getNewDest() == true) &&
-	//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
 			(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()))
 	{
 
@@ -85,12 +82,12 @@ void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 
 /** *************************************************************************
  *
- * LocalPlanner
+ * LocalPlanner2D
  *
  */
-LocalPlanner::LocalPlanner() :
+LocalPlanner2D::LocalPlanner2D() :
 		startVel(0), destVel(0), newDest(false), destReached(false),
-		depthMode(0), diveMode(0), destID(0), turningRadius(1.0), maxPitch(0),
+		destID(0), turningRadius(1.0),
 		lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0),
 		velChangeDist(1.0), defaultLegVel(1.0), waypointTimeout(1e3),
 		forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
@@ -103,10 +100,10 @@ LocalPlanner::LocalPlanner() :
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
 
-	cout << endl << endl << endl << "LocalPlanner started" << endl;
+	cout << endl << endl << endl << "LocalPlanner2D started" << endl;
 }
 
-LocalPlanner::~LocalPlanner()
+LocalPlanner2D::~LocalPlanner2D()
 {
 
 	if (fp.is_open())
@@ -115,7 +112,7 @@ LocalPlanner::~LocalPlanner()
 		fp_wp.close();
 }
 
-int LocalPlanner::subscribeChannels()
+int LocalPlanner2D::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
 	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, onNavLCM, this);
@@ -129,17 +126,12 @@ int LocalPlanner::subscribeChannels()
 /**
  * Copy current nav solution and process the waypoints
  */
-int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
+int LocalPlanner2D::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
-
-	currPose.setPosition(nav->x, nav->y, nav->depth);
-	currAltitude = nav->altitude;
+	currPose.setPosition(nav->x, nav->y);
 
 	// Instead of heading, we make the current pose "heading" actually the slip
 	// 	angle (bearing), for control
-#if 0
-	currPose.setRollPitchYawRad( nav->roll, nav->pitch, nav->heading );
-#else
 	double bearing = atan2(
 			+nav->vy * cos(nav->heading) + nav->vx * sin(nav->heading),
 			-nav->vy * sin(nav->heading) + nav->vx * cos(nav->heading));
@@ -147,9 +139,8 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 		bearing += 2 * M_PI;
 	while (bearing > M_PI)
 		bearing -= 2 * M_PI;
-	currPose.setRollPitchYawRad(nav->roll, nav->pitch, bearing);
-#endif
-	currVel = nav->vx, nav->vy, nav->vz;
+	currPose.setThetaRad(bearing);
+	currVel = nav->vx, nav->vy;
 
 	// for now only process waypoints or dive commands if we are in
 	// RUN mode.  This will need to be modified to take into account
@@ -166,23 +157,21 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
  * We have received a new path command.
  * Let's calcualte a new path.
  */
-int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
+int LocalPlanner2D::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 {
 	bool status = false;
 	// Reset destination pose
 	destPose.setIdentity();
 
 	// Set destination pose and velocity
-	destPose.setPosition(pc->waypoint[0], pc->waypoint[1], pc->waypoint[2]);
-	destPose.setRollPitchYawRad(pc->waypoint[3], pc->waypoint[4],
-			pc->waypoint[5]);
+	destPose.setPosition(pc->waypoint[0], pc->waypoint[1]);
+	destPose.setThetaRad(pc->waypoint[5]);
 	destVel = pc->waypoint[6];
-	depthMode = pc->depth_mode;
 	destID = pc->goal_id;
 
 	cout << timestamp_now() << " Got a new DEST point " << endl << "\t"
 			<< "DestPose=" << destPose.getX() << "," << destPose.getY() << ","
-			<< destPose.getZ() << " < " << destPose.getYawRad() / M_PI * 180
+			<< destPose.getThetaRad() / M_PI * 180
 			<< endl;
 
 	setDestReached(false);
@@ -201,38 +190,33 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 	return status;
 }
 
-#define DIVE_REV_VEL -0.5
-//#define DIVE_REV_VEL 0 // for lab testing
-#define DIVE_PICTH (10.0 / 180.0 * M_PI)
-#define DIVE_DEPTH 0.5
-
 /**
  * Call Dubins path planner to generate a path from current location to the
  * destination waypoint
  */
-int LocalPlanner::calculateWaypoints()
+int LocalPlanner2D::calculateWaypoints()
 {
 
 	// Get a copy of curr and dest pose
-	Pose3D currPose = this->currPose;
-	Pose3D destPose = this->destPose;
+	Pose2D currPose = this->currPose;
+	Pose2D destPose = this->destPose;
 	double currVel = this->currVel[0];
 
 	cout << timestamp_now() << " Calculating new waypoints..." << endl;
 	cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
-			<< currPose.getY() << "," << currPose.getZ() << " < "
-			<< currPose.getYawRad() / M_PI * 180 << endl;
+			<< currPose.getY() << "," << " < "
+			<< currPose.getThetaRad() / M_PI * 180 << endl;
 	cout << setprecision(2) << "DestPose=" << destPose.getX() << ","
-			<< destPose.getY() << "," << destPose.getZ() << " < "
-			<< destPose.getYawRad() / M_PI * 180 << endl;
+			<< destPose.getY() << "," << " < "
+			<< destPose.getThetaRad() / M_PI * 180 << endl;
 
-	Pose3D destPoseRel = getRelativePose(destPose);
+	Pose2D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
-	cout << "Dest rel: X=" << destPoseRel.getX()
+	cout << "Dest rel: X=" << destPoseRel.getX() << " Y=" << destPoseRel.getY()
 			<< ", angle=" << relAngle/M_PI*180 << endl;
 
 	bool success = false;
-	vector<Pose3D> wps;
+	vector<Pose2D> wps;
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
@@ -240,20 +224,19 @@ int LocalPlanner::calculateWaypoints()
 	    destPoseRel.getX() > 2*turningRadius ||
 		fabs(relAngle) > 45./180*M_PI )
 	{
-		DubinsPath dp;
+		DubinsPath2D dp;
 		dp.setCircleRadius(turningRadius);
-		dp.setMaxPitch(maxPitch);
 		dp.setWaypointDropDist(wpDropDist);
 		dp.setWaypointDropAngleFromDropDist();
 
 		// Don't use current pose but a pose looking a bit ahead. We adjust this
 		//	by employing the current velocity
 		double lookAheadTime = 0.2; // [s]
-		Pose3D lookAheadPose;
+		Pose2D lookAheadPose;
 		// Using fabs of vel to ensure that even if we are going backwards the
 		// lookaheadpose is in front of us
 		lookAheadPose.setX(fabs(currVel) * lookAheadTime);
-		Pose3D startPose = currPose.compose(lookAheadPose);
+		Pose2D startPose = currPose.compose(lookAheadPose);
 
 		// Try to calculate a feasible Dubins path. If we fail we try
 		//  a second time with twice the circle radius
@@ -302,7 +285,7 @@ int LocalPlanner::calculateWaypoints()
 /**
  * Account for changes in system state
  */
-int LocalPlanner::onGlobalState(
+int LocalPlanner2D::onGlobalState(
 		const acfrlcm::auv_global_planner_state_t *gpStateLCM)
 {
 	cout << "Change of global state to: " << (int) (gpStateLCM->state) << endl;
@@ -315,15 +298,15 @@ int LocalPlanner::onGlobalState(
 	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
 	{
 		// form a STOP message to send
-		acfrlcm::auv_control_t cc;
+		acfrlcm::wam_v_control_t cc;
 		cc.utime = timestamp_now();
-		cc.run_mode = acfrlcm::auv_control_t::STOP;
-		lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+		cc.run_mode = acfrlcm::wam_v_control_t::STOP;
+		lcm.publish("WAM_V_CONTROL."+vehicle_name, &cc);
 	}
 	return 1;
 }
 
-int LocalPlanner::loadConfig(char *program_name)
+int LocalPlanner2D::loadConfig(char *program_name)
 {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
@@ -337,12 +320,6 @@ int LocalPlanner::loadConfig(char *program_name)
 
 	sprintf(key, "%s.turning_radius", rootkey);
 	turningRadius = bot_param_get_double_or_fail(param, key);
-
-	sprintf(key, "%s.minimum_altitude", rootkey);
-	minAltitude = bot_param_get_double_or_fail(param, key);
-
-	sprintf(key, "%s.maximum_pitch", rootkey);
-	maxPitch = bot_param_get_double_or_fail(param, key);
 
 	sprintf(key, "%s.velocity_change_distance", rootkey);
 	velChangeDist = bot_param_get_double_or_fail(param, key);
@@ -392,7 +369,7 @@ int LocalPlanner::loadConfig(char *program_name)
 	return 1;
 }
 
-int LocalPlanner::process()
+int LocalPlanner2D::process()
 {
     // setup signal handlers
 	mainExit = false;
@@ -420,7 +397,7 @@ int LocalPlanner::process()
  * 1) remove it from the list if we have reached it or
  * 2) calculate commands for the controller
  */
-int LocalPlanner::processWaypoints()
+int LocalPlanner2D::processWaypoints()
 {
 
 	// Nothing to do
@@ -430,16 +407,15 @@ int LocalPlanner::processWaypoints()
 	}
 
 	// Get the next waypoint
-	Pose3D wp = waypoints.at(0);
+	Pose2D wp = waypoints.at(0);
 
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
 
-		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
+		printf( "[%3.2f, %3.2f] reached.\n",
 				wp.getX(),
-				wp.getY(),
-				wp.getZ() );
+				wp.getY() );
 		waypoints.erase(waypoints.begin());
 		resetWaypointTime(timestamp_now());
 
@@ -457,9 +433,9 @@ int LocalPlanner::processWaypoints()
 			}
 
 //			// form a STOP message to send
-//			acfrlcm::auv_control_t cc;
+//			acfrlcm::wam_v_control_t cc;
 //			cc.utime = timestamp_now();
-//			cc.run_mode = acfrlcm::auv_control_t::STOP;
+//			cc.run_mode = acfrlcm::wam_v_control_t::STOP;
 //			lcm.publish("AUV_CONTROL", &cc);
 
 			return getDestReached();
@@ -467,7 +443,7 @@ int LocalPlanner::processWaypoints()
 
 	}
 
-	Pose3D currPose = getCurrPose();
+	Pose2D currPose = getCurrPose();
 
 	// Calculate desired heading to way point
 	//  This is not our bearing to the point but a global angle
@@ -483,53 +459,19 @@ int LocalPlanner::processWaypoints()
 	//}
 
 	// form a message to send
-	acfrlcm::auv_control_t cc;
+	acfrlcm::wam_v_control_t cc;
 	cc.utime = timestamp_now();
-	cc.run_mode = acfrlcm::auv_control_t::RUN;
+	cc.run_mode = acfrlcm::wam_v_control_t::RUN;
 	cc.heading = desHeading;
 	cc.vx = desVel;
-    static double depth_ref = 0.0;
-    double curr_depth_ref;
-	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
-	{
-		//cc.depth = wp.getZ();
-        curr_depth_ref = wp.getZ();
 
-        // check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (currAltitude - minAltitude);
-        if (curr_alt_ref < curr_depth_ref)
-            curr_depth_ref = curr_alt_ref;
+        //cout << "wpX: " << wp.getX() << " wpY:" << wp.getY() << " cX:" << currPose.getX() << " cY:" << currPose.getY() << " dH:" << desHeading << " dV:" << desVel << endl;
 
-		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
-	}
-	else
-	{
-		// set the depth goal using the filtered desired altitude.
-		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
-		curr_depth_ref = currPose.getZ() + (currAltitude - wp.getZ());
-		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
-	}
-    // FIXME: limit the depth rate change to yield an achievable 
-    // trajectory. This is modelled on a forward speed of 0.75m/s 
-    // with a max pitch of 0.3rad.  This should be configurable or
-    // calculated automatically.
-    double NAV_DT = 0.1;
-    double max_depth_ref_change = 0.2*NAV_DT;
-    double depth_ref_error = curr_depth_ref - depth_ref;
-    if (depth_ref_error > max_depth_ref_change)
-        depth_ref += max_depth_ref_change;
-    else if (depth_ref_error < -max_depth_ref_change)
-        depth_ref -= max_depth_ref_change;
-    else
-        depth_ref = curr_depth_ref;
-
-    cc.depth = depth_ref;
-
-	lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+	lcm.publish("WAM_V_CONTROL."+vehicle_name, &cc);
 	return 1;
 }
 
-int LocalPlanner::sendResponse()
+int LocalPlanner2D::sendResponse()
 {
 	acfrlcm::auv_path_response_t pr;
 	pr.utime = timestamp_now();
@@ -544,26 +486,25 @@ int LocalPlanner::sendResponse()
 	return 1;
 }
 
-void LocalPlanner::printWaypoints() const {
+void LocalPlanner2D::printWaypoints() const {
 	cout << "waypoints = [" << endl;
 	for (unsigned int i = 0; i < waypoints.size(); i++)
 	{
-		printf( "%3.2f, %3.2f, %3.2f;\n",
+		printf( "%3.2f, %3.2f;\n",
 				waypoints.at(i).getX(),
-				waypoints.at(i).getY(),
-				waypoints.at(i).getZ() );
+				waypoints.at(i).getY());
 	}
 	cout << "];" << endl;
 }
-bool LocalPlanner::publishWaypoints() {
+
+bool LocalPlanner2D::publishWaypoints() {
 	acfrlcm::auv_local_path_t lp;
 	lp.utime = timestamp_now();
-	int i;
+	unsigned int i;
 	// TODO: comparison between signed and unsiged!
 	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
 		lp.x[i] = waypoints[i].getX();
 		lp.y[i] = waypoints[i].getY();
-		lp.z[i] = waypoints[i].getZ();
 	}
 	lp.num_el = i;
 	lcm.publish("LOCAL_PATH."+vehicle_name, &lp);
