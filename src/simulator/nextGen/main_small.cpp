@@ -1,4 +1,4 @@
-// nextGen AUV simulator
+// nga AUV simulator
 
 
 #include <iostream>
@@ -8,11 +8,10 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <libplankton/auv_config_file.hpp>
-#include <libplankton/auv_map_projection.hpp>
+#include "acfr-common/auv_map_projection.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_nextGen_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
@@ -70,7 +69,7 @@ SMALL::Vector3D grav;
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
 //SMALL::Vector6D in;
-auv_nextGen_motor_command_t in;
+auv_nga_motor_command_t in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
@@ -145,7 +144,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     
     // propeller revolutions per second (rps)
     // converting desired rpm to rps
-    double n = in.tailThruster/60;
+    double n = in.tail_thruster/60;
     
     // limit the max rpm to 1500 = 25 rps
     if(fabs(n) > 25)
@@ -184,10 +183,10 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     
     // external applied forces
     double X, Y, Z, K, M, N;
-    X = prop_force * cos(in.tailRudder) * cos(in.tailElevator);
+    X = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
 
-    Y = prop_force * sin(in.tailRudder) * cos(in.tailElevator);
-    Z = prop_force * sin(in.tailElevator);
+    Y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
+    Z = prop_force * sin(in.tail_elevator);
     K = 0;        // assume zero roll moment - should account for roll moment of thruster
 
     // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
@@ -346,7 +345,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 }
 
 // motor command callback
-void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nextGen_motor_command_t *mc, lcm::LCM *lcm) 
+void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nga_motor_command_t *mc, lcm::LCM *lcm) 
 {
     in = *mc;
 }
@@ -406,18 +405,18 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             printf("%2.3f ", state(i));
             fp << state(i) << " ";
         }
-        printf("%2.3f ", in.vertFwd);
-        fp << in.vertFwd << " ";
-        printf("%2.3f ", in.vertRear);
-        fp << in.vertRear << " ";
-        printf("%2.3f ", in.latFwd);
-        fp << in.latFwd << " ";
-        printf("%2.3f ", in.tailThruster);
-        fp << in.tailThruster << " ";
-        printf("%2.3f ", in.tailRudder);
-        fp << in.tailRudder << " ";
-        printf("%2.3f ", in.tailElevator);
-        fp << in.tailElevator << " ";
+        printf("%2.3f ", in.vert_fore);
+        fp << in.vert_fore << " ";
+        printf("%2.3f ", in.vert_aft);
+        fp << in.vert_aft << " ";
+        printf("%2.3f ", in.lat_fore);
+        fp << in.lat_fore << " ";
+        printf("%2.3f ", in.tail_thruster);
+        fp << in.tail_thruster << " ";
+        printf("%2.3f ", in.tail_rudder);
+        fp << in.tail_rudder << " ";
+        printf("%2.3f ", in.tail_elevator);
+        fp << in.tail_elevator << " ";
         fp << "\n";
         fp.close();
         printf("\n");
@@ -690,15 +689,11 @@ int main(int argc, char **argv)
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
-    sprintf(key, "%s.slam_config", rootkey);
-    char *slamConfigFileName = bot_param_get_str_or_fail(param, key);
-    Config_File *slamConfigFile;
-    slamConfigFile = new Config_File(slamConfigFileName);
-
     double latitude_sim, longitude_sim;
-
-    slamConfigFile->get_value( "LATITUDE", latitude_sim);
-    slamConfigFile->get_value( "LONGITUDE", longitude_sim);
+    sprintf(key, "%s.latitude", rootkey);
+    latitude_sim = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.longitude", rootkey);
+    longitude_sim = bot_param_get_double_or_fail(param, key);
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
@@ -755,13 +750,13 @@ int main(int argc, char **argv)
     state(10) = 0;
     state(11) = 0;
 
-    in.vertFwd = 0;
-    in.vertRear = 0;
-    in.latFwd = 0;
-    in.latRear = 0;
-    in.tailThruster = 0;
-    in.tailRudder = 0;
-    in.tailElevator = 0;
+    in.vert_fore = 0;
+    in.vert_aft = 0;
+    in.lat_fore = 0;
+    in.lat_aft = 0;
+    in.tail_thruster = 0;
+    in.tail_rudder = 0;
+    in.tail_elevator = 0;
 
     fp_nav.open( "/tmp/log_nav.txt", ios::out);
     fp.open("/tmp/log.txt", ios::out);
@@ -779,7 +774,6 @@ int main(int argc, char **argv)
         if(ret > 0)
             lcm.handle();
     }
-    delete slamConfigFile;
     delete map_projection_sim;
     if( fp.is_open())
     	fp.close();

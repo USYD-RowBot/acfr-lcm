@@ -8,8 +8,8 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <libplankton/auv_config_file.hpp>
-#include <libplankton/auv_map_projection.hpp>
+//#include <libplankton/auv_config_file.hpp>
+#include "acfr-common/auv_map_projection.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
@@ -945,15 +945,11 @@ int main(int argc, char **argv)
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
-    sprintf(key, "%s.slam_config", rootkey);
-    char *slamConfigFileName = bot_param_get_str_or_fail(param, key);
-    Config_File *slamConfigFile;
-    slamConfigFile = new Config_File(slamConfigFileName);
-
     double latitude_sim, longitude_sim;
-
-    slamConfigFile->get_value( "LATITUDE", latitude_sim);
-    slamConfigFile->get_value( "LONGITUDE", longitude_sim);
+    sprintf(key, "%s.latitude", rootkey);
+    latitude_sim = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.longitude", rootkey);
+    longitude_sim = bot_param_get_double_or_fail(param, key);
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
@@ -1031,7 +1027,6 @@ int main(int argc, char **argv)
         if(ret > 0)
             lcm.handle();
     }
-    delete slamConfigFile;
     delete map_projection_sim;
     if( fp.is_open())
     	fp.close();
