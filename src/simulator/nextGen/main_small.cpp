@@ -133,7 +133,8 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double prop_diameter = 0.25;
     double rho = 1030;              // Water density
     double J0 = 0; // open water advance coefficient
-    double Kt = 0; // propeller torque coefficient
+    double Kt = 0; // propeller thrust coefficient
+    double Kq = 0; // properler torque coefficient
     
     // Sanity check on input
     /*if(in(0) != in(0))
@@ -163,15 +164,32 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
     double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
 
-    if (J0 > 0)
-        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
-    else if (J0 > -0.2)
-        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
-    else
-        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+    // these need to be determined
+    // but relate to the torque from the rear thruster
+    // not sure but it may result in a torque not around
+    // the x-axis of the vehicle
+    double beta1 = 0.0;
+    double beta2 = -0.0;
 
-    double prop_force;
+    if (J0 > 0)
+    {
+        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else if (J0 > -0.2)
+    {
+        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else
+    {
+        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+
+    double prop_force, prop_torque;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
+    prop_torque = rho * pow(prop_diameter,5) * Kq * fabs(n) * n; // Fossen 6.113
     //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
     if(prop_force !=  prop_force)
     {
@@ -187,7 +205,17 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 
     Y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
     Z = prop_force * sin(in.tail_elevator);
-    K = 0;        // assume zero roll moment - should account for roll moment of thruster
+    K = prop_torque;  // this is approximate and still needs coefficients defined.
+    // it may also not be strictly just roll if the thrust is vectored
+
+    // the tunnel thruster forces needs to be determined as well
+    // the lateral components affect yaw - psi and motion in y
+    // the vertical components affect pitch - theta and motion in z
+    // there is no effect on surge motion or roll
+    //
+    double tunnel_diameter = 0.1;
+
+    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n
 
     // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
     M = 7.5 * Z * 1.25; // moment from vertical force on pitch about CoG
