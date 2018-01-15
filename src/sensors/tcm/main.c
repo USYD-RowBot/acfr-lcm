@@ -12,6 +12,7 @@
 
 #include "acfr-common/timestamp.h"
 #include "perls-lcmtypes/senlcm_tcm_t.h"
+#include "perls-lcmtypes/senlcm_tcm_mag_t.h"
 #include "acfr-common/sensor.h"
 #include "acfr-common/units.h"
 
@@ -19,7 +20,7 @@
 
 #define update_rate 0.1
 
-int parse_tcm(char *buf, senlcm_tcm_t *tcm)
+int parse_tcm(char *buf, senlcm_tcm_t *tcm, senlcm_tcm_mag_t *tcm_mag)
 {
     // decode the tcm frame
     char frame_id = buf[2];
@@ -39,45 +40,47 @@ int parse_tcm(char *buf, senlcm_tcm_t *tcm)
             {
             case kHeading:
                 tcm->heading = (*(float *)current_pos) * DTOR;
+                tcm_mag->heading = tcm->heading;
                 current_pos += 4;
                 index++;
                 break;
             case kPAngle:
                 tcm->pitch = (*(float *)current_pos) * DTOR;
+                tcm_mag->pitch = tcm->pitch;
                 current_pos += 4;
                 index++;
                 break;
             case kRAngle:
                 tcm->roll = (*(float *)current_pos) * DTOR;
+                tcm_mag->roll = tcm->roll;
                 current_pos += 4;
                 index++;
                 break;
             case kTemperature:
                 tcm->temperature = *(float *)current_pos;
+                tcm_mag->temperature = tcm->temperature;
+                current_pos += 4;
+                index++;
+                break;
+            case kXAligned	:
+                tcm_mag->mag_x = (*(float *)current_pos);
+                current_pos += 4;
+                index++;
+                break;
+            case kYAligned:
+                tcm_mag->mag_y = (*(float *)current_pos);
+                current_pos += 4;
+                index++;
+                break;
+            case kZAligned:
+                tcm_mag->mag_z = (*(float *)current_pos);
                 current_pos += 4;
                 index++;
                 break;
 
-//                    case kXAligned	:
-//                        tcm->mag_x = (*(float *)current_pos);
-//                        current_pos += 4;
-//                        index++;
-//                        break;
-//                    case kYAligned:
-//                        tcm->mag_y = (*(float *)current_pos);
-//                        current_pos += 4;
-//                        index++;
-//                        break;
-//                    case kZAligned:
-//                        tcm->mag_z = (*(float *)current_pos);
-//                        current_pos += 4;
-//                        index++;
-//                        break;
-
             }
             if(index == count)
                 break;
-
         }
     }
 
@@ -110,16 +113,15 @@ int program_tcm(acfr_sensor_t *s)
     // set the return types
     memset(data, 0, sizeof(data));
     data[0] = kSetDataComponents;
-    data[1] = 4;
+    data[1] = 7;
     data[2] = kHeading;
     data[3] = kPAngle;
     data[4] = kRAngle;
     data[5] = kTemperature;
-//    data[6] = kXAligned;
-//    data[7] = kYAligned;
-//    data[8] = kZAligned;
-    len = tcm_form_message(data, 6, out);
-//    len = tcm_form_message(data, 9, out);
+    data[6] = kXAligned;
+    data[7] = kYAligned;
+    data[8] = kZAligned;
+    len = tcm_form_message(data, 9, out);
     acfr_sensor_write(s, out, len);
 
 
@@ -222,6 +224,7 @@ main (int argc, char *argv[])
 
     int64_t timestamp;
     senlcm_tcm_t tcm;
+    senlcm_tcm_t tcm_mag;
 
     program_tcm(sensor);
     int programmed = 1;
@@ -288,10 +291,15 @@ main (int argc, char *argv[])
                         {
                             memset(&tcm, 0, sizeof(senlcm_tcm_t));
                             tcm.utime = timestamp;
+                            memset(&tcm, 0, sizeof(senlcm_tcm_mag_t));
+                            tcm_mag.utime = timestamp;
                             // its good data, lets parse it
 
-                            if(parse_tcm(&buf[0], &tcm))
+                            if(parse_tcm(&buf[0], &tcm, &tcm_mag))
+                            {
                                 senlcm_tcm_t_publish(lcm, "TCM", &tcm);
+                                senlcm_tcm_mag_t_publish(lcm, "TCM_MAG", &tcm_mag);
+                            }
                         }
                         else
                             printf("Bad CRC\n");
