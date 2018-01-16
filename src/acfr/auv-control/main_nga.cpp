@@ -55,6 +55,7 @@ typedef struct
     double pitch;
     double heading;
     double altitude;
+    int utime;
     depth_mode_t depth_mode;
 } command_t;
 
@@ -254,6 +255,7 @@ static void control_callback(const lcm_recv_buf_t *rbuf, const char *channel,
     state->command.depth = control->depth;
     state->command.altitude = control->altitude;
     state->command.pitch = control->pitch;
+    state->command.utime = timestamp_now();
     state->run_mode = control->run_mode;
 
     switch (control->depth_mode)
@@ -326,6 +328,53 @@ static void *lcm_thread(void *context)
     return 0;
 }
 
+
+// the MC is the output, spektrum command is input
+void spektrum_control(acfrlcm_auv_nga_motor_command_t *mc, acfrlcm_auv_spektrum_control_command_t *spektrum_command)
+{
+    // Lateral tunnel thrusters
+    int fore = 0;
+    int aft = 0;
+    double rudder;
+
+    fore = (spektrum_command->values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
+    aft = (spektrum_command->values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
+        
+    // Check the steering mode switch
+    if(spektrum_command->values[RC_GEAR] > 1200)
+    {
+        fore += (spektrum_command->values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
+        aft -= (spektrum_command->values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
+        rudder = 0;
+    }
+    else 
+    {
+        rudder = -(spektrum_command->values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
+    }
+
+    mc->tail_elevator = -(spektrum_command->values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
+    mc->tail_rudder = rudder; 
+    mc->lat_aft = aft;
+    mc->lat_fore = fore; 
+    
+    
+    int rcval = spektrum_command->values[RC_THROTTLE] - RC_THROTTLE_OFFSET;
+        
+    // if in deadzone at centre
+    if (abs(rcval) < RC_DEADZONE)
+    {
+        mc->tail_thruster = 0;
+    }
+    else
+    {
+        mc->tail_thruster = (rcval - RC_DEADZONE) * RCMULT;
+        if (mc->tail_thruster > RC_MAX_PROP_RPM)
+            mc->tail_thruster = RC_MAX_PROP_RPM;
+        else if (mc->tail_thruster < -RC_MAX_PROP_RPM)
+            mc->tail_thruster = -RC_MAX_PROP_RPM;
+    }        
+}
+
 int main(int argc, char **argv)
 {
     // install the signal handler
@@ -390,311 +439,279 @@ int main(int argc, char **argv)
     {
         loopCount++;
 
+        // quick copies of state elements that are set from LCM messages
         pthread_mutex_lock(&state.spektrum_lock);
-	acfrlcm_auv_spektrum_control_command_t spektrum_command = state.spektrum_command;
+        acfrlcm_auv_spektrum_control_command_t spektrum_command = state.spektrum_command;
         pthread_mutex_unlock(&state.spektrum_lock);
+
+        pthread_mutex_lock(&state.nav_lock);
+        acfrlcm_auv_acfr_nav_t nav = state.nav;
+        pthread_mutex_unlock(&state.nav_lock);
+
+        pthread_mutex_lock(&state.command_lock);
+        command_t cmd = state.command;
+        pthread_mutex_unlock(&state.command_lock);
 
         // reset the motor command
         memset(&mc, 0, sizeof(acfrlcm_auv_nga_motor_command_t));
-	// Check for remote mode
-	if(timestamp_now() - spektrum_command.utime < 1e6)
-	{
-	    // Lateral tunel thrusters
-	    int fore = 0;
-	    int aft = 0;
-	    double rudder;
-
-	    fore = (spektrum_command.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
-	    aft= (spektrum_command.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
-            
-	    // Check the steering mode switch
-	    if(spektrum_command.values[RC_GEAR] > 1200)
-	    {
-	        fore += (spektrum_command.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
-	        aft -= (spektrum_command.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
-		rudder = 0;
-	    }
-	    else 
-	        rudder = -(spektrum_command.values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
-
-            mc.tail_elevator = -(spektrum_command.values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
-            mc.tail_rudder = rudder; 
-	    mc.lat_aft = aft;
-	    mc.lat_fore = fore; 
-	    
-	    
-	    int rcval = spektrum_command.values[RC_THROTTLE] - RC_THROTTLE_OFFSET;
-            
-	    // We are in remote mode as the timestamp difference is less then 1 second
-	    // if in deadzone at centre
-            if (abs(rcval) < RC_DEADZONE)
-            {
-                mc.tail_thruster = 0;
-            }
-            else
-            {
-                mc.tail_thruster = (rcval - RC_DEADZONE) * RCMULT;
-                if (mc.tail_thruster > RC_MAX_PROP_RPM)
-                    mc.tail_thruster = RC_MAX_PROP_RPM;
-                else if (mc.tail_thruster < -RC_MAX_PROP_RPM)
-                    mc.tail_thruster = -RC_MAX_PROP_RPM;
-            }        
 
 
 
-
-
-	}        
-	else if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)// ||
-                //state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+        // Check for remote mode
+        // We are in remote mode as the timestamp difference is less then 1 second
+        if(timestamp_now() - spektrum_command.utime < 1e6)
         {
-            // lock the nav and command data and get a local copy
-            pthread_mutex_lock(&state.nav_lock);
-            acfrlcm_auv_acfr_nav_t nav = state.nav;
-            pthread_mutex_unlock(&state.nav_lock);
-
-            pthread_mutex_lock(&state.command_lock);
-            command_t cmd = state.command;
-            pthread_mutex_unlock(&state.command_lock);
-
-
-            // X Velocity
-            prop_rpm = pid(&state.gains_vel, nav.vx, cmd.vx, CONTROL_DT);
-
-            // Pitch to fins
-            if (cmd.depth_mode == PITCH_MODE)
-            {
-                pitch = cmd.pitch;
-            }
-            // Altitude to pitch
-            // Invert sign of pitch reference to reflect pitch
-            // orientation
-            else if (state.command.depth_mode == ALTITUDE_MODE)
-                pitch = -pid(&state.gains_altitude, nav.altitude, cmd.altitude,
-                             CONTROL_DT);
-            // Depth to pitch mode
-            else
-                pitch = -pid(&state.gains_depth, nav.depth, cmd.depth,
-                             CONTROL_DT);
-
-            if ((nav.vx > -0.05) || (prop_rpm > -100))
-                plane_angle = pid(&state.gains_pitch, nav.pitch, pitch,
-                                  CONTROL_DT);
-            else
-                plane_angle = pid(&state.gains_pitch_r, nav.pitch, pitch,
-                                  CONTROL_DT);
-
-            /*
-             * Heading calculation
-             * Calculate the diff between desired heading and actual heading.
-             * Ensure this diff is between +/-PI
-             */
-            while (nav.heading < -M_PI)
-                nav.heading += 2 * M_PI;
-            while (nav.heading > M_PI)
-                nav.heading -= 2 * M_PI;
-
-            while (cmd.heading < -M_PI)
-                cmd.heading += 2 * M_PI;
-            while (cmd.heading > M_PI)
-                cmd.heading -= 2 * M_PI;
-
-            double diff_heading = nav.heading - cmd.heading;
-            while( diff_heading < -M_PI )
-                diff_heading += 2*M_PI;
-            while( diff_heading > M_PI )
-                diff_heading -= 2*M_PI;
-
-#if 0
-            double bearing = atan2(
-                                 nav.vy * cos(nav.heading) + nav.vx * sin(nav.heading),
-                                 -nav.vy * sin(nav.heading) + nav.vx * cos(nav.heading));
-
-            while (bearing < -M_PI)
-                bearing += 2 * M_PI;
-            while (bearing > M_PI)
-                bearing -= 2 * M_PI;
-
-
-            // correctly compute the weighted bearing
-            double yaw1 = bearing;
-            if (yaw1 > 2 * M_PI
-               )
-                yaw1 -= 2 * M_PI;
-            else if (yaw1 < 0)
-                yaw1 += 2 * M_PI;
-
-            double yaw2 = nav.heading;
-            if (yaw2 > 2 * M_PI
-               )
-                yaw2 -= 2 * M_PI;
-            else if (yaw2 < 0)
-                yaw2 += 2 * M_PI;
-
-            if (yaw2 - yaw1 > M_PI
-               )
-                yaw2 -= 2 * M_PI;
-            else if (yaw1 - yaw2 > M_PI
-                    )
-                yaw1 -= 2 * M_PI;
-
-            //Weight the heading more as the velocity magnitude decreases
-
-            double W_BEARING = 0;
-            /* for the moment, use the heading as the yaw reference
-
-             if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
-             W_BEARING = fabs(state.nav.vx) / 0.2;
-             else
-             W_BEARING = 1;
-             */
-            double W_HEADING = 1 - W_BEARING;
-
-            double bearing_weighted = W_BEARING * yaw1 + W_HEADING * yaw2;
-
-            while (bearing_weighted < -M_PI)
-                bearing_weighted += 2 * M_PI;
-            while (bearing_weighted > M_PI)
-                bearing_weighted -= 2 * M_PI;
-
-            // If the sign of the heading is not the same as the sign of the
-            //		bearing...
-            if ((int) (fabs(cmd.heading) / cmd.heading)
-                    != (int) (fabs(bearing_weighted) / bearing_weighted))
-            {
-                if (cmd.heading < (-M_PI / 2))
-                    cmd.heading += 2 * M_PI;
-                else if (bearing_weighted < (-M_PI / 2))
-                    bearing_weighted += 2 * M_PI;
-            }
-
-            //printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
-#endif
-
-            // Special dive case, no heading control
-            if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
-            {
-                rudder_angle = 0;
-            }
-            else
-            {
-
-                // Account for side slip by making the velocity bearing weighted
-                // 	on the desired heading
-                rudder_angle = pid(&state.gains_heading, diff_heading, 0.0, CONTROL_DT);
-            }
-
-
-            //	printf("prop_rpm: %f\n",prop_rpm);
-            // Reverse all the fin angles for reverse direction (given rpm is
-            // 	negative and so is velocity, so water relative should be
-            //	negative, or soon will be). May not be enough due to completely
-            //	different dynamics in reverse, hence there are new gains for the
-            //	reverse pitch control now.
-            if ((nav.vx < -0.05) && (prop_rpm < -100))
-            {
-                printf("reversing, flipping fin control\n");
-                rudder_angle       = -rudder_angle;
-                plane_angle      = -plane_angle;
-            }
-
-            //printf("hnav:%f, hcmd:%f, rangle:%f r:%.1f p:%.1f \n",
-            // state.nav.heading, state.command.heading, rudder_angle, plane_angle);
-
-            // Set motor controller values
-            mc.tail_thruster = prop_rpm;
-            mc.tail_rudder = rudder_angle;
-            mc.tail_elevator = plane_angle;
-            mc.vert_fore = 0;
-            mc.vert_aft = 0;
-            mc.lat_fore = 0;
-            mc.lat_aft = 0;
-
-
-            // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
-            if( loopCount % 10 == 0 )
-            {
-                acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
-                printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
-                        nav.vx, cmd.vx, (cmd.vx - nav.vx) );
-                printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
-                        nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
-                printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
-                        nav.pitch/M_PI*180, pitch/M_PI*180, (pitch - nav.pitch)/M_PI*180 );
-                printf( "Roll: curr=%3.2f, des=%3.2f, diff=%3.2f \n",
-                        nav.roll/M_PI*180, 0.0, -nav.roll/M_PI*180 );
-                printf( "Motor   : main=%4d\n", (int)mc.tail_thruster);
-                printf( "Fins    : rudder_angle=%.2f, plane_angle=%.2f \n",
-                        mc.tail_rudder, mc.tail_elevator);
-                printf( "\n" );
-            }
-
-        }
-        if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
-        {
-            // diving with NGA is a little special. we have tunnel thrusters
-            // to reach a target depth
-            pthread_mutex_lock(&state.nav_lock);
-            acfrlcm_auv_acfr_nav_t nav = state.nav;
-            pthread_mutex_unlock(&state.nav_lock);
-
-            pthread_mutex_lock(&state.command_lock);
-            command_t cmd = state.command;
-            pthread_mutex_unlock(&state.command_lock);
-
-            double target_pitch = 0.0;
-
-            double target_descent = pid(&state.gains_tunnel_depth, 
-                    nav.depth, cmd.depth, CONTROL_DT);
-            double differential = pid(&state.gains_tunnel_pitch,
-                    nav.pitch, target_pitch, CONTROL_DT);
-            double mutual = -pid(&state.gains_tunnel_descent,
-                    nav.vz, target_descent, CONTROL_DT);
-
-            // Set motor controller values
-            mc.tail_thruster = 0;
-            mc.tail_rudder = 0;
-            mc.tail_elevator = 0;
-            mc.vert_fore = mutual + differential;
-            mc.vert_aft = mutual - differential;
-            mc.lat_fore = 0;
-            mc.lat_aft = 0;
-
-
-            // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
-            if( loopCount % 10 == 0 )
-            {
-                acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
-                printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
-                        nav.depth, cmd.depth, (cmd.depth - nav.depth) );
-                printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
-                        nav.vz, target_descent, (target_descent - nav.vz));
-                printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
-                        nav.pitch/M_PI*180, target_pitch/M_PI*180, (target_pitch - nav.pitch)/M_PI*180 );
-                printf( "Vert Tunnel: fore=%.2f, aft=%.2f \n",
-                        mc.vert_fore, mc.vert_aft);
-                printf( "\n" );
-            }
-        }
+            spektrum_control(&mc, &spektrum_command);
+        }        
         else
         {
-            // if we are not in RUN or DIVE mode, zero the integral terms
-            state.gains_vel.integral = 0;
-            state.gains_roll.integral = 0;
-            state.gains_depth.integral = 0;
-            state.gains_altitude.integral = 0;
-            state.gains_pitch.integral = 0;
-            state.gains_pitch_r.integral = 0;
-            state.gains_heading.integral = 0;
-            state.gains_tunnel_depth.integral = 0;
-            state.gains_tunnel_descent.integral = 0;
-            state.gains_tunnel_pitch.integral = 0;
-
-            if( loopCount % 10 == 0 )
+            // if we haven't received updates from the local planner
+            // be aware it could have crashed, so give it 5 seconds
+            // just in case it is stuck replanning at a lower rate
+            if (timestamp_now() - cmd.utime < 5e6)
             {
-                printf( "o" );
-            }
 
+                if (state.run_mode == ACFRLCM_AUV_CONTROL_T_RUN)// ||
+                    //state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+                {
+                    // X Velocity
+                    prop_rpm = pid(&state.gains_vel, nav.vx, cmd.vx, CONTROL_DT);
+
+                    // Pitch to fins
+                    if (cmd.depth_mode == PITCH_MODE)
+                    {
+                        pitch = cmd.pitch;
+                    }
+                    // Altitude to pitch
+                    else if (state.command.depth_mode == ALTITUDE_MODE)
+                    {
+                        // Invert sign of pitch reference to reflect pitch
+                        // orientation
+                        pitch = -pid(&state.gains_altitude, nav.altitude, cmd.altitude,
+                                    CONTROL_DT);
+                    }
+                    // Depth to pitch mode
+                    else
+                    {
+                        pitch = -pid(&state.gains_depth, nav.depth, cmd.depth,
+                                    CONTROL_DT);
+                    }
+
+                    if ((nav.vx > -0.05) || (prop_rpm > -100))
+                        plane_angle = pid(&state.gains_pitch, nav.pitch, pitch,
+                                        CONTROL_DT);
+                    else
+                        plane_angle = pid(&state.gains_pitch_r, nav.pitch, pitch,
+                                        CONTROL_DT);
+
+                    /*
+                    * Heading calculation
+                    * Calculate the diff between desired heading and actual heading.
+                    * Ensure this diff is between +/-PI
+                    */
+
+                    // to properly do this current should be accounted for
+                    // so it could be moving towards the target without actually
+                    // facing it
+                    while (nav.heading < -M_PI)
+                        nav.heading += 2 * M_PI;
+                    while (nav.heading > M_PI)
+                        nav.heading -= 2 * M_PI;
+
+                    while (cmd.heading < -M_PI)
+                        cmd.heading += 2 * M_PI;
+                    while (cmd.heading > M_PI)
+                        cmd.heading -= 2 * M_PI;
+
+                    double diff_heading = nav.heading - cmd.heading;
+                    while( diff_heading < -M_PI )
+                        diff_heading += 2*M_PI;
+                    while( diff_heading > M_PI )
+                        diff_heading -= 2*M_PI;
+
+#if 0
+                    double bearing = atan2(
+                                        nav.vy * cos(nav.heading) + nav.vx * sin(nav.heading),
+                                        -nav.vy * sin(nav.heading) + nav.vx * cos(nav.heading));
+
+                    while (bearing < -M_PI)
+                        bearing += 2 * M_PI;
+                    while (bearing > M_PI)
+                        bearing -= 2 * M_PI;
+
+
+                    // correctly compute the weighted bearing
+                    double yaw1 = bearing;
+                    if (yaw1 > 2 * M_PI
+                    )
+                        yaw1 -= 2 * M_PI;
+                    else if (yaw1 < 0)
+                        yaw1 += 2 * M_PI;
+
+                    double yaw2 = nav.heading;
+                    if (yaw2 > 2 * M_PI
+                    )
+                        yaw2 -= 2 * M_PI;
+                    else if (yaw2 < 0)
+                        yaw2 += 2 * M_PI;
+
+                    if (yaw2 - yaw1 > M_PI
+                    )
+                        yaw2 -= 2 * M_PI;
+                    else if (yaw1 - yaw2 > M_PI
+                            )
+                        yaw1 -= 2 * M_PI;
+
+                    //Weight the heading more as the velocity magnitude decreases
+
+                    double W_BEARING = 0;
+                    /* for the moment, use the heading as the yaw reference
+
+                    if (fabs(state.nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
+                    W_BEARING = fabs(state.nav.vx) / 0.2;
+                    else
+                    W_BEARING = 1;
+                    */
+                    double W_HEADING = 1 - W_BEARING;
+
+                    double bearing_weighted = W_BEARING * yaw1 + W_HEADING * yaw2;
+
+                    while (bearing_weighted < -M_PI)
+                        bearing_weighted += 2 * M_PI;
+                    while (bearing_weighted > M_PI)
+                        bearing_weighted -= 2 * M_PI;
+
+                    // If the sign of the heading is not the same as the sign of the
+                    //		bearing...
+                    if ((int) (fabs(cmd.heading) / cmd.heading)
+                            != (int) (fabs(bearing_weighted) / bearing_weighted))
+                    {
+                        if (cmd.heading < (-M_PI / 2))
+                            cmd.heading += 2 * M_PI;
+                        else if (bearing_weighted < (-M_PI / 2))
+                            bearing_weighted += 2 * M_PI;
+                    }
+
+                    //printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state.nav.heading,bearing_weighted);
+#endif
+
+                    // Special dive case, no heading control
+                    if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+                    {
+                        rudder_angle = 0;
+                    }
+                    else
+                    {
+
+                        // Account for side slip by making the velocity bearing weighted
+                        // 	on the desired heading
+                        rudder_angle = pid(&state.gains_heading, diff_heading, 0.0, CONTROL_DT);
+                    }
+
+
+                    //	printf("prop_rpm: %f\n",prop_rpm);
+                    // Reverse all the fin angles for reverse direction (given rpm is
+                    // 	negative and so is velocity, so water relative should be
+                    //	negative, or soon will be). May not be enough due to completely
+                    //	different dynamics in reverse, hence there are new gains for the
+                    //	reverse pitch control now.
+                    if ((nav.vx < -0.05) && (prop_rpm < -100))
+                    {
+                        printf("reversing, flipping fin control\n");
+                        rudder_angle       = -rudder_angle;
+                        plane_angle      = -plane_angle;
+                    }
+
+                    //printf("hnav:%f, hcmd:%f, rangle:%f r:%.1f p:%.1f \n",
+                    // state.nav.heading, state.command.heading, rudder_angle, plane_angle);
+
+                    // Set motor controller values
+                    mc.tail_thruster = prop_rpm;
+                    mc.tail_rudder = rudder_angle;
+                    mc.tail_elevator = plane_angle;
+                    mc.vert_fore = 0;
+                    mc.vert_aft = 0;
+                    mc.lat_fore = 0;
+                    mc.lat_aft = 0;
+
+
+                    // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
+                    if( loopCount % 10 == 0 )
+                    {
+                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
+                        printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                                nav.vx, cmd.vx, (cmd.vx - nav.vx) );
+                        printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                                nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
+                        printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                                nav.pitch/M_PI*180, pitch/M_PI*180, (pitch - nav.pitch)/M_PI*180 );
+                        printf( "Roll: curr=%3.2f, des=%3.2f, diff=%3.2f \n",
+                                nav.roll/M_PI*180, 0.0, -nav.roll/M_PI*180 );
+                        printf( "Motor   : main=%4d\n", (int)mc.tail_thruster);
+                        printf( "Fins    : rudder_angle=%.2f, plane_angle=%.2f \n",
+                                mc.tail_rudder, mc.tail_elevator);
+                        printf( "\n" );
+                    }
+
+                }
+                else if (state.run_mode == ACFRLCM_AUV_CONTROL_T_DIVE)
+                {
+                    // diving with NGA is a little special. we have tunnel thrusters
+                    // to reach a target depth
+                    double target_pitch = 0.0;
+
+                    double target_descent = pid(&state.gains_tunnel_depth, 
+                            nav.depth, cmd.depth, CONTROL_DT);
+                    double differential = pid(&state.gains_tunnel_pitch,
+                            nav.pitch, target_pitch, CONTROL_DT);
+                    double mutual = -pid(&state.gains_tunnel_descent,
+                            nav.vz, target_descent, CONTROL_DT);
+
+                    // Set motor controller values
+                    mc.tail_thruster = 0;
+                    mc.tail_rudder = 0;
+                    mc.tail_elevator = 0;
+                    mc.vert_fore = mutual + differential;
+                    mc.vert_aft = mutual - differential;
+                    mc.lat_fore = 0;
+                    mc.lat_aft = 0;
+
+
+                    // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
+                    if( loopCount % 10 == 0 )
+                    {
+                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
+                        printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                                nav.depth, cmd.depth, (cmd.depth - nav.depth) );
+                        printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                                nav.vz, target_descent, (target_descent - nav.vz));
+                        printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                                nav.pitch/M_PI*180, target_pitch/M_PI*180, (target_pitch - nav.pitch)/M_PI*180 );
+                        printf( "Vert Tunnel: fore=%.2f, aft=%.2f \n",
+                                mc.vert_fore, mc.vert_aft);
+                        printf( "\n" );
+                    }
+                }
+                else
+                {
+                    // if we are not in RUN or DIVE mode, zero the integral terms
+                    state.gains_vel.integral = 0;
+                    state.gains_roll.integral = 0;
+                    state.gains_depth.integral = 0;
+                    state.gains_altitude.integral = 0;
+                    state.gains_pitch.integral = 0;
+                    state.gains_pitch_r.integral = 0;
+                    state.gains_heading.integral = 0;
+                    state.gains_tunnel_depth.integral = 0;
+                    state.gains_tunnel_descent.integral = 0;
+                    state.gains_tunnel_pitch.integral = 0;
+
+                    if( loopCount % 10 == 0 )
+                    {
+                        printf( "o" );
+                    }
+                }
+            }
         }
         mc.utime = timestamp_now();
         acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NGA_MOTOR", &mc);
