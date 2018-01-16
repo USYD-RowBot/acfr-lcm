@@ -1,6 +1,6 @@
 package senlcm;
 
-struct tcm_t
+struct tcm_mag_t
 {
     int64_t utime;
     
@@ -8,7 +8,7 @@ struct tcm_t
     double roll;
     double pitch;
     double temperature;
-  //  double mag_x;
-    //double mag_y;
-    //double mag_z;
+    double mag_x;
+    double mag_y;
+    double mag_z;
 }
