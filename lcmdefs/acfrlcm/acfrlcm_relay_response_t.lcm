@@ -1,0 +1,8 @@
+package acfrlcm;
+
+struct relay_response_t
+{
+    int64_t utime;
+
+	boolean state_active; // indicates if the relevant relay or io port is active: 1 or inactive: 0
+}
