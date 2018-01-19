@@ -13,21 +13,18 @@
 //#include <errno.h>
 //#include <string.h>
 
-//#include <bot_param/param_client.h>
-//#include "acfr-common/timestamp.h"
-//#include "acfr-common/sensor.h"
+#include <bot_param/param_client.h>
+#include "acfr-common/timestamp.h"
+#include "acfr-common/sensor.h"
 //#include "acfr-common/units.h"
-//#include "acfr-common/lcm_util.h"
-//#include "perls-lcmtypes/acfrlcm_asv_torqeedo_motor_command_t.h"
-//#include "perls-lcmtypes/acfrlcm_asv_torqeedo_motor_status_t.h"
-//#include "perls-lcmtypes/perllcm_heartbeat_t.h"
+#include "acfr-common/lcm_util.h"
+#include "perls-lcmtypes/acfrlcm_relay_command_t.h"
+#include "perls-lcmtypes/acfrlcm_relay response_t.h"
 
 // Conversion values
 //#define BYTE_MAX 256                // hex byte conversion value
 //#define BITS_PER_BYTE 8             // for bit shifting
 //#define S_TO_MICROS 1000000         // 10^6 conversion to microsecond
-
-// Position of info in Status Msg
 
 // Message structure matching values
 
@@ -35,8 +32,12 @@
 #define CMD_TIMEOUT 5000000
 #define NUM_RELAYS 24                   // Number of relays on board
 #define NUM_IOS 8                       // Number of IO ports on board
+#define MAX_DEV_NAME_LEN 20                  // Maximum length for an attached device name 
 #define MAX_DELAY 2147483647            // Maximum auto relay off dealy in ms
 #define MIN_DELAY 100                   // Minimum auto relay off delay in ms
+#define ON_LEN 8                        // Message length for ASCII 'on' message
+#define OFF_LEN 9                       // Message length for ASCII 'off' message
+#define ON_DELAY_LEN 19                 // Message length for ASCII 'on' message with delay for auto 'off' 
 
 typedef struct
 {
@@ -66,23 +67,6 @@ void signal_handler(int sig_num)
         program_exit = 1;
 }
 
-void send_msg(int message_type, state_t *u)
-{    
-    state_t *state = (state_t *)u;
-    int res = 0;
-    // string to send to request a status message
-//    static char msg_3003[MSG3003_LEN] = {0xAC,0x30,0x03,0xCF,0xAD,0xFF};
-
-    switch(message_type)
-    {
-        // send motor status request message
-        case MSG_3003:
-            //printf("MSG_3003\n");
-            res = acfr_sensor_write(state->sensor, (char *)msg_3003, MSG3003_LEN);
-            break;
-
-		}
-    }
     if (res < 0)
     {
         fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay drive. %i - %s", errno, strerror(errno));
@@ -106,17 +90,20 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
         //state->io_number = mc->io_number;
         //state->io_request = mc->io_request;
 
+        int len = 0;
         // Set relay state command (not I/O output state)
         if ((mc->relay_number > 0) && (mc->relay_number <= NUM_IOS) && (mc->relay_device[mc->relay_number] != "no_device"))
         {
             // send SR (set relay) command
             if (mc->relay_request = true) // set ON
             {
-                char set_relay_cmd[] = {'S','R',' ','n','n',' ','o','n'};
+                char set_relay_cmd[ON_LEN] = {'S','R',' ','n','n',' ','o','n'};
+                len = ON_LEN;
             }
             else // false: set OFF
             {
-                char set_relay_cmd[] = {'S','R',' ','n','n',' ','o','f','f'};
+                char set_relay_cmd[OFF_LEN] = {'S','R',' ','n','n',' ','o','f','f'};
+                len = OFF_LEN;
             }
             // copy in the relay number digits over the place holder 'n's
             div_t divresult = div(relay_number,10);
@@ -125,17 +112,53 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             // If relay off delay value is set, need to turn the relay off again after that many ms
             if ((mc->relay_request == true) && (mc->relay_off_delay >= MIN_DELAY) && mc->relay_off_delay <= MAX_DELAY))
             {
-                // TODO - implement delayed off functionality
+                // TODO - implement delayed off command functionality
+
             }
+            // Then send the command
+            if (verbose)
+            {
+                printf(set_io_cmd);
+            }
+            int res = acfr_sensor_write(s, set_relay_cmd, len);
+			if (res < 0)
+		    {
+        		fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay drive. %i - %s", errno, strerror(errno));
+        		program_exit = 1;
+     		}
         }
         // Set I/O output state command (not relay state)
         else if ((mc->io_number > 0) && (mc->io_number <= NUM_IOS) && (mc->io_device[mc->io_number] != "no_device"))
         {
-            // send SO (set I/O output) command - TODO
-        }
+            // send SO (set I/O output) command
+			if (mc->io_request = true) // set ON
+            {
+                char set_io_cmd[ON_LEN] = {'S','O',' ','n','n',' ','o','n'};
+                len = ON_LEN;
+            }
+            else // false: set OFF
+            {
+                char set_io_cmd[OFF_LEN] = {'S','O',' ','n','n',' ','o','f','f'};
+                len = OFF_LEN;
+            }
+            // copy in the relay number digits over the place holder 'n's
+            div_t divresult = div(relay_number,10);
+            set_io_cmd[3] = atoi(mc->divresult.quot);
+            set io_cmd[4] = atoi(mc->divresult.rem);
+            // Then send the command
+            if (verbose)
+            {
+                printf(set_io_cmd);
+            }
+            int res = acfr_sensor_write(s, set_io_cmd, len);
+    		if (res < 0)
+    		{		
+        		fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay drive. %i - %s", errno, strerror(errno));
+        		program_exit = 1;
+		    }
+        } // end io
     }
-//    printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
-}
+} // end relay_cmd_handler
 
 int main(int argc, char **argv)
 {
@@ -158,28 +181,21 @@ int main(int argc, char **argv)
     // Initialise LCM
     state.lcm = lcm_create(NULL);
 
-//    // Get the config root key from the command line args
-//    char opt;
-//    int got_key = 0;
-//    while((opt = getopt(argc, argv, "hk:")) != -1)
-//    {
-//        if(opt == 'k')
-//        {
-//            strcpy(state.root_key, optarg);
-//            got_key = 1;
-//        }
-//        if(opt == 'h')
-//        {
-//            fprintf(stderr, "Usage: torqeedo -k <config key>\n");
-//            fprintf(stderr, " e.g.: torqeedo -k torqeedo.port-motor\n");
-//            return 0;
-//        }
-//    }
-//    if(!got_key)
-//    {
-//        fprintf(stderr, "Torqeedo: a config file key is required, use -h for help\n");
-//        return 0;
-//    }
+    // Check for command line args
+    char opt;
+    int got_key = 0;
+    while((opt = getopt(argc, argv, "h:")) != -1)
+    {
+        if(opt == 'h')
+        {
+            fprintf(stderr, "Usage: dS2824_relays \n");
+            fprintf(stderr, "e.g. dS2824_relays -h (to show this help info)\n");
+            return 0;
+        }
+    }
+
+    // Get the config root key from the command line, program name
+    sprintf(rootkey, "%s", basename(argv[0]));
 
     // Read the config file now 
     char key[64]; // temp to hold keys for lookup
@@ -201,10 +217,25 @@ int main(int argc, char **argv)
     printf("Channel out: %s\n", (char *)channel_response);
     sprintf(key, "%s.verbose", state.root_key);
     bool verbose = bot_param_get_boolean_or_fail(param, key);
-    
+    // get the list of devices attached to relays
+    char relay_devices[NUM_RELAYS][MAX_DEV_NAME_LEN];
+    for (int i = 1; i <= NUM_RELAYS; i++)
+    {
+        sprintf(key, "%s.relay_%d", state.root_key, i);
+        printf("Requesting Parameter: %s\n", key);
+        char *relay_devices[i][0] = bot_param_get_str_or_fail(param, key);
+    }
+    // get the list of devices attached to I/Os
+    char io_devices[NUM_IOS][MAX_DEV_NAME_LEN];
+    for (int i = 1; i <= NUM_IOS; i++)
+    {
+        sprintf(key, "%s.io_%d", state.root_key, i);
+        printf("Requesting Parameter: %s\n", key);
+        char *io_devices[i][0] = bot_param_get_str_or_fail(param, key);
+    }
+
     // Subscribe to the LCM channels for incoming messages
-    acfrlcm_asv_torqeedo_motor_command_t_subscribe(state.lcm, channel_control, &torqeedo_cmd_handler, &state);
-//    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
+    acfrlcm_relay_command_t_subscribe(state.lcm, channel_control, &relay_cmd_handler, &state);
 
     // Read the io tcp config to setup Ethernet connection to relay board
     state.sensor = acfr_sensor_create(state.lcm, state.root_key);
