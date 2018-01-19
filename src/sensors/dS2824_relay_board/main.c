@@ -5,13 +5,13 @@
     ACFR
 */
 
-//#include <stdio.h>
-//#include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 //#include <signal.h>
 //#include <libgen.h>
-//#include <math.h>
-//#include <errno.h>
-//#include <string.h>
+#include <math.h>
+#include <errno.h>
+#include <string.h>
 
 #include <bot_param/param_client.h>
 #include "acfr-common/timestamp.h"
@@ -32,7 +32,7 @@
 #define CMD_TIMEOUT 5000000
 #define NUM_RELAYS 24                   // Number of relays on board
 #define NUM_IOS 8                       // Number of IO ports on board
-#define MAX_DEV_NAME_LEN 20                  // Maximum length for an attached device name 
+#define MAX_DEV_NAME_LEN 20             // Maximum length for an attached device name 
 #define MAX_DELAY 2147483647            // Maximum auto relay off dealy in ms
 #define MIN_DELAY 100                   // Minimum auto relay off delay in ms
 #define ON_LEN 8                        // Message length for ASCII 'on' message
@@ -44,6 +44,11 @@ typedef struct
     lcm_t *lcm;
     char root_key[64];
     acfr_sensor_t *sensor;
+    boolean ok_response;
+    uint8_t request_no;
+    boolean request_state;
+    uint32_t state_list; // register for state bit per relay (0: inactive, 1: active) from 1..24 relays, 25..32 = 1..8 io's
+
 //    int fwd_speed;
 //    int rev_speed;
     char counter;
@@ -106,7 +111,7 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
                 len = OFF_LEN;
             }
             // copy in the relay number digits over the place holder 'n's
-            div_t divresult = div(relay_number,10);
+            div_t divresult = div(mc->relay_number,10);
             set_relay_cmd[3] = atoi(mc->divresult.quot);
             set relay_cmd[4] = atoi(mc->divresult.rem);
             // If relay off delay value is set, need to turn the relay off again after that many ms
@@ -120,7 +125,9 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             {
                 printf(set_io_cmd);
             }
-            int res = acfr_sensor_write(s, set_relay_cmd, len);
+            state.ok_response = false; // set response received equal to false
+            state.request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
+            int res = acfr_sensor_write(state.sensor, set_relay_cmd, len); 
 			if (res < 0)
 		    {
         		fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay drive. %i - %s", errno, strerror(errno));
@@ -150,13 +157,23 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             {
                 printf(set_io_cmd);
             }
-            int res = acfr_sensor_write(s, set_io_cmd, len);
+            state.ok_response = false; // set response received equal to false
+            state.request_no = NUM_RELAYS + mc->io_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
+
+            int res = acfr_sensor_write(state.sensor, set_io_cmd, len);
     		if (res < 0)
     		{		
         		fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay drive. %i - %s", errno, strerror(errno));
         		program_exit = 1;
 		    }
         } // end io
+        else
+        {
+            // No valid state request, so ignore
+            return();
+        }
+        // Return to main loop to wait for response
+        return();
     }
 } // end relay_cmd_handler
 
@@ -170,11 +187,12 @@ int main(int argc, char **argv)
 
     // Initialise state which holds all current data
     state_t state;
+    state.prev_time = timestamp_now();
     memset(&state.root_key, 0, 64);
-    //state.fwd_speed = -1; 
-    //state.rev_speed = -1; // both negative for idle (stopped) at start 
-    //state.counter = 0;
-    //state.prev_time = timestamp_now();
+    state.ok_response = false; // received no response
+    state.request_no = 0; // set to out of range 0: none, 1..24 relays, 25..32 = 1..8 io's
+    state.request_state = false; // request off state
+    state.state_list = 0; // bits 1..24 relays, 25..32 = 1..8 io's
     //memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_command_t));
     //memset(&state.mot_status, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
     
@@ -244,24 +262,23 @@ int main(int argc, char **argv)
         fprintf(stderr, "Could not open tcp connection to relay board: %s\n", state.root_key);
         return 0;
     }
-    acfr_sensor_noncanonical(state.sensor, 1, 0);
-
+    acfr_sensor_canonical(state.sensor, 0x0D, 0); // see if carriage return works TODO confirm
+    
     // Incoming message buffer
     fd_set rfds, dup_rfds; // list of file descriptors where we will listen for incoming messages and duplicate set for use
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[BUFLENGTH];
+    int len = 0;
     struct timeval tv;
     int ret;
-    bool start_found = false; // start of message AC found
-    bool end_found = false; // end of message AD found
-    bool mask_next_value = false; // no escape characters currently detected
-    int i = 0;
     FD_ZERO(&rfds);
     FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
     FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch 
     memset(buf, 0, sizeof(buf));
-    memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
-    printf("SETUP COMPLETE\n");
+    if (verbose)
+    {
+        printf("SETUP COMPLETE\n");
+    }
 
     // Main program loop - used to read status messages from the 
     while(!program_exit)
@@ -269,7 +286,7 @@ int main(int argc, char **argv)
         dup_rfds = rfds; // reset file descriptors
         tv.tv_sec = 0;
         tv.tv_usec = SELECT_TIMEOUT;
-
+        
         // check incoming message sources
         ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
         if(ret == -1) 
@@ -284,75 +301,37 @@ int main(int argc, char **argv)
             }
             if(FD_ISSET(state.sensor->fd, &dup_rfds)) // tcp, read the bytes
             {
-                mask_next_value = false; // no escape characters currently detected
-                // while there are more characters to read
-//                while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1))) // && (i < MATCH_BYTE_LEN))
-//                {   
-//                    //printf("%02X %i\n", (uint8_t)buf[i], i);
-//                    // match message start
-//                    if ((uint8_t)buf[i] == (uint8_t)MATCH_BYTE_0)
-//                    {
-//                        start_found = true;
-//                        state.mot_status.utime = timestamp_now();
-//                        end_found = false; // only count an end after a start
-//                    }
-//                    if (start_found && (uint8_t)buf[i] == MATCH_BYTE_END)
-//                    {
-//                        end_found = true;
-//                    }
-//					// if an AE (escape character) has been detected and removed, we need to mask the next incoming character
-//                    if (start_found && !end_found && mask_next_value)
-//                    {
-//                        buf[i] = buf[i] + BYTE_MASK;
-//					    mask_next_value = false;
-//                    }
-//					if (start_found && (uint8_t)buf[i] != MATCH_BYTE_ESCAPE) // dont inrement to overwrite 'AE' control characters in msgs
-//                    {
-//                        i++; // increment to next space in storage array
-//                    }
-//                    else if (start_found && (uint8_t)buf[i] == MATCH_BYTE_ESCAPE)
-//                    {
-//                        // don't increment, set flag to apply mask to next character
-//                        mask_next_value = true; 
-//                    }
-//                    if (i >= BUFLENGTH) // reset buffer in case of (invalid) long msg
-//                        i = 0;
-//                }
-
-//                if (start_found && end_found)
-//                {   
-//                    //printf("Start & End\n"); 
-//                    if (i == MATCH_BYTE_LEN && buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
-//                    {
-//                        // fill LCM motor status message from serial buffer
-//               
-//                        //state.mot_status.prop_speed = (int16_t) buf[P_SPEED_POS]; // copy MSB
-//                        //state.mot_status.prop_speed =<< BITS_PER_BYTE; // shift one byte 
-//                        //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
-//                        state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
-//                        state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
-//                        state.mot_status.field_2 = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // TODO change this to current
-//                        state.mot_status.motor_temp = (uint8_t)buf[PCB_TEMP_POS]; // TODO change this to PCB temp 16bit signed
-//                        signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
-//                        state.mot_status.field_4 = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // TODO change this to stator temp
-//
-//                        // and publish status message
-//                        acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_response, &state.mot_status);
-//
-//                        if (verbose) // print motor status
-//                        {
-//                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.field_2)/10, ((double)pcb_temp)/10, (double)state.mot_status.field_4/10);
-//                        }
-//                        // reset outgoing message 
-//                        memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
-//                    }
-//                    // reset flags, buffer, index
-//                    start_found = false;
-//                    end_found = false;
-//                    memset(buf, 0, sizeof(buf));
-//                    i = 0;
-//                }
-
+                len += acfr_sensor_read(state.sensor, &buf[len], data_len - len);
+                if (len > 0)
+                {
+                    if ((buf[0] == 'O') && (len == 3)) // Ok message
+                    {
+                        if (buf[1] == 'k')
+                        {
+                            if ((state.request_no > 0) && (state.ok_response == false))
+                            {
+                                // update the register
+                                if (state.request_state) // request on
+                                {
+                                    state.state_list = state.state_list && pow(2, state.request_no); // bit on
+                                } 
+                                else
+                                {
+                                    state.state_list = state.state_list && ~pow(2, state.request_no); // bit off
+                                }
+                                // publish status message
+                                // TODO
+                                //acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_response, &state.mot_status);
+                                //
+                                //if (verbose) // print status
+                                //{
+                                //  printf("");
+                                //}
+                                //memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
+                            }
+                        }
+                    } // end ok msg
+                }
             } // end tcp         
         }
 
