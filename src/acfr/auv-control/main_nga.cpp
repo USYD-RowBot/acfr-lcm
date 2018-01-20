@@ -664,15 +664,15 @@ int main(int argc, char **argv)
                             nav.depth, cmd.depth, CONTROL_DT);
                     double differential = pid(&state.gains_tunnel_pitch,
                             nav.pitch, target_pitch, CONTROL_DT);
-                    double mutual = -pid(&state.gains_tunnel_descent,
+                    double mutual = pid(&state.gains_tunnel_descent,
                             nav.vz, target_descent, CONTROL_DT);
 
                     // Set motor controller values
                     mc.tail_thruster = 0;
                     mc.tail_rudder = 0;
                     mc.tail_elevator = 0;
-                    mc.vert_fore = mutual + differential;
-                    mc.vert_aft = mutual - differential;
+                    mc.vert_fore = mutual - differential;
+                    mc.vert_aft = mutual + differential;
                     mc.lat_fore = 0;
                     mc.lat_aft = 0;
 
