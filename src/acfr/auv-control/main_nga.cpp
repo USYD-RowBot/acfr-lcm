@@ -55,7 +55,7 @@ typedef struct
     double pitch;
     double heading;
     double altitude;
-    int utime;
+    int64_t utime;
     depth_mode_t depth_mode;
 } command_t;
 
@@ -88,6 +88,8 @@ typedef struct
     // remote
     acfrlcm_auv_spektrum_control_command_t spektrum_command;
     pthread_mutex_t spektrum_lock;
+
+    char *vehicle_name;
 } state_t;
 
 // load all the config variables
@@ -375,6 +377,43 @@ void spektrum_control(acfrlcm_auv_nga_motor_command_t *mc, acfrlcm_auv_spektrum_
     }        
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, state_t *state)
+{
+    int opt;
+
+    const char *def = "DEFAULT";
+    int n = strlen(def);
+    state->vehicle_name = (char *)malloc(n);
+    strncpy(state->vehicle_name, def, n);
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(state->vehicle_name);
+            int n = strlen((char *)optarg);
+            state->vehicle_name = (char *)malloc(n);
+            strncpy(state->vehicle_name, (char *)optarg, n);
+            break;
+         }
+    }
+}
+
 int main(int argc, char **argv)
 {
     // install the signal handler
@@ -401,6 +440,8 @@ int main(int argc, char **argv)
     sprintf(root_key, "acfr.%s", basename(argv[0]));
     load_config(&state, root_key);
 
+    parse_args(argc, argv, &state);
+
     // LCM thread
     pthread_t lcm_tid;
     pthread_create(&lcm_tid, NULL, lcm_thread, &state);
@@ -417,11 +458,15 @@ int main(int argc, char **argv)
     pthread_mutex_init(&state.spektrum_lock, NULL);
 
     // LCM callbacks
-    acfrlcm_auv_acfr_nav_t_subscribe(state.lcm, "ACFR_NAV.*", &acfr_nav_callback,
+    char channel[64];
+    sprintf(channel, "ACFR_NAV.%s", state.vehicle_name);
+    acfrlcm_auv_acfr_nav_t_subscribe(state.lcm, channel, &acfr_nav_callback,
                                      &state);
-    acfrlcm_auv_control_t_subscribe(state.lcm, "AUV_CONTROL", &control_callback,
+    sprintf(channel, "AUV_CONTROL.%s", state.vehicle_name);
+    acfrlcm_auv_control_t_subscribe(state.lcm, channel, &control_callback,
                                     &state);
-    acfrlcm_auv_spektrum_control_command_t_subscribe(state.lcm, "SPEKTRUM_CONTROL",
+    sprintf(channel, "SPEKTRUM_CONTROL.%s", state.vehicle_name);
+    acfrlcm_auv_spektrum_control_command_t_subscribe(state.lcm, channel,
             &spektrum_control_callback, &state);
 
     periodic_info timer_info;
@@ -455,8 +500,6 @@ int main(int argc, char **argv)
         // reset the motor command
         memset(&mc, 0, sizeof(acfrlcm_auv_nga_motor_command_t));
 
-
-
         // Check for remote mode
         // We are in remote mode as the timestamp difference is less then 1 second
         if(timestamp_now() - spektrum_command.utime < 1e6)
@@ -468,6 +511,7 @@ int main(int argc, char **argv)
             // if we haven't received updates from the local planner
             // be aware it could have crashed, so give it 5 seconds
             // just in case it is stuck replanning at a lower rate
+            printf("Diff: %li - %li = %li\n", timestamp_now(), cmd.utime, timestamp_now() - cmd.utime);
             if (timestamp_now() - cmd.utime < 5e6)
             {
 
@@ -638,7 +682,9 @@ int main(int argc, char **argv)
                     // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
                     if( loopCount % 10 == 0 )
                     {
-                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
+                        char channel[60];
+                        sprintf(channel, "NEXTGEN_MOTOR.TOP.%s", state.vehicle_name);
+                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, channel, &mc);
                         printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                                 nav.vx, cmd.vx, (cmd.vx - nav.vx) );
                         printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
@@ -680,7 +726,8 @@ int main(int argc, char **argv)
                     // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
                     if( loopCount % 10 == 0 )
                     {
-                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NEXTGEN_MOTOR.TOP", &mc);
+                        sprintf(channel, "NEXTGEN_MOTOR.TOP.%s", state.vehicle_name);
+                        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, channel, &mc);
                         printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                                 nav.depth, cmd.depth, (cmd.depth - nav.depth) );
                         printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
@@ -712,9 +759,14 @@ int main(int argc, char **argv)
                     }
                 }
             }
+            else
+            {
+                fprintf(stderr, "Timed out for automatic control\n");
+            }
         }
         mc.utime = timestamp_now();
-        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, "NGA_MOTOR", &mc);
+        sprintf(channel, "NEXTGEN_MOTOR.%s", state.vehicle_name);
+        acfrlcm_auv_nga_motor_command_t_publish(state.lcm, channel, &mc);
 
         // wait for a timer event
         wait_period(&timer_info);
