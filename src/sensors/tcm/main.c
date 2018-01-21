@@ -181,6 +181,42 @@ signal_handler(int sig_num)
         program_exit = 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name));
+    strcpy(*vehicle_name, default_name);
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            int n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -206,6 +242,16 @@ main (int argc, char *argv[])
     sigaction(SIGTERM, &sa, NULL);
     sigaction(SIGINT, &sa, NULL);
 
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+
+    char *tcm_channel[100];
+    char *tcm_mag_channel[100];
+
+    snprintf(tcm_channel, 100, "%s.TCM", vehicle_name);
+    snprintf(tcm_mag_channel, 100, "%s.TCM_MAG", vehicle_name);
+
+    free(*vehicle_name);
 
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
@@ -297,8 +343,8 @@ main (int argc, char *argv[])
 
                             if(parse_tcm(&buf[0], &tcm, &tcm_mag))
                             {
-                                senlcm_tcm_t_publish(lcm, "TCM", &tcm);
-                                senlcm_tcm_mag_t_publish(lcm, "TCM_MAG", &tcm_mag);
+                                senlcm_tcm_t_publish(lcm, tcm_channel, &tcm);
+                                senlcm_tcm_mag_t_publish(lcm, tcm_mag_channel, &tcm_mag);
                             }
                         }
                         else
