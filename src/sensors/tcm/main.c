@@ -197,9 +197,10 @@ parse_args (int argc, char **argv, char **vehicle_name)
     int opt;
 
     const char *default_name = "DEFAULT";
-    *vehicle_name = malloc(strlen(default_name));
+    *vehicle_name = malloc(strlen(default_name)+1);
     strcpy(*vehicle_name, default_name);
-
+    
+    int n;
     while ((opt = getopt (argc, argv, "hn:")) != -1)
     {
         switch(opt)
@@ -208,7 +209,7 @@ parse_args (int argc, char **argv, char **vehicle_name)
             print_help (0, argv);
             break;
         case 'n':
-            int n = strlen((char *)optarg);
+            n = strlen((char *)optarg);
             free(*vehicle_name);
             *vehicle_name = malloc(n);
             strcpy(*vehicle_name, (char *)optarg);
@@ -245,13 +246,13 @@ main (int argc, char *argv[])
     char *vehicle_name;
     parse_args(argc, argv, &vehicle_name);
 
-    char *tcm_channel[100];
-    char *tcm_mag_channel[100];
+    char tcm_channel[100];
+    char tcm_mag_channel[100];
 
     snprintf(tcm_channel, 100, "%s.TCM", vehicle_name);
     snprintf(tcm_mag_channel, 100, "%s.TCM_MAG", vehicle_name);
 
-    free(*vehicle_name);
+    free(vehicle_name);
 
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
@@ -270,7 +271,7 @@ main (int argc, char *argv[])
 
     int64_t timestamp;
     senlcm_tcm_t tcm;
-    senlcm_tcm_t tcm_mag;
+    senlcm_tcm_mag_t tcm_mag;
 
     program_tcm(sensor);
     int programmed = 1;
@@ -337,7 +338,7 @@ main (int argc, char *argv[])
                         {
                             memset(&tcm, 0, sizeof(senlcm_tcm_t));
                             tcm.utime = timestamp;
-                            memset(&tcm, 0, sizeof(senlcm_tcm_mag_t));
+                            memset(&tcm_mag, 0, sizeof(senlcm_tcm_mag_t));
                             tcm_mag.utime = timestamp;
                             // its good data, lets parse it
 
