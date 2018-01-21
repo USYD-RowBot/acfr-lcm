@@ -1,119 +1,199 @@
 #include <signal.h>
 #include <stdio.h>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
 #include <math.h>
+#include <termios.h>
 
 #include "acfr-common/timestamp.h"
+#include "acfr-common/sensor.h"
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_spektrum_control_command_t.h"
+#include "perls-lcmtypes/perllcm_heartbeat_t.h"
 
-//#define DEBUG
+#define BUFSIZE 100
 
-#define LOOPTIMEOUT 20 // No of times to try read UDP message bits before continuing without read
 
-int
-create_udp_listen(char *port)
+typedef struct {
+    char vehicle_name[BUFSIZE];
+    char channel_name[BUFSIZE];
+
+    int channels;
+
+    char send_next;
+
+    lcm_t *lcm;
+    acfrlcm_auv_spektrum_control_command_t sc;
+} state_t;
+
+void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
-    int sockfd;
-    struct addrinfo hints, *servinfo, *p;
-    int ret;
-    char host[64];
+    state_t *state = (state_t *)u;
 
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // set to AF_INET to force IPv4
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP
-
-    if((ret = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
-    {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ret));
-        return -1;
-    }
-
-    for(p = servinfo; p != NULL; p = p->ai_next)
-    {
-	getnameinfo(p->ai_addr, sizeof(struct sockaddr_in), host, sizeof(host), NULL, 0,  NI_NUMERICHOST);
-        printf("Host name: %s\n", host);
-    }
-	// loop through all the results and bind to the first we can
-    for(p = servinfo; p != NULL; p = p->ai_next)
-    {
-	getnameinfo(p->ai_addr, sizeof(struct sockaddr_in), host, sizeof(host), NULL, 0,  NI_NUMERICHOST);
-        printf("Host name: %s\n", host);
-
-        if((sockfd = socket(p->ai_family, p->ai_socktype,
-                            p->ai_protocol)) == -1)
-        {
-            perror("listener: socket");
-            continue;
-        }
-        if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
-        {
-            close(sockfd);
-            perror("listener: bind");
-            continue;
-        }
-        break;
-    }
-
-    if(p == NULL)
-    {
-        fprintf(stderr, "listener: failed to bind socket\n");
-        return -2;
-	}
-    printf("UDP listen socket open on port %s\n", port);
-
-    return sockfd;
+    state->send_next = 1;
 }
 
 // Parse the 16 bytes that come from the RC controller
-int
-parse_rc(char *buf, lcm_t *lcm, int channels)
+static int
+parse_rc(char *buf, state_t *state)
 {
 
     unsigned short channel_value;
     char channel_id;
-    short channel_values[channels];
+    short channel_values[state->channels];
 
-    //float rcmult = RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE - RC_DEADZONE);
-    //if(buf[0] != 0 && buf[1] != 162)
-    //    return 0;
-
-
-    for(int i=1; i<8; i++)
+    for(int i=0; i<state->channels; i++)
     {
         channel_id = (buf[i*2] & 0xF8) >> 3;
         channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
 
-        channel_values[(int)channel_id] = channel_value;
+        //printf("%i-%i ", (int)channel_id, (int)channel_value);
+        printf("%x-%x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
 
+        if (channel_id < state->channels)
+        {
+            channel_values[(int)channel_id] = channel_value;
+        }
     }
+    printf("\n");
 
     acfrlcm_auv_spektrum_control_command_t sc;
     sc.utime = timestamp_now();
-    sc.channels = channels;
-    for(int i=0; i<6; i++)
-	    sc.values[i] = channel_values[i];
-    acfrlcm_auv_spektrum_control_command_t_publish(lcm, "SPEKTRUM_CONTROL", &sc);
+    sc.channels = state->channels;
+    sc.values = channel_values;
+
+    if (state->send_next)
+    {
+        state->send_next = 0;
+        acfrlcm_auv_spektrum_control_command_t_publish(state->lcm, state->channel_name, &sc);
+    }
 
     return 1;
 }
 
 int main_exit;
-void signal_handler(int sigNum)
+int broken_pipe;
+void signal_handler(int sig_num)
 {
     // do a safe exit
-    main_exit = 1;
+    if(sig_num == SIGPIPE)
+        broken_pipe = 1;
+    else
+        main_exit = 1;
+}
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, state_t *state)
+{
+    int opt;
+
+    const char *def = "DEFAULT";
+    strncpy(state->vehicle_name, def, BUFSIZE);
+    snprintf(state->channel_name, BUFSIZE, "SPEKTRUM_CONTROL.%s", state->vehicle_name);
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            strncpy(state->vehicle_name, (char *)optarg, BUFSIZE);
+            snprintf(state->channel_name, BUFSIZE, "%s.SPEKTRUM_CONTROL", state->vehicle_name);
+            break;
+         }
+    }
+}
+
+static void *
+lcm_thread (void *context)
+{
+    state_t *state = (state_t *) context;
+    printf("LCM thread starting\n");
+    while (!main_exit)
+    {
+        lcm_handle_timeout(state->lcm, 1000);
+    }
+
+    return 0;
+}
+
+void realign(acfr_sensor_t *sensor)
+{
+    // this is fragile - and may fail arbitrarily
+    // but we need to find the start of the packet
+    // based on decoding with an oscilloscope
+    // the first two bytes of the message is 0xE1 0xA2
+    
+    fd_set rfds;
+    unsigned char buf[16];
+    uint8_t aligned = 0;
+
+    printf("Aligning to message.\n");
+    while(!aligned)
+    {
+        if(broken_pipe)
+        {
+            sensor->port_open = 0;
+            fprintf(stderr, "Pipe broken\n");
+            continue;
+        }
+
+        memset(buf, 0, sizeof(buf));
+
+        tcflush(sensor->fd, TCIOFLUSH);
+        tcflush(sensor->fd, TCIOFLUSH);
+
+        FD_ZERO(&rfds);
+        FD_SET(sensor->fd, &rfds);
+
+        struct timeval tv;
+        tv.tv_sec = 0;
+        tv.tv_usec = 2000;
+
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret == -1)
+        {
+            perror("Select failure: ");
+        }
+        else if(ret != 0)
+        {
+            int len;
+            // deliberately don't align with expected packet size of 16 bytes
+            int bytes = 16;
+            len = acfr_sensor_read(sensor, buf, bytes);
+            printf("%i\n", len);
+            if(len == bytes && buf[1] == 0xa2)
+            {
+                aligned = 1;
+            }
+            else
+            {
+                fprintf(stderr, "Wrong number of bytes (%i)\n", len);
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Timeout: Checking connection\n");
+        }
+    }
+
+    printf("Aligned packet.\n");
 }
 
 int
@@ -121,10 +201,22 @@ main(int argc, char **argv)
 {
     // install the signal handler
     main_exit = 0;
+    broken_pipe = 0;
     signal(SIGINT, signal_handler);
+    //signal(SIGPIPE, signal_handler);
 
-    lcm_t *lcm = lcm_create(NULL);
-    BotParam *param = bot_param_new_from_server (lcm, 1);
+    state_t state;
+
+    parse_args(argc, argv, &state);
+
+    state.lcm = lcm_create(NULL);
+    BotParam *param = bot_param_new_from_server (state.lcm, 1);
+
+    pthread_t tid;
+    pthread_create(&tid, NULL, lcm_thread, &state);
+    pthread_detach(tid);
+
+	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
 
     if(param == NULL)
         return 0;
@@ -134,50 +226,66 @@ main(int argc, char **argv)
     char key[64];
     sprintf(rootkey, "acfr.%s", basename(argv[0]));
 
-    sprintf(key, "%s.control_port", rootkey);
-    char *control_port = bot_param_get_str_or_fail(param, key);
-
     sprintf(key, "%s.channels", rootkey);
-    int channels = bot_param_get_int_or_fail(param, key);
+    state.channels = bot_param_get_int_or_fail(param, key);
+
+    acfr_sensor_t *sensor = acfr_sensor_create(state.lcm, rootkey);
+
+    if(sensor == NULL)
+        return 0;
+
+    acfr_sensor_noncanonical(sensor, 1, 0);
 
     // Create the UDP listener
-    int control_sockfd = create_udp_listen(control_port);
+    realign(sensor);
+
     fd_set rfds;
-    struct timeval tv;
-    int data_len;
-    char buf[16];
-    int count = 0;
+    unsigned char buf[16];
 
     while(!main_exit)
     {
+        if(broken_pipe)
+        {
+            sensor->port_open = 0;
+            fprintf(stderr, "Pipe broken\n");
+            continue;
+        }
+        memset(buf, 0, sizeof(buf));
+
         FD_ZERO(&rfds);
-        FD_SET(control_sockfd, &rfds);
-        tv.tv_sec = 1.0;
+        FD_SET(sensor->fd, &rfds);
+
+        struct timeval tv;
+        tv.tv_sec = 1;
         tv.tv_usec = 0;
 
-        int loopcount = 0;
-        int ret = select (control_sockfd + 1, &rfds, NULL, NULL, &tv);
-        if(ret != -1)
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret == -1)
         {
-            data_len = 0;
-            while((data_len < 16)&&(loopcount < LOOPTIMEOUT))
+            perror("Select failure: ");
+        }
+        else if(ret != 0)
+        {
+            int len;
+            int bytes = 16;
+            len = acfr_sensor_read(sensor, buf, bytes);
+            if(len == bytes)
             {
-                data_len += recvfrom(control_sockfd, &buf[data_len], 16 - data_len, 0, NULL, NULL);
-                loopcount++;
-		count++;
+                parse_rc(buf, &state);
             }
-//	    printf("Data len: %d, %d\n", data_len, count);
-            if(data_len >= 16)
+            else
             {
-                parse_rc(buf, lcm, channels);
+                fprintf(stderr, "Wrong number of bytes (%i)\n", len);
             }
         }
+        else
+        {
+            fprintf(stderr, "Timeout: Checking connection\n");
+        }
     }
-    close(control_sockfd);
+    acfr_sensor_destroy(sensor);
+    pthread_join(tid, NULL);
 
-    return 1;
+    return 0;
 }
-
-
-
 
