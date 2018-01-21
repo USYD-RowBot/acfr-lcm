@@ -59,8 +59,7 @@ typedef struct
     lcm_t *lcm;
     char root_key[64];
     acfr_sensor_t *sensor;
-    int fwd_speed;
-    int rev_speed;
+    int cmd_speed;
     char counter;
     int64_t prev_time;
     acfrlcm_asv_torqeedo_motor_command_t mot_command;
@@ -131,65 +130,52 @@ void send_msg(int message_type, state_t *u)
 
         // send motor speed control message
         case MSG_3082:
-		{
             //printf("MSG_3082\n");
             // if forwards, (and no reverse) OR reverse (and no forwards)
-            if ((state->fwd_speed > 0 && state->rev_speed < 0)||(state->rev_speed > 0 && state->fwd_speed < 0))
+            if (state->cmd_speed != 0)
             {
-                // if forwards, (and no reverse) 
-                if (state->fwd_speed > 0 && state->rev_speed <= 0)
+                printf("F: %d\n", state->cmd_speed);
+                if (state->cmd_speed > MAX_SPEED)
                 {
-                    printf("F: %d\n", state->fwd_speed);
-                    if (state->fwd_speed > MAX_SPEED)
-                    {
-                        state->fwd_speed = MAX_SPEED;
-                        fprintf(stderr, "Torqeedo: Speed control value (forward) out of range.");
-                    }
-                    // set fwd speed, int16_t into int8_t array
-                    msg_3082_move[MSG3082_SPEED_POS] = (int8_t)(state->fwd_speed >> BITS_PER_BYTE); // MSB
-                    div_t divresult = div (state->fwd_speed, BYTE_MAX);
-                    msg_3082_move[MSG3082_SPEED_POS + 1] = (int8_t)divresult.rem; // LSB
-
-                    //printf("speed: %d %d %d\n",state->fwd_speed, (int16_t) msg_3082_move[5], (int16_t) msg_3082_move[6]);
+                    state->cmd_speed = MAX_SPEED;
+                    fprintf(stderr, "Torqeedo: Speed control value (forward) out of range.");
                 }
-               	// if reverse, (and no forwards)
-            	else if (state->rev_speed > 0 && state->fwd_speed <= 0)
-            	{
-                    printf("R: %d\n", state->rev_speed);
-                	if (state->rev_speed > MAX_SPEED) // ensure value is in range of mesage array length
-                	{
-                    	state->rev_speed = MAX_SPEED;
-						fprintf(stderr, "Torqeedo: Speed control value (reverse) out of range.");
-                	}
-                    // set rev speed
-                    msg_3082_move[MSG3082_SPEED_POS] = (int8_t)(-state->rev_speed >> BITS_PER_BYTE); // MSB
-                    div_t divresult = div (-state->rev_speed, BYTE_MAX);
-                    msg_3082_move[MSG3082_SPEED_POS + 1] = (int8_t)divresult.rem; // LSB
-            	} 
+                else if (state->cmd_speed < -MAX_SPEED) // ensure value is in range of mesage array length
+            	
+                {
+                    state->cmd_speed = -MAX_SPEED;
+                    fprintf(stderr, "Torqeedo: Speed control value (reverse) out of range.");
+                }
+                // set fwd speed, int16_t into int8_t array
+                msg_3082_move[MSG3082_SPEED_POS] = (int8_t)(state->cmd_speed >> BITS_PER_BYTE); // MSB
+                div_t divresult = div (state->cmd_speed, BYTE_MAX);
+                msg_3082_move[MSG3082_SPEED_POS + 1] = (int8_t)divresult.rem; // LSB
 
-				// calculate + add crc to msg based on msg section: from address through to byte before crc
+                //printf("speed: %d %d %d\n",state->fwd_speed, (int16_t) msg_3082_move[5], (int16_t) msg_3082_move[6]);
+
+                // calculate + add crc to msg based on msg section: from address through to byte before crc
                 msg_3082_move[7] = (uint8_t) calc_maxim1wire_crc((uint8_t*)&msg_3082_move[1], 6);
 
                 // check for and substitute packet escape characters if req'd due to values equal to control chars (in power or in crc)
                 int subs_count = 0; // count the num of substituted characters so that dont accidentally substitute the end char 
-				for (int i=5; i < (MSG3082_LEN - 2 + subs_count); i++)
-				{
-					if ((uint8_t) msg_3082_move[i] == 0xAC || // matches control char value
-                    	(uint8_t) msg_3082_move[i] == 0xAD ||
-                    	(uint8_t) msg_3082_move[i] == 0xAE )
-					{
+                for (int i=5; i < (MSG3082_LEN - 2 + subs_count); i++)
+                {
+                    if ((uint8_t) msg_3082_move[i] == 0xAC || // matches control char value
+                        (uint8_t) msg_3082_move[i] == 0xAD ||
+                        (uint8_t) msg_3082_move[i] == 0xAE )
+                    {
                         subs_count++;
-						for (int j = (MSG3082_LEN + MAX_SUBS - 1); j > (i + 1); j--) // for the rest of the array
-						{
-							msg_3082_move[j] = msg_3082_move[j - 1]; // shift along one position - sufficient padding at end of array for us to do this
-						}
-						msg_3082_move[i+1] = msg_3082_move[i] - BYTE_MASK; // then shift original value with mask
-						msg_3082_move[i] = 0xAE; // and add in the escape character
+                        for (int j = (MSG3082_LEN + MAX_SUBS - 1); j > (i + 1); j--) // for the rest of the array
+                        {
+                            msg_3082_move[j] = msg_3082_move[j - 1]; // shift along one position - sufficient padding at end of array for us to do this
+                        }
+                        msg_3082_move[i+1] = msg_3082_move[i] - BYTE_MASK; // then shift original value with mask
+                        msg_3082_move[i] = 0xAE; // and add in the escape character
                         
-					}
-				}
-                // write to serial output, adding 1 extra byte of 0's for timing issue (in documentation) wont work owise
-				res = acfr_sensor_write(state->sensor, (char *)msg_3082_move, MSG3082_LEN + subs_count + 1);
+                    }
+                }
+            // write to serial output, adding 1 extra byte of 0's for timing issue (in documentation) wont work owise
+            res = acfr_sensor_write(state->sensor, (char *)msg_3082_move, MSG3082_LEN + subs_count + 1);
             }
 
             // otherwise if not fwd OR rev, either idle or invalid - so treat as stopped
@@ -197,15 +183,14 @@ void send_msg(int message_type, state_t *u)
             {
                 res = acfr_sensor_write(state->sensor, (char *)msg_3082_idle, MSG3082_LEN);
             }
-            break;
-		}
+        break;
     }
     //printf("res: %d\n", res);
     if (res < 0)
     {
         fprintf(stderr, "Torqeedo: Failed to write to motor control socket. %i - %s", errno, strerror(errno));
         program_exit = 1;
-     }
+    }
 
 } // end send_msg
 
@@ -218,8 +203,7 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
     {
         // update state
         state->prev_time = mc->utime;
-        state->fwd_speed = mc->forward_speed;
-        state->rev_speed = mc->reverse_speed;
+        state->cmd_speed = mc->command_speed;
     }
 //    printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
 }
@@ -253,8 +237,7 @@ int main(int argc, char **argv)
     // Initialise state which holds all current data
     state_t state;
     memset(&state.root_key, 0, 64);
-    state.fwd_speed = -1; 
-    state.rev_speed = -1; // both negative for idle (stopped) at start 
+    state.cmd_speed = 0; 
     state.counter = 0;
     state.prev_time = timestamp_now();
     memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_command_t));

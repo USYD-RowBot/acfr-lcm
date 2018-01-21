@@ -1,7 +1,11 @@
+#include <unistd.h>
 #include "global_planner.hpp"
+
+using namespace std;
 
 // Globals are bad mmmmk
 int mainExit;
+string vehicle_name = "DEFAULT";
 
 void onPathResponse(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const acfrlcm::auv_path_response_t *pr, GlobalPlanner* gp)
@@ -112,8 +116,8 @@ GlobalPlanner::GlobalPlanner() :
 {
 
 	// subscribe to the relevant LCM messages
-	lcm.subscribeFunction("TASK_PLANNER_COMMAND.*", onGlobalPlannerCommand, this);
-	lcm.subscribeFunction("PATH_RESPONSE", onPathResponse, this);
+	lcm.subscribeFunction("TASK_PLANNER_COMMAND."+vehicle_name, onGlobalPlannerCommand, this);
+	lcm.subscribeFunction("PATH_RESPONSE."+vehicle_name, onPathResponse, this);
 
 	// set default values
 	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
@@ -281,7 +285,7 @@ int GlobalPlanner::clock()
 		// Send the global state change message
 		cout << "Publishing new global state: " << (int) (gpState.state)
 				<< endl;
-		lcm.publish("GLOBAL_STATE", &gpState);
+		lcm.publish("GLOBAL_STATE."+vehicle_name, &gpState);
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
@@ -377,7 +381,7 @@ int GlobalPlanner::sendLeg()
 			<< ", " << (*currPoint).pose.getZ() << endl;
 
 	// Send the message
-	lcm.publish("PATH_COMMAND", &pc);
+	lcm.publish("PATH_COMMAND."+vehicle_name, &pc);
 	legStartTime = timestamp_now();
 
 	return 1;
@@ -425,7 +429,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< (int) (cameraTriggerMsg.enabled) << " f:"
 					<< (int) (cameraTriggerMsg.freq) << " w:"
 					<< (int) (cameraTriggerMsg.pulseWidthUs) << endl;
-			lcm.publish("CAMERA_TRIGGER", &cameraTriggerMsg);
+			lcm.publish("CAMERA_TRIGGER."+vehicle_name, &cameraTriggerMsg);
 			break;
 		case DVL:
 		    memset(&rdiCommandMsg, 0, sizeof(rdiCommandMsg));
@@ -457,7 +461,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< cmd << " I:"
 					<< (int) (rdiCommandMsg.d) << " F:"
 					<< (int) (rdiCommandMsg.i) << endl;
-            lcm.publish("RDI_CONTROL", &rdiCommandMsg);
+            lcm.publish("RDI_CONTROL."+vehicle_name, &rdiCommandMsg);
 			break;
 		}
 	}
@@ -483,6 +487,35 @@ int GlobalPlanner::process()
 	return 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            vehicle_name = (char*)optarg;
+            break;
+         }
+    }
+}
+
 void signalHandler(int sig)
 {
 	mainExit = 1;
@@ -490,6 +523,7 @@ void signalHandler(int sig)
 
 int main(int argc, char **argv)
 {
+        parse_args(argc, argv);
 	// install the signal handler
 	mainExit = 0;
 	signal(SIGINT, signalHandler);

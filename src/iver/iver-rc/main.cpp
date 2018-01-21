@@ -12,9 +12,10 @@
 #include <libgen.h>
 #include <math.h>
 
+#include <lcm/lcm-cpp.hpp>
 #include "perls-common/timestamp.h"
 #include <bot_param/param_client.h>
-#include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
+#include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
 
 //#define DEBUG
 
@@ -56,6 +57,7 @@ enum
 #define RCMULT 4.8 //RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE-RC_DEADZONE)
 #define LOOPTIMEOUT 20 // No of times to try read UDP message bits before continuing without read
 
+std::string vehicle_name = "DEFAULT";
 
 int
 create_udp_listen(char *port)
@@ -104,7 +106,7 @@ create_udp_listen(char *port)
 
 // Parse the 16 bytes that come from the RC controller
 int
-parse_rc(char *buf, lcm_t *lcm)
+parse_rc(char *buf, lcm::LCM &lcm)
 {
 
     unsigned short channel_value;
@@ -144,7 +146,7 @@ parse_rc(char *buf, lcm_t *lcm)
 #ifdef DEBUG       
         printf("POS 0: %d\n", channel_values[RC_GEAR]);
 #endif
-        acfrlcm_auv_iver_motor_command_t rc;
+        acfrlcm::auv_iver_motor_command_t rc;
         rc.utime = timestamp_now();
         rc.top = -(channel_values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
         rc.bottom = rc.top;
@@ -167,13 +169,13 @@ parse_rc(char *buf, lcm_t *lcm)
                 rc.main = -RC_MAX_PROP_RPM;
         }        
 
-        rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE;
-        acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
+        rc.source = acfrlcm::auv_iver_motor_command_t::REMOTE;
+        lcm.publish("IVER_MOTOR"+vehicle_name, &rc);
     }
     else
     {
         // Fill payload with zeros for either other position 1 or 2
-        acfrlcm_auv_iver_motor_command_t rc;
+        acfrlcm::auv_iver_motor_command_t rc;
         rc.utime = timestamp_now();
         rc.top = 0;
         rc.bottom = 0;
@@ -187,20 +189,49 @@ parse_rc(char *buf, lcm_t *lcm)
 #ifdef DEBUG       
             printf("POS 1: %d\n", channel_values[RC_GEAR]);
 #endif
-            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO;
-            acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
+            rc.source = acfrlcm::auv_iver_motor_command_t::RCZERO;
+            lcm.publish("IVER_MOTOR", &rc);
         }
         else
         {
 #ifdef DEBUG       
             printf("POS 2: %d\n", channel_values[RC_GEAR]);
 #endif
-            rc.source = ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE;
+            rc.source = acfrlcm::auv_iver_motor_command_t::RCRELEASE;
         }
-        acfrlcm_auv_iver_motor_command_t_publish(lcm, "IVER_MOTOR", &rc);
+        lcm.publish("IVER_MOTOR", &rc);
     }   
     
     return 1;
+}
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            vehicle_name = (char*)optarg;
+            break;
+         }
+    }
 }
 
 int main_exit;
@@ -217,8 +248,9 @@ main(int argc, char **argv)
     main_exit = 0;
     signal(SIGINT, signal_handler);
 
-    lcm_t *lcm = lcm_create(NULL);
-    BotParam *param = bot_param_new_from_server (lcm, 1);
+    //lcm_t *lcm = lcm_create(NULL);
+    lcm::LCM lcm;
+    BotParam *param = bot_param_new_from_server (lcm.getUnderlyingLCM(), 1);
 
     if(param == NULL)
         return 0;

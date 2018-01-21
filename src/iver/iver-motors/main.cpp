@@ -14,12 +14,16 @@
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
+#include <string>
 
+#include <lcm/lcm-cpp.hpp>
 #include "perls-common/lcm_util.h"
 #include "perls-common/serial.h"
 #include "perls-common/timestamp.h"
 #include <bot_param/param_client.h>
-#include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
+#include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
 
 #define SERVO_RANGE 0
 #define DTOR M_PI/180.
@@ -64,12 +68,14 @@ typedef struct
     int motor_fd;
 
     // lcm stuff param = bot_param_new_from_server (lcm, 1);
-    lcm_t *lcm;
+    lcm::LCM lcm;
 
     int64_t remote_time;
     control_source_t source_state;
 
     int64_t last_data_time;
+
+    std::string vehicle_name = "DEFAULT";
 
 } state_t;
 
@@ -141,20 +147,18 @@ send_control(double top, double bottom, double port, double starboard, double ma
 }
 
 void
-motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc_, void *u)
+motor_handler(const lcm::ReceiveBuffer *rbuf, const std::string& ch, const acfrlcm::auv_iver_motor_command_t *mc_, state_t *state)
 {
-    state_t *state = (state_t *)u;
-
-    acfrlcm_auv_iver_motor_command_t mc = *mc_;
+    acfrlcm::auv_iver_motor_command_t mc = *mc_;
 
     switch (mc.source)
     {
-    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE:
+    case acfrlcm::auv_iver_motor_command_t::REMOTE:
         // set to remote controlled, use values
         state->remote_time = mc.utime;
         state->source_state = REMOTE;
         break;
-    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCZERO:
+    case acfrlcm::auv_iver_motor_command_t::RCZERO:
         // set to dead, use values (which are zero...
         // possibly could override/set to zero in case
         // of unexpected error/message contents)
@@ -167,13 +171,13 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         state->remote_time = mc.utime;
         state->source_state = DEAD;
         break;
-    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_RCRELEASE:
+    case acfrlcm::auv_iver_motor_command_t::RCRELEASE:
         // release manual control, resume mission
         // so don't use values in message
         state->remote_time = mc.utime;
         state->source_state = MISSION;
         return;
-    case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_AUTO:
+    case acfrlcm::auv_iver_motor_command_t::AUTO:
         // automatic control message
         // only use if in mission mode
         if (state->source_state != MISSION)
@@ -208,6 +212,55 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     send_control(mc.top, mc.bottom, mc.port, mc.starboard, mc.main, state);
 }
 
+void handle_heartbeat(const lcm::ReceiveBuffer *rbuf,
+                const std::string& channel, const perllcm::heartbeat_t *hb,
+                state_t *state)
+{
+    // if we are in REMOTE mode
+    // check the remote time out and zero control (motors off) if required
+    if(state->source_state == REMOTE &&
+        (timestamp_now() - state->remote_time) > REMOTE_TIMEOUT)
+    {
+        state->source_state = DEAD;
+        // ensure we aren't limited by the command period
+        // from sending this
+        state->last_data_time -= COMMAND_PERIOD;
+
+        // set fins to null, motor to off
+        send_control(0.0, 0.0, 0.0, 0.0, 0.0, state);
+    }
+}
+
+ 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, state_t *state)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            state->vehicle_name = (char*)optarg;
+            break;
+         }
+    }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -219,13 +272,13 @@ main(int argc, char **argv)
     signal(SIGINT, signal_handler);
 
     // lets start LCM
-    state.lcm = lcm_create(NULL);
-
+    //state.lcm = lcm_create(NULL);
+    parse_args(argc, argv, &state);
 
     // read the config file
     char rootkey[64];
     char key[128];
-    BotParam *param = bot_param_new_from_server (state.lcm, 1);
+    BotParam *param = bot_param_new_from_server (state.lcm.getUnderlyingLCM(), 1);
     if(param == NULL)
         return 0;
     sprintf(rootkey, "acfr.%s", basename(argv[0]));
@@ -270,29 +323,27 @@ main(int argc, char **argv)
 
     state.last_data_time = timestamp_now();
 
-    acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, "IVER_MOTOR", &motor_handler, &state);
+    state.lcm.subscribeFunction("IVER_MOTOR"+state.vehicle_name, &motor_handler, &state);
+
+    // Subscribe to the heartbeat
+    state.lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, &state);
+    return 1;
+
 
     // process
+    int fd = state.lcm.getFileno();
+    fd_set rfds;
+
     while(!program_exit)
     {
-        // if we are in REMOTE mode
-        // check the remote time out and zero control (motors off) if required
-        if(state.source_state == REMOTE &&
-            (timestamp_now() - state.remote_time) > REMOTE_TIMEOUT)
-        {
-            state.source_state = DEAD;
-            // ensure we aren't limited by the command period
-            // from sending this
-            state.last_data_time -= COMMAND_PERIOD;
-
-            // set fins to null, motor to off
-            send_control(0.0, 0.0, 0.0, 0.0, 0.0, &state);
-        }
-
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        lcmu_handle_timeout(state.lcm, &tv);
+        FD_ZERO(&rfds);
+        FD_SET(fd, &rfds);
+        struct timeval timeout;
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+        int ret = select(fd + 1, &rfds, NULL, NULL, &timeout);
+        if (ret > 0)
+            state.lcm.handle();
     }
 
     close(state.servo_fd);

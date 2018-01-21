@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# send a new mission <argv[1]> to veicle <argv[2]>
 
 import lcm
 import sys
@@ -20,6 +21,7 @@ msg = auv_global_planner_t()
 msg.command = auv_global_planner_t.GOTO
 msg.str = missionString
     
+vehicle_name = sys.argv[2];
     
-lc.publish('TASK_PLANNER_COMMAND.HOLT', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.'+vehicle_name, msg.encode())
 

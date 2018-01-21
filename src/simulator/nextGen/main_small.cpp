@@ -1,4 +1,4 @@
-// nextGen AUV simulator
+// nga AUV simulator
 
 
 #include <iostream>
@@ -8,11 +8,10 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <libplankton/auv_config_file.hpp>
-#include <libplankton/auv_map_projection.hpp>
+#include "acfr-common/auv_map_projection.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_nextGen_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
@@ -70,7 +69,7 @@ SMALL::Vector3D grav;
 // the state vector is X Y Z r p h u v w p q r
 // the control vector is RPM prop_torque rudder, plane
 //SMALL::Vector6D in;
-auv_nextGen_motor_command_t in;
+auv_nga_motor_command_t in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
@@ -134,7 +133,8 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double prop_diameter = 0.25;
     double rho = 1030;              // Water density
     double J0 = 0; // open water advance coefficient
-    double Kt = 0; // propeller torque coefficient
+    double Kt = 0; // propeller thrust coefficient
+    double Kq = 0; // properler torque coefficient
     
     // Sanity check on input
     /*if(in(0) != in(0))
@@ -145,7 +145,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     
     // propeller revolutions per second (rps)
     // converting desired rpm to rps
-    double n = in.tailThruster/60;
+    double n = in.tail_thruster/60;
     
     // limit the max rpm to 1500 = 25 rps
     if(fabs(n) > 25)
@@ -164,15 +164,32 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
     double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
 
-    if (J0 > 0)
-        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
-    else if (J0 > -0.2)
-        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
-    else
-        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+    // these need to be determined
+    // but relate to the torque from the rear thruster
+    // not sure but it may result in a torque not around
+    // the x-axis of the vehicle
+    double beta1 = 0.0;
+    double beta2 = -0.0;
 
-    double prop_force;
+    if (J0 > 0)
+    {
+        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else if (J0 > -0.2)
+    {
+        Kt = alpha1 + alpha3 * J0;			// Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else
+    {
+        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+
+    double prop_force, prop_torque;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
+    prop_torque = rho * pow(prop_diameter,5) * Kq * fabs(n) * n; // Fossen 6.113
     //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
     if(prop_force !=  prop_force)
     {
@@ -182,19 +199,48 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     if(fabs(prop_force) > 10.0)
         prop_force = prop_force / fabs(prop_force) * 10;
     
+
+    // the tunnel thruster forces needs to be determined as well
+    // the lateral components affect yaw - psi and motion in y
+    // the vertical components affect pitch - theta and motion in z
+    // there is no effect on surge motion or roll
+    //
+    double tunnel_diameter = 0.1;
+
+    // there is ZERO basis for this number (we use +-1500, full range is +-2048
+    // from the DAC
+    double to_rps = 0.03;
+
+    n = in.vert_fore * to_rps;
+    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.vert_aft * to_rps;
+    double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.lat_fore * to_rps;
+    double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.lat_aft * to_rps;
+    double lat_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+
+    double mutual_vert = vert_fore_force + vert_aft_force;
+    double differential_vert = vert_fore_force - vert_aft_force;
+
+    double mutual_lat = lat_fore_force + lat_aft_force;
+    double differential_lat = lat_fore_force - lat_aft_force;
+
+    double tail_x = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_z = prop_force * sin(in.tail_elevator);
+
     // external applied forces
     double X, Y, Z, K, M, N;
-    X = prop_force * cos(in.tailRudder) * cos(in.tailElevator);
+    X = tail_x;
+    Y = tail_y + mutual_lat;
+    Z = tail_z + mutual_vert;
 
-    Y = prop_force * sin(in.tailRudder) * cos(in.tailElevator);
-    Z = prop_force * sin(in.tailElevator);
-    K = 0;        // assume zero roll moment - should account for roll moment of thruster
-
+    // it may also not be strictly just roll if the thrust is vectored
+    K = prop_torque;  // this is approximate and still needs coefficients defined.
     // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
-    M = 7.5 * Z * 1.25; // moment from vertical force on pitch about CoG
-    N = 7.5 * Y * 1.25; // moment from lateral force on heading about CoG
-
-
+    M = tail_z * 1.25 + 0.75 * differential_vert;
+    N = tail_y * 1.25 + 0.75 * differential_lat; 
 
     // Force vectors, props and control surfaces
     SMALL::Vector3D longF, latF;
@@ -346,7 +392,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 }
 
 // motor command callback
-void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nextGen_motor_command_t *mc, lcm::LCM *lcm) 
+void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nga_motor_command_t *mc, lcm::LCM *lcm) 
 {
     in = *mc;
 }
@@ -406,18 +452,18 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             printf("%2.3f ", state(i));
             fp << state(i) << " ";
         }
-        printf("%2.3f ", in.vertFwd);
-        fp << in.vertFwd << " ";
-        printf("%2.3f ", in.vertRear);
-        fp << in.vertRear << " ";
-        printf("%2.3f ", in.latFwd);
-        fp << in.latFwd << " ";
-        printf("%2.3f ", in.tailThruster);
-        fp << in.tailThruster << " ";
-        printf("%2.3f ", in.tailRudder);
-        fp << in.tailRudder << " ";
-        printf("%2.3f ", in.tailElevator);
-        fp << in.tailElevator << " ";
+        printf("%2.3f ", in.vert_fore);
+        fp << in.vert_fore << " ";
+        printf("%2.3f ", in.vert_aft);
+        fp << in.vert_aft << " ";
+        printf("%2.3f ", in.lat_fore);
+        fp << in.lat_fore << " ";
+        printf("%2.3f ", in.tail_thruster);
+        fp << in.tail_thruster << " ";
+        printf("%2.3f ", in.tail_rudder);
+        fp << in.tail_rudder << " ";
+        printf("%2.3f ", in.tail_elevator);
+        fp << in.tail_elevator << " ";
         fp << "\n";
         fp.close();
         printf("\n");
@@ -426,7 +472,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.NEXTGENSIM", &nav);
+        lcm->publish("ACFR_NAV.NGASIM", &nav);
 
     }
     //	lcm->publish("ACFR_NAV", &nav);
@@ -690,15 +736,11 @@ int main(int argc, char **argv)
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
-    sprintf(key, "%s.slam_config", rootkey);
-    char *slamConfigFileName = bot_param_get_str_or_fail(param, key);
-    Config_File *slamConfigFile;
-    slamConfigFile = new Config_File(slamConfigFileName);
-
     double latitude_sim, longitude_sim;
-
-    slamConfigFile->get_value( "LATITUDE", latitude_sim);
-    slamConfigFile->get_value( "LONGITUDE", longitude_sim);
+    sprintf(key, "%s.latitude", rootkey);
+    latitude_sim = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.longitude", rootkey);
+    longitude_sim = bot_param_get_double_or_fail(param, key);
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
@@ -725,9 +767,9 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("NEXTGEN_MOTOR", on_motor_command, &lcm);
+    lcm.subscribeFunction("NEXTGEN_MOTOR.NGASIM", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
-    lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
+    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
     lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
@@ -755,13 +797,13 @@ int main(int argc, char **argv)
     state(10) = 0;
     state(11) = 0;
 
-    in.vertFwd = 0;
-    in.vertRear = 0;
-    in.latFwd = 0;
-    in.latRear = 0;
-    in.tailThruster = 0;
-    in.tailRudder = 0;
-    in.tailElevator = 0;
+    in.vert_fore = 0;
+    in.vert_aft = 0;
+    in.lat_fore = 0;
+    in.lat_aft = 0;
+    in.tail_thruster = 0;
+    in.tail_rudder = 0;
+    in.tail_elevator = 0;
 
     fp_nav.open( "/tmp/log_nav.txt", ios::out);
     fp.open("/tmp/log.txt", ios::out);
@@ -779,7 +821,6 @@ int main(int argc, char **argv)
         if(ret > 0)
             lcm.handle();
     }
-    delete slamConfigFile;
     delete map_projection_sim;
     if( fp.is_open())
     	fp.close();
