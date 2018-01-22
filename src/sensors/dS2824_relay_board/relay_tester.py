@@ -12,9 +12,10 @@ def Main():
     channel = 'RELAY_CONTROL'
 
     print('ACFR USYD dS2824 Relay TESTER started for driver LCM channel: {}'.format(channel))
-    if len(sys.argv) < 3:
-        print('Usage: python relay_tester.py <relay number> <0/1>')
-        print(' e.g.  python relay_tester.py 8 1    (to turn relay 8 on)\n')
+    if len(sys.argv) < 4:
+        print('Usage: python relay_tester.py <R/O> <relay number> <0/1>')
+        print(' e.g.  python relay_tester.py R 8 1    (to turn relay 8 on)\n')
+        print('       python relay_tester.py O 5 0    (to turn i/o 5 off)\n')
         sys.exit()
 
     # Setup LCM
@@ -22,11 +23,18 @@ def Main():
 
     msg = relay_command_t()
 
-    msg.relay_number = int(sys.argv[1])
-    msg.relay_request = int(sys.argv[2])
-    msg.relay_off_delay = 0
-    msg.io_number = 0
-    msg.io_request = 0
+    if str(sys.argv[1]) == 'R':
+         msg.relay_number = int(sys.argv[2])
+         msg.relay_request = int(sys.argv[3])
+         msg.relay_off_delay = 0
+         msg.io_number = 0
+         msg.io_request = 0
+    elif str(sys.argv[1]) == 'O':
+         msg.io_number = int(sys.argv[2])
+         msg.io_request = int(sys.argv[3])
+         msg.relay_off_delay = 0
+         msg.relay_number = 0
+         msg.relay_request = 0
     msg.utime = long(time.time())*1000000
     lc.publish(channel, msg.encode())
 

@@ -32,12 +32,13 @@
 #define ON_DELAY_LEN 20                 // Message length for ASCII 'on' message with delay for auto 'off' 
 #define BUFLENGTH 128                   // Buffer length for incoming tcp messages
 #define SELECT_TIMEOUT 10000            // usec block timeout on select for tcp and LCM
-#define RETRIES 3						// Number of attempts to receive status over tcp before skipping relay (status update)
+#define RETRIES 2						// Number of attempts to receive status over tcp before skipping relay (status update)
 
 typedef struct
 {
     lcm_t *lcm;
     char root_key[64];
+    char *channel_status; // lcm channel name for status message outgoing
     int64_t prev_time; // arrival time of previous LCM request message
     acfr_sensor_t *sensor; // tcp connection to board
     bool ok_response; // whether an ok response has been received back from the board, to acknowledge the request
@@ -65,10 +66,6 @@ void signal_handler(int sig_num)
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-    if (state->verbose)
-    {
-        fprintf(stderr,".");
-    }
 	int cmd_len = 0;
     int len = 0;
 	int res = 0;
@@ -82,91 +79,96 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     FD_SET(state->sensor->fd, &rfds); // add the relay file descriptor to the set to watch
     memset(buf, 0, sizeof(buf));
 
-	char get_relay_cmd[GET_LEN] = {'G','R',' ','n','n','\n'};
+	char get_relay_cmd[GET_LEN]; 
 	cmd_len = GET_LEN;
 
     for (int i = 1; i <= NUM_RELAYS; i++)
     {
-		// copy in the relay number digits over the place holder 'n's
+		// copy in the relay number digits 
         div_t divresult = div(i,10);
-        get_relay_cmd[3] = atoi((const char*)&divresult.quot);
-        get_relay_cmd[4] = atoi((const char*)&divresult.rem);
+        sprintf(get_relay_cmd, "GR %d%d\n", (int)divresult.quot, (int)divresult.rem);
 		// send status request
 		res = acfr_sensor_write(state->sensor, get_relay_cmd, cmd_len);
-        if (state->verbose)
-        {
-            fprintf(stderr, "Relay cmd: %s", get_relay_cmd);
-        }
+        //if (state->verbose)
+        //{
+        //    fprintf(stderr, "Relay cmd: %s", get_relay_cmd);
+        //}
         if (res < 0)
         {
-            fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
+            fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board: %i - %s\n", errno, strerror(errno));
 		}
 		// Get response from relay board
-		dup_rfds = rfds; // reset file descriptors
-        tv.tv_sec = 0;
-        tv.tv_usec = SELECT_TIMEOUT;
         bool success = false;
         int count = 0;
+        len = 0;
 		// check incoming message source
         while (!success && count < RETRIES)
         {
+        	dup_rfds = rfds; // reset file descriptors
+			tv.tv_sec = 0;
+            tv.tv_usec = SELECT_TIMEOUT;
             ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
-            if(ret == -1) 
+            if (ret == -1) 
             {
                 fprintf(stderr, "dS2824 Relay Driver: Select failure: %i", errno);
             }
-            else if(ret != 0) // check incoming message
+            else if (ret > 0) // check incoming message
             {
-                if(FD_ISSET(state->sensor->fd, &dup_rfds)) // tcp, read the bytes
+                if (FD_ISSET(state->sensor->fd, &dup_rfds)) // tcp, read the bytes
                 {
-                   len += acfr_sensor_read(state->sensor, &buf[len], BUFLENGTH - len);
+                    len += acfr_sensor_read(state->sensor, &buf[len], BUFLENGTH - len);
                     if (len > 0)
                     {
                         if ((buf[0] == 'A') && (len >= 2) && (buf[1] == 'c')) // Active message
                         {
 		    				state->state_list = state->state_list | (uint32_t)(pow(2, i-1)); // Switch bit on
-		    				len = 0; // full message received reset read char length
+                            success = true;
 		    			}
 		    			else if ((buf[0] == 'I') && (len >= 2) && (buf[1] == 'n')) // InActive message
                         {
                             state->state_list = state->state_list & ~(uint32_t)(pow(2, i-1)); // Switch bit off
-		    				len = 0;
+                            success = true;
 		    			}
 		    			else
 		    			{
-		    				len = 0;
 		    				if (state->verbose)
 		    				{
 		    					fprintf(stderr, "dS2824 Relay Driver: Unknown incoming tcp message: %s\n", buf);
 		    				}
 		    			} // end if unknown message
 		    		} // end if chars read
+                    len = 0; // message received reset read char length
                 } // end if tcp
             } // end if select
             count ++;
-        } // end success
+        } // end success while loop
         if (!success)
         {
-            fprintf(stderr, "dS2824 Relay Driver: Cannot detect state of Relay %d status update skipped\n", i);
+            fprintf(stderr, "dS2824 Relay Driver: Cannot detect state of Relay %d, status update skipped\n", i);
         }
     } // end relays
 
-	char get_io_cmd[GET_LEN-1] = {'G','I',' ','n','\n'};
+	char get_io_cmd[GET_LEN-1];
 	cmd_len = GET_LEN-1;
+// 	   fprintf(stderr, "%d %d %X \n", 1, (uint32_t)(pow(2, 1-1)), (uint32_t)(pow(2, 1-1)));
+//     fprintf(stderr, "%d %d %x \n", 2, (uint32_t)(pow(2, 2-1)), (uint32_t)(pow(2, 2-1)));
+//     fprintf(stderr, "%d %d %X \n", 3, (uint32_t)(pow(2, 3-1)), (uint32_t)(pow(2, 3-1)));
+//     fprintf(stderr, "%d %d %X \n", 4, (uint32_t)(pow(2, 4-1)), (uint32_t)(pow(2, 4-1)));
+//     fprintf(stderr, "%d %d %X \n", 5, (uint32_t)(pow(2, 5-1)), (uint32_t)(pow(2, 5-1)));
 
     for (int i = 1; i <= NUM_IOS; i++)
     {
         // copy in the relay number digits over the place holder 'n's
-        get_io_cmd[3] = atoi((const char*)&i);
-		// send status request
+        sprintf(get_io_cmd, "GI %d\n", i); 
+        // send status request
         res = acfr_sensor_write(state->sensor, get_io_cmd, cmd_len);
-        if (state->verbose)
-        {
-            fprintf(stderr, "IO cmd: %s", get_io_cmd); 
-        }
+        //if (state->verbose)
+        //{
+        //    fprintf(stderr, "IO cmd: %s", get_io_cmd); 
+        //}
         if (res < 0)
         {
-            fprintf(stderr, "dS2824 Relay Driver (IO): Failed to write to relay board. %i - %s", errno, strerror(errno));
+            fprintf(stderr, "dS2824 Relay Driver (IO): Failed to write to relay board: %i - %s\n", errno, strerror(errno));
         }
 		// Get response from relay board
 		dup_rfds = rfds; // reset file descriptors
@@ -182,7 +184,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             {
                 fprintf(stderr, "dS2824 Relay Driver (IO): Select failure: %i", errno);
             }
-            else if(ret != 0) // check incoming message
+            else if(ret > 0) // check incoming message
             {
                 if(FD_ISSET(state->sensor->fd, &dup_rfds)) // tcp, read the bytes
                 {
@@ -191,32 +193,47 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
                     {
                         if ((buf[0] == 'A') && (len >= 2) && (buf[1] == 'c')) // Active message
                         {
-                            state->state_list = state->state_list | (uint32_t)(pow(2, i-1)); // Switch bit on
-                            len = 0; // full message received reset read char length
+                            state->state_list = state->state_list | (uint32_t)(pow(2, NUM_RELAYS + i-1)); // Switch bit on (bits 25..32 for ios)
+                            success = true;
                         }
                         else if ((buf[0] == 'I') && (len >= 2) && (buf[1] == 'n')) // InActive message
                         {
-                            state->state_list = state->state_list & ~(uint32_t)(pow(2, i-1)); // Switch bit off
-                            len = 0;
+                            state->state_list = state->state_list & ~(uint32_t)(pow(2, NUM_RELAYS + i-1)); // Switch bit off (bits 25..32 for ios)
+                            success = true;
                         }
                         else
                         {
-                            len = 0;
                             if (state->verbose)
                             {
                                 fprintf(stderr, "dS2824 Relay Driver (IO): Unknown incoming tcp message: %s\n", buf);
                             }
                         } // end if unknown message
                     } // end if chars read
+                    len = 0; // message received reset read char length
                 } // end if tcp
             } // end if select
             count ++;
         } // end success
         if (!success)
         {
-            fprintf(stderr, "dS2824 Relay Driver (IO): Cannot detect state of IO %d status update skipped\n", i);
+            fprintf(stderr, "dS2824 Relay Driver (IO): Cannot detect state of IO %d, status update skipped\n", i);
         }
     } //end ios
+
+    // break status message into bytes (for LCM)
+    acfrlcm_relay_status_t status_msg;
+    status_msg.utime = timestamp_now();
+    status_msg.state_list[0] = (state->state_list >> 24) & 0xFF;
+    status_msg.state_list[1] = (state->state_list >> 16) & 0xFF;
+    status_msg.state_list[2] = (state->state_list >> 8) & 0xFF;
+    status_msg.state_list[3] = state->state_list & 0xFF;
+    // publish status message
+    acfrlcm_relay_status_t_publish(state->lcm, state->channel_status, &status_msg);
+
+    if (state->verbose) // print status
+    {
+       fprintf(stderr, "dS2824 Relay Driver: HB Update status: %X\n", state->state_list);
+    }
 } // end hb handler
 
 // handles incoming LCM relay requests, sends requests to the board via tcp
@@ -225,7 +242,7 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
     state_t *state = (state_t *)u;
     if (state->verbose)
     {
-        fprintf(stderr, "LCM");
+        fprintf(stderr, "dS2824 Relay Driver: Received LCM relay state request\n");
     }
     // if message timestamp is latest received, and still valid (not older than 5s)
     if ((mc->utime >= state->prev_time) && ((timestamp_now() - CMD_TIMEOUT) <= mc->utime))
@@ -235,10 +252,10 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
 
         int len = 0;
         // Set relay state command (not I/O output state)
-        if ((mc->relay_number > 0) && (mc->relay_number <= NUM_IOS)) // TODO && (mc->relay_device[mc->relay_number] != "no_device"))
+        if ((mc->relay_number > 0) && (mc->relay_number <= NUM_RELAYS)) // TODO && (mc->relay_device[mc->relay_number] != "no_device"))
         {
-            char set_relay_on_cmd[ON_LEN] = {'S','R',' ','n','n',' ','o','n','\n'};
-            char set_relay_off_cmd[OFF_LEN] = {'S','R',' ','n','n',' ','o','f','f','\n'};
+            char set_relay_on_cmd[ON_LEN];
+            char set_relay_off_cmd[OFF_LEN];
 			div_t divresult = div(mc->relay_number,10);
 
             // send SR (set relay) command
@@ -246,9 +263,9 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             {
                 len = ON_LEN;
 				// copy in the relay number digits over the place holder 'n's
-            	set_relay_on_cmd[3] = atoi((const char*)&divresult.quot);
-            	set_relay_on_cmd[4] = atoi((const char*)&divresult.rem);
-				// If relay off delay value is set, need to turn the relay off again after that many ms
+                sprintf(set_relay_on_cmd, "SR %d%d on\n", (int)divresult.quot, (int)divresult.rem);
+				
+                // If relay off delay value is set, need to turn the relay off again after that many ms
 				if ((mc->relay_request == true) && (mc->relay_off_delay >= MIN_DELAY) && (mc->relay_off_delay <= MAX_DELAY))
             	{
                 	// TODO - implement delayed off command functionality
@@ -257,7 +274,7 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
 				// Then send the command
             	if (state->verbose)
             	{
-            	    fprintf(stderr, "Relay on command: %s/n",set_relay_on_cmd);
+            	    fprintf(stderr, "Relay on command: %s", set_relay_on_cmd);
             	}
             	state->ok_response = false; // set response received equal to false
             	state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
@@ -270,14 +287,13 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             else // false: set OFF
             {
                 len = OFF_LEN;
-				// copy in the relay number digits over the place holder 'n's
-            	set_relay_off_cmd[3] = atoi((const char*)&divresult.quot);
-            	set_relay_off_cmd[4] = atoi((const char*)&divresult.rem);
+				// copy in the relay number digits 
+                sprintf(set_relay_off_cmd, "SR %d%d off\n", (int)divresult.quot, (int)divresult.rem);
 
             	// Then send the command
             	if (state->verbose)
             	{
-            	    fprintf(stderr, "Relay off command: %s/n",set_relay_off_cmd);
+            	    fprintf(stderr, "Relay off command: %s", set_relay_off_cmd);
             	}
             	state->ok_response = false; // set response received equal to false
             	state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
@@ -291,18 +307,18 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
         // Set I/O output state command (not relay state)
         else if ((mc->io_number > 0) && (mc->io_number <= NUM_IOS)) // TODO && (mc->io_device[mc->io_number] != "no_device"))
         {
-            char set_io_on_cmd[ON_LEN-1] = {'S','O',' ','n',' ','o','n','\n'};
-			char set_io_off_cmd[OFF_LEN-1] = {'S','O',' ','n',' ','o','f','f','\n'};
+            char set_io_on_cmd[ON_LEN-1];
+			char set_io_off_cmd[OFF_LEN-1];
 			// send SO (set I/O output) command
 			if (mc->io_request == true) // set ON
             {
                 len = ON_LEN-1;
 				// copy in the relay number digits over the place holder 'n's
-            	set_io_on_cmd[3] = atoi((const char*)&mc->io_number);
+            	sprintf(set_io_on_cmd, "SO %d on\n", mc->io_number);
 				// Then send the command
             	if (state->verbose)
             	{
-            	    fprintf(stderr, "I/O on command: %s/n",set_io_on_cmd);
+            	    fprintf(stderr, "I/O on command: %s",set_io_on_cmd);
             	}
             	state->ok_response = false; // set response received equal to false
             	state->request_no = NUM_RELAYS + mc->io_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
@@ -312,18 +328,16 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             	{       
             	    fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
             	}
-
-
             }
             else // false: set OFF
             {
                 len = OFF_LEN-1;
 				// copy in the relay number digits over the place holder 'n's
-            	set_io_off_cmd[3] = atoi((const char*)&mc->io_number);
+            	sprintf(set_io_off_cmd, "SO %d off\n", mc->io_number);
             	// Then send the command
             	if (state->verbose)
             	{
-            	    fprintf(stderr, "I/O off command: %s/n",set_io_off_cmd);
+            	    fprintf(stderr, "I/O off command: %s",set_io_off_cmd);
             	}
             	state->ok_response = false; // set response received equal to false
             	state->request_no = NUM_RELAYS + mc->io_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
@@ -338,16 +352,21 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
         else
         {
             // No valid state request, so ignore
+            fprintf(stderr, "Invalid State request - request relay (%d) <1..24> or io (%d) <1..8> number out of range\n", mc->relay_number, mc->io_number);
             return;
         }
         // Return to main loop to wait for response
-        return;
+    } // end if timeout
+    else
+    {
+        fprintf(stderr, "dS2824 Relay Driver: Relay Command Timeout\n");
     }
+
 } // end relay_cmd_handler
 
 int main(int argc, char **argv)
 {
-    // install the signal handler
+    // install the signalhandler
     program_exit = 0;
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler); 
@@ -399,6 +418,7 @@ int main(int argc, char **argv)
     sprintf(key, "%s.channel_status", root_key);
     printf("Requesting Parameter: %s\n", key);
     char *channel_status = bot_param_get_str_or_fail(param, key);
+    state.channel_status = channel_status;
     printf("Channel out: %s\n", (char *)channel_status);
     sprintf(key, "%s.verbose", root_key);
     bool verbose = bot_param_get_boolean_or_fail(param, key);
@@ -431,7 +451,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Could not open tcp connection to relay board: %s\n", state.root_key);
         return 0;
     }
-    acfr_sensor_canonical(state.sensor, 0x0D, 0); // see if carriage return works TODO confirm
+    acfr_sensor_canonical(state.sensor, 0x0A, 0); // see if carriage return works TODO confirm
     //state.root_key = root_key;
     
     // Incoming message buffer
@@ -451,7 +471,7 @@ int main(int argc, char **argv)
     }
 
     // Main program loop - used to call LCM handlers for incoming LCM messages and send a status message when tcp messages confirming a change are received
-    while(!program_exit)
+    while (!program_exit)
     {
         dup_rfds = rfds; // reset file descriptors
         tv.tv_sec = 0;
@@ -459,17 +479,17 @@ int main(int argc, char **argv)
         
         // check incoming message sources
         ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
-        if(ret == -1) 
+        if (ret == -1) 
         {
             fprintf(stderr, "dS2824 Relay Driver: Select failure: %i", errno);
         }
-        else if(ret != 0) // check incoming message
+        else if (ret != 0) // check incoming message
         {
-            if(FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
+            if (FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
             {
                 lcm_handle(state.lcm);
             }
-            if(FD_ISSET(state.sensor->fd, &dup_rfds)) // tcp, read the bytes
+            if (FD_ISSET(state.sensor->fd, &dup_rfds)) // tcp, read the bytes
             {
                 len += acfr_sensor_read(state.sensor, &buf[len], BUFLENGTH - len);
                 if (len > 0)
