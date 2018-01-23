@@ -395,7 +395,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
         if(++loopCount % 60 == 0)
         {
-            printf( "Time=%l Avg charge = %d\n",
+            printf( "Time=%li Avg charge = %d\n",
                     state->ps.utime, state->ps.avg_charge_p);
         }
     }
@@ -429,10 +429,9 @@ parse_args (int argc, char **argv, char **channel_name)
     int opt;
 
     const char *default_name = "DEFAULT";
-    *vehicle_name = malloc(strlen(default_name)+1);
-    strcpy(*vehicle_name, default_name);
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
     
-    int n;
     while ((opt = getopt (argc, argv, "hn:")) != -1)
     {
         switch(opt)
@@ -441,9 +440,9 @@ parse_args (int argc, char **argv, char **channel_name)
             print_help (0, argv);
             break;
         case 'n':
-            free(*vehicle_name);
-            *vehicle_name = malloc(200);
-            strnprintf(*channel_name, 200, "%.BATTERY", (char *)optarg);
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.BATTERY", (char *)optarg);
             break;
          }
     }
@@ -489,6 +488,8 @@ int main (int argc, char *argv[])
         io = io_serial;
     else if(!strcmp(io_str, "socket"))
         io = io_socket;
+    else
+        return -1;
 
     char **serial_devs;
     char **inet_ports;
