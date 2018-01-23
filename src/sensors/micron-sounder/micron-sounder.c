@@ -7,6 +7,41 @@
 #include "acfr-common/timestamp.h"
 #include "acfr-common/sensor.h"
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.MICRON_SOUNDER", (char *)optarg);
+            break;
+         }
+    }
+}
+
 int program_exit;
 void signal_handler(int sig_num)
 {
@@ -20,6 +55,10 @@ main (int argc, char *argv[])
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
+
+
+    char *channel_name;
+    parse_args(argc, argv, &channel_name);
 
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
@@ -63,7 +102,7 @@ main (int argc, char *argv[])
                 strncpy(value, buf, strlen(buf) - 1);
                 micron.altitude = atof(value);
 
-                senlcm_micron_sounder_t_publish(lcm, "MICRON_SOUNDER", &micron);
+                senlcm_micron_sounder_t_publish(lcm, channel_name, &micron);
             }
         }
     }
