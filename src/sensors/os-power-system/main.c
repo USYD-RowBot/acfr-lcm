@@ -46,6 +46,7 @@ typedef struct
     senlcm_os_power_system_t ps;
     int initialised[MAX_CONTS];
     int batt_present[MAX_CONTS][8];
+    char *channel_name;
 } state_t;
 
 /*
@@ -412,6 +413,41 @@ int readline(int fd, char *buf, int max_len)
     return i;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*vehicle_name);
+            *vehicle_name = malloc(200);
+            strnprintf(*channel_name, 200, "%.BATTERY", (char *)optarg);
+            break;
+         }
+    }
+}
 
 int program_exit;
 void
@@ -430,6 +466,8 @@ int main (int argc, char *argv[])
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
+
+    parse_args(argc, argv, &state.channel_name);
 
 
     // read the config file
