@@ -3,6 +3,8 @@
 
 	30/9/10
 	Christian Lees
+	
+	Moved to the ACFR sensor driver 23/01/18 CL
 */
 
 #include <stdio.h>
@@ -12,9 +14,11 @@
 #include <string.h>
 #include <unistd.h>
 
-
-#include "perls-common/units.h"
-#include "perls-common/generic_sensor_driver.h"
+#include "acfr-common/timestamp.h"
+#include "acfr-common/sensor.h"
+#include "acfr-common/units.h"
+//#include "perls-common/units.h"
+//#include "perls-common/generic_sensor_driver.h"
 #include "perls-lcmtypes/senlcm_parosci_t.h"
 
 #define PAROSCI_START_CMD    "*0100P4\r\n" /* continuously sample and send      */
@@ -74,13 +78,111 @@ static int parseParosci(char *msg_ptr,double *depth)
         return 0;
 }
 
-
+/*
 static int myopts(generic_sensor_driver_t *gsd)
 {
     getopt_add_description (gsd->gopt, "Paroscientific depth sensor driver.");
     return 0;
 }
+*/
 
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
+
+int program_exit;
+void signal_handler(int sig_num)
+{
+    // do a safe exit
+    program_exit = 1;
+}
+
+int main(int argc, char *argv[])
+{
+    // install the signal handler
+    program_exit = 0;
+    signal(SIGINT, signal_handler);
+    
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+    char sensor_channel[100];
+    snprintf(sensor_channel, 100, "%s.PAROSCI", vehicle_name);
+
+    lcm_t *lcm = lcm_create(NULL);
+
+    char rootkey[64];
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
+    if(sensor == NULL)
+        return 0;
+
+    acfr_sensor_canonical(sensor, '\r', '\n');
+    acfr_sensor_write(sensor, PAROSCI_START_CMD, strlen(PAROSCI_START_CMD));
+
+    char parosci_str[256];
+    int bytes;
+    
+    while(!program_exit)
+    {
+	memset(parosci_str, 0, sizeof(parosci_str));
+        bytes = acfr_sensor_read_timeout(sensor, parosci_str, sizeof(parosci_str), 1);
+        if(bytes > 0)
+        {
+        	senlcm_parosci_t parosci;
+        	parosci.utime = timestamp_now();
+	    	if(parseParosci(parosci_str, &parosci.raw))
+            	if(validateParosci(parosci_str) == 0)
+            	{
+				    parosci.depth = (parosci.raw - ATMOSPHERE_OFFSET) * ATMOSPHERE_CONVERSION;
+				    senlcm_parosci_t_publish (lcm, sensor_channel, &parosci);
+				}	    
+        }
+    }
+    
+    acfr_sensor_destroy(sensor);
+    
+    return 1;
+}
+    
+
+
+/*
 
 int main (int argc, char *argv[])
 {
@@ -118,3 +220,4 @@ int main (int argc, char *argv[])
     }
     gsd_write(gsd, PAROSCI_STOP_CMD, strlen(PAROSCI_STOP_CMD));
 }
+*/
