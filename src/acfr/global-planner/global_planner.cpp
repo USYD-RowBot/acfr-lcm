@@ -118,8 +118,8 @@ GlobalPlanner::GlobalPlanner() :
 {
 
 	// subscribe to the relevant LCM messages
-	lcm.subscribeFunction("TASK_PLANNER_COMMAND."+vehicle_name, onGlobalPlannerCommand, this);
-	lcm.subscribeFunction("PATH_RESPONSE."+vehicle_name, onPathResponse, this);
+	lcm.subscribeFunction(vehicle_name+".TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", onPathResponse, this);
 
 	// set default values
 	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
@@ -287,7 +287,7 @@ int GlobalPlanner::clock()
 		// Send the global state change message
 		cout << "Publishing new global state: " << (int) (gpState.state)
 				<< endl;
-		lcm.publish("GLOBAL_STATE."+vehicle_name, &gpState);
+		lcm.publish(vehicle_name+".GLOBAL_STATE", &gpState);
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
@@ -405,7 +405,7 @@ int GlobalPlanner::sendLeg()
 			<< ", " << (*currPoint).pose.getZ() << endl;
 
 	// Send the message
-	lcm.publish("PATH_COMMAND."+vehicle_name, &pc);
+	lcm.publish(vehicle_name+".PATH_COMMAND", &pc);
 	legStartTime = timestamp_now();
 
 	return 1;
@@ -453,7 +453,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< (int) (cameraTriggerMsg.enabled) << " f:"
 					<< (int) (cameraTriggerMsg.freq) << " w:"
 					<< (int) (cameraTriggerMsg.pulseWidthUs) << endl;
-			lcm.publish("CAMERA_TRIGGER."+vehicle_name, &cameraTriggerMsg);
+			lcm.publish(vehicle_name+".CAMERA_TRIGGER", &cameraTriggerMsg);
 			break;
 		case DVL:
 		    memset(&rdiCommandMsg, 0, sizeof(rdiCommandMsg));
@@ -485,7 +485,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< cmd << " I:"
 					<< (int) (rdiCommandMsg.d) << " F:"
 					<< (int) (rdiCommandMsg.i) << endl;
-            lcm.publish("RDI_CONTROL."+vehicle_name, &rdiCommandMsg);
+            lcm.publish(vehicle_name+".RDI_CONTROL", &rdiCommandMsg);
 			break;
 		}
 	}

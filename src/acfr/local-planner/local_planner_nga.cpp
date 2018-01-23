@@ -1,4 +1,4 @@
-#include "local_planner.hpp"
+#include "local_planner_nga.hpp"
 #include <string>
 #include <libgen.h>
 #include <signal.h>
@@ -17,200 +17,35 @@
 using namespace std;
 
 
-// Exit handler, I swear this is the only global
-bool mainExit;
-void signalHandler(int sig)
-{
-	mainExit = true;
-}
-
-// Nav callback
-void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const acfrlcm::auv_acfr_nav_t *nav, LocalPlanner *lp)
-{
-	lp->onNav(nav);
-}
-
-// Path command callback
-void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
-		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
-		LocalPlanner *lp)
-{
-	lp->onPathCommand(pc);
-}
-
-// Global State command callback
-void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
-		const std::string& channel,
-		const acfrlcm::auv_global_planner_state_t *gpState, LocalPlanner *lp)
-{
-	lp->onGlobalState(gpState);
-}
-
-// heartbeat callback
-void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp)
-{
-	// We haven't reached our goal but don't have any more waypoints.
-	// 	Let's recalculate a feasible path.
-	// Addition: Make the replanning stage occur at a set period
-	//        if( (lp->waypoints.size() == 0) && (lp->getDestReached() == false) && (lp->getNewDest() == true))// ||  (( timestamp_now() - lp->getReplanTime() )/1000000 > 5) ) // if we want faster replanning, or a different number than the heartbeat, this callback needs to be made faster and this variable can be used
-	static long count = 0;
-	//	double timeSinceReplan = (timestamp_now() - lp->getReplanTime()) / 1000000.;
-
-	if ((lp->getDestReached() == false && lp->getNewDest() == true) &&
-	//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
-			(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()))
-	{
-
-		if (lp->getWaypointTimePassedSec() > lp->getWaypointTimeout())
-			cout << "Way point timed out: " << lp->getWaypointTimePassedSec()
-					<< " > " << lp->getWaypointTimeout() << endl;
-
-		cout << endl << "------------------------" << endl
-				<< "RECALCULATING A NEW PATH" << endl
-				<< "------------------------" << endl << endl;
-
-		lp->calculateWaypoints();
-		lp->resetWaypointTime(timestamp_now());
-		lp->resetReplanTime(timestamp_now());
-	}
-	else if (++count % 10 == 0)
-	{
-		//		cout << "Time since replanning:" << timeSinceReplan << endl << endl;
-	}
-
-	lp->sendResponse();
-}
-
 /** *************************************************************************
  *
  * LocalPlanner
  *
  */
-LocalPlanner::LocalPlanner() :
-		startVel(0), destVel(0), newDest(false), destReached(false),
-		depthMode(0), diveMode(0), destID(0), turningRadius(1.0), maxPitch(0),
-		lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0),
-		velChangeDist(1.0), defaultLegVel(1.0), waypointTimeout(1e3),
-		forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
-		maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300),
-		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
-		waypointTime(timestamp_now()), replanTime(timestamp_now())
+LocalPlannerTunnel::LocalPlannerTunnel() :
+    LocalPlanner()
 {
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
 
-	cout << endl << endl << endl << "LocalPlanner started" << endl;
+	cout << endl << endl << endl << "LocalPlannerNGA started" << endl;
 }
 
-LocalPlanner::~LocalPlanner()
+// this is so the parent class destructor is called
+// do NOT delete
+LocalPlannerTunnel::~LocalPlannerTunnel()
 {
-
-	if (fp.is_open())
-		fp.close();
-	if (fp_wp.is_open())
-		fp_wp.close();
-}
-
-int LocalPlanner::subscribeChannels()
-{
-	// sunscribe to the required LCM messages
-	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", onNavLCM, this);
-	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
-	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
-	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
-        return 1;
 }
 
 
-/**
- * Copy current nav solution and process the waypoints
- */
-int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
-{
-
-	currPose.setPosition(nav->x, nav->y, nav->depth);
-	currAltitude = nav->altitude;
-
-	// Instead of heading, we make the current pose "heading" actually the slip
-	// 	angle (bearing), for control
-#if 0
-	currPose.setRollPitchYawRad( nav->roll, nav->pitch, nav->heading );
-#else
-	double bearing = atan2(
-			+nav->vy * cos(nav->heading) + nav->vx * sin(nav->heading),
-			-nav->vy * sin(nav->heading) + nav->vx * cos(nav->heading));
-	while (bearing < -M_PI)
-		bearing += 2 * M_PI;
-	while (bearing > M_PI)
-		bearing -= 2 * M_PI;
-	currPose.setRollPitchYawRad(nav->roll, nav->pitch, bearing);
-#endif
-	currVel = nav->vx, nav->vy, nav->vz;
-
-	// for now only process waypoints or dive commands if we are in
-	// RUN mode.  This will need to be modified to take into account
-	// an active PAUSE mode.
-	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
-	{
-		processWaypoints();
-	}
-
-	return 1;
-}
-
-/**
- * We have received a new path command.
- * Let's calcualte a new path.
- */
-int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
-{
-	bool status = false;
-	// Reset destination pose
-	destPose.setIdentity();
-
-	// Set destination pose and velocity
-	destPose.setPosition(pc->waypoint[0], pc->waypoint[1], pc->waypoint[2]);
-	destPose.setRollPitchYawRad(pc->waypoint[3], pc->waypoint[4],
-			pc->waypoint[5]);
-	destVel = pc->waypoint[6];
-	depthMode = pc->depth_mode;
-	destID = pc->goal_id;
-
-	cout << timestamp_now() << " Got a new DEST point " << endl << "\t"
-			<< "DestPose=" << destPose.getX() << "," << destPose.getY() << ","
-			<< destPose.getZ() << " < " << destPose.getYawRad() / M_PI * 180
-			<< endl;
-
-	setDestReached(false);
-	setNewDest(true);
-	if ((status = calculateWaypoints()) == false)
-	{
-		// TODO: We must do something more clever here!!!!!
-		cerr
-				<< endl
-				<< "----------------------------------------"
-				<< "Can't calcualte a feasible path. Let's cruise and see what happens"
-				<< "----------------------------------------" << endl << endl;
-	}
-	resetWaypointTime(timestamp_now());
-
-	return status;
-}
-
-#define DIVE_REV_VEL -0.5
-//#define DIVE_REV_VEL 0 // for lab testing
-#define DIVE_PICTH (10.0 / 180.0 * M_PI)
-#define DIVE_DEPTH 0.5
 
 /**
  * Call Dubins path planner to generate a path from current location to the
  * destination waypoint
  */
-int LocalPlanner::calculateWaypoints()
+int LocalPlannerTunnel::calculateWaypoints()
 {
 
 	// Get a copy of curr and dest pose
@@ -299,31 +134,8 @@ int LocalPlanner::calculateWaypoints()
 	return success;
 }
 
-/**
- * Account for changes in system state
- */
-int LocalPlanner::onGlobalState(
-		const acfrlcm::auv_global_planner_state_t *gpStateLCM)
-{
-	cout << "Change of global state to: " << (int) (gpStateLCM->state) << endl;
-	gpState = *gpStateLCM;
 
-	/* for the moment, send a STOP command to the low level controller
-	 * for transitions into any state but RUN.  This may need to be
-	 * modified for more complex PAUSE or ABORT behaviours.
-	 */
-	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
-	{
-		// form a STOP message to send
-		acfrlcm::auv_control_t cc;
-		cc.utime = timestamp_now();
-		cc.run_mode = acfrlcm::auv_control_t::STOP;
-		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
-	}
-	return 1;
-}
-
-int LocalPlanner::loadConfig(char *program_name)
+int LocalPlannerTunnel::loadConfig(char *program_name)
 {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
@@ -392,35 +204,13 @@ int LocalPlanner::loadConfig(char *program_name)
 	return 1;
 }
 
-int LocalPlanner::process()
-{
-    // setup signal handlers
-	mainExit = false;
-	signal(SIGINT, signalHandler);
-
-	int fd = lcm.getFileno();
-	fd_set rfds;
-	while (!mainExit)
-	{
-		FD_ZERO(&rfds);
-		FD_SET(fd, &rfds);
-		struct timeval timeout;
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
-		int ret = select(fd + 1, &rfds, NULL, NULL, &timeout);
-		if (ret > 0)
-			lcm.handle();
-	}
-
-	return 0;
-}
 
 /**
  * Look at the next waypoint and
  * 1) remove it from the list if we have reached it or
  * 2) calculate commands for the controller
  */
-int LocalPlanner::processWaypoints()
+int LocalPlannerTunnel::processWaypoints()
 {
 
 	// Nothing to do
@@ -525,48 +315,7 @@ int LocalPlanner::processWaypoints()
 
     cc.depth = depth_ref;
 
-	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+	lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
 	return 1;
-}
-
-int LocalPlanner::sendResponse()
-{
-	acfrlcm::auv_path_response_t pr;
-	pr.utime = timestamp_now();
-	pr.goal_id = destID;
-	pr.are_we_there_yet = destReached;
-	if (waypoints.size() > 2)
-		pr.distance = waypoints.size() * wpDropDist;
-	else
-		pr.distance = currPose.positionDistance(destPose);
-	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
-
-	return 1;
-}
-
-void LocalPlanner::printWaypoints() const {
-	cout << "waypoints = [" << endl;
-	for (unsigned int i = 0; i < waypoints.size(); i++)
-	{
-		printf( "%3.2f, %3.2f, %3.2f;\n",
-				waypoints.at(i).getX(),
-				waypoints.at(i).getY(),
-				waypoints.at(i).getZ() );
-	}
-	cout << "];" << endl;
-}
-bool LocalPlanner::publishWaypoints() {
-	acfrlcm::auv_local_path_t lp;
-	lp.utime = timestamp_now();
-	int i;
-	// TODO: comparison between signed and unsiged!
-	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
-		lp.x[i] = waypoints[i].getX();
-		lp.y[i] = waypoints[i].getY();
-		lp.z[i] = waypoints[i].getZ();
-	}
-	lp.num_el = i;
-	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
-	return true;
 }
 

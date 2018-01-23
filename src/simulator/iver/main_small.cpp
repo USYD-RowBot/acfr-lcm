@@ -650,11 +650,9 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        //lcm->publish("ACFR_NAV.IVERSIM", &nav);
+        //lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
-    //	lcm->publish("ACFR_NAV", &nav);
-    // for simulating the sensors, acfr_nav_new should be publishing the ACFR_NAV
 
     //IMU
     //rotate gravity into local frame
@@ -695,7 +693,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     imu.accel[0] = accel[0] + grav_b[0] + ba_x + STD_A*rand_n();
     imu.accel[1] = accel[1] + grav_b[1] + ba_y + STD_A*rand_n();
     imu.accel[2] = accel[2] + grav_b[2] + ba_z + STD_A*rand_n();
-    lcm->publish("IMU."+vehicle_name, &imu);
+    lcm->publish(vehicle_name+".IMU", &imu);
 
     //    if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     //    {
@@ -716,7 +714,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         tcm.roll= state(3) + rand_n()*0.25*M_PI/180;
         tcm.pitch= state(4) + rand_n()*0.25*M_PI/180;
         tcm.temperature = 20;
-        lcm->publish("TCM."+vehicle_name, &tcm);
+        lcm->publish(vehicle_name+".TCM", &tcm);
     }
 
     // YSI depth
@@ -734,7 +732,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         ysi.conductivity = 0;
         ysi.oxygen = 0;
         ysi.battery = 0;
-        lcm->publish("YSI."+vehicle_name, &ysi);
+        lcm->publish(vehicle_name+".YSI", &ysi);
     }
 
     // GPS
@@ -815,7 +813,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             gpsd3->fix.mode = 3;
             gpsd3->status = 1;
             gpsd3->tag = strdup("");
-            lcm->publish("GPSD_CLIENT."+vehicle_name, gpsd3);
+            lcm->publish(vehicle_name+".GPSD_CLIENT", gpsd3);
             delete gpsd3;
         }
     }
@@ -846,7 +844,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             rdi.pd4.btv_status = 1; // beyond dvl bl range
 
         rdi.pd4.speed_of_sound = 1521.495;
-        lcm->publish("RDI."+vehicle_name, &rdi);
+        lcm->publish(vehicle_name+".RDI", &rdi);
     }
 
     last_obs_time = timeStamp;
@@ -976,10 +974,10 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("IVER_MOTOR."+vehicle_name, on_motor_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".IVER_MOTOR", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
-    //lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
+    //lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
 

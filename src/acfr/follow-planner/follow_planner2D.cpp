@@ -85,11 +85,11 @@ FollowPlanner2D::~FollowPlanner2D()
 int FollowPlanner2D::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
-	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, onNavLCM, this);
-	lcm.subscribeFunction("GLOBAL_STATE."+vehicle_name, onGlobalStateLCM, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", onNavLCM, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_1HZ", recalculate, this);
 
-	lcm.subscribeFunction("ACFR_NAV."+target_name, onTargetNavLCM, this);
+	lcm.subscribeFunction(target_name+".ACFR_NAV", onTargetNavLCM, this);
         return 1;
 }
 
@@ -298,7 +298,7 @@ bool FollowPlanner2D::publishWaypoint() {
     gp_msg.command = acfrlcm::auv_global_planner_t::GOTO;
     cout << "Sending new GOTO mission" << endl;
     cout << gp_msg.str << endl;
-    lcm.publish("TASK_PLANNER_COMMAND."+vehicle_name, &gp_msg);
+    lcm.publish(vehicle_name+".TASK_PLANNER_COMMAND", &gp_msg);
 
     return true;
 }

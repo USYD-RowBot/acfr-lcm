@@ -73,6 +73,8 @@ auv_nga_motor_command_t in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
+string vehicle_name = "DEFAULT";
+
 void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 {
     double Xa, Ya, Za;
@@ -199,14 +201,6 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     if(fabs(prop_force) > 10.0)
         prop_force = prop_force / fabs(prop_force) * 10;
     
-    // external applied forces
-    double X, Y, Z, K, M, N;
-    X = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
-
-    Y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
-    Z = prop_force * sin(in.tail_elevator);
-    K = prop_torque;  // this is approximate and still needs coefficients defined.
-    // it may also not be strictly just roll if the thrust is vectored
 
     // the tunnel thruster forces needs to be determined as well
     // the lateral components affect yaw - psi and motion in y
@@ -215,13 +209,40 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     //
     double tunnel_diameter = 0.1;
 
+    // there is ZERO basis for this number (we use +-1500, full range is +-2048
+    // from the DAC
+    double to_rps = 0.03;
+
+    n = in.vert_fore * to_rps;
     double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.vert_aft * to_rps;
+    double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.lat_fore * to_rps;
+    double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    n = in.lat_aft * to_rps;
+    double lat_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
 
+    double mutual_vert = vert_fore_force + vert_aft_force;
+    double differential_vert = vert_fore_force - vert_aft_force;
+
+    double mutual_lat = lat_fore_force + lat_aft_force;
+    double differential_lat = lat_fore_force - lat_aft_force;
+
+    double tail_x = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_z = prop_force * sin(in.tail_elevator);
+
+    // external applied forces
+    double X, Y, Z, K, M, N;
+    X = tail_x;
+    Y = tail_y + mutual_lat;
+    Z = tail_z + mutual_vert;
+
+    // it may also not be strictly just roll if the thrust is vectored
+    K = prop_torque;  // this is approximate and still needs coefficients defined.
     // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
-    M = 7.5 * Z * 1.25; // moment from vertical force on pitch about CoG
-    N = 7.5 * Y * 1.25; // moment from lateral force on heading about CoG
-
-
+    M = tail_z * 1.25 + 0.75 * differential_vert;
+    N = tail_y * 1.25 + 0.75 * differential_lat; 
 
     // Force vectors, props and control surfaces
     SMALL::Vector3D longF, latF;
@@ -453,7 +474,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.NEXTGENSIM", &nav);
+        lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
     //	lcm->publish("ACFR_NAV", &nav);
@@ -748,10 +769,10 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("NEXTGEN_MOTOR", on_motor_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".NEXTGEN_MOTOR", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
-    lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
-    lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
+    lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
+    lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
 
