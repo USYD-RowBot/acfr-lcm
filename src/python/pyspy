@@ -153,7 +153,7 @@ class Interface(object):
         while not quitting:
             self.render()
             try:
-                lc.handle()
+                lc.handle_timeout(100)
             except IOError:
                 break
 
