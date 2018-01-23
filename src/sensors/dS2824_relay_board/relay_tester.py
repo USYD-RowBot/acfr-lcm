@@ -14,8 +14,8 @@ def Main():
     print('ACFR USYD dS2824 Relay TESTER started for driver LCM channel: {}'.format(channel))
     if len(sys.argv) < 4:
         print('Usage: python relay_tester.py <R/O> <relay number> <0/1>')
-        print(' e.g.  python relay_tester.py R 8 1     (to turn relay 8 on)\n')
-        print('       python relay_tester.py O 5 0     (to turn i/o 5 off)\n')
+        print(' e.g.  python relay_tester.py R 8 1     (to turn relay 8 on)')
+        print('       python relay_tester.py O 5 0     (to turn i/o 5 off)')
         print('       python relay_tester.py D 12 1000 (to turn relay 12 on for 1000 ms))\n')
         sys.exit()
 

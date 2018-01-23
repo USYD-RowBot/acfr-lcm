@@ -39,15 +39,17 @@ typedef struct
 {
     lcm_t *lcm;
     char root_key[64];
-    char *channel_status;       // lcm channel name for status message outgoing
-    int64_t prev_time;          // arrival time of previous LCM request message
-    uint8_t hb_count;           // counts number of times enter hb handeler, to limit prints to screen
-    acfr_sensor_t *sensor;      // tcp connection to board
-    bool ok_response;           // whether an ok response has been received back from the board, to acknowledge the request
-    uint8_t request_no;         // relay or io port where the change was requested, 0: none, 1..24 relays, 25..32 = 1..8 io's
-    bool request_state;         // state that was last requested on:true/off:false
-    uint32_t state_list;        // register for state bit per relay (0: inactive, 1: active) from 1..24 relays, 25..32 = 1..8 io's
-    bool verbose;               // for extra debug prints
+    char *relay_devices[NUM_RELAYS];    // devices on system as per config file
+    char *io_devices[NUM_IOS];          // devices on system as per config file
+    char *channel_status;               // lcm channel name for status message outgoing
+    int64_t prev_time;                  // arrival time of previous LCM request message
+    uint8_t hb_count;                   // counts number of times enter hb handeler, to limit prints to screen
+    acfr_sensor_t *sensor;              // tcp connection to board
+    bool ok_response;                   // whether an ok response has been received back from the board, to acknowledge the request
+    uint8_t request_no;                 // relay or io port where the change was requested, 0: none, 1..24 relays, 25..32 = 1..8 io's
+    bool request_state;                 // state that was last requested on:true/off:false
+    uint32_t state_list;                // register for state bit per relay (0: inactive, 1: active) from 1..24 relays, 25..32 = 1..8 io's
+    bool verbose;                       // for extra debug prints
 } state_t;
 
 // Globals for signalling exit
@@ -128,7 +130,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
                             state->state_list = state->state_list & ~(uint32_t)(pow(2, i-1)); // Switch bit off
                             success = true;
 		    			}
-		    			else
+		    			else // Unknown message
 		    			{
 		    				if (state->verbose)
 		    				{
@@ -249,47 +251,68 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
         // update state
         state->prev_time = mc->utime;
 
-        int len = 0;
         // Set relay state command (not I/O output state)
-        if ((mc->relay_number > 0) && (mc->relay_number <= NUM_RELAYS)) // TODO && (mc->relay_device[mc->relay_number] != "no_device"))
+        if ((mc->relay_number > 0) && (mc->relay_number <= NUM_RELAYS))
         {
+            if (strcmp(state->relay_devices[mc->relay_number - 1], "no_device") == 0)
+            {
+                fprintf(stderr, "dS2824 Relay Board: Warning - There is no device at that relay number in the configuration\n");
+            }
+            else
+            {
+                if (state->verbose)
+                {
+                    fprintf(stderr, "dS2824 Relay Board: Request device %s \n", state->relay_devices[mc->relay_number - 1]);
+                }
+            }
             char set_relay_on_cmd[ON_LEN];
+            char set_relay_delay_cmd[ON_DELAY_LEN];
             char set_relay_off_cmd[OFF_LEN];
 			div_t divresult = div(mc->relay_number,10);
 
             // send SR (set relay) command
             if (mc->relay_request == true) // set ON
             {
-                len = ON_LEN;
-				// copy in the relay number digits over the place holder 'n's
-                sprintf(set_relay_on_cmd, "SR %d%d on\n", (int)divresult.quot, (int)divresult.rem);
-				
                 // If relay off delay value is set, need to turn the relay off again after that many ms
 				if ((mc->relay_request == true) && (mc->relay_off_delay >= MIN_DELAY) && (mc->relay_off_delay <= MAX_DELAY))
             	{
-                	// TODO - implement delayed off command functionality
-                    sprintf(set_relay_on_cmd, "SR %d%d on %10d\n", (int)divresult.quot, (int)divresult.rem, (int)mc->relay_off_delay); // Min 100, Max 2147483647
-                    len = ON_DELAY_LEN;
+                	// auto off delay command 
+                    sprintf(set_relay_delay_cmd, "SR %d%d on %10d\n", (int)divresult.quot, (int)divresult.rem, (int)mc->relay_off_delay); // Min 100, Max 2147483647
+					// Then send the command
+                    if (state->verbose)
+                    {
+                        fprintf(stderr, "dS2824 Relay Board: Relay on command: %s", set_relay_on_cmd);
+                    }
+                    state->ok_response = false; // set response received equal to false
+                    state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
+                    int res = acfr_sensor_write(state->sensor, set_relay_delay_cmd, ON_DELAY_LEN);
+                    if (res < 0)
+                    {
+                        fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board %i - %s", errno, strerror(errno));
+                    }
             	}
-				// Then send the command
-            	if (state->verbose)
-            	{
-            	    fprintf(stderr, "dS2824 Relay Board: Relay on command: %s", set_relay_on_cmd);
-            	}
-            	state->ok_response = false; // set response received equal to false
-            	state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
-            	int res = acfr_sensor_write(state->sensor, set_relay_on_cmd, len);
-            	if (res < 0)
-            	{
-            	    fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
-            	}
+				else
+				{
+                	// copy in the relay number 
+                	sprintf(set_relay_on_cmd, "SR %d%d on\n", (int)divresult.quot, (int)divresult.rem);
+					// Then send the command
+            		if (state->verbose)
+            		{
+            		    fprintf(stderr, "dS2824 Relay Board: Relay on command: %s", set_relay_on_cmd);
+            		}
+            		state->ok_response = false; // set response received equal to false
+            		state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
+            		int res = acfr_sensor_write(state->sensor, set_relay_on_cmd, ON_LEN);
+            		if (res < 0)
+            		{
+            		    fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board %i - %s", errno, strerror(errno));
+            		}
+				}
             }
             else // false: set OFF
             {
-                len = OFF_LEN;
 				// copy in the relay number digits 
                 sprintf(set_relay_off_cmd, "SR %d%d off\n", (int)divresult.quot, (int)divresult.rem);
-
             	// Then send the command
             	if (state->verbose)
             	{
@@ -297,22 +320,32 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             	}
             	state->ok_response = false; // set response received equal to false
             	state->request_no = mc->relay_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
-            	int res = acfr_sensor_write(state->sensor, set_relay_off_cmd, len); 
+            	int res = acfr_sensor_write(state->sensor, set_relay_off_cmd, OFF_LEN); 
 				if (res < 0)
 		    	{
-        			fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
+        			fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board %i - %s", errno, strerror(errno));
      			}
-			}
+			} // end off
         }
         // Set I/O output state command (not relay state)
-        else if ((mc->io_number > 0) && (mc->io_number <= NUM_IOS)) // TODO && (mc->io_device[mc->io_number] != "no_device"))
+        else if ((mc->io_number > 0) && (mc->io_number <= NUM_IOS)) 
         {
+			if (strcmp(state->io_devices[mc->io_number - 1], "no_device") == 0)
+            {
+                fprintf(stderr, "dS2824 Relay Board: Warning - There is no device at that I/O number in the configuration\n");
+            }
+            else
+            {
+                if (state->verbose)
+                {
+                    fprintf(stderr, "dS2824 Relay Board: Request device %s \n", state->io_devices[mc->io_number - 1]);
+                }
+            }
             char set_io_on_cmd[ON_LEN-1];
 			char set_io_off_cmd[OFF_LEN-1];
 			// send SO (set I/O output) command
 			if (mc->io_request == true) // set ON
             {
-                len = ON_LEN-1;
 				// copy in the relay number digits 
             	sprintf(set_io_on_cmd, "SO %d on\n", mc->io_number);
 				// Then send the command
@@ -323,15 +356,14 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             	state->ok_response = false; // set response received equal to false until we check Ok msg
             	state->request_no = NUM_RELAYS + mc->io_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
 
-            	int res = acfr_sensor_write(state->sensor, set_io_on_cmd, len);
+            	int res = acfr_sensor_write(state->sensor, set_io_on_cmd, ON_LEN-1);
             	if (res < 0)
             	{       
-            	    fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
+            	    fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board %i - %s", errno, strerror(errno));
             	}
             }
             else // false: set OFF
             {
-                len = OFF_LEN-1;
 				// copy in the relay number digits
             	sprintf(set_io_off_cmd, "SO %d off\n", mc->io_number);
             	// Then send the command
@@ -342,17 +374,17 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
             	state->ok_response = false; // set response received equal to false until we check Ok msg
             	state->request_no = NUM_RELAYS + mc->io_number; // record where the request from 1..24 relays 25..32 = 1..8 io's
 
-            	int res = acfr_sensor_write(state->sensor, set_io_off_cmd, len);
+            	int res = acfr_sensor_write(state->sensor, set_io_off_cmd, OFF_LEN-1);
     			if (res < 0)
     			{		
-        			fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board. %i - %s", errno, strerror(errno));
+        			fprintf(stderr, "dS2824 Relay Driver: Failed to write to relay board %i - %s", errno, strerror(errno));
 		    	}
 			}
         } // end io
         else
         {
             // No valid state request, so ignore
-            fprintf(stderr, "dS2824 Relay Driver: Invalid State request - request relay (%d) <1..24> or io (%d) <1..8> number out of range\n", mc->relay_number, mc->io_number);
+            fprintf(stderr, "dS2824 Relay Driver: Invalid request - request relay (%d) <1..24> or io (%d) <1..8> number out of range\n", mc->relay_number, mc->io_number);
             return;
         }
         // Return to main loop to wait for response
@@ -377,6 +409,8 @@ int main(int argc, char **argv)
     state.prev_time = timestamp_now();
     state.hb_count = 0;
     memset(&state.root_key, 0, 64);
+    //memset(&state.relay_devices, 0, NUM_RELAYS * (MAX_DEV_NAME_LEN + 1));
+    //memset(&state.io_devices, 0, NUM_IOS * (MAX_DEV_NAME_LEN + 1)); 
     state.ok_response = false; // received no response
     state.request_no = 0; // set to out of range 0: none, 1..24 relays, 25..32 = 1..8 io's
     state.request_state = false; // request off state
@@ -425,20 +459,18 @@ int main(int argc, char **argv)
     bool verbose = bot_param_get_boolean_or_fail(param, key);
     state.verbose = verbose;
     // get the list of devices attached to relays
-    char relay_devices[NUM_RELAYS][MAX_DEV_NAME_LEN];
     for (int i = 1; i <= NUM_RELAYS; i++)
     {
         sprintf(key, "%s.relay_%d", root_key, i);
         printf("Requesting Parameter: %s\n", key);
-        strcpy(relay_devices[i-1], bot_param_get_str_or_fail(param, key));
+        state.relay_devices[i-1] = bot_param_get_str_or_fail(param, key);
     }
     // get the list of devices attached to I/Os
-    char io_devices[NUM_IOS][MAX_DEV_NAME_LEN];
     for (int j = 1; j <= NUM_IOS; j++)
     {
         sprintf(key, "%s.io_%d", root_key, j);
         printf("Requesting Parameter: %s\n", key);
-        strcpy(io_devices[j-1], bot_param_get_str_or_fail(param, key));
+        state.io_devices[j-1] = bot_param_get_str_or_fail(param, key);
     }
 
     // Subscribe to the LCM channels for incoming messages
