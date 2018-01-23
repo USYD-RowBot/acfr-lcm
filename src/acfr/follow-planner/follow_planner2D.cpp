@@ -258,7 +258,7 @@ bool FollowPlanner2D::publishWaypoint() {
     //
     ::acfr::missions::lat latitude(39);
     ::acfr::missions::lon longitude(-15);
-    ::acfr::missions::location loc(latitude, longitude);
+    ::acfr::missions::latlonelement_t loc(latitude, longitude);
     ::acfr::missions::m dist(100);
     ::acfr::missions::distanceelement_t tradius(dist);
     ::acfr::missions::distanceelement_t ddistance(dist);
