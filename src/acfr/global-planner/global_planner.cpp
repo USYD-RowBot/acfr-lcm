@@ -35,7 +35,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 					<< ". Stopping execution" << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
 		}
-		else if( !gp->mis.load(gm->str) )
+		else if( !gp->loadNewMissionFile(gm->str) )
 		{
 			cerr << "Could not load mission file " << gm->str
 					<< ". Stopping execution" << endl;
@@ -44,10 +44,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission" << endl;
-			if( gp->getCurrentState() == globalPlannerFsmRun ) {
-				gp->globalPlannerMessage = globalPlannerStop;
-				gp->clock();
-			}
+			// set the start point
+			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
+			//	gp->globalPlannerMessage = globalPlannerStop;
+			//	gp->clock();
+			//}
 			gp->globalPlannerMessage = globalPlannerRun;
 			gp->mis.dumpMatlab("matlab_plot.m");
 		}
@@ -89,7 +90,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 	case acfrlcm::auv_global_planner_t::GRID:
 	case acfrlcm::auv_global_planner_t::SPIRAL:
 	case acfrlcm::auv_global_planner_t::ZAMBONIE:
-		if( !gp->mis.parseMissionString(gm->str) )
+		if( !gp->loadNewMissionString(gm->str) )
 		{
 			cerr << "Could not load mission file " << gm->str
 					<< ". Stopping execution" << endl;
@@ -98,12 +99,13 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission received as a task command" << endl;
-			if( gp->getCurrentState() == globalPlannerFsmRun ) {
-				gp->globalPlannerMessage = globalPlannerStop;
-				gp->clock();
-			}
+			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
+			//	gp->globalPlannerMessage = globalPlannerStop;
+			//	gp->clock();
+			//}
 			gp->globalPlannerMessage = globalPlannerRun;
-		}	break;
+		}	
+                break;
 		
 	}
 
@@ -154,10 +156,10 @@ int GlobalPlanner::clock()
 		if (globalPlannerMessage == globalPlannerRun)
 		{
 			// set the start point
-			currPoint = mis.waypoints.begin();
+			//currPoint = mis.waypoints.begin();
 			nextState = globalPlannerFsmRun;
 			cout << "globalplannerfsmidle" << endl;
-			sendLeg();
+			//sendLeg();
 		}
 		else
 			nextState = globalPlannerFsmIdle;
@@ -290,6 +292,28 @@ int GlobalPlanner::clock()
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
 }
+
+bool GlobalPlanner::loadNewMissionFile(string filename)
+{
+	bool ret;
+	if ((ret = mis.load(filename)) == true)
+	{
+		currPoint = mis.waypoints.begin();
+        	sendLeg();
+	}
+	return ret;
+}
+
+bool GlobalPlanner::loadNewMissionString(string mission_string)
+{	bool ret;
+	if ((ret = mis.parseMissionString(mission_string)) == true)
+	{
+		currPoint = mis.waypoints.begin();
+        	sendLeg();
+	}
+	return ret;
+}
+
 
 int GlobalPlanner::sendLeg()
 {

@@ -29,7 +29,7 @@ typedef struct
     double left_limit;
     double right_limit;
     double margin;
-    double threshold
+    double threshold;
     double initial_gain;
     double x_offset;
     double z_offset;

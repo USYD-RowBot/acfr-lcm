@@ -215,7 +215,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     //
     double tunnel_diameter = 0.1;
 
-    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n
+    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
 
     // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
     M = 7.5 * Z * 1.25; // moment from vertical force on pitch about CoG
