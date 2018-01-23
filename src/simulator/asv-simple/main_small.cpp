@@ -327,7 +327,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message.  FIXMED: This should be the NOVATEL message.
-        lcm->publish("ACFR_NAV."+vehicle_name, &nav);
+        lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
 
@@ -443,8 +443,8 @@ int main(int argc, char **argv)
     last_print_time = timeStamp;
     last_obs_time = timeStamp;
 
-    lcm.subscribeFunction("PORT_MOTOR_CONTROL."+vehicle_name, on_torqeedo_port_command, &lcm);
-    lcm.subscribeFunction("STBD_MOTOR_CONTROL."+vehicle_name, on_torqeedo_stbd_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".PORT_MOTOR_CONTROL", on_torqeedo_port_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".STBD_MOTOR_CONTROL", on_torqeedo_stbd_command, &lcm);
     lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
 

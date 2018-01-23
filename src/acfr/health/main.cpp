@@ -168,22 +168,22 @@ HealthMonitor::HealthMonitor()
 int HealthMonitor::subscribeChannels()
 {
 	// Subscribe to all the sensors we need to monitor
-	lcm.subscribeFunction("TCM."+vehicle_name, handle_tcm, this);
-	lcm.subscribeFunction("KVH1550."+vehicle_name, handle_imu, this);
-	lcm.subscribeFunction("GPSD_CLIENT."+vehicle_name, handle_gps, this);
-	lcm.subscribeFunction("ECOPUCK."+vehicle_name, handle_ecopuck, this);
-	lcm.subscribeFunction("MICRON."+vehicle_name, handle_micron, this);
-	lcm.subscribeFunction("RDI."+vehicle_name, handle_rdi, this);
-	lcm.subscribeFunction("PAROSCI."+vehicle_name, handle_parosci, this);
-	lcm.subscribeFunction("YSI."+vehicle_name, handle_ysi, this);
-	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, handle_nav, this);
-	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG."+vehicle_name, handle_vis, this);
-	lcm.subscribeFunction("LEAK."+vehicle_name, handle_leak, this);
-	lcm.subscribeFunction("GLOBAL_STATE."+vehicle_name, handle_global_state, this);
-	lcm.subscribeFunction("BATTERY."+vehicle_name, handle_battery, this);
+	lcm.subscribeFunction(vehicle_name+".TCM", handle_tcm, this);
+	lcm.subscribeFunction(vehicle_name+".KVH1550", handle_imu, this);
+	lcm.subscribeFunction(vehicle_name+".GPSD_CLIENT", handle_gps, this);
+	lcm.subscribeFunction(vehicle_name+".ECOPUCK", handle_ecopuck, this);
+	lcm.subscribeFunction(vehicle_name+".MICRON", handle_micron, this);
+	lcm.subscribeFunction(vehicle_name+".RDI", handle_rdi, this);
+	lcm.subscribeFunction(vehicle_name+".PAROSCI", handle_parosci, this);
+	lcm.subscribeFunction(vehicle_name+".YSI", handle_ysi, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", handle_nav, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_AUV_VIS_RAWLOG", handle_vis, this);
+	lcm.subscribeFunction(vehicle_name+".LEAK", handle_leak, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", handle_global_state, this);
+	lcm.subscribeFunction(vehicle_name+".BATTERY", handle_battery, this);
 
     // Subscribe to path response to report waypoint progress in *.AUVSTAT
-    lcm.subscribeFunction("PATH_RESPONSE."+vehicle_name, handle_path_response, this);
+    lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", handle_path_response, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
@@ -405,7 +405,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
         status.vel = (char)(nav.vx * 100.0);
         status.waypoint = path_response.goal_id;
 
-	lcm.publish("AUVSTAT."+vehicle_name, &status);
+	lcm.publish(vehicle_name+".AUVSTAT", &status);
 
 	return 1;
 }
@@ -415,7 +415,7 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	acfrlcm::auv_global_planner_t abortMsg;
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
-	lcm.publish("TASK_PLANNER_COMMAND."+vehicle_name, &abortMsg);
+	lcm.publish(vehicle_name+".TASK_PLANNER_COMMAND", &abortMsg);
 
 	return 1;
 }

@@ -52,6 +52,8 @@ public:
 	bool areWeThereYet;
 	double distanceToGoal;
 	void set_filename(string filename);
+	bool loadNewMissionFile(string filename);
+	bool loadNewMissionString(string mission_string);
 
 
 	Mission mis;
