@@ -115,9 +115,9 @@ LocalPlanner2D::~LocalPlanner2D()
 int LocalPlanner2D::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
-	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, onNavLCM, this);
-	lcm.subscribeFunction("PATH_COMMAND."+vehicle_name, onPathCommandLCM, this);
-	lcm.subscribeFunction("GLOBAL_STATE."+vehicle_name, onGlobalStateLCM, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", onNavLCM, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
         return 1;
 }
@@ -301,7 +301,7 @@ int LocalPlanner2D::onGlobalState(
 		acfrlcm::wam_v_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::wam_v_control_t::STOP;
-		lcm.publish("WAM_V_CONTROL."+vehicle_name, &cc);
+		lcm.publish(vehicle_name+".WAM_V_CONTROL", &cc);
 	}
 	return 1;
 }
@@ -467,7 +467,7 @@ int LocalPlanner2D::processWaypoints()
 
         //cout << "wpX: " << wp.getX() << " wpY:" << wp.getY() << " cX:" << currPose.getX() << " cY:" << currPose.getY() << " dH:" << desHeading << " dV:" << desVel << endl;
 
-	lcm.publish("WAM_V_CONTROL."+vehicle_name, &cc);
+	lcm.publish(vehicle_name+".WAM_V_CONTROL", &cc);
 	return 1;
 }
 
@@ -481,7 +481,7 @@ int LocalPlanner2D::sendResponse()
 		pr.distance = waypoints.size() * wpDropDist;
 	else
 		pr.distance = currPose.positionDistance(destPose);
-	lcm.publish("PATH_RESPONSE."+vehicle_name, &pr);
+	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
 
 	return 1;
 }
@@ -507,7 +507,7 @@ bool LocalPlanner2D::publishWaypoints() {
 		lp.y[i] = waypoints[i].getY();
 	}
 	lp.num_el = i;
-	lcm.publish("LOCAL_PATH."+vehicle_name, &lp);
+	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
 	return true;
 }
 

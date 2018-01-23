@@ -73,6 +73,8 @@ auv_nga_motor_command_t in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 
+string vehicle_name = "DEFAULT";
+
 void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 {
     double Xa, Ya, Za;
@@ -472,7 +474,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.NGASIM", &nav);
+        lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
     //	lcm->publish("ACFR_NAV", &nav);
@@ -767,10 +769,10 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("NEXTGEN_MOTOR.NGASIM", on_motor_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".NEXTGEN_MOTOR", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
-    lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
+    lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
 

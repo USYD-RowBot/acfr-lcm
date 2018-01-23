@@ -216,7 +216,6 @@ int main (int argc, char *argv[])
                             if (i > 0)
                             {
                                 printf("Realigned (%i)\n", i);
-                                hex_out(buf+i, 5);
                                 acfr_sensor_read(sensor, buf, i);
                             }
                             aligned = 1;

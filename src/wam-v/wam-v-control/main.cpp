@@ -213,8 +213,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         // Print out and publish IVER_MOTOR.TOP status message every 10 loops
         if( loopCount % 10 == 0 )
         {
-            state->lcm.publish("PORT_MOTOR_CONTROL.TOP."+state->vehicle_name, &mc_port);
-            state->lcm.publish("STBD_MOTOR_CONTROL.TOP."+state->vehicle_name, &mc_stbd);
+            state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL.TOP", &mc_port);
+            state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL.TOP", &mc_stbd);
             printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                     nav.vx, cmd.vx, (cmd.vx - nav.vx) );
             printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
@@ -239,10 +239,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     }
     mc_port.utime = timestamp_now();
     mc_port.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
-    state->lcm.publish("PORT_MOTOR_CONTROL."+state->vehicle_name, &mc_port);
+    state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL", &mc_port);
     mc_stbd.utime = timestamp_now();
     mc_stbd.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
-    state->lcm.publish("STBD_MOTOR_CONTROL."+state->vehicle_name, &mc_stbd);
+    state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL", &mc_stbd);
 }
 
 
@@ -312,14 +312,14 @@ int main(int argc, char **argv)
     memset(&state.command, 0, sizeof(command_t));
 
     // LCM callbacks
-    state.lcm.subscribeFunction("ACFR_NAV."+state.vehicle_name, acfr_nav_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback,
                                      &state);
-    state.lcm.subscribeFunction("WAM_V_CONTROL."+state.vehicle_name, control_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".WAM_V_CONTROL", control_callback,
                                     &state);
-    state.lcm.subscribeFunction("PORT_MOTOR_CONTROL."+state.vehicle_name,
+    state.lcm.subscribeFunction(state.vehicle_name+".PORT_MOTOR_CONTROL",
             motor_callback, &state);
 
-    state.lcm.subscribeFunction("STBD_MOTOR_CONTROL."+state.vehicle_name,
+    state.lcm.subscribeFunction(state.vehicle_name+".STBD_MOTOR_CONTROL",
             motor_callback, &state);
 
     state.lcm.subscribeFunction("HEARTBEAT_10HZ",
