@@ -162,6 +162,10 @@ int main (int argc, char *argv[])
     status.name = ship_name;
     status.ship_id = ship_id;
 
+    acfr_sensor_noncanonical(sensor, 1, 0);
+
+    printf("Entering main loop\n");
+
 
     fd_set rfds;
     // loop to collect data, parse and send it on its way
@@ -190,12 +194,40 @@ int main (int argc, char *argv[])
         else if(ret != 0)
         {
             int len;
+            int expected_length = 52;
             status.utime = timestamp_now();
-            len = acfr_sensor_read(sensor, buf, 52);
-            if(len == 52)
+            len = acfr_sensor_read(sensor, buf, expected_length);
+            if(len == expected_length)
             {
                 if (parseShipStatus(buf, len, &status))
                     acfrlcm_ship_status_t_publish (lcm, channel, &status);
+                else
+                {
+                    // length is correct, but parsing didn't work
+                    // check for a magic sentinel
+                    // 'q' and 49 are the first two values
+                    int aligned = 0;
+                    for (int i=0;i<len-1;++i)
+                    {
+                        if (buf[i] == 'q' && buf[i+1] == 49)
+                        {
+                            // we have the offset
+                            // read this many off
+                            if (i > 0)
+                            {
+                                printf("Realigned (%i)\n", i);
+                                acfr_sensor_read(sensor, buf, i);
+                            }
+                            aligned = 1;
+                            break;
+                        }
+                    }
+
+                    if (!aligned)
+                    {
+                        acfr_sensor_read(sensor, buf, 1);
+                    }
+                }
             }
             else
             {
@@ -206,7 +238,7 @@ int main (int argc, char *argv[])
         else
         {
             // timeout, check the connection
-            fprintf(stderr, "Timeout: Checking connection\n");
+            fprintf(stderr, "Timeout: Checking connection (%i)\n", ret);
         }
     }
 
