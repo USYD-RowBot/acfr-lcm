@@ -85,7 +85,10 @@ static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status
 
     // quick check that this packet matches expected fields
     if (buf[0] != 'q' || buf[1] != 49)
+    {
+        printf("Invalid header.\n");
         return 0;
+    }
 
     //status->north_velocity = read_swapped_float(buf + 23);
     //status->east_velocity = read_swapped_float(buf + 27);
@@ -166,6 +169,11 @@ int main (int argc, char *argv[])
 
     printf("Entering main loop\n");
 
+    long int last_stats = timestamp_now();
+
+    int failed_count = 0;
+    int success_count = 0;
+
 
     fd_set rfds;
     // loop to collect data, parse and send it on its way
@@ -177,6 +185,14 @@ int main (int argc, char *argv[])
             sensor->port_open = 0;
             fprintf(stderr, "Pipe broken\n");
             continue;
+        }
+
+        if (last_stats + 1000000L < timestamp_now())
+        {
+            printf("Converted: %i, Failed %i\n", success_count, failed_count);
+            last_stats = timestamp_now();
+            failed_count = 0;
+            success_count = 0;
         }
 
         memset(buf, 0, sizeof(buf));
@@ -200,9 +216,13 @@ int main (int argc, char *argv[])
             if(len == expected_length)
             {
                 if (parseShipStatus(buf, len, &status))
+                {
+                    success_count++;
                     acfrlcm_ship_status_t_publish (lcm, channel, &status);
+                }
                 else
                 {
+                    failed_count++;
                     // length is correct, but parsing didn't work
                     // check for a magic sentinel
                     // 'q' and 49 are the first two values

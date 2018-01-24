@@ -8,6 +8,7 @@
 #include <libgen.h>
 #include <math.h>
 #include <termios.h>
+#include <libudev.h>
 
 #include "acfr-common/timestamp.h"
 #include "acfr-common/sensor.h"
@@ -37,6 +38,69 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state->send_next = 1;
 }
 
+// Takes they type of device we are looking for, eg /dev/ttyUSB*, the serial number of the device we are looking fot
+// and will return the actual device eg /dev/ttyUSB0
+int find_device(char *serial_number, char *port)
+{
+	struct udev *udev;
+	struct udev_enumerate *enumerate;
+	struct udev_list_entry *devices, *dev_list_entry;
+	struct udev_device *dev;
+	
+	/* Create the udev object */
+	udev = udev_new();
+	if (!udev) {
+		fprintf(stderr, "Can't create udev\n");
+		return 0;
+	}
+	
+	/* Create a list of the devices in the 'tty' subsystem. */
+	enumerate = udev_enumerate_new(udev);
+	udev_enumerate_add_match_subsystem(enumerate, "tty");
+	udev_enumerate_scan_devices(enumerate);
+	devices = udev_enumerate_get_list_entry(enumerate);
+	
+	udev_list_entry_foreach(dev_list_entry, devices) 
+	{
+		const char *path;
+		
+		/* Get the filename of the /sys entry for the device
+		   and create a udev_device object (dev) representing it */
+		path = udev_list_entry_get_name(dev_list_entry);
+		dev = udev_device_new_from_syspath(udev, path);
+		// Get the /dev entry
+		const char *device_node = udev_device_get_devnode(dev);
+		
+		// Weed out the none USB devices
+		dev = udev_device_get_parent_with_subsystem_devtype(
+		       dev,
+		       "usb",
+		       "usb_device");
+		       
+		if(!dev)
+			continue;
+		
+		// Get the devices serial number	
+		const char *device_serial_number = udev_device_get_sysattr_value(dev, "serial");
+		printf("%s, %s\n", device_node, device_serial_number);
+		if(!strcmp(device_serial_number, serial_number))
+		{
+			printf("Found serial device at %s\n", device_node);
+			strcpy(port, device_node);
+			udev_device_unref(dev);
+			udev_enumerate_unref(enumerate);
+			udev_unref(udev);
+			return 1;
+		}
+
+		udev_device_unref(dev);
+	}
+	/* Free the enumerator object */
+	udev_enumerate_unref(enumerate);
+
+	udev_unref(udev);
+	return 0;
+}
 // Parse the 16 bytes that come from the RC controller
 static int
 parse_rc(char *buf, state_t *state)
@@ -52,14 +116,14 @@ parse_rc(char *buf, state_t *state)
         channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
 
         //printf("%i-%i ", (int)channel_id, (int)channel_value);
-        printf("%x-%x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
+        //printf("%x-%x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
 
         if (channel_id < state->channels)
         {
             channel_values[(int)channel_id] = channel_value;
         }
     }
-    printf("\n");
+    //printf("\n");
 
     acfrlcm_auv_spektrum_control_command_t sc;
     sc.utime = timestamp_now();
@@ -141,11 +205,11 @@ void realign(acfr_sensor_t *sensor)
     // the first two bytes of the message is 0xE1 0xA2
     
     fd_set rfds;
-    unsigned char buf[16];
+    char buf[16];
     uint8_t aligned = 0;
 
     printf("Aligning to message.\n");
-    while(!aligned)
+    while(!aligned && !main_exit)
     {
         if(broken_pipe)
         {
@@ -187,10 +251,10 @@ void realign(acfr_sensor_t *sensor)
                 fprintf(stderr, "Wrong number of bytes (%i)\n", len);
             }
         }
-        else
-        {
-            fprintf(stderr, "Timeout: Checking connection\n");
-        }
+        //else
+        //{
+        //    fprintf(stderr, "Timeout: Checking connection\n");
+        //}
     }
 
     printf("Aligned packet.\n");
@@ -206,7 +270,6 @@ main(int argc, char **argv)
     //signal(SIGPIPE, signal_handler);
 
     state_t state;
-
     parse_args(argc, argv, &state);
 
     state.lcm = lcm_create(NULL);
@@ -228,8 +291,33 @@ main(int argc, char **argv)
 
     sprintf(key, "%s.channels", rootkey);
     state.channels = bot_param_get_int_or_fail(param, key);
+	
+	
 
-    acfr_sensor_t *sensor = acfr_sensor_create(state.lcm, rootkey);
+	// As we want to over write the serial_device we can't use the acfr_sensor_create reoutine
+	acfr_sensor_t *sensor = (acfr_sensor_t *)malloc(sizeof(acfr_sensor_t));
+	if(acfr_sensor_load_config(state.lcm, sensor, rootkey))
+	{
+		if(!strcmp(sensor->serial_dev, "by_serial_number"))
+		{
+		    // Load the serial number of the device we are looking for
+		    sprintf(key, "%s.device_serial_number", rootkey);
+            char *device_serial_number = bot_param_get_str_or_fail(param, key);
+            char device[128];
+            if(!find_device(device_serial_number, device))
+            {
+                fprintf(stderr, "Could not find serial device based on serial number %s\n", device_serial_number);
+                return 0;
+            }
+            // update the port in the sensor structure
+            sensor->serial_dev = device;
+        }
+        
+        if(!acfr_sensor_open(sensor))
+            return 0;
+   }    
+
+    //acfr_sensor_t *sensor = acfr_sensor_create(state.lcm, rootkey);
 
     if(sensor == NULL)
         return 0;
@@ -240,7 +328,7 @@ main(int argc, char **argv)
     realign(sensor);
 
     fd_set rfds;
-    unsigned char buf[16];
+    char buf[16];
 
     while(!main_exit)
     {
@@ -278,10 +366,10 @@ main(int argc, char **argv)
                 fprintf(stderr, "Wrong number of bytes (%i)\n", len);
             }
         }
-        else
-        {
-            fprintf(stderr, "Timeout: Checking connection\n");
-        }
+        //else
+        //{
+           // fprintf(stderr, "Timeout: Checking connection\n");
+        //}
     }
     acfr_sensor_destroy(sensor);
     pthread_join(tid, NULL);
