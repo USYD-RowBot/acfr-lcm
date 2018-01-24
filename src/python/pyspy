@@ -3,6 +3,7 @@ import lcm
 import sys
 import curses
 import curses.ascii
+import time
 
 try:
     from cStringIO.StringIO import BytesIO
@@ -24,6 +25,44 @@ def get_message_types(module_handle):
     return fingerprint_mapping
 
 
+class ChannelStats(object):
+    def __init__(self):
+        self.decode_count = 0
+        self.data_total = 0
+
+        self.last_display_time = 0
+        self.last_data_total = 0
+        self.last_decode_count = 0
+
+        self.cached = None
+
+    def add_packet(self, buf):
+        self.last_time = time.time()
+        self.decode_count += 1
+        self.data_total += len(buf)
+
+    def get_stats(self, time):
+
+        interval = float(time - self.last_display_time)
+
+        if interval < 1.0:
+            return self.cached
+
+        decoded = self.decode_count
+        frequency = float(decoded - self.last_decode_count) / interval
+        bandwidth = float(self.data_total - self.last_data_total) / interval
+        since_last = time - self.last_time
+
+        # reset for next call in
+        self.last_display_time = time
+        self.last_data_total = self.data_total
+        self.last_decode_count = self.decode_count
+
+        self.cached = (bandwidth, frequency, decoded, since_last)
+
+        return self.cached
+
+
 class Channel(object):
     def __init__(self, channel_name, data_type):
         self.channel_name = channel_name
@@ -31,21 +70,35 @@ class Channel(object):
         self.latest = None
         self.subchannels = {}
 
-    def decode(self, raw_data):
-        if data_type is not None:
-            return data_type.decode(buf)
-        else:
-            return None
+        self.cs = ChannelStats()
 
     def handle_latest(self, raw_data):
+        self.cs.add_packet(raw_data)
         self.latest = raw_data
+
+    def output_headers(self, message=None):
+        if self.data_type is None:
+            return ["Can't decode",""]
+
+        now = time.time()
+        bandwidth, frequency, decoded, since_last = self.cs.get_stats(now)
+        message = message or self.data_type.decode(self.latest)
+        lines = [
+                self.channel_name + repr(message),
+                "bw {:5.2f}kB/s, f {:5.2f}Hz, decoded {}".format(bandwidth/1024, frequency, decoded)]
+
+        if since_last > 1.0:
+            lines[1] = "{}, {:.0f}s since last".format(lines[1], since_last)
+
+        return lines
+
 
     def list_attributes(self, lcm_type_set, message=None):
         if self.data_type is None:
-            return [("Can't decode", "")]
+            return []
 
         message = message or self.data_type.decode(self.latest)
-        attributes = [(self.channel_name, repr(message))]
+        attributes = []
         # pylcm uses slots to declare the variable elements so we
         # iterate over them, no need to check anything else
         for attr in message.__slots__:
@@ -118,11 +171,12 @@ class PySpy(object):
 
 class Interface(object):
     def __init__(self, spyinstance):
-        self.col_widths = [29, 29, 20]  # the width of each channel
+        self.col_widths = [29, 29, 19]  # the width of each channel
         self.col_starts = [0, 30, 60]
         self.selected_channel = None  # the name of the channel, not index
         self.last_attr_count = 0
         self.spyinstance = spyinstance
+        self.quitting = False
 
         # used for debuggin/messages, basically displays the last 10 rows...
         self.log = []
@@ -147,10 +201,10 @@ class Interface(object):
 
         self.screen.nodelay(1)
 
-        quitting = False
+        self.quitting = False
 
 
-        while not quitting:
+        while not self.quitting:
             self.render()
             try:
                 lc.handle_timeout(100)
@@ -180,7 +234,7 @@ class Interface(object):
                     self.selected_channel = sorted_channels[index]
 
             elif key == ord('q') or key == ord('Q'):
-                quitting = True
+                self.quitting = True
 
     def render(self):
         spy = self.spyinstance
@@ -192,13 +246,18 @@ class Interface(object):
                 print_row = 0
 
                 # print the attributes and their values
+                header_lines = spy.channels[name].output_headers()
+                for line in header_lines:
+                    self.screen.addstr(print_row, self.col_starts[1], field(line, self.col_widths[1] + self.col_widths[2]))
+                    print_row += 1
+
                 attrs = spy.channels[name].list_attributes(spy.lcm_type_set)
                 for attr, value in attrs:
                     self.screen.addstr(print_row, self.col_starts[1], field(attr, self.col_widths[1]))
                     try:
                         self.screen.addstr(print_row, self.col_starts[2], field(value, self.col_widths[2]))
                     except curses.error as e:
-                        print e
+                        print "Curses Error:", e
                         
                     print_row += 1
                     if print_row >= self.height - 1:
@@ -256,5 +315,9 @@ if __name__ == '__main__':
     spy = PySpy(lc, lcm_types)
     interface = Interface(spy)
 
-    curses.wrapper(interface)
+
+    while not interface.quitting:
+        curses.wrapper(interface)
+
+    print "pyspy closing."
 
