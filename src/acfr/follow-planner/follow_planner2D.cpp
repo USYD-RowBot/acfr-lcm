@@ -15,6 +15,8 @@
 #include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
 
+#include "acfr-mission/missionschema.hxx"
+
 using namespace std;
 
 
