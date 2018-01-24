@@ -389,17 +389,17 @@ int main(int argc, char **argv)
                         //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
                         state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
                         state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
-                        state.mot_status.field_2 = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // TODO change this to current
-                        state.mot_status.motor_temp = (uint8_t)buf[PCB_TEMP_POS]; // TODO change this to PCB temp 16bit signed
+                        state.mot_status.current = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // current
+                        state.mot_status.pcb_temp = (int16_t)buf[PCB_TEMP_POS]; // PCB temp 16bit signed
                         signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
-                        state.mot_status.field_4 = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // TODO change this to stator temp
+                        state.mot_status.stator_temp = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // stator temp
 
                         // and publish status message
                         acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
 
                         if (verbose) // print motor status
                         {
-                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.field_2)/10, ((double)pcb_temp)/10, (double)state.mot_status.field_4/10);
+                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.current)/10, ((double)state.mot_status.pcb_temp)/10, (double)state.mot_status.stator_temp/10);
                         }
                         // reset outgoing message 
                         memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
