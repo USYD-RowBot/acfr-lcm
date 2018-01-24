@@ -38,9 +38,11 @@
 typedef struct
 {
     lcm_t *lcm;
-    char root_key[64];
+	char *vehicle_name;					// for vehicle prefix on LCM channels
+    char root_key[64];					// process name
     char *relay_devices[NUM_RELAYS];    // devices on system as per config file
     char *io_devices[NUM_IOS];          // devices on system as per config file
+	char *channel_control;				// lcm channel name for control messages incoming
     char *channel_status;               // lcm channel name for status message outgoing
     int64_t prev_time;                  // arrival time of previous LCM request message
     uint8_t hb_count;                   // counts number of times enter hb handeler, to limit prints to screen
@@ -396,7 +398,46 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
 
 } // end relay_cmd_handler
 
-int main(int argc, char **argv)
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void parse_args (int argc, char **argv, char **channel_control, char **channel_status)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_control = malloc(strlen(default_name)+1);
+    strcpy(*channel_control, default_name);
+	*channel_status = malloc(strlen(default_name)+1);
+    strcpy(*channel_status, default_name);
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_control);
+            *channel_control = malloc(128);
+            snprintf(*channel_control, 128, "%s.RELAY_CONTROL", (char *)optarg);
+            free(*channel_status);
+            *channel_status = malloc(128);
+            snprintf(*channel_status, 128, "%s.RELAY_STATUS", (char *)optarg);
+            break;
+         }
+    }
+}
+
+int main(int argc, char *argv[])
 {
     // install the signalhandler
     program_exit = 0;
@@ -409,13 +450,11 @@ int main(int argc, char **argv)
     state.prev_time = timestamp_now();
     state.hb_count = 0;
     memset(&state.root_key, 0, 64);
-    //memset(&state.relay_devices, 0, NUM_RELAYS * (MAX_DEV_NAME_LEN + 1));
-    //memset(&state.io_devices, 0, NUM_IOS * (MAX_DEV_NAME_LEN + 1)); 
     state.ok_response = false; // received no response
     state.request_no = 0; // set to out of range 0: none, 1..24 relays, 25..32 = 1..8 io's
     state.request_state = false; // request off state
     state.state_list = 0; // bits 1..24 relays, 25..32 = 1..8 io's
-    
+    parse_args(argc, argv, &state.channel_control, &state.channel_status); // get the vehicle name from command line args
     
     // Initialise LCM
     state.lcm = lcm_create(NULL);
@@ -445,19 +484,10 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    // Read the lcm channel names 
-    sprintf(key, "%s.channel_control", root_key);
-    printf("Requesting Parameter: %s\n", key);
-    char *channel_control = bot_param_get_str_or_fail(param, key);
-    printf("Channel in: %s\n", (char *)channel_control);
-    sprintf(key, "%s.channel_status", root_key);
-    printf("Requesting Parameter: %s\n", key);
-    char *channel_status = bot_param_get_str_or_fail(param, key);
-    state.channel_status = channel_status;
-    printf("Channel out: %s\n", (char *)channel_status);
+    // Read the config file values 
     sprintf(key, "%s.verbose", root_key);
-    bool verbose = bot_param_get_boolean_or_fail(param, key);
-    state.verbose = verbose;
+	printf("Requesting Parameter: %s\n", key);
+    state.verbose = bot_param_get_boolean_or_fail(param, key);
     // get the list of devices attached to relays
     for (int i = 1; i <= NUM_RELAYS; i++)
     {
@@ -474,7 +504,7 @@ int main(int argc, char **argv)
     }
 
     // Subscribe to the LCM channels for incoming messages
-    acfrlcm_relay_command_t_subscribe(state.lcm, channel_control, &relay_cmd_handler, &state);
+    acfrlcm_relay_command_t_subscribe(state.lcm, state.channel_control, &relay_cmd_handler, &state);
 	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
 
     // Read the io tcp config to setup Ethernet connection to relay board
@@ -498,7 +528,7 @@ int main(int argc, char **argv)
     FD_SET(state.sensor->fd, &rfds); // add the motor serial file descriptor to the set to watch
     FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch 
     memset(buf, 0, sizeof(buf));
-    if (verbose)
+    if (state.verbose)
     {
         printf("SETUP COMPLETE\n");
     }
@@ -549,9 +579,9 @@ int main(int argc, char **argv)
 							status_msg.state_list[2] = (state.state_list >> 8) & 0xFF;
 							status_msg.state_list[3] = state.state_list & 0xFF;
 							// publish status message
-                            acfrlcm_relay_status_t_publish(state.lcm, channel_status, &status_msg);
+                            acfrlcm_relay_status_t_publish(state.lcm, state.channel_status, &status_msg);
                             
-                            if (verbose) // print status
+                            if (state.verbose) // print status
                             {
                                 fprintf(stderr, "dS2824 Relay Board: Update status: %X\n    ", state.state_list); 
 								for (int i = 0; i < NUM_RELAYS + NUM_IOS; i++)
