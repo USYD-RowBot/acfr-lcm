@@ -352,8 +352,15 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
 
     /* precision of fix */
     gd->satellites_used = ud->satellites_used;
-    for (int i=0; i<ud->satellites_used; i++)
-        gd->used[i] = ud->used[i];
+    int j = 0;
+    for (int i=0; i<MAXCHANNELS; i++)
+    	if(ud->skyview[i].used)
+    		gd->used[j++] = ud->skyview[i].PRN; 
+    
+    //for (int i=0; i<ud->satellites_used; i++)
+    //    gd->used[i] = ud->used[i];
+        
+        
     gd->dop.pdop = ud->dop.pdop;
     gd->dop.hdop = ud->dop.hdop;
     gd->dop.tdop = ud->dop.tdop;
@@ -369,10 +376,10 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
     gd->satellites_visible = ud->satellites_visible;
     for (size_t i=0; i<gd->satellites_visible; i++)
     {
-        gd->PRN[i] = ud->PRN[i];
-        gd->elevation[i] = ud->elevation[i];
-        gd->azimuth[i] = ud->azimuth[i];
-        gd->ss[i] = ud->ss[i];
+        gd->PRN[i] = ud->skyview[i].PRN;
+        gd->elevation[i] = ud->skyview[i].elevation;
+        gd->azimuth[i] = ud->skyview[i].azimuth;
+        gd->ss[i] = ud->skyview[i].ss;
     }
 
     /* devconfig_t data */
@@ -398,7 +405,7 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
 
     /* policy_t data ignored */
 
-    gd->tag = strdup (ud->tag);
+    gd->tag = NULL; //strdup (ud->tag);
 
     return 0;
 }

@@ -451,7 +451,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         // Print out and publish IVER_MOTOR.TOP status message every 10 loops
         if( loopCount % 10 == 0 )
         {
-            state->lcm.publish("IVER_MOTOR.TOP."+state->vehicle_name, &mc);
+            state->lcm.publish(state->vehicle_name+".IVER_MOTOR.TOP", &mc);
             printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                     nav.vx, cmd.vx, (cmd.vx - nav.vx) );
             printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
@@ -488,8 +488,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     cg.utime = timestamp_now();
     cg.pitch_goal = pitch;
     mc.source = acfrlcm::auv_iver_motor_command_t::AUTO;
-    state->lcm.publish("IVER_MOTOR."+state->vehicle_name, &mc);
-    state->lcm.publish("CONTROL_GOAL."+state->vehicle_name, &cg);
+    state->lcm.publish(state->vehicle_name+".IVER_MOTOR", &mc);
+    state->lcm.publish(state->vehicle_name+".CONTROL_GOAL", &cg);
 }
 
 
@@ -580,11 +580,11 @@ int main(int argc, char **argv)
     memset(&state.command, 0, sizeof(command_t));
 
     // LCM callbacks
-    state.lcm.subscribeFunction("ACFR_NAV."+state.vehicle_name, acfr_nav_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback,
                                      &state);
-    state.lcm.subscribeFunction("AUV_CONTROL."+state.vehicle_name, control_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".AUV_CONTROL", control_callback,
                                     &state);
-    state.lcm.subscribeFunction("IVER_MOTOR."+state.vehicle_name,
+    state.lcm.subscribeFunction(state.vehicle_name+".IVER_MOTOR",
             motor_callback, &state);
 
     state.lcm.subscribeFunction("HEARTBEAT_10HZ",
