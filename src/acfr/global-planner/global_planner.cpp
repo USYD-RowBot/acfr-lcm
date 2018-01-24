@@ -90,6 +90,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 	case acfrlcm::auv_global_planner_t::GRID:
 	case acfrlcm::auv_global_planner_t::SPIRAL:
 	case acfrlcm::auv_global_planner_t::ZAMBONIE:
+	case acfrlcm::auv_global_planner_t::MISSION:
 		if( !gp->loadNewMissionString(gm->str) )
 		{
 			cerr << "Could not load mission file " << gm->str

@@ -402,7 +402,7 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     status.heading = (char)(heading_temp/2); // and halve to fit into signed char (sent as 2 degree incements)
 	status.img_count = image_count;
         status.charge = (char)(battery.avg_charge_p);
-        status.vel = (char)(nav.vx * 100.0);
+        status.vel = (char)(nav.vx * 10.0);
         status.waypoint = path_response.goal_id;
 
 	lcm.publish(vehicle_name+".AUVSTAT", &status);
