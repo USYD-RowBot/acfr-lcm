@@ -583,7 +583,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
                 if( loopCount % 10 == 0 )
                 {
-                    state->lcm.publish(state->vehicle_name+"NEXTGEN_MOTOR.TOP", &mc);
+                    state->lcm.publish(state->vehicle_name+".NEXTGEN_MOTOR.TOP", &mc);
                     printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                             nav.vx, cmd.vx, (cmd.vx - nav.vx) );
                     printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
@@ -625,7 +625,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
                 if( loopCount % 10 == 0 )
                 {
-                    state->lcm.publish(state->vehicle_name+"NEXTGEN_MOTOR.TOP", &mc);
+                    state->lcm.publish(state->vehicle_name+".NEXTGEN_MOTOR.TOP", &mc);
                     printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                             nav.depth, cmd.depth, (cmd.depth - nav.depth) );
                     printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
@@ -757,11 +757,11 @@ int main(int argc, char **argv)
     pthread_mutex_init(&state.spektrum_lock, NULL);
 
     // LCM callbacks
-    state.lcm.subscribeFunction(state.vehicle_name+"ACFR_NAV", &acfr_nav_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", &acfr_nav_callback,
                                      &state);
-    state.lcm.subscribeFunction(state.vehicle_name+"AUV_CONTROL", &control_callback,
+    state.lcm.subscribeFunction(state.vehicle_name+".AUV_CONTROL", &control_callback,
                                     &state);
-    state.lcm.subscribeFunction(state.vehicle_name+"SPEKTRUM_CONTROL",
+    state.lcm.subscribeFunction(state.vehicle_name+".SPEKTRUM_CONTROL",
             &spektrum_control_callback, &state);
 
     state.lcm.subscribeFunction("HEARTBEAT_10HZ", &handle_heartbeat,

@@ -17,7 +17,7 @@
 #include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_spektrum_control_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/asv_torqeedo_motor_command_t.hpp"
-#include "../../acfr/spektrum-control/spektrum-control.h"
+#include "spektrum-control/spektrum-control.h"
 
 using namespace std;
 
