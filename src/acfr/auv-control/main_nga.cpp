@@ -412,7 +412,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         // if we haven't received updates from the local planner
         // be aware it could have crashed, so give it 5 seconds
         // just in case it is stuck replanning at a lower rate
-        printf("Diff: %li - %li = %li\n", timestamp_now(), cmd.utime, timestamp_now() - cmd.utime);
+        //printf("Diff: %li - %li = %li\n", timestamp_now(), cmd.utime, timestamp_now() - cmd.utime);
         if (timestamp_now() - cmd.utime < 5e6)
         {
 
@@ -662,7 +662,6 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             fprintf(stderr, "Timed out for automatic control\n");
         }
     }
-    fprintf(stderr, "sending nextgen motor command\n");
     mc.utime = timestamp_now();
     state->lcm.publish(state->vehicle_name+".NEXTGEN_MOTOR", &mc);
 }
