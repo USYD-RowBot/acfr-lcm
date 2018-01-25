@@ -5,11 +5,6 @@ struct asv_torqeedo_motor_command_t
     int64_t utime;
     
     int16_t command_speed;
-
-    const int16_t AUTO=0;
-    const int16_t REMOTE=1;
-    const int16_t RCZERO=2;
-    const int16_t RCRELEASE=3;
-    int16_t source;         // either remote or auto
+    boolean enabled;
 
 }

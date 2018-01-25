@@ -15,7 +15,9 @@
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_spektrum_control_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/asv_torqeedo_motor_command_t.hpp"
+#include "../../acfr/spektrum-control/spektrum-control.h"
 
 using namespace std;
 
@@ -49,8 +51,8 @@ typedef struct
     pthread_mutex_t command_lock;
 
     // remote
-    int64_t remote_time;
-    int remote;
+    int64_t prev_remote_time;
+    enum rc_control_source_t control_source; // RC/ZERO/AUTO
 
     // vehicle name
     string vehicle_name = "DEFAULT";
@@ -107,21 +109,27 @@ static void control_callback(const lcm::ReceiveBuffer *rbuf, const std::string& 
     pthread_mutex_unlock(&state->command_lock);
 }
 
-// Remote control callback
-void motor_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
-                    const acfrlcm::asv_torqeedo_motor_command_t *mc, state_t *state)
+// Remote control callback incoming RC message
+void rc_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                    const acfrlcm::auv_spektrum_control_command_t *spektrum_cmd, state_t *state)
 {
-    // we got a remote command, set the time and mode
-    if(mc->source == acfrlcm::asv_torqeedo_motor_command_t::REMOTE)
-    {
-        state->remote_time = mc->utime;
-        state->remote = 1;
-    }
-    else
-    {
-        state->remote = 0;
-    }
+	if (spektrum_cmd->utime > state->prev_remote_time) // msg is newer than previous msg
+	{
+		state->prev_remote_time = spektrum_cmd->utime; // we got a remote command, set the time and mode
 
+	    if (spektrum_cmd->values[RC_AUX1] > REAR_POS_CUTOFF)
+	    {
+			state->control_source = RC_MODE_RC; // vehicle controlled by handheld remote control
+	    }
+	    else if (spektrum_cmd->values[RC_AUX1] > CENTER_POS_CUTOFF)
+	    {
+			state->control_source = RC_MODE_ZERO; // disable motors
+	    }
+		else
+		{
+			state->control_source = RC_MODE_AUTO; // vehicle controlled by wam-v-control 
+		}
+	}
 }
 
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
@@ -160,13 +168,13 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     memset(&mc_port, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
     memset(&mc_stbd, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
 
-    if( state->remote )
-    {
+	if (state->control_source == RC_MODE_RC)
+	{
+		// TODO - transate RC commands to motor commands
         printf( "Remote is on! Should we (not) do something??\n" );
     }
-
-    if (state->run_mode == acfrlcm::wam_v_control_t::RUN) 
-    {
+	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
+	{
         // lock the nav and command data and get a local copy
         pthread_mutex_lock(&state->nav_lock);
         acfrlcm::auv_acfr_nav_t nav = state->nav;
@@ -223,11 +231,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             printf( "Stbd   : %4d\n", (int)mc_stbd.command_speed);
             printf( "\n" );
         }
-
     }
-    else
+    else // in all other states, motors should not move
     {
-        // if we are not in RUN, zero the integral terms
+        // if the rc control source is RC_MODE_ZERO (not rc or auto) OR in auto, if we are not in RUN
+		
+		// zero the integral terms
         state->gains_vel.integral = 0;
         state->gains_heading.integral = 0;
 
@@ -235,14 +244,19 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         {
             printf( "o" );
         }
+		// set motor speed to zero
+		mc_port.command_speed = 0;
+		mc_stbd.command_speed = 0;
 
-    }
+		//TODO - and disable relay
+
+	}
+
     mc_port.utime = timestamp_now();
-    mc_port.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
     state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL", &mc_port);
     mc_stbd.utime = timestamp_now();
-    mc_stbd.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
     state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL", &mc_stbd);
+
 }
 
 
@@ -295,7 +309,7 @@ int main(int argc, char **argv)
     state.run_mode = acfrlcm::wam_v_control_t::STOP;
     state.gains_vel.integral = 0;
     state.gains_heading.integral = 0;
-    state.remote = 0;
+    state.control_source = RC_MODE_ZERO;
 
     char root_key[64];
     sprintf(root_key, "acfr.%s", basename(argv[0]));
@@ -312,18 +326,10 @@ int main(int argc, char **argv)
     memset(&state.command, 0, sizeof(command_t));
 
     // LCM callbacks
-    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback,
-                                     &state);
-    state.lcm.subscribeFunction(state.vehicle_name+".WAM_V_CONTROL", control_callback,
-                                    &state);
-    state.lcm.subscribeFunction(state.vehicle_name+".PORT_MOTOR_CONTROL",
-            motor_callback, &state);
-
-    state.lcm.subscribeFunction(state.vehicle_name+".STBD_MOTOR_CONTROL",
-            motor_callback, &state);
-
-    state.lcm.subscribeFunction("HEARTBEAT_10HZ",
-            &handle_heartbeat, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".WAM_V_CONTROL", control_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".SPEKTRUM_CONTROL", rc_callback, &state);
+    state.lcm.subscribeFunction("HEARTBEAT_10HZ", &handle_heartbeat, &state);
 
     // Loop
     int fd = state.lcm.getFileno();
