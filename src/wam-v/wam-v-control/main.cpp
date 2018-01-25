@@ -19,7 +19,7 @@
 #include "perls-lcmtypes++/acfrlcm/asv_torqeedo_motor_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/relay_status_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/relay_command_t.hpp"
-#include "../../acfr/spektrum-control/spektrum-control.h"
+#include "acfr-common/spektrum-control.h"
 
 using namespace std;
 
@@ -66,6 +66,10 @@ typedef struct
     bool torqeedo_motors_relay_enabled = 0; // how we control it
     bool torqeedo_motors_relay_reported = 0; // what it reports
 
+	// motor speed limiting
+	double motor_limit_rc = 0;
+	double motor_limit_controller = 0;
+
 } state_t;
 
 // load all the config variables
@@ -102,6 +106,13 @@ int load_config(state_t *state, char *rootkey)
 
     sprintf(key, "%s.heading.sat", rootkey);
     state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
+
+    // Motor RPM Limiting
+    sprintf(key, "%s.motor_limit_rc", rootkey);
+    state->motor_limit_rc = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.motor_limit_controller", rootkey);
+    state->motor_limit_controller = bot_param_get_double_or_fail(param, key);
 
 	// get relay number for torqeedos from relay device list
 	char *relay_device;
@@ -225,6 +236,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 			send_relay_cmd(state, true);
             fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
         }
+
+
+        // apply proportional speed limiting - limit format percentage
+        mc_port.command_speed = (int)(state->motor_limit_rc/100 * mc_port.command_speed);
+        mc_stbd.command_speed = (int)(state->motor_limit_rc/100 * mc_stbd.command_speed);
+
     }
 	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
 	{
@@ -279,6 +296,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         // Set motor controller values
         mc_port.command_speed = speed_control + heading_control;
         mc_stbd.command_speed = speed_control - heading_control;
+
+		// apply proportional speed limiting - limit format percentage
+        mc_port.command_speed = (int)(state->motor_limit_controller/100 * mc_port.command_speed);
+        mc_stbd.command_speed = (int)(state->motor_limit_controller/100 * mc_stbd.command_speed);
 
         // Print out and publish IVER_MOTOR.TOP status message every 10 loops
         if( loopCount % 10 == 0 )
