@@ -17,6 +17,8 @@
 #include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_spektrum_control_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/asv_torqeedo_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/relay_status_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/relay_command_t.hpp"
 #include "../../acfr/spektrum-control/spektrum-control.h"
 
 using namespace std;
@@ -56,6 +58,12 @@ typedef struct
 
     // vehicle name
     string vehicle_name = "DEFAULT";
+
+    // motor relay
+    uint8_t torqeedo_relay_no = 0; // read from the relay config
+    bool torqeedo_motors_relay_enabled = 0; // how we control it
+    bool torqeedo_motors_relay_reported = 0; // what it reports
+
 } state_t;
 
 // load all the config variables
@@ -152,6 +160,26 @@ void limit_value(double *val, double limit)
         *val = -limit;
 }
 
+void handle_relay_status(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const acfrlcm::relay_status_t *relay_status, state_t *state)
+{
+    // status comes in as an array of 4 bytes, each bit represents a relay or i/o
+    divt divresult;
+    divresult = div((state->torqeedo_relay_no - 1), 8); // relays 1..24, bits 0..7
+    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && char pow(2,divresult.rem); //TODO test
+}
+
+void send_relay_cmd(uint8_t relay_number, bool enable)
+{
+	// publish LCM relay state request command	
+	acfrlcm::relay_command_t request_msg;
+	request_msg->relay_number = relay_number;
+	request_msg->relay_request = enable;
+	request_msg->relay_off_delay = 0; // no off delay
+	request_msg->io_number = 0; // no io
+	request_msg->io_request = 0;
+	state->lcm.publish(state->vehicle_name+".RELAY_CONTROL", &request_msg); 
+}
+
 void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const perllcm::heartbeat_t *hb, state_t *state)
 { 
     double speed_control = 0.0;
@@ -172,9 +200,25 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 	{
 		// TODO - transate RC commands to motor commands
         printf( "Remote is on! Should we (not) do something??\n" );
+        state->torqeedo_motors_relay_enabled = true;
+        if (state->torqeedo_motors_relay_reported == false)
+        {
+            // turn on relay
+			send_relay_cmd(state->torqeedo_relay_no, true);
+            fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
+        }
     }
 	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
 	{
+        // enable motors
+		state->torqeedo_motors_relay_enabled = true;
+        if (state->torqeedo_motors_relay_reported == false)
+        {
+            // turn on relay
+			send_relay_cmd(state->torqeedo_relay_no, true);
+			fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
+        }
+        
         // lock the nav and command data and get a local copy
         pthread_mutex_lock(&state->nav_lock);
         acfrlcm::auv_acfr_nav_t nav = state->nav;
@@ -248,7 +292,14 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 		mc_port.command_speed = 0;
 		mc_stbd.command_speed = 0;
 
-		//TODO - and disable relay
+		// disable motor relay
+        state->torqeedo_motors_relay_enabled = false;
+        if (state->torqeedo_motors_relay_reported == true)
+        {
+            // turn off relay
+			send_relay_cmd(state->torqeedo_relay_no, false);
+			fprintf(stderr, "Entering ZERO or STOP mode - disable torqeedo motors relay\n");
+        }
 
 	}
 
@@ -329,6 +380,7 @@ int main(int argc, char **argv)
     state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback, &state);
     state.lcm.subscribeFunction(state.vehicle_name+".WAM_V_CONTROL", control_callback, &state);
     state.lcm.subscribeFunction(state.vehicle_name+".SPEKTRUM_CONTROL", rc_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".RELAY_STATUS", &handle_relay_status, &state);
     state.lcm.subscribeFunction("HEARTBEAT_10HZ", &handle_heartbeat, &state);
 
     // Loop
