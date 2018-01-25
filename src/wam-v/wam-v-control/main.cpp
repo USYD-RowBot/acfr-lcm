@@ -27,6 +27,8 @@ using namespace std;
 #define CONTROL_DT 0.1
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
+#define NUM_RELAYS 24                   // Number of relays on relay board
+
 
 typedef struct
 {
@@ -101,6 +103,19 @@ int load_config(state_t *state, char *rootkey)
     sprintf(key, "%s.heading.sat", rootkey);
     state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
 
+	// get relay number for torqeedos from relay device list
+	char *relay_device;
+    for (int i = 1; i <= NUM_RELAYS; i++)
+    {
+		sprintf(key, "dS2824_relays.relay_%d", i);
+        //printf("Requesting Parameter: %s\n", key);
+        relay_device = bot_param_get_str_or_fail(param, key);
+		if (strcmp(relay_device, "torqeedos_contactor") == 0)
+		{
+			state->torqeedo_relay_no = i;
+			return 1;	// found, don't check further entries
+		}
+    }
     return 1;
 }
 
@@ -163,20 +178,23 @@ void limit_value(double *val, double limit)
 void handle_relay_status(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const acfrlcm::relay_status_t *relay_status, state_t *state)
 {
     // status comes in as an array of 4 bytes, each bit represents a relay or i/o
-    divt divresult;
+    div_t divresult;
     divresult = div((state->torqeedo_relay_no - 1), 8); // relays 1..24, bits 0..7
-    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && char pow(2,divresult.rem); //TODO test
+    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && (char) pow(2,divresult.rem); //TODO test
 }
 
-void send_relay_cmd(uint8_t relay_number, bool enable)
+void send_relay_cmd(state_t *state, bool enable)
 {
 	// publish LCM relay state request command	
-	acfrlcm::relay_command_t request_msg;
-	request_msg->relay_number = relay_number;
-	request_msg->relay_request = enable;
-	request_msg->relay_off_delay = 0; // no off delay
-	request_msg->io_number = 0; // no io
-	request_msg->io_request = 0;
+	acfrlcm::relay_command_t request_msg; // create new message
+    memset(&request_msg, 0, sizeof(acfrlcm::relay_command_t)); // initialise
+    // set msg relay request values
+	request_msg.relay_number = state->torqeedo_relay_no; 
+	request_msg.relay_request = enable;
+    // set non-used values to defaults
+	request_msg.relay_off_delay = 0; // no off delay
+	request_msg.io_number = 0; // no io
+	request_msg.io_request = 0;
 	state->lcm.publish(state->vehicle_name+".RELAY_CONTROL", &request_msg); 
 }
 
@@ -204,7 +222,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         if (state->torqeedo_motors_relay_reported == false)
         {
             // turn on relay
-			send_relay_cmd(state->torqeedo_relay_no, true);
+			send_relay_cmd(state, true);
             fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
         }
     }
@@ -215,7 +233,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         if (state->torqeedo_motors_relay_reported == false)
         {
             // turn on relay
-			send_relay_cmd(state->torqeedo_relay_no, true);
+			send_relay_cmd(state, true);
 			fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
         }
         
@@ -297,7 +315,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         if (state->torqeedo_motors_relay_reported == true)
         {
             // turn off relay
-			send_relay_cmd(state->torqeedo_relay_no, false);
+			send_relay_cmd(state, false);
 			fprintf(stderr, "Entering ZERO or STOP mode - disable torqeedo motors relay\n");
         }
 
