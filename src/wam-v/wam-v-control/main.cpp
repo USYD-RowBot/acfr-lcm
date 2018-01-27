@@ -28,7 +28,7 @@ using namespace std;
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 #define NUM_RELAYS 24                   // Number of relays on relay board
-
+#define TORQEEDO_CTRL_MAX 1000       // Max input control value for Torqeedo Motors
 
 typedef struct
 {
@@ -57,6 +57,7 @@ typedef struct
     // remote
     int64_t prev_remote_time;
     enum rc_control_source_t control_source; // RC/ZERO/AUTO
+	acfrlcm::auv_spektrum_control_command_t spektrum_msg;
 
     // vehicle name
     string vehicle_name = "DEFAULT";
@@ -167,6 +168,8 @@ void rc_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	if (spektrum_cmd->utime > state->prev_remote_time) // msg is newer than previous msg
 	{
 		state->prev_remote_time = spektrum_cmd->utime; // we got a remote command, set the time and mode
+		memcpy(&state->spektrum_msg, spektrum_cmd, sizeof(acfrlcm::auv_spektrum_control_command_t));
+		//state->spektrum_msg = spektrum_cmd;
 
 	    if (spektrum_cmd->values[RC_AUX1] > REAR_POS_CUTOFF)
 	    {
@@ -269,25 +272,60 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 			send_relay_cmd(state, true);
             fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
         }
-//        // check gear (control assignment switch) of remote (3 position switch top RHS)
-//        if (spektrum_cmd->values[GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
-//        {
-//            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
-//            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
-//            
-//
-//        }
-//        else if (spektrum_cmd->values[GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
-//        {
-//            // Do nothing
-//        }
-//        else // Front Switch Position
-//        {
-//            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
-//            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
-//            
-//
-//        }
+
+        // check gear (drive control mode assignment switch) of remote (3 position switch top RHS)
+        if (state->spektrum_msg.values[RC_GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
+        {
+            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
+            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
+            int16_t port_throttle = state->spektrum_msg.values[RC_THROTTLE];
+            if ((port_throttle < CENTR_POS + HALF_DEADZONE) && (port_throttle > CENTR_POS - HALF_DEADZONE))
+            {
+                 mc_port.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                port_throttle-= CENTR_POS; //centre to zero
+                if (port_throttle > 0) 
+                {
+                    port_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    port_throttle+= HALF_DEADZONE;
+                }
+                mc_port.command_speed = (int)((port_throttle/AVAIL_V_RANGE)*TORQEEDO_CTRL_MAX);
+			}
+			int16_t stbd_throttle = state->spektrum_msg.values[RC_ELEVATOR];
+			if ((stbd_throttle < CENTR_POS + HALF_DEADZONE) && (stbd_throttle > CENTR_POS - HALF_DEADZONE))
+            {
+                 mc_stbd.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                stbd_throttle-= CENTR_POS; //centre to zero
+                if (stbd_throttle > 0)
+                {
+                    stbd_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    stbd_throttle+= HALF_DEADZONE;
+                }
+                mc_stbd.command_speed = (int)((stbd_throttle/AVAIL_V_RANGE)*TORQEEDO_CTRL_MAX);
+			}
+        }
+        else if (state->spektrum_msg.values[RC_GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
+        {
+            // Do nothing
+        }
+        else // Front Switch Position
+        {
+            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
+            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
+            
+
+        }
 
 
         // apply proportional speed limiting - limit format percentage
