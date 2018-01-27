@@ -44,6 +44,13 @@ using namespace libplankton;
 #define BIAS_A 0.0196
 #define BIAS_G 9.6963e-06
 
+#define NGA_DIAM 0.3 // m
+#define NGA_LENGTH 2.5 // m
+#define NGA_VERT_DISTANCE 2 //m
+#define NGA_LAT_DISTANCE 1.8 //m
+#define NGA_MASS 120 // kg
+#define NGA_INERTIA ((NGA_MASS*NGA_LENGTH*NGA_LENGTH/12) + (NGA_MASS*NGA_DIAM*NGA_DIAM/4))
+
 typedef boost::numeric::ublas::vector< double > state_type;
 
 // Inertial Matrix
@@ -81,7 +88,6 @@ SMALL::Vector3D grav;
 #define PITCHDOTNDX 10
 #define HDGDOTNDX 11
 
-// the control vector is RPM prop_torque rudder, plane
 //SMALL::Vector6D in;
 auv_nga_motor_command_t in;
 
@@ -107,10 +113,6 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     q = x[PITCHDOTNDX];
     r = x[HDGDOTNDX];
     
-    SMALL::Vector4D nuLinear, nuRotational;
-    nuLinear = u, v, w, 0.0;
-    nuRotational = p, q, r, 0.0;
-
     // adjustments for a constant water current (or wind)
 
     SMALL::Rotation3D Cbn;
@@ -124,14 +126,9 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     vc_b = (Cbn.i() * vc_n);
 
     // vehicle velocity in the current
-    nuLinear(1) = nuLinear(1) - vc_b(1);
-    nuLinear(2) = nuLinear(2) - vc_b(2);
-    nuLinear(3) = nuLinear(3) - vc_b(3);
-
     u = u - vc_b(1);
     v = v - vc_b(2);
     w = w - vc_b(3);
-
 
     // make heading 0 to 2pi
     while(psi < 0)
@@ -159,6 +156,10 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
         cerr << "In 0 NaN" << endl;
     }*/
     
+    /**************************
+     * Prop force from the tail
+     **************************/
+    //
     // propeller revolutions per second (rps)
     // converting desired rpm to rps
     double n = in.tail_thruster/60;
@@ -203,19 +204,26 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
         Kq = beta1 + beta2 * J0;
     }
 
-    double prop_force, prop_torque;
+    double prop_force;//, prop_torque;
     prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
-    prop_torque = rho * pow(prop_diameter,5) * Kq * fabs(n) * n; // Fossen 6.113
+    //prop_torque = rho * pow(prop_diameter,5) * Kq * fabs(n) * n; // Fossen 6.113
     //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
     if(prop_force !=  prop_force)
     {
         cerr << "Prop force error" << endl;
         prop_force = 0;
     }
-    if(fabs(prop_force) > 10.0)
-        prop_force = prop_force / fabs(prop_force) * 10;
+    //if(fabs(prop_force) > 10.0)
+    //    prop_force = prop_force / fabs(prop_force) * 10;
     
+    double tail_x = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_z = prop_force * sin(in.tail_elevator);
 
+
+    /****************************************
+     * Tunnel thruster forces
+     * **************************************/
     // the tunnel thruster forces needs to be determined as well
     // the lateral components affect yaw - psi and motion in y
     // the vertical components affect pitch - theta and motion in z
@@ -223,18 +231,19 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     //
     double tunnel_diameter = 0.1;
 
+    //
     // there is ZERO basis for this number (we use +-1500, full range is +-2048
     // from the DAC
     double to_rps = 0.03;
 
-    n = in.vert_fore * to_rps;
-    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
-    n = in.vert_aft * to_rps;
-    double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
-    n = in.lat_fore * to_rps;
-    double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
-    n = in.lat_aft * to_rps;
-    double lat_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n) * n;
+    double n_vert_fore = in.vert_fore * to_rps;
+    double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_fore) * n_vert_fore;
+    double n_vert_aft = in.vert_aft * to_rps;
+    double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_aft) * n_vert_aft;
+    double n_lat_fore = in.lat_fore * to_rps;
+    double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_lat_fore) * n_lat_fore;
+    double n_lat_aft = in.lat_aft * to_rps;
+    double lat_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_lat_aft) * n_lat_aft;
 
     double mutual_vert = vert_fore_force + vert_aft_force;
     double differential_vert = vert_fore_force - vert_aft_force;
@@ -242,171 +251,77 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     double mutual_lat = lat_fore_force + lat_aft_force;
     double differential_lat = lat_fore_force - lat_aft_force;
 
-    double tail_x = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
-    double tail_y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
-    double tail_z = prop_force * sin(in.tail_elevator);
+  
+    // ***********
+    // Drag forces
+    // ***********
+    double Cd_surge = 0.82; // modelled on a long cylinder
+    double A_surge = M_PI * pow(NGA_DIAM,2); // submerged
+    double Cd_across = 1.17; // modelled on a long cylinder
+    double A_across = NGA_DIAM * NGA_LENGTH;
+    
+    double Fd_surge = 0.5 * rho * A_surge * Cd_surge * fabs(u) * u ;
+    double Fd_sway = 0.5 * rho * A_across * Cd_across * fabs(v) * v;
+    double Fd_vert = 0.5 * rho * A_across * Cd_across * fabs(w) * w;
+   
+    // *************************
+    // Gravity and Buoyant Force
+    // *************************
+    double F_g = NGA_MASS*9.81;
+    double A_sub = M_PI * pow(NGA_DIAM/2,2);
+    if (x[ZNDX] < NGA_DIAM/2)
+    {
+        double theta_sub = 2 * acos(x[ZNDX]/(NGA_DIAM/2));
+        A_sub -= 0.5*pow(NGA_DIAM/2, 2) * theta_sub - sin(theta_sub);
+    }
+    double F_buoy = 0.66 * rho * A_sub * NGA_LENGTH * 9.81; // model the buoyancy to be slightly higher than the force of gravity when fully submerged
 
     // external applied forces
-    double X, Y, Z, K, M, N;
-    X = tail_x;
-    Y = tail_y + mutual_lat;
-    Z = tail_z + mutual_vert;
+    double F_surge, F_sway, F_vert;
+    F_surge = tail_x - Fd_surge;
+    F_sway = 0;// tail_y + mutual_lat - Fd_sway;
+    F_vert = tail_z + mutual_vert - Fd_vert + F_g - F_buoy;
 
-    // it may also not be strictly just roll if the thrust is vectored
-    K = prop_torque;  // this is approximate and still needs coefficients defined.
-    // FIXME: This scaling factor shouldn't be necessary seems required to get the vehicle model to turn adequately
-    M = tail_z * 1.25 + 0.75 * differential_vert;
-    N = tail_y * 1.25 + 0.75 * differential_lat; 
+    // applied torques 
+    // model the vehicle as a long cylinder spinning in a fluid
+    // integrating the drag along the length from the centre, we have
+    //  dF = 0.5 * Cd * rho * (Rw)^2 * D * dR (where d is the 
+    // integrating this gives us
+    //  T = 1/3 * CD * rho * D * w^2 * (L/2)^3
+    double Td = Cd_across * rho *  NGA_DIAM * fabs(r) * r * pow(NGA_LENGTH/2,3); 
 
-    // Force vectors, props and control surfaces
-    SMALL::Vector3D longF, latF;
-    longF = X, Z, M;
-    latF = Y, K, N;
 
-    
-    // Hydrodynamic Forces and Moments
-    /*
-    X = Xuu * u * fabs(u) + (Xwq - m) * w * q
-        + (Xqq + m * xG) * pow(q, 2) + (Xvr + m) * v * r
-        + (Xrr + m * xG) * pow(r, 2) - m * yG * p * q
-        - m * zG * p * r + prop_force;
-        
-    Y = Yvv * v * fabs(v) + Yrr * r * fabs(r)
-        + m * yG * pow(r, 2) + (Yur - m) * u * r
-        + (Ywp + m) * w * p + (Ypq - m * xG) * p * q
-        + Yuv * u * v + m * yG * pow(p, 2) - m * zG * q * r
-        + Ydr * pow(u, 2) * rudder;
-        
-    Z = Zww * w * fabs(w) + Zqq * q * fabs(q)
-        + (Zuq + m) * u * q + (Zvp - m) * v * p
-        + (Zrp - m * xG) * r * p + Zuw * u * w
-        + m * zG * (pow(p, 2) + pow(q, 2)) - m * yG * r * q
-        + Zdp * pow(u, 2) * plane;
-        
-    K = Kpp * p * fabs(p) - (Izz - Iyy) * q * r
-        + m * yG * (u * q - v * p) - m * zG * (w * p - u * r)
-        + in(1);
-        
-    M = Mww * w * fabs(w) + Mqq * q * fabs(q)
-        + (Muq - m * xG) * u * q + (Mvp + m * xG) * v * p
-        + (Mrp - (Ixx - Izz)) * r * p
-        + m * zG * (v * r - w * q) + Muw * u * w
-        + Mdp * pow(u, 2) * plane;
-        
-    N = Nvv * v * fabs(v) + Nrr * r * fabs(r)
-        + (Nur - m * xG) * u * r + (Nwp + m * xG) * w * p
-        + (Npq - (Iyy - Ixx)) * p * q
-        - m * yG * (v * r - w * q) + Nuv * u * v
-        + Ndr * pow(u, 2) * rudder;
-*/
+    double T_hdg = ((-tail_y * NGA_LENGTH/2) + (differential_lat*NGA_LAT_DISTANCE/2) - Td);
+   
+    // update the rates of change of the system states
+    dxdt[XNDX] = u*cos(psi);
+    dxdt[YNDX] = u*sin(psi);
+    dxdt[ZNDX] = w;
+    dxdt[ROLLNDX] = 0;
+    dxdt[PITCHNDX] = 0;
+    dxdt[HDGNDX] = r;
+    dxdt[XDOTNDX] = F_surge/NGA_MASS;
+    dxdt[YDOTNDX] = F_sway/NGA_MASS;
+    dxdt[ZDOTNDX] = F_vert/NGA_MASS;
+    dxdt[ROLLDOTNDX] = 0;
+    dxdt[PITCHDOTNDX] = 0;  // FIXME: Need to account for pitch here
+    dxdt[HDGDOTNDX] = T_hdg / NGA_INERTIA;
 
-    // For decoupled lateral and longitudinal forces as per Fossen 7.5.6
+    static int loopCount = 0;
 
-    // Velocity vectors, current state
-    SMALL::Vector3D longV, latV;
-    longV = u, w, q;
-    latV = v, p, r;
-    
-    // Damping matrices modified to match the above equations
-    SMALL::Matrix33 longDv, latDv;
-    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q),
-            -Zuq * q - Zuw * w, 					-Zww * fabs(w), 			-Zqq * fabs(q),
-            - Muq * q - Muw * w, 					-Mww * fabs(w), 			-Mqq * fabs(q);
-    
-    latDv = -Yvv * fabs(v) - Yuv * u,	-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * u,
-            0, 							-Kpp * fabs(p), 						0, // new addition based on above equations
-//                        -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
-            -Nvv * fabs(v) - Nuv * u, 	- Nwp * w - Npq * q, 					-Nrr * fabs(r) - Nur * u;
-    
-    // Damping matrices
-    /*
-    SMALL::Matrix33 longDv, latDv;
-    longDv = -Xuu * fabs(u), 						-Xwq * q, 					-Xqq * fabs(q) - Xwq * w,
-             -Zuq * q - Zuw * w, 					-Zww * fabs(w) - Zuw * u, 	-Zqq * fabs(q),
-             -Muu * fabs(u) - Muq * q - Muw * w, 	-Mww * fabs(w), 			-Mqq * fabs(q);
-
-    latDv = -Yvv * fabs(v), 			-Ywp * w - Ypq * q, 					-Yrr * fabs(r) - Yur * r,
-            -Mvp * p, 					-Mpp * fabs(p), 						-Mrp * p,
-            -Nvv * fabs(v) - Nuv * u, 	-Npp * fabs(p) - Nwp * w - Npq * q, 	-Nrr * fabs(r) - Nur * u;
-    */
-
-    // Coriolis matrices
-    SMALL::Matrix33 longCv, latCv;
-    longCv = 	0.0, 		0.0, 					0.0,
-            0.0, 		0.0, 					-(m - Xudot) * u,
-            0.0, 		(Zwdot - Xudot) * u, 	m * xG * u;
-    
-    latCv = 	0.0, 		0.0, 					(m- Xudot) * u,
-            0.0, 		0.0, 					0.0,
-            (Xudot - Yvdot) * u, 	0.0, 		m * xG * u;
-    
-    // Gravity and buoyancy
-    SMALL::Vector3D longGn, latGn;
-    longGn = 0.0, 0.0, W * zG  * sin(theta);
-    latGn = 0.0, W * zG * sin(phi), 0.0;
-    
-    /*    cout << "X = ";
-        for(int j=0; j<12; j++)
-                cout << x[j] << " ";
-        cout << endl;
-*/    
-    SMALL::Vector3D t1, t2;
-    //    t1 = (longF - longGn - longCv * longV  - longDv * longV);
-    t1 = longDv * longV;
-    t2 = latDv * latV;
-    //    t2 = (latF - latGn - latCv * latV - latDv * latV);
-    //    cout << "F = " << t1(1) << " " << t2(1) << " " << t1(2) << " " << t2(2) << " " << t1(3) << " " << t2(3) << " "<< endl;
-    static int count = 0;
-    if (count++ > 999)
-    { 
-        cout << count << endl;
-        cout << "propF = " << prop_force << endl;
-        cout << "X = " << X << " Y = " << Y << " Z = " << Z << endl;
-        cout << "K = " << K << " M = " << M << " N = " << N << endl;
-        cout << "longF = " << longF.toString() << endl;
-        cout << "longGn = " << longGn.toString() << endl;
-        cout << "longDv = " << t1.toString() << endl;
-        cout << "longCv = " << (longCv * latV).toString() << endl;
-        cout << "latF = " << latF.toString() << endl;
-        cout << "latGn = " << latGn.toString() << endl;
-        cout << "latDv = " << t2.toString() << endl;
-        cout << "latCv = " << (latCv * latV).toString() << endl;
-        cout << endl;
-        count = 0;
-    }
-
-    SMALL::Vector3D longDot, latDot;
-    longDot = (longF - longGn - longCv * longV - longDv * longV) / longM;
-    latDot = (latF - latGn - latCv * latV - latDv * latV) / latM;
-
-    accel = longDot[0], latDot[0], longDot[1];
-
-    // Rotate the velocites to the world frame
-    SMALL::Vector3D etaDotLin;//, etaDotRot;
-    etaDotLin = (auvPose.get3x4TransformationMatrix() * nuLinear);
-    //etaDotRot = (auvPose.get3x4TransformationMatrix() * nuRotational); // will be unused, as the Euler rates transform is used below
-    
-    SMALL::Vector6D nu_dot;
-    nu_dot = longDot[0], latDot[0], longDot[1], latDot[1], longDot[2], latDot[2];
-    
-    dxdt[XNDX] = etaDotLin[0] + CURRENT;
-    dxdt[YNDX] = etaDotLin[1];
-    dxdt[ZNDX] = etaDotLin[2];
-    dxdt[ROLLNDX] = p + q*cos(phi)*tan(theta) + r*sin(phi)*tan(theta); //etaDotRot[0];
-    dxdt[PITCHNDX] = q*cos(phi) - r*sin(phi); //etaDotRot[1];
-
-    if (fabs(theta) > M_PI/2 - 0.1)
+    if (loopCount++ > 100)
     {
-        cout << "Close to gimbal lock" << endl;
+        cout << "u: " << u << " v: " << v << " w: " << w << " p: " << p << " q: " << q << " r: " << r << endl;
+        cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder << " tailElev: " << in.tail_elevator << endl;
+        cout << " tail_x: " << tail_x << " tail_y: " << tail_y << " tail_z: " << tail_z << endl;
+        cout << " vert_fore_force: " << vert_fore_force << " vert_aft_force: " << vert_aft_force << endl; 
+        cout << " mutual_vert: " << mutual_vert << " differential_vert: " << differential_vert << endl;
+        cout << " lat_fore_force: " << lat_fore_force << " lat_aft_force: " << lat_aft_force << endl; 
+        cout << " mutual_lat: " << mutual_lat << " differential_lat: " << differential_lat << endl;
+        cout << "T_hdg: " << T_hdg << " Td: " << Td << endl;
+        cout << "dx:" << dxdt[XNDX] << " dy:" << dxdt[YNDX] << " dpsi:" << dxdt[HDGDOTNDX] << endl;
+        loopCount = 0;
     }
-    dxdt[HDGNDX] = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta); //etaDotRot[2];
-    dxdt[XDOTNDX] = nu_dot[0];
-    dxdt[YDOTNDX] = nu_dot[1];
-    dxdt[ZDOTNDX] = nu_dot[2];
-    dxdt[ROLLDOTNDX] = nu_dot[3];
-    dxdt[PITCHDOTNDX] = nu_dot[4];
-    dxdt[HDGDOTNDX] = nu_dot[5];
-
 }
 
 // motor command callback
@@ -430,25 +345,25 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 {
     // call the solver
     //    integrate_n_steps(stepper, auv, state , 0.0 , 0.001 , 100 );
-    integrate_const(stepper, auv, state , 0.0 , 0.01 , 0.001 ); // 1x speed simulation
+    integrate_const(stepper, auv, state , 0.0 , 0.1 , 0.01 ); // 1x speed simulation
 
     int64_t timeStamp = timestamp_now();
 
     //construct the nav message
     auv_acfr_nav_t nav;
     nav.utime = timeStamp;
-    nav.x = state(0);
-    nav.y = state(1);
-    nav.depth = state(2);
-    nav.roll = state(3);
-    nav.pitch = state(4);
-    nav.heading = state(5);
-    nav.vx = state(6);
-    nav.vy = state(7);
-    nav.vz = state(8);
-    nav.rollRate = state(9);
-    nav.pitchRate = state(10);
-    nav.headingRate = state(11);
+    nav.x = state(XNDX);
+    nav.y = state(YNDX);
+    nav.depth = state(ZNDX);
+    nav.roll = state(ROLLNDX);
+    nav.pitch = state(PITCHNDX);
+    nav.heading = state(HDGNDX);
+    nav.vx = state(XDOTNDX);
+    nav.vy = state(YDOTNDX);
+    nav.vz = state(ZDOTNDX);
+    nav.rollRate = state(ROLLDOTNDX);
+    nav.pitchRate = state(PITCHDOTNDX);
+    nav.headingRate = state(HDGDOTNDX);
 
     nav.altitude = WATER_DEPTH - nav.depth;
 
@@ -490,10 +405,10 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish(vehicle_name+".ACFR_NAV", &nav);
+        //lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
-    //	lcm->publish(vehicle_name+".ACFR_NAV", &nav);
+    lcm->publish(vehicle_name+".ACFR_NAV", &nav);
     // for simulating the sensors, acfr_nav_new should be publishing the ACFR_NAV
 
     //IMU
@@ -832,18 +747,18 @@ int main(int argc, char **argv)
             m * xG - Yrdot,		-Izx - Krdot,		Iz - Nrdot;
 
     // initial conditions
-    state(0) = -10;
-    state(1) = -10;
-    state(2) = 1.9;  //Z = 1;
-    state(3) = 0;
-    state(4) = 0;
-    state(5) = 0;
-    state(6) = 0;
-    state(7) = 0;
-    state(8) = 0;
-    state(9) = 0;
-    state(10) = 0;
-    state(11) = 0;
+    state(XNDX) = -10;
+    state(YNDX) = -10;
+    state(ZNDX) = 1.9;  //Z = 1;
+    state(ROLLNDX) = 0;
+    state(PITCHNDX) = 0;
+    state(HDGNDX) = 0;
+    state(XDOTNDX) = 0;
+    state(YDOTNDX) = 0;
+    state(ZDOTNDX) = 0;
+    state(ROLLDOTNDX) = 0;
+    state(PITCHDOTNDX) = 0;
+    state(HDGDOTNDX) = 0;
 
     in.vert_fore = 0;
     in.vert_aft = 0;
