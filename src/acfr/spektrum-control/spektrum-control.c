@@ -239,10 +239,10 @@ void realign(acfr_sensor_t *sensor)
         {
             int len;
             // deliberately don't align with expected packet size of 16 bytes
-            int bytes = 16;
+            int bytes = 15;
             len = acfr_sensor_read(sensor, buf, bytes);
             printf("%i\n", len);
-            if(len == bytes && buf[1] == 0xa2)
+            if(len == bytes && (unsigned char)buf[1] == 0xa2)
             {
                 aligned = 1;
             }

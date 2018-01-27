@@ -70,6 +70,9 @@ typedef struct
 	double motor_limit_rc = 0;
 	double motor_limit_controller = 0;
 
+	// debug verbose 
+	bool verbose = 0;
+
 } state_t;
 
 // load all the config variables
@@ -114,6 +117,9 @@ int load_config(state_t *state, char *rootkey)
     sprintf(key, "%s.motor_limit_controller", rootkey);
     state->motor_limit_controller = bot_param_get_double_or_fail(param, key);
 
+    sprintf(key, "%s.verbose", rootkey);
+    state->verbose = bot_param_get_str_or_fail(param, key);
+
 	// get relay number for torqeedos from relay device list
 	char *relay_device;
     for (int i = 1; i <= NUM_RELAYS; i++)
@@ -124,9 +130,20 @@ int load_config(state_t *state, char *rootkey)
 		if (strcmp(relay_device, "torqeedos_contactor") == 0)
 		{
 			state->torqeedo_relay_no = i;
-			return 1;	// found, don't check further entries
+		    if (state->verbose)
+		    {
+		        printf("Torqeedo Contactor Relay Number: %d\n", i);
+		    }
+
+			continue;	// found, don't check further entries
 		}
     }
+
+    if (state->verbose)
+    {
+        printf("Config setup complete\n");
+    }
+
     return 1;
 }
 
@@ -154,14 +171,26 @@ void rc_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	    if (spektrum_cmd->values[RC_AUX1] > REAR_POS_CUTOFF)
 	    {
 			state->control_source = RC_MODE_RC; // vehicle controlled by handheld remote control
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_RC\n");
+		    }
 	    }
 	    else if (spektrum_cmd->values[RC_AUX1] > CENTER_POS_CUTOFF)
 	    {
 			state->control_source = RC_MODE_ZERO; // disable motors
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_ZERO\n");
+		    }
 	    }
 		else
 		{
 			state->control_source = RC_MODE_AUTO; // vehicle controlled by wam-v-control 
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_AUTO\n");
+		    }
 		}
 	}
 }
@@ -196,6 +225,10 @@ void handle_relay_status(const lcm::ReceiveBuffer *rbuf, const std::string& chan
 
 void send_relay_cmd(state_t *state, bool enable)
 {
+    if (state->verbose)
+    {
+        printf("Send Relay Cmd: No. %d %d\n", state->torqeedo_relay_no, (int)enable);
+    }
 	// publish LCM relay state request command	
 	acfrlcm::relay_command_t request_msg; // create new message
     memset(&request_msg, 0, sizeof(acfrlcm::relay_command_t)); // initialise
@@ -236,6 +269,25 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 			send_relay_cmd(state, true);
             fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
         }
+//        // check gear (control assignment switch) of remote (3 position switch top RHS)
+//        if (spektrum_cmd->values[GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
+//        {
+//            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
+//            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
+//            
+//
+//        }
+//        else if (spektrum_cmd->values[GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
+//        {
+//            // Do nothing
+//        }
+//        else // Front Switch Position
+//        {
+//            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
+//            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
+//            
+//
+//        }
 
 
         // apply proportional speed limiting - limit format percentage
@@ -326,6 +378,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         if( loopCount % 10 == 0 )
         {
             printf( "o" );
+        }
+        if( loopCount % 1000 == 0 )
+        {
+            printf( "\nRC Mode: %d Run Mode: %d\n", state->control_source, state->run_mode);
         }
 		// set motor speed to zero
 		mc_port.command_speed = 0;
