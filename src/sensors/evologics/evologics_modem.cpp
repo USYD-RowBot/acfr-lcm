@@ -379,6 +379,8 @@ printf("Term char = 0x%02X\n", (unsigned int)*term);
     */ 
     send_command("AT@ZU1");      // request USBL positioning data
     send_command("AT?ZU");      // request USBL positioning data
+
+    send_command("AT@ZX0");      // turn off extended notification
     
     //send_command("ATN");      // noise mode
     
