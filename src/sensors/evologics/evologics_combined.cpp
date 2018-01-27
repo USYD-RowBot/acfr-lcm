@@ -626,7 +626,6 @@ bool EvologicsModem::send_command(const char *d)
     if (starts_with(message_text, "OK") || starts_with(message_text, "[*]OK"))
     {
         success = true;
-        std::cout << "Command successful.\n";
     }
     else if (starts_with(message_text, "ERROR"))
     {
@@ -677,7 +676,6 @@ bool EvologicsModem::send_mode(const char *d)
     if (starts_with(message_text, "INITIATION"))
     {
         success = true;
-        std::cout << "Command successful:\n" << message_text << "\n";
     }
     else if (starts_with(message_text, "ERROR"))
     {
@@ -806,7 +804,8 @@ std::string EvologicsModem::get_target_name(int target_id)
 
 void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb)
 {
-    std::cout << "Thump" << std::endl;
+    //std::cout << "Thump" << std::endl;
+
     // heartbeat! we need to see if we have to ping someone
     // first check if we have a ping queued. if we do, then do nothing
 
@@ -1027,11 +1026,12 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     // to this we expect a few things
     // namely an OK, BUSY or ERROR response
     // followed by a final message depending on the message type
+    
+    std::cout << "Waiting for SEND response" << std::endl;
     std::unique_lock<std::mutex> ul(this->queue_response_mutex);
 
     while (this->queued_responses.size() == 0)
     {
-        std::cout << "Waiting for SEND response" << std::endl;
         this->response_added.wait_for(ul, std::chrono::milliseconds(100));
     }
 
@@ -1072,9 +1072,9 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     {
         // now was it delivered, failed or cancelled?
         // this also depends on the message type
+        std::cout << "Waiting for SEND[IM] delivery response" << std::endl;
         while (this->queued_responses.size() == 0)
         {
-            std::cout << "Waiting for SEND[IM] delivery response" << std::endl;
             this->response_added.wait_for(ul, std::chrono::milliseconds(100));
         }
 
@@ -1105,7 +1105,6 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
             std::cerr << "Unknown response to command:\n>" << message_text << "\n"; 
         }
     }
-
 
     return success;
 }
@@ -1190,7 +1189,7 @@ void EvologicsModem::modem_read_thread()
         }
         else if (ret == 0)
         {
-            std::cout << "Timeout waiting for modem data.\n";
+            //std::cout << "Timeout waiting for modem data.\n";
         }
         else if (ret == -1)
         {
@@ -1408,7 +1407,6 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
     // or positioning output
     //if (true)
     {
-        std::cout << "Locking QR mutex (queue_modem_response)" << std::endl;
         std::lock_guard<std::mutex> lg(this->queue_response_mutex);
 
         // now we can add into the array!
@@ -1419,7 +1417,6 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         this->queued_responses.emplace_back(timestamp, new_buffer);
 
         this->response_added.notify_one();
-        std::cout << "Unlocking QR mutex (queue_modem_response)" << std::endl;
     }
 }
 
@@ -1600,15 +1597,17 @@ void EvologicsModem::run()
 
     while (!loop_exit)
     {
+        std::cout << "========================================\n";
+        std::cout << "Waiting for message to send." << std::endl;
         std::unique_lock<std::mutex> ul(this->queue_message_mutex);
         while (!loop_exit && this->queued_messages.size() == 0 && this->next_ping.size() == 0)
         {
-            std::cout << "Waiting for message to send." << std::endl;
             this->message_added.wait_for(ul, std::chrono::milliseconds(500));
         }
 
         if (this->queued_messages.size() > 0)
         {
+            std::cout << "Sending queued burst/IM message from LCM\n";
             // sending burst/data IM
             auto message = this->queued_messages.front();
             this->queued_messages.pop_front();
@@ -1617,6 +1616,7 @@ void EvologicsModem::run()
         }
         else if (this->next_ping.size() > 0)
         {
+            std::cout << "Sending IM ping for USBL FIX.\n";
             // sending a ping for a USBL fix
             send_message(MSG_IM, (char *)next_ping.data(), next_ping.size());
             next_ping.clear();
