@@ -422,6 +422,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 // X Velocity
                 prop_rpm = pid(&state->gains_vel, nav.vx, cmd.vx, CONTROL_DT);
 
+                /* For the moment, we will focus on using the tunnel thrusters to control depth and assume that pitch remains fairly stable
                 // Pitch to fins
                 if (cmd.depth_mode == PITCH_MODE)
                 {
@@ -448,12 +449,31 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 else
                     plane_angle = pid(&state->gains_pitch_r, nav.pitch, pitch,
                                     CONTROL_DT);
+                */
+                /************************************************************
+                * Depth calculation
+                * Diving with NGA is a little special. we have tunnel thrusters
+                * to reach a target depth
+                *************************************************************/
+                double target_pitch = 0.0;
 
-                /*
+                double mutual_vert = pid(&state->gains_tunnel_depth, 
+                        nav.depth, cmd.depth, CONTROL_DT);
+                double differential_vert = pid(&state->gains_tunnel_pitch,
+                        nav.pitch, target_pitch, CONTROL_DT);
+                //double mutual = pid(&state->gains_tunnel_descent,
+                //        nav.vz, target_descent, CONTROL_DT);
+
+                // Set motor controller values
+                mc.vert_fore = mutual_vert + differential_vert;
+                mc.vert_aft = mutual_vert - differential_vert;
+
+
+                /************************************************************
                 * Heading calculation
                 * Calculate the diff between desired heading and actual heading.
                 * Ensure this diff is between +/-PI
-                */
+                *************************************************************/
 
                 // to properly do this current should be accounted for
                 // so it could be moving towards the target without actually
@@ -474,86 +494,15 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 while( diff_heading > M_PI )
                     diff_heading -= 2*M_PI;
 
-#if 0
-                double bearing = atan2(
-                                    nav.vy * cos(nav.heading) + nav.vx * sin(nav.heading),
-                                    -nav.vy * sin(nav.heading) + nav.vx * cos(nav.heading));
+                // Account for side slip by making the velocity bearing weighted
+                // 	on the desired heading
+                rudder_angle = -pid(&state->gains_heading, diff_heading, 0.0, CONTROL_DT);
 
-                while (bearing < -M_PI)
-                    bearing += 2 * M_PI;
-                while (bearing > M_PI)
-                    bearing -= 2 * M_PI;
+                mc.lat_fore = 0;
+                mc.lat_aft = 0;
 
-
-                // correctly compute the weighted bearing
-                double yaw1 = bearing;
-                if (yaw1 > 2 * M_PI
-                )
-                    yaw1 -= 2 * M_PI;
-                else if (yaw1 < 0)
-                    yaw1 += 2 * M_PI;
-
-                double yaw2 = nav.heading;
-                if (yaw2 > 2 * M_PI
-                )
-                    yaw2 -= 2 * M_PI;
-                else if (yaw2 < 0)
-                    yaw2 += 2 * M_PI;
-
-                if (yaw2 - yaw1 > M_PI
-                )
-                    yaw2 -= 2 * M_PI;
-                else if (yaw1 - yaw2 > M_PI
-                        )
-                    yaw1 -= 2 * M_PI;
-
-                //Weight the heading more as the velocity magnitude decreases
-
-                double W_BEARING = 0;
-                /* for the moment, use the heading as the yaw reference
-
-                if (fabs(state->nav.vx) < 0.2) // at 0.2 m/s assume velocity vector magnitude is accurate relative to error
-                W_BEARING = fabs(state->nav.vx) / 0.2;
-                else
-                W_BEARING = 1;
-                */
-                double W_HEADING = 1 - W_BEARING;
-
-                double bearing_weighted = W_BEARING * yaw1 + W_HEADING * yaw2;
-
-                while (bearing_weighted < -M_PI)
-                    bearing_weighted += 2 * M_PI;
-                while (bearing_weighted > M_PI)
-                    bearing_weighted -= 2 * M_PI;
-
-                // If the sign of the heading is not the same as the sign of the
-                //		bearing...
-                if ((int) (fabs(cmd.heading) / cmd.heading)
-                        != (int) (fabs(bearing_weighted) / bearing_weighted))
-                {
-                    if (cmd.heading < (-M_PI / 2))
-                        cmd.heading += 2 * M_PI;
-                    else if (bearing_weighted < (-M_PI / 2))
-                        bearing_weighted += 2 * M_PI;
-                }
-
-                //printf("bearing: %f heading: %f bearing_w: %f\n",bearing,state->nav.heading,bearing_weighted);
-#endif
-
-                // Special dive case, no heading control
-                if (state->run_mode == acfrlcm::auv_control_t::DIVE)
-                {
-                    rudder_angle = 0;
-                }
-                else
-                {
-
-                    // Account for side slip by making the velocity bearing weighted
-                    // 	on the desired heading
-                    rudder_angle = pid(&state->gains_heading, diff_heading, 0.0, CONTROL_DT);
-                }
-
-
+                // FIXME: Might consider adding some lat tunnel thruster here
+                
                 //	printf("prop_rpm: %f\n",prop_rpm);
                 // Reverse all the fin angles for reverse direction (given rpm is
                 // 	negative and so is velocity, so water relative should be
@@ -574,10 +523,6 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 mc.tail_thruster = prop_rpm;
                 mc.tail_rudder = rudder_angle;
                 mc.tail_elevator = plane_angle;
-                mc.vert_fore = 0;
-                mc.vert_aft = 0;
-                mc.lat_fore = 0;
-                mc.lat_aft = 0;
 
 
                 // Print out and publish NEXTGEN_MOTOR.TOP status message every 10 loops
@@ -595,11 +540,19 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                     printf( "Motor   : main=%4d\n", (int)mc.tail_thruster);
                     printf( "Fins    : rudder_angle=%.2f, plane_angle=%.2f \n",
                             mc.tail_rudder, mc.tail_elevator);
+                    printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                            nav.depth, cmd.depth, (cmd.depth - nav.depth) );
+                    //printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                    //        nav.vz, target_descent, (target_descent - nav.vz));
+                    printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                            nav.pitch/M_PI*180, target_pitch/M_PI*180, (target_pitch - nav.pitch)/M_PI*180 );
+                    printf( "Vert Tunnel: fore=%.2f, aft=%.2f \n",
+                            mc.vert_fore, mc.vert_aft);
                     printf( "\n" );
                 }
 
             }
-            else if (state->run_mode == acfrlcm::auv_control_t::DIVE)
+/*            else if (state->run_mode == acfrlcm::auv_control_t::DIVE)
             {
                 // diving with NGA is a little special. we have tunnel thrusters
                 // to reach a target depth
@@ -636,7 +589,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                             mc.vert_fore, mc.vert_aft);
                     printf( "\n" );
                 }
-            }
+            }*/
             else
             {
                 // if we are not in RUN or DIVE mode, zero the integral terms
