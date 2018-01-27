@@ -110,8 +110,12 @@ parse_rc(char *buf, state_t *state)
     char channel_id;
     short channel_values[state->channels];
 
-    for(int i=0; i<state->channels; i++)
+    // packet size is always 16, first two bytes are status/flags
+    // and data isn't necessarily ordered
+    // so read the last 7 byte pairs
+    for(int i=1; i<8; i++)
     {
+        // we have an offset of 2 as the first two bytes are status/flags
         channel_id = (buf[i*2] & 0xF8) >> 3;
         channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
 
@@ -239,7 +243,7 @@ void realign(acfr_sensor_t *sensor)
         {
             int len;
             // deliberately don't align with expected packet size of 16 bytes
-            int bytes = 15;
+            int bytes = 16;
             len = acfr_sensor_read(sensor, buf, bytes);
             printf("%i\n", len);
             if(len == bytes && (unsigned char)buf[1] == 0xa2)
@@ -248,7 +252,8 @@ void realign(acfr_sensor_t *sensor)
             }
             else
             {
-                fprintf(stderr, "Wrong number of bytes (%i)\n", len);
+                len = acfr_sensor_read(sensor, buf, 1);
+                fprintf(stderr, "Shifting alignment\n");
             }
         }
         //else
@@ -359,6 +364,10 @@ main(int argc, char **argv)
             len = acfr_sensor_read(sensor, buf, bytes);
             if(len == bytes)
             {
+                if ((unsigned char)buf[1] != 0xa2)
+                {
+                    realign(sensor);
+                }
                 parse_rc(buf, &state);
             }
             else
