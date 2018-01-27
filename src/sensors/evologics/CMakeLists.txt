@@ -13,4 +13,4 @@ perls_add_executable (evologics-extended evologics_extended.cpp )
 perls_target_link_libraries (evologics-extended perls-lcmtypes perls-common z pthread)
 
 perls_add_executable (evologics-combined evologics_combined.cpp )
-perls_target_link_libraries (evologics-combined perls-lcmtypes acfr-common pthread)
+perls_target_link_libraries (evologics-combined perls-lcmtypes acfr-common z pthread)
