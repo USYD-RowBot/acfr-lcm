@@ -3,6 +3,8 @@
 #include <vector>
 #include <tuple>
 
+#include <chrono>
+
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -114,8 +116,16 @@ public:
     void run();
 
     void publish_modem_response(int64_t timestamp, const std::vector<uint8_t> &buffer);
-
     void queue_modem_response(int64_t timestamp, std::vector<uint8_t> &buffer);
+
+    void process_burst(int64_t timestamp, std::vector<uint8_t> &v);
+    void process_im(int64_t timestamp, std::vector<uint8_t> &v);
+    void process_pbm(int64_t timestamp, std::vector<uint8_t> &v);
+
+    void process_usbllong(int64_t timestamp, std::vector<uint8_t> &v);
+    void process_usblangles(int64_t timestamp, std::vector<uint8_t> &v);
+
+    void process_lcm_data(uint8_t *data, int data_length);
 
 private:
     lcm::LCM lcm;
@@ -346,6 +356,14 @@ bool EvologicsModem::load_configuration(char *program_name)
     int targets[255];
     int num_targets = bot_param_get_int_array(param, key, targets, 255);
 
+    sprintf(key, "%s.ping_rates", rootkey);
+    int ping_rates[255];
+    int num_rates = bot_param_get_int_array(param, key, targets, 255);
+
+    sprintf(key, "%s.send_fixes", rootkey);
+    int send_fixes[255];
+    int num_send_fixes = bot_param_get_boolean_array(param, key, targets, 255);
+
     sprintf(key, "%s.target_names", rootkey);
     char **target_names = nullptr;
     target_names = bot_param_get_str_array_alloc(param, key);
@@ -466,7 +484,8 @@ bool EvologicsModem::connect_modem()
 void EvologicsModem::modem_write(char const *command, int length)
 {
     // (this includes many RECV and SEND cmds, but not all!)
-    std::cout << "Sending to modem:\n>" << 
+    //std::cout << "Sending to modem:\n<<" << 
+    std::cout << "<<" << 
         std::string(command, strcspn(command, ",\n")) << std::endl;
     /*senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
@@ -753,6 +772,7 @@ int EvologicsModem::get_target_channel(std::string const &channel)
 
 void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb)
 {
+    std::cout << "Thump" << std::endl;
     // heartbeat! we need to see if we have to ping someone
     // first check if we have a ping queued. if we do, then do nothing
 
@@ -968,7 +988,8 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
 
     while (this->queued_responses.size() == 0)
     {
-        this->response_added.wait(ul);
+        std::cout << "Waiting for SEND response" << std::endl;
+        this->response_added.wait_for(ul, std::chrono::milliseconds(100));
     }
 
     auto message = this->queued_responses.front();
@@ -1006,13 +1027,12 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     // this will change if using broadcast IMs)
     if (success && (message_type == MSG_BURST || message_type == MSG_IM))
     {
-        std::cerr << "IMS do not give delivery reports but may still report cancelled or expired." << std::endl;
-
         // now was it delivered, failed or cancelled?
         // this also depends on the message type
         while (this->queued_responses.size() == 0)
         {
-            this->response_added.wait(ul);
+            std::cout << "Waiting for SEND[IM] delivery response" << std::endl;
+            this->response_added.wait_for(ul, std::chrono::milliseconds(100));
         }
 
         message = this->queued_responses.front();
@@ -1054,6 +1074,8 @@ void EvologicsModem::lcm_handle_thread()
     {
         this->lcm.handleTimeout(100);
     }
+
+    std::cout << "LCM handle thread exit" << std::endl;
 }
 
 void EvologicsModem::modem_read_thread()
@@ -1247,7 +1269,8 @@ void EvologicsModem::publish_modem_response(int64_t timestamp, std::vector<uint8
 {
     //TODO: update this to display all messages excluding any data fields
     // (this includes many RECV and SEND cmds, but not all!)
-    std::cout << "Received from modem:\n>" << 
+    //std::cout << "Received from modem:\n>>" << 
+    std::cout << ">>" << 
         std::string((char *)buf.data(), strcspn((char *)buf.data(), ",\n")) << std::endl;
     senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
@@ -1273,14 +1296,35 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
     // they have already been logged so move on!
     if (starts_with(response, "RECV"))
     {
+        if (starts_with(response, "RECV,"))
+        {
+            this->process_burst(timestamp, buffer);
+        }
+        else if (starts_with(response, "RECVIM,"))
+        {
+            this->process_im(timestamp, buffer);
+        }
+        else if (starts_with(response, "RECVPBM,"))
+        {
+            this->process_pbm(timestamp, buffer);
+        }
+
         return;
     }
     else if (starts_with(response, "SEND"))
     {
         return;
     }
-    else if (starts_with(response, "USBLPHY"))
+    else if (starts_with(response, "USBL"))
     {
+        if (starts_with(response, "USBLLONG,"))
+        {
+            this->process_usbllong(timestamp, buffer);
+        }
+        else if (starts_with(response, "USBLANGLES,"))
+        {
+            this->process_usblangles(timestamp, buffer);
+        }
         return;
     }
     else if (starts_with(response, "PHYO"))
@@ -1358,6 +1402,35 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
     }
 }
 
+void EvologicsModem::process_lcm_data(uint8_t *d, int size)
+{
+    // first check the crc
+    unsigned long crc = crc32(0, d + 3, size - 9);
+    unsigned long data_crc = *(uint32_t *)&d[size - 6];
+    
+    if((data_crc & 0xFFFFFFFF) != (crc & 0xFFFFFFFF))
+    {
+        std::cerr << "LCM data CRC error\n";
+        //printf("0x%X 0x%X\n", crc, data_crc);
+        return;
+    }
+
+    // get the channel name
+    char *channel = (char *)malloc(d[3] + 1);
+    memset(channel, 0, d[3] + 1);
+    memcpy(channel, &d[4], d[3]);
+
+    // get the payload location
+    void *lcm_data_start = &d[d[3] + 4];
+    int lcm_data_length = size - d[3] - 10;
+    
+    std::cout << "Publishing lcm data on channel name: " << channel << std::endl;
+    
+    // publish the LCM data
+    lcm.publish(channel, lcm_data_start, lcm_data_length);
+}
+
+
 void EvologicsModem::run()
 {
     // first step is make sure we are connected!
@@ -1386,7 +1459,8 @@ void EvologicsModem::run()
         std::unique_lock<std::mutex> ul(this->queue_message_mutex);
         while (this->queued_messages.size() == 0 && this->next_ping.size() == 0)
         {
-            this->message_added.wait(ul);
+            std::cout << "Waiting for message to send." << std::endl;
+            this->message_added.wait_for(ul, std::chrono::milliseconds(500));
         }
 
         if (this->queued_messages.size() > 0)
