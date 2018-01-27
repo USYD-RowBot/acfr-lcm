@@ -112,18 +112,19 @@ public:
     bool send_mode(const char *d);
 
     int get_target_channel(std::string const &channel);
+    std::string get_target_name(int target_id);
 
     void run();
 
     void publish_modem_response(int64_t timestamp, const std::vector<uint8_t> &buffer);
     void queue_modem_response(int64_t timestamp, std::vector<uint8_t> &buffer);
 
-    void process_burst(int64_t timestamp, std::vector<uint8_t> &v);
-    void process_im(int64_t timestamp, std::vector<uint8_t> &v);
-    void process_pbm(int64_t timestamp, std::vector<uint8_t> &v);
+    void process_burst(int64_t timestamp, std::string const &message);
+    void process_im(int64_t timestamp, std::string const &message);
+    void process_pbm(int64_t timestamp, std::string const &message);
 
-    void process_usbllong(int64_t timestamp, std::vector<uint8_t> &v);
-    void process_usblangles(int64_t timestamp, std::vector<uint8_t> &v);
+    void process_usbllong(int64_t timestamp, std::string const &message);
+    void process_usblangles(int64_t timestamp, std::string const &message);
 
     void process_lcm_data(uint8_t *data, int data_length);
 
@@ -194,6 +195,25 @@ bool starts_with(std::string const &full_string, std::string const &prefix)
 bool starts_with(std::string const &full_string, char const *prefix)
 {
     return 0 == full_string.compare(0, strlen(prefix), prefix);
+}
+
+std::vector<std::string> chop_string(std::string const &s, int nTokens)
+{
+   std::string delimiter = " ,:*?!";
+   std::vector<std::string> tokens;
+
+   std::string token;
+   size_t last = 0;
+   size_t next = 0;
+   int i = 0;
+   while (((next = s.find_first_of(delimiter, last)) != std::string::npos) && (i < nTokens-1)) {
+       token = s.substr(last, next-last);
+       tokens.push_back(token);
+       last = next + 1;
+       i++;
+   }
+   tokens.push_back(s.substr(last));
+   return tokens;
 }
 
 // The GLOBALS to bind to the signal handler
@@ -770,6 +790,20 @@ int EvologicsModem::get_target_channel(std::string const &channel)
     return target_channel;
 }
 
+std::string EvologicsModem::get_target_name(int target_id)
+{
+    for (auto &target : ping_targets)
+    {
+        if (target.target_id == target_id)
+        {
+            return target.target_name;
+        }
+    }
+
+    // couldn't map the name
+    return std::string();
+}
+
 void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb)
 {
     std::cout << "Thump" << std::endl;
@@ -813,6 +847,10 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
         // build the message up
         char message[64];
         int length = snprintf(message, sizeof(message), "AT*SENDIM,5,%d,ack,%05d", target, target);
+
+        // add the terminator
+        memcpy(message + length, term, term_len);
+        length += term_len;
 
         // and place in the queue
         next_ping.resize(length);
@@ -913,7 +951,9 @@ EvologicsModem::build_lcm_data_message
         bool use_pbm
     )
 {
-    int message_size = lcm_data_size + strlen(dest_channel) + 10;
+    // breaking this constant down:
+    // LCM <name length> <32bit crc> LE
+    int message_size = lcm_data_size + strlen(dest_channel) + 3 + 1 + 4 + 2;
 
     char header[64];
     int header_size = 0;
@@ -940,7 +980,7 @@ EvologicsModem::build_lcm_data_message
     }
 
     int bufpos = 0;
-    std::vector<unsigned char> buffer(header_size + message_size);
+    std::vector<unsigned char> buffer(header_size + message_size + term_len);
     char *buf = (char *)buffer.data();
 
     memcpy(buf, header, header_size);
@@ -968,7 +1008,10 @@ EvologicsModem::build_lcm_data_message
     strncpy(buf + bufpos, "LE", 2);
     bufpos += 2;
 
-    if (bufpos != header_size + message_size)
+    memcpy(buf + bufpos, term, term_len);
+    bufpos += term_len;
+
+    if (bufpos != header_size + message_size + term_len)
     {
         std::cerr << "Error in encoding LCM message. Data size mismatch." << std::endl;
     }
@@ -1105,15 +1148,15 @@ void EvologicsModem::modem_read_thread()
             // data that could accidentally match the line termination
             // characters (CR + LF)
             //
-            // the shortest possible message is 4 bytes - OK\r\n
+            // the shortest possible message is 3 bytes - <number>\r\n
             // which coincidentally matches the length needed to get
-            // RECV matched and passed to a special handler for those messages
-            // so start with 4 bytes!
-            // make sure we get exactly 4 bytes (in a row)
-            uint8_t message_start[4];
+            // REC matched and passed to a special handler for those messages
+            // so start with 3 bytes!
+            // make sure we get exactly 3 bytes (in a row)
+            uint8_t message_start[3];
             while (bytes < 2)
             {
-                bytes += read(this->modem_fd, message_start + bytes, 4 - bytes);
+                bytes += read(this->modem_fd, message_start + bytes, 2 - bytes);
                 // in case the modem sends a blank response...
                 // it happens (with AT@ZU1 apparently...)
                 if (message_start[0] == '\r')
@@ -1121,20 +1164,19 @@ void EvologicsModem::modem_read_thread()
                     bytes = 0;
                 }
             }
-            while (bytes < 4)
+            while (bytes < 3)
             {
-                bytes += read(this->modem_fd, message_start + bytes, 4 - bytes);
+                bytes += read(this->modem_fd, message_start + bytes, 3 - bytes);
             }
 
             // faster than looping
             buf.push_back(message_start[0]);
             buf.push_back(message_start[1]);
             buf.push_back(message_start[2]);
-            buf.push_back(message_start[3]);
 
 
             // now we can check if it is a recv
-            if (buf[0] == 'R' && buf[1] == 'E' && buf[2] == 'C' && buf[3] == 'V')
+            if (buf[0] == 'R' && buf[1] == 'E' && buf[2] == 'C')
             {
                 this->parse_recv(buf);
             }
@@ -1168,14 +1210,20 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
 {
     size_t bytes = buf.size();
 
-    if (bytes != 4)
+    if (bytes != 3)
     {
-        std::cerr << "Should only be parsing RECV commands starting with 4 bytes." << std::endl;
+        std::cerr << "Should only be parsing REC commands starting with 3 bytes." << std::endl;
     }
 
     // we need to get the length of the data at the end
     // and also need to find out what type of RECV message it is.
     uint8_t byte;
+    // read the V
+    bytes += read(this->modem_fd, &byte, 1);
+    buf.push_back(byte);
+
+    // now read the letter we need to know the difference
+    // between types
     bytes += read(this->modem_fd, &byte, 1);
     buf.push_back(byte);
 
@@ -1298,15 +1346,15 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
     {
         if (starts_with(response, "RECV,"))
         {
-            this->process_burst(timestamp, buffer);
+            this->process_burst(timestamp, response);
         }
         else if (starts_with(response, "RECVIM,"))
         {
-            this->process_im(timestamp, buffer);
+            this->process_im(timestamp, response);
         }
         else if (starts_with(response, "RECVPBM,"))
         {
-            this->process_pbm(timestamp, buffer);
+            this->process_pbm(timestamp, response);
         }
 
         return;
@@ -1319,11 +1367,11 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
     {
         if (starts_with(response, "USBLLONG,"))
         {
-            this->process_usbllong(timestamp, buffer);
+            this->process_usbllong(timestamp, response);
         }
         else if (starts_with(response, "USBLANGLES,"))
         {
-            this->process_usblangles(timestamp, buffer);
+            this->process_usblangles(timestamp, response);
         }
         return;
     }
@@ -1355,40 +1403,12 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         return;
     }
 
-    /*
-    // check for any responses that we need to know
-    // a command worked
-    bool queue = false;
-    if (response.find("OK") == 0)
-    {
-        queue = true;
-    }
-    else if (response.find("ERROR") == 0)
-    {
-        queue = true;
-    }
-    else if (response.find("BUSY") == 0)
-    {
-        queue = true;
-    }
-    else if (response.find("DELIVERED") == 0)
-    {
-        queue = true;
-    }
-    else if (response.find("FAILED") == 0)
-    {
-        queue = true;
-    }
-    else if (response.find("CANCELLED") == 0)
-    {
-        queue = true;
-    }
-    */
-
     // for now assume we queue everything that isn't
     // a message received/extended notifications response
-    if (true) // (queue)
+    // or positioning output
+    //if (true)
     {
+        std::cout << "Locking QR mutex (queue_modem_response)" << std::endl;
         std::lock_guard<std::mutex> lg(this->queue_response_mutex);
 
         // now we can add into the array!
@@ -1399,7 +1419,131 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         this->queued_responses.emplace_back(timestamp, new_buffer);
 
         this->response_added.notify_one();
+        std::cout << "Unlocking QR mutex (queue_modem_response)" << std::endl;
     }
+}
+
+void EvologicsModem::process_usbllong(int64_t timestamp, std::string const &message)
+{
+    std::vector<std::string> tokens = chop_string(message, 17);
+    
+    if(tokens.size() != 17)
+        return;
+    
+    // Work out the actual time that the measurment was taken
+    double measurement_time = stof(tokens[2]);
+    double current_time = stof(tokens[1]);
+    
+    senlcm::evologics_usbl_t ud;
+    ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
+    ud.mtime = (int64_t)(measurement_time * 1e6);
+    ud.ctime = (int64_t)(current_time * 1e6);
+    ud.remote_id = stoi(tokens[3]);
+    ud.x = stof(tokens[4]);
+    ud.y = stof(tokens[5]);
+    ud.z = stof(tokens[6]);
+    ud.e = stof(tokens[7]);
+    ud.n = stof(tokens[8]);
+    ud.u = stof(tokens[9]);
+    ud.r = stof(tokens[10]);
+    ud.p = stof(tokens[11]);
+    ud.h = stof(tokens[12]);
+    ud.prop_time = stof(tokens[13]);
+    ud.rssi = stoi(tokens[14]);
+    ud.integrity = stoi(tokens[15]);
+    ud.accuracy = stof(tokens[16]);
+    
+    std::string target_name = get_target_name(ud.remote_id);
+    std::string usbl_fix_channel_name = vehicle_name + ".EVO_USBLFIX." + target_name;
+
+    lcm.publish(usbl_fix_channel_name, &ud);
+}
+
+void EvologicsModem::process_usblangles(int64_t timestamp, std::string const &message)
+{
+    std::vector<std::string> tokens = chop_string(message, 17);
+    
+    if(tokens.size() != 14)
+        return;
+    
+    // Work out the actual time that the measurment was taken
+    double measurement_time = stof(tokens[2]);
+    double current_time = stof(tokens[1]);
+    
+    // we will correct the time as it may not be sync'd with the computer running this code
+    //double time_diff = current_time - measurement_time;
+    
+    senlcm::evologics_usbl_angles_t ud;
+    ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
+    ud.mtime = (int64_t)(measurement_time * 1e6);
+    ud.ctime = (int64_t)(current_time * 1e6);
+    ud.remote_id = stoi(tokens[3]);
+    ud.lbearing = stof(tokens[4]);
+    ud.lelevation = stof(tokens[5]);
+    ud.bearing = stof(tokens[6]);
+    ud.elevation = stof(tokens[7]);
+    ud.r = stof(tokens[8]);
+    ud.p = stof(tokens[9]);
+    ud.h = stof(tokens[10]);
+    ud.rssi = stoi(tokens[11]);
+    ud.integrity = stoi(tokens[12]);
+    ud.accuracy = stof(tokens[13]);
+
+    std::string target_name = get_target_name(ud.remote_id);
+    std::string angles_channel_name = vehicle_name + ".EVO_ANGLES." + target_name;
+
+    lcm.publish(angles_channel_name, &ud);
+}
+
+void EvologicsModem::process_im(int64_t timestamp, std::string const &message)
+{
+    std::vector<std::string> tokens = chop_string(message, 10);
+    if (tokens.size() != 10)
+       return;
+
+    int size = stoi(tokens[1]);
+    int source = stoi(tokens[2]);
+    int target = stoi(tokens[3]);
+
+    if (starts_with(tokens[9], "LCM"))
+    {
+        process_lcm_data((uint8_t *)tokens[9].c_str(), size);
+    }
+}
+
+void EvologicsModem::process_pbm(int64_t timestamp, std::string const &message)
+{
+    std::vector<std::string> tokens = chop_string(message, 9);
+    if (tokens.size() != 9)
+       return;
+
+    int size = stoi(tokens[1]);
+    int source = stoi(tokens[2]);
+    int target = stoi(tokens[3]);
+
+    if (starts_with(tokens[8], "LCM"))
+    {
+        process_lcm_data((uint8_t *)tokens[8].c_str(), size);
+    }
+
+    //cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with " << tokens[8].length() << " bytes of data " << data << endl;
+}
+
+void EvologicsModem::process_burst(int64_t timestamp, std::string const &message)
+{
+    std::vector<std::string> tokens = chop_string(message, 10);
+    if (tokens.size() != 10)
+       return;
+
+    int size = stoi(tokens[1]);
+    int source = stoi(tokens[2]);
+    int target = stoi(tokens[3]);
+
+    if (starts_with(tokens[9], "LCM"))
+    {
+        process_lcm_data((uint8_t *)tokens[9].c_str(), size);
+    }
+
 }
 
 void EvologicsModem::process_lcm_data(uint8_t *d, int size)
@@ -1457,7 +1601,7 @@ void EvologicsModem::run()
     while (!loop_exit)
     {
         std::unique_lock<std::mutex> ul(this->queue_message_mutex);
-        while (this->queued_messages.size() == 0 && this->next_ping.size() == 0)
+        while (!loop_exit && this->queued_messages.size() == 0 && this->next_ping.size() == 0)
         {
             std::cout << "Waiting for message to send." << std::endl;
             this->message_added.wait_for(ul, std::chrono::milliseconds(500));
