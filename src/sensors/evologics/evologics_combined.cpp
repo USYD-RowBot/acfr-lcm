@@ -106,7 +106,7 @@ public:
     void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec);
     void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
 
-    std::vector<unsigned char> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
+    std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
     bool send_message(int message_type, char const *data, int length);
 
     void modem_read_thread();
@@ -714,7 +714,7 @@ bool EvologicsModem::configure_modem()
 
     if (!send_command("AT@CTRL"))
         return false;
-	
+
     snprintf(cmd, sizeof(cmd), "AT!L%d", source_level);
     if (!send_command(cmd))
         return false;
@@ -905,15 +905,15 @@ void EvologicsModem::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::stri
     // queue the message for sending, don't just fire it off
     int target_channel = get_target_channel(channel);
 
-    std::vector<unsigned char> message = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), false);
+    std::vector<unsigned char> message;
+    int message_type;
+
+    std::tie(message_type, message) = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), false);
 
     // now to queue the message
     std::lock_guard<std::mutex> lg(this->queue_message_mutex);
 
-    // TODO: this should really know if an IM, IMS or BURST.
-    // but in practice we are sending IM or BURST only and they behave similarly
-    // with regards to delivery reports
-    this->queued_messages.emplace_back(MSG_IM, std::vector<uint8_t>());
+    this->queued_messages.emplace_back(message_type, std::vector<uint8_t>());
     this->queued_messages.back().second.swap(message);
 
     this->message_added.notify_one();
@@ -923,9 +923,18 @@ void EvologicsModem::on_lcm_pbm_data(const lcm::ReceiveBuffer* rbuf, const std::
 {
     // queue the message for sending, don't just fire it off
     int target_channel = get_target_channel(channel);
-    std::vector<unsigned char> message = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), true);
+    std::vector<unsigned char> message;
+    int message_type;
 
-    this->send_message(MSG_PBM, (char *)message.data(), message.size());
+    std::tie(message_type, message) = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), true);
+
+    if (message_type != MSG_PBM)
+    {
+        std::cerr << "PBM message could not be constructed for " << channel << "." << std::endl;
+    }
+    {
+        this->send_message(MSG_PBM, (char *)message.data(), message.size());
+    }
 }
 
 void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::string &channel)
@@ -952,22 +961,21 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
 
     if (send_fix)
     {
-        std::vector<unsigned char> message = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target, channel.c_str(), false);
+        std::vector<uint8_t> message;
+        int message_type;
+        std::tie(message_type, message) = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target, channel.c_str(), false);
 
         // now to queue the message
         std::lock_guard<std::mutex> lg(this->queue_message_mutex);
 
-        // TODO: this should really know if an IM, IMS or BURST.
-        // but in practice we are sending IM or BURST only and they behave similarly
-        // with regards to delivery reports
-        this->queued_messages.emplace_back(MSG_IM, std::vector<uint8_t>());
+        this->queued_messages.emplace_back(message_type, std::vector<uint8_t>());
         this->queued_messages.back().second.swap(message);
 
         this->message_added.notify_one();
     }
 }
 
-std::vector<unsigned char>
+std::pair<int, std::vector<unsigned char>>
 EvologicsModem::build_lcm_data_message
     (
         unsigned char *lcm_data,
@@ -980,6 +988,7 @@ EvologicsModem::build_lcm_data_message
     // breaking this constant down:
     // LCM <name length> <32bit crc> LE
     int message_size = lcm_data_size + strlen(dest_channel) + 3 + 1 + 4 + 2;
+    int message_type;
 
     char header[64];
     int header_size = 0;
@@ -988,21 +997,24 @@ EvologicsModem::build_lcm_data_message
         if (use_pbm)
         {
             header_size = snprintf(header, sizeof(header), "AT*SENDPBM,%d,%d,", message_size, target_id);
+            message_type = MSG_PBM;
         }
         else
         {
             header_size = snprintf(header, sizeof(header), "AT*SENDIM,%d,%d,ack,", message_size, target_id);
+            message_type = MSG_IM;
         }
     }
     else if (use_pbm)
     {
         std::cerr << "Tried to send PBM, but data too large." << std::endl;
-        return std::vector<unsigned char>();
+        return std::pair<int, std::vector<unsigned char>>();
     }
     else
     {
         // send as burst
         header_size = snprintf(header, sizeof(header), "AT*SEND,%d,%d,", message_size, target_id);
+        message_type = MSG_BURST;
     }
 
     int bufpos = 0;
@@ -1042,7 +1054,7 @@ EvologicsModem::build_lcm_data_message
         std::cerr << "Error in encoding LCM message. Data size mismatch." << std::endl;
     }
 
-    return buffer;
+    return std::make_pair(message_type, buffer);
 }
 
 bool EvologicsModem::send_message(int message_type, char const *data, int length)
@@ -1099,7 +1111,15 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     {
         // now was it delivered, failed or cancelled?
         // this also depends on the message type
-        std::cout << "Waiting for SEND[IM] delivery response" << std::endl;
+        if (message_type == MSG_BURST)
+        {
+            std::cout << "Waiting for SEND delivery response" << std::endl;
+        }
+        else if (message_type == MSG_IM)
+        {
+            std::cout << "Waiting for SENDIM delivery response" << std::endl;
+        }
+
         while (this->queued_responses.size() == 0)
         {
             this->response_added.wait_for(ul, std::chrono::milliseconds(100));
@@ -1659,12 +1679,26 @@ void EvologicsModem::run()
 
         if (this->queued_messages.size() > 0)
         {
-            std::cout << "Sending queued burst/IM message from LCM\n";
             // sending burst/data IM
             auto queued = this->queued_messages.front();
 
+
             message.swap(queued.second);
             message_type = queued.first;
+
+            if (message_type == MSG_IM)
+            {
+                std::cout << "Sending queued IM message from LCM\n";
+            }
+            else if (message_type == MSG_BURST)
+            {
+                std::cout << "Sending queued BURST message from LCM\n";
+            }
+            else
+            {
+                std::cout << "Sending queued UNKNOWN message from LCM\n";
+            }
+
             this->queued_messages.pop_front();
 
         }
