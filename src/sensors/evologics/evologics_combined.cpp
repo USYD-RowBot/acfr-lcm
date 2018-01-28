@@ -1266,12 +1266,13 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
             return;
         case 'P':
             // RECVPBM
-            field = 7;
+            field = 8;
+            break;
         default:
             // RECV
             // RECVIM
             // RECVIMS
-            field = 8;
+            field = 9;
     }
 
 
@@ -1298,14 +1299,8 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
     // then read it in
     size_t data_length = atoi(strchr((char *)buf.data(), ',') + 1);
 
-    std::cout << "RECV message with payload of " << data_length << " bytes.\n";
-    std::cout << "Sanity check: "
-        << buf[buf.size() - 5] 
-        << buf[buf.size() - 4] 
-        << buf[buf.size() - 3] 
-        << buf[buf.size() - 2] 
-        << buf[buf.size() - 1] 
-        << std::endl;
+    std::cout << std::string((char *)buf.data(), strcspn((char *)buf.data(), ",\r\n"));
+    std::cout << " message with payload of " << data_length << " bytes.\n";
 
     // two options
     // first is read each byte in a loop, second is allocate dynamically and loop through
@@ -1327,20 +1322,10 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
         }
     }
 
-    std::cout << "Read " << data_read << " of " << data_length << "bytes.\n";
-
     for (size_t ii=0; ii < data_length; ++ii)
     {
         buf.emplace_back(buffer[ii]);
     }
-
-    std::cout << "Sanity check: "
-        << buf[buf.size() - 5] 
-        << buf[buf.size() - 4] 
-        << buf[buf.size() - 3] 
-        << buf[buf.size() - 2] 
-        << buf[buf.size() - 1] 
-        << std::endl;
 
     free(buffer);
 
@@ -1433,6 +1418,10 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         return;
     }
     else if (starts_with(response, "PHYO"))
+    {
+        return;
+    }
+    else if (starts_with(response, "DROPCNT")) // WTF evologics?
     {
         return;
     }
