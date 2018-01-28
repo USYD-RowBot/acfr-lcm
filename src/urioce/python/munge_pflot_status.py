@@ -3,8 +3,6 @@
 
 import lcm
 import sys
-import math
-import time
 
 LCMROOT='/home/auv/git/acfr-lcm'
 
@@ -46,8 +44,8 @@ def pfloatHandler(channel, data):
         print 'Received pfloat status but waiting for usbl fix'
     
 lc = lcm.LCM()
-lc.subscribe("FALKOR.USBLFIX.PFLOAT.", usblHandler)
-lc.subscribe("AFS.STATUS", pfloatHandler)
+lc.subscribe("FALKOR.USBL_FIX.PFLOAT.", usblHandler)
+lc.subscribe("AFS.PFLOAT", pfloatHandler)
 
 while True:
     lc.handle()
