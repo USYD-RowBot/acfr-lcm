@@ -2,6 +2,7 @@
 #include <list>
 #include <vector>
 #include <tuple>
+#include <utility>
 
 #include <chrono>
 
@@ -30,9 +31,14 @@
 #include "perls-lcmtypes++/senlcm/evologics_modem_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_usbl_angles_t.hpp"
-#include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_ping_control_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_ping_status_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_range_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
+
+// this is 'legacy' for seabed_modem_gui control
+// that program should be updated to handle the newer format
+#include "perls-lcmtypes++/senlcm/evologics_command_t.hpp"
 
 #define DTOR M_PI/180.0
 #define RTOD 180.0/M_PI
@@ -54,18 +60,19 @@ struct PingTarget
 {
     PingTarget(std::string target_name, uint8_t target_id, int period)
         : target_name(target_name), target_id(target_id),
-        tracking_active(true), send_fixes(false), minimum_period(period),
-        last_sent_fix_time(0)
+        in_water(true), send_fixes(false), minimum_period(period),
+        last_sent_fix_time(0), last_fix_time(0), last_ping_time(0)
     {
     
     }
 
     std::string target_name;
     uint8_t target_id;
-    bool tracking_active;
+    bool in_water;
     bool send_fixes;
     int64_t minimum_period;
     int64_t last_sent_fix_time;
+    int64_t last_fix_time;
     int64_t last_ping_time;
 };
 
@@ -97,6 +104,7 @@ public:
     void on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::string &channel);
     void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb);
     void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec);
+    void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
 
     std::vector<unsigned char> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
     bool send_message(int message_type, char const *data, int length);
@@ -237,6 +245,7 @@ EvologicsModem::EvologicsModem()
 {
     lcm.subscribe("HEARTBEAT_1HZ", &EvologicsModem::on_heartbeat, this);
     lcm.subscribe("EVOLOGICS_CONTROL", &EvologicsModem::on_evo_control, this);
+    lcm.subscribe("EVOLOGICS_PING_CONTROL", &EvologicsModem::on_evo_ping_control, this);
 };
 
 EvologicsModem::~EvologicsModem()
@@ -830,7 +839,7 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
     for (auto &pt : this->ping_targets)
     {
         int64_t cutoff = now - pt.minimum_period;
-        if (pt.last_sent_fix_time < cutoff && pt.last_ping_time < cutoff)
+        if (pt.in_water && pt.last_sent_fix_time < cutoff && pt.last_ping_time < cutoff)
         {
             if (pt.last_ping_time < last_ping_time)
             {
@@ -870,6 +879,19 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
         }
     }
 
+}
+void EvologicsModem::on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc)
+{
+    for (auto &pt : this->ping_targets)
+    {
+        if (epc->target_id == pt.target_id)
+        {
+            pt.in_water = epc->in_water;
+            pt.send_fixes = epc->send_fixes;
+            pt.minimum_period = epc->ping_rate * 1e6;
+            break;
+        }
+    }
 }
 
 void EvologicsModem::on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec)
@@ -919,7 +941,7 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
     {
         if (pt.target_id == target)
         {
-            if (pt.send_fixes && pt.last_sent_fix_time < now - pt.minimum_period)
+            if (pt.in_water && pt.send_fixes && pt.last_sent_fix_time < now - pt.minimum_period)
             {
                 send_fix = true;
                 pt.last_sent_fix_time = now;
