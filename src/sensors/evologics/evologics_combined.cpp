@@ -136,7 +136,7 @@ private:
 
     std::mutex write_mutex;
 
-    bool exit_loops;
+    bool close_threads;
 
     // serial parameters
     bool use_serial_comm;
@@ -185,6 +185,7 @@ private:
     std::mutex queue_message_mutex;
     std::list<std::pair<int, std::vector<uint8_t>>> queued_messages;
     std::vector<uint8_t> next_ping;
+    int next_ping_target;
 };
 
 bool starts_with(std::string const &full_string, std::string const &prefix)
@@ -232,7 +233,7 @@ void signal_handler(int sig)
 }
 
 EvologicsModem::EvologicsModem()
-    : lcm(lcm::LCM()), topside_id(0)
+    : lcm(lcm::LCM()), close_threads(false), topside_id(0)
 {
     lcm.subscribe("HEARTBEAT_1HZ", &EvologicsModem::on_heartbeat, this);
     lcm.subscribe("EVOLOGICS_CONTROL", &EvologicsModem::on_evo_control, this);
@@ -394,7 +395,7 @@ bool EvologicsModem::load_configuration(char *program_name)
         while (target_names[ii] != nullptr && ii < num_targets)
         {
             // set the period as just larger than the timeout
-            this->ping_targets.push_back(PingTarget(target_names[ii], targets[ii], ack_timeout+2));
+            this->ping_targets.push_back(PingTarget(target_names[ii], targets[ii], (ack_timeout+4)*1e6));
             std::cout << "Ping target: " << target_names[ii] << std::endl;
             ++ii;
         }
@@ -506,7 +507,7 @@ void EvologicsModem::modem_write(char const *command, int length)
     // (this includes many RECV and SEND cmds, but not all!)
     //std::cout << "Sending to modem:\n<<" << 
     std::cout << "<<" << 
-        std::string(command, strcspn(command, ",\n")) << std::endl;
+        std::string(command, strcspn(command, ",\n\r")) << std::endl;
     /*senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
     msg.size = buf.size() - 1;
@@ -591,7 +592,8 @@ bool EvologicsModem::send_query(const char *d)
         std::string message_text((char *)message.second.data(), message.second.size());
 
         expected_lines--;
-        std::cout << "=>" << message_text;
+        std::cout << "=>" << 
+            std::string((char *)message_text.data(), strcspn((char *)message_text.data(), ",\r\n")) << std::endl;
     }
 
     return true;
@@ -691,7 +693,7 @@ bool EvologicsModem::send_mode(const char *d)
     {
         // we don't want to get stuck here
         success = false;
-        std::cerr << "Unknown response to command:\n>" << message_text << "\n"; 
+        std::cerr << "Unknown response to mode change:\n>" << message_text << "\n"; 
     }
 
     return success;
@@ -832,6 +834,8 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
         {
             if (pt.last_ping_time < last_ping_time)
             {
+                // this needs to be set when it actually pings to get the time
+                // correct
                 last_ping_time = pt.last_ping_time;
                 target = pt.target_id;
             }
@@ -854,6 +858,7 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
         // and place in the queue
         next_ping.resize(length);
         memcpy(next_ping.data(), message, length);
+        next_ping_target = target;
 
         // also don't forget to update the ping time
         for (auto &pt : this->ping_targets)
@@ -986,7 +991,7 @@ EvologicsModem::build_lcm_data_message
     bufpos += header_size;
 
     // prefix LCM <length of channel name> <channel name> <data>
-    strncpy(buf, "LCM", 3);
+    strncpy(buf + bufpos, "LCM", 3);
     bufpos += 3;
 
     // TODO: investigate using lookups for this
@@ -1060,7 +1065,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     {
         // we don't want to get stuck here
         success = false;
-        std::cerr << "Unknown response to command:\n>" << message_text << "\n"; 
+        std::cerr << "Unknown response to SEND:\n>" << message_text << "\n"; 
     }
 
     // we get feedback as long as it isn't a PBM
@@ -1102,7 +1107,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
         {
             // we don't want to get stuck here
             success = false;
-            std::cerr << "Unknown response to command:\n>" << message_text << "\n"; 
+            std::cerr << "Unknown delivery report response:\n>" << message_text << "\n"; 
         }
     }
 
@@ -1112,7 +1117,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
 
 void EvologicsModem::lcm_handle_thread()
 {
-    while (!loop_exit)
+    while (!this->close_threads)
     {
         this->lcm.handleTimeout(100);
     }
@@ -1128,13 +1133,13 @@ void EvologicsModem::modem_read_thread()
     size_t bytes;
     int64_t timestamp;
     
-    while(!loop_exit)
+    while(!this->close_threads)
     {
         FD_ZERO (&rfds);
         FD_SET (this->modem_fd, &rfds);
         struct timeval timeout;
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 500000;
         
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         timestamp = timestamp_now();
@@ -1231,18 +1236,20 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
     {
         case 'S':
         case 'E':
+        case 'F':
             // RECVSTART
             // RECVEND
+            // RECVFAILED
             this->parse_generic(buf);
             return;
         case 'P':
             // RECVPBM
-            field = 8;
+            field = 7;
         default:
             // RECV
             // RECVIM
             // RECVIMS
-            field = 9;
+            field = 8;
     }
 
 
@@ -1269,6 +1276,15 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
     // then read it in
     size_t data_length = atoi(strchr((char *)buf.data(), ',') + 1);
 
+    std::cout << "RECV message with payload of " << data_length << " bytes.\n";
+    std::cout << "Sanity check: "
+        << buf[buf.size() - 5] 
+        << buf[buf.size() - 4] 
+        << buf[buf.size() - 3] 
+        << buf[buf.size() - 2] 
+        << buf[buf.size() - 1] 
+        << std::endl;
+
     // two options
     // first is read each byte in a loop, second is allocate dynamically and loop through
 
@@ -1276,13 +1292,34 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
     size_t data_read = 0;
     while (data_read < data_length)
     {
-        data_read += read(this->modem_fd, buffer + data_read, data_length - data_read);
+        int ret = read(this->modem_fd, buffer + data_read, data_length - data_read);
+
+        if (ret >= 0)
+        {
+            data_read += ret; 
+        }
+        else
+        {
+            std::cerr << "Error reading data payload (parse_recv).\n";
+            return;
+        }
     }
+
+    std::cout << "Read " << data_read << " of " << data_length << "bytes.\n";
 
     for (size_t ii=0; ii < data_length; ++ii)
     {
         buf.emplace_back(buffer[ii]);
     }
+
+    std::cout << "Sanity check: "
+        << buf[buf.size() - 5] 
+        << buf[buf.size() - 4] 
+        << buf[buf.size() - 3] 
+        << buf[buf.size() - 2] 
+        << buf[buf.size() - 1] 
+        << std::endl;
+
     free(buffer);
 
     // at this point should be two more bytes and done
@@ -1308,7 +1345,6 @@ void EvologicsModem::parse_generic(std::vector<uint8_t> &buf)
         uint8_t byte;
         bytes += read(this->modem_fd, &byte, 1);
         buf.push_back(byte);
-
     }
 }
 
@@ -1318,7 +1354,7 @@ void EvologicsModem::publish_modem_response(int64_t timestamp, std::vector<uint8
     // (this includes many RECV and SEND cmds, but not all!)
     //std::cout << "Received from modem:\n>>" << 
     std::cout << ">>" << 
-        std::string((char *)buf.data(), strcspn((char *)buf.data(), ",\n")) << std::endl;
+        std::string((char *)buf.data(), strcspn((char *)buf.data(), ",\r\n")) << std::endl;
     senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
     msg.size = buf.size() - 1;
@@ -1595,8 +1631,12 @@ void EvologicsModem::run()
     }
     std::cout << "Modem configured." << std::endl;
 
+    std::vector<uint8_t> message;
+    int message_type;
+
     while (!loop_exit)
     {
+        usleep(5e5);
         std::cout << "========================================\n";
         std::cout << "Waiting for message to send." << std::endl;
         std::unique_lock<std::mutex> ul(this->queue_message_mutex);
@@ -1605,23 +1645,43 @@ void EvologicsModem::run()
             this->message_added.wait_for(ul, std::chrono::milliseconds(500));
         }
 
+
         if (this->queued_messages.size() > 0)
         {
             std::cout << "Sending queued burst/IM message from LCM\n";
             // sending burst/data IM
-            auto message = this->queued_messages.front();
+            auto queued = this->queued_messages.front();
+
+            message.swap(queued.second);
+            message_type = queued.first;
             this->queued_messages.pop_front();
 
-            send_message(message.first, (char *)message.second.data(), message.second.size());
         }
         else if (this->next_ping.size() > 0)
         {
-            std::cout << "Sending IM ping for USBL FIX.\n";
+            std::cout << "Sending IM ping to " << next_ping_target << " for USBL FIX.\n";
             // sending a ping for a USBL fix
-            send_message(MSG_IM, (char *)next_ping.data(), next_ping.size());
+            message.swap(next_ping);
             next_ping.clear();
+            message_type = MSG_IM;
+            for (auto &pt : this->ping_targets)
+            {
+                if (pt.target_id == next_ping_target)
+                {
+                    pt.last_ping_time = timestamp_now();
+                    break;
+                }
+            }
         }
+
+        // release the mutex so other places can queue messages whilst we
+        // block to go through the sending process
+        ul.unlock();
+
+        send_message(message_type, (char *)message.data(), message.size());
     }
+
+    this->close_threads = true;
 
     read_thread.join();
     handle_thread.join();
