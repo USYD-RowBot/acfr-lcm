@@ -18,10 +18,10 @@ missionXML = ET.fromstringlist(mission)
 missionString = ET.tostring(missionXML)
 
 msg = auv_global_planner_t()
-msg.command = auv_global_planner_t.GOTO
+msg.command = auv_global_planner_t.MISSION
 msg.str = missionString
     
 vehicle_name = sys.argv[2];
     
-lc.publish('TASK_PLANNER_COMMAND.'+vehicle_name, msg.encode())
+lc.publish(vehicle_name+'.TASK_PLANNER_COMMAND', msg.encode())
 

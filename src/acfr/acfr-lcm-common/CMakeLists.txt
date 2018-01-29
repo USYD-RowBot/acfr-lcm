@@ -7,6 +7,7 @@ set (SRC
 	socket.c	socket.h
 				units.h
 	dfs.c		dfs.h
+                spektrum-control.h
 	auv_map_projection.cpp  auv_map_projection.hpp
 )
 

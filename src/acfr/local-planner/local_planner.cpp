@@ -118,9 +118,9 @@ LocalPlanner::~LocalPlanner()
 int LocalPlanner::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
-	lcm.subscribeFunction("ACFR_NAV."+vehicle_name, onNavLCM, this);
-	lcm.subscribeFunction("PATH_COMMAND."+vehicle_name, onPathCommandLCM, this);
-	lcm.subscribeFunction("GLOBAL_STATE."+vehicle_name, onGlobalStateLCM, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", onNavLCM, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
         return 1;
 }
@@ -318,7 +318,7 @@ int LocalPlanner::onGlobalState(
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
-		lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	}
 	return 1;
 }
@@ -525,7 +525,7 @@ int LocalPlanner::processWaypoints()
 
     cc.depth = depth_ref;
 
-	lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
 
@@ -539,7 +539,7 @@ int LocalPlanner::sendResponse()
 		pr.distance = waypoints.size() * wpDropDist;
 	else
 		pr.distance = currPose.positionDistance(destPose);
-	lcm.publish("PATH_RESPONSE."+vehicle_name, &pr);
+	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
 
 	return 1;
 }
@@ -566,7 +566,7 @@ bool LocalPlanner::publishWaypoints() {
 		lp.z[i] = waypoints[i].getZ();
 	}
 	lp.num_el = i;
-	lcm.publish("LOCAL_PATH."+vehicle_name, &lp);
+	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
 	return true;
 }
 

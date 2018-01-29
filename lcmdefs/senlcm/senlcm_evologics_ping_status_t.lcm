@@ -1,0 +1,9 @@
+package senlcm;
+
+struct evologics_ping_status_t
+{
+    int64_t utime;
+    int8_t target_count;
+
+    evologics_ping_control_t targets[target_count];
+}

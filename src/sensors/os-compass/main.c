@@ -13,14 +13,6 @@
 #include "acfr-common/units.h"
 #include "acfr-common/dfs.h"
 
-//#include "perls-common/ascii.h"
-//#include "perls-common/bot_util.h"
-//#include "perls-common/dfs.h"
-//#include "perls-common/error.h"
-//#include "perls-common/generic_sensor_driver.h"
-//#include "perls-common/nmea.h"
-//#include "perls-common/units.h"
-
 #include "perls-math/rphcorr.h"
 
 #include "perls-lcmtypes/senlcm_os_compass_t.h"
@@ -132,6 +124,42 @@ os_config (acfr_sensor_t *s)
     return 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
 
 
 int program_exit;
@@ -158,13 +186,18 @@ int main (int argc, char *argv[])
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
 
+    char *vehicle_name;
+    char channel_name[200];
+    parse_args(argc, argv, &vehicle_name);
+
+    snprintf(channel_name, sizeof(channel_name), "%s.OS_COMPASS", vehicle_name);
+
     char rootkey[64];
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
     acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
     if(sensor == NULL)
         return 0;
-
 
     acfr_sensor_canonical(sensor, '\n', '\r');
 
@@ -205,7 +238,7 @@ int main (int argc, char *argv[])
             len = acfr_sensor_read(sensor, buf, 256);
             if(len > 0)
                 if (parse_buf (buf, len, &os_compass, 0))
-			senlcm_os_compass_t_publish (lcm, "OS_COMPASS", &os_compass);
+			senlcm_os_compass_t_publish (lcm, channel_name, &os_compass);
 
         }
         else
@@ -219,49 +252,4 @@ int main (int argc, char *argv[])
     acfr_sensor_destroy(sensor);
 
     return 0;
-
-/*    generic_sensor_driver_t *gsd = gsd_create (argc, argv, NULL, myopts);
-    gsd_canonical (gsd, '\r','\n');
-    gsd_launch (gsd);
-
-    rphcorr_t *rphcorr = rphcorr_create (gsd->params, gsd->rootkey);
-    if (!rphcorr)
-    {
-        ERROR ("rphcorr_create () failed!");
-        exit (EXIT_FAILURE);
-    }
-
-    os_config (gsd);
-
-    double salinity = bot_param_get_double_or_fail (gsd->params, "site.salinity");
-    bool freshwater = salinity < 5 ? 1 : 0;
-
-    gsd_flush (gsd);
-    gsd_reset_stats (gsd);
-
-
-    while (1)
-    {
-        // read stream
-        char buf[1024];
-        int64_t timestamp;
-        int len = gsd_read (gsd, buf, 128, &timestamp);
-
-        senlcm_os_compass_t os_compass;
-        if (parse_buf (buf, len, &os_compass, freshwater))
-        {
-            os_compass.utime = timestamp;
-            senlcm_os_compass_t_publish (gsd->lcm, gsd->channel, &os_compass);
-            publish_rphcorr (gsd->lcm, rphcorr, timestamp, os_compass.rph);
-
-            gsd_update_stats (gsd, 1);
-        }
-        else
-            gsd_update_stats (gsd, -1);
-
-    } // while
-
-    rphcorr_destroy (rphcorr);
-    */
-    
 }

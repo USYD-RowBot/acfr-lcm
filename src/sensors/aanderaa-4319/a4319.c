@@ -24,7 +24,7 @@ int chop_string(char *data, char **tokens)
     return i;
 }
 
-int parse_a4319(lcm_t *lcm, char *d, int bytes)
+int parse_a4319(lcm_t *lcm, char *d, int bytes, char *sensor_channel)
 {
     char *tok[16];
     int num_tok = chop_string(d, tok);
@@ -35,13 +35,13 @@ int parse_a4319(lcm_t *lcm, char *d, int bytes)
 
 		senlcm_aanderaa_4319_t a4319;
 		a4319.utime = timestamp_now();
-    		a4319.conductivity = atof(tok[2]);
+    	a4319.conductivity = atof(tok[2]);
 		a4319.temperature = atof(tok[3]);
 		a4319.salinity = atof(tok[4]);
 		a4319.density = atof(tok[5]);
 		a4319.speed = atof(tok[6]);
 
-		senlcm_aanderaa_4319_t_publish(lcm, "4319", &a4319);
+		senlcm_aanderaa_4319_t_publish(lcm, sensor_channel, &a4319);
 	
 		return 1;
 	    }
@@ -57,7 +57,42 @@ int parse_a4319(lcm_t *lcm, char *d, int bytes)
 }
 
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
 
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
 
 
 int program_exit;
@@ -72,6 +107,11 @@ int main(int argc, char *argv[])
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
+    
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+    char sensor_channel[100];
+    snprintf(sensor_channel, 100, "%s.4319", vehicle_name);
 
     lcm_t *lcm = lcm_create(NULL);
 
@@ -93,7 +133,7 @@ int main(int argc, char *argv[])
         bytes = acfr_sensor_read_timeout(sensor, a4319_str, sizeof(a4319_str), 1);
         if(bytes > 0)
         {
-	    parse_a4319(lcm, a4319_str, bytes);
+	    parse_a4319(lcm, a4319_str, bytes, sensor_channel);
         }
     }
     
