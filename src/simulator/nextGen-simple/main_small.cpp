@@ -44,12 +44,13 @@ using namespace libplankton;
 #define BIAS_A 0.0196
 #define BIAS_G 9.6963e-06
 
-#define NGA_DIAM 0.3 // m
-#define NGA_LENGTH 2.5 // m
-#define NGA_VERT_DISTANCE 2 //m
-#define NGA_LAT_DISTANCE 1.8 //m
-#define NGA_MASS 120 // kg
-#define NGA_INERTIA ((NGA_MASS*NGA_LENGTH*NGA_LENGTH/12) + (NGA_MASS*NGA_DIAM*NGA_DIAM/4))
+#define NGA_DIAM 0.3 
+#define NGA_RADIUS (0.5*NGA_DIAM)
+#define NGA_LENGTH 2.5 
+#define NGA_VERT_DISTANCE 2 
+#define NGA_LAT_DISTANCE 1.8 
+#define NGA_MASS 120 
+#define NGA_INERTIA ((0.0833*NGA_MASS*NGA_LENGTH*NGA_LENGTH) + (0.25*NGA_MASS*NGA_DIAM*NGA_DIAM))
 
 typedef boost::numeric::ublas::vector< double > state_type;
 
@@ -113,6 +114,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     q = x[PITCHDOTNDX];
     r = x[HDGDOTNDX];
     
+    /*
     // adjustments for a constant water current (or wind)
 
     SMALL::Rotation3D Cbn;
@@ -129,7 +131,7 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     u = u - vc_b(1);
     v = v - vc_b(2);
     w = w - vc_b(3);
-
+    */
     // make heading 0 to 2pi
     while(psi < 0)
         psi += 2 * M_PI;
@@ -255,10 +257,10 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     // ***********
     // Drag forces
     // ***********
-    double Cd_surge = 0.82; // modelled on a long cylinder
-    double A_surge = M_PI * pow(NGA_DIAM,2); // submerged
-    double Cd_across = 1.17; // modelled on a long cylinder
-    double A_across = NGA_DIAM * NGA_LENGTH;
+    double Cd_surge = 3; //0.82; // modelled on a long cylinder
+    double A_surge = M_PI * pow(NGA_RADIUS,2); // submerged
+    double Cd_across = 5; //1.17; // modelled on a long cylinder
+    double A_across = (NGA_DIAM * NGA_LENGTH);
     
     double Fd_surge = 0.5 * rho * A_surge * Cd_surge * fabs(u) * u ;
     double Fd_sway = 0.5 * rho * A_across * Cd_across * fabs(v) * v;
@@ -268,58 +270,83 @@ void auv( const state_type &x , state_type &dxdt , const double /* t */ )
     // Gravity and Buoyant Force
     // *************************
     double F_g = NGA_MASS*9.81;
-    double A_sub = M_PI * pow(NGA_DIAM/2,2);
-    if (x[ZNDX] < NGA_DIAM/2)
+    double A_sub = M_PI * pow(NGA_RADIUS,2);
+    double A_breach = 0;
+    // Assume that depth is measured at the middle of the vehicle
+    if (x[ZNDX] < NGA_RADIUS)
     {
-        double theta_sub = 2 * acos(x[ZNDX]/(NGA_DIAM/2));
-        A_sub -= 0.5*pow(NGA_DIAM/2, 2) * theta_sub - sin(theta_sub);
+        A_breach = pow(NGA_RADIUS,2) * acos(x[ZNDX]/(NGA_RADIUS)) - x[ZNDX]*sqrt(pow(NGA_RADIUS,2)-pow(x[ZNDX],2));
+        A_sub -= A_breach;
     }
     double F_buoy = 0.66 * rho * A_sub * NGA_LENGTH * 9.81; // model the buoyancy to be slightly higher than the force of gravity when fully submerged
 
-    // external applied forces
+
+    //cout << " F_buoy: " << F_buoy << " A_breach: " << A_breach << " A_sub: " << A_sub << endl;
+
+    // *************************
+    // External applied forces
+    // *************************
     double F_surge, F_sway, F_vert;
     F_surge = tail_x - Fd_surge;
-    F_sway = 0;// tail_y + mutual_lat - Fd_sway;
-    F_vert = tail_z + mutual_vert - Fd_vert + F_g - F_buoy;
+    F_sway = 0;//tail_y + mutual_lat - Fd_sway;
+    F_vert = tail_z + mutual_vert - Fd_vert  + F_g - F_buoy;
 
-    // applied torques 
+    // *************************
+    // Applied torques 
+    // *************************
     // model the vehicle as a long cylinder spinning in a fluid
-    // integrating the drag along the length from the centre, we have
-    //  dF = 0.5 * Cd * rho * (Rw)^2 * D * dR (where d is the 
-    // integrating this gives us
-    //  T = 1/3 * CD * rho * D * w^2 * (L/2)^3
-    double Td = Cd_across * rho *  NGA_DIAM * fabs(r) * r * pow(NGA_LENGTH/2,3); 
-
-
-    double T_hdg = ((-tail_y * NGA_LENGTH/2) + (differential_lat*NGA_LAT_DISTANCE/2) - Td);
+    // treat the cylinder as a series of disks of the diameter of the vehicle 
+    // and of thickness dR.  The velocity through water of each disk is related to the
+    // angular velocity w by the distance to the centre R.  
+    //  dF_drag = 0.5 * Cd * rho * (Rw)^2 * Diam * dR (where R is the distance from the centre of the vehicle)
+    //
+    // Integrating the drag along the length from the centre, we have:
+    //  T_drag = 1/3 * Cd * rho * Diam * w^2 * (L/2)^3
+    //
+    double Td_hdg = 0.333 * Cd_across * rho *  (NGA_DIAM) * fabs(r) * r * pow(0.5*NGA_LENGTH,3); 
+    //double Td_hdg = 100000 * fabs(r) * r;
+    double T_hdg = ((-tail_y * 0.5*NGA_LENGTH) + (differential_lat*0.5*NGA_LAT_DISTANCE) - Td_hdg);
    
+    double Td_pitch = 0.333 * Cd_across * rho *  (NGA_DIAM) * fabs(q) * q * pow(0.5*NGA_LENGTH,3); 
+    //double Td_pitch = 100000 * fabs(q) * q; 
+
+    double d_buoy_centre = 0.1; // assume the buoyancy and gravity each act centered at around 10cm from the centre of the vehicle
+    double T_buoy = F_buoy * d_buoy_centre * sin(x[PITCHNDX]);
+    double T_g = F_g * d_buoy_centre * sin(x[PITCHNDX]);
+
+    double T_pitch = ((-tail_z * 0.5 * NGA_LENGTH) + (differential_vert* 0.5 * NGA_LAT_DISTANCE) - Td_pitch - T_buoy - T_g);
+
     // update the rates of change of the system states
     dxdt[XNDX] = u*cos(psi);
     dxdt[YNDX] = u*sin(psi);
     dxdt[ZNDX] = w;
-    dxdt[ROLLNDX] = 0;
-    dxdt[PITCHNDX] = 0;
+    dxdt[ROLLNDX] = p;
+    dxdt[PITCHNDX] = q;
     dxdt[HDGNDX] = r;
     dxdt[XDOTNDX] = F_surge/NGA_MASS;
     dxdt[YDOTNDX] = F_sway/NGA_MASS;
     dxdt[ZDOTNDX] = F_vert/NGA_MASS;
     dxdt[ROLLDOTNDX] = 0;
-    dxdt[PITCHDOTNDX] = 0;  // FIXME: Need to account for pitch here
+    dxdt[PITCHDOTNDX] = T_pitch / NGA_INERTIA;  // FIXME: Need to account for pitch here
     dxdt[HDGDOTNDX] = T_hdg / NGA_INERTIA;
 
     static int loopCount = 0;
 
     if (loopCount++ > 100)
     {
+        cout << "x: " << x[XNDX] << " y: " << x[YNDX] << " z: " << x[ZNDX] << " roll: " << x[ROLLNDX] << " pitch: " << x[PITCHNDX] << " hdg: " << x[HDGNDX] << endl;
         cout << "u: " << u << " v: " << v << " w: " << w << " p: " << p << " q: " << q << " r: " << r << endl;
         cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder << " tailElev: " << in.tail_elevator << endl;
+        cout << " Fd_vert: " << Fd_vert << " F_g: " << F_g << " F_buoy: " << F_buoy << endl;
         cout << " tail_x: " << tail_x << " tail_y: " << tail_y << " tail_z: " << tail_z << endl;
         cout << " vert_fore_force: " << vert_fore_force << " vert_aft_force: " << vert_aft_force << endl; 
         cout << " mutual_vert: " << mutual_vert << " differential_vert: " << differential_vert << endl;
         cout << " lat_fore_force: " << lat_fore_force << " lat_aft_force: " << lat_aft_force << endl; 
         cout << " mutual_lat: " << mutual_lat << " differential_lat: " << differential_lat << endl;
-        cout << "T_hdg: " << T_hdg << " Td: " << Td << endl;
-        cout << "dx:" << dxdt[XNDX] << " dy:" << dxdt[YNDX] << " dpsi:" << dxdt[HDGDOTNDX] << endl;
+        cout << "T_hdg: " << T_hdg << " Td_hdg: " << Td_hdg << endl;
+        cout << "T_pitch: " << T_pitch << " Td_pitch: " << Td_pitch << " T_buoy: " << T_buoy << " T_g: " << T_g <<  endl;
+        cout << "dx:" << dxdt[XNDX] << " dy:" << dxdt[YNDX] << " dz: " << dxdt[ZNDX] << " droll: " << dxdt[ROLLNDX] << " dpitch: " << dxdt[PITCHNDX] << " dhdg: " << dxdt[HDGNDX] << endl;
+        cout << "dxdot: " << dxdt[XDOTNDX] << " dydot: " << dxdt[YDOTNDX] << " dzdot: " << dxdt[ZDOTNDX] << " drolldot: " << dxdt[ROLLDOTNDX] << " dpitchdot: " << dxdt[PITCHDOTNDX] <<  " dhdgdot:" << dxdt[HDGDOTNDX] << endl;
         loopCount = 0;
     }
 }
@@ -751,7 +778,7 @@ int main(int argc, char **argv)
     state(YNDX) = -10;
     state(ZNDX) = 1.9;  //Z = 1;
     state(ROLLNDX) = 0;
-    state(PITCHNDX) = 0;
+    state(PITCHNDX) = 0.05;
     state(HDGNDX) = 0;
     state(XDOTNDX) = 0;
     state(YDOTNDX) = 0;

@@ -299,8 +299,8 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
     double latitude_fix, longitude_fix;
     map_projection_sim->calc_geo_coords( nav.x + rand_n()*0.1, nav.y + rand_n()*0.1, latitude_fix, longitude_fix );
-    nav.latitude = latitude_fix;
-    nav.longitude = longitude_fix;
+    nav.latitude = latitude_fix*M_PI/180;
+    nav.longitude = longitude_fix*M_PI/180;
 
     if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     {
