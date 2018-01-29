@@ -140,13 +140,16 @@ int HealthMonitor::checkStatus(int64_t hbTime)
     //if(global_state.state == 0)
     //    status.status |= ABORT_BIT;
 
-	status.latitude = (float)(uvc_osi.latitude);	
-	status.longitude = (float)(uvc_osi.longitude);
-	status.altitude = (unsigned char)(uvc_dvl.alt * 10.0);
+	status.latitude = (float)(uvc_osi.latitude * RTOD);	
+	status.longitude = (float)(uvc_osi.longitude * RTOD);
+	if(uvc_dvl.alt > 12.6)
+		status.altitude = -(char)uvc_dvl.alt;
+	else
+		status.altitude = (char)(uvc_dvl.alt * 10.0);
 	status.depth = (short)(uvc_rph.depth * 10.0);
-	status.roll = (char)((uvc_rph.rph[0] * RTOD) * 10.0);
-	status.pitch = (char)((uvc_rph.rph[1] * RTOD) * 10.0);
-	status.heading = (short)((uvc_rph.rph[2] * RTOD) * 10.0);
+	status.roll = (char)((uvc_rph.rph[0] * RTOD) * 2.0);
+	status.pitch = (char)((uvc_rph.rph[1] * RTOD) * 2.0);
+	status.heading = (short)90 - ((uvc_rph.rph[2] * RTOD) / 2.0);
 	status.charge = (char)uvc_opi.percent;
 	status.waypoint = (char)uvc_osi.nextwp;
 	status.img_count = image_count;
