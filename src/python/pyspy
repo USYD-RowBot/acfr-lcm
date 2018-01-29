@@ -300,6 +300,7 @@ if __name__ == '__main__':
     import bot_lcmgl
     import bot_param
     import bot_procman
+    import urioce_lcm
 
     lcm_types = get_message_types(acfrlcm)
     lcm_types.update(get_message_types(senlcm))
@@ -309,6 +310,7 @@ if __name__ == '__main__':
     lcm_types.update(get_message_types(bot_lcmgl))
     lcm_types.update(get_message_types(bot_param))
     lcm_types.update(get_message_types(bot_procman))
+    lcm_types.update(get_message_types(urioce_lcm))
 
     lc = lcm.LCM()
 
