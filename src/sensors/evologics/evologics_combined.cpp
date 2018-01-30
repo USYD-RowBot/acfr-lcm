@@ -386,13 +386,15 @@ bool EvologicsModem::load_configuration(char *program_name)
     int targets[255];
     int num_targets = bot_param_get_int_array(param, key, targets, 255);
 
+    /*
     sprintf(key, "%s.ping_rates", rootkey);
     int ping_rates[255];
-    int num_rates = bot_param_get_int_array(param, key, targets, 255);
+    int num_rates = bot_param_get_int_array(param, key, ping_rates, 255);
 
     sprintf(key, "%s.send_fixes", rootkey);
     int send_fixes[255];
-    int num_send_fixes = bot_param_get_boolean_array(param, key, targets, 255);
+    int num_send_fixes = bot_param_get_boolean_array(param, key, send_fixes, 255);
+    */
 
     sprintf(key, "%s.target_names", rootkey);
     char **target_names = nullptr;
@@ -1569,6 +1571,9 @@ void EvologicsModem::process_im(int64_t timestamp, std::string const &message)
     int source = stoi(tokens[2]);
     int target = stoi(tokens[3]);
 
+    std::cout << "Received IM from " << get_target_name(source) << " to "
+        << get_target_name(target) << std::endl;
+
     if (starts_with(tokens[9], "LCM"))
     {
         process_lcm_data((uint8_t *)tokens[9].c_str(), size);
@@ -1585,12 +1590,13 @@ void EvologicsModem::process_pbm(int64_t timestamp, std::string const &message)
     int source = stoi(tokens[2]);
     int target = stoi(tokens[3]);
 
+    std::cout << "Received PBM from " << get_target_name(source) << " to "
+        << get_target_name(target) << std::endl;
+
     if (starts_with(tokens[8], "LCM"))
     {
         process_lcm_data((uint8_t *)tokens[8].c_str(), size);
     }
-
-    //cout << "*** EVOLOGICS modem " << local_address << " received piggy back instant message from " << source << " to " << target << " of size " << size << " with " << tokens[8].length() << " bytes of data " << data << endl;
 }
 
 void EvologicsModem::process_burst(int64_t timestamp, std::string const &message)
@@ -1602,6 +1608,9 @@ void EvologicsModem::process_burst(int64_t timestamp, std::string const &message
     int size = stoi(tokens[1]);
     int source = stoi(tokens[2]);
     int target = stoi(tokens[3]);
+
+    std::cout << "Received BURST from " << get_target_name(source) << " to "
+        << get_target_name(target) << std::endl;
 
     if (starts_with(tokens[9], "LCM"))
     {
@@ -1718,8 +1727,14 @@ void EvologicsModem::run()
                 }
             }
         }
+        else
+        {
+            std::cerr << "Trying to send message when none waiting." << std::endl;
+            // the lock will release the mutex on its desctruction
+            continue;
+        }
 
-        // release the mutex so other places can queue messages whilst we
+        // deliberately release the mutex so other places can queue messages whilst we
         // block to go through the sending process
         ul.unlock();
 

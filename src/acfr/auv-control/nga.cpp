@@ -83,6 +83,8 @@ parse_args (int argc, char **argv)
             break;
          }
     }
+
+    return vehicle_name;
 }
 
 int main(int argc, char **argv)
