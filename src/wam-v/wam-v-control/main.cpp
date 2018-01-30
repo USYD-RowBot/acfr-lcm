@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vector>
 #include <bot_param/param_client.h>
 
 #include "pid.h"
@@ -28,7 +29,7 @@ using namespace std;
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 #define NUM_RELAYS 24                   // Number of relays on relay board
-
+#define TORQEEDO_CTRL_MAX 1000       // Max input control value for Torqeedo Motors
 
 typedef struct
 {
@@ -57,6 +58,7 @@ typedef struct
     // remote
     int64_t prev_remote_time;
     enum rc_control_source_t control_source; // RC/ZERO/AUTO
+	acfrlcm::auv_spektrum_control_command_t spektrum_msg;
 
     // vehicle name
     string vehicle_name = "DEFAULT";
@@ -167,6 +169,18 @@ void rc_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	if (spektrum_cmd->utime > state->prev_remote_time) // msg is newer than previous msg
 	{
 		state->prev_remote_time = spektrum_cmd->utime; // we got a remote command, set the time and mode
+		
+        // make sure the memory is assigned for the dynamic array
+        int8_t num_channels = spektrum_cmd->channels;
+        if ((state->spektrum_msg.values).size() < (uint8_t)num_channels) 
+        {
+            (state->spektrum_msg.values).resize(num_channels);
+        }
+        // and copy dynamic array
+        state->spektrum_msg = *spektrum_cmd;
+        
+        //printf("RC: %5d, %5d, %5d, %5d, %5d, %5d\n", state->spektrum_msg.values[0], state->spektrum_msg.values[1], state->spektrum_msg.values[2], 
+        //                                             state->spektrum_msg.values[3], state->spektrum_msg.values[4], state->spektrum_msg.values[5]);
 
 	    if (spektrum_cmd->values[RC_AUX1] > REAR_POS_CUTOFF)
 	    {
@@ -260,8 +274,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 
 	if (state->control_source == RC_MODE_RC)
 	{
-		// TODO - transate RC commands to motor commands
-        printf( "Remote is on! Should we (not) do something??\n" );
+		// transate RC commands to motor commands
         state->torqeedo_motors_relay_enabled = true;
         if (state->torqeedo_motors_relay_reported == false)
         {
@@ -269,31 +282,132 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 			send_relay_cmd(state, true);
             fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
         }
-//        // check gear (control assignment switch) of remote (3 position switch top RHS)
-//        if (spektrum_cmd->values[GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
-//        {
-//            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
-//            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
-//            
-//
-//        }
-//        else if (spektrum_cmd->values[GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
-//        {
-//            // Do nothing
-//        }
-//        else // Front Switch Position
-//        {
-//            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
-//            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
-//            
-//
-//        }
 
+        //printf("HB: %5d, %5d, %5d, %5d, %5d, %5d\n", state->spektrum_msg.values[0], state->spektrum_msg.values[1], state->spektrum_msg.values[2], 
+        //                                             state->spektrum_msg.values[3], state->spektrum_msg.values[4], state->spektrum_msg.values[5]);
+        //printf("Switch Value: %d @ %d > %d ?\n", state->spektrum_msg.values[RC_GEAR], RC_GEAR, REAR_POS_CUTOFF);
+        
+        // check gear (drive control mode assignment switch) of remote (3 position switch top RHS)
+        if (state->spektrum_msg.values[RC_GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
+        {
+            if (state->verbose)
+            {
+                printf("Differential Mode\n");
+            }
+            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
+            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
+            int16_t port_throttle = state->spektrum_msg.values[RC_THROTTLE];
+            //printf("Port: %d\n", port_throttle);
+            if ((port_throttle < (CENTR_POS + HALF_DEADZONE)) && (port_throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                 mc_port.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                port_throttle-= CENTR_POS; //centre to zero
+                if (port_throttle > 0) 
+                {
+                    port_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    port_throttle+= HALF_DEADZONE;
+                }
+                printf("Port Throttle: %d\n", port_throttle);
+                double temp = (double)port_throttle/((double)AVAIL_V_RANGE/2.0);
+                mc_port.command_speed = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+
+			}
+			int16_t stbd_throttle = state->spektrum_msg.values[RC_ELEVATOR];
+			if ((stbd_throttle < (CENTR_POS + HALF_DEADZONE)) && (stbd_throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                 mc_stbd.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                stbd_throttle-= CENTR_POS; //centre to zero
+                if (stbd_throttle > 0)
+                {
+                    stbd_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    stbd_throttle+= HALF_DEADZONE;
+                }
+                //printf("Stbd Throttle: %d\n", stbd_throttle);
+                double temp = (double)stbd_throttle/((double)AVAIL_V_RANGE/2.0);
+                mc_stbd.command_speed = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+			}
+        }
+        else if (state->spektrum_msg.values[RC_GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
+        {
+            // Do nothing
+            printf("No Gear\n");
+        }
+        else // Front Switch Position
+        {
+            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
+            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
+            if (state->verbose)
+            {
+                printf("Steering Mode\n");
+            }
+			int16_t throttle = state->spektrum_msg.values[RC_THROTTLE];
+            if ((throttle < (CENTR_POS + HALF_DEADZONE)) && (throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                mc_port.command_speed = 0; // close to centre so no thrust
+			   	mc_stbd.command_speed = 0;
+            }
+            else
+            {
+                throttle-= CENTR_POS; //centre to zero
+                if (throttle > 0)
+                {
+                    throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    throttle+= HALF_DEADZONE;
+                }
+				double temp = (double)throttle/((double)AVAIL_V_RANGE/2.0);
+                throttle = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+
+				int16_t steer = state->spektrum_msg.values[RC_AILERON];
+				if ((steer < (CENTR_POS + HALF_DEADZONE)) && (steer > (CENTR_POS - HALF_DEADZONE)))
+				{
+					mc_port.command_speed = (int)(throttle); // no steer, equal throttle
+					mc_stbd.command_speed = (int)(throttle);
+				}
+				else // steer
+				{
+					steer-= CENTR_POS; //centre to zero
+                	if (steer > 0) // joystick left - anticlockwise turn left, reduce port motor// + clockwise, turn right, reduce stbd motor
+                	{   
+						steer-= HALF_DEADZONE; // adjust for deadzone
+						mc_stbd.command_speed = (int)(throttle); // stbd at throttle speed
+						// port reduce by steer amount through to full reverse
+                        //printf("Steer: %d Throttle: %d\n", steer, throttle);
+                        double temp = (((double)steer/((double)AVAIL_H_RANGE/2.0) * 2.0 * (double)throttle));
+                        //printf("Temp: %f\n", temp);
+						mc_port.command_speed = (int)(throttle - (2 * temp));
+                	}
+                	else // joystick right - clockwise, turn right, reduce stbd motor
+                	{   
+                	    steer+= HALF_DEADZONE; // adjust for deadzone
+						mc_port.command_speed = (int)(throttle); // port at throttle speed
+						// stbd reduce by steer amount through to full reverse
+                        //printf("Steer: %d Throttle: %d\n", steer, throttle);
+                        double temp = (((double)steer/((double)AVAIL_H_RANGE/2.0) * 2.0 * (double)throttle));
+                        //printf("Temp: %f\n", temp);
+						mc_stbd.command_speed = (int)(throttle + (2 * temp));
+                	}
+				} // end steer
+            } // end throttle
+        } //end steering mode
 
         // apply proportional speed limiting - limit format percentage
         mc_port.command_speed = (int)(state->motor_limit_rc/100 * mc_port.command_speed);
         mc_stbd.command_speed = (int)(state->motor_limit_rc/100 * mc_stbd.command_speed);
-
     }
 	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
 	{

@@ -171,7 +171,7 @@ parse_args (int argc, char **argv, state_t *state)
 
     const char *def = "DEFAULT";
     strncpy(state->vehicle_name, def, BUFSIZE);
-    snprintf(state->channel_name, BUFSIZE, "SPEKTRUM_CONTROL.%s", state->vehicle_name);
+    snprintf(state->channel_name, BUFSIZE, "%s.SPEKTRUM_CONTROL", state->vehicle_name);
 
     while ((opt = getopt (argc, argv, "hn:")) != -1)
     {
