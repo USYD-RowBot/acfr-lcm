@@ -471,7 +471,7 @@ parse_args (int argc, char **argv, state_t *state)
     
     
     int n;
-    while ((opt = getopt (argc, argv, "hnsp:")) != -1)
+    while ((opt = getopt (argc, argv, "hn:sp:")) != -1)
     {
         switch(opt)
         {
