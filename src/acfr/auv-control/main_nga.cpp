@@ -457,12 +457,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 *************************************************************/
                 double target_pitch = 0.0;
 
-                double mutual_vert = pid(&state->gains_tunnel_depth, 
+                double target_descent = pid(&state->gains_tunnel_depth, 
                         nav.depth, cmd.depth, CONTROL_DT);
                 double differential_vert = pid(&state->gains_tunnel_pitch,
                         nav.pitch, target_pitch, CONTROL_DT);
-                //double mutual = pid(&state->gains_tunnel_descent,
-                //        nav.vz, target_descent, CONTROL_DT);
+                double mutual_vert = pid(&state->gains_tunnel_descent,
+                        nav.vz, target_descent, CONTROL_DT);
 
                 // Set motor controller values
                 mc.vert_fore = mutual_vert + differential_vert;
@@ -498,8 +498,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                 // 	on the desired heading
                 rudder_angle = -pid(&state->gains_heading, diff_heading, 0.0, CONTROL_DT);
 
-                mc.lat_fore = 0;
-                mc.lat_aft = 0;
+                double differential_lat = pid(&state->gains_tunnel_heading,
+                        diff_heading, 0, CONTROL_DT);
+                mc.lat_fore = differential_lat;
+                mc.lat_aft = -differential_lat;
 
                 // FIXME: Might consider adding some lat tunnel thruster here
                 
@@ -542,8 +544,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
                             mc.tail_rudder, mc.tail_elevator);
                     printf( "Depth: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                             nav.depth, cmd.depth, (cmd.depth - nav.depth) );
-                    //printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
-                    //        nav.vz, target_descent, (target_descent - nav.vz));
+                    printf( "Descent Rate: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                            nav.vz, target_descent, (target_descent - nav.vz));
                     printf( "Pitch : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
                             nav.pitch/M_PI*180, target_pitch/M_PI*180, (target_pitch - nav.pitch)/M_PI*180 );
                     printf( "Vert Tunnel: fore=%.2f, aft=%.2f \n",

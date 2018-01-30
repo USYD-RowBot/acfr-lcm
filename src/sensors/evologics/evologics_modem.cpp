@@ -277,8 +277,13 @@ int Evologics_Modem::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::stri
     // figure out which channel to send the data on
     int target_channel = get_target_channel(target_name.c_str());
     cout << "Got LCM message on channel " << channel;
-    if (target_channel != -1) 
+    if (target_channel != -1 || use_pbm) 
     {
+        // this should only arise when using pbm... which
+        // seems to ignore what target you specify anyway
+        // so just assign one and get on with sending
+        if (target_channel == -1)
+            target_channel = 11;
        cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
        send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), use_pbm);
    } else {
