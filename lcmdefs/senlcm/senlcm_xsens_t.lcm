@@ -3,7 +3,8 @@ package senlcm;
 struct xsens_t
 {
     int64_t utime;
-    
+
+    int32_t count;    
     double heading;
     double roll;
     double pitch;

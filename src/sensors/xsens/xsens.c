@@ -19,43 +19,100 @@
 
 #define update_rate 0.1
 
-float tofloat(char *d)
+float be_float(unsigned char *d)
 {
-	uint32_t n = bswap_32(*d);
-	return *((float *)&n);
+	
+
+	unsigned int n = *((unsigned int *)d);
+	uint32_t n2 = bswap_32(n);
+	return *((float *)&n2);
 }	
 
-int parse_xsens(lcm_t *lcm, char *channel_name, char *d, int len, int64_t timestamp)
+unsigned short be_short(unsigned char *d)
 {
-	char *dp;
+	return (unsigned short)((d[0] << 8) + d[1]);
+}
+
+
+int parse_xsens(lcm_t *lcm, char *channel_name, unsigned char *d, int len, int64_t timestamp, senlcm_xsens_t *xs)
+{
+	unsigned char *dp;
 	if(d[3] == 0xFF)
 		dp = &d[6];
 	else
 		dp = &d[4];
-		
-    senlcm_xsens_t xs;
-    xs.utime = timestamp;
-    xs.temp = tofloat(&dp[0]);
-    xs.acc_x = tofloat(&dp[4]);
-    xs.acc_y = tofloat(&dp[8]);
-    xs.acc_z = tofloat(&dp[12]);
-    xs.gyr_x = tofloat(&dp[16]);
-    xs.gyr_y = tofloat(&dp[20]);
-    xs.gyr_z = tofloat(&dp[24]);
-    xs.mag_x = tofloat(&dp[28]);
-    xs.mag_y = tofloat(&dp[32]);
-    xs.mag_z = tofloat(&dp[36]);
-    xs.roll = tofloat(&dp[40]);
-    xs.pitch = tofloat(&dp[44]);
-    xs.heading = tofloat(&dp[48]);
+
+	unsigned char sub_len, data[64];
+	unsigned short id;
+            xs->utime = timestamp;
+	while((dp - d) < len)
+	{
+	    id = (*dp << 8) + *(dp + 1);
+ 	    sub_len = *(dp + 2);
+	    memcpy(data, dp + 3, sub_len);
+	    dp += 3 + sub_len;
+
+//	    printf("ID: 0x%04X, length: %d\n", id & 0xFFFF, sub_len);
+//	    for(int i=0; i<sub_len; i++)
+//		printf("%02X ", data[i] & 0xFF);
+//	    printf("\n");
+
+            switch (id & 0xF800)
+            {
+	        case 0x0800:	//Temperature
+		    if((id & 0x00F0) == 0x0010)
+			xs->temp = be_float(data);
+		    break;
+	        case 0x1000:	// Timestamp
+		    if((id & 0x00F0) == 0x0020)
+			xs->count = (int)be_short(data);
+		    break;
+	        case 0x2000:	// Orientation
+		    if((id & 0x00F0) == 0x0030)
+		    {
+			xs->roll = be_float(data);
+			xs->pitch = be_float(data+4);
+			xs->heading = be_float(data+8);
+		    }
+		    break;
+	        case 0x4000:	// Acceleration
+		    if((id & 0x00F0) == 0x0020)
+		    {
+			xs->acc_x = be_float(data);
+			xs->acc_y = be_float(data+4);
+			xs->acc_z = be_float(data+8);
+		    }
+		    break;			
+	        case 0x8000:	// Angular vel
+		    if((id & 0x00F0) == 0x0020)
+		    {
+			xs->gyr_x = be_float(data);
+			xs->gyr_y = be_float(data+4);
+			xs->gyr_z = be_float(data+8);
+		    }
+		    break;			
+	        case 0xC000:	// Magnetic
+		    if((id & 0x00F0) == 0x0020)
+		    {
+			xs->mag_x = be_float(data);
+			xs->mag_y = be_float(data+4);
+			xs->mag_z = be_float(data+8);
+		    }
+		    break;			
+	        //default:
+		//    printf("Unwanted or unknown packet\n");
+		//    break;
+            }
+
+	}
       
-    senlcm_xsens_t_publish(lcm, channel_name, &xs);    
+        senlcm_xsens_t_publish(lcm, channel_name, xs);    
 
     return 1;
 
 }
 
-int xsens_form_message(char *in, int data_len, char mid, char *out)
+int xsens_form_message(unsigned char *in, int data_len, unsigned char mid, unsigned char *out)
 {
 	memset(out, 0, XSENS_COMMAND_SIZE);
     out[0] = 0xFA;
@@ -65,15 +122,15 @@ int xsens_form_message(char *in, int data_len, char mid, char *out)
     //Data size
     if(data_len < 254)
     {
-    	out[4] = data_len & 0xFF;
-    	memcpy(&out[5], in, data_len);
+    	out[3] = data_len & 0xFF;
+    	memcpy(&out[4], in, data_len);
 	}
 	else
 	{	// Extended data mode
-		out[4] = 0xFF;
-		out[5] = (data_len & 0xFF00) >> 8;
-		out[6] = data_len & 0xFF;
-		memcpy(&out[7], in, data_len);
+		out[3] = 0xFF;
+		out[4] = (data_len & 0xFF00) >> 8;
+		out[5] = data_len & 0xFF;
+		memcpy(&out[6], in, data_len);
 	}
     
     // Header Length
@@ -82,16 +139,29 @@ int xsens_form_message(char *in, int data_len, char mid, char *out)
     	header_len = 6;
 	else 
 		header_len = 4;
-    
-    for(int i=header_len; i<data_len+header_len; i++)
-    	out[header_len + data_len] += out[i];
+
+    unsigned char cs = 0 ; 
+    for(int i=1; i<data_len+header_len; i++)
+	cs += out[i];    	
+
+    out[header_len + data_len] += 0xFF - cs + 1;
 
     return header_len + data_len + 1;
 }
 
-int xsens_read(acfr_sensor_t *s, char *in)
+int xsens_read(acfr_sensor_t *s, unsigned char *in)
 {
-	int len = acfr_sensor_read_timeoutms(s, in, 4, 500);
+	int len;
+	in[0] = 0;
+	do
+	{
+	    len = acfr_sensor_read_timeoutms(s, (char *)&in[0], 1, 500);
+	    if(in[0] == 0xFA)
+	        len += acfr_sensor_read_timeoutms(s, (char *)&in[1], 1, 500);
+	    //printf("0x%02X, ", in[0] & 0xFF);
+	} while(in[0] != 0xFA && in[1] == 0xFF);
+	//printf("\n");
+	len += acfr_sensor_read_timeoutms(s, (char *)&in[len], 2, 500);
 	if(len < 4)
 	{
 		fprintf(stderr, "Failed to get data back from Xsens\n");
@@ -102,20 +172,25 @@ int xsens_read(acfr_sensor_t *s, char *in)
 	// Extended data mode
 	if(data_size == 0xFF)
 	{	
-		len += acfr_sensor_read_timeoutms(s, &in[len], 2, 500);
+		len += acfr_sensor_read_timeoutms(s, (char *)&in[len], 2, 500);
 		data_size = in[5] & 0xFF;
 		data_size += (in[4] & 0xFF) << 8;
 	}
 	
 	// Read the data and the checksum
-	len += acfr_sensor_read_timeoutms(s, &in[len], data_size+1, 500);
+	len += acfr_sensor_read_timeoutms(s, (char *)&in[len], data_size+1, 500);
 	
 	// Check the checksum
 	unsigned char cs = 0;
-	for(int i=1; i<len; i++)
+	for(int i=1; i<len-1; i++)
 		cs += in[i];
-		
-	if(cs != in[len-1])
+/*
+	printf("Data Recv: ");
+	for(int i = 0;i<len; i++)
+		printf("%02X ", in[i] & 0xFF);
+	printf("\n");
+*/
+	if((0xFF - cs + 1) != in[len-1])
 	{
 		fprintf(stderr, "Checksum error\n");
 		return -1;
@@ -124,47 +199,52 @@ int xsens_read(acfr_sensor_t *s, char *in)
 	return len;
 }
 
-int xsens_send_command(acfr_sensor_t *s, char *in, int data_len, char command)
+int xsens_send_command(acfr_sensor_t *s, unsigned char *in, int data_len, unsigned char command)
 {
-	char out[XSENS_COMMAND_SIZE];
+	unsigned char out[XSENS_COMMAND_SIZE];
 	
 	int len;
 	len = xsens_form_message(in, data_len, command, out);
-	acfr_sensor_write(s, out, len);
+	acfr_sensor_write(s, (char *)out, len);
+/*
+	printf("Data Send: ");
+	for(int i = 0;i<len; i++)
+		printf("%02X ", out[i] & 0xFF);
+	printf("\n");
+*/	
+	do {
+	    xsens_read(s, in);
+	} while (in[2] != command + 1);
 
-	return xsens_read(s, in);	
+	return 1;	
 }
+
 
 int program_xsens(acfr_sensor_t *s)
 {
-    char data[128];
+    unsigned char data[128];
  	
-	// Xsens wakeup
-	xsens_send_command(s, data, 0, 0x3E);
- 
+
+    tcflush(s->fd, TCIOFLUSH); 
+//    xsens_send_command(s, data, 0, 0x40);
+//printf("Reset\n");
  	// Go to config
+//usleep(5e6);
     xsens_send_command(s, data, 0, 0x30);
-    
-    // Set output mode, Temp, Calibrated data, Orientation
-    data[0] = 0x08;
-    data[1] = 0x07;
-    xsens_send_command(s, data, 2, 0xD0);
-    
-    // Output settings
-    data[0] = 0x00;
-    data[1] = 0x00;
-    data[2] = 0x0C;
-    data[3] = 0x05;
-    xsens_send_command(s, data, 4, 0xD2);
-    
-    // Set output period, 100Hz
-    data[0] = 0x04;
-    data[1] = 0x80;
-    xsens_send_command(s, data, 2, 0x04);
-    
+printf("Entered config\n");
+	unsigned char xsense_program[] = 
+		{	0x08, 0x10, 0x00, 0x01,		// Temp, 1Hz
+			0x10, 0x20, 0x07, 0xD0, 	// Packet count
+			0x20, 0x30, 0x00, 0x64,		// Euler angles, 100Hz
+			0x40, 0x20, 0x00, 0x64, 	// Acceleration, 100Hz
+			0x80, 0x20, 0x00, 0x64, 	// Angular velocity, 100Hz
+			0xC0, 0x20, 0x00, 0x64  	// Mag field, 100Hz			 
+		};
+	xsens_send_command(s, xsense_program, sizeof(xsense_program), 0xC0);
+printf("Programmed\n");
     // Go to measurement mode
     xsens_send_command(s, data, 0, 0x10);
-
+printf("Entered measure\n");
     return 1;
 }
 
@@ -249,13 +329,13 @@ main (int argc, char *argv[])
     acfr_sensor_noncanonical(sensor, 1, 0);
 
     int len;
-    char buf[XSENS_READ_SIZE];
+    unsigned char buf[XSENS_READ_SIZE];
 
     int64_t timestamp;
-
     program_xsens(sensor);
 
     fd_set rfds;
+    senlcm_xsens_t xs;
 
     while(!program_exit)
     {
@@ -277,9 +357,9 @@ main (int argc, char *argv[])
             timestamp = timestamp_now();
             len = xsens_read(sensor, buf);
             if(len > 1)
-            	parse_xsens(lcm, xsens_channel, buf, len, timestamp);
+            	parse_xsens(lcm, xsens_channel, buf, len, timestamp, &xs);
             else
-                printf("Bad data_len\n");
+                fprintf(stderr, "Bad data_len\n");
         }
         
     }
