@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# send an abort to vehicle <argv[1]>
 
 import lcm
 import sys

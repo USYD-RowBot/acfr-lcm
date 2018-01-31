@@ -1,0 +1,10 @@
+package acfrlcm;
+
+struct asv_torqeedo_motor_command_t
+{
+    int64_t utime;
+    
+    int16_t command_speed;
+    boolean enabled;
+
+}

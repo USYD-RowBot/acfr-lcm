@@ -155,8 +155,8 @@ cout << "Target lat: " << y << " lon:" << x << endl;
     usbl_fix_t uf;
     uf.utime = timestamp_now();
     uf.remote_id = ef->remote_id;
-    uf.latitude = y ;
-    uf.longitude = x ;
+    uf.latitude = y;
+    uf.longitude = x;
     uf.depth = target_world[2];
     uf.accuracy = ef->accuracy;
     uf.ship_longitude = ship_longitude * DTOR;
@@ -186,11 +186,11 @@ cout << "Target lat: " << y << " lon:" << x << endl;
     int channel_pos = channel.find_last_of('.');
     std::string target_name = channel.substr(channel_pos + 1);
 
-    char usbl_fix_channel_name[64]; 
-    sprintf(usbl_fix_channel_name, "USBL_FIX.%s", target_name.c_str());
+    char usbl_fix_channel_name[128]; 
+    snprintf(usbl_fix_channel_name, 128, "%s.USBL_FIX.%s", vehicle_name, target_name.c_str());
     lcm->publish(usbl_fix_channel_name, &uf);
     
-    printf("%s: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", usbl_fix_channel_name, ef->remote_id, uf.latitude * RTOD, uf.longitude *RTOD, uf.depth, uf.accuracy);
+    printf("%s: target: %d Lat: %3.5f Lon: %3.5f Depth %3.1f Accuracy %2.2f\n", usbl_fix_channel_name, ef->remote_id, uf.latitude * RTOD, uf.longitude * RTOD, uf.depth, uf.accuracy);
       
 /*
     int d_size = uf.getEncodedSize();
@@ -234,6 +234,8 @@ int Evologics_Usbl::load_config(char *program_name)
     ins_ship_pose.setPosition(d[0], d[1], d[2]);
     ins_ship_pose.setRollPitchYawRad(d[3], d[4], d[5]);
 
+    sprintf(key, "%s.vehicle_name", rootkey);
+    vehicle_name = bot_param_get_str_or_fail(param, key);
 
     // ship status source
     sprintf(key, "%s.ship_status_channel", rootkey);
@@ -250,7 +252,7 @@ int Evologics_Usbl::init()
     lcm->subscribeFunction(ship_status_channel_str, on_ship_status, this);
     //lcm->subscribeFunction("NOVATEL", on_novatel, this);
 
-    lcm->subscribeFunction("EVO_USBL.*", on_usblfix, this);
+    lcm->subscribeFunction(".*\\.EVO_USBLFIX\\..*", on_usblfix, this);
     
     send_fixes = true;
     

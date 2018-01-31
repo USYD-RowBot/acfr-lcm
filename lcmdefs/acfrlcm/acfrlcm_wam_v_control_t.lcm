@@ -1,0 +1,15 @@
+package acfrlcm;
+
+struct wam_v_control_t
+{
+    int64_t utime;
+
+    const int8_t STOP = 0;
+    const int8_t RUN = 1;
+    
+    int8_t run_mode;
+    
+    double heading;
+    double vx;
+        
+}

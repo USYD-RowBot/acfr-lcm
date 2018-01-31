@@ -67,5 +67,7 @@ class Evologics_Usbl
         projPJ pj_latlong;
 
         char *ship_status_channel_str;
+
+        char *vehicle_name;
 };
          

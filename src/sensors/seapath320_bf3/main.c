@@ -85,7 +85,10 @@ static int parseShipStatus(char *buf, int buf_len, acfrlcm_ship_status_t *status
 
     // quick check that this packet matches expected fields
     if (buf[0] != 'q' || buf[1] != 49)
+    {
+        printf("Invalid header.\n");
         return 0;
+    }
 
     //status->north_velocity = read_swapped_float(buf + 23);
     //status->east_velocity = read_swapped_float(buf + 27);
@@ -162,6 +165,15 @@ int main (int argc, char *argv[])
     status.name = ship_name;
     status.ship_id = ship_id;
 
+    acfr_sensor_noncanonical(sensor, 1, 0);
+
+    printf("Entering main loop\n");
+
+    long int last_stats = timestamp_now();
+
+    int failed_count = 0;
+    int success_count = 0;
+
 
     fd_set rfds;
     // loop to collect data, parse and send it on its way
@@ -173,6 +185,14 @@ int main (int argc, char *argv[])
             sensor->port_open = 0;
             fprintf(stderr, "Pipe broken\n");
             continue;
+        }
+
+        if (last_stats + 1000000L < timestamp_now())
+        {
+            printf("Converted: %i, Failed %i\n", success_count, failed_count);
+            last_stats = timestamp_now();
+            failed_count = 0;
+            success_count = 0;
         }
 
         memset(buf, 0, sizeof(buf));
@@ -190,12 +210,44 @@ int main (int argc, char *argv[])
         else if(ret != 0)
         {
             int len;
+            int expected_length = 52;
             status.utime = timestamp_now();
-            len = acfr_sensor_read(sensor, buf, 52);
-            if(len == 52)
+            len = acfr_sensor_read(sensor, buf, expected_length);
+            if(len == expected_length)
             {
                 if (parseShipStatus(buf, len, &status))
+                {
+                    success_count++;
                     acfrlcm_ship_status_t_publish (lcm, channel, &status);
+                }
+                else
+                {
+                    failed_count++;
+                    // length is correct, but parsing didn't work
+                    // check for a magic sentinel
+                    // 'q' and 49 are the first two values
+                    int aligned = 0;
+                    for (int i=0;i<len-1;++i)
+                    {
+                        if (buf[i] == 'q' && buf[i+1] == 49)
+                        {
+                            // we have the offset
+                            // read this many off
+                            if (i > 0)
+                            {
+                                printf("Realigned (%i)\n", i);
+                                acfr_sensor_read(sensor, buf, i);
+                            }
+                            aligned = 1;
+                            break;
+                        }
+                    }
+
+                    if (!aligned)
+                    {
+                        acfr_sensor_read(sensor, buf, 1);
+                    }
+                }
             }
             else
             {
@@ -206,7 +258,7 @@ int main (int argc, char *argv[])
         else
         {
             // timeout, check the connection
-            fprintf(stderr, "Timeout: Checking connection\n");
+            fprintf(stderr, "Timeout: Checking connection (%i)\n", ret);
         }
     }
 

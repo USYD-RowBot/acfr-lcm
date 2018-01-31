@@ -18,4 +18,7 @@ set (PERLS_LCM_PACKAGES
 
   # ACFR LCM defs
   "acfrlcm"
+
+  # URI float
+  "urioce_lcm"
 )
