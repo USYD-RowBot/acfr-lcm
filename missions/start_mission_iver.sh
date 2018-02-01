@@ -15,6 +15,7 @@ IMAGE_LOGDIR=$LOGDIR/i$TIMESTAMP/
 # create the directory for the images
 mkdir -p $LOGDIR
 mkdir -p $IMAGE_LOGDIR
+export LCM_MISSION_DIR=$LOGDIR
 
 # kill any loggers that may be running
 killall -q lcm-logger
