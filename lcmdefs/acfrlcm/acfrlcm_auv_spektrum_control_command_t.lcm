@@ -1,0 +1,17 @@
+package acfrlcm;
+
+struct auv_spektrum_control_command_t
+{
+    // RC Channel names                                                             
+    const int8_t RC_THROTTLE = 0;
+    const int8_t RC_AILERON = 1;                                                                 
+    const int8_t RC_ELEVATOR = 2;                                                                
+    const int8_t RC_RUDDER = 3;                                                                  
+    const int8_t RC_AUX1 = 4;
+    const int8_t RC_GEAR = 5;
+            
+    int64_t utime;
+
+	int8_t channels;
+	int16_t values[channels];
+}

@@ -79,6 +79,7 @@ perls_add_group (utilities util "Build utilities group?" OFF)
 perls_add_group (sirius sirius "Build Sirius group?" OFF)
 perls_add_group (acfr acfr "Build ACFR group?" OFF)
 perls_add_group (simulator simulator "Build Simulator group?" ON)
+perls_add_group (wam-v wam-v "Build wam-v group?" ON)
 perls_add_group (waveglider waveglider "Build Waveglider group?" ON)
 
 # ROOT-LEVEL TARGETS

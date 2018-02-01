@@ -46,6 +46,7 @@ typedef struct
     senlcm_os_power_system_t ps;
     int initialised[MAX_CONTS];
     int batt_present[MAX_CONTS][8];
+    char *channel_name;
 } state_t;
 
 /*
@@ -394,7 +395,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
         if(++loopCount % 60 == 0)
         {
-            printf( "Time=%l Avg charge = %d\n",
+            printf( "Time=%li Avg charge = %d\n",
                     state->ps.utime, state->ps.avg_charge_p);
         }
     }
@@ -412,6 +413,40 @@ int readline(int fd, char *buf, int max_len)
     return i;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.BATTERY", (char *)optarg);
+            break;
+         }
+    }
+}
 
 int program_exit;
 void
@@ -430,6 +465,8 @@ int main (int argc, char *argv[])
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
+
+    parse_args(argc, argv, &state.channel_name);
 
 
     // read the config file
@@ -451,6 +488,8 @@ int main (int argc, char *argv[])
         io = io_serial;
     else if(!strcmp(io_str, "socket"))
         io = io_socket;
+    else
+        return -1;
 
     char **serial_devs;
     char **inet_ports;

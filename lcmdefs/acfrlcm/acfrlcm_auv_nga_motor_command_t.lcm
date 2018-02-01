@@ -1,0 +1,15 @@
+package acfrlcm;
+
+struct auv_nga_motor_command_t
+{
+    int64_t utime;
+	
+    double vert_fore;         // RPM
+    double vert_aft;
+    double lat_fore;
+    double lat_aft;	
+    double tail_thruster;    // RPM
+    double tail_rudder;      // Rad
+    double tail_elevator;    // Rad
+    
+}
