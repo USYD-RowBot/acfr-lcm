@@ -420,7 +420,7 @@ main (int argc, char *argv[])
     char *vehicle_name;
     parse_args(argc, argv, &vehicle_name);
     snprintf(state.PD5_channel, 128, "%s.RDI", vehicle_name);
-    snprintf(state.PD5_channel, 128, "%s.RDI_PD0", vehicle_name);
+    snprintf(state.PD0_channel, 128, "%s.RDI_PD0", vehicle_name);
     
     
     state.lcm = lcm_create(NULL);

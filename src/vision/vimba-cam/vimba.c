@@ -1006,11 +1006,13 @@ print_help (int exval, char **argv)
 
     printf("  -h                               print this help and exit\n");
     printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    printf("  -k config key                    paramter file key\n");
     exit (exval);
 }
 
 void
-parse_args (int argc, char **argv, char **channel_name)
+parse_args (int argc, char **argv, char **channel_name, char *root_key)
+
 {
     int opt;
 
@@ -1018,7 +1020,7 @@ parse_args (int argc, char **argv, char **channel_name)
     *channel_name = malloc(strlen(default_name)+1);
     strcpy(*channel_name, default_name);
     
-    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    while ((opt = getopt (argc, argv, "hn:k:")) != -1)
     {
         switch(opt)
         {
@@ -1030,6 +1032,13 @@ parse_args (int argc, char **argv, char **channel_name)
             *channel_name = malloc(200);
             snprintf(*channel_name, 200, "%s.ACFR_AUV_VIS_RAWLOG", (char *)optarg);
             break;
+         
+        case 'k':
+	    //*root_key = malloc(64);
+	    printf("%s\n", optarg);
+	    //strcpy(*root_key, optarg);
+	    snprintf(root_key, 64, "%s", (char *)optarg);
+            break;
          }
     }
 }
@@ -1040,14 +1049,12 @@ int main(int argc, char **argv)
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
 
-
-    //BotParam *params;
     //char root_key[64];
     char key[64];
 
     state_t state;
 
-    parse_args(argc, argv, &state.rawlog_channel);
+    parse_args(argc, argv, &state.rawlog_channel, state.root_key);
 
     // Seems more complicated then it should be but we want to be able to dynamically change its size.
     char path[] = "./";
@@ -1067,28 +1074,6 @@ int main(int argc, char **argv)
     state.tss.max_rate_error = 1.0;
     state.previous_frame_utime = 0;
 
-    // read the config file, we base the entry on a command line switch
-    char opt;
-    int got_key = 0;
-    while((opt = getopt(argc, argv, "hk:")) != -1)
-    {
-        if(opt == 'k')
-        {
-            strcpy(state.root_key, optarg);
-            got_key = 1;
-        }
-        if(opt == 'h')
-        {
-            fprintf(stderr, "Usage: vimba -k <config key>\n");
-            return 0;
-        }
-    }
-
-    if(!got_key)
-    {
-        fprintf(stderr, "a config file key is required\n");
-        return 0;
-    }
 
 
     state.lcm = lcm_create(NULL);
