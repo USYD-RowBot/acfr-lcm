@@ -133,7 +133,7 @@ void send_msg(int message_type, state_t *u)
         case MSG_3082:
             //printf("MSG_3082\n");
             // if forwards, (and no reverse) OR reverse (and no forwards)
-            if (state->cmd_speed != 0)
+            if ((state->enabled) && (state->cmd_speed != 0))
             {
                 printf("F: %d\n", state->cmd_speed);
                 if (state->cmd_speed > MAX_SPEED)
@@ -179,7 +179,7 @@ void send_msg(int message_type, state_t *u)
             res = acfr_sensor_write(state->sensor, (char *)msg_3082_move, MSG3082_LEN + subs_count + 1);
             }
 
-            // otherwise if not fwd OR rev, either idle or invalid - so treat as stopped
+            // otherwise if not enabled &/OR speed equals 0, either idle or invalid - so treat as stopped
             else
             {
                 res = acfr_sensor_write(state->sensor, (char *)msg_3082_idle, MSG3082_LEN);
