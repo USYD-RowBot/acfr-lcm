@@ -45,14 +45,17 @@ ControlSource ControllerBase::spektrum_control_mode(acfrlcm::auv_spektrum_contro
     // RC_AUX1 is the top left triple state switch on the DX-6 controllers
     if (sc.values[RC_AUX1] > REAR_POS_CUTOFF)
     {
+        std::cout << "Switching to Automatic control mode" << std::endl;
         return ControlSource::Automatic;
     }
     else if (sc.values[RC_AUX1] > CENTER_POS_CUTOFF)
     {
+        std::cout << "Switching to Dead control mode" << std::endl;
         return ControlSource::Dead;
     }
     else
     {
+        std::cout << "Switching to Manual control mode" << std::endl;
         return ControlSource::Manual;
     }
 }

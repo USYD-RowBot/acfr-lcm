@@ -22,10 +22,13 @@
 typedef struct {
     char vehicle_name[BUFSIZE];
     char channel_name[BUFSIZE];
+    char rootkey[BUFSIZE];
 
     int channels;
 
     char send_next;
+    int dsm_level;
+    unsigned char dsm_preamble;
 
     lcm_t *lcm;
     acfrlcm_auv_spektrum_control_command_t sc;
@@ -116,11 +119,20 @@ parse_rc(char *buf, state_t *state)
     for(int i=1; i<8; i++)
     {
         // we have an offset of 2 as the first two bytes are status/flags
-        channel_id = (buf[i*2] & 0xF8) >> 3;
-        channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
+        if(state->dsm_preamble == 0xA2)
+        {
+            channel_id = (buf[i*2] & 0xF8) >> 3;
+            channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
+        }
+        else
+        {
+            channel_id = (buf[i*2] & 0xFC) >> 2;
+            channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
+        }
+        
 
         //printf("%i-%i ", (int)channel_id, (int)channel_value);
-        //printf("%x-%x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
+        //printf("%02x-%02x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
 
         if (channel_id < state->channels)
         {
@@ -161,6 +173,7 @@ print_help (int exval, char **argv)
 
     printf("  -h                               print this help and exit\n");
     printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    printf("  -k config key                    param file config key\n");
     exit (exval);
 }
 
@@ -173,7 +186,7 @@ parse_args (int argc, char **argv, state_t *state)
     strncpy(state->vehicle_name, def, BUFSIZE);
     snprintf(state->channel_name, BUFSIZE, "%s.SPEKTRUM_CONTROL", state->vehicle_name);
 
-    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    while ((opt = getopt (argc, argv, "hn:k:")) != -1)
     {
         switch(opt)
         {
@@ -183,6 +196,9 @@ parse_args (int argc, char **argv, state_t *state)
         case 'n':
             strncpy(state->vehicle_name, (char *)optarg, BUFSIZE);
             snprintf(state->channel_name, BUFSIZE, "%s.SPEKTRUM_CONTROL", state->vehicle_name);
+            break;
+        case 'k':
+            strncpy(state->rootkey, (char *)optarg, BUFSIZE);
             break;
          }
     }
@@ -201,13 +217,13 @@ lcm_thread (void *context)
     return 0;
 }
 
-void realign(acfr_sensor_t *sensor)
+void realign(acfr_sensor_t *sensor, state_t *state)
 {
     // this is fragile - and may fail arbitrarily
     // but we need to find the start of the packet
     // based on decoding with an oscilloscope
     // the first two bytes of the message is 0xE1 0xA2
-    
+
     fd_set rfds;
     char buf[16];
     uint8_t aligned = 0;
@@ -246,14 +262,14 @@ void realign(acfr_sensor_t *sensor)
             int bytes = 16;
             len = acfr_sensor_read(sensor, buf, bytes);
             printf("%i\n", len);
-            if(len == bytes && (unsigned char)buf[1] == 0xa2)
+            if(len == bytes && (unsigned char)buf[1] == state->dsm_preamble)
             {
                 aligned = 1;
             }
             else
             {
                 len = acfr_sensor_read(sensor, buf, 1);
-                fprintf(stderr, "Shifting alignment\n");
+                fprintf(stderr, "Shifting alignment, 0x%02X, 0x%02X\n", state->dsm_preamble& 0xFF, buf[1] & 0xFF);
             }
         }
         //else
@@ -290,23 +306,28 @@ main(int argc, char **argv)
         return 0;
 
     // Read the config params
-    char rootkey[64];
     char key[64];
-    sprintf(rootkey, "acfr.%s", basename(argv[0]));
 
-    sprintf(key, "%s.channels", rootkey);
+    sprintf(key, "%s.channels", state.rootkey);
     state.channels = bot_param_get_int_or_fail(param, key);
 	
-	
+    sprintf(key, "%s.dsm", state.rootkey);
+    char *dsm_str = bot_param_get_str_or_fail(param, key);
+    if(!strcmp(dsm_str, "DX5"))
+        state.dsm_preamble = 0x01;
+    else
+        state.dsm_preamble = 0xA2;
+
+    printf("Setting DSM premable to 0x%02X\n", state.dsm_preamble & 0xFF);
 
 	// As we want to over write the serial_device we can't use the acfr_sensor_create reoutine
 	acfr_sensor_t *sensor = (acfr_sensor_t *)malloc(sizeof(acfr_sensor_t));
-	if(acfr_sensor_load_config(state.lcm, sensor, rootkey))
+	if(acfr_sensor_load_config(state.lcm, sensor, state.rootkey))
 	{
 		if(!strcmp(sensor->serial_dev, "by_serial_number"))
 		{
 		    // Load the serial number of the device we are looking for
-		    sprintf(key, "%s.device_serial_number", rootkey);
+		    sprintf(key, "%s.device_serial_number", state.rootkey);
             char *device_serial_number = bot_param_get_str_or_fail(param, key);
             char device[128];
             if(!find_device(device_serial_number, device))
@@ -330,7 +351,7 @@ main(int argc, char **argv)
     acfr_sensor_noncanonical(sensor, 1, 0);
 
     // Create the UDP listener
-    realign(sensor);
+    realign(sensor, &state);
 
     fd_set rfds;
     char buf[16];
@@ -364,9 +385,9 @@ main(int argc, char **argv)
             len = acfr_sensor_read(sensor, buf, bytes);
             if(len == bytes)
             {
-                if ((unsigned char)buf[1] != 0xa2)
+                if ((unsigned char)buf[1] != state.dsm_preamble)
                 {
-                    realign(sensor);
+                    realign(sensor, &state);
                 }
                 parse_rc(buf, &state);
             }
