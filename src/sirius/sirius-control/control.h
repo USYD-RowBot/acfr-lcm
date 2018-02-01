@@ -10,7 +10,7 @@
 #include <libgen.h>
 #include <pthread.h>
 #include <signal.h>
-#include <lcm.h>
+#include <lcm/lcm.h>
 #include "timer.h"
 #include <bot_param/param_client.h>
 #include "perls-common/timestamp.h"

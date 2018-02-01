@@ -98,18 +98,8 @@ LocalPlanner::LocalPlanner() :
 		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
 		waypointTime(timestamp_now()), replanTime(timestamp_now())
 {
-
-	// sunscribe to the required LCM messages
-	lcm.subscribeFunction("ACFR_NAV.*", onNavLCM, this);
-	lcm.subscribeFunction("PATH_COMMAND", onPathCommandLCM, this);
-	lcm.subscribeFunction("GLOBAL_STATE", onGlobalStateLCM, this);
-	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
-
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
-	//    pthread_mutex_init(&currPoseLock, NULL);
-	//    pthread_mutex_init(&destPoseLock, NULL);
-	//    pthread_mutex_init(&waypointsLock, NULL);
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
 
@@ -123,10 +113,19 @@ LocalPlanner::~LocalPlanner()
 		fp.close();
 	if (fp_wp.is_open())
 		fp_wp.close();
-	//    pthread_mutex_destroy(&currPoseLock);
-	//    pthread_mutex_destroy(&destPoseLock);
-	//    pthread_mutex_destroy(&waypointsLock);
 }
+
+int LocalPlanner::subscribeChannels()
+{
+	// sunscribe to the required LCM messages
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", onNavLCM, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
+	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
+        return 1;
+}
+
+
 /**
  * Copy current nav solution and process the waypoints
  */
@@ -237,9 +236,9 @@ int LocalPlanner::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
-	if ( 0 ) // destPoseRel.getX() < 0 ||
-		//	destPoseRel.getX() > 2*turningRadius ||
-		//	fabs(relAngle) > 45./180*M_PI )
+	if (destPoseRel.getX() < 0 ||
+	    destPoseRel.getX() > 2*turningRadius ||
+		fabs(relAngle) > 45./180*M_PI )
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -319,7 +318,7 @@ int LocalPlanner::onGlobalState(
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
-		lcm.publish("AUV_CONTROL", &cc);
+		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	}
 	return 1;
 }
@@ -526,7 +525,7 @@ int LocalPlanner::processWaypoints()
 
     cc.depth = depth_ref;
 
-	lcm.publish("AUV_CONTROL", &cc);
+	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
 
@@ -540,7 +539,7 @@ int LocalPlanner::sendResponse()
 		pr.distance = waypoints.size() * wpDropDist;
 	else
 		pr.distance = currPose.positionDistance(destPose);
-	lcm.publish("PATH_RESPONSE", &pr);
+	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
 
 	return 1;
 }
@@ -567,7 +566,7 @@ bool LocalPlanner::publishWaypoints() {
 		lp.z[i] = waypoints[i].getZ();
 	}
 	lp.num_el = i;
-	lcm.publish("LOCAL_PATH", &lp);
+	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
 	return true;
 }
 

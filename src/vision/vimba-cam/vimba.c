@@ -66,6 +66,7 @@ typedef struct
     char *uid;
     char *mac;
     char *channel;
+    char *rawlog_channel;
     char *camera_name;
 
     VmbHandle_t camera;
@@ -511,7 +512,7 @@ int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
         vis_raw.utime = utime;
         vis_raw.exp_time = exposure;
         vis_raw.image_name = filename;
-        acfrlcm_auv_vis_rawlog_t_publish(state->lcm, "ACFR_AUV_VIS_RAWLOG", &vis_raw);
+        acfrlcm_auv_vis_rawlog_t_publish(state->lcm, state->rawlog_channel, &vis_raw);
     }
 
     TIFFClose(image);
@@ -643,14 +644,14 @@ int publish_image(state_t *state, VmbFrame_t *frame, unsigned int exposure, unsi
 
     char *key_exp = "ExposureValue";
     metadata.key =malloc(strlen(key_exp));
-    strcpy(metadata.key,key_exp);
+    strncpy(metadata.key,key_exp, strlen(key_exp));
     metadata.n = 4;
     metadata.value =  (uint8_t *)&exposure;
     memcpy(&image.metadata[0], &metadata, sizeof(bot_core_image_metadata_t));
 
     char *key_gain = "GainValue";
     metadata.key =realloc(metadata.key, strlen(key_gain));
-    strcpy(metadata.key,key_gain);
+    strncpy(metadata.key,key_gain, strlen(key_gain));
     metadata.n = 4;
     metadata.value =  (uint8_t *)&gain;
     memcpy(&image.metadata[1], &metadata, sizeof(bot_core_image_metadata_t));
@@ -998,17 +999,55 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
     return;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.ACFR_AUV_VIS_RAWLOG", (char *)optarg);
+            break;
+         }
+    }
+}
+    
 int main(int argc, char **argv)
 {
     program_exit = 0;
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
 
+
     //BotParam *params;
     //char root_key[64];
     char key[64];
 
     state_t state;
+
+    parse_args(argc, argv, &state.rawlog_channel);
 
     // Seems more complicated then it should be but we want to be able to dynamically change its size.
     char path[] = "./";

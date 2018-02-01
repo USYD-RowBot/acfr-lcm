@@ -8,8 +8,8 @@
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
-#include <libplankton/auv_config_file.hpp>
-#include <libplankton/auv_map_projection.hpp>
+//#include <libplankton/auv_config_file.hpp>
+#include "acfr-common/auv_map_projection.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
@@ -72,6 +72,8 @@ SMALL::Vector3D grav;
 SMALL::Vector6D in;
 
 double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
+
+string vehicle_name = "DEFAULT";
 
 void auv( const state_type &x , state_type &dxdt , const double /* t */ )
 {
@@ -578,8 +580,8 @@ void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel
     in(1) = 0;
     in(2) = -mc->top;// / 180.0 * M_PI;
     in(3) = -mc->bottom;
-    in(4) = -mc->port;// / 180.0 * M_PI;
-    in(5) = -mc->starboard;
+    in(4) = mc->port;// / 180.0 * M_PI;
+    in(5) = mc->starboard;
 }
 
 double rand_n(void) // generate normally distributed variable given uniformly distributed variable using the Box-Muller method
@@ -648,11 +650,9 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message
-        lcm->publish("ACFR_NAV.IVERSIM", &nav);
+        //lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
-    //	lcm->publish("ACFR_NAV", &nav);
-    // for simulating the sensors, acfr_nav_new should be publishing the ACFR_NAV
 
     //IMU
     //rotate gravity into local frame
@@ -693,7 +693,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
     imu.accel[0] = accel[0] + grav_b[0] + ba_x + STD_A*rand_n();
     imu.accel[1] = accel[1] + grav_b[1] + ba_y + STD_A*rand_n();
     imu.accel[2] = accel[2] + grav_b[2] + ba_z + STD_A*rand_n();
-    lcm->publish("IMU", &imu);
+    lcm->publish(vehicle_name+".IMU", &imu);
 
     //    if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     //    {
@@ -714,7 +714,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         tcm.roll= state(3) + rand_n()*0.25*M_PI/180;
         tcm.pitch= state(4) + rand_n()*0.25*M_PI/180;
         tcm.temperature = 20;
-        lcm->publish("TCM", &tcm);
+        lcm->publish(vehicle_name+".TCM", &tcm);
     }
 
     // YSI depth
@@ -732,7 +732,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
         ysi.conductivity = 0;
         ysi.oxygen = 0;
         ysi.battery = 0;
-        lcm->publish("YSI", &ysi);
+        lcm->publish(vehicle_name+".YSI", &ysi);
     }
 
     // GPS
@@ -813,7 +813,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             gpsd3->fix.mode = 3;
             gpsd3->status = 1;
             gpsd3->tag = strdup("");
-            lcm->publish("GPSD_CLIENT", gpsd3);
+            lcm->publish(vehicle_name+".GPSD_CLIENT", gpsd3);
             delete gpsd3;
         }
     }
@@ -844,7 +844,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             rdi.pd4.btv_status = 1; // beyond dvl bl range
 
         rdi.pd4.speed_of_sound = 1521.495;
-        lcm->publish("RDI", &rdi);
+        lcm->publish(vehicle_name+".RDI", &rdi);
     }
 
     last_obs_time = timeStamp;
@@ -885,6 +885,35 @@ void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
 
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            vehicle_name = (char*)optarg;
+            break;
+         }
+    }
+}
+
 int main_exit;
 void signal_handler(int sig)
 {
@@ -893,6 +922,8 @@ void signal_handler(int sig)
 
 int main(int argc, char **argv)
 {
+    cout << "Starting sim..." << endl;
+    parse_args(argc, argv);
 
     // install the signal handler
     main_exit = 0;
@@ -912,15 +943,11 @@ int main(int argc, char **argv)
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
-    sprintf(key, "%s.slam_config", rootkey);
-    char *slamConfigFileName = bot_param_get_str_or_fail(param, key);
-    Config_File *slamConfigFile;
-    slamConfigFile = new Config_File(slamConfigFileName);
-
     double latitude_sim, longitude_sim;
-
-    slamConfigFile->get_value( "LATITUDE", latitude_sim);
-    slamConfigFile->get_value( "LONGITUDE", longitude_sim);
+    sprintf(key, "%s.latitude", rootkey);
+    latitude_sim = bot_param_get_double_or_fail(param, key);
+    sprintf(key, "%s.longitude", rootkey);
+    longitude_sim = bot_param_get_double_or_fail(param, key);
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
@@ -947,10 +974,10 @@ int main(int argc, char **argv)
     bg_z = BIAS_G*rand_n();
 
 
-    lcm.subscribeFunction("IVER_MOTOR", on_motor_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".IVER_MOTOR", on_motor_command, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
-    lcm.subscribeFunction("ACFR_NAV", on_nav_store, &lcm);
+    //lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
 
     //populate_inv_inertia();
 
@@ -998,7 +1025,6 @@ int main(int argc, char **argv)
         if(ret > 0)
             lcm.handle();
     }
-    delete slamConfigFile;
     delete map_projection_sim;
     if( fp.is_open())
     	fp.close();

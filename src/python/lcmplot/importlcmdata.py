@@ -75,7 +75,7 @@ class Channel(object):
                     
                 # get all the subtypes attributes
                 for sub_attr, value in self.subchannels[attr].list_attributes(lcm_type_set, value):
-                    attributes.append((sub_attr + '.'+ attr, value))
+                    attributes.append((attr + '.'+ sub_attr, value))
                 # don't want to append this
                 continue
             else:
@@ -142,7 +142,28 @@ class MessageDecoder(object):
                 if isinstance(attribute_data[0], numbers.Number):
                     # numeric!
                     y = np.array(attribute_data)
-                    name = channel_name + '.' + attribute_name
+                    name = channel_name + '->' + attribute_name
                     data[name] = PlotData(name, time, y)
-        
+                else:
+                    # see if we can iterate and it is numeric
+                    try:
+                        if isinstance(attribute_data[0][0], numbers.Number):
+                            # numeric array! need to check if they are
+                            # all the same length
+                            length = len(attribute_data[0])
+                            arrays = [list() for i in xrange(length)]
+                            for x in attribute_data:
+                                if not len(x) == length:
+                                    break
+                                for i in xrange(length):
+                                    arrays[i].append(x[i])
+                            else:
+                                # if we get here they are all the same
+                                for i in xrange(length):
+                                    name = "{}->{}[{}]".format(channel_name, attribute_name, i)
+                                    y = np.array(arrays[i])
+                                    data[name] = PlotData(name, time, y)
+                    except:
+                        pass
+
         return data

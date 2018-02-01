@@ -25,6 +25,8 @@ typedef struct
     acfr_sensor_t *sensor;
     int num_psu;
     int psu_addrs[MAX_PSUS];
+    int psu;
+    char *channel_name;
 } state_t;
 
 #define RS485_SEALEVEL
@@ -57,7 +59,6 @@ int RS485_write(acfr_sensor_t *sensor, char *d)
 #endif
 
     int ret = acfr_sensor_write(sensor, d, strlen(d));
-
 #ifdef RS485_SEALEVEL
     // clear the RTS pin to enable receiving
 //    set_rts(sensor->fd, 0);
@@ -91,7 +92,6 @@ void parse_psu_response(state_t *state, char *d, int len)
     memcpy(addr_str, &d[1], 2);
     addr = atoi(addr_str);
     cmd_char = &d[3];
-    
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
     	if(chop_string( d, ", ", tokens) == 4)
@@ -102,7 +102,7 @@ void parse_psu_response(state_t *state, char *d, int len)
 	    	psu.voltage = atof(tokens[1]);
 	    	psu.current = atof(tokens[2]);
 	    	psu.temperature = atof(tokens[3]);
-	    	senlcm_acfr_psu_t_publish(state->lcm, "PSU", &psu);
+	    	senlcm_acfr_psu_t_publish(state->lcm, state->channel_name, &psu);
     	}
     }
 }
@@ -121,18 +121,54 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 		memset(msg, 0, sizeof(msg));
 		sprintf(msg, "#%02dS\r", state->psu_addrs[i]);
 		RS485_write(state->sensor, msg);
-		
+	        usleep(100e3);	
 		// Wait for a response with a timeout
 		memset(resp, 0, sizeof(resp));
-		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 100);
+		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 200);
 		if(ret > 0)
 			parse_psu_response(state, resp, ret);
+
+		usleep(100e3);
 	}
         
         
 		    
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.PSU", (char *)optarg);
+            break;
+         }
+    }
+}
 
 int program_exit;
 void
@@ -150,6 +186,8 @@ int main (int argc, char *argv[])
     signal(SIGINT, signal_handler);
 
     state_t state;
+
+    parse_args(argc, argv, &state.channel_name);
     
     //Initalise LCM object
     state.lcm = lcm_create(NULL);
@@ -171,7 +209,7 @@ int main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-
+state.psu = 0;
     
     while (!program_exit)
     {

@@ -1,5 +1,4 @@
-/* ACFR PSU driver
- * 1/8 brick 
+/* ACFR Tunnel Thruster Twin Controller
  *
  * Christian Lees
  * ACFR
@@ -17,20 +16,36 @@
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 #include "perls-lcmtypes/acfrlcm_tunnel_thruster_command_t.h"
 #include "perls-lcmtypes/acfrlcm_tunnel_thruster_power_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_nga_motor_command_t.h"
 
+// actual max values supported
+//#define TUNNEL_MAX 2047
+//#define TUNNEL_MIN -2048
 
-#define TUNNEL_MAX 2047
-#define TUNNEL_MIN -2048
+// but with power issues...
+// 1024 is really slow, nowhere near the limit
+#define TUNNEL_MAX 1500
+#define TUNNEL_MIN -1500
 
-#define COMMAND_TIMEOUT_THRUST 500
+#define COMMAND_TIMEOUT_THRUST 10
 #define COMMAND_TIMEOUT 10
 
 typedef struct 
 {
     lcm_t *lcm;
     acfr_sensor_t *sensor;
-    acfrlcm_tunnel_thruster_command_t tc;
+    int64_t command_utime;
+    int vert_fore;
+    int vert_aft;
+    int lat_fore;
+    int lat_aft;
+    int8_t vf_pos_down;
+    int8_t va_pos_down;
+    int8_t lf_pos_right;
+    int8_t la_pos_right;
     int addrs[4];
+    int64_t zero_time;
+    int64_t last_zero_time;
 } state_t;
 
 #define RS485_SEALEVEL
@@ -84,6 +99,7 @@ int chop_string(char *data, char *delim, char **tokens)
         tokens[i++] = token;
         token = strtok(NULL, delim);
     }
+
     return i;
 }
 
@@ -100,14 +116,16 @@ int parse_thruster_response(state_t *state, char *d, int len)
     
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
-    	if(chop_string(d, ", ", tokens) == 5)
+    	if(chop_string(d, ", ", tokens) == 6)
     	{
 	    	acfrlcm_tunnel_thruster_power_t ttp;
 	    	ttp.utime = timestamp_now();
 	    	ttp.addr = addr;
-	    	ttp.voltage = atof(tokens[2]);
-	    	ttp.current = atof(tokens[3]);
-	    	ttp.temperature = atof(tokens[4]);
+	    	ttp.voltage[0] = atof(tokens[1]);
+	    	ttp.current[0] = atof(tokens[2]);
+	    	ttp.voltage[1] = atof(tokens[3]);
+	    	ttp.current[1] = atof(tokens[4]);
+	    	ttp.temperature = atof(tokens[5]);
 	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, "TUNNEL_THRUSTER_POWER", &ttp);
 	    	
 	    	return 1;
@@ -147,7 +165,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state_t *state = (state_t *)u;
     char msg[16];
 	
-	for(int i=0; i<4; i++)
+	for(int i=0; i<2; i++)
 	{
 		memset(msg, 0, sizeof(msg));
 		sprintf(msg, "#%02dS\r", state->addrs[i]);
@@ -164,59 +182,81 @@ int send_tunnel_commands(state_t *state)
 	// Send the thrust values to the controllers
 	char msg[16];
 	
-	sprintf(msg, "#%02uT%d\r", state->addrs[0], state->tc.fore_horiz);
+	sprintf(msg, "#%02uT1 %d\r", state->addrs[0], state->lat_fore);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
-	sprintf(msg, "#%02uT%d\r", state->addrs[1], state->tc.fore_vert);
+	sprintf(msg, "#%02uT2 %d\r", state->addrs[0], state->vert_fore);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 
-	sprintf(msg, "#%02uT%d\r", state->addrs[2], state->tc.aft_horiz);
+	// these are the opposite direction to the fore motors
+	sprintf(msg, "#%02uT1 %d\r", state->addrs[1], -state->lat_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
-	sprintf(msg, "#%02uT%d\r", state->addrs[3], state->tc.aft_vert);
+	sprintf(msg, "#%02uT2 %d\r", state->addrs[1], -state->vert_aft);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;
 }	
 
-void tunnel_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_tunnel_thruster_command_t *tc, void *u)
+void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)
 {
     state_t *state = (state_t *)u;
+
+    acfrlcm_auv_nga_motor_command_t mc;
+
+    memcpy(&mc, mot, sizeof(acfrlcm_auv_nga_motor_command_t));
 
 
  // Copy the commands and set the limits
     
-    state->tc.utime = tc->utime;
+    state->command_utime = mot->utime;
     
-    if(tc->fore_horiz > TUNNEL_MAX)
-    	state->tc.fore_horiz = TUNNEL_MAX;
-	else if (tc->fore_horiz < TUNNEL_MIN)
-    	state->tc.fore_horiz = TUNNEL_MIN;
-	else
-		state->tc.fore_horiz = tc->fore_horiz;
+    mc.lat_fore *= state->lf_pos_right;
+    if(mc.lat_fore > TUNNEL_MAX)
+    	state->lat_fore = TUNNEL_MAX;
+    else if (mc.lat_fore < TUNNEL_MIN)
+    	state->lat_fore = TUNNEL_MIN;
+    else
+        state->lat_fore = mc.lat_fore;
 		
-    if(tc->fore_vert > TUNNEL_MAX)
-    	state->tc.fore_vert = TUNNEL_MAX;
-	else if (tc->fore_vert < TUNNEL_MIN)
-    	state->tc.fore_vert = TUNNEL_MIN;
-	else
-		state->tc.fore_vert = tc->fore_vert;
+    mc.vert_fore *= state->vf_pos_down;
+    if(mc.vert_fore > TUNNEL_MAX)
+    	state->vert_fore = TUNNEL_MAX;
+    else if (mc.vert_fore < TUNNEL_MIN)
+    	state->vert_fore = TUNNEL_MIN;
+    else
+        state->vert_fore = mc.vert_fore;
 
-	if(tc->aft_horiz > TUNNEL_MAX)
-    	state->tc.aft_horiz = TUNNEL_MAX;
-	else if (tc->aft_horiz < TUNNEL_MIN)
-    	state->tc.aft_horiz = TUNNEL_MIN;
-	else
-		state->tc.aft_horiz = tc->aft_horiz;
+    mc.lat_aft *= state->la_pos_right;
+    if(mc.lat_aft > TUNNEL_MAX)
+    	state->lat_aft = TUNNEL_MAX;
+    else if (mc.lat_aft < TUNNEL_MIN)
+    	state->lat_aft = TUNNEL_MIN;
+    else
+        state->lat_aft = mc.lat_aft;
 		
-    if(tc->aft_vert > TUNNEL_MAX)
-    	state->tc.aft_vert = TUNNEL_MAX;
-	else if (tc->aft_vert < TUNNEL_MIN)
-    	state->tc.aft_vert = TUNNEL_MIN;
-	else
-		state->tc.aft_vert = tc->aft_vert;
+    mc.vert_aft *= state->va_pos_down;
+    if(mc.vert_aft > TUNNEL_MAX)
+    	state->vert_aft = TUNNEL_MAX;
+    else if (mc.vert_aft < TUNNEL_MIN)
+    	state->vert_aft = TUNNEL_MIN;
+    else
+        state->vert_aft = mc.vert_aft;
 
-    send_tunnel_commands(state);
+    if(state->vert_aft == 0 && state->vert_fore == 0 && state->lat_aft == 0 && state->lat_fore == 0)
+    {
+	int64_t time_now = timestamp_now();
+	state->zero_time += time_now - state->last_zero_time;
+	state->last_zero_time = time_now;
+    }
+    else
+    {
+	state->last_zero_time = timestamp_now();
+	state->zero_time = 0;
+    }
+
+    if(state->zero_time < 10e6)
+    	send_tunnel_commands(state);
 }
         
 
@@ -248,22 +288,41 @@ int main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
         
-	// Read the PSU addresses we are interested in
-	char key[64];
-	sprintf(key, "%s.addrs", rootkey);
-	int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 4);
-	if(num_thrusters != 4)
+    // Read the PSU addresses we are interested in
+    char key[64];
+    sprintf(key, "%s.addrs", rootkey);
+    int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 2);
+    if(num_thrusters != 2)
 	{
 		printf("Wrong number of thruster addresses\n");
 		acfr_sensor_destroy(state.sensor);
 		return 0;
 	}
 
+    sprintf(key, "%s.vert_fore_pos_down", rootkey);
+    state.vf_pos_down = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.vert_aft_pos_down", rootkey);
+    state.va_pos_down = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.lat_fore_pos_right", rootkey);
+    state.lf_pos_right = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.lat_aft_pos_right", rootkey);
+    state.la_pos_right = bot_param_get_boolean_or_fail(state.sensor->param, key);
+
+    if (state.vf_pos_down == 0)
+        state.vf_pos_down = -1;
+    if (state.va_pos_down == 0)
+        state.va_pos_down = -1;
+    if (state.lf_pos_right == 0)
+        state.lf_pos_right = -1;
+    if (state.la_pos_right == 0)
+        state.la_pos_right = -1;
+
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    acfrlcm_tunnel_thruster_command_t_subscribe(state.lcm, "TUNNEL_THRUSTER_COMMAND", &tunnel_command_handler, &state);
+    //acfrlcm_tunnel_thruster_command_t_subscribe(state.lcm, "TUNNEL_THRUSTER_COMMAND", &tunnel_command_handler, &state);
+    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA_MOTOR", &nga_motor_command_handler, &state);
     
     while (!program_exit)
     {

@@ -5,8 +5,64 @@ import argparse
 
 from lcmplot import get_message_types, MessageDecoder
 
+def plot_nga_power(data):
+    from matplotlib import pyplot as plt
+
+    temp = data['TUNNEL_THRUSTER_POWER->temperature']
+
+    psu_temp = data['PSU->temperature']
+    psu_current = data['PSU->current']
+    psu_voltage = data['PSU->voltage']
+    psu_address = data['PSU->address']
+
+    tt_power0_v = data['TUNNEL_THRUSTER_POWER->voltage[0]']
+    tt_power1_v = data['TUNNEL_THRUSTER_POWER->voltage[1]']
+
+    tt_power0_c = data['TUNNEL_THRUSTER_POWER->current[0]']
+    tt_power1_c = data['TUNNEL_THRUSTER_POWER->current[1]']
+
+    bf_power_v = data['BLUEFIN_STATUS->voltage']
+    bf_power_c = data['BLUEFIN_STATUS->current']
+
+    plt.plot(temp.time, temp.data, 'b')
+    plt.plot(psu_temp.time, psu_temp.data, 'r')
+
+    plt.figure()
+
+    plt.plot(psu_current.time, psu_current.data, 'bo')
+    plt.plot(psu_voltage.time, psu_voltage.data, 'ro')
+
+    plt.figure()
+    plt.plot(psu_current.time, psu_current.data * psu_voltage.data, 'ro')
+    plt.plot(tt_power0_v.time, tt_power0_v.data * tt_power0_c.data, 'go')
+    plt.plot(tt_power1_v.time, tt_power1_v.data * tt_power1_c.data, 'go')
+    plt.plot(bf_power_v.time, bf_power_v.data * bf_power_c.data, 'bo')
+
+    plt.show()
+
+def plot_nga_depth(data):
+    from matplotlib import pyplot as plt
+
+    depth = data['ACFR_NAV->depth']
+    vz = data['ACFR_NAV->vz']
+
+    target = data['AUV_CONTROL->depth']
+
+    fore = data['NGA_MOTOR->vert_fore']
+    aft = data['NGA_MOTOR->vert_aft']
+
+
+    plt.plot(depth.time, depth.data * 1000.0, 'b', label='depth')
+    plt.plot(vz.time, vz.data * 1000.0, 'r', label='vz')
+    #plt.plot(target.time, target.data)
+    plt.plot(fore.time, fore.data, 'g', label='fore')
+    plt.plot(aft.time, aft.data, 'y', label='aft')
+    plt.legend()
+
+    plt.show()
+
 if __name__ == '__main__':
-    sys.path.insert(0, '/home/auv/git/acfr_lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+    sys.path.insert(0, '/home/lachlan/Code/auvgit/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
     parser = argparse.ArgumentParser()
 
@@ -52,3 +108,7 @@ if __name__ == '__main__':
 
     # print out the fields we can plot
     print sorted(data.keys())
+
+    plot_nga_depth(data)
+
+

@@ -1,0 +1,15 @@
+package senlcm;
+
+struct aanderaa_4319_t
+{
+    int64_t utime;
+
+	double temperature;
+	double conductivity;
+	double salinity;
+	double density;
+	double speed;
+}
+
+
+
