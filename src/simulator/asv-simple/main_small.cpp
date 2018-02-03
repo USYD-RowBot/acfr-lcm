@@ -299,8 +299,8 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
     double latitude_fix, longitude_fix;
     map_projection_sim->calc_geo_coords( nav.x + rand_n()*0.1, nav.y + rand_n()*0.1, latitude_fix, longitude_fix );
-    nav.latitude = latitude_fix;
-    nav.longitude = longitude_fix;
+    nav.latitude = latitude_fix*M_PI/180;
+    nav.longitude = longitude_fix*M_PI/180;
 
     if (timeStamp - last_print_time > 0.1*1e6) // 10 Hz
     {
@@ -327,7 +327,7 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
 
 
         // publish the nav message.  FIXMED: This should be the NOVATEL message.
-        lcm->publish("ACFR_NAV."+vehicle_name, &nav);
+        lcm->publish(vehicle_name+".ACFR_NAV", &nav);
 
     }
 
@@ -443,8 +443,8 @@ int main(int argc, char **argv)
     last_print_time = timeStamp;
     last_obs_time = timeStamp;
 
-    lcm.subscribeFunction("PORT_MOTOR_CONTROL."+vehicle_name, on_torqeedo_port_command, &lcm);
-    lcm.subscribeFunction("STBD_MOTOR_CONTROL."+vehicle_name, on_torqeedo_stbd_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".PORT_MOTOR_CONTROL", on_torqeedo_port_command, &lcm);
+    lcm.subscribeFunction(vehicle_name+".STBD_MOTOR_CONTROL", on_torqeedo_stbd_command, &lcm);
     lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
     //lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
 

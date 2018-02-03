@@ -26,6 +26,7 @@ typedef struct
     int num_psu;
     int psu_addrs[MAX_PSUS];
     int psu;
+    char *channel_name;
 } state_t;
 
 #define RS485_SEALEVEL
@@ -101,7 +102,7 @@ void parse_psu_response(state_t *state, char *d, int len)
 	    	psu.voltage = atof(tokens[1]);
 	    	psu.current = atof(tokens[2]);
 	    	psu.temperature = atof(tokens[3]);
-	    	senlcm_acfr_psu_t_publish(state->lcm, "PSU", &psu);
+	    	senlcm_acfr_psu_t_publish(state->lcm, state->channel_name, &psu);
     	}
     }
 }
@@ -134,6 +135,40 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 		    
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.PSU", (char *)optarg);
+            break;
+         }
+    }
+}
 
 int program_exit;
 void
@@ -151,6 +186,8 @@ int main (int argc, char *argv[])
     signal(SIGINT, signal_handler);
 
     state_t state;
+
+    parse_args(argc, argv, &state.channel_name);
     
     //Initalise LCM object
     state.lcm = lcm_create(NULL);

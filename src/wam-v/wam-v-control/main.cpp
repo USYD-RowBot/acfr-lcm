@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <vector>
 #include <bot_param/param_client.h>
 
 #include "pid.h"
@@ -15,7 +16,11 @@
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/wam_v_control_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_spektrum_control_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/asv_torqeedo_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/relay_status_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/relay_command_t.hpp"
+#include "acfr-common/spektrum-control.h"
 
 using namespace std;
 
@@ -23,6 +28,8 @@ using namespace std;
 #define CONTROL_DT 0.1
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
+#define NUM_RELAYS 24                   // Number of relays on relay board
+#define TORQEEDO_CTRL_MAX 1000       // Max input control value for Torqeedo Motors
 
 typedef struct
 {
@@ -49,11 +56,25 @@ typedef struct
     pthread_mutex_t command_lock;
 
     // remote
-    int64_t remote_time;
-    int remote;
+    int64_t prev_remote_time;
+    enum rc_control_source_t control_source; // RC/ZERO/AUTO
+	acfrlcm::auv_spektrum_control_command_t spektrum_msg;
 
     // vehicle name
     string vehicle_name = "DEFAULT";
+
+    // motor relay
+    uint8_t torqeedo_relay_no = 0; // read from the relay config
+    bool torqeedo_motors_relay_enabled = 0; // how we control it
+    bool torqeedo_motors_relay_reported = 0; // what it reports
+
+	// motor speed limiting
+	double motor_limit_rc = 0;
+	double motor_limit_controller = 0;
+
+	// debug verbose 
+	bool verbose = 0;
+
 } state_t;
 
 // load all the config variables
@@ -91,6 +112,40 @@ int load_config(state_t *state, char *rootkey)
     sprintf(key, "%s.heading.sat", rootkey);
     state->gains_heading.sat = bot_param_get_double_or_fail(param, key);
 
+    // Motor RPM Limiting
+    sprintf(key, "%s.motor_limit_rc", rootkey);
+    state->motor_limit_rc = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.motor_limit_controller", rootkey);
+    state->motor_limit_controller = bot_param_get_double_or_fail(param, key);
+
+    sprintf(key, "%s.verbose", rootkey);
+    state->verbose = bot_param_get_str_or_fail(param, key);
+
+	// get relay number for torqeedos from relay device list
+	char *relay_device;
+    for (int i = 1; i <= NUM_RELAYS; i++)
+    {
+		sprintf(key, "dS2824_relays.relay_%d", i);
+        //printf("Requesting Parameter: %s\n", key);
+        relay_device = bot_param_get_str_or_fail(param, key);
+		if (strcmp(relay_device, "torqeedos_contactor") == 0)
+		{
+			state->torqeedo_relay_no = i;
+		    if (state->verbose)
+		    {
+		        printf("Torqeedo Contactor Relay Number: %d\n", i);
+		    }
+
+			continue;	// found, don't check further entries
+		}
+    }
+
+    if (state->verbose)
+    {
+        printf("Config setup complete\n");
+    }
+
     return 1;
 }
 
@@ -107,21 +162,51 @@ static void control_callback(const lcm::ReceiveBuffer *rbuf, const std::string& 
     pthread_mutex_unlock(&state->command_lock);
 }
 
-// Remote control callback
-void motor_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
-                    const acfrlcm::asv_torqeedo_motor_command_t *mc, state_t *state)
+// Remote control callback incoming RC message
+void rc_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                    const acfrlcm::auv_spektrum_control_command_t *spektrum_cmd, state_t *state)
 {
-    // we got a remote command, set the time and mode
-    if(mc->source == acfrlcm::asv_torqeedo_motor_command_t::REMOTE)
-    {
-        state->remote_time = mc->utime;
-        state->remote = 1;
-    }
-    else
-    {
-        state->remote = 0;
-    }
+	if (spektrum_cmd->utime > state->prev_remote_time) // msg is newer than previous msg
+	{
+		state->prev_remote_time = spektrum_cmd->utime; // we got a remote command, set the time and mode
+		
+        // make sure the memory is assigned for the dynamic array
+        int8_t num_channels = spektrum_cmd->channels;
+        if ((state->spektrum_msg.values).size() < (uint8_t)num_channels) 
+        {
+            (state->spektrum_msg.values).resize(num_channels);
+        }
+        // and copy dynamic array
+        state->spektrum_msg = *spektrum_cmd;
+        
+        //printf("RC: %5d, %5d, %5d, %5d, %5d, %5d\n", state->spektrum_msg.values[0], state->spektrum_msg.values[1], state->spektrum_msg.values[2], 
+        //                                             state->spektrum_msg.values[3], state->spektrum_msg.values[4], state->spektrum_msg.values[5]);
 
+	    if (spektrum_cmd->values[RC_AUX1] > REAR_POS_CUTOFF)
+	    {
+			state->control_source = RC_MODE_RC; // vehicle controlled by handheld remote control
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_RC\n");
+		    }
+	    }
+	    else if (spektrum_cmd->values[RC_AUX1] > CENTER_POS_CUTOFF)
+	    {
+			state->control_source = RC_MODE_ZERO; // disable motors
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_ZERO\n");
+		    }
+	    }
+		else
+		{
+			state->control_source = RC_MODE_AUTO; // vehicle controlled by wam-v-control 
+		    if (state->verbose)
+		    {
+		        printf("\nRC_MODE_AUTO\n");
+		    }
+		}
+	}
 }
 
 // ACFR Nav callback, as this program handles its own timing we just make a copy of this data
@@ -144,6 +229,35 @@ void limit_value(double *val, double limit)
         *val = -limit;
 }
 
+void handle_relay_status(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const acfrlcm::relay_status_t *relay_status, state_t *state)
+{
+    // status comes in as an array of 4 bytes, each bit represents a relay or i/o
+    div_t divresult;
+    divresult = div((state->torqeedo_relay_no - 1), 8); // relays 1..24, bits 0..7
+    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && (char) pow(2,divresult.rem); 
+    //printf("Reported Relay State: %d %d %d %d\n", state->torqeedo_motors_relay_reported, divresult.quot, divresult.rem, (char)relay_status->state_list[1]);
+}
+
+void send_relay_cmd(state_t *state, bool enable)
+{
+    if (state->verbose)
+    {
+        printf("Send Relay Cmd: No. %d %d\n", state->torqeedo_relay_no, (int)enable);
+    }
+	// publish LCM relay state request command	
+	acfrlcm::relay_command_t request_msg; // create new message
+    memset(&request_msg, 0, sizeof(acfrlcm::relay_command_t)); // initialise
+    // set msg relay request values
+	request_msg.relay_number = state->torqeedo_relay_no; 
+	request_msg.relay_request = enable;
+    // set non-used values to defaults
+	request_msg.relay_off_delay = 0; // no off delay
+	request_msg.io_number = 0; // no io
+	request_msg.io_request = 0;
+    request_msg.utime = timestamp_now();
+	state->lcm.publish(state->vehicle_name+".RELAY_CONTROL", &request_msg); 
+}
+
 void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel, const perllcm::heartbeat_t *hb, state_t *state)
 { 
     double speed_control = 0.0;
@@ -160,13 +274,154 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     memset(&mc_port, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
     memset(&mc_stbd, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
 
-    if( state->remote )
-    {
-        printf( "Remote is on! Should we (not) do something??\n" );
-    }
+	if (state->control_source == RC_MODE_RC)
+	{
+		// transate RC commands to motor commands
+        state->torqeedo_motors_relay_enabled = true;
+        if (state->torqeedo_motors_relay_reported == false)
+        {
+            // turn on relay
+			send_relay_cmd(state, true);
+            fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
+        }
 
-    if (state->run_mode == acfrlcm::wam_v_control_t::RUN) 
-    {
+        //printf("HB: %5d, %5d, %5d, %5d, %5d, %5d\n", state->spektrum_msg.values[0], state->spektrum_msg.values[1], state->spektrum_msg.values[2], 
+        //                                             state->spektrum_msg.values[3], state->spektrum_msg.values[4], state->spektrum_msg.values[5]);
+        //printf("Switch Value: %d @ %d > %d ?\n", state->spektrum_msg.values[RC_GEAR], RC_GEAR, REAR_POS_CUTOFF);
+        
+        // check gear (drive control mode assignment switch) of remote (3 position switch top RHS)
+        if (state->spektrum_msg.values[RC_GEAR] > REAR_POS_CUTOFF) // Rear Switch Position
+        {
+            if (state->verbose)
+            {
+                printf("Differential Mode\n");
+            }
+            // Differential Mode: Left Joystick (up/down): Fwd/Rev Port Motor
+            //                    Right Joysick (up/down): Fwd/Rev Stbd Motor 
+            int16_t port_throttle = state->spektrum_msg.values[RC_THROTTLE];
+            //printf("Port: %d\n", port_throttle);
+            if ((port_throttle < (CENTR_POS + HALF_DEADZONE)) && (port_throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                 mc_port.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                port_throttle-= CENTR_POS; //centre to zero
+                if (port_throttle > 0) 
+                {
+                    port_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    port_throttle+= HALF_DEADZONE;
+                }
+                printf("Port Throttle: %d\n", port_throttle);
+                double temp = (double)port_throttle/((double)AVAIL_V_RANGE/2.0);
+                mc_port.command_speed = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+
+			}
+			int16_t stbd_throttle = state->spektrum_msg.values[RC_ELEVATOR];
+			if ((stbd_throttle < (CENTR_POS + HALF_DEADZONE)) && (stbd_throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                 mc_stbd.command_speed = 0; // close to centre so no thrust
+            }
+            else
+            {
+                stbd_throttle-= CENTR_POS; //centre to zero
+                if (stbd_throttle > 0)
+                {
+                    stbd_throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    stbd_throttle+= HALF_DEADZONE;
+                }
+                //printf("Stbd Throttle: %d\n", stbd_throttle);
+                double temp = (double)stbd_throttle/((double)AVAIL_V_RANGE/2.0);
+                mc_stbd.command_speed = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+			}
+        }
+        else if (state->spektrum_msg.values[RC_GEAR] > CENTER_POS_CUTOFF) // Center Switch Position
+        {
+            // Do nothing
+            printf("No Gear\n");
+        }
+        else // Front Switch Position
+        {
+            // Steering Mode: Left Joystick (up/down): Fwd/Rev Both Motors
+            //                Right Joystick (left/right): Port/Stbd Steering (both motors)
+            if (state->verbose)
+            {
+                printf("Steering Mode\n");
+            }
+			int16_t throttle = state->spektrum_msg.values[RC_THROTTLE];
+            if ((throttle < (CENTR_POS + HALF_DEADZONE)) && (throttle > (CENTR_POS - HALF_DEADZONE)))
+            {
+                mc_port.command_speed = 0; // close to centre so no thrust
+			   	mc_stbd.command_speed = 0;
+            }
+            else
+            {
+                throttle-= CENTR_POS; //centre to zero
+                if (throttle > 0)
+                {
+                    throttle-= HALF_DEADZONE; // adjust for deadzone
+                }
+                else
+                {
+                    throttle+= HALF_DEADZONE;
+                }
+				double temp = (double)throttle/((double)AVAIL_V_RANGE/2.0);
+                throttle = (int16_t)(temp * (double)TORQEEDO_CTRL_MAX * 2.0);
+
+				int16_t steer = state->spektrum_msg.values[RC_AILERON];
+				if ((steer < (CENTR_POS + HALF_DEADZONE)) && (steer > (CENTR_POS - HALF_DEADZONE)))
+				{
+					mc_port.command_speed = (int)(throttle); // no steer, equal throttle
+					mc_stbd.command_speed = (int)(throttle);
+				}
+				else // steer
+				{
+					steer-= CENTR_POS; //centre to zero
+                	if (steer > 0) // joystick left - anticlockwise turn left, reduce port motor// + clockwise, turn right, reduce stbd motor
+                	{   
+						steer-= HALF_DEADZONE; // adjust for deadzone
+						mc_stbd.command_speed = (int)(throttle); // stbd at throttle speed
+						// port reduce by steer amount through to full reverse
+                        //printf("Steer: %d Throttle: %d\n", steer, throttle);
+                        double temp = (((double)steer/((double)AVAIL_H_RANGE/2.0) * 2.0 * (double)throttle));
+                        //printf("Temp: %f\n", temp);
+						mc_port.command_speed = (int)(throttle - (2 * temp));
+                	}
+                	else // joystick right - clockwise, turn right, reduce stbd motor
+                	{   
+                	    steer+= HALF_DEADZONE; // adjust for deadzone
+						mc_port.command_speed = (int)(throttle); // port at throttle speed
+						// stbd reduce by steer amount through to full reverse
+                        //printf("Steer: %d Throttle: %d\n", steer, throttle);
+                        double temp = (((double)steer/((double)AVAIL_H_RANGE/2.0) * 2.0 * (double)throttle));
+                        //printf("Temp: %f\n", temp);
+						mc_stbd.command_speed = (int)(throttle + (2 * temp));
+                	}
+				} // end steer
+            } // end throttle
+        } //end steering mode
+
+        // apply proportional speed limiting - limit format percentage
+        mc_port.command_speed = (int)(state->motor_limit_rc/100 * mc_port.command_speed);
+        mc_stbd.command_speed = (int)(state->motor_limit_rc/100 * mc_stbd.command_speed);
+    }
+	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
+	{
+        // enable motors
+		state->torqeedo_motors_relay_enabled = true;
+        if (state->torqeedo_motors_relay_reported == false)
+        {
+            // turn on relay
+			send_relay_cmd(state, true);
+			fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
+        }
+        
         // lock the nav and command data and get a local copy
         pthread_mutex_lock(&state->nav_lock);
         acfrlcm::auv_acfr_nav_t nav = state->nav;
@@ -210,11 +465,15 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         mc_port.command_speed = speed_control + heading_control;
         mc_stbd.command_speed = speed_control - heading_control;
 
+		// apply proportional speed limiting - limit format percentage
+        mc_port.command_speed = (int)(state->motor_limit_controller/100 * mc_port.command_speed);
+        mc_stbd.command_speed = (int)(state->motor_limit_controller/100 * mc_stbd.command_speed);
+
         // Print out and publish IVER_MOTOR.TOP status message every 10 loops
         if( loopCount % 10 == 0 )
         {
-            state->lcm.publish("PORT_MOTOR_CONTROL.TOP."+state->vehicle_name, &mc_port);
-            state->lcm.publish("STBD_MOTOR_CONTROL.TOP."+state->vehicle_name, &mc_stbd);
+            state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL.TOP", &mc_port);
+            state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL.TOP", &mc_stbd);
             printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
                     nav.vx, cmd.vx, (cmd.vx - nav.vx) );
             printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
@@ -223,11 +482,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             printf( "Stbd   : %4d\n", (int)mc_stbd.command_speed);
             printf( "\n" );
         }
-
     }
-    else
+    else // in all other states, motors should not move
     {
-        // if we are not in RUN, zero the integral terms
+        // if the rc control source is RC_MODE_ZERO (not rc or auto) OR in auto, if we are not in RUN
+		
+		// zero the integral terms
         state->gains_vel.integral = 0;
         state->gains_heading.integral = 0;
 
@@ -235,14 +495,30 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         {
             printf( "o" );
         }
+        if( loopCount % 1000 == 0 )
+        {
+            printf( "\nRC Mode: %d Run Mode: %d\n", state->control_source, state->run_mode);
+        }
+		// set motor speed to zero
+		mc_port.command_speed = 0;
+		mc_stbd.command_speed = 0;
 
-    }
+		// disable motor relay
+        state->torqeedo_motors_relay_enabled = false;
+        if (state->torqeedo_motors_relay_reported == true)
+        {
+            // turn off relay
+			send_relay_cmd(state, false);
+			fprintf(stderr, "Entering ZERO or STOP mode - disable torqeedo motors relay\n");
+        }
+
+	}
+
     mc_port.utime = timestamp_now();
-    mc_port.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
-    state->lcm.publish("PORT_MOTOR_CONTROL."+state->vehicle_name, &mc_port);
+    state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL", &mc_port);
     mc_stbd.utime = timestamp_now();
-    mc_stbd.source = acfrlcm::asv_torqeedo_motor_command_t::AUTO;
-    state->lcm.publish("STBD_MOTOR_CONTROL."+state->vehicle_name, &mc_stbd);
+    state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL", &mc_stbd);
+
 }
 
 
@@ -295,7 +571,7 @@ int main(int argc, char **argv)
     state.run_mode = acfrlcm::wam_v_control_t::STOP;
     state.gains_vel.integral = 0;
     state.gains_heading.integral = 0;
-    state.remote = 0;
+    state.control_source = RC_MODE_ZERO;
 
     char root_key[64];
     sprintf(root_key, "acfr.%s", basename(argv[0]));
@@ -312,18 +588,11 @@ int main(int argc, char **argv)
     memset(&state.command, 0, sizeof(command_t));
 
     // LCM callbacks
-    state.lcm.subscribeFunction("ACFR_NAV."+state.vehicle_name, acfr_nav_callback,
-                                     &state);
-    state.lcm.subscribeFunction("WAM_V_CONTROL."+state.vehicle_name, control_callback,
-                                    &state);
-    state.lcm.subscribeFunction("PORT_MOTOR_CONTROL."+state.vehicle_name,
-            motor_callback, &state);
-
-    state.lcm.subscribeFunction("STBD_MOTOR_CONTROL."+state.vehicle_name,
-            motor_callback, &state);
-
-    state.lcm.subscribeFunction("HEARTBEAT_10HZ",
-            &handle_heartbeat, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".ACFR_NAV", acfr_nav_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".WAM_V_CONTROL", control_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".SPEKTRUM_CONTROL", rc_callback, &state);
+    state.lcm.subscribeFunction(state.vehicle_name+".RELAY_STATUS", &handle_relay_status, &state);
+    state.lcm.subscribeFunction("HEARTBEAT_10HZ", &handle_heartbeat, &state);
 
     // Loop
     int fd = state.lcm.getFileno();

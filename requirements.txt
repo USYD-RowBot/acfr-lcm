@@ -1,8 +1,0 @@
-Flask
-flask-jsonpify
-Pillow
-gdal
-pyproj
-gevent
-requests
-pycurl

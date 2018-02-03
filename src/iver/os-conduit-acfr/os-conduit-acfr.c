@@ -402,6 +402,7 @@ parse_msg(state_t *state, const char *msg, const int64_t timestamp)
     {
         // we will be rebroadcasting the RMC message so that gpsd can be run
         send_udp(&state->gps_udp_info, msg, strlen(msg));
+        send_udp(&state->gps_udp_info, "\n", 1);
     }
     // $ACK -- uvc ack of backseat driver cmd
     else if (0==strncmp (msg,"$ACK",4))
@@ -518,7 +519,6 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state_t *state = (state_t *)u;
     char msg[64];
     nmea_sprintf (msg, "$OSD,G,C,S,P,Y,D,*");
-
     acfr_sensor_write(state->sensor, msg, strlen(msg));
 }
 
@@ -535,8 +535,8 @@ void task_planner_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
 		acfr_sensor_write(state->sensor, msg, strlen(msg));		
 		
 		// Now tell it to park in the current location, we are assuming this is on the surface
-		nmea_sprintf (msg, "$OPK,%3.5f,%3.5f,30,1*", state->latitude, state->longitude);
-		acfr_sensor_write(state->sensor, msg, strlen(msg));		
+		//nmea_sprintf (msg, "$OPK,%3.5f,%3.5f,30,1*", state->latitude, state->longitude);
+		//acfr_sensor_write(state->sensor, msg, strlen(msg));		
 	}
 }
 
@@ -631,7 +631,7 @@ int main (int argc, char *argv[])
             if(FD_ISSET(state.sensor->fd, &rfds))
             {
                 memset(buf, 0, sizeof(buf));
-                int ret = acfr_sensor_read(state.sensor, buf, sizeof(buf));
+                int ret = acfr_sensor_read_timeoutms(state.sensor, buf, sizeof(buf), 1000);
                 {
                     if(ret > 0)
                         parse_msg(&state, buf, timestamp);

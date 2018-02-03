@@ -34,8 +34,39 @@ os5000_parse_0x01 (const char buf[], size_t len);
 static inline double
 os5000_volts_to_psi (double volts)
 {
-    double psi = 100.0/2.25 * (volts - 0.25);
+    // US131-000005-010BA SN:01281069
+    // 10  Bar Absolute
+
+    // 10 bar in psi = 145.0
+    //double psi = 145.0/2.25 * (volts - 0.25); // this is incorrect see explanation below
+    
+    double psi = 145.0/2.0 * (volts - 0.25);
     return psi;
+
+
+    // US131-000005-300PA SN:0708121043
+    // 300 PSI Absolute
+
+    // voltage range = 0.5 .. 4.5 V
+    // 300 PSI = 4.5 V
+    // 0 PSI = 0.5 V
+    // compass-os AD halves the voltage 
+    // 4.5V -> 2.25V, 0.5V -> 0.25V
+    //
+    // 2.25 - 0.25 = 2.0
+    // psi = 300 * (Volts - 0.25)/2.0
+
+    //double psi = 300/2.0 * (volts - 0.25);
+    //return psi;
+
+
+    // M5131-000005-250PG
+    // SN: 021714D055
+    // 250 PSI Gauge
+
+    //double psi = 250/2.0 * (volts - 0.25);
+    //return psi;
+
 }
 
 

@@ -35,7 +35,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 					<< ". Stopping execution" << endl;
 			gp->globalPlannerMessage = globalPlannerStop;
 		}
-		else if( !gp->mis.load(gm->str) )
+		else if( !gp->loadNewMissionFile(gm->str) )
 		{
 			cerr << "Could not load mission file " << gm->str
 					<< ". Stopping execution" << endl;
@@ -44,10 +44,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission" << endl;
-			if( gp->getCurrentState() == globalPlannerFsmRun ) {
-				gp->globalPlannerMessage = globalPlannerStop;
-				gp->clock();
-			}
+			// set the start point
+			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
+			//	gp->globalPlannerMessage = globalPlannerStop;
+			//	gp->clock();
+			//}
 			gp->globalPlannerMessage = globalPlannerRun;
 			gp->mis.dumpMatlab("matlab_plot.m");
 		}
@@ -89,7 +90,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 	case acfrlcm::auv_global_planner_t::GRID:
 	case acfrlcm::auv_global_planner_t::SPIRAL:
 	case acfrlcm::auv_global_planner_t::ZAMBONIE:
-		if( !gp->mis.parseMissionString(gm->str) )
+	case acfrlcm::auv_global_planner_t::MISSION:
+		if( !gp->loadNewMissionString(gm->str) )
 		{
 			cerr << "Could not load mission file " << gm->str
 					<< ". Stopping execution" << endl;
@@ -98,12 +100,13 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission received as a task command" << endl;
-			if( gp->getCurrentState() == globalPlannerFsmRun ) {
-				gp->globalPlannerMessage = globalPlannerStop;
-				gp->clock();
-			}
+			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
+			//	gp->globalPlannerMessage = globalPlannerStop;
+			//	gp->clock();
+			//}
 			gp->globalPlannerMessage = globalPlannerRun;
-		}	break;
+		}	
+                break;
 		
 	}
 
@@ -116,8 +119,8 @@ GlobalPlanner::GlobalPlanner() :
 {
 
 	// subscribe to the relevant LCM messages
-	lcm.subscribeFunction("TASK_PLANNER_COMMAND."+vehicle_name, onGlobalPlannerCommand, this);
-	lcm.subscribeFunction("PATH_RESPONSE."+vehicle_name, onPathResponse, this);
+	lcm.subscribeFunction(vehicle_name+".TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", onPathResponse, this);
 
 	// set default values
 	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
@@ -154,10 +157,10 @@ int GlobalPlanner::clock()
 		if (globalPlannerMessage == globalPlannerRun)
 		{
 			// set the start point
-			currPoint = mis.waypoints.begin();
+			//currPoint = mis.waypoints.begin();
 			nextState = globalPlannerFsmRun;
 			cout << "globalplannerfsmidle" << endl;
-			sendLeg();
+			//sendLeg();
 		}
 		else
 			nextState = globalPlannerFsmIdle;
@@ -285,11 +288,33 @@ int GlobalPlanner::clock()
 		// Send the global state change message
 		cout << "Publishing new global state: " << (int) (gpState.state)
 				<< endl;
-		lcm.publish("GLOBAL_STATE."+vehicle_name, &gpState);
+		lcm.publish(vehicle_name+".GLOBAL_STATE", &gpState);
 	}
 	globalPlannerMessage = globalPlannerIdle;
 	return 0;
 }
+
+bool GlobalPlanner::loadNewMissionFile(string filename)
+{
+	bool ret;
+	if ((ret = mis.load(filename)) == true)
+	{
+		currPoint = mis.waypoints.begin();
+        	sendLeg();
+	}
+	return ret;
+}
+
+bool GlobalPlanner::loadNewMissionString(string mission_string)
+{	bool ret;
+	if ((ret = mis.parseMissionString(mission_string)) == true)
+	{
+		currPoint = mis.waypoints.begin();
+        	sendLeg();
+	}
+	return ret;
+}
+
 
 int GlobalPlanner::sendLeg()
 {
@@ -381,7 +406,7 @@ int GlobalPlanner::sendLeg()
 			<< ", " << (*currPoint).pose.getZ() << endl;
 
 	// Send the message
-	lcm.publish("PATH_COMMAND."+vehicle_name, &pc);
+	lcm.publish(vehicle_name+".PATH_COMMAND", &pc);
 	legStartTime = timestamp_now();
 
 	return 1;
@@ -429,7 +454,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< (int) (cameraTriggerMsg.enabled) << " f:"
 					<< (int) (cameraTriggerMsg.freq) << " w:"
 					<< (int) (cameraTriggerMsg.pulseWidthUs) << endl;
-			lcm.publish("CAMERA_TRIGGER."+vehicle_name, &cameraTriggerMsg);
+			lcm.publish(vehicle_name+".CAMERA_TRIGGER", &cameraTriggerMsg);
 			break;
 		case DVL:
 		    memset(&rdiCommandMsg, 0, sizeof(rdiCommandMsg));
@@ -461,7 +486,7 @@ int GlobalPlanner::sendCommands(list<MissionCommand> &commands)
 					<< cmd << " I:"
 					<< (int) (rdiCommandMsg.d) << " F:"
 					<< (int) (rdiCommandMsg.i) << endl;
-            lcm.publish("RDI_CONTROL."+vehicle_name, &rdiCommandMsg);
+            lcm.publish(vehicle_name+".RDI_CONTROL", &rdiCommandMsg);
 			break;
 		}
 	}

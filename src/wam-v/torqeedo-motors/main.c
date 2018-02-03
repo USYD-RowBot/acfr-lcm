@@ -62,6 +62,7 @@ typedef struct
     int cmd_speed;
     char counter;
     int64_t prev_time;
+    bool enabled;
     acfrlcm_asv_torqeedo_motor_command_t mot_command;
     acfrlcm_asv_torqeedo_motor_status_t mot_status;
 
@@ -132,7 +133,7 @@ void send_msg(int message_type, state_t *u)
         case MSG_3082:
             //printf("MSG_3082\n");
             // if forwards, (and no reverse) OR reverse (and no forwards)
-            if (state->cmd_speed != 0)
+            if ((state->enabled) && (state->cmd_speed != 0))
             {
                 printf("F: %d\n", state->cmd_speed);
                 if (state->cmd_speed > MAX_SPEED)
@@ -178,7 +179,7 @@ void send_msg(int message_type, state_t *u)
             res = acfr_sensor_write(state->sensor, (char *)msg_3082_move, MSG3082_LEN + subs_count + 1);
             }
 
-            // otherwise if not fwd OR rev, either idle or invalid - so treat as stopped
+            // otherwise if not enabled &/OR speed equals 0, either idle or invalid - so treat as stopped
             else
             {
                 res = acfr_sensor_write(state->sensor, (char *)msg_3082_idle, MSG3082_LEN);
@@ -204,6 +205,7 @@ void torqeedo_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfr
         // update state
         state->prev_time = mc->utime;
         state->cmd_speed = mc->command_speed;
+        state->enabled = mc->enabled;
     }
 //    printf("TC in:  F %i R %i\n", state->fwd_speed, state->rev_speed);
 }
@@ -240,16 +242,19 @@ int main(int argc, char **argv)
     state.cmd_speed = 0; 
     state.counter = 0;
     state.prev_time = timestamp_now();
+    state.enabled = false;
     memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_command_t));
     memset(&state.mot_status, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));
     
     // Initialise LCM
     state.lcm = lcm_create(NULL);
 
+	char *vehicle_name;
+
     // Determine which motor we control based on command line switch
     char opt;
     int got_key = 0;
-    while((opt = getopt(argc, argv, "hk:")) != -1)
+    while((opt = getopt(argc, argv, "hk:n:")) != -1)
     {
         if(opt == 'k')
         {
@@ -258,9 +263,16 @@ int main(int argc, char **argv)
         }
         if(opt == 'h')
         {
-            fprintf(stderr, "Usage: torqeedo -k <config key>\n");
-            fprintf(stderr, " e.g.: torqeedo -k torqeedo.port-motor\n");
+            fprintf(stderr, "Usage: torqeedo -k <config key> -n <vehicle name>\n");
+            fprintf(stderr, " e.g.: torqeedo -k torqeedo.port-motor -n WAMV\n");
             return 0;
+        }
+        if(opt == 'n')
+        {
+			int n = strlen((char *)optarg);
+            vehicle_name = malloc(n);
+            strcpy(vehicle_name, (char *)optarg);
+            printf("Vehicle: %s\n", vehicle_name);
         }
     }
     if(!got_key)
@@ -281,12 +293,20 @@ int main(int argc, char **argv)
     // Read the lcm channel names 
     sprintf(key, "%s.channel_control", state.root_key);
     printf("Requesting Parameter: %s\n", key);
-    char *channel_control = bot_param_get_str_or_fail(param, key);
+    //char *channel_control = bot_param_get_str_or_fail(param, key);
+    char *channel_control_end = bot_param_get_str_or_fail(param, key);
+	char *channel_control = malloc(strlen(vehicle_name) + strlen(channel_control_end) + 2);
+	sprintf(channel_control, "%s.%s", vehicle_name, channel_control_end); 
     printf("Channel in: %s\n", (char *)channel_control);
+
     sprintf(key, "%s.channel_status", state.root_key);
     printf("Requesting Parameter: %s\n", key);
-    char *channel_status = bot_param_get_str_or_fail(param, key);
+    //char *channel_status = bot_param_get_str_or_fail(param, key);
+    char *channel_status_end = bot_param_get_str_or_fail(param, key);
+	char *channel_status = malloc(strlen(vehicle_name) + strlen(channel_status_end) + 2);
+	sprintf(channel_status, "%s.%s", vehicle_name, channel_status_end);
     printf("Channel out: %s\n", (char *)channel_status);
+
     sprintf(key, "%s.verbose", state.root_key);
     bool verbose = bot_param_get_boolean_or_fail(param, key);
     
@@ -389,17 +409,18 @@ int main(int argc, char **argv)
                         //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
                         state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
                         state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
-                        state.mot_status.field_2 = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // TODO change this to current
-                        state.mot_status.motor_temp = (uint8_t)buf[PCB_TEMP_POS]; // TODO change this to PCB temp 16bit signed
-                        signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
-                        state.mot_status.field_4 = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // TODO change this to stator temp
+                        state.mot_status.current = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // current
+                        state.mot_status.pcb_temp = BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
+                        //state.mot_status.pcb_temp = (int16_t)buf[PCB_TEMP_POS]; // PCB temp 16bit signed
+                        //signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
+                        state.mot_status.stator_temp = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // stator temp
 
                         // and publish status message
                         acfrlcm_asv_torqeedo_motor_status_t_publish(state.lcm, channel_status, &state.mot_status);
 
                         if (verbose) // print motor status
                         {
-                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.field_2)/10, ((double)pcb_temp)/10, (double)state.mot_status.field_4/10);
+                            printf("Prop Speed: %05i   Voltage: %3.2f   Current: %3.2f   PCB Temperature: %3.1f   Stator Temperature: %3.1f\n", state.mot_status.prop_speed, ((double)state.mot_status.voltage)/100, ((double)state.mot_status.current)/10, ((double)state.mot_status.pcb_temp)/10, (double)state.mot_status.stator_temp/10);
                         }
                         // reset outgoing message 
                         memset(&state.mot_command, 0, sizeof(acfrlcm_asv_torqeedo_motor_status_t));

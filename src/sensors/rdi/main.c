@@ -15,17 +15,22 @@
 #include "perls-lcmtypes/senlcm_raw_ascii_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_relay_t.h"
 
+/*
 #include "perls-common/units.h"
 #include "perls-common/error.h"
 #include "perls-common/timestamp.h"
 #include "perls-common/getopt.h"
 #include "perls-common/lcm_util.h"
 #include "perls-common/generic_sensor_driver.h"
+*/
+
+#include "acfr-common/units.h"
+#include "acfr-common/error.h"
+#include "acfr-common/timestamp.h"
+#include "acfr-common/sensor.h"
+
 
 #include "rdi.h"
-
-#define DTOR (UNITS_DEGREE_TO_RADIAN)
-#define RTOD (UNITS_RADIAN_TO_DEGREE)
 
 #define RDI_DEV_TICKS_PER_SECOND (100) //  1/tofp_hundredth
 #define RDI_DEV_TICKS_WRAPAROUND (24*3600*100)
@@ -41,13 +46,19 @@ typedef struct
     int pd0_count_max;
     pthread_mutex_t count_lock;
     int mode;
-    generic_sensor_driver_t *gsd;
+    //generic_sensor_driver_t *gsd;
+    lcm_t *lcm;
+    acfr_sensor_t *sensor;
     int programming;
     double range;
+    char PD5_channel[128];
+    char PD0_channel[128];
 } state_t;
 
 rdi_pd_mode_t rdi_pd_mode = RDI_PD5_MODE;
 int rdi_pd_len = RDI_PD5_LEN;
+
+int program_exit;
 
 static int64_t
 rdi_timestamp_sync (timestamp_sync_state_t *tss, int64_t tofp_hours, int64_t tofp_minute,
@@ -58,9 +69,9 @@ rdi_timestamp_sync (timestamp_sync_state_t *tss, int64_t tofp_hours, int64_t tof
     return timestamp_sync (tss, dev_ticks, host_utime);
 }
 
-int rdi_send_command(generic_sensor_driver_t *gsd, char *cmd, int er)
+int rdi_send_command(acfr_sensor_t *sensor, char *cmd, int er)
 {
-    gsd_write(gsd, cmd, strlen(cmd));
+    acfr_sensor_write(sensor, cmd, strlen(cmd));
     char buf;
     int count = 0;
 
@@ -69,7 +80,7 @@ int rdi_send_command(generic_sensor_driver_t *gsd, char *cmd, int er)
         // wait to get a prompt
         do
         {
-            gsd_read(gsd, &buf, 1, NULL);
+            acfr_sensor_read(sensor, &buf, 1);
             if(++count == 50)
                 return 0;
         }
@@ -81,23 +92,21 @@ int rdi_send_command(generic_sensor_driver_t *gsd, char *cmd, int er)
 static void
 program_dvl(state_t * state) //const char *config)
 {
-    if (state->gsd->io == GSD_IO_PLAYBACK)
-        return;
 
     char buf[256];
     bool alive=0;
 
-    tcsendbreak(state->gsd->fd, 0);
+    tcsendbreak(state->sensor->fd, 0);
     usleep(2000000);
 
-    gsd_canonical(state->gsd, '\r', '\n');
+    acfr_sensor_canonical(state->sensor, '\r', '\n');
 
     int alive_tries = 0;
     while (!alive)
     {
-        tcsendbreak(state->gsd->fd, 0);
+        tcsendbreak(state->sensor->fd, 0);
         //gsd_write (gsd, "===\n", strlen ("===\n")); // software break
-        alive = gsd_read_timeout (state->gsd, buf, 256, NULL, 10000);
+        alive = acfr_sensor_read_timeoutms (state->sensor, buf, 256, 10000);
         printf("*\n");
         if(++alive_tries > 20)
         {
@@ -110,7 +119,7 @@ program_dvl(state_t * state) //const char *config)
     // wait to get a prompt
     do
     {
-        gsd_read(state->gsd, buf, 1, NULL);
+        acfr_sensor_read(state->sensor, buf, 1);
         printf("%c", buf[0]);
 
     }
@@ -124,47 +133,47 @@ program_dvl(state_t * state) //const char *config)
     if(state->mode == MODE_PD5)
     {
         printf("Programming PD5 mode\n");
-        rdi_send_command(state->gsd, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
-        rdi_send_command(state->gsd, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
-        rdi_send_command(state->gsd, "WP00000\r", EXPECT_RESPONSE); // No water profiling
-        rdi_send_command(state->gsd, "PD5\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "CF11110\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "CK\r", NO_RESPONSE); // Keep parameters on power cycle
-        rdi_send_command(state->gsd, "CS\r", NO_RESPONSE);
+        rdi_send_command(state->sensor, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
+        rdi_send_command(state->sensor, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
+        rdi_send_command(state->sensor, "WP00000\r", EXPECT_RESPONSE); // No water profiling
+        rdi_send_command(state->sensor, "PD5\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "CK\r", NO_RESPONSE); // Keep parameters on power cycle
+        rdi_send_command(state->sensor, "CS\r", NO_RESPONSE);
     }
     else if(state->mode == MODE_PD4)
     {
         printf("Programming PD4 mode\n");
-        rdi_send_command(state->gsd, "BP001\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, max_depth_cmd, EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "WP00000\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "PD4\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "CF11110\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "CK\r", NO_RESPONSE);
-        rdi_send_command(state->gsd, "CS\r", NO_RESPONSE);
+        rdi_send_command(state->sensor, "BP001\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, max_depth_cmd, EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "WP00000\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "PD4\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "CF11110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "CK\r", NO_RESPONSE);
+        rdi_send_command(state->sensor, "CS\r", NO_RESPONSE);
     }
     else
     {
         printf("Programming PD0 mode\n");
-        rdi_send_command(state->gsd, "WD 100 000 000\r", EXPECT_RESPONSE);
-        rdi_send_command(state->gsd, "CF01110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "WD 100 000 000\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "CF01110\r", EXPECT_RESPONSE);
     }
     fflush(NULL);
 }
 
-
+/*
 static int
 myopts (generic_sensor_driver_t *gsd)
 {
     getopt_add_description (gsd->gopt, "RDI Workhorse & Explorer DVL sensor driver.");
     return 0;
 }
+*/
 
 
 
 
-
-int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
+int get_rdi_and_send(state_t *state, timestamp_sync_state_t *tss)
 {
     // get an RDI response
     char buf[1024];
@@ -174,20 +183,21 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
     // get the start
     do
     {
-        gsd_read(gsd, buf, 1, &timestamp);
+        acfr_sensor_read(state->sensor, buf, 1);
+        timestamp = timestamp_now();
     }
     while (buf[0] != 0x7F && buf[0] != 0x7D);
 
     len = 0;
     while(len < 3)
-        len += gsd_read(gsd, &buf[1+len], 3 - len, NULL);
+        len += acfr_sensor_read(state->sensor, &buf[1+len], 3 - len);
 
     // find the length of the data to recv
     unsigned short data_len = *(unsigned short *)&buf[2];
     // get the rest
     len = 4;
     while(len < (data_len + 2))
-        len += gsd_read(gsd, &buf[len], data_len + 2 - len, NULL);
+        len += acfr_sensor_read(state->sensor, &buf[len], data_len + 2 - len);
 
 
     if(buf[0] == RDI_PD0_HEADER)
@@ -199,12 +209,12 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
             senlcm_rdi_pd0_t lcm_pd0 = rdi_pd0_to_lcm_pd0(&pd0);
             lcm_pd0.utime = rdi_timestamp_sync (tss, pd0.variable.rtc_hour, pd0.variable.rtc_min, pd0.variable.rtc_sec,
                                                 pd0.variable.rtc_hund, timestamp);
-            senlcm_rdi_pd0_t_publish (gsd->lcm, "RDI_PD0", &lcm_pd0);
+            senlcm_rdi_pd0_t_publish (state->lcm, state->PD0_channel, &lcm_pd0);
             //gsd_update_stats (gsd, true);
             free_rdi_pd0(&pd0);
         }
-        else
-            gsd_update_stats (gsd, false);
+        //else
+            //gsd_update_stats (gsd, false);
 
     }
     else if(buf[0] == RDI_PD45_HEADER)
@@ -220,12 +230,12 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
                 senlcm_rdi_pd4_t lcm_pd4 = rdi_pd4_to_lcm_pd4 (&pd4);
                 lcm_pd4.utime = rdi_timestamp_sync (tss, pd4.tofp_hour, pd4.tofp_minute, pd4.tofp_second,
                                                     pd4.tofp_hundredth, timestamp);
-                senlcm_rdi_pd4_t_publish (gsd->lcm, gsd->channel, &lcm_pd4);
-                gsd_update_stats (gsd, true);
+                senlcm_rdi_pd4_t_publish (state->lcm, state->PD5_channel, &lcm_pd4);
+                //gsd_update_stats (gsd, true);
             }
             else
             {
-                gsd_update_stats (gsd, false);
+                //gsd_update_stats (gsd, false);
                 printf("parse error, PD4\n");
             }
             break;
@@ -238,12 +248,12 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
                 senlcm_rdi_pd5_t lcm_pd5 = rdi_pd5_to_lcm_pd5 (&pd5);
                 lcm_pd5.utime = lcm_pd5.pd4.utime = timestamp; //rdi_timestamp_sync (tss, pd5.tofp_hour, pd5.tofp_minute,
                 //       pd5.tofp_second, pd5.tofp_hundredth, timestamp);
-                senlcm_rdi_pd5_t_publish (gsd->lcm, gsd->channel, &lcm_pd5);
-                gsd_update_stats (gsd, true);
+                senlcm_rdi_pd5_t_publish (state->lcm, state->PD5_channel, &lcm_pd5);
+                //gsd_update_stats (gsd, true);
             }
             else
             {
-                gsd_update_stats (gsd, false);
+                //gsd_update_stats (gsd, false);
                 printf("parse error, PD5\n");
             }
 
@@ -251,7 +261,7 @@ int get_rdi_and_send(generic_sensor_driver_t *gsd, timestamp_sync_state_t *tss)
         }
         default:
             ERROR ("unsupported PD mode by driver");
-            gsd_update_stats (gsd, -1);
+            //gsd_update_stats (gsd, -1);
         } // switch
     }
 
@@ -335,19 +345,67 @@ void rdi_control_callback(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 static void *
 lcm_thread (void *context)
 {
-    generic_sensor_driver_t *gsd = (generic_sensor_driver_t *) context;
+    //generic_sensor_driver_t *gsd = (generic_sensor_driver_t *) context;
     printf("LCM thread starting\n");
-    while (!gsd->done)
+    state_t *state = (state_t *)context;
+    while (!program_exit)
     {
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-
-        lcmu_handle_timeout(gsd->lcm, &tv);
+        lcm_handle_timeout(state->lcm, 1000);
     }
 
     return 0;
 }
+
+
+
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
+
+
+void signal_handler(int sig_num)
+{
+    // do a safe exit
+    program_exit = 1;
+}
+
+
+
 
 
 int
@@ -356,9 +414,23 @@ main (int argc, char *argv[])
     timestamp_sync_state_t *tss = timestamp_sync_init (RDI_DEV_TICKS_PER_SECOND, RDI_DEV_TICKS_WRAPAROUND, 1.01);
 
     state_t state;
-    state.gsd = gsd_create (argc, argv, NULL, &myopts);
-    gsd_launch (state.gsd);
-    pthread_mutex_init(&state.count_lock, NULL);
+    //state.gsd = gsd_create (argc, argv, NULL, &myopts);
+    //gsd_launch (state.gsd);
+    
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+    snprintf(state.PD5_channel, 128, "%s.RDI", vehicle_name);
+    snprintf(state.PD0_channel, 128, "%s.RDI_PD0", vehicle_name);
+    
+    
+    state.lcm = lcm_create(NULL);
+    char rootkey[64];
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+    state.sensor = acfr_sensor_create(state.lcm, rootkey);
+    if(state.sensor == NULL)
+        return 0;
+    
+    pthread_mutex_init(&state.count_lock, (void *)&state);
     int pd5_count = 0, pd0_count = 0;
 
 
@@ -369,8 +441,8 @@ main (int argc, char *argv[])
 
 
     char key[256];
-    sprintf(key, "%s.mode", state.gsd->rootkey);
-    char *key_str = bot_param_get_str_or_fail(state.gsd->params, key);
+    sprintf(key, "%s.mode", rootkey);
+    char *key_str = bot_param_get_str_or_fail(state.sensor->param, key);
     if(!strcmp(key_str, "PD0"))
         state.mode = MODE_PD0;
     else if(!strcmp(key_str, "PD5"))
@@ -390,36 +462,37 @@ main (int argc, char *argv[])
         printf("Unknown mode %s in config file\n", key_str);
         return 0;
     }
-    sprintf(key, "%s.pd5_count_max", state.gsd->rootkey);
-    state.pd5_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
-    sprintf(key, "%s.pd0_count_max", state.gsd->rootkey);
-    state.pd0_count_max = bot_param_get_int_or_fail(state.gsd->params, key);
-    sprintf(key, "%s.range", state.gsd->rootkey);
-    state.range = bot_param_get_double_or_fail(state.gsd->params, key);
+    sprintf(key, "%s.pd5_count_max", rootkey);
+    state.pd5_count_max = bot_param_get_int_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.pd0_count_max", rootkey);
+    state.pd0_count_max = bot_param_get_int_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.range", rootkey);
+    state.range = bot_param_get_double_or_fail(state.sensor->param, key);
     printf( "read max range from config file: %f [m]\n", state.range);
 
     // initialize dvl
-    gsd_flush (state.gsd);
-    gsd_reset_stats (state.gsd);
+    //gsd_flush (state.gsd);
+    //gsd_reset_stats (state.gsd);
     program_dvl(&state);
 
-    gsd_noncanonical(state.gsd, 1024, 1);
+    //gsd_noncanonical(state.gsd, 1024, 1);
+    acfr_sensor_noncanonical(state.sensor, 1024, 1);
 
-    gsd_flush (state.gsd);
-    gsd_reset_stats (state.gsd);
+    //gsd_flush (state.gsd);
+    //gsd_reset_stats (state.gsd);
 
     // create an LCM thread to listen so the command pass through will work
     pthread_t tid;
-    pthread_create(&tid, NULL, lcm_thread, state.gsd);
+    pthread_create(&tid, NULL, lcm_thread, &state);
     pthread_detach(tid);
 
-    senlcm_raw_ascii_t_subscribe(state.gsd->lcm, "MP_PASSOUT", &mp_callback, &state);
-    acfrlcm_auv_relay_t_subscribe(state.gsd->lcm, "RELAY", &relay_callback, &state);
-    senlcm_rdi_control_t_subscribe(state.gsd->lcm, "RDI_CONTROL", &rdi_control_callback, &state);
+    senlcm_raw_ascii_t_subscribe(state.lcm, "MP_PASSOUT", &mp_callback, &state);
+    acfrlcm_auv_relay_t_subscribe(state.lcm, "RELAY", &relay_callback, &state);
+    senlcm_rdi_control_t_subscribe(state.lcm, "RDI_CONTROL", &rdi_control_callback, &state);
 
     double current_range = state.range;
 
-    while (!state.gsd->done)
+    while (!program_exit)
     {
         // are we changing the range
         pthread_mutex_lock(&state.count_lock);
@@ -428,8 +501,8 @@ main (int argc, char *argv[])
             char range_cmd[64];
             sprintf(range_cmd, "BX%05d\r", (int)(state.range*10));
             printf("Changing Range to %fm\n", state.range);
-            rdi_send_command(state.gsd, range_cmd, EXPECT_RESPONSE); // max depth in decimetre
-            rdi_send_command(state.gsd,"CS\r", NO_RESPONSE);         //trigger the ping
+            rdi_send_command(state.sensor, range_cmd, EXPECT_RESPONSE); // max depth in decimetre
+            rdi_send_command(state.sensor,"CS\r", NO_RESPONSE);         //trigger the ping
             current_range = state.range;
         }
         pthread_mutex_unlock(&state.count_lock);
@@ -445,13 +518,13 @@ main (int argc, char *argv[])
                 if(pd5_count == 1)
                 {
                     //Turn off water pings and on bottom pings
-                    rdi_send_command(state.gsd, "BP1\r", EXPECT_RESPONSE);
-                    rdi_send_command(state.gsd, "WP0\r", EXPECT_RESPONSE);
-                    rdi_send_command(state.gsd, "PD5\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor, "BP1\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor, "WP0\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor, "PD5\r", EXPECT_RESPONSE);
                 }
 
-                rdi_send_command(state.gsd,"CS\r", NO_RESPONSE); //trigger the ping
-                get_rdi_and_send(state.gsd, tss);
+                rdi_send_command(state.sensor,"CS\r", NO_RESPONSE); //trigger the ping
+                get_rdi_and_send(&state, tss);
             }
             else if(pd0_count++ < state.pd0_count_max)
             {
@@ -459,13 +532,13 @@ main (int argc, char *argv[])
                 if(pd0_count == 1)
                 {
                     //Turn on water pings and off bottom pings
-                    rdi_send_command(state.gsd,"BP0\r", EXPECT_RESPONSE);
-                    rdi_send_command(state.gsd,"WP1\r", EXPECT_RESPONSE);
-                    rdi_send_command(state.gsd,"PD0\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor,"BP0\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor,"WP1\r", EXPECT_RESPONSE);
+                    rdi_send_command(state.sensor,"PD0\r", EXPECT_RESPONSE);
                 }
 
-                rdi_send_command(state.gsd,"CS\r", NO_RESPONSE); //trigger the ping
-                get_rdi_and_send(state.gsd, tss);
+                rdi_send_command(state.sensor,"CS\r", NO_RESPONSE); //trigger the ping
+                get_rdi_and_send(&state, tss);
             }
             else
             {
@@ -477,7 +550,7 @@ main (int argc, char *argv[])
         }
         else
             // we are in free running mode, just PD5 or PD4
-            get_rdi_and_send(state.gsd, tss);
+            get_rdi_and_send(&state, tss);
 
     } // while
 

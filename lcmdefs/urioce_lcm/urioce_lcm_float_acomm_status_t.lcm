@@ -1,0 +1,20 @@
+package urioce_lcm;
+
+struct float_acomm_status_t
+{
+	int32_t  	timestamp;
+	int16_t 	depth; 		//m
+	int16_t 	altitude; 	//m
+	int8_t 		ctl_mode;	 
+	int8_t		ctl_status;
+	int16_t		volume_cmd;	// cm3
+	int16_t		volume_actual;  // cm3
+	int8_t		thrust_cmd;	// Amps	
+	int32_t		leg_time;
+	int32_t		mis_time;
+	int16_t		leg_num;
+	int32_t		mis_status;
+	int8_t		leg_type;
+	int8_t 		bat_charge;
+	int8_t 		arduino_status;
+}
