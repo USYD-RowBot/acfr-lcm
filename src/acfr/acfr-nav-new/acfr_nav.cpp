@@ -11,6 +11,7 @@ acfr_nav::acfr_nav()
     state->lcm = new lcm::LCM();
     state->altitude = 0;
     state->bottomLock = false;
+    state->broken_iver_alt = false;
 }
 
 acfr_nav::~acfr_nav()
