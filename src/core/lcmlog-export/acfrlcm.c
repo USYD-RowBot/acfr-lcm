@@ -218,3 +218,16 @@ acfrlcm_auv_control_goal_t_handler (const lcm_recv_buf_t *rbuf, const char *chan
 }
 
 
+void
+acfrlcm_auv_vis_rawlog_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                               const acfrlcm_auv_vis_rawlog_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",    "%"PRId64, msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "image_name","%s",      msg->image_name);
+    TEXTREAD_ADD_FIELD (tr, "exp_time","%d",      msg->exp_time);
+    textread_stop (tr);
+}

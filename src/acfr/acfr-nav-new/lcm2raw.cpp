@@ -11,7 +11,7 @@ void printUsage() {
     cout << "Options      -b Broken Iver altitude, only on the OSI message" << endl;
 }
 
-int parseArguments(int argc, char **argv, state_c *state, char **lcm_filename, char **raw_filename, string &vehicle_name_dot, string &usbl_name) {
+int parseArguments(int argc, char **argv, state_c *state, string &lcm_filename, string &raw_filename, string &vehicle_name_dot, string &usbl_name) {
     if(argc <= 2) {
         cout << "Incorrect number of aurguments\n";
         printUsage();
@@ -21,7 +21,7 @@ int parseArguments(int argc, char **argv, state_c *state, char **lcm_filename, c
 
     
     int c;
-    while((c = getopt(argc, argv, "bn:u:")) != -1)
+    while((c = getopt(argc, argv, "bn:u:i:o:")) != -1)
         switch(c) {
             case 'b':
                 state->broken_iver_alt = true;
@@ -32,18 +32,14 @@ int parseArguments(int argc, char **argv, state_c *state, char **lcm_filename, c
             case 'u':
                 usbl_name = optarg;
                 break;     
+            case 'i':
+                lcm_filename = optarg;
+                break;     
+            case 'o':
+                raw_filename = optarg;
+                break;     
         }
 
-
-    int n;
-    n = strlen((char *)argv[optind]);
-    *lcm_filename = (char *)malloc(n);
-    strcpy(*lcm_filename, (char *)argv[optind]);
-
-   
-    n = strlen((char *)argv[optind+1]);
-    *raw_filename = (char *)malloc(n);
-    strcpy(*raw_filename, (char *)argv[optind+1]);
 
     return 1;
 }
@@ -51,18 +47,19 @@ int parseArguments(int argc, char **argv, state_c *state, char **lcm_filename, c
 
 int main(int argc, char **argv) {
 
-    char *lcm_filename = {0};
-    char *raw_filename = {0};
-    string vehicle_name_dot;
+    string lcm_filename;
+    string raw_filename;
+    string vehicle_name_dot = ".*";
     string usbl_name;
 
     state_c state;
     state.broken_iver_alt = false;
 
-    parseArguments(argc, argv, &state, &lcm_filename, &raw_filename, vehicle_name_dot, usbl_name);
-    char url[256];
-    sprintf(url, "file://%s?speed=0", lcm_filename);
-    cout << url << endl;
+    parseArguments(argc, argv, &state, lcm_filename, raw_filename, vehicle_name_dot, usbl_name);
+    string  url = string("file://") + lcm_filename + string("?speed=0");
+
+    //sprintf(url, "file://%s?speed=0", lcm_filename);
+    //cout << url << endl;
 
 
     cout << "Broken Iver alitmeter : " << state.broken_iver_alt << endl;
@@ -73,7 +70,7 @@ int main(int argc, char **argv) {
         state.mode = RAW;
         //state.raw_out.open(argv[2]);
         // open the files
-        state.raw_out.open(raw_filename, ofstream::out);
+        state.raw_out.open(raw_filename.c_str(), ofstream::out);
         if(!state.raw_out.is_open()) {
             cerr << "Could not open output file: " << raw_filename << endl;
             return 1;
