@@ -391,7 +391,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         state->ps.avg_charge_p = state->ps.avg_charge_p / state->num_devs;
         state->ps.minutes_tef = state->ps.minutes_tef / state->num_devs;
 
-        senlcm_os_power_system_t_publish (state->lcm, "BATTERY", &state->ps);
+        senlcm_os_power_system_t_publish (state->lcm, state->channel_name, &state->ps);
 
         if(++loopCount % 60 == 0)
         {
@@ -575,7 +575,6 @@ int main (int argc, char *argv[])
     fd_set rfds;
     char buf[MAX_BUF_LEN];
     int64_t timestamp;
-    int j;
 
     // loop to collect data, parse and send it on its way
     while(!program_exit)
@@ -603,9 +602,9 @@ int main (int argc, char *argv[])
                     {
                         memset(buf, 0, MAX_BUF_LEN);
                         if(io == io_socket)
-                            j = readline(batt_fd[i], buf, MAX_BUF_LEN);
+                            readline(batt_fd[i], buf, MAX_BUF_LEN);
                         else
-                            j = read(batt_fd[i], buf, MAX_BUF_LEN);
+                            read(batt_fd[i], buf, MAX_BUF_LEN);
                         timestamp = timestamp_now();
                         //printf("%d:       %s\n", j, buf);
                         if(parse_os_controller(buf, &state, i))
