@@ -253,6 +253,7 @@ void send_relay_cmd(state_t *state, bool enable)
 	request_msg.relay_off_delay = 0; // no off delay
 	request_msg.io_number = 0; // no io
 	request_msg.io_request = 0;
+    request_msg.utime = timestamp_now();
 	state->lcm.publish(state->vehicle_name+".RELAY_CONTROL", &request_msg); 
 }
 
