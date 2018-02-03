@@ -234,8 +234,8 @@ void handle_relay_status(const lcm::ReceiveBuffer *rbuf, const std::string& chan
     // status comes in as an array of 4 bytes, each bit represents a relay or i/o
     div_t divresult;
     divresult = div((state->torqeedo_relay_no - 1), 8); // relays 1..24, bits 0..7
-    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && (char) pow(2,divresult.rem); //TODO test
-    printf("Reported Relay State: %d %d %d %d\n", state->torqeedo_motors_relay_reported, divresult.quot, divresult.rem, (char)relay_status->state_list[1]);
+    state->torqeedo_motors_relay_reported = (relay_status->state_list[divresult.quot]) && (char) pow(2,divresult.rem); 
+    //printf("Reported Relay State: %d %d %d %d\n", state->torqeedo_motors_relay_reported, divresult.quot, divresult.rem, (char)relay_status->state_list[1]);
 }
 
 void send_relay_cmd(state_t *state, bool enable)
