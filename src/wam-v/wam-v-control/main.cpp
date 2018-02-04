@@ -434,7 +434,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 	//else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
     else if (state->control_source == RC_MODE_AUTO)
 	{
-        if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from planner have timed out (something may have crashed)
+        if (timestamp_now() > (state->prev_control_time + UPDATE_TIMEOUT)) // messages from planner have timed out (something may have crashed)
         {
             // stop moving, but don't go to Zero mode, in case messages restart
             fprintf(stderr, "Control Message Timeout in RC MODE AUTO: remain in RC MODE AUTO, but stop motors \n");
