@@ -18,15 +18,16 @@ print_help (int exval, char **argv)
 }
 
 void
-parse_args (int argc, char **argv, char **channel_name)
+parse_args (int argc, char **argv, char *vehicle_name, char *rootkey)
 {
     int opt;
 
     const char *default_name = "DEFAULT";
-    *channel_name = malloc(strlen(default_name)+1);
-    strcpy(*channel_name, default_name);
+    //*channel_name = malloc(strlen(default_name)+1);
+    memset(vehicle_name, 0, 32);
+    strncpy(vehicle_name, default_name, strlen(default_name));
     
-    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    while ((opt = getopt (argc, argv, "hn:k:")) != -1)
     {
         switch(opt)
         {
@@ -34,9 +35,15 @@ parse_args (int argc, char **argv, char **channel_name)
             print_help (0, argv);
             break;
         case 'n':
-            free(*channel_name);
-            *channel_name = malloc(200);
-            snprintf(*channel_name, 200, "%s.MICRON_SOUNDER", (char *)optarg);
+            //free(*channel_name);
+            //*channel_name = malloc(200);
+            //snprintf(*channel_name, 200, "%s.MICRON_SOUNDER", (char *)optarg);
+            memset(vehicle_name, 0, 32);
+            strncpy(vehicle_name, optarg, strlen(optarg));
+            break;
+         case 'k':
+            memset(rootkey, 0, 64);
+            strncpy(rootkey, optarg, strlen(optarg));
             break;
          }
     }
@@ -57,18 +64,31 @@ main (int argc, char *argv[])
     signal(SIGINT, signal_handler);
 
 
-    char *channel_name;
-    parse_args(argc, argv, &channel_name);
+    char vehicle_name[32];
+    char channel_name[64];
+    char rootkey[64];
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    parse_args(argc, argv, vehicle_name, rootkey);
 
     //Initalise LCM object - specReading
     lcm_t *lcm = lcm_create(NULL);
 
-    char rootkey[64];
-    sprintf(rootkey, "sensors.%s", basename(argv[0]));
-
     acfr_sensor_t *sensor = acfr_sensor_create(lcm, rootkey);
     if(sensor == NULL)
         return 0;
+
+    // Get the channel name
+    char key[64];
+    sprintf(key, "%s.channel", rootkey);
+
+    if(bot_param_has_key(sensor->param, key))
+    {
+        char *channel = bot_param_get_str_or_fail(sensor->param, key);
+        sprintf(channel_name, "%s.%s", vehicle_name, channel);
+    }
+    else
+        sprintf(channel_name, "%s.MICRON_SOUNDER", vehicle_name);
 
     acfr_sensor_canonical(sensor, '\r', '\n');
 
