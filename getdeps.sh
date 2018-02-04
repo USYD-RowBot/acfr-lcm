@@ -15,7 +15,7 @@ sudo apt-get install libglib2.0-dev \
 	libglibmm-2.4-dev \
 	doxygen \
 	libf2c2-dev \
-	libgsl0-dev \
+	libgsl-dev \
 	gtk-doc-tools \
         libgps-dev \
 	libqt4-svg \
