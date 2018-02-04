@@ -431,7 +431,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             mc_stbd.command_speed = (int)(state->motor_limit_rc/100 * mc_stbd.command_speed);
         } // end timout else
     } // end RC mode
-	else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
+	//else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
+    else if (state->control_source == RC_MODE_AUTO)
 	{
         if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from planner have timed out (something may have crashed)
         {
@@ -448,81 +449,104 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         }
         else // no timeout
         {
-            // enable motors
-		    state->torqeedo_motors_relay_enabled = true;
-            if (state->torqeedo_motors_relay_reported == false)
+            if (state->run_mode == acfrlcm::wam_v_control_t::RUN)
             {
-                // turn on relay
-		    	send_relay_cmd(state, true);
-		    	fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
-            }
-            
-            // lock the nav and command data and get a local copy
-            pthread_mutex_lock(&state->nav_lock);
-            acfrlcm::auv_acfr_nav_t nav = state->nav;
-            pthread_mutex_unlock(&state->nav_lock);
+                // enable motors
+		        state->torqeedo_motors_relay_enabled = true;
+                if (state->torqeedo_motors_relay_reported == false)
+                {
+                    // turn on relay
+		        	send_relay_cmd(state, true);
+		        	fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
+                }
+                
+                // lock the nav and command data and get a local copy
+                pthread_mutex_lock(&state->nav_lock);
+                acfrlcm::auv_acfr_nav_t nav = state->nav;
+                pthread_mutex_unlock(&state->nav_lock);
 
-            pthread_mutex_lock(&state->command_lock);
-            command_t cmd = state->command;
-            pthread_mutex_unlock(&state->command_lock);
+                pthread_mutex_lock(&state->command_lock);
+                command_t cmd = state->command;
+                pthread_mutex_unlock(&state->command_lock);
 
 
-            // X Velocity
-            speed_control = pid(&state->gains_vel, nav.vx, cmd.vx, CONTROL_DT);
+                // X Velocity
+                speed_control = pid(&state->gains_vel, nav.vx, cmd.vx, CONTROL_DT);
 
-            /*
-             * Heading calculation
-             * Calculate the diff between desired heading and actual heading.
-             * Ensure this diff is between +/-PI
-             */
-            while (nav.heading < -M_PI)
-                nav.heading += 2 * M_PI;
-            while (nav.heading > M_PI)
-                nav.heading -= 2 * M_PI;
+                /*
+                 * Heading calculation
+                 * Calculate the diff between desired heading and actual heading.
+                 * Ensure this diff is between +/-PI
+                 */
+                while (nav.heading < -M_PI)
+                    nav.heading += 2 * M_PI;
+                while (nav.heading > M_PI)
+                    nav.heading -= 2 * M_PI;
 
-            while (cmd.heading < -M_PI)
-                cmd.heading += 2 * M_PI;
-            while (cmd.heading > M_PI)
-                cmd.heading -= 2 * M_PI;
+                while (cmd.heading < -M_PI)
+                    cmd.heading += 2 * M_PI;
+                while (cmd.heading > M_PI)
+                    cmd.heading -= 2 * M_PI;
 
-            double diff_heading = nav.heading - cmd.heading;
-            while( diff_heading < -M_PI )
-                diff_heading += 2*M_PI;
-            while( diff_heading > M_PI )
-                diff_heading -= 2*M_PI;
+                double diff_heading = nav.heading - cmd.heading;
+                while( diff_heading < -M_PI )
+                    diff_heading += 2*M_PI;
+                while( diff_heading > M_PI )
+                    diff_heading -= 2*M_PI;
 
-            heading_control = pid(&state->gains_heading, diff_heading, 0.0, CONTROL_DT);
+                heading_control = pid(&state->gains_heading, diff_heading, 0.0, CONTROL_DT);
 
-            //printf("hnav:%f, hcmd:%f, rangle:%f p:%.1f s:%.1f \n",
-            // state->nav.heading, state->command.heading, speed_control + heading_control, speed_control - heading_control);
+                //printf("hnav:%f, hcmd:%f, rangle:%f p:%.1f s:%.1f \n",
+                // state->nav.heading, state->command.heading, speed_control + heading_control, speed_control - heading_control);
 
-            // Set motor controller values
-            mc_port.command_speed = speed_control + heading_control;
-            mc_stbd.command_speed = speed_control - heading_control;
+                // Set motor controller values
+                mc_port.command_speed = speed_control + heading_control;
+                mc_stbd.command_speed = speed_control - heading_control;
 
-		    // apply proportional speed limiting - limit format percentage
-            mc_port.command_speed = (int)(state->motor_limit_controller/100 * mc_port.command_speed);
-            mc_stbd.command_speed = (int)(state->motor_limit_controller/100 * mc_stbd.command_speed);
+		        // apply proportional speed limiting - limit format percentage
+                mc_port.command_speed = (int)(state->motor_limit_controller/100 * mc_port.command_speed);
+                mc_stbd.command_speed = (int)(state->motor_limit_controller/100 * mc_stbd.command_speed);
 
-            // Print out and publish IVER_MOTOR.TOP status message every 10 loops
-            if( loopCount % 10 == 0 )
+                // Print out and publish IVER_MOTOR.TOP status message every 10 loops
+                if( loopCount % 10 == 0 )
+                {
+                    state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL.TOP", &mc_port);
+                    state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL.TOP", &mc_stbd);
+                    printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
+                            nav.vx, cmd.vx, (cmd.vx - nav.vx) );
+                    printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
+                            nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
+                    printf( "Port   : %4d\n", (int)mc_port.command_speed);
+                    printf( "Stbd   : %4d\n", (int)mc_stbd.command_speed);
+                    printf( "\n" );
+                }
+            } // end if RUN mode
+            else // not in RUN, so IDLE, ABORT etc
             {
-                state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL.TOP", &mc_port);
-                state->lcm.publish(state->vehicle_name+".STBD_MOTOR_CONTROL.TOP", &mc_stbd);
-                printf( "Velocity: curr=%2.2f, des=%2.2f, diff=%2.2f\n",
-                        nav.vx, cmd.vx, (cmd.vx - nav.vx) );
-                printf( "Heading : curr=%3.2f, des=%3.2f, diff=%3.2f\n",
-                        nav.heading/M_PI*180, cmd.heading/M_PI*180, diff_heading/M_PI*180 );
-                printf( "Port   : %4d\n", (int)mc_port.command_speed);
-                printf( "Stbd   : %4d\n", (int)mc_stbd.command_speed);
-                printf( "\n" );
+            	// zero the integral terms
+        		state->gains_vel.integral = 0;
+        		state->gains_heading.integral = 0;
+				if (state->verbose)
+				{
+					printf( "In RC_MODE_AUTO but not in Run Mode, Mode: %d\n", state->run_mode);
+				}
+        		// set motor speed to zero
+        		mc_port.command_speed = 0;
+        		mc_stbd.command_speed = 0;
+        		// disable motor relay
+        		state->torqeedo_motors_relay_enabled = false;
+        		if (state->torqeedo_motors_relay_reported == true)
+        		{
+        		    // turn off relay
+        		    send_relay_cmd(state, false);
+        		    fprintf(stderr, "Not in RUN mode - disable torqeedo motors relay\n");
+        		}
+
             }
         } // end timeout else
     } // end AUTO mode
-    else // in all other states, motors should not move
+    else // in RC_MODE_ZERO or other undefined states, motors should not move
     {
-        // if the rc control source is RC_MODE_ZERO (not rc or auto) OR in auto, if we are not in RUN
-		
 		// zero the integral terms
         state->gains_vel.integral = 0;
         state->gains_heading.integral = 0;
@@ -545,7 +569,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         {
             // turn off relay
 			send_relay_cmd(state, false);
-			fprintf(stderr, "Entering ZERO or STOP mode - disable torqeedo motors relay\n");
+			fprintf(stderr, "Entering RC_MODE_ZERO - disable torqeedo motors relay\n");
         }
 
 	}
