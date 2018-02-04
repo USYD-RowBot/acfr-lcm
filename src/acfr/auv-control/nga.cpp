@@ -121,6 +121,7 @@ void NGAController::init()
 void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
     acfrlcm::auv_nga_motor_command_t mc;
+    memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
 
     double prop_rpm = 0.0;
@@ -245,9 +246,11 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 {
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t mc;
+    memset(&mc, 0, sizeof(mc));
+
+    mc.utime = timestamp_now();
 
     // Lateral tunnel thrusters
-    mc.utime = timestamp_now();
     int fore = 0;
     int aft = 0;
     double rudder;
@@ -296,6 +299,7 @@ void NGAController::dead_control()
 {
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t rc;
+    memset(&rc, 0, sizeof(rc));
     rc.utime = timestamp_now();
 
     rc.tail_thruster = 0;
