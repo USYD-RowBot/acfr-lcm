@@ -5,3 +5,6 @@
 *.swp
 build
 *.pyc
+.idea
+# ignore build directory
+build/

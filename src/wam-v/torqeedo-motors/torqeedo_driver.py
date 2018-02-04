@@ -1427,7 +1427,7 @@ def Main():
 
 
     baud_rate = 19200
-    command_channel = "PORT_THRUSTER"
+    command_channel = "PORT_MOTOR_CONTROL"
     device = '/dev/ttyUSB0' # default port
     if len(sys.argv) > 1:
         device = sys.argv[1] # e.g. '/dev/ttyUSB1'

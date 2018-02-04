@@ -4,8 +4,8 @@
 #include <libgen.h>
 #include <fstream>
 #include <bot_param/param_client.h>
-#include "seabed_interface.hpp"
-#include "auv_seabed_slam_models.hpp"
+#include "libseabedcommon/seabed_interface.hpp"
+#include "libflounder/auv_seabed_slam_models.hpp"
 #include "handlers.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
@@ -76,6 +76,7 @@ class state_c
         int lowRateCount;
 
         bool bottomLock;
+	bool broken_iver_alt;
 };
 
 class acfr_nav

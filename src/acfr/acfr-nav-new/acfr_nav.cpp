@@ -2,6 +2,7 @@
 
 
 int loop_exit;
+string vehicle_name = "DEFAULT";
 
 acfr_nav::acfr_nav()
 {
@@ -10,6 +11,7 @@ acfr_nav::acfr_nav()
     state->lcm = new lcm::LCM();
     state->altitude = 0;
     state->bottomLock = false;
+    state->broken_iver_alt = false;
 }
 
 acfr_nav::~acfr_nav()
@@ -36,34 +38,34 @@ int acfr_nav::initialise()
     // subscribe to the relevant LCM channel based on our configuration
     
     // we always subscribe to the GPS
-    state->lcm->subscribeFunction("GPSD_CLIENT", on_gps, state);
+    state->lcm->subscribeFunction(vehicle_name+".GPSD_CLIENT", on_gps, state);
     
     // Are we using the OS_COMPASS, attitude or depth
     if(attitude_source == ATT_OS || DEPTH_OS_COMPASS)
-        state->lcm->subscribeFunction("OS_COMPASS", on_os_compass, state);
+        state->lcm->subscribeFunction(vehicle_name+".OS_COMPASS", on_os_compass, state);
     
     // Are we using the TCM compass
     if(attitude_source == ATT_TCM)
-        state->lcm->subscribeFunction("TCM", on_tcm_compass, state);
+        state->lcm->subscribeFunction(vehicle_name+".TCM", on_tcm_compass, state);
     else if(attitude_source == ATT_UVC)
-	state->lcm->subscribeFunction("UVC_RPH", on_uvc_rph, state);
+	state->lcm->subscribeFunction(vehicle_name+".UVC_RPH", on_uvc_rph, state);
         
     // Which depth sensor are we using
     if(depth_source == DEPTH_YSI)
-        state->lcm->subscribeFunction("YSI", on_ysi, state);
+        state->lcm->subscribeFunction(vehicle_name+".YSI", on_ysi, state);
     else if(depth_source == DEPTH_PAROSCI)
-        state->lcm->subscribeFunction("PAROSCI", on_parosci, state);
+        state->lcm->subscribeFunction(vehicle_name+".PAROSCI", on_parosci, state);
     else if(depth_source == DEPTH_SEABIRD)
-        state->lcm->subscribeFunction("SEABIRD", on_seabird_depth, state);
+        state->lcm->subscribeFunction(vehicle_name+".SEABIRD", on_seabird_depth, state);
     
     // We always subscribe to this as our velocity source
     if(velocity_source == VEL_RDI)
-	state->lcm->subscribeFunction("RDI", on_rdi, state);
+	state->lcm->subscribeFunction(vehicle_name+".RDI", on_rdi, state);
     else if(velocity_source == VEL_UVC)
-	    state->lcm->subscribeFunction("UVC_DVL", on_uvc_dvl, state);
+	    state->lcm->subscribeFunction(vehicle_name+".UVC_DVL", on_uvc_dvl, state);
 
     // Always subscribe to the IMU
-    state->lcm->subscribeFunction("IMU", on_imu, state);
+    state->lcm->subscribeFunction(vehicle_name+".IMU", on_imu, state);
     
     // Subscribe to the Evologics USBL
     if(evologics_channel != NULL)
@@ -170,11 +172,11 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		
 		//printf("%ld\r", (long int)nav.utime);
 
-        state->lcm->publish("ACFR_NAV", &nav);   
+        state->lcm->publish(vehicle_name+".ACFR_NAV", &nav);   
 
     	if(state->lowRateCount++ == 9) {
     		state->lowRateCount = 0;
-            state->lcm->publish("ACFR_NAV.TOP", &nav);   
+            state->lcm->publish(vehicle_name+".ACFR_NAV_TOP", &nav);   
 
     	}
 /*        }
@@ -275,6 +277,35 @@ void acfr_nav::calculate_mag()
 
 
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            vehicle_name = (char*)optarg;
+            break;
+         }
+    }
+}
+
 
 
 void signal_handler(int sig)
@@ -288,6 +319,7 @@ int main(int argc, char **argv)
     // install the exit handler
     loop_exit = 0;
     signal(SIGINT, signal_handler);
+    parse_args(argc, argv);
     acfr_nav *nav = new acfr_nav;
     nav->load_config(basename((argv[0])));
     nav->initialise();

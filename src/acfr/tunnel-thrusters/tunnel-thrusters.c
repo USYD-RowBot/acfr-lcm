@@ -34,12 +34,15 @@ typedef struct
 {
     lcm_t *lcm;
     acfr_sensor_t *sensor;
-//    acfrlcm_tunnel_thruster_command_t tc;
     int64_t command_utime;
     int vert_fore;
     int vert_aft;
     int lat_fore;
     int lat_aft;
+    int8_t vf_pos_down;
+    int8_t va_pos_down;
+    int8_t lf_pos_right;
+    int8_t la_pos_right;
     int addrs[4];
     int64_t zero_time;
     int64_t last_zero_time;
@@ -195,43 +198,50 @@ int send_tunnel_commands(state_t *state)
 	return 1;
 }	
 
-//void tunnel_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_tunnel_thruster_command_t *tc, void *u)
 void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)
 {
     state_t *state = (state_t *)u;
+
+    acfrlcm_auv_nga_motor_command_t mc;
+
+    memcpy(&mc, mot, sizeof(acfrlcm_auv_nga_motor_command_t));
 
 
  // Copy the commands and set the limits
     
     state->command_utime = mot->utime;
     
-    if(mot->lat_fore > TUNNEL_MAX)
+    mc.lat_fore *= state->lf_pos_right;
+    if(mc.lat_fore > TUNNEL_MAX)
     	state->lat_fore = TUNNEL_MAX;
-    else if (mot->lat_fore < TUNNEL_MIN)
+    else if (mc.lat_fore < TUNNEL_MIN)
     	state->lat_fore = TUNNEL_MIN;
     else
-	state->lat_fore = mot->lat_fore;
+        state->lat_fore = mc.lat_fore;
 		
-    if(mot->vert_fore > TUNNEL_MAX)
+    mc.vert_fore *= state->vf_pos_down;
+    if(mc.vert_fore > TUNNEL_MAX)
     	state->vert_fore = TUNNEL_MAX;
-    else if (mot->vert_fore < TUNNEL_MIN)
+    else if (mc.vert_fore < TUNNEL_MIN)
     	state->vert_fore = TUNNEL_MIN;
     else
-	state->vert_fore = mot->vert_fore;
+        state->vert_fore = mc.vert_fore;
 
-    if(mot->lat_aft > TUNNEL_MAX)
+    mc.lat_aft *= state->la_pos_right;
+    if(mc.lat_aft > TUNNEL_MAX)
     	state->lat_aft = TUNNEL_MAX;
-    else if (mot->lat_aft < TUNNEL_MIN)
+    else if (mc.lat_aft < TUNNEL_MIN)
     	state->lat_aft = TUNNEL_MIN;
     else
-	state->lat_aft = mot->lat_aft;
+        state->lat_aft = mc.lat_aft;
 		
-    if(mot->vert_aft > TUNNEL_MAX)
+    mc.vert_aft *= state->va_pos_down;
+    if(mc.vert_aft > TUNNEL_MAX)
     	state->vert_aft = TUNNEL_MAX;
-    else if (mot->vert_aft < TUNNEL_MIN)
+    else if (mc.vert_aft < TUNNEL_MIN)
     	state->vert_aft = TUNNEL_MIN;
     else
-        state->vert_aft = mot->vert_aft;
+        state->vert_aft = mc.vert_aft;
 
     if(state->vert_aft == 0 && state->vert_fore == 0 && state->lat_aft == 0 && state->lat_fore == 0)
     {
@@ -288,6 +298,24 @@ int main (int argc, char *argv[])
 		acfr_sensor_destroy(state.sensor);
 		return 0;
 	}
+
+    sprintf(key, "%s.vert_fore_pos_down", rootkey);
+    state.vf_pos_down = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.vert_aft_pos_down", rootkey);
+    state.va_pos_down = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.lat_fore_pos_right", rootkey);
+    state.lf_pos_right = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.lat_aft_pos_right", rootkey);
+    state.la_pos_right = bot_param_get_boolean_or_fail(state.sensor->param, key);
+
+    if (state.vf_pos_down == 0)
+        state.vf_pos_down = -1;
+    if (state.va_pos_down == 0)
+        state.va_pos_down = -1;
+    if (state.lf_pos_right == 0)
+        state.lf_pos_right = -1;
+    if (state.la_pos_right == 0)
+        state.la_pos_right = -1;
 
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');

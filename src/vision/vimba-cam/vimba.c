@@ -66,6 +66,7 @@ typedef struct
     char *uid;
     char *mac;
     char *channel;
+    char *rawlog_channel;
     char *camera_name;
 
     VmbHandle_t camera;
@@ -511,7 +512,7 @@ int write_tiff_image(state_t *state, VmbFrame_t *frame, int64_t utime)
         vis_raw.utime = utime;
         vis_raw.exp_time = exposure;
         vis_raw.image_name = filename;
-        acfrlcm_auv_vis_rawlog_t_publish(state->lcm, "ACFR_AUV_VIS_RAWLOG", &vis_raw);
+        acfrlcm_auv_vis_rawlog_t_publish(state->lcm, state->rawlog_channel, &vis_raw);
     }
 
     TIFFClose(image);
@@ -1004,17 +1005,62 @@ void VMB_CALL camera_plugged(VmbHandle_t handle , const char* name , void* conte
     return;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    printf("  -k config key                    paramter file key\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name, char *root_key)
+
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:k:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.ACFR_AUV_VIS_RAWLOG", (char *)optarg);
+            break;
+         
+        case 'k':
+	    //*root_key = malloc(64);
+	    printf("%s\n", optarg);
+	    //strcpy(*root_key, optarg);
+	    snprintf(root_key, 64, "%s", (char *)optarg);
+            break;
+         }
+    }
+}
+    
 int main(int argc, char **argv)
 {
     program_exit = 0;
     signal(SIGINT, signal_handler);
     signal(SIGPIPE, signal_handler);
 
-    //BotParam *params;
     //char root_key[64];
     char key[64];
 
     state_t state;
+
+    parse_args(argc, argv, &state.rawlog_channel, state.root_key);
 
     // Seems more complicated then it should be but we want to be able to dynamically change its size.
     char path[] = "./";
@@ -1034,28 +1080,6 @@ int main(int argc, char **argv)
     state.tss.max_rate_error = 1.0;
     state.previous_frame_utime = 0;
 
-    // read the config file, we base the entry on a command line switch
-    char opt;
-    int got_key = 0;
-    while((opt = getopt(argc, argv, "hk:")) != -1)
-    {
-        if(opt == 'k')
-        {
-            strcpy(state.root_key, optarg);
-            got_key = 1;
-        }
-        if(opt == 'h')
-        {
-            fprintf(stderr, "Usage: vimba -k <config key>\n");
-            return 0;
-        }
-    }
-
-    if(!got_key)
-    {
-        fprintf(stderr, "a config file key is required\n");
-        return 0;
-    }
 
 
     state.lcm = lcm_create(NULL);

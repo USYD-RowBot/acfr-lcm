@@ -29,6 +29,7 @@ sudo apt-get install libglib2.0-dev \
 	libcv-dev \
 	libreadline6-dev \
 	libncurses5-dev \
-	libproj-dev #\
+	libproj-dev \
+	libudev-dev
 	#libturbojpeg1-dev
 

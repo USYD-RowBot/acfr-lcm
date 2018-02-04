@@ -1,4 +1,8 @@
 #include <math.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <unistd.h>
 #include "health_monitor.hpp"
 
 #define COMPASS_TIMEOUT	1000000
@@ -26,6 +30,7 @@
 #define LEAK_BIT        0b1000000000000000 //0x8000
 
 
+using namespace std;
 
 // Handlers
 
@@ -157,28 +162,32 @@ HealthMonitor::HealthMonitor()
 	dvlbl_timeout = DVLBL_TIMEOUT;
 	depth_timeout = DEPTH_TIMEOUT;
 	oas_timeout = OAS_TIMEOUT;
+}
 
-	//lcm = NULL;
+
+int HealthMonitor::subscribeChannels()
+{
 	// Subscribe to all the sensors we need to monitor
-	lcm.subscribeFunction("TCM", handle_tcm, this);
-	lcm.subscribeFunction("KVH1550", handle_imu, this);
-	lcm.subscribeFunction("GPSD_CLIENT", handle_gps, this);
-	lcm.subscribeFunction("ECOPUCK", handle_ecopuck, this);
-	lcm.subscribeFunction("MICRON", handle_micron, this);
-	lcm.subscribeFunction("RDI", handle_rdi, this);
-	lcm.subscribeFunction("PAROSCI", handle_parosci, this);
-	lcm.subscribeFunction("YSI", handle_ysi, this);
-	lcm.subscribeFunction("ACFR_NAV.*", handle_nav, this);
-	lcm.subscribeFunction("ACFR_AUV_VIS_RAWLOG", handle_vis, this);
-	lcm.subscribeFunction("LEAK", handle_leak, this);
-	lcm.subscribeFunction("GLOBAL_STATE", handle_global_state, this);
-	lcm.subscribeFunction("BATTERY", handle_battery, this);
+	lcm.subscribeFunction(vehicle_name+".TCM", handle_tcm, this);
+	lcm.subscribeFunction(vehicle_name+".KVH1550", handle_imu, this);
+	lcm.subscribeFunction(vehicle_name+".GPSD_CLIENT", handle_gps, this);
+	lcm.subscribeFunction(vehicle_name+".ECOPUCK", handle_ecopuck, this);
+	lcm.subscribeFunction(vehicle_name+".MICRON", handle_micron, this);
+	lcm.subscribeFunction(vehicle_name+".RDI", handle_rdi, this);
+	lcm.subscribeFunction(vehicle_name+".PAROSCI", handle_parosci, this);
+	lcm.subscribeFunction(vehicle_name+".YSI", handle_ysi, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_NAV", handle_nav, this);
+	lcm.subscribeFunction(vehicle_name+".ACFR_AUV_VIS_RAWLOG", handle_vis, this);
+	lcm.subscribeFunction(vehicle_name+".LEAK", handle_leak, this);
+	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", handle_global_state, this);
+	lcm.subscribeFunction(vehicle_name+".BATTERY", handle_battery, this);
 
     // Subscribe to path response to report waypoint progress in *.AUVSTAT
-    lcm.subscribeFunction("PATH_RESPONSE", handle_path_response, this);
+    lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", handle_path_response, this);
 
 	// Subscribe to the heartbeat
 	lcm.subscribeFunction("HEARTBEAT_1HZ", &handle_heartbeat, this);
+        return 1;
 }
 
 int HealthMonitor::loadConfig(char *program_name)
@@ -283,8 +292,8 @@ int HealthMonitor::loadConfig(char *program_name)
 	if (0 == bot_param_get_double(param, key, &tmp_double))
 		oas_timeout = tmp_double;
 
-        sprintf(key, "%s.vehicle_name", rootkey);
-        vehicle_name = bot_param_get_str_or_fail(param, key);
+        //sprintf(key, "%s.vehicle_name", rootkey);
+        //vehicle_name = bot_param_get_str_or_fail(param, key);
  
 	return 1;
 }
@@ -362,43 +371,47 @@ int HealthMonitor::checkStatus(int64_t hbTime)
         if(global_state.state == 0)
             status.status |= ABORT_BIT;
 
-	status.latitude = (float)nav.latitude;	
-	status.longitude = (float)nav.longitude;
-	status.altitude = (unsigned char)(nav.altitude * 10.0);
+	status.latitude = (float)nav.latitude*180/M_PI;	
+	status.longitude = (float)nav.longitude*180/M_PI;
+    //status.altitude = (unsigned char)(nav.altitude * 10.0);
+    if (nav.altitude < 12.5)
+        status.altitude = (char)(nav.altitude * 10.0);
+    else if (nav.altitude > 125)
+        status.altitude = (char)(-125);
+    else
+        status.altitude = (char)(-nav.altitude);
 	status.depth = (short)(nav.depth * 10.0);
-	//status.roll = (char)(nav.roll * 10.0 * 180 / 3.1415); //DONE below - undefined for values outside +/- 12.8 degrees
-    roll_temp = (nav.roll * 180 / 3.1415);
-    if (roll_temp > 30) // 30 max degrees reported
+	//status.roll = (char)(nav.roll * 10.0 * 180 / M_PI); //DONE below - undefined for values outside +/- 12.8 degrees
+    roll_temp = (nav.roll * 180 / M_PI);
+    if (roll_temp > 60) // 60 max degrees reported
         status.roll = 127; // over roll indicator
-    else if (roll_temp < -30)
+    else if (roll_temp < -60)
         status.roll = -127; // under roll indicator
-    else // abs(roll_temp) <= 30 
-        status.roll = (char)(roll_temp * 4); // sent in quarter degree units
-    //status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415); // DONE below - undefined for values outside +/- 12.8 degrees
-    pitch_temp = (nav.pitch * 180 / 3.1415); 
-    if (pitch_temp > 30) // 30 max degrees reported
-        status.pitch = 127; // over pitch indicator
-    else if (pitch_temp < -30)
-        status.pitch = -127; // under pitch indicator
-    else // abs(pitch_temp) <= 30
-        status.pitch = (char)(roll_temp * 4); // sent in quarter degree units
+    else // abs(roll_temp) <= 60 
+        status.roll = (char)(roll_temp * 2); // sent in quarter degree units
 
-	status.pitch = (char)(nav.pitch * 10.0 * 180 / 3.1415); 
-    //status.heading = (short)(fmod(nav.heading *  180 / 3.1415, 360)/2); //DONE - this is a char, not a short, needs to be fixed /2 is not a solution 180 > 128
-    heading_temp = fmod(nav.heading *  180 / 3.1415, 360); // rad to deg, limit range to -360..+360
-    if (heading_temp >= 180) // limit to -180..180
+    //status.pitch = (char)(nav.pitch * 10.0 * 180 / M_PI); // DONE below - undefined for values outside +/- 12.8 degrees
+    pitch_temp = (nav.pitch * 180 / M_PI); 
+    if (pitch_temp > 60) // 60 max degrees reported
+        status.pitch = 127; // over pitch indicator
+    else if (pitch_temp < -60)
+        status.pitch = -127; // under pitch indicator
+    else // abs(pitch_temp) <= 60
+        status.pitch = (char)(pitch_temp * 2); // sent in quarter degree units
+
+    //status.heading = (short)(fmod(nav.heading *  180 / M_PI, 360)/2); //DONE - this is a char, not a short, needs to be fixed /2 is not a solution 180 > 128
+    heading_temp = fmod(nav.heading *  180 / M_PI, 360); // rad to deg, limit range to -360..+360
+    while (heading_temp >= 180) // limit to -180..180
         heading_temp = (heading_temp - 360); 
-    if (heading_temp <= -180) // limit to -180..180 opposite case
+    while (heading_temp <= -180) // limit to -180..180 opposite case
         heading_temp = (heading_temp + 360);
     status.heading = (char)(heading_temp/2); // and halve to fit into signed char (sent as 2 degree incements)
 	status.img_count = image_count;
-        status.charge = (char)(battery.avg_charge_p);
-        status.vel = (char)(nav.vx * 100.0);
-        status.waypoint = path_response.goal_id;
+    status.charge = (char)(battery.avg_charge_p);
+    status.vel = (char)(nav.vx * 10.0);
+    status.waypoint = path_response.goal_id;
 
-        char channel_name[128];
-        snprintf(channel_name, 128, "AUVSTAT.%s", vehicle_name);
-	lcm.publish(channel_name, &status);
+	lcm.publish(vehicle_name+".AUVSTAT", &status);
 
 	return 1;
 }
@@ -408,7 +421,7 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	acfrlcm::auv_global_planner_t abortMsg;
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
-	lcm.publish("TASK_PLANNER_COMMAND", &abortMsg);
+	lcm.publish(vehicle_name+".TASK_PLANNER_COMMAND", &abortMsg);
 
 	return 1;
 }
@@ -444,6 +457,36 @@ int HealthMonitor::checkAbortConditions()
 	return 0;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, HealthMonitor &state)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            state.setVehicleName((char*)optarg);
+            break;
+         }
+    }
+}
+
+
 int program_exit;
 void signal_handler(int sigNum)
 {
@@ -456,6 +499,8 @@ int main(int argc, char **argv)
 	program_exit = 0;
 
 	HealthMonitor state;
+        parse_args(argc, argv, state);
+        state.subscribeChannels();
 
 	if (!state.loadConfig(basename(argv[0])))
 	{

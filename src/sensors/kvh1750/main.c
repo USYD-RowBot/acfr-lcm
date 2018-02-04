@@ -107,7 +107,7 @@ unsigned int calc_checksum(unsigned char *d, int len)
     return 0;//crc32(0, d, len);
 }
 
-int parse_imu(unsigned char *d, lcm_t *lcm)
+int parse_imu(unsigned char *d, lcm_t *lcm, char *kvh_channel)
 {
     // we don't need to check the header as that has already been done
     unsigned int crc = calc_checksum(d, 32);
@@ -132,7 +132,7 @@ int parse_imu(unsigned char *d, lcm_t *lcm)
 
     kvh.temperature = (double)((short)(d[30] >> 8) + d[31]);
 
-    senlcm_kvh1750_t_publish(lcm, "KVH1750", &kvh);
+    senlcm_kvh1750_t_publish(lcm, kvh_channel, &kvh);
 
     return 1;
 }
@@ -143,6 +143,44 @@ signal_handler(int sigNum)
 {
     // do a safe exit
     program_exit = 1;
+}
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name));
+    strcpy(*vehicle_name, default_name);
+
+    int n;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
 }
 
 
@@ -157,6 +195,15 @@ int main(int argc, char **argv)
     char key[64];
 
     lcm_t *lcm = lcm_create(NULL);
+
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+
+    char kvh_channel[100];
+
+    snprintf(kvh_channel, 100, "%s.KVH1750", vehicle_name);
+
+    free(vehicle_name);
 
     printf("Obtaining parameters\n");
     params = bot_param_new_from_server (lcm, 1);
@@ -210,7 +257,7 @@ int main(int argc, char **argv)
                 bytes_read += read(serial_fd, &buf[4 + bytes_read], 32 - bytes_read);
 
 
-            parse_imu(buf, lcm);
+            parse_imu(buf, lcm, kvh_channel);
         }
         else if(*(int *)&buf[0] == 0xAA0081FE)
         {

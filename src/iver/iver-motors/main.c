@@ -15,9 +15,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include "perls-common/lcm_util.h"
-#include "perls-common/serial.h"
-#include "perls-common/timestamp.h"
+#include "acfr-common/serial.h"
+#include "acfr-common/timestamp.h"
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_iver_motor_command_t.h"
 
@@ -70,6 +69,7 @@ typedef struct
     control_source_t source_state;
 
     int64_t last_data_time;
+    
 
 } state_t;
 
@@ -137,8 +137,8 @@ send_control(double top, double bottom, double port, double starboard, double ma
         }
 
     }
-
 }
+
 
 void
 motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver_motor_command_t *mc_, void *u)
@@ -146,7 +146,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     state_t *state = (state_t *)u;
 
     acfrlcm_auv_iver_motor_command_t mc = *mc_;
-
+/*
     switch (mc.source)
     {
     case ACFRLCM_AUV_IVER_MOTOR_COMMAND_T_REMOTE:
@@ -182,7 +182,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
         }
         break;
     }
-
+*/
     // limit check
     mc.top = mc.top * TOP_SCALE;
     if(mc.top >= MAX_SERVO_ANGLE)
@@ -208,11 +208,50 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_iver
     send_control(mc.top, mc.bottom, mc.port, mc.starboard, mc.main, state);
 }
 
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
+
 int
 main(int argc, char **argv)
 {
     state_t state;
-    state.source_state = REMOTE;
+//    state.source_state = REMOTE;
 
     // install the signal handler
     program_exit = 0;
@@ -220,6 +259,11 @@ main(int argc, char **argv)
 
     // lets start LCM
     state.lcm = lcm_create(NULL);
+
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+    char motor_channel[128];
+    snprintf(motor_channel, 128, "%s.IVER_MOTOR", vehicle_name);
 
 
     // read the config file
@@ -270,7 +314,7 @@ main(int argc, char **argv)
 
     state.last_data_time = timestamp_now();
 
-    acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, "IVER_MOTOR", &motor_handler, &state);
+    acfrlcm_auv_iver_motor_command_t_subscribe(state.lcm, motor_channel, &motor_handler, &state);
 
     // process
     while(!program_exit)
@@ -289,10 +333,8 @@ main(int argc, char **argv)
             send_control(0.0, 0.0, 0.0, 0.0, 0.0, &state);
         }
 
-        struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        lcmu_handle_timeout(state.lcm, &tv);
+
+        lcm_handle_timeout(state.lcm, 1000);
     }
 
     close(state.servo_fd);

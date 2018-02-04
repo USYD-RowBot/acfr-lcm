@@ -1,0 +1,8 @@
+package acfrlcm;
+
+struct relay_status_t
+{
+    int64_t utime;
+
+	byte state_list[4]; // one bit per 24 * relay and 8 * io ports, active: 1, inactive: 0
+}
