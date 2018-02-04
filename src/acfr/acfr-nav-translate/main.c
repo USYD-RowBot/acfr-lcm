@@ -14,6 +14,7 @@
 #include "perls-lcmtypes/senlcm_novatel_t.h"
 
 
+#define SELECT_TIMEOUT 10000        // usec block timeout on select for LCM
 
 // acfr_nav_translate:
 // Subscribes to the senlcm_novatel_t LCM message, 
@@ -36,12 +37,25 @@ typedef struct
 // globals for signalling exit
 int program_exit;
 
+
 void signal_handler(int sig_num)
 {
     // do a safe exit
     if(sig_num == SIGINT)
     program_exit = 1;
 }
+
+
+void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senlcm_novatel_t *msgin, void *u)
+{
+    state_t *state = (state_t *)u;
+
+    // TODO Translate
+
+
+    acfrlcm_asv_torqeedo_motor_status_t_publish(state->lcm, ch_out_nav, &state.//TODO);    
+}
+
 
 int main(int argc, char **argv)
 {
@@ -100,21 +114,53 @@ int main(int argc, char **argv)
     printf("Requesting Parameter: %s\n", key);
     state.verbose = bot_param_get_boolean_or_fail(param, key);
 
-	// TODO Lat, Long ...?
+    sprintf(key, "%s.origin_lat", root_key);
+    printf("Requesting Parameter: %s\n", key);
+    state.origin_lat = bot_param_get_TODO_or_fail(param, key);
+
+	printf(key, "%s.origin_long", root_key);
+    printf("Requesting Parameter: %s\n", key);
+    state.origin_long = bot_param_get_TODO_or_fail(param, key);
+	
 
 	// Subscribe to the LCM channels for incoming messages
     senlcm_novatel_t_subscribe(state.lcm, ch_in_novatel, &incoming_msg_handler, &state);
 
-	
-	
+	// Setup select for just the LCM msgs
+    fd_set rfds, dup_rfds; // list of file descriptors where we will listen for incoming messages and duplicate set for use
+    int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
+    struct timeval tv;
+    FD_ZERO(&rfds);
+    FD_SET(lcm_fd, &rfds); // add the lcm file descriptor to the set to watch
 
+    // Main program loop
+    while(!program_exit)
+    {
+        dup_rfds = rfds; // reset file descriptors
+        tv.tv_sec = 0;
+        tv.tv_usec = SELECT_TIMEOUT;
+        
+		// check incoming message sources
+        ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
+        if(ret == -1)
+        {
+            fprintf(stderr, "NavTranslate: Select failure: %i", errno);
+        }
+        else if(ret != 0) // check incoming message
+        {
+			if(FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
+            {
+                lcm_handle(state.lcm);
+            }
+		}
 
+    } // end main loop
 
+    // close LCM commections
+    lcm_destroy(state.lcm);
+    return 0;
 
-
-
-
-}
+} // end main
 
 
 
