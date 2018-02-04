@@ -151,6 +151,8 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		//printf("%f, %f, %f, %f, %f\n", estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], estimate.x[SB_VEHICLE_Z], fmod(estimate.x[SB_VEHICLE_PSI]*180/M_PI,360), estimate.x[SB_VEHICLE_X_VEL]);
 
 		state->slam->calc_geo_coords(estimate.x[SB_VEHICLE_X], estimate.x[SB_VEHICLE_Y], nav.latitude, nav.longitude);
+		nav.latitude = nav.latitude * M_PI / 180.0;
+		nav.longitude = nav.longitude * M_PI / 180.0;
 		nav.x = estimate.x[SB_VEHICLE_X];
 		nav.y = estimate.x[SB_VEHICLE_Y];
 		nav.depth = estimate.x[SB_VEHICLE_Z];
