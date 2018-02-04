@@ -14,30 +14,36 @@
 // set the output rate and output format
 int program_imu(int fd, int rate)
 {
-    char msg_out[64], msg_in[64];
+    // msg_in has to fit output of ?axes command
+    char msg_out[64], msg_in[150];
 
-    printf("Programming IMU ");
+    printf("Programming IMU\n");
     // set the port canonical
     serial_set_canonical(fd, '\r', '\n');
 
     // put it in config mode
     sprintf(msg_out, "=config,1\r");
     write(fd, msg_out, strlen(msg_out));
-    printf(".");
+    printf("Entering Configuration Mode\n");
 
     // get response
+    int count = 0;
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
-        read(fd, msg_in, sizeof(msg_in));
+        read(fd, msg_in, sizeof(msg_in)-1);
+	count++;
+	//printf("%s\n", msg_in);
+	if (count % 1000 == 0)
+            printf("%i\n", count);
     }
     while(!strstr(msg_in, "CONFIG,1"));
     // set the data rate
-    printf(".");
+    printf("Configuration Mode Entered\n");
 
     sprintf(msg_out, "=DR,%d\r\n", rate);
     write(fd, msg_out, strlen(msg_out));
-    printf(".");
+    printf("Setting data rate %d\n", rate);
 
     // get response
     memset(msg_in, 0, sizeof(msg_in));
@@ -46,12 +52,26 @@ int program_imu(int fd, int rate)
         read(fd, msg_in, sizeof(msg_in));
     }
     while(!strstr(msg_in, "DR,"));
+    printf("Data rate set\n");
+
+    // check the axes settings
+    sprintf(msg_out, "?axes\r\n");
+    write(fd, msg_out, strlen(msg_out));
     printf(".");
+
+    memset(msg_in, 0, sizeof(msg_in));
+    do
+    {
+        read(fd, msg_in, sizeof(msg_in));
+        printf("\n%s\n", msg_in);
+    }
+    while(!strstr(msg_in, "AXES,"));
+    printf("\n%s\n", msg_in);
 
     // set the angular output
     sprintf(msg_out, "=rotfmt,RATE\r\n");
     write(fd, msg_out, strlen(msg_out));
-    printf(".");
+    printf("Setting rotation format\n");
 
     // get response
     memset(msg_in, 0, sizeof(msg_in));
@@ -60,7 +80,7 @@ int program_imu(int fd, int rate)
         read(fd, msg_in, sizeof(msg_in));
     }
     while(!strstr(msg_in, "ROTFMT,RATE"));
-    printf(".");
+    printf("Rotation Format Set\n");
 
     // leave config mode
     sprintf(msg_out, "=CONFIG,0\r\n");
@@ -185,6 +205,7 @@ int main(int argc, char **argv)
 
     free(vehicle_name);
 
+    printf("Obtaining parameters\n");
     params = bot_param_new_from_server (lcm, 1);
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
@@ -199,7 +220,9 @@ int main(int argc, char **argv)
     int sample_rate = bot_param_get_double_or_fail(params, key);
 
     // Open the port
+    printf("Opening Serial Port\n");
     int serial_fd = serial_open(device, serial_translate_speed(baud), serial_translate_parity("8N1"), 1);
+    printf("Serial Port Open (%i)\n", serial_fd);
 
     // Set the sample rate and output format
     program_imu(serial_fd, sample_rate);

@@ -216,10 +216,10 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     // break status message into bytes (for LCM)
     acfrlcm_relay_status_t status_msg;
     status_msg.utime = timestamp_now();
-    status_msg.state_list[0] = (state->state_list >> 24) & 0xFF;
-    status_msg.state_list[1] = (state->state_list >> 16) & 0xFF;
-    status_msg.state_list[2] = (state->state_list >> 8) & 0xFF;
-    status_msg.state_list[3] = state->state_list & 0xFF;
+    status_msg.state_list[3] = (state->state_list >> 24) & 0xFF;
+    status_msg.state_list[2] = (state->state_list >> 16) & 0xFF;
+    status_msg.state_list[1] = (state->state_list >> 8) & 0xFF;
+    status_msg.state_list[0] = state->state_list & 0xFF;
     // publish status message
     acfrlcm_relay_status_t_publish(state->lcm, state->channel_status, &status_msg);
 

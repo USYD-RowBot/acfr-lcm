@@ -107,7 +107,7 @@ int parse_bluefin_message(state_t *state, char *d, int len)
     addr = atoi(addr_str);
     memcpy(cmd_str, &d[3], 2);
     
-    //printf("Got data: %d %s\n", addr, d);
+    printf("Got data: %d %s\n", addr, d);
     
     // Main thruster reponses
     if(addr == 1)
@@ -513,7 +513,7 @@ int main (int argc, char *argv[])
 */
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
     //acfrlcm_auv_bluefin_tail_command_t_subscribe(state.lcm, "BLUEFIN_COMMAND", &bluefin_command_handler, &state);
-    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA_MOTOR", &nga_motor_command_handler, &state);
+    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA.NEXTGEN_MOTOR", &nga_motor_command_handler, &state);
 
 
     // the main loop is for reading data from the serial port that isn't handled after a write and the LCM messages

@@ -9,7 +9,7 @@ from acfrlcm import relay_command_t
 
 def Main():
 
-    channel = 'RELAY_CONTROL'
+    channel = 'WAMV.RELAY_CONTROL'
 
     print('ACFR USYD dS2824 Relay TESTER started for driver LCM channel: {}'.format(channel))
     if len(sys.argv) < 4:

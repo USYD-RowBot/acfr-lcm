@@ -76,6 +76,7 @@ class state_c
         int lowRateCount;
 
         bool bottomLock;
+	bool broken_iver_alt;
 };
 
 class acfr_nav

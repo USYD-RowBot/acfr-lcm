@@ -24,6 +24,7 @@
 #include "perls-lcmtypes++/senlcm/ms_gx1_t.hpp"
 #include "perls-lcmtypes++/senlcm/os_compass_t.hpp"
 #include "perls-lcmtypes++/senlcm/uvc_dvl_t.hpp"
+#include "perls-lcmtypes++/senlcm/uvc_osi_t.hpp"
 #include "perls-lcmtypes++/senlcm/uvc_rphtd_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_vis_rawlog_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
@@ -52,6 +53,7 @@ void on_os_compass(const lcm::ReceiveBuffer* rbuf, const std::string& channel, c
 void on_imu(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const IMU_t *imu, state_c* state);
 void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const usbl_fix_t *usbl, state_c* state);
 void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_dvl_t *dvl, state_c* state);
+void on_uvc_osi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_osi_t *osi, state_c* state);
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state);
 void on_seabotix_sensors(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabotix_sensors_t *ss, state_c* state);
 void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state);
