@@ -24,8 +24,8 @@
 
 // but with power issues...
 // 1024 is really slow, nowhere near the limit
-#define TUNNEL_MAX 1500
-#define TUNNEL_MIN -1500
+#define TUNNEL_MAX 1750
+#define TUNNEL_MIN -1750
 
 #define COMMAND_TIMEOUT_THRUST 10
 #define COMMAND_TIMEOUT 10
