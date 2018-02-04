@@ -156,7 +156,7 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 
 	state->bottomLock = btv_ok;
 
-	if( btv_ok )
+	if( true ) // btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)rdi->utime/1e6);
