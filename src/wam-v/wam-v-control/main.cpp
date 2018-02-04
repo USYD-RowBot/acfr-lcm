@@ -282,6 +282,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 	{
         if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from RC have timed out (may be out of range)
         {
+            fprintf(stderr, "RC Message Timeout in RC MODE RC: transition to RC MODE ZERO \n");
             state->control_source = RC_MODE_ZERO; // Return to zero mode until another msg comes through
             mc_port.command_speed = 0;
             mc_stbd.command_speed = 0;
@@ -435,6 +436,7 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from planner have timed out (something may have crashed)
         {
             // stop moving, but don't go to Zero mode, in case messages restart
+            fprintf(stderr, "Control Message Timeout in RC MODE AUTO: remain in RC MODE AUTO, but stop motors \n");
             mc_port.command_speed = 0;
             mc_stbd.command_speed = 0;
             state->torqeedo_motors_relay_enabled = false;
