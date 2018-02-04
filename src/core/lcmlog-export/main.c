@@ -113,6 +113,7 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     acfrlcm_auv_bluefin_tail_status_t_subscribe(lcm, "BLUEFIN_STATUS", &acfrlcm_auv_bluefin_tail_status_t_handler, lle);
     acfrlcm_auv_bluefin_tail_command_t_subscribe(lcm, "BLUEFIN_COMMAND", &acfrlcm_auv_bluefin_tail_command_t_handler, lle);
     acfrlcm_auv_control_goal_t_subscribe(lcm, "CONTROL_GOAL", &acfrlcm_auv_control_goal_t_handler, lle);
+    acfrlcm_auv_vis_rawlog_t_subscribe(lcm, "ACFR_AUV_VIS_RAWLOG", &acfrlcm_auv_vis_rawlog_t_handler, lle);
 }
 
 int
