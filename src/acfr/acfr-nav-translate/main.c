@@ -54,7 +54,6 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 	memset(&nav_msg, 0, sizeof(acfrlcm_auv_acfr_nav_t));
 
     // Translate
-
 	nav.utime = msg_in->utime;      	// keep orig. value 
 
 	nav.latitude = msg_in->latitude;	// In (radians)
@@ -70,10 +69,14 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
         return -1;
 	}
     
-	nav.depth =	0;	 					// could be det. from height - tides? but not used 
-    nav.roll = msg_in->roll;			// Right-Handed Body F.O.R. (radians)
-    nav.pitch = msg_in->pitch;	 		// Right-Handed Body F.O.R. (radians)
-    nav.heading = msg_in->heading;		// Right-Handed (+ down) Body F.O.R. (radians)
+	nav.depth =	0;	 					            // could be det. from height - tides? but not used 
+    nav.roll = msg_in->roll;		            	// Right-Handed Body F.O.R. (radians)
+    nav.pitch = msg_in->pitch;	 		            // Right-Handed Body F.O.R. (radians)
+    nav.heading = msg_in->heading % (2 * M_PI);		// Right-Handed (+ down) Body F.O.R. (radians)
+    if (nav.heading < 0)    
+    {
+        nav.heading += (2 * M_PI);
+    } 
 
 	double velocity_compass_angle = 0;
 	double velocity_magnitude = 0;
@@ -108,19 +111,23 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 	}
 	else // general cases
 	{
-		velocity_compass_angle = atan(msg_in.east_velocity/msg_in.north_velocity); // TODO - check quadrant and fix signs
+		velocity_compass_angle = atan(msg_in.east_velocity/msg_in.north_velocity); 
+        if (velocity_compass_angle < 0)
+        {
+            velocity_compass_angle += (2 * PI);
+        }
 		velocity_magnitude = sqrt(msg_in.east_velocity * msg_in.east_velocity + msg_in.north_velocity * msg_in.north_velocity);
     }
-    velocity_body_angle = velocity_compass_angle - heading; 
+    velocity_body_angle = velocity_compass_angle - nav.heading; 
   	nav.vx = velocity_magnitude * sin(velocity_body_angle);	// Body F.O.R. Forward velocity (m/s)
    	nav.vy = velocity_magnitude * cos(velocity_body_angle);	// Body F.O.R. Starboard velocity (m/s)
     
-	nav.vz = 0; 						// not used for wam-v 2D planner  
+	nav.vz = -msg_in.up_velocity; 	    // not used for wam-v 2D planner  
 	nav.rollRate = 0;					// not used for wam-v 2D planner 
     nav.pitchRate = 0;					// not used for wam-v 2D planner 
     nav.headingRate = 0;				// not used for wam-v 2D planner 
-    nav.altitude = 0;					// not used for wam-v  //state->altitude;
-    nav.fwd_obstacle_dist = 0;			// not used for wam-v  //state->fwd_obs_dist;
+    nav.altitude = 0;					// not used for wam-v 2D planner 
+    nav.fwd_obstacle_dist = 0;			// not yet implemented
 
 
     acfrlcm_asv_torqeedo_motor_status_t_publish(state->lcm, ch_out_nav, &nav_msg);    
@@ -243,12 +250,5 @@ int main(int argc, char **argv)
     return 0;
 
 } // end main
-
-
-
-
-
-
-
 
 
