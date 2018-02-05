@@ -1,6 +1,8 @@
 #include <csignal>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "controller.hpp"
 #include "pid.h"
 
@@ -120,6 +122,7 @@ void NGAController::init()
 
 void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
+    std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
@@ -208,7 +211,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
-        rudder_angle = -pid(&this->gains_heading, diff_heading, 0.0, dt);
+        rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
         double differential_lat = pid(&this->gains_tunnel_heading,
                 diff_heading, 0, dt);
