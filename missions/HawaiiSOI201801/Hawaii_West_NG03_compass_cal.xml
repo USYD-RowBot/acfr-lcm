@@ -16,7 +16,7 @@
 			<position x="0.0" y="790.0" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -25,7 +25,7 @@
 			<position x="200.0" y="790.0" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -34,7 +34,7 @@
 			<position x="210.0" y="800.0" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -43,7 +43,7 @@
 			<position x="210.0" y="1000.0" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -52,7 +52,7 @@
 			<position x="200.0" y="1010.0" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -61,7 +61,7 @@
 			<position x="0.0" y="1010.0" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -70,7 +70,7 @@
 			<position x="-10.0" y="1000.0" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -79,7 +79,7 @@
 			<position x="-10.0" y="800.0" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -88,7 +88,7 @@
 			<position x="0.0" y="790.0" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -97,7 +97,7 @@
 			<position x="200.0" y="790.0" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -106,7 +106,7 @@
 			<position x="210.0" y="800.0" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -115,7 +115,7 @@
 			<position x="210.0" y="1000.0" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -124,7 +124,7 @@
 			<position x="200.0" y="1010.0" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -133,7 +133,7 @@
 			<position x="0.0" y="1010.0" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -142,7 +142,7 @@
 			<position x="-10.0" y="1000.0" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -151,7 +151,7 @@
 			<position x="-10.0" y="800.0" z="0.0"/>
 			<heading deg="112.5" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -160,7 +160,7 @@
 			<position x="-48.4924240492" y="892.928932188" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -169,7 +169,7 @@
 			<position x="92.9289321881" y="751.507575951" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -178,7 +178,7 @@
 			<position x="107.071067812" y="751.507575951" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -187,7 +187,7 @@
 			<position x="248.492424049" y="892.928932188" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -196,7 +196,7 @@
 			<position x="248.492424049" y="907.071067812" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -205,7 +205,7 @@
 			<position x="107.071067812" y="1048.49242405" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -214,7 +214,7 @@
 			<position x="92.9289321881" y="1048.49242405" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -223,7 +223,7 @@
 			<position x="-48.4924240492" y="907.071067812" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -232,7 +232,7 @@
 			<position x="-48.4924240492" y="892.928932188" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -241,7 +241,7 @@
 			<position x="92.9289321881" y="751.507575951" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -250,7 +250,7 @@
 			<position x="107.071067812" y="751.507575951" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -259,7 +259,7 @@
 			<position x="248.492424049" y="892.928932188" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -268,7 +268,7 @@
 			<position x="248.492424049" y="907.071067812" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -277,7 +277,7 @@
 			<position x="107.071067812" y="1048.49242405" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -286,7 +286,7 @@
 			<position x="92.9289321881" y="1048.49242405" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
@@ -295,7 +295,7 @@
 			<position x="-48.4924240492" y="907.071067812" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
-			<velocity x="2.0" />
+			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
 	</primitive>
