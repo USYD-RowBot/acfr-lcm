@@ -34,7 +34,7 @@
     </primitive>
    <primitive>
         <goto>
-            <position x="0" y="100" z="0.0"/>
+            <position x="0" y="1000" z="0.0"/>
             <heading deg="180" />
             <timeout t="100" />
             <velocity x="2.0" />
