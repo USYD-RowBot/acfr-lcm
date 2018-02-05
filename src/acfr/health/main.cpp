@@ -169,7 +169,7 @@ int HealthMonitor::subscribeChannels()
 {
 	// Subscribe to all the sensors we need to monitor
 	lcm.subscribeFunction(vehicle_name+".TCM", handle_tcm, this);
-	lcm.subscribeFunction(vehicle_name+".KVH1550", handle_imu, this);
+	lcm.subscribeFunction(vehicle_name+".KVH1750", handle_imu, this);
 	lcm.subscribeFunction(vehicle_name+".GPSD_CLIENT", handle_gps, this);
 	lcm.subscribeFunction(vehicle_name+".ECOPUCK", handle_ecopuck, this);
 	lcm.subscribeFunction(vehicle_name+".MICRON", handle_micron, this);
@@ -303,44 +303,45 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 	acfrlcm::auv_status_short_t status;
 	memset(&status, 0, sizeof(acfrlcm::auv_status_short_t));
 	status.utime = timestamp_now();
+	status.status = 0xFFFF;
     float heading_temp = 0; // temp value to process heading before copy to char
     float pitch_temp = 0; // temp value to process heading before copy to char
     float roll_temp = 0; // temp value to process heading before copy to char
 
 	// check the age of the sensor data
 	if ((hbTime - compass.utime) < compass_timeout)
-		status.status |= COMPASS_BIT;
+		status.status &= ~COMPASS_BIT;
 	else if (abort_on_no_compass == true)
 		sendAbortMessage("COMPASS dead");
 
 	if ((hbTime - gps.utime) < gps_timeout)
-		status.status |= GPS_BIT;
+		status.status &= ~GPS_BIT;
 	else if (abort_on_no_gps == true)
 		sendAbortMessage("GPS dead");
 
 	if ((hbTime - ecopuck.utime) < ecopuck_timeout)
-		status.status |= ECOPUCK_BIT;
+		status.status &= ~ECOPUCK_BIT;
 	else if (abort_on_no_ecopuck == true)
 		sendAbortMessage("ECOPUCK dead");
 
 	if ((hbTime - nav.utime) < nav_timeout)
-		status.status |= NAV_BIT;
+		status.status &= ~NAV_BIT;
 	else if (abort_on_no_nav == true)
 		sendAbortMessage("NAV dead");
 
 	if ((hbTime - imu.utime) < imu_timeout)
-		status.status |= IMU_BIT;
+		status.status &= ~IMU_BIT;
 	else if (abort_on_no_imu == true)
 		sendAbortMessage("IMU dead");
 
 	if ((hbTime - dvl.utime) < dvl_timeout)
-		status.status |= DVL_BIT;
+		status.status &= ~DVL_BIT;
 	else if (abort_on_no_dvl == true)
 		sendAbortMessage("DVL dead");
 
 	if (dvl.pd4.btv_status == 0) // 0 is good
 	{
-		status.status |= DVL_BL_BIT;
+		status.status &= ~DVL_BL_BIT;
 		dvlbl_utime = dvl.utime;
 	}
 	else if (((hbTime - dvlbl_utime) >= dvlbl_timeout)
@@ -353,23 +354,23 @@ int HealthMonitor::checkStatus(int64_t hbTime)
 
 	if ((hbTime - parosci.utime) < depth_timeout
 			|| (hbTime - ysi.utime) < depth_timeout)
-		status.status |= DEPTH_BIT;
+		status.status &= ~DEPTH_BIT;
 	else if (abort_on_no_depth == true)
 		sendAbortMessage("DEPTH dead");
 
 	if ((hbTime - oas.utime) < oas_timeout)
-		status.status |= OAS_BIT;
+		status.status &= ~OAS_BIT;
 	else if (abort_on_no_oas == true)
 		sendAbortMessage("OAS dead");
 		
 	if(leak.leak == 1)
 	{
-		status.status |= LEAK_BIT;
+		status.status &= ~LEAK_BIT;
 		sendAbortMessage("Leak");
 	}
     
-        if(global_state.state == 0)
-            status.status |= ABORT_BIT;
+        if(global_state.state != 0)
+            status.status &= ~ABORT_BIT;
 
 	status.latitude = (float)nav.latitude*180/M_PI;	
 	status.longitude = (float)nav.longitude*180/M_PI;
@@ -380,7 +381,8 @@ int HealthMonitor::checkStatus(int64_t hbTime)
         status.altitude = (char)(-125);
     else
         status.altitude = (char)(-nav.altitude);
-	status.depth = (short)(nav.depth * 10.0);
+
+    status.depth = (short)(nav.depth * 10.0);
 	//status.roll = (char)(nav.roll * 10.0 * 180 / M_PI); //DONE below - undefined for values outside +/- 12.8 degrees
     roll_temp = (nav.roll * 180 / M_PI);
     if (roll_temp > 60) // 60 max degrees reported
@@ -428,6 +430,11 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 
 int HealthMonitor::checkAbortConditions()
 {
+	// we haven't initialised the nav yet, can't check abort
+	if (nav.utime == 0)
+	{
+		return 0;
+	}
 	// for now check depth against nav solution.  This could also consider
 	// the raw sensor measurements but would have to account for tare.
 	if (nav.depth > max_depth)
