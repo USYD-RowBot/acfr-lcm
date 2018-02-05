@@ -56,6 +56,7 @@ int program_novatel(acfr_sensor_t *s, int rate, char *com_port)
 
 int parse_inspvab(lcm_t *lcm, char *d, int64_t timestamp, int64_t gps_time, float lat_std, float lon_std)
 {
+    // Reference: Novatel Span OEM Firmware Manual 5.2.23 INSPVA p.147
     senlcm_novatel_t nov;
     memset(&nov, 0, sizeof(senlcm_novatel_t));
     nov.utime = timestamp;
