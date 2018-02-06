@@ -15,7 +15,7 @@
 
     <primitive>
         <goto>
-            <position x="0" y="1000" z="0.0"/>
+            <position x="2800" y="2800" z="0.0"/>
             <heading deg="0" />
             <timeout t="300" />
             <velocity x="2.0" />
@@ -25,7 +25,7 @@
     </primitive>
     <primitive>
         <goto>
-            <position x="0" y="1000" z="2.0"/>
+            <position x="2800" y="2800" z="2.0"/>
             <heading deg="0" />
             <timeout t="100" />
             <velocity x="0.0" />
@@ -34,10 +34,10 @@
     </primitive>
    <primitive>
         <goto>
-            <position x="0" y="1000" z="0.0"/>
-            <heading deg="180" />
+            <position x="2800" y="2800" z="0.0"/>
+            <heading deg="0" />
             <timeout t="100" />
-            <velocity x="2.0" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
