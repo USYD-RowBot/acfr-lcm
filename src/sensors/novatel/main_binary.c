@@ -66,6 +66,8 @@ typedef struct
     double gps_pitch;
     double gps_heading_std;
     double gps_pitch_std;
+    double heading_offset;
+    bool flip_roll_pitch;
     int64_t timestamp;
     int64_t gps_time;
     bool have_imu;
@@ -87,7 +89,7 @@ int program_novatel(state_t *state, int rate, char *com_port)
 	}
 	else
 	{
-		sprintf(msg, "log heading2b onnew %f\r\n", 1.0/(double)rate);
+		sprintf(msg, "log heading2b onnew \r\n");
     	acfr_sensor_write(state->sensor, msg, strlen(msg));
 		sprintf(msg, "log bestvelb ontime %f\r\n", 1.0/(double)rate);
     	acfr_sensor_write(state->sensor, msg, strlen(msg));		
@@ -142,19 +144,25 @@ int parse_bestposb(state_t *state, char *d)
 		nov.gps_time = state->gps_time;
 		nov.latitude = *(double *)&d[8] * DTOR;
 		nov.longitude = *(double *)&d[16] * DTOR;
-		nov.roll = 0;
-		nov.pitch = state->gps_pitch * DTOR;
-		nov.heading = state->gps_heading * DTOR;
+		if(state->flip_roll_pitch)
+		{	
+		    nov.roll = 0;
+		    nov.pitch = state->gps_pitch * DTOR;
+		}
+	        else
+		{	
+		    nov.pitch = 0;
+		    nov.roll = state->gps_pitch * DTOR;
+		}
+		nov.heading = fmod((state->gps_heading + state->heading_offset), 360) * DTOR;
 		nov.height = *(double *)&d[24];
-		nov.north_velocity = sin(state->gps_tog*DTOR)*state->gps_sog;
-		nov.east_velocity = cos(state->gps_tog*DTOR)*state->gps_sog;
+		nov.north_velocity = cos(state->gps_tog*DTOR)*state->gps_sog;
+		nov.east_velocity = sin(state->gps_tog*DTOR)*state->gps_sog;
 		nov.up_velocity = state->gps_vz;
-		int status;
-		if(*(int *)&d[0] >= 10)
+		int status = *(int *)&d[0];
+		if(status  > 10)
 			status = 10;
-		else
-			status = *(int *)&d[4];
-//		printf("Status %d\n", status);
+		//printf("Status %d\n", status);
 		char *ns = malloc(strlen(bestpos_status[status]) + 1);
 		memset(ns, 0, strlen(bestpos_status[status]) + 1);
 		strncpy(ns, bestpos_status[status], strlen(bestpos_status[status]));
@@ -231,6 +239,19 @@ main (int argc, char *argv[])
 
 	sprintf(key, "%s.have_imu", rootkey);
     state.have_imu = bot_param_get_boolean_or_fail(state.sensor->param, key);
+
+
+    sprintf(key, "%s.flip_roll_pitch", rootkey);
+    if(bot_param_has_key(state.sensor->param, key))
+	state.flip_roll_pitch = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    else
+	state.flip_roll_pitch = false;
+
+    sprintf(key, "%s.heading_offset", rootkey);
+    if(bot_param_has_key(state.sensor->param, key))
+	state.heading_offset = bot_param_get_double_or_fail(state.sensor->param, key);
+    else
+	state.heading_offset = 0.0;
 
     program_novatel(&state, rate, com_port);
 
