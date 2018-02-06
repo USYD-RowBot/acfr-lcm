@@ -9,13 +9,25 @@
 
 #include "perls-lcmtypes++/acfrlcm/auv_iver_motor_command_t.hpp"
 
-#define RC_OFFSET 505
-#define RC_THROTTLE_OFFSET 493      // Testing 16092016 JJM
-#define RC_TO_RAD (0.071875*M_PI/180)*2
+//#define RC_OFFSET 505
+//#define RC_THROTTLE_OFFSET 493      // Testing 16092016 JJM
+//#define RC_TO_RAD (0.071875*M_PI/180)*2
+//#define RC_TO_RPM 8              // Mitch
+//#define RC_MAX_PROP_RPM 1500
+//#define RC_DEADZONE 40 // Testing 160902016 JJM // this is defined in the spektrum header
+//#define RCMULT 4.8 //RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE-RC_DEADZONE)
+
+
+// to match the NGA/DX6 controller (after scaling * 2)
+#define RC_OFFSET 1024
+#define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
+#define RC_HALF_RANGE 685
+#define RC_TO_RAD 2*(24*M_PI/180)/RC_HALF_RANGE
 #define RC_TO_RPM 8              // Mitch
 #define RC_MAX_PROP_RPM 1500
-//#define RC_DEADZONE 40 // Testing 160902016 JJM // this is defined in the spektrum header
-#define RCMULT 4.8 //RC_MAX_PROP_RPM/(RC_HALF_INPUT_RANGE-RC_DEADZONE)
+#define RC_DEADZONE 80 // Testing 160902016 JJM
+#define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
+#define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
 
 class IverController: public ControllerBase
 {

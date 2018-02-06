@@ -4,6 +4,7 @@
 import lcm
 import sys
 import time
+import math
 
 LCMROOT='/home/auv/git/acfr-lcm'
 
@@ -15,33 +16,31 @@ lc = lcm.LCM();
 
 msg = auv_control_t()
 msg.depth_mode = auv_control_t.DEPTH_MODE
-msg.run_mode = auv_control_t.DIVE
+msg.run_mode = auv_control_t.RUN
 
-if (len(sys.argv) > 1):
-    msg.heading = float(5.31)
-    msg.depth = float(1.0)
-    msg.altitude = float(0.0)
-    msg.pitch = float(0.0)
-    msg.vx = float(0.0)
+msg.altitude = float(0.0)
+msg.pitch = float(0.0)
+msg.vx = float(0.0)
+msg.heading = float(math.pi / 2)
+
+for i in xrange(10):
+    msg.depth = float(2.0)
 
     msg.utime = int(time.time() * 1000000)
+    time.sleep(0.5)
 
-    lc.publish('AUV_CONTROL', msg.encode())
+    lc.publish('NGA.AUV_CONTROL', msg.encode())
     print "Sent dive command"
 
-    time.sleep(120)
 
+for i in xrange(20):
     msg.utime = int(time.time() * 1000000)
     msg.depth = -0.04
-    lc.publish('AUV_CONTROL', msg.encode())
+    lc.publish('NGA.AUV_CONTROL', msg.encode())
     print "Sent surface command"
+    time.sleep(0.5)
 
-    time.sleep(5)
-
-    msg.utime = int(time.time() * 1000000)
-    msg.run_mode = auv_control_t.STOP
-    lc.publish('AUV_CONTROL', msg.encode())
-    print "Sent STOP command"
-else:
-    print 'Wrong number of args'
-
+msg.utime = int(time.time() * 1000000)
+msg.run_mode = auv_control_t.STOP
+lc.publish('AUV_CONTROL', msg.encode())
+print "Sent STOP command"

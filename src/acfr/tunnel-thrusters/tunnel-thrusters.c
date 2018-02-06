@@ -321,8 +321,7 @@ int main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    //acfrlcm_tunnel_thruster_command_t_subscribe(state.lcm, "TUNNEL_THRUSTER_COMMAND", &tunnel_command_handler, &state);
-    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA_MOTOR", &nga_motor_command_handler, &state);
+    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA.NEXTGEN_MOTOR", &nga_motor_command_handler, &state);
     
     while (!program_exit)
     {
