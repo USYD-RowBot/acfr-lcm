@@ -103,6 +103,7 @@ int program_novatel(state_t *state, int rate, char *com_port)
 
 int parse_inspvab(state_t *state, char *d)
 {
+    // Reference: Novatel Span OEM Firmware Manual 5.2.23 INSPVA p.147
     senlcm_novatel_t nov;
     memset(&nov, 0, sizeof(senlcm_novatel_t));
     nov.utime = state->timestamp;
