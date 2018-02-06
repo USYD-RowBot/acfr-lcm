@@ -84,10 +84,12 @@ int main(void)
 	for(int i=0; i<20; i++)
 	{
 		status = CAN_Write(h, &rev_config1);
+		printf("CAN Status 0: %d\n", status);
 	}
 	for(int j=0; j<20; j++)
 	{
 		status = CAN_Write(h, &rev_config2);
+		printf("CAN Status 0: %d\n", status);
 	}
 	//Configure BMS 2
 	rev_config1.ID = RECEIVE_CONFIG1 + OFFSET2;
@@ -95,10 +97,12 @@ int main(void)
 	for(int i=0; i<20; i++)
 	{
 		status = CAN_Write(h, &rev_config1);
+		printf("CAN Status 1: %d\n", status);
 	}
 	for(int j=0; j<20; j++)
 	{
 		status = CAN_Write(h, &rev_config2);
+		printf("CAN Status 1: %d\n", status);
 	}
 	//Configure BMS 3
 	rev_config1.ID = RECEIVE_CONFIG1 + OFFSET3;
@@ -106,10 +110,12 @@ int main(void)
 	for(int i=0; i<20; i++)
 	{
 		status = CAN_Write(h, &rev_config1);
+		printf("CAN Status 2:  %d\n", status);
 	}
 	for(int j=0; j<20; j++)
 	{
 		status = CAN_Write(h, &rev_config2);
+		printf("CAN Status 2: %d\n", status);
 	}
 	//Configure BMS 4
 	rev_config1.ID = RECEIVE_CONFIG1 + OFFSET4;
@@ -117,10 +123,12 @@ int main(void)
 	for(int i=0; i<20; i++)
 	{
 		status = CAN_Write(h, &rev_config1);
+		printf("CAN Status 3: %d\n", status);
 	}
 	for(int j=0; j<20; j++)
 	{
 		status = CAN_Write(h, &rev_config2);
+		printf("CAN Status 3: %d\n", status);
 	}
 
 	printf("All bms configuared with:\n");
