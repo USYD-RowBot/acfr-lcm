@@ -67,10 +67,14 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 	// set to source F.O.R values, then translate to
 	nav.x = msg_in->latitude;			// Northings relative to origin (m)
 	nav.y = msg_in->longitude;			// Eastings relative to origin (m)
-	int error_code = pj_transform(state->gps, state->tmerc, 1, 1, &nav.x, &nav.y, 0);  // src_def, dest_def, point_count, point_offset, x, y, z 
-	if (error_code != 0)													 // x y z = N E D (z/D = null)
+    if (state->verbose)
+    {
+        printf("Lat nav.x: %f Lon nav.y: %f \n", nav.x, nav.y);
+    }
+	int error_code = pj_transform(state->gps, state->tmerc, 1, 1, &nav.y, &nav.x, 0);  // src_def, dest_def, point_count, point_offset, x, y, z 
+	if (error_code != 0)													 // Note: supposed to be NED, but actually END (y x z) x y z = N E D (z/D = null)
 	{
-		fprintf(stderr, "NavTranslate FATAL ERROR: can't perform Transverse Mercator Projection\n");
+		fprintf(stderr, "NavTranslate FATAL ERROR: can't perform Transverse Mercator Projection %d\n", error_code);
         exit(-1);
 	}
     
@@ -145,9 +149,15 @@ int main(int argc, char **argv)
 	// Set channel names with vehicle name
 	snprintf(state.ch_in_novatel, 128, "%s.NOVATEL", state.vehicle_name);
 	snprintf(state.ch_out_nav, 128, "%s.ACFR_NAV", state.vehicle_name);
+    if (state.verbose)
+    {
+        printf("Channel in: %s\n", state.ch_in_novatel);
+        printf("Channel out: %s\n", state.ch_out_nav);
+    }
 
 	// Get the root key from the command line, program name
-	sprintf(state.root_key, "%s", basename(argv[0]));
+	//sprintf(state.root_key, "%s", basename(argv[0]));
+    sprintf(state.root_key, "nav.acfr-nav-new"); // use std 
 
 	// Read the config file
     char key[64]; // temp to hold keys for lookup
@@ -164,17 +174,23 @@ int main(int argc, char **argv)
     state.verbose = bot_param_get_boolean_or_fail(param, key);
 	
 	// And convert Lat and Long from degrees to radians
-    sprintf(key, "%s.origin_lat", state.root_key);
+    sprintf(key, "%s.latitude", state.root_key);
     printf("Requesting Parameter: %s\n", key);
     state.origin[0] = DTOR * bot_param_get_double_or_fail(param, key);
 
-	printf(key, "%s.origin_long", state.root_key);
+	sprintf(key, "%s.longitude", state.root_key);
     printf("Requesting Parameter: %s\n", key);
     state.origin[1] = DTOR * bot_param_get_double_or_fail(param, key);
 	
+    if (state.verbose)
+    {
+        printf("Origin - Lat: %f Lon: %f \n", state.origin[0], state.origin[1]);
+        printf("Origin - Lat: %f Lon: %f \n", (RTOD * state.origin[0]), (RTOD * state.origin[1]));
+    }
+
 	// Setup for Transverse Mercator Projection using proj.4 library 
     char proj_str[128];
-    sprintf(proj_str, "+proj=tmerc +lat_0=%f +lon_0=%f +axis=ned +units=m", state.origin[0] * RTOD, state.origin[1] * RTOD);
+    sprintf(proj_str, "+proj=tmerc +lat_0=%f +lon_0=%f +axis=ned +units=m", RTOD * state.origin[0], RTOD * state.origin[1]);
     state.gps = pj_init_plus("+proj=latlong +ellps=WGS84");
     state.tmerc = pj_init_plus(proj_str);
 	if (state.tmerc == 0 || state.gps == 0)
@@ -205,7 +221,7 @@ int main(int argc, char **argv)
         ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
         if(ret == -1)
         {
-            fprintf(stderr, "NavTranslate: Select failure: %i", errno);
+            fprintf(stderr, "NavTranslate: Select failure: %i %s", errno, strerror(errno));
         }
         else if(ret != 0) // check incoming message
         {
@@ -216,6 +232,10 @@ int main(int argc, char **argv)
 		}
 
     } // end main loop
+    
+    // free proj4 memory
+    pj_free(state.gps);
+    pj_free(state.tmerc);
 
     // close LCM commections
     lcm_destroy(state.lcm);
