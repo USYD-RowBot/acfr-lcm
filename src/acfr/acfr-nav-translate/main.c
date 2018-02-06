@@ -147,7 +147,9 @@ int main(int argc, char **argv)
     }
 	
 	// Set channel names with vehicle name
-	snprintf(state.ch_in_novatel, 128, "%s.NOVATEL", state.vehicle_name);
+	//snprintf(state.ch_in_novatel, 128, "%s.NOVATEL", state.vehicle_name);
+	//temp hack as NOVATEL doesn't have prefix yet
+	snprintf(state.ch_in_novatel, 128, "NOVATEL");
 	snprintf(state.ch_out_nav, 128, "%s.ACFR_NAV", state.vehicle_name);
     if (state.verbose)
     {
