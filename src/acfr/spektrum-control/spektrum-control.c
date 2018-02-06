@@ -128,6 +128,9 @@ parse_rc(char *buf, state_t *state)
         {
             channel_id = (buf[i*2] & 0xFC) >> 2;
             channel_value = ((buf[i*2] & 0x03) << 8) | (buf[(i*2)+1] & 0xFF);
+            // compensate for the limited range - so it better matches the
+            // range of the DX6
+            channel_value <<= 1;
         }
         
 

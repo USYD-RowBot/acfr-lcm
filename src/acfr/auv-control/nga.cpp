@@ -1,6 +1,8 @@
 #include <csignal>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "controller.hpp"
 #include "pid.h"
 
@@ -120,7 +122,9 @@ void NGAController::init()
 
 void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
+    std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
+    memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
 
     double prop_rpm = 0.0;
@@ -207,7 +211,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
-        rudder_angle = -pid(&this->gains_heading, diff_heading, 0.0, dt);
+        rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
         double differential_lat = pid(&this->gains_tunnel_heading,
                 diff_heading, 0, dt);
@@ -245,9 +249,11 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 {
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t mc;
+    memset(&mc, 0, sizeof(mc));
+
+    mc.utime = timestamp_now();
 
     // Lateral tunnel thrusters
-    mc.utime = timestamp_now();
     int fore = 0;
     int aft = 0;
     double rudder;
@@ -296,6 +302,7 @@ void NGAController::dead_control()
 {
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t rc;
+    memset(&rc, 0, sizeof(rc));
     rc.utime = timestamp_now();
 
     rc.tail_thruster = 0;
