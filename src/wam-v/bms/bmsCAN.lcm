@@ -1,0 +1,25 @@
+package bmsCAN;
+
+struct data
+{
+	int16_t bms;
+	string error;
+	byte soc;
+	float voltage;
+	float current;
+	byte temp;
+	float cvolt1;
+	float cvolt2;
+	float cvolt3;
+	float cvolt4;
+	float cvolt5;
+	float cvolt6;
+	float cvolt7;
+	float cvolt8;
+	float cvolt9;
+	float cvolt10;
+	float cvolt11;
+	float cvolt12;
+	float cvolt13;
+	float cvolt14;
+}
