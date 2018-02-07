@@ -15,38 +15,38 @@
 
     <primitive>
         <goto>
-            <position x="2800" y="2800" z="0.0"/>
+            <position x="350" y="1800" z="0.0"/>
             <heading deg="0" />
-            <timeout t="300" />
-            <velocity x="2.0" />
+            <timeout t="500" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="2900" y="2800" z="0.0"/>
+            <position x="450" y="1800" z="0.0"/>
             <heading deg="0" />
-            <timeout t="100" />
-            <velocity x="2.0" />
+            <timeout t="400" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
         </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="2900" y="2780" z="0.0"/>
+            <position x="450" y="1780" z="0.0"/>
             <heading deg="180" />
-            <timeout t="50" />
-            <velocity x="2.0" />
+            <timeout t="200" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
         </goto>
     </primitive>
    <primitive>
         <goto>
-            <position x="2800" y="2780" z="0.0"/>
+            <position x="350" y="1780" z="0.0"/>
             <heading deg="180" />
-            <timeout t="100" />
-            <velocity x="2.0" />
+            <timeout t="400" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
