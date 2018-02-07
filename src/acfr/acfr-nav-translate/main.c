@@ -72,7 +72,7 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
         printf("Lat nav.x: %f Lon nav.y: %f \n", nav.x, nav.y);
     }
 	int error_code = pj_transform(state->gps, state->tmerc, 1, 1, &nav.y, &nav.x, 0);  // src_def, dest_def, point_count, point_offset, x, y, z 
-	if (error_code != 0)													 // Note: supposed to be NED, but actually END (y x z) x y z = N E D (z/D = null)
+	if (error_code != 0)							 // Note: supposed to be NED, but actually END (y x z) x y z = N E D (z/D = null)
 	{
 		fprintf(stderr, "NavTranslate FATAL ERROR: can't perform Transverse Mercator Projection %d\n", error_code);
         exit(-1);
@@ -95,8 +95,8 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 	double velocity_magnitude = sqrt(msg_in->east_velocity * msg_in->east_velocity + msg_in->north_velocity * msg_in->north_velocity);
     double velocity_body_angle = velocity_compass_angle - nav.heading; 
   	
-    	nav.vy = velocity_magnitude * sin(velocity_body_angle);	// Body F.O.R. Forward velocity (m/s)
-   	nav.vx = velocity_magnitude * cos(velocity_body_angle);	// Body F.O.R. Starboard velocity (m/s)
+    	nav.vy = velocity_magnitude * sin(velocity_body_angle);	// Body F.O.R. Starboard velocity (m/s)
+   	nav.vx = velocity_magnitude * cos(velocity_body_angle);	// Body F.O.R. Forward velocity (m/s)
     
 	nav.vz = -msg_in->up_velocity; 	    // not used for wam-v 2D planner  
 	nav.rollRate = 0;					// not used for wam-v 2D planner 
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 
 	// Setup for Transverse Mercator Projection using proj.4 library 
     char proj_str[128];
-    sprintf(proj_str, "+proj=tmerc +lat_0=%f +lon_0=%f +axis=ned +units=m", RTOD * state.origin[0], RTOD * state.origin[1]);
+    sprintf(proj_str, "+proj=tmerc +lat_0=%f +lon_0=%f +axis=enu +units=m", RTOD * state.origin[0], RTOD * state.origin[1]);
     state.gps = pj_init_plus("+proj=latlong +ellps=WGS84");
     state.tmerc = pj_init_plus(proj_str);
 	if (state.tmerc == 0 || state.gps == 0)
