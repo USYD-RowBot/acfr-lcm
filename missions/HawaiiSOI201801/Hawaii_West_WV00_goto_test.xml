@@ -1,0 +1,24 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    
+    <desc>
+        This is a test mission
+    </desc>
+    <global>
+        <location lat="19.9164" lon="-155.9193" />
+        <turn_radius m='0' />
+        <drop_distance m="4" />
+        <drop_angle rad="0.4" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+
+    <primitive>
+        <goto>
+            <position x="100" y="100" z="0.0"/>
+            <heading deg="45" />
+            <timeout t="300" />
+            <velocity x="2.0" />
+        </goto>
+    </primitive>
+</mission>
