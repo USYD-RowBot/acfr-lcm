@@ -285,7 +285,9 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             fprintf(stderr, "RC Message Timeout in RC MODE RC: transition to RC MODE ZERO \n");
             state->control_source = RC_MODE_ZERO; // Return to zero mode until another msg comes through
             mc_port.command_speed = 0;
+            mc_port.enabled = false;
             mc_stbd.command_speed = 0;
+            mc_stbd.enabled = false;
             state->torqeedo_motors_relay_enabled = false;
             if (state->torqeedo_motors_relay_reported == true)
             {
@@ -303,7 +305,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 	    		send_relay_cmd(state, true);
                 fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
             }
-
+            mc_port.enabled = true;
+            mc_stbd.enabled = true;
             //printf("HB: %5d, %5d, %5d, %5d, %5d, %5d\n", state->spektrum_msg.values[0], state->spektrum_msg.values[1], state->spektrum_msg.values[2], 
             //                                             state->spektrum_msg.values[3], state->spektrum_msg.values[4], state->spektrum_msg.values[5]);
             //printf("Switch Value: %d @ %d > %d ?\n", state->spektrum_msg.values[RC_GEAR], RC_GEAR, REAR_POS_CUTOFF);
@@ -439,7 +442,9 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             // stop moving, but don't go to Zero mode, in case messages restart
             fprintf(stderr, "Control Message Timeout in RC MODE AUTO: remain in RC MODE AUTO, but stop motors \n");
             mc_port.command_speed = 0;
+            mc_port.enabled = false; 
             mc_stbd.command_speed = 0;
+			mc_stbd.enabled = false;
             state->torqeedo_motors_relay_enabled = false;
             if (state->torqeedo_motors_relay_reported == true)
             {
@@ -459,7 +464,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 		        	send_relay_cmd(state, true);
 		        	fprintf(stderr, "Entering AUTO and RUN mode - enable torqeedo motors relay\n");
                 }
-                
+                mc_port.enabled = true;
+            	mc_stbd.enabled = true;
                 // lock the nav and command data and get a local copy
                 pthread_mutex_lock(&state->nav_lock);
                 acfrlcm::auv_acfr_nav_t nav = state->nav;
@@ -541,7 +547,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         		    send_relay_cmd(state, false);
         		    fprintf(stderr, "Not in RUN mode - disable torqeedo motors relay\n");
         		}
-
+            	mc_port.enabled = false;
+            	mc_stbd.enabled = false;
             }
         } // end timeout else
     } // end AUTO mode
@@ -571,7 +578,8 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
 			send_relay_cmd(state, false);
 			fprintf(stderr, "Entering RC_MODE_ZERO - disable torqeedo motors relay\n");
         }
-
+		mc_port.enabled = false;
+        mc_stbd.enabled = false;
 	}
 
     mc_port.utime = timestamp_now();
