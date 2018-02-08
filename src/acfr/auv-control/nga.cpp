@@ -1,6 +1,8 @@
 #include <csignal>
 #include <unistd.h>
 
+#include <iostream>
+
 #include "controller.hpp"
 #include "pid.h"
 
@@ -120,6 +122,7 @@ void NGAController::init()
 
 void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
+    std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
@@ -176,9 +179,18 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double mutual_vert = pid(&this->gains_tunnel_descent,
                 nav.vz, target_descent, dt);
 
+	// this IS CORRECT!!!
+	differential_vert = -differential_vert;
+
+	//mutual_vert = 0.0;
+	//differential_vert = 0.0;
+
+
         // Set motor controller values
         mc.vert_fore = mutual_vert + differential_vert;
         mc.vert_aft = mutual_vert - differential_vert;
+
+	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
 
 
         /************************************************************
@@ -208,12 +220,15 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
-        rudder_angle = -pid(&this->gains_heading, diff_heading, 0.0, dt);
+        rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
         double differential_lat = pid(&this->gains_tunnel_heading,
                 diff_heading, 0, dt);
-        mc.lat_fore = differential_lat;
-        mc.lat_aft = -differential_lat;
+
+	//differential_lat = -differential_lat;
+	std::cout << "Diff lat: " << differential_lat << std::endl;
+        mc.lat_fore = -differential_lat;
+        mc.lat_aft = +differential_lat;
 
         // FIXME: Might consider adding some lat tunnel thruster here
         
@@ -238,6 +253,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         mc.tail_rudder = rudder_angle;
         mc.tail_elevator = plane_angle;
     }
+
+    // safety hard codes
+    mc.tail_elevator = 0.0;
     
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }

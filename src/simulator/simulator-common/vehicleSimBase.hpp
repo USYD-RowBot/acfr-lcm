@@ -11,10 +11,9 @@
 #include "acfr-common/auv_map_projection.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
-//#include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
+#include "perls-lcmtypes++/senlcm/parosci_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
@@ -62,10 +61,6 @@ class VehicleSimBase
 public:
     VehicleSimBase();
     virtual ~VehicleSimBase();
-    // motor command callback
-    void on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_nga_motor_command_t *mc, lcm::LCM *lcm);
-
-    void on_nav_store(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const auv_acfr_nav_t *nav, lcm::LCM *lcm); 
 
     void setVehicleName(string vehName);
     string const getVehicleName() const;
@@ -75,7 +70,7 @@ public:
 protected:
     // Calculate the path, this is where the magic happens
     void calculate(); 
-    virtual void updateState( const state_type &x , state_type &dxdt , const double /* t */ );
+    virtual void updateState( const state_type &x , state_type &dxdt , const double /* t */ ) = 0;
 
     // virtual functions for derived classes to decide on data to be published
     virtual void publishSensorData() = 0;
@@ -85,6 +80,7 @@ protected:
     void publishIMU();
     void publishTCM();
     void publishYSI();
+    void publishParosci();
     void publishGPS();
     void publishDVL();
  
@@ -112,11 +108,15 @@ private:
 
     SMALL::Vector3D accel;
 
-    ofstream fp, fp_nav;
     Local_WGS84_TM_Projection *map_projection_sim;
 
-    int64_t last_dvl_time = 4.611686e+18, last_gps_time = 4.611686e+18, last_ysi_time = 4.611686e+18, last_tcm_time = 4.611686e+18, last_print_time = 4.611686e+18; // 2^62
-    int64_t last_obs_time = 4.611686e+18;
+    int64_t last_dvl_time;
+    int64_t last_gps_time;
+    int64_t last_ysi_time;
+    int64_t last_tcm_time;
+    int64_t last_print_time;
+    int64_t last_obs_time;
+    int64_t last_parosci_time;
 
     // earth rotation in the navigation frame
     SMALL::Vector3D earth_rot;
@@ -137,9 +137,6 @@ private:
     #define ROLLDOTNDX 9
     #define PITCHDOTNDX 10
     #define HDGDOTNDX 11
-
-    //SMALL::Vector6D in;
-    auv_nga_motor_command_t in;
 
     double ba_x,ba_y,ba_z,bg_x,bg_y,bg_z;
 

@@ -172,8 +172,8 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //if(fabs(prop_force) > 10.0)
     //    prop_force = prop_force / fabs(prop_force) * 10;
     
-    double tail_x = prop_force * cos(in.tail_rudder) * cos(in.tail_elevator);
-    double tail_y = prop_force * sin(in.tail_rudder) * cos(in.tail_elevator);
+    double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator);
+    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator);
     double tail_z = prop_force * sin(in.tail_elevator);
 
 
@@ -314,10 +314,10 @@ void NGAVehicleSim::on_motor_command(const lcm::ReceiveBuffer* rbuf, const std::
 
 void NGAVehicleSim::publishSensorData()
 {
-    publishACFRNav();
-    publishIMU();
+    //publishACFRNav();
+    //publishIMU();
     publishTCM();
-    publishYSI();
+    publishParosci();
     publishGPS();
     publishDVL();
 }
