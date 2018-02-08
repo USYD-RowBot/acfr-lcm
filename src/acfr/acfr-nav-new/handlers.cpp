@@ -156,7 +156,7 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 
 	state->bottomLock = btv_ok;
 
-	if( btv_ok )
+	if( true ) // btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)rdi->utime/1e6);
@@ -405,13 +405,14 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	}
 
 	state->bottomLock = btv_ok;
-	state->altitude = dvl->alt;
+	if(!state->broken_iver_alt)
+	    state->altitude = dvl->alt;
 	
 	//if( btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)dvl->utime/1e6);
-	    rdi_data.alt = dvl->alt;
+	    rdi_data.alt = state->altitude;
 	    rdi_data.r1 = 0.0;
 	    rdi_data.r2 = 0.0;
 	    rdi_data.r3 = 0.0;
@@ -443,6 +444,12 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	    }
 	
     }
+}
+
+void on_uvc_osi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_osi_t *osi, state_c* state)
+{
+    // Fix for broken altimeter on the Umich Iver
+    state->altitude = osi->altimeter;
 }
 
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state)
