@@ -40,7 +40,18 @@ os5000_volts_to_psi (double volts)
     // 10 bar in psi = 145.0
     //double psi = 145.0/2.25 * (volts - 0.25); // this is incorrect see explanation below
     
-    double psi = 145.0/2.0 * (volts - 0.25);
+    //double psi = 145.0/2.0 * (volts - 0.25);
+    //return psi;
+
+    // US7139-150PA-5W00000
+    // 150 psi
+    double psi = 150.0/2.0 * (volts - 0.25);
+    int static count = 0;
+    if (count ++ > 10)
+    {
+        printf("Read in volts: %f for depth: %f(psi)\n", volts, psi);
+        count = 0;
+    }
     return psi;
 
 
