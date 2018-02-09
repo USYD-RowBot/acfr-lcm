@@ -21,8 +21,8 @@ msg.run_mode = auv_control_t.RUN
 # initial 'zero' settings
 msg.altitude = float(0.0)
 msg.pitch = float(0.0)
-msg.vx = float(0.0)
-msg.heading = float(0.0)
+msg.vx = float(2.0)
+msg.heading = float(5)
 
 # send a null depth (so the plots later don't have a sawtooth)
 msg.utime = int(time.time() * 1000000)
@@ -30,10 +30,8 @@ msg.depth = float(0.0)
 time.sleep(0.5)
 lc.publish('NGA.AUV_CONTROL', msg.encode())
 
-msg.heading = float(math.pi / 2)
-
-for i in xrange(10):
-    msg.depth = float(2.0)
+for i in xrange(120):
+    msg.depth = float(0.0)
 
     msg.utime = int(time.time() * 1000000)
     time.sleep(0.5)
@@ -41,13 +39,6 @@ for i in xrange(10):
     lc.publish('NGA.AUV_CONTROL', msg.encode())
     print "Sent dive command"
 
-
-for i in xrange(10):
-    msg.utime = int(time.time() * 1000000)
-    msg.depth = -0.09
-    lc.publish('NGA.AUV_CONTROL', msg.encode())
-    print "Sent surface command"
-    time.sleep(0.5)
 
 msg.utime = int(time.time() * 1000000)
 msg.run_mode = auv_control_t.STOP

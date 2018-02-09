@@ -1,24 +1,24 @@
 <?xml version="1.0" standalone="no" ?>
 <mission>
-    <location lat="-14.698974" lon="145.448254" />
+    
     <desc>
-        This is a dense coverage at Trimodal Site 1
+        This is a test mission
     </desc>
     <global>
-        <turn_radius m='7.5' />
+        <location lat="19.9164" lon="-155.9193" />
+        <turn_radius m='0' />
         <drop_distance m="4" />
-        <drop_angle rad="0.5" />
+        <drop_angle rad="0.4" />
         <mission_timeout t = "1"/>
         <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
     </global>
+
     <primitive>
         <goto>
-            <!-- trimodal beach -->
-            <position x="450" y="0" z="0.0"/>
-            <heading deg="0" />
+            <position x="100" y="100" z="0.0"/>
+            <heading deg="45" />
             <timeout t="300" />
-            <velocity x="1.0" />
-            <depth mode = "depth" />
+            <velocity x="2.0" />
         </goto>
     </primitive>
 </mission>
