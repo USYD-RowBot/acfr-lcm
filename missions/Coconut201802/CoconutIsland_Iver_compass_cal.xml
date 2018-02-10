@@ -15,7 +15,7 @@
 		<goto>
 			<position x="-10" y="-10" z="0.0"/>
 			<heading deg="45" />
-			<timeout t="100" />
+			<timeout t="300" />
 			<velocity x="1.0" />
 			<depth mode = "depth" />
 		</goto>
