@@ -16,7 +16,7 @@
     <primitive>
         <goto>
             <position x="0" y="-5" z="0.0"/>
-            <heading deg="0" />
+            <heading deg="-20" />
             <timeout t="360" />
             <velocity x="1.0" />
             <depth mode = "depth" />
@@ -24,8 +24,8 @@
     </primitive>
     <primitive>
         <goto>
-            <position x="20" y="-5" z="0.5"/>
-            <heading deg="0" />
+            <position x="20" y="-11.847475" z="0.5"/>
+            <heading deg="-20" />
             <timeout t="360" />
             <velocity x="1.0" />
             <depth mode = "depth" />
@@ -34,8 +34,8 @@
     </primitive>
     <primitive>
         <goto>
-            <position x="50" y="-5" z="0.5"/>
-            <heading deg="0" />
+            <position x="50" y="-22.1685" z="0.5"/>
+            <heading deg="-20" />
             <timeout t="360" />
             <velocity x="1.0" />
             <depth mode = "depth" />
@@ -43,8 +43,8 @@
     </primitive>
     <primitive>
         <goto>
-            <position x="60" y="-5" z="0.0"/>
-            <heading deg="0" />
+            <position x="60" y="-26" z="0.0"/>
+            <heading deg="-20" />
             <timeout t="360" />
             <velocity x="1.0" />
             <depth mode = "depth" />
