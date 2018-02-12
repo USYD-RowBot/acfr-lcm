@@ -13,7 +13,7 @@
 	</global>
 	<primitive>
 		<goto>
-			<position x="-750.0" y="1673.0" z="0.0"/>
+			<position x="-1783.0" y="640.0" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -22,7 +22,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-650.0" y="1673.0" z="0.0"/>
+			<position x="-1683.0" y="640.0" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -31,7 +31,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-640.0" y="1683.0" z="0.0"/>
+			<position x="-1673.0" y="650.0" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -40,7 +40,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-640.0" y="1783.0" z="0.0"/>
+			<position x="-1673.0" y="750.0" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -49,7 +49,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-650.0" y="1793.0" z="0.0"/>
+			<position x="-1683.0" y="760.0" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -58,7 +58,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-750.0" y="1793.0" z="0.0"/>
+			<position x="-1783.0" y="760.0" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -67,7 +67,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-760.0" y="1783.0" z="0.0"/>
+			<position x="-1793.0" y="750.0" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -76,7 +76,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-760.0" y="1683.0" z="0.0"/>
+			<position x="-1793.0" y="650.0" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -85,7 +85,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-750.0" y="1673.0" z="0.0"/>
+			<position x="-1783.0" y="640.0" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -94,7 +94,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-650.0" y="1673.0" z="0.0"/>
+			<position x="-1683.0" y="640.0" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -103,7 +103,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-640.0" y="1683.0" z="0.0"/>
+			<position x="-1673.0" y="650.0" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -112,7 +112,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-640.0" y="1783.0" z="0.0"/>
+			<position x="-1673.0" y="750.0" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -121,7 +121,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-650.0" y="1793.0" z="0.0"/>
+			<position x="-1683.0" y="760.0" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -130,7 +130,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-750.0" y="1793.0" z="0.0"/>
+			<position x="-1783.0" y="760.0" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -139,7 +139,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-760.0" y="1783.0" z="0.0"/>
+			<position x="-1793.0" y="750.0" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -148,7 +148,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-760.0" y="1683.0" z="0.0"/>
+			<position x="-1793.0" y="650.0" z="0.0"/>
 			<heading deg="112.5" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -157,7 +157,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-777.781745931" y="1725.92893219" z="0.0"/>
+			<position x="-1810.78174593" y="692.928932188" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -166,7 +166,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-707.071067812" y="1655.21825407" z="0.0"/>
+			<position x="-1740.07106781" y="622.218254069" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -175,7 +175,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-692.928932188" y="1655.21825407" z="0.0"/>
+			<position x="-1725.92893219" y="622.218254069" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -184,7 +184,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-622.218254069" y="1725.92893219" z="0.0"/>
+			<position x="-1655.21825407" y="692.928932188" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -193,7 +193,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-622.218254069" y="1740.07106781" z="0.0"/>
+			<position x="-1655.21825407" y="707.071067812" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -202,7 +202,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-692.928932188" y="1810.78174593" z="0.0"/>
+			<position x="-1725.92893219" y="777.781745931" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -211,7 +211,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-707.071067812" y="1810.78174593" z="0.0"/>
+			<position x="-1740.07106781" y="777.781745931" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -220,7 +220,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-777.781745931" y="1740.07106781" z="0.0"/>
+			<position x="-1810.78174593" y="707.071067812" z="0.0"/>
 			<heading deg="-90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -229,7 +229,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-777.781745931" y="1725.92893219" z="0.0"/>
+			<position x="-1810.78174593" y="692.928932188" z="0.0"/>
 			<heading deg="-45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -238,7 +238,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-707.071067812" y="1655.21825407" z="0.0"/>
+			<position x="-1740.07106781" y="622.218254069" z="0.0"/>
 			<heading deg="0.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -247,7 +247,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-692.928932188" y="1655.21825407" z="0.0"/>
+			<position x="-1725.92893219" y="622.218254069" z="0.0"/>
 			<heading deg="45.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -256,7 +256,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-622.218254069" y="1725.92893219" z="0.0"/>
+			<position x="-1655.21825407" y="692.928932188" z="0.0"/>
 			<heading deg="90.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -265,7 +265,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-622.218254069" y="1740.07106781" z="0.0"/>
+			<position x="-1655.21825407" y="707.071067812" z="0.0"/>
 			<heading deg="135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -274,7 +274,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-692.928932188" y="1810.78174593" z="0.0"/>
+			<position x="-1725.92893219" y="777.781745931" z="0.0"/>
 			<heading deg="180.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -283,7 +283,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-707.071067812" y="1810.78174593" z="0.0"/>
+			<position x="-1740.07106781" y="777.781745931" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
@@ -292,7 +292,7 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="-777.781745931" y="1740.07106781" z="0.0"/>
+			<position x="-1810.78174593" y="707.071067812" z="0.0"/>
 			<heading deg="-135.0" />
 			<timeout t="3000" />
 			<velocity x="1.0" />
