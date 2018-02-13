@@ -104,21 +104,39 @@ Ship_Status::Ship_Status(char *rootkey)
     ship_id = bot_param_get_int_or_fail(param, key);
 
 
+    char channel_name[128];
+
+
     // subscribe to the LCM channels
     if(gps_source == GPS_NOVATEL || att_source == ATT_NOVATEL)
-        lcm->subscribeFunction("NOVATEL", on_novatel, this);
+    {
+        snprintf(channel_name, 128, "%s.NOVATEL", ship_name);
+        lcm->subscribeFunction(channel_name, on_novatel, this);
+    }
         
     if(gps_source == GPS_RT3202 || att_source == ATT_RT3202)
-        lcm->subscribeFunction("RT3202", on_rt3202, this);
+    {
+        snprintf(channel_name, 128, "%s.RT3202", ship_name);
+        lcm->subscribeFunction(channel_name, on_rt3202, this);
+    }
         
     if(gps_source == GPS_POSMV || att_source == ATT_POSMV)
-        lcm->subscribeFunction("POSMV", on_posmv, this);
+    {
+        snprintf(channel_name, 128, "%s.POSMV", ship_name);
+        lcm->subscribeFunction(channel_name, on_posmv, this);
+    }
    
     if(gps_source == GPS_GPSD)
-        lcm->subscribeFunction("GPSD_CLIENT", on_gps, this);
+    {
+        snprintf(channel_name, 128, "%s.GPSD_CLIENT", ship_name);
+        lcm->subscribeFunction(channel_name, on_gps, this);
+    }
     
     if(att_source == ATT_AHRS)
-        lcm->subscribeFunction("AHRS", on_ahrs, this);
+    {
+        snprintf(channel_name, 128, "%s.AHRS", ship_name);
+        lcm->subscribeFunction(channel_name, on_ahrs, this);
+    }
 
     lcm->subscribeFunction("HEARTBEAT_10HZ", on_heartbeat, this);
 
@@ -184,7 +202,7 @@ int Ship_Status::send_status()
             break;
     }
     char channel[64] = {0};
-    sprintf(channel, "SHIP_STATUS.%s", ship_name);    
+    sprintf(channel, "%s.SHIP_STATUS", ship_name);
     lcm->publish(channel, &ss);
 
     //cout << "Published ship_status on chan " << channel << " with lat:" << ss.latitude << " lon:" << ss.longitude << " r:" << ss.roll << " p:" << ss.pitch << " h:" << ss.heading << endl; 
