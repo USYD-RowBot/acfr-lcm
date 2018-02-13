@@ -15,7 +15,7 @@
 
     <primitive>
         <goto>
-            <position x="290" y="-65" z="0.0"/>
+            <position x="290" y="65" z="0.0"/>
             <heading deg="90" />
             <timeout t="300" />
             <velocity x="1.2" />
@@ -25,7 +25,7 @@
     </primitive>
     <primitive>
         <zambonie>
-            <position x="290" y="-65" z="0.0"/>
+            <position x="290" y="65" z="0.0"/>
             <heading deg="90" />
             <spacing m="0.75" />
             <length m="50" />
