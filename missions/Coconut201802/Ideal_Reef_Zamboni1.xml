@@ -8,7 +8,7 @@
         <location lat="21.455371" lon="-157.797168" />
         <turn_radius m='10' />
         <drop_distance m="4" />
-        <drop_angle rad="0.4" />
+        <drop_angle deg="40" />
         <mission_timeout t = "1"/>
         <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
     </global>
@@ -18,7 +18,7 @@
             <position x="0" y="-25" z="0.0"/>
             <heading deg="90" />
             <timeout t="300" />
-            <velocity x="1.0" />
+            <velocity x="1.2" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
