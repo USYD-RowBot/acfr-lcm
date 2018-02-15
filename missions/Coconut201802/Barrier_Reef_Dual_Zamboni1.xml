@@ -26,13 +26,13 @@
     <primitive>
         <zambonie>
             <position x="245" y="105" z="0.0"/>
-            <heading deg="90" />
+            <heading deg="0" />
             <spacing m="0.75" />
             <length m="50" />
             <width m="50" />
             <timeout t="14400" />
             <velocity x="1.1" />
-            <direction d="ccw" />
+            <direction d="cw" />
             <pitch deg="0" />
             <depth mode="depth" />
         </zambonie>
@@ -56,7 +56,7 @@
             <width m="50" />
             <timeout t="14400" />
             <velocity x="1.1" />
-            <direction d="ccw" />
+            <direction d="cw" />
             <pitch deg="0" />
             <depth mode="depth" />
         </zambonie>
