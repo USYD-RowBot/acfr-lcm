@@ -38,6 +38,31 @@
         </zambonie>
     </primitive>
 
+    <primitive>
+        <goto>
+            <position x="245" y="200" z="0.0"/>
+            <heading deg="-90" />
+            <timeout t="300" />
+            <velocity x="1.2" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <zambonie>
+            <position x="245" y="200" z="0.0"/>
+            <heading deg="-90" />
+            <spacing m="0.75" />
+            <length m="50" />
+            <width m="50" />
+            <timeout t="14400" />
+            <velocity x="1.1" />
+            <direction d="ccw" />
+            <pitch deg="0" />
+            <depth mode="depth" />
+        </zambonie>
+    </primitive>
+
 <!--
     <primitive>
         <goto>
