@@ -31,6 +31,7 @@ using namespace std;
 #define NUM_RELAYS 24               // Number of relays on relay board
 #define TORQEEDO_CTRL_MAX 1000      // Max input control value for Torqeedo Motors
 #define UPDATE_TIMEOUT 2000000      // Timeout for recovery behaviour if controller messages stop coming in from planner or rc depending on mode
+#define MOTOR_BOOT_DELAY 10000000   // Timeout w relay off to allow torqeedos to reset if software stopped while relay on
 
 typedef struct
 {
@@ -60,7 +61,7 @@ typedef struct
     // remote
     int64_t prev_remote_time = 0;
     enum rc_control_source_t control_source; // RC/ZERO/AUTO
-	acfrlcm::auv_spektrum_control_command_t spektrum_msg;
+    acfrlcm::auv_spektrum_control_command_t spektrum_msg;
 
     // vehicle name
     string vehicle_name = "DEFAULT";
@@ -70,12 +71,15 @@ typedef struct
     bool torqeedo_motors_relay_enabled = 0; // how we control it
     bool torqeedo_motors_relay_reported = 0; // what it reports
 
-	// motor speed limiting
-	double motor_limit_rc = 0;
-	double motor_limit_controller = 0;
+    // motor speed limiting
+    double motor_limit_rc = 0;
+    double motor_limit_controller = 0;
 
-	// debug verbose 
-	bool verbose = 0;
+    // for motor boot reset delay
+    int64_t prog_start_time = 0;
+
+    // debug verbose 
+    bool verbose = 0;
 
 } state_t;
 
@@ -278,8 +282,14 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     memset(&mc_port, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
     memset(&mc_stbd, 0, sizeof(acfrlcm::asv_torqeedo_motor_command_t));
 
-	if (state->control_source == RC_MODE_RC)
-	{
+    bool in_boot_delay = false;
+    if (timestamp_now() < (state->prog_start_time + MOTOR_BOOT_DELAY))
+    {
+        in_boot_delay = true;
+    }
+
+    if ((state->control_source == RC_MODE_RC) && (!in_boot_delay))
+    {
         if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from RC have timed out (may be out of range)
         {
             fprintf(stderr, "RC Message Timeout in RC MODE RC: transition to RC MODE ZERO \n");
@@ -297,12 +307,12 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         }
         else // no timeout 
         {
-	    	// transate RC commands to motor commands
+	    // transate RC commands to motor commands
             state->torqeedo_motors_relay_enabled = true;
             if (state->torqeedo_motors_relay_reported == false)
             {
                 // turn on relay
-	    		send_relay_cmd(state, true);
+	    	send_relay_cmd(state, true);
                 fprintf(stderr, "Entering RC mode - enable torqeedo motors relay\n");
             }
             mc_port.enabled = true;
@@ -434,9 +444,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             mc_stbd.command_speed = (int)(state->motor_limit_rc/100 * mc_stbd.command_speed);
         } // end timout else
     } // end RC mode
-	//else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
-    else if (state->control_source == RC_MODE_AUTO)
-	{
+    
+    //else if ((state->control_source == RC_MODE_AUTO) && (state->run_mode == acfrlcm::wam_v_control_t::RUN))
+    else if ((state->control_source == RC_MODE_AUTO) && (!in_boot_delay))
+    {
         if (timestamp_now() > (state->prev_control_time + UPDATE_TIMEOUT)) // messages from planner have timed out (something may have crashed)
         {
             // stop moving, but don't go to Zero mode, in case messages restart
@@ -552,9 +563,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
             }
         } // end timeout else
     } // end AUTO mode
-    else // in RC_MODE_ZERO or other undefined states, motors should not move
+    
+    else // in RC_MODE_ZERO or in_boot_delay or other undefined states, relay off and motors should not move
     {
-		// zero the integral terms
+	// zero the integral terms
         state->gains_vel.integral = 0;
         state->gains_heading.integral = 0;
 
@@ -566,21 +578,21 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
         {
             printf( "\nRC Mode: %d Run Mode: %d\n", state->control_source, state->run_mode);
         }
-		// set motor speed to zero
-		mc_port.command_speed = 0;
-		mc_stbd.command_speed = 0;
+	// set motor speed to zero
+	mc_port.command_speed = 0;
+	mc_stbd.command_speed = 0;
 
-		// disable motor relay
+	// disable motor relay
         state->torqeedo_motors_relay_enabled = false;
         if (state->torqeedo_motors_relay_reported == true)
         {
             // turn off relay
-			send_relay_cmd(state, false);
-			fprintf(stderr, "Entering RC_MODE_ZERO - disable torqeedo motors relay\n");
+	    send_relay_cmd(state, false);
+	    fprintf(stderr, "Entering RC_MODE_ZERO - disable torqeedo motors relay\n");
         }
-		mc_port.enabled = false;
+	mc_port.enabled = false;
         mc_stbd.enabled = false;
-	}
+    }
 
     mc_port.utime = timestamp_now();
     state->lcm.publish(state->vehicle_name+".PORT_MOTOR_CONTROL", &mc_port);
@@ -635,7 +647,8 @@ int main(int argc, char **argv)
     signal(SIGINT, signal_handler);
 
     state_t state;
-    //state.lcm = lcm_create(NULL);
+    // record time for torqeedo boot reset delay
+    state.prog_start_time = timestamp_now();
     state.run_mode = acfrlcm::wam_v_control_t::STOP;
     state.gains_vel.integral = 0;
     state.gains_heading.integral = 0;
