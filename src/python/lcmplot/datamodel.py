@@ -1,5 +1,6 @@
 from PyQt4.QtCore import QAbstractListModel, QVariant, Qt
 
+
 class DataModel(QAbstractListModel):
     def __init__(self, data, parent=None):
         super(DataModel, self).__init__(parent)

@@ -4,7 +4,7 @@ import numbers
 
 try:
     from cStringIO.StringIO import BytesIO
-except:
+except ImportError:
     from io import BytesIO
 
 
@@ -38,7 +38,7 @@ class Channel(object):
         # with the key attr.attr in place
         self.data = {}
 
-        #TODO: Create attributes in dict
+        # TODO: Create attributes in dict
 
     def handle_latest(self, lcm_type_set, raw_data):
         # we need to decode and stash the attributes away here
@@ -54,7 +54,7 @@ class Channel(object):
         attributes = self.list_attributes(lcm_type_set, message)
 
         for key, value in attributes:
-            if not key in self.data:
+            if key not in self.data:
                 self.data[key] = [value]
             else:
                 self.data[key].append(value)
@@ -70,12 +70,12 @@ class Channel(object):
                 # so split it out and get the attributes.
 
                 # if this is the first time decoding create the subchannel
-                if not attr in self.subchannels:
+                if attr not in self.subchannels:
                     self.subchannels[attr] = Channel(attr, type(value))
                     
                 # get all the subtypes attributes
                 for sub_attr, value in self.subchannels[attr].list_attributes(lcm_type_set, value):
-                    attributes.append((attr + '.'+ sub_attr, value))
+                    attributes.append((attr + '.' + sub_attr, value))
                 # don't want to append this
                 continue
             else:
@@ -83,11 +83,13 @@ class Channel(object):
 
         return attributes
 
+
 class PlotData(object):
     def __init__(self, name, time, data):
         self.name = name
         self.time = time
         self.data = data
+
 
 class MessageDecoder(object):
     def __init__(self, lcm_types):
@@ -151,7 +153,7 @@ class MessageDecoder(object):
                             # numeric array! need to check if they are
                             # all the same length
                             length = len(attribute_data[0])
-                            arrays = [list() for i in xrange(length)]
+                            arrays = [list() for _ in xrange(length)]
                             for x in attribute_data:
                                 if not len(x) == length:
                                     break
