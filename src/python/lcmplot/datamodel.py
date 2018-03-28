@@ -1,4 +1,4 @@
-from PyQt4.QtCore import QAbstractListModel, QVariant, Qt
+from PyQt5.QtCore import QAbstractListModel, QVariant, Qt
 
 
 class DataModel(QAbstractListModel):
@@ -31,6 +31,13 @@ class DataModel(QAbstractListModel):
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.provided_data)
+
+    def get_by_name(self, name):
+        for entry in self.provided_data:
+            if entry.name == name:
+                return entry
+        else:
+            return None
 
     def data(self, index, role=None):
         # need to be able to numerically index the data

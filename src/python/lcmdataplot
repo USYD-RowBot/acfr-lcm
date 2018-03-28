@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # print out the fields we can plot
     print sorted(data.keys())
 
-    from PyQt4.QtGui import QApplication
+    from PyQt5.QtGui import QApplication
     qapp = QApplication([])
     window = PlotWindow(data)
 

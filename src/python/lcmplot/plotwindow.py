@@ -1,5 +1,5 @@
-from PyQt4.QtGui import QMainWindow
-from PyQt4.QtCore import Qt, pyqtSlot
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import Qt, pyqtSlot
 
 from window import Ui_DataPlotMain
 from datamodel import DataModel
@@ -20,6 +20,8 @@ class PlotWindow(QMainWindow):
         self.ui.pushAdd.clicked.connect(self.graph_addition_pressed)
         self.ui.pushRemove.clicked.connect(self.graph_removal_pressed)
 
+        self.ui.graphicsView.dropped_data.connect(self.add_graph)
+
         n = 20
         self.next_pen_idx = 0
         self.pens = [(i, n) for i in xrange(n)]
@@ -28,7 +30,7 @@ class PlotWindow(QMainWindow):
     @pyqtSlot()
     def graph_addition_pressed(self):
         for idx in self.ui.dataTree.selectedIndexes():
-            self.plot_data(self.data.data(idx, Qt.UserRole).toPyObject())
+            self.plot_data(self.data.data(idx, Qt.UserRole).value())
 
     def next_pen(self):
         self.next_pen_idx += 1
@@ -40,3 +42,8 @@ class PlotWindow(QMainWindow):
     @pyqtSlot()
     def graph_removal_pressed(self):
         print "Button pressed!"
+
+    def add_graph(self, data_name):
+        entry = self.data.get_by_name(data_name)
+        if entry is not None:
+            self.plot_data(entry)
