@@ -131,6 +131,35 @@ void on_seabird_depth(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 
 }
 
+void on_aanderaa_ct(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const aanderaa_4319_t *ct, state_c* state)
+{
+    auv_data_tools::Aanderaa_4319_Data aanderaa;
+	auv_data_tools::Seabird_Data seabird;
+    aanderaa.set_raw_timestamp((double)ct->utime/1e6);
+    aanderaa.cond = ct->conductivity;
+    aanderaa.temp = ct->temperature;
+    aanderaa.sal = ct->salinity;
+    aanderaa.dens = ct->density;
+    aanderaa.sos = ct->speed;
+    if(state->mode == NAV)
+	{
+		seabird.set_raw_timestamp(aanderaa.get_raw_timestamp());
+		seabird.cond = aanderaa.cond;
+		seabird.temp = aanderaa.temp;
+		seabird.sal = aanderaa.sal;
+		seabird.pres = 0;
+		seabird.sos = aanderaa.sos;
+        state->slam->handle_salinitytemp_data(seabird);
+	}
+    else if(state->mode == RAW)
+    {
+        aanderaa.print(state->raw_out);
+        state->raw_out << endl;
+    }
+
+}
+
+
 // handle a message from the RDI DVL, the old code used the PD0 message
 // we are using the PD5 message as the LCM module was already written
 void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rdi_pd5_t *rdi, state_c* state) 
