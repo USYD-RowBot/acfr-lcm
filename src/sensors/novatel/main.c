@@ -70,8 +70,40 @@ int program_gps(int fd, char *cmd)
     return 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
 
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
 
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.NOVATEL", (char *)optarg);
+            break;
+         }
+    }
+}
 
 int program_exit;
 void signal_handler(int sig_num)
@@ -95,6 +127,9 @@ int main(int argc, char *argv[])
     param = bot_param_new_from_server (lcm, 1);
 
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    char *channel_name;
+    parse_args(argc, argv, &channel_name);
 
 
     // read the config file
@@ -263,7 +298,7 @@ int main(int argc, char *argv[])
                 time_t gps_utc_time = mktime(&gps_time);
                 nov.gps_time = (int64_t)(gps_utc_time * 1e6) + (int64_t)((fmod(g_seconds,1.0)) * 1e6);
                 //printf("%s\n", asctime(&gps_time));
-                senlcm_novatel_t_publish(lcm, "NOVATEL", &nov);
+                senlcm_novatel_t_publish(lcm, channel_name, &nov);
             }
             if((tok[0][0] == '<') && ret == 22)
             {

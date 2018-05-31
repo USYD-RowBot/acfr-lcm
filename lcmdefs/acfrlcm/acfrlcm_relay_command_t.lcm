@@ -1,0 +1,12 @@
+package acfrlcm;
+
+struct relay_command_t
+{
+    int64_t utime;
+    
+	byte relay_number; // Refer to config for device listing (range: 1..24)
+	boolean relay_request; // Requested state 0: off, 1: on
+    int32_t relay_off_delay; // Only for use with relay on command, switches the relay off after 'off_delay' (range: 100..2147483647)
+    byte io_number ; // Refer to config for device listing (range: 1..8)
+    boolean io_request; // Requested state 0: off, 1: on
+}

@@ -1,0 +1,13 @@
+package acfrlcm;
+
+struct asv_torqeedo_motor_status_t
+{
+    int64_t utime;
+
+	int32_t prop_speed;	
+	int32_t voltage;
+	int16_t pcb_temp;
+	int32_t current;
+	int32_t stator_temp;
+	
+}

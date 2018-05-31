@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <signal.h>
 #include <climits>
+#include <string>
 
 #include "perls-common/bot_util.h"
 #include "perls-common/lcm_util.h"
@@ -25,7 +26,7 @@
 
 #include "perls-lcmtypes++/acfrlcm/auv_status_short_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
-
+#include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 
 
 class HealthMonitor
@@ -34,6 +35,7 @@ public:
     HealthMonitor();
 
     int loadConfig(char *programName);
+    int subscribeChannels();
     int checkStatus(int64_t hbTime);
     int sendAbortMessage(const char *);
     int checkAbortConditions();
@@ -41,6 +43,10 @@ public:
     void print_bounding_box(void) {
 	std::cout << "min x/y = " << min_x << " / " << min_y << std::endl
 		<< "max x/y = " << max_x << " / " << max_y << std::endl;
+    }
+
+    void setVehicleName(std::string n) {
+        vehicle_name = n;
     }
     senlcm::tcm_t compass;
     senlcm::gpsd3_t gps;
@@ -54,6 +60,7 @@ public:
     senlcm::micron_ping_t oas;
     acfrlcm::auv_global_planner_state_t global_state;
     senlcm::os_power_system_t battery;
+    acfrlcm::auv_path_response_t path_response;
 
     //lcm_t *lcm;
     lcm::LCM lcm;
@@ -93,7 +100,6 @@ private:
 
     int64_t dvlbl_utime;
     
-    char *vehicle_name;
-    
+    std::string vehicle_name;
 };
 

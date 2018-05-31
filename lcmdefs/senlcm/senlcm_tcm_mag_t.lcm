@@ -1,0 +1,14 @@
+package senlcm;
+
+struct tcm_mag_t
+{
+    int64_t utime;
+    
+    double heading;
+    double roll;
+    double pitch;
+    double temperature;
+    double mag_x;
+    double mag_y;
+    double mag_z;
+}

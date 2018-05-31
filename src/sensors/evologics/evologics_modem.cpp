@@ -174,6 +174,9 @@ int Evologics_Modem::load_config(char *program_name)
         exit(1);
     }
 
+    sprintf(key, "%s.vehicle_name", rootkey);
+    vehicle_name = bot_param_get_str_or_fail(param, key);
+
     sprintf(key, "%s.term", rootkey);
     if (bot_param_has_key(param, key))
     {
@@ -274,11 +277,16 @@ int Evologics_Modem::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::stri
     // figure out which channel to send the data on
     int target_channel = get_target_channel(target_name.c_str());
     cout << "Got LCM message on channel " << channel;
-    if (target_channel != -1) 
+    if (target_channel != -1 || use_pbm) 
     {
+        // this should only arise when using pbm... which
+        // seems to ignore what target you specify anyway
+        // so just assign one and get on with sending
+        if (target_channel == -1)
+            target_channel = 11;
        cout << ".  Sending to target name: " << target_name << " on channel " << target_channel << endl;
        send_lcm_data((unsigned char *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), use_pbm);
-    } else {
+   } else {
        cout << ".  Target " << target_name << " not found in channel list.  Dropping lcm message." << endl;
     }
 
@@ -376,6 +384,8 @@ printf("Term char = 0x%02X\n", (unsigned int)*term);
     */ 
     send_command("AT@ZU1");      // request USBL positioning data
     send_command("AT?ZU");      // request USBL positioning data
+
+    send_command("AT@ZX0");      // turn off extended notification
     
     //send_command("ATN");      // noise mode
     
@@ -431,7 +441,7 @@ void Evologics_Modem::publish_modem_response(int64_t timestamp, vector<unsigned 
     msg.data = buf;
 
     char channel_name[128];
-    snprintf(channel_name, 128, "EVOLOGICS_LOG.%s", vehicle_name);
+    snprintf(channel_name, 128, "%s.EVOLOGICS_LOG", vehicle_name);
     this->lcm->publish(channel_name, &msg);
 }
 
@@ -872,7 +882,7 @@ int Evologics_Modem::process_modem_data(char *d, int len, int64_t timestamp)
         string target_name;
         char usbl_range_channel_name[64];
         get_target_name(er.target, target_name);
-        sprintf(usbl_range_channel_name, "EVO_RANGE.%s", target_name.c_str());
+        sprintf(usbl_range_channel_name, "%s.EVO_RANGE.%s", vehicle_name, target_name.c_str());
 
         lcm->publish(usbl_range_channel_name, &er);
         
@@ -1087,9 +1097,9 @@ int Evologics_Modem::process_usbllong(char *d, int64_t timestamp)
     ud.accuracy = atof(tokens[16]);
     
     string target_name;
-    char usbl_fix_channel_name[64];
+    char usbl_fix_channel_name[128];
     get_target_name(ud.remote_id, target_name);
-    sprintf(usbl_fix_channel_name, "EVO_USBLFIX.%s", target_name.c_str());
+    snprintf(usbl_fix_channel_name, 128, "%s.EVO_USBLFIX.%s", vehicle_name, target_name.c_str());
 
     lcm->publish(usbl_fix_channel_name, &ud);
     
@@ -1137,11 +1147,24 @@ int Evologics_Modem::process_usblangles(char *d, int64_t timestamp)
     ud.integrity = atoi(tokens[12]);
     ud.accuracy = atof(tokens[13]);
 
-    lcm->publish("EVO_ANGLES", &ud);
+    string target_name;
+    char angles_channel_name[128];
+    get_target_name(ud.remote_id, target_name);
+    snprintf(angles_channel_name, 128, "%s.EVO_ANGLES.%s", vehicle_name, target_name.c_str());
+
+    lcm->publish(angles_channel_name, &ud);
+    
+    // put it in the queue for position calculation
+    
+    /*if(fixq != NULL)
+    {
+        evologics_usbl_t *fq = new evologics_usbl_t;
+        memcpy(fq, &ud, sizeof(evologics_usbl_t));
+        fixq->push(fq);
+    }*/
     
     return 1;
 }
-
 
 int Evologics_Modem::process_im(char *d)
 {

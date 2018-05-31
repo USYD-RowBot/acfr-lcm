@@ -26,5 +26,5 @@ struct posmv_t
     double latitude_sd;
     double longitude_sd;
     
-    string status;
+//    string status;
 }

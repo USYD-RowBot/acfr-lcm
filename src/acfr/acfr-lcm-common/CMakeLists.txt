@@ -7,9 +7,14 @@ set (SRC
 	socket.c	socket.h
 				units.h
 	dfs.c		dfs.h
+                spektrum-control.h
+	auv_map_projection.cpp  auv_map_projection.hpp
 )
 
+include_directories ( 
+	/usr/include/uf-3.2
+	)	
 
 perls_add_library (acfr-common ${SRC})
-perls_target_link_libraries ( acfr-common bot2-param-client)
+perls_target_link_libraries ( acfr-common bot2-param-client ufGeographicConversions)
 

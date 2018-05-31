@@ -1,9 +1,9 @@
 perlsx_glib ()
 
-#find_package(LibXML++ REQUIRED)
+find_package(LibXML++ REQUIRED)
 
 #set(LIBXMLPP_LIBS  ${LIBXMLPP_LIBRARIES})
-#include_directories(${LibXML++_INCLUDE_DIRS})
+include_directories(${LibXML++_INCLUDE_DIRS})
 
 #add_library(GlobalPlanner
 #    SHARED
@@ -18,16 +18,14 @@ perlsx_glib ()
 perls_add_executable (global-planner 
 	global_planner.cpp
 )
-perls_target_link_libraries (global-planner
-	acfr-mission
+perls_target_link_libraries (global-planner perls-lcmtypes++ perls-common acfr-mission
 )
 
 
 perls_add_executable (GlobalPlannerTest 
 	test.cpp
 )
-perls_target_link_libraries (GlobalPlannerTest 
-	acfr-mission
+perls_target_link_libraries (GlobalPlannerTest perls-lcmtypes++ perls-common acfr-mission
 )
 
 #install(TARGETS GlobalPlanner
