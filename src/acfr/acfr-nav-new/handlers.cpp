@@ -387,7 +387,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 {
 
 
-    const double bad_value = 999.999;
+    const double bad_value = 32.768;
 
 	/*
 	 * Check the status of the bottom tracking
@@ -404,11 +404,20 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 
 	}
 
-	state->bottomLock = btv_ok;
-	if(!state->broken_iver_alt)
-	    state->altitude = dvl->alt;
 	
-	//if( btv_ok )
+
+	state->bottomLock = btv_ok;
+	double vz;
+	if(!state->broken_iver_alt)
+	{
+	    state->altitude = dvl->alt;
+	    vz = dvl->vz;
+	}
+	else
+	    vz = 0;
+	    //vz = state->iver_vz;
+	
+	if( btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)dvl->utime/1e6);
@@ -425,7 +434,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	    rdi_data.nz = 0.0;
 	    rdi_data.vx = dvl->vx;
 	    rdi_data.vy = dvl->vy;
-	    rdi_data.vz = dvl->vz;
+	    rdi_data.vz = vz;
 	    rdi_data.COG = 0;   // FIXME
 	    rdi_data.SOG = 0;   // FIXME
 	    rdi_data.bt_status = btv_ok ? 0 : 1;
@@ -450,6 +459,12 @@ void on_uvc_osi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 {
     // Fix for broken altimeter on the Umich Iver
     state->altitude = osi->altimeter;
+    if(state->broken_iver_alt)
+    {
+        state->iver_vz = (state->uvc_prev_alt - state->altitude)/((osi->utime - state->uvc_osi_prev_utime)/1e6);
+        state->uvc_osi_prev_utime = osi->utime;
+        state->uvc_prev_alt = state->altitude;
+    }
 }
 
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state)
