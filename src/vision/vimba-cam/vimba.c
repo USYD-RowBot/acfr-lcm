@@ -750,6 +750,12 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
     if(err != VmbErrorSuccess)
         printf("Frame requeue error: %d\n", err);
 
+
+    // Check the status of the cameras PTP clock
+    char *ptp_status = NULL;
+    VmbFeatureEnumGet(camera , "PtpStatus", (const char **)&ptp_status);
+    printf("PTP Status : %s\n", ptp_status);
+
     // get the actual frame timestamp based on its clock and our clock
     int64_t frame_utime = timestamp_sync_private(&state->tss, frame->timestamp, utime);
 
@@ -1123,6 +1129,8 @@ int main(int argc, char **argv)
     // Register the callback to detect cameras
     VmbFeatureInvalidationRegister(gVimbaHandle, "DiscoveryCameraEvent", camera_plugged , &state);
     VmbFeatureCommandRun (gVimbaHandle , "GeVDiscoveryAllAuto");
+    
+//    VmbFeatureInvalidationRegister(gVimbaHandle, "DiscoveryCameraEvent", ptp_callback , &state);
 
 
     // start the write thread and detach it

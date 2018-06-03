@@ -9,6 +9,7 @@
 #include "perls-common/getopt.h"
 #include "perls-common/textread.h"
 #include "perls-common/unix.h"
+#include "perls-lcmtypes/senlcm_acfr_psu_t.h"
 
 #include "bot_core.h"
 #include "hauv.h"
@@ -57,11 +58,12 @@ add_subscriptions (lcm_t *lcm, lcmlog_export_t *lle)
     senlcm_kvh1750_t_subscribe (lcm, "KVH1750", &senlcm_kvh1750_t_handler, lle);
     senlcm_usb2000_spec_t_subscribe (lcm, "SPEC_DOWN", &senlcm_usb2000_spec_t_handler, lle);
     senlcm_sts_spec_t_subscribe (lcm, "SPEC_UP", &senlcm_sts_spec_t_handler, lle);
-    senlcm_usbl_fix_t_subscribe (lcm, "USBL_FIX.*", &senlcm_usbl_fix_t_handler, lle);
+    senlcm_usbl_fix_t_subscribe (lcm, ".*USBL_FIX.*", &senlcm_usbl_fix_t_handler, lle);
     senlcm_novatel_t_subscribe (lcm, "NOVATEL", &senlcm_novatel_t_handler, lle);
-    senlcm_evologics_usbl_t_subscribe (lcm, "EVO_USBL.*", &senlcm_evologics_usbl_t_handler, lle);
+    senlcm_evologics_usbl_t_subscribe (lcm, ".*EVO_USBL.*", &senlcm_evologics_usbl_t_handler, lle);
     senlcm_ahrs_t_subscribe (lcm, "AHRS", &senlcm_ahrs_t_handler, lle);
     senlcm_bk9115_t_subscribe (lcm, "BK9115", &senlcm_bk9115_t_handler, lle);
+    senlcm_acfr_psu_t_subscribe (lcm, "PSU", &senlcm_acfr_psu_t_handler, lle);
 
     // bot_core channels
     bot_core_image_sync_t_subscribe (lcm, "^.*PROSILICA.*SYNC$", &bot_core_image_sync_t_handler, lle);

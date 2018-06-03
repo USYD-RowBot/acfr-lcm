@@ -1229,3 +1229,20 @@ senlcm_bk9115_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
     textread_stop (tr);
 }
 
+void
+senlcm_acfr_psu_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                       const senlcm_acfr_psu_t *msg, void *user)
+{
+    lcmlog_export_t *lle = user;
+    textread_t *tr = lle_get_textread (lle, channel);
+
+    textread_start (tr);
+    TEXTREAD_ADD_FIELD (tr, "utime",   "%"PRId64,  msg->utime);
+    TEXTREAD_ADD_FIELD (tr, "address","%"PRId8,      msg->address);
+    TEXTREAD_ADD_FIELD (tr, "voltage","%f",      msg->voltage);
+    TEXTREAD_ADD_FIELD (tr, "current","%f",      msg->current);
+    TEXTREAD_ADD_FIELD (tr, "temperature","%f",      msg->temperature);
+
+    textread_stop (tr);
+}
+

@@ -24,8 +24,8 @@
 
 // but with power issues...
 // 1024 is really slow, nowhere near the limit
-#define TUNNEL_MAX 1500
-#define TUNNEL_MIN -1500
+#define TUNNEL_MAX 1750
+#define TUNNEL_MIN -1750
 
 #define COMMAND_TIMEOUT_THRUST 10
 #define COMMAND_TIMEOUT 10
@@ -321,8 +321,7 @@ int main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    //acfrlcm_tunnel_thruster_command_t_subscribe(state.lcm, "TUNNEL_THRUSTER_COMMAND", &tunnel_command_handler, &state);
-    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA_MOTOR", &nga_motor_command_handler, &state);
+    acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA.NEXTGEN_MOTOR", &nga_motor_command_handler, &state);
     
     while (!program_exit)
     {
