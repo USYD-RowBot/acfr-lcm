@@ -19,6 +19,7 @@ int parseArguments(int argc, char **argv, state_c *state, string &lcm_filename, 
     }
 
 
+    bool usbl_name_set = false;
     
     int c;
     while((c = getopt(argc, argv, "bn:u:i:o:")) != -1)
@@ -31,6 +32,7 @@ int parseArguments(int argc, char **argv, state_c *state, string &lcm_filename, 
                 break;     
             case 'u':
                 usbl_name = optarg;
+		usbl_name_set = true;
                 break;     
             case 'i':
                 lcm_filename = optarg;
@@ -39,6 +41,15 @@ int parseArguments(int argc, char **argv, state_c *state, string &lcm_filename, 
                 raw_filename = optarg;
                 break;     
         }
+
+    if (!usbl_name_set)
+    {
+        usbl_name = vehicle_name_dot;
+        if (usbl_name.back() == '.')
+        {
+            usbl_name.pop_back();
+        }
+    }
 
 
     return 1;
@@ -50,7 +61,7 @@ int main(int argc, char **argv) {
     string lcm_filename;
     string raw_filename;
     string vehicle_name_dot = ".*";
-    string usbl_name;
+    string usbl_name = ".*";
 
     state_c state;
     state.broken_iver_alt = false;
