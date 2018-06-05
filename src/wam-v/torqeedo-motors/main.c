@@ -12,6 +12,7 @@
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/select.h>
 
 #include <bot_param/param_client.h>
 #include "acfr-common/timestamp.h"
