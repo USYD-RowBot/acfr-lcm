@@ -110,6 +110,7 @@ uint8_t calc_maxim1wire_crc(const uint8_t input_msg[], int leng)
     return crc;
 }
 
+// Send serial message to motor
 void send_msg(int message_type, state_t *u)
 {    
     state_t *state = (state_t *)u;
@@ -321,7 +322,6 @@ int main(int argc, char **argv)
         fprintf(stderr, "Could not open motor serial port %s\n", state.root_key);
         return 0;
     }
-    // TODO - set RS-485 mode flags etc if req'd
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Incoming message buffer
@@ -344,7 +344,8 @@ int main(int argc, char **argv)
     // Main program loop - used to read status messages from the 
     while(!program_exit)
     {
-        dup_rfds = rfds; // reset file descriptors
+        //dup_rfds = rfds; // reset file descriptors
+		FD_COPY(&rfds, &dup_rfds); // reset file descriptors
         tv.tv_sec = 0;
         tv.tv_usec = SELECT_TIMEOUT;
 
@@ -403,16 +404,10 @@ int main(int argc, char **argv)
                     if (i == MATCH_BYTE_LEN && buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
                     {
                         // fill LCM motor status message from serial buffer
-               
-                        //state.mot_status.prop_speed = (int16_t) buf[P_SPEED_POS]; // copy MSB
-                        //state.mot_status.prop_speed =<< BITS_PER_BYTE; // shift one byte 
-                        //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
                         state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
                         state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
                         state.mot_status.current = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // current
                         state.mot_status.pcb_temp = BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
-                        //state.mot_status.pcb_temp = (int16_t)buf[PCB_TEMP_POS]; // PCB temp 16bit signed
-                        //signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
                         state.mot_status.stator_temp = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // stator temp
 
                         // and publish status message
