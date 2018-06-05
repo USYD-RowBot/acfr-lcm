@@ -13,6 +13,10 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #include <bot_param/param_client.h>
 #include "acfr-common/timestamp.h"
@@ -326,7 +330,7 @@ int main(int argc, char **argv)
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Incoming message buffer
-    fd_set rfds, dup_rfds; // list of file descriptors where we will listen for incoming messages and duplicate set for use
+    fd_set rfds; // list of file descriptors where we will listen for incoming messages
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[BUFLENGTH];
     struct timeval tv;
@@ -345,24 +349,27 @@ int main(int argc, char **argv)
     // Main program loop - used to read status messages from the 
     while(!program_exit)
     {
-        //dup_rfds = rfds; // reset file descriptors
-		FD_COPY(&rfds, &dup_rfds); // reset file descriptors
+        // reset file descriptors
+		//FD_COPY(&rfds, &dup_rfds); // reset file descriptors (no fd_copy)
+		FD_ZERO(&rfds);
+		FD_SET(state.sensor->fd, &rfds);
+		FD_SET(lcm_fd, &rfds);
         tv.tv_sec = 0;
         tv.tv_usec = SELECT_TIMEOUT;
 
         // check incoming message sources
-        ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
+        ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1) 
         {
             fprintf(stderr, "Torqeedo: Select failure: %i", errno);
         }
         else if(ret != 0) // check incoming message
         {
-            if(FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
+            if(FD_ISSET(lcm_fd, &rfds)) // LCM message, call the handler
             {
                 lcm_handle(state.lcm);
             }
-            if(FD_ISSET(state.sensor->fd, &dup_rfds)) // serial, read the bytes
+            if(FD_ISSET(state.sensor->fd, &rfds)) // serial, read the bytes
             {
                 mask_next_value = false; // no escape characters currently detected
                 // while there are more characters to read
