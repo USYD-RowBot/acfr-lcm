@@ -140,7 +140,7 @@ int load_config(state_t *state, char *rootkey)
 			state->torqeedo_relay_no = i;
 		    if (state->verbose)
 		    {
-		        printf("Torqeedo Contactor Relay Number: %d\n", i);
+		        printf("/nTorqeedo Contactor Relay Number: %d\n", i);
 		    }
 
 			continue;	// found, don't check further entries
@@ -286,8 +286,10 @@ void handle_heartbeat(const lcm::ReceiveBuffer *rbuf, const std::string& channel
     if (timestamp_now() < (state->prog_start_time + MOTOR_BOOT_DELAY))
     {
         in_boot_delay = true;
+	fprintf(stderr, "In boot motor reset delay\n");
+	//fprintf(stderr, "In Boot Delay %lld %lld %lld \n", state->prog_start_time, timestamp_now(), MOTOR_BOOT_DELAY);
     }
-
+    
     if ((state->control_source == RC_MODE_RC) && (!in_boot_delay))
     {
         if (timestamp_now() > (state->prev_remote_time + UPDATE_TIMEOUT)) // messages from RC have timed out (may be out of range)

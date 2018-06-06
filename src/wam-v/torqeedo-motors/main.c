@@ -350,10 +350,9 @@ int main(int argc, char **argv)
     while(!program_exit)
     {
         // reset file descriptors
-		//FD_COPY(&rfds, &dup_rfds); // reset file descriptors (no fd_copy)
-		FD_ZERO(&rfds);
-		FD_SET(state.sensor->fd, &rfds);
-		FD_SET(lcm_fd, &rfds);
+	FD_ZERO(&rfds);
+	FD_SET(state.sensor->fd, &rfds);
+	FD_SET(lcm_fd, &rfds);
         tv.tv_sec = 0;
         tv.tv_usec = SELECT_TIMEOUT;
 
