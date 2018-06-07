@@ -387,9 +387,9 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     // Copy the commands and set the limits
     
     state->command_utime = mot->utime;
-    if(abs(mot->tail_thruster) > state->max_rpm)
+    if(mot->tail_thruster > state->max_rpm)
         state->thruster = state->max_rpm;
-    else if(abs(mot->tail_thruster) > state->max_rpm)
+    else if(mot->tail_thruster < -state->max_rpm)
         state->thruster = -state->max_rpm;
     else
         state->thruster = mot->tail_thruster;
