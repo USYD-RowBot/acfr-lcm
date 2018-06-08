@@ -237,7 +237,7 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->bf_status.current = atof(tok[3]);
                 state->bf_status.psu_temp = atof(tok[4]);
                 
-                acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "BLUEFIN_STATUS", &state->bf_status);
+                acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "NGA.BLUEFIN_STATUS", &state->bf_status);
                 return 1;
             }
         }
@@ -311,7 +311,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
     {
         sprintf(msg, "#01MV %d\n", state->thruster);
-        //printf("Sending, attemp %d: %s\n", retry, msg);
+        printf("Sending, attemp %d: %s\n", retry, msg);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_main)
         {
@@ -368,7 +368,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     
        // bluefin_write_respond(state, "#04S\n", 1);
     // On the heart beat we will get the ouput voltage and current if the thruster is enabled
-    if(state->enabled)
+    //if(state->enabled)
     {
         bluefin_write_respond(state, "#04S\n", 1);
         
