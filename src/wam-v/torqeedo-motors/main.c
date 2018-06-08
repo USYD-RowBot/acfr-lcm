@@ -12,6 +12,11 @@
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/select.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
 
 #include <bot_param/param_client.h>
 #include "acfr-common/timestamp.h"
@@ -110,6 +115,7 @@ uint8_t calc_maxim1wire_crc(const uint8_t input_msg[], int leng)
     return crc;
 }
 
+// Send serial message to motor
 void send_msg(int message_type, state_t *u)
 {    
     state_t *state = (state_t *)u;
@@ -321,11 +327,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "Could not open motor serial port %s\n", state.root_key);
         return 0;
     }
-    // TODO - set RS-485 mode flags etc if req'd
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Incoming message buffer
-    fd_set rfds, dup_rfds; // list of file descriptors where we will listen for incoming messages and duplicate set for use
+    fd_set rfds; // list of file descriptors where we will listen for incoming messages
     int lcm_fd = lcm_get_fileno(state.lcm); // get the file descriptor id for the lcm messager
     char buf[BUFLENGTH];
     struct timeval tv;
@@ -344,23 +349,26 @@ int main(int argc, char **argv)
     // Main program loop - used to read status messages from the 
     while(!program_exit)
     {
-        dup_rfds = rfds; // reset file descriptors
+        // reset file descriptors
+	FD_ZERO(&rfds);
+	FD_SET(state.sensor->fd, &rfds);
+	FD_SET(lcm_fd, &rfds);
         tv.tv_sec = 0;
         tv.tv_usec = SELECT_TIMEOUT;
 
         // check incoming message sources
-        ret = select (FD_SETSIZE, &dup_rfds, NULL, NULL, &tv);
+        ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
         if(ret == -1) 
         {
             fprintf(stderr, "Torqeedo: Select failure: %i", errno);
         }
         else if(ret != 0) // check incoming message
         {
-            if(FD_ISSET(lcm_fd, &dup_rfds)) // LCM message, call the handler
+            if(FD_ISSET(lcm_fd, &rfds)) // LCM message, call the handler
             {
                 lcm_handle(state.lcm);
             }
-            if(FD_ISSET(state.sensor->fd, &dup_rfds)) // serial, read the bytes
+            if(FD_ISSET(state.sensor->fd, &rfds)) // serial, read the bytes
             {
                 mask_next_value = false; // no escape characters currently detected
                 // while there are more characters to read
@@ -403,16 +411,10 @@ int main(int argc, char **argv)
                     if (i == MATCH_BYTE_LEN && buf[1] == MATCH_BYTE_1 && buf[2] == MATCH_BYTE_2)
                     {
                         // fill LCM motor status message from serial buffer
-               
-                        //state.mot_status.prop_speed = (int16_t) buf[P_SPEED_POS]; // copy MSB
-                        //state.mot_status.prop_speed =<< BITS_PER_BYTE; // shift one byte 
-                        //state.mot_status.prop_speed += buf[P_SPEED_POS + 1] // and add the LSB
                         state.mot_status.prop_speed = BYTE_MAX * (uint8_t)buf[P_SPEED_POS] + (uint8_t)buf[P_SPEED_POS + 1];
                         state.mot_status.voltage = BYTE_MAX * (uint8_t)buf[VOLT_POS] + (uint8_t)buf[VOLT_POS + 1];
                         state.mot_status.current = BYTE_MAX * (uint8_t)buf[CURRENT_POS] + (uint8_t)buf[CURRENT_POS + 1];  // current
                         state.mot_status.pcb_temp = BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
-                        //state.mot_status.pcb_temp = (int16_t)buf[PCB_TEMP_POS]; // PCB temp 16bit signed
-                        //signed short pcb_temp =  BYTE_MAX * (uint8_t)buf[PCB_TEMP_POS] + (uint8_t)buf[PCB_TEMP_POS + 1];
                         state.mot_status.stator_temp = BYTE_MAX * (uint8_t)buf[STATOR_TEMP_POS] + (uint8_t)buf[STATOR_TEMP_POS + 1]; // stator temp
 
                         // and publish status message

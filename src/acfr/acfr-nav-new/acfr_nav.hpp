@@ -77,6 +77,9 @@ class state_c
 
         bool bottomLock;
 	bool broken_iver_alt;
+	int64_t uvc_osi_prev_utime;
+	double uvc_prev_alt;
+	double iver_vz;
 };
 
 class acfr_nav
