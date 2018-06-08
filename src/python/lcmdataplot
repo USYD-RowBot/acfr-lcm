@@ -3,7 +3,7 @@ import lcm
 import sys
 import argparse
 
-from lcmplot import get_message_types, MessageDecoder
+from lcmplot import get_message_types, MessageDecoder, PlotWindow
 
 def plot_nga_power(data):
     from matplotlib import pyplot as plt
@@ -62,7 +62,7 @@ def plot_nga_depth(data):
     plt.show()
 
 if __name__ == '__main__':
-    sys.path.insert(0, '/home/lachlan/Code/auvgit/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+    sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
     parser = argparse.ArgumentParser()
 
@@ -109,6 +109,12 @@ if __name__ == '__main__':
     # print out the fields we can plot
     print sorted(data.keys())
 
-    plot_nga_depth(data)
+    from PyQt5.QtGui import QApplication
+    qapp = QApplication([])
+    window = PlotWindow(data)
+
+    window.show()
+
+    qapp.exec_()
 
 

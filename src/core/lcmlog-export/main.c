@@ -9,6 +9,7 @@
 #include "perls-common/getopt.h"
 #include "perls-common/textread.h"
 #include "perls-common/unix.h"
+#include "perls-lcmtypes/senlcm_acfr_psu_t.h"
 
 #include "bot_core.h"
 #include "hauv.h"

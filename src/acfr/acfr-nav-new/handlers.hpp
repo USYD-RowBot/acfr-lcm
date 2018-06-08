@@ -16,6 +16,7 @@
 #include "perls-lcmtypes++/senlcm/parosci_t.hpp"
 #include "perls-lcmtypes++/senlcm/lq_modem_t.hpp"
 #include "perls-lcmtypes++/senlcm/seabird_t.hpp"
+#include "perls-lcmtypes++/senlcm/aanderaa_4319_t.hpp"
 #include "perls-lcmtypes++/senlcm/seabird_depth_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
@@ -42,6 +43,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 void on_parosci(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const parosci_t *parosci, state_c* state);
 void on_lq_modem(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const lq_modem_t *lqm, state_c* state);
 void on_seabird_ct(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabird_t, state_c* state);
+void on_aanderaa_ct(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const aanderaa_4319_t *aandera, state_c* state);
 void on_seabird_depth(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabird_depth_t *sd, state_c* state);
 void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rdi_pd5_t *rdi, state_c* state);
 void on_ysi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const ysi_t *ysi, state_c* state);

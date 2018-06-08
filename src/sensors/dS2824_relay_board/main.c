@@ -19,7 +19,7 @@
 #include "perls-lcmtypes/acfrlcm_relay_status_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
 
-// Contants
+// Constants
 #define CMD_TIMEOUT 5000000             // Timeout after which an LCM request will be ignored 5s
 #define NUM_RELAYS 24                   // Number of relays on board
 #define NUM_IOS 8                       // Number of IO ports on board
@@ -28,21 +28,21 @@
 #define MIN_DELAY 100                   // Minimum auto relay off delay in ms
 #define ON_LEN 9                        // Message length for ASCII 'on' message
 #define OFF_LEN 10                      // Message length for ASCII 'off' message
-#define GET_LEN 7						// Message length for ASCII 'get status' message
+#define GET_LEN 7			// Message length for ASCII 'get status' message
 #define ON_DELAY_LEN 20                 // Message length for ASCII 'on' message with delay for auto 'off' 
 #define BUFLENGTH 128                   // Buffer length for incoming tcp messages
 #define SELECT_TIMEOUT 10000            // usec block timeout on select for tcp and LCM
-#define TRIES 1						    // Number of attempts to receive status over tcp before skipping relay (status update)
+#define TRIES 1			    	// Number of attempts to receive status over tcp before skipping relay (status update)
 #define PRINT_PERIOD 5                  // Print status update on every nth 1Hz heartbeat message = seconds
 
 typedef struct
 {
     lcm_t *lcm;
-	char *vehicle_name;					// for vehicle prefix on LCM channels
-    char root_key[64];					// process name
+	char *vehicle_name;		// for vehicle prefix on LCM channels
+    char root_key[64];			// process name
     char *relay_devices[NUM_RELAYS];    // devices on system as per config file
     char *io_devices[NUM_IOS];          // devices on system as per config file
-	char *channel_control;				// lcm channel name for control messages incoming
+	char *channel_control;		// lcm channel name for control messages incoming
     char *channel_status;               // lcm channel name for status message outgoing
     int64_t prev_time;                  // arrival time of previous LCM request message
     uint8_t hb_count;                   // counts number of times enter hb handeler, to limit prints to screen

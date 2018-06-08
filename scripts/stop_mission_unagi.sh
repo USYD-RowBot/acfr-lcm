@@ -5,8 +5,8 @@
 echo "Triggering and capture stopped"
 
 #kill infinite watchman
-#ps -e|grep infinite | grep -v grep | awk '{print $1}'|xargs kill
-#echo "Killed infinite_watchman"
+ps -e|grep infinite | grep -v grep | awk '{print $1}'|xargs kill
+echo "Killed infinite_watchman"
 
 #kill lcm-logger
 pkill lcm-logger
