@@ -42,7 +42,6 @@ class DragTreeView(QTreeView):
 
         data = QMimeData()
 
-        print "plain/text:", self.keys
         data.setText(self.keys)
         drag.setMimeData(data)
 

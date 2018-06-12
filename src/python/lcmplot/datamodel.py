@@ -113,9 +113,12 @@ class DataModel(QAbstractItemModel):
                 return len(parent.data_elements)
 
     def get_by_name(self, name):
+        channel = name.split('->')[0]
         for entry in self.provided_data:
-            if entry.name == name:
-                return entry
+            if entry.name == channel:
+                for element in entry.data_elements:
+                    if element.name == name:
+                        return element
         else:
             return None
 

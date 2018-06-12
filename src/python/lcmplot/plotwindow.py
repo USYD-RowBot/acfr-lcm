@@ -67,9 +67,9 @@ class PlotWindow(QMainWindow):
             self.plot_data(self.data.data(idx, Qt.UserRole).value())
 
     def add_graph(self, data_name):
-        print data_name
         entry = self.data.get_by_name(data_name)
-        print entry
         if entry is not None:
             self.plot_data(entry)
+        else:
+            print "Unknown data: {}".format(data_name)
 
