@@ -41,7 +41,7 @@ class ChannelData:
         self.name = channel_name
         self.data_elements = []
 
-        for en in element_names:
+        for en in sorted(element_names):
             self.data_elements.append(ElementData(self, en))
 
 
