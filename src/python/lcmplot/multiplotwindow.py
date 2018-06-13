@@ -18,7 +18,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.sourceView = DragTree(self.centralwidget)
+        self.sourceView = DragTreeView(self.centralwidget)
         self.sourceView.setObjectName("sourceView")
         self.verticalLayout.addWidget(self.sourceView)
         self.potentialView = QtWidgets.QListView(self.centralwidget)
@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         self.activeView.setObjectName("activeView")
         self.verticalLayout.addWidget(self.activeView)
         self.horizontalLayout.addLayout(self.verticalLayout)
-        self.plotView = DropPlot(self.centralwidget)
+        self.plotView = DropPlotWidget(self.centralwidget)
         self.plotView.setObjectName("plotView")
         self.horizontalLayout.addWidget(self.plotView)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -47,5 +47,5 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
 
-from .dragtree import DragTree
-from .dropplot import DropPlot
+from .dragtree import DragTreeView
+from .dropplot import DropPlotWidget

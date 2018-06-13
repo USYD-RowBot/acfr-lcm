@@ -3,7 +3,7 @@ import lcm
 import sys
 import argparse
 
-from lcmplot import get_message_types, MessageDecoder, PlotWindow
+from lcmplot import get_message_types, MessageDecoder
 
 def plot_nga_power(data):
     from matplotlib import pyplot as plt
@@ -112,8 +112,9 @@ if __name__ == '__main__':
     # get the Qt Data Model ready for the plots
     from lcmplot.datamodel import DataModel
     data_model = DataModel(parent=qapp)
-
     data_model.insert_data(data)
+
+    from lcmplot import PlotWindow, NewPlotWindow
 
     first_window = PlotWindow(data_model)
     first_window.show()
