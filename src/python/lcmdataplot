@@ -106,14 +106,17 @@ if __name__ == '__main__':
     # non-numeric fields that cannot be plotted
     data = data_handler.export()
 
-    # print out the fields we can plot
-    print sorted(data.keys())
-
     from PyQt5.QtGui import QApplication
     qapp = QApplication([])
-    window = PlotWindow(data)
 
-    window.show()
+    # get the Qt Data Model ready for the plots
+    from lcmplot.datamodel import DataModel
+    data_model = DataModel(parent=qapp)
+
+    data_model.insert_data(data)
+
+    first_window = PlotWindow(data_model)
+    first_window.show()
 
     qapp.exec_()
 

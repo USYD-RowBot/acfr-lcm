@@ -2,15 +2,14 @@ from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtCore import Qt, pyqtSlot
 
 from window import Ui_DataPlotMain
-from datamodel import DataModel
+from offsetaxis import OffsetAxis
 
 
 class PlotWindow(QMainWindow):
-    def __init__(self, data):
+    def __init__(self, data_model):
         super(PlotWindow, self).__init__()
-        self.data = DataModel(parent=self)
+        self.data = data_model
 
-        self.data.insert_data(data)
         self.ui = Ui_DataPlotMain()
 
         self.ui.setupUi(self)
@@ -26,12 +25,17 @@ class PlotWindow(QMainWindow):
 
         self.ui.graphicsView.dropped_data.connect(self.add_graph)
 
+        self.offset_axis = OffsetAxis('bottom', 0.0)
+        self.minimum_time = 1e24  # TODO: clean this up to be float max or something similar
+
+        self.offset_axis.linkToView(self.ui.graphicsView.plotItem.getViewBox())
+        self.ui.graphicsView.getPlotItem().layout.addItem(self.offset_axis, 4, 1)
+
         n = 20
         self.next_pen_idx = 0
         self.pens = [(i, n) for i in xrange(n)]
 
         self.plots = dict()
-
 
     @pyqtSlot()
     def graph_addition_pressed(self):
@@ -45,6 +49,9 @@ class PlotWindow(QMainWindow):
 
     def plot_data(self, data):
         if data.name not in self.plots:
+            if len(data.time) > 0 and data.time[0] < self.minimum_time:
+                self.minimum_time = data.time[0]
+                self.offset_axis.update_offset(self.minimum_time)
             dataitem = self.ui.graphicsView.plot(data.time, data.data, pen=self.next_pen(), name=data.name)
             self.plots[data.name] = dataitem
 
@@ -60,7 +67,6 @@ class PlotWindow(QMainWindow):
                 self.ui.graphicsView.plotItem.legend.removeItem(data.name)
                 # remove the entry in the local plot
                 del self.plots[data.name]
-
 
     def add_by_index(self, idx):
         if idx.parent().isValid():
