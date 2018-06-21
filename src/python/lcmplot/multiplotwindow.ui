@@ -18,18 +18,65 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="DragTree" name="sourceView"/>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="title">
+         <string>New Plots</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="DragTreeView" name="sourceView"/>
+         </item>
+         <item>
+          <widget class="QListView" name="potentialView"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QPushButton" name="addplotbutton">
+             <property name="text">
+              <string>Add Plot</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </item>
       <item>
-       <widget class="QListView" name="potentialView"/>
-      </item>
-      <item>
-       <widget class="QTreeView" name="activeView"/>
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>Active Plots</string>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QTreeView" name="activeView"/>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QPushButton" name="deleteplotbutton">
+             <property name="text">
+              <string>Delete Plot</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="swapaxesbutton">
+             <property name="text">
+              <string>Swap X and Y</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </item>
     <item>
-     <widget class="DropPlot" name="plotView"/>
+     <widget class="DropPlotWidget" name="plotView"/>
     </item>
    </layout>
   </widget>
@@ -47,12 +94,12 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>DropPlot</class>
+   <class>DropPlotWidget</class>
    <extends>QGraphicsView</extends>
    <header>.dropplot</header>
   </customwidget>
   <customwidget>
-   <class>DragTree</class>
+   <class>DragTreeView</class>
    <extends>QTreeView</extends>
    <header>.dragtree</header>
   </customwidget>

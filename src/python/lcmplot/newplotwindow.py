@@ -52,9 +52,31 @@ class PlotModel(QAbstractTableModel):
 
     def add_plot(self, plot_item):
         row = len(self.plots)
-        self.beginInsertRows(QModelIndex(), row, row+1)
+        self.beginInsertRows(QModelIndex(), row, row)
         self.plots.append(plot_item)
         self.endInsertRows()
+
+    def delete_plot(self, row):
+        self.beginRemoveRows(QModelIndex(), row, row)
+        print row, len(self.plots)
+        del self.plots[row]
+        self.endRemoveRows()
+
+    def swap_axes(self, row):
+        pd = self.plots[row]
+
+        pd.xlabel, pd.ylabel = pd.ylabel, pd.xlabel
+        pd.xdata, pd.ydata = pd.ydata, pd.xdata
+
+        if pd.xlabel.endswith('->utime'):
+            # this is a vs time
+            pd.legend_name = pd.ylabel
+        else:
+            # this is vs a not-time
+            pd.legend_name = "{} vs {}".format(pd.xlabel, pd.ylabel)
+
+        self.dataChanged.emit(self.index(row, 0), self.index(row, 1))
+
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.plots)
@@ -85,6 +107,10 @@ class PlotModel(QAbstractTableModel):
             else:
                 return QVariant()
 
+        if int_role == Qt.UserRole:
+            plot = self.plots[index.row()]
+
+            return QVariant(plot)
 
 
 class NewPlotWindow(QMainWindow):
@@ -108,6 +134,11 @@ class NewPlotWindow(QMainWindow):
         # these are the double click/selection commands to add a plot
         self.ui.sourceView.activated.connect(self.timeplot_by_index)
         self.ui.potentialView.activated.connect(self.xy_by_indices)
+
+        # these look up the currently selected plots and do the action
+        self.ui.addplotbutton.clicked.connect(self.add_plot)
+        self.ui.deleteplotbutton.clicked.connect(self.delete_plot)
+        self.ui.swapaxesbutton.clicked.connect(self.swap_plot)
 
         self.ui.sourceView.selection_update.connect(self.update_source_selected)
 
@@ -168,3 +199,34 @@ class NewPlotWindow(QMainWindow):
     def next_pen(self):
         self.next_pen_idx += 1
         return self.pens[self.next_pen_idx - 1]
+
+    def add_plot(self):
+        idx = self.ui.potentialView.selectedIndexes()[0]
+        self.xy_by_indices(idx)
+
+    def delete_plot(self):
+        indices = self.ui.activeView.selectedIndexes()
+        # the indices list each column in a single row...
+        # so to avoid repeat deletions
+        rows = set([x.row() for x in indices])
+        for row in rows:
+            idx = self.plot_model.index(row, 0, QModelIndex())
+            pd = self.plot_model.data(idx, Qt.UserRole).value()
+            self.ui.plotView.removeItem(pd.plotitem)
+            self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
+            self.plot_model.delete_plot(row)
+
+    def swap_plot(self):
+        indices = self.ui.activeView.selectedIndexes()
+        # the indices list each column in a single row...
+        # so to avoid repeat deletions
+        rows = set([x.row() for x in indices])
+        for row in rows:
+            idx = self.plot_model.index(row, 0, QModelIndex())
+            pd = self.plot_model.data(idx, Qt.UserRole).value()
+            pd.plotitem.setData(x=pd.ydata, y=pd.xdata)
+            self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
+
+            self.plot_model.swap_axes(row)
+
+            self.ui.plotView.plotItem.legend.addItem(pd.plotitem, pd.legend_name)
