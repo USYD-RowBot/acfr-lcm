@@ -36,12 +36,13 @@ class ListModel(QAbstractListModel):
 
 
 class PlotData(object):
-    def __init__(self, xdata, ydata, plotitem, xlabel, ylabel):
+    def __init__(self, xdata, ydata, plotitem, xlabel, ylabel, legend):
         self.xdata = xdata
         self.ydata = ydata
         self.plotitem = plotitem
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.legend_name = legend
 
 
 class PlotModel(QAbstractTableModel):
@@ -49,7 +50,7 @@ class PlotModel(QAbstractTableModel):
         super(PlotModel, self).__init__(*args, **kwargs)
         self.plots = list()
 
-    def add_plot(self, plot_item, label):
+    def add_plot(self, plot_item):
         row = len(self.plots)
         self.beginInsertRows(QModelIndex(), row, row+1)
         self.plots.append(plot_item)
@@ -61,13 +62,28 @@ class PlotModel(QAbstractTableModel):
     def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
         return 2
 
+    def headerData(self, section, orientation, int_role=None):
+        if int_role == Qt.DisplayRole:
+            if section == 0:
+                return QVariant("X")
+            elif section == 1:
+                return QVariant("Y")
+
+        return QVariant()
+
     def data(self, index, int_role=None):
         if not index.isValid():
             return QVariant()
 
         if int_role == Qt.DisplayRole:
-            index.column()
-            return QVariant(self.plots.)
+            col = index.column()
+            plot = self.plots[index.row()]
+            if col == 0:
+                return QVariant(plot.xlabel)
+            elif col == 1:
+                return QVariant(plot.ylabel)
+            else:
+                return QVariant()
 
 
 
@@ -76,12 +92,15 @@ class NewPlotWindow(QMainWindow):
         super(NewPlotWindow, self).__init__()
         self.data = data_model
 
+        self.plot_model = PlotModel()
+
         self.ui = Ui_MainWindow()
 
         self.ui.setupUi(self)
 
         # load in the data model
         self.ui.sourceView.setModel(self.data)
+        self.ui.activeView.setModel(self.plot_model)
 
         # add a legend
         self.ui.plotView.getPlotItem().addLegend()
@@ -117,7 +136,7 @@ class NewPlotWindow(QMainWindow):
     def timeplot_by_index(self, idx):
         if idx.parent().isValid():
             d = self.data.data(idx, Qt.UserRole).value()
-            self.plot_data(d.time, d.data, d.name)
+            self.plot_data(d.time, d.data, '->utime', d.name)
 
     def xy_by_indices(self, idx):
         # the idx refers to our x
@@ -130,13 +149,21 @@ class NewPlotWindow(QMainWindow):
             y = self.data.data(idx, Qt.UserRole).value().data
             yname = self.data.data(idx, Qt.UserRole).value().name
 
-        name = "{} vs {}".format(yname, xname)
+        self.plot_data(x, y, xname, yname)
 
-        self.plot_data(x, y, name)
+    def plot_data(self, x, y, xlabel, ylabel):
+        if xlabel.endswith('->utime'):
+            # this is a vs time
+            legend = ylabel
+        else:
+            # this is vs a not-time
+            legend = "{} vs {}".format(xlabel, ylabel)
 
-    def plot_data(self, x, y, name):
-        print name, x, y
-        self.ui.plotView.plot(list(x), list(y), pen=self.next_pen(), name=name)
+        plotitem = self.ui.plotView.plot(list(x), list(y), pen=self.next_pen(), name=legend)
+
+        pd = PlotData(x, y, plotitem, xlabel, ylabel, legend)
+
+        self.plot_model.add_plot(pd)
 
     def next_pen(self):
         self.next_pen_idx += 1
