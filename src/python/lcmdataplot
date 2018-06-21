@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     from lcmplot import PlotWindow, NewPlotWindow
 
-    first_window = PlotWindow(data_model)
+    first_window = NewPlotWindow(data_model)
     first_window.show()
 
     qapp.exec_()

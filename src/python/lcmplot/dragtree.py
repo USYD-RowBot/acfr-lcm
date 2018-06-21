@@ -4,7 +4,10 @@ from PyQt5.QtGui import QDrag
 
 
 class DragTreeView(QTreeView):
-    selection_update = pyqtSignal(QItemSelection, QItemSelection)
+    # Using QItemSelection here fails in the sense that pyqtgraph can't find
+    # the bounds for the plot (or actually plot) just defining it with qitemselection
+    # causes errors even if not linked anywhere.
+    selection_update = pyqtSignal(list)
 
     def __init__(self, *args, **kwargs):
         super(DragTreeView, self).__init__(*args, **kwargs)
@@ -51,5 +54,9 @@ class DragTreeView(QTreeView):
     def selectionChanged(self, selected, deselected):
         super(DragTreeView, self).selectionChanged(selected, deselected)
 
-        self.selection_update.emit(selected, deselected)
+        output = []
+        for idx in selected.indexes():
+            output.append(idx)
+
+        self.selection_update.emit(output)
 

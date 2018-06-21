@@ -1,7 +1,7 @@
+from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtCore import Qt, pyqtSlot, QItemSelection, QAbstractListModel, QVariant, QItemSelectionModel
 
-from multiplotwindow import Ui_MainWindow
+from .newlcmplotwindow import Ui_MainWindow
 
 
 class ListModel(QAbstractListModel):
@@ -35,6 +35,42 @@ class ListModel(QAbstractListModel):
             return QVariant(self.channel_data.data_elements[index.row()])
 
 
+class PlotData(object):
+    def __init__(self, xdata, ydata, plotitem, xlabel, ylabel):
+        self.xdata = xdata
+        self.ydata = ydata
+        self.plotitem = plotitem
+        self.xlabel = xlabel
+        self.ylabel = ylabel
+
+
+class PlotModel(QAbstractTableModel):
+    def __init__(self, *args, **kwargs):
+        super(PlotModel, self).__init__(*args, **kwargs)
+        self.plots = list()
+
+    def add_plot(self, plot_item, label):
+        row = len(self.plots)
+        self.beginInsertRows(QModelIndex(), row, row+1)
+        self.plots.append(plot_item)
+        self.endInsertRows()
+
+    def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
+        return len(self.plots)
+
+    def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
+        return 2
+
+    def data(self, index, int_role=None):
+        if not index.isValid():
+            return QVariant()
+
+        if int_role == Qt.DisplayRole:
+            index.column()
+            return QVariant(self.plots.)
+
+
+
 class NewPlotWindow(QMainWindow):
     def __init__(self, data_model):
         super(NewPlotWindow, self).__init__()
@@ -60,9 +96,8 @@ class NewPlotWindow(QMainWindow):
         self.next_pen_idx = 0
         self.pens = [(i, n) for i in xrange(n)]
 
-    @pyqtSlot(QItemSelection)
     def update_source_selected(self, selected):
-        for idx in selected.indexes():
+        for idx in selected:
             parent = idx.parent()
 
             if parent.isValid():
