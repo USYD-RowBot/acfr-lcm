@@ -11,7 +11,6 @@ except ImportError:
 
 QMI = QModelIndex
 
-
 def get_message_types(module_handle):
     """Get the fingerprints of LCM types in the module and the mapping between."""
 

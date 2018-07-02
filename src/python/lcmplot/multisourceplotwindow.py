@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex, QTimer
 from PyQt5.QtWidgets import QMainWindow
 
-from .newlcmplotwindow import Ui_MainWindow
+from .multiplotwindow import Ui_MainWindow
 
 from .multisourcemodel import NumericElementData
 

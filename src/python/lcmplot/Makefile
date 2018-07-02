@@ -1,2 +1,2 @@
-newlcmplotwindow.py: multiplotwindow.ui
-	pyuic5 multiplotwindow.ui > newlcmplotwindow.py
+multiplotwindow.py: multiplotwindow.ui
+	pyuic5 multiplotwindow.ui > multiplotwindow.py
