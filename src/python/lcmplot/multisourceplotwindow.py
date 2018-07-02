@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex, QTimer
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
 from .multiplotwindow import Ui_MainWindow
 
@@ -113,7 +113,7 @@ class PlotModel(QAbstractTableModel):
             # this is vs a not-time
             pd.legend_name = "{} vs {}".format(pd.xlabel, pd.ylabel)
 
-        self.dataChanged.emit(self.index(row, 0), self.index(row, 1))
+        self.dataChanged.emit(self.index(row, 1), self.index(row, 2))
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.plots)
@@ -189,6 +189,8 @@ class MultiSourcePlotWindow(QMainWindow):
 
         self.ui.sourceView.selection_update.connect(self.update_source_selected)
 
+        self.ui.actionOpen.triggered.connect(self.fileopen)
+
         n = 20
         self.next_pen_idx = 0
         self.pens = [(i, n) for i in xrange(n)]
@@ -198,6 +200,17 @@ class MultiSourcePlotWindow(QMainWindow):
         # or more accurately just update
         for plot in self.plot_model.plots:
             plot.plotitem.setData(plot.xdata, plot.ydata)
+
+    def fileopen(self):
+        # display the dialog, pass the (valid) result to the data model
+        file_name = QFileDialog.getOpenFileName(self, "Open LCM log", filter="LCM Logs (*.lcm)")
+
+        if file_name is None:
+            print "No file selected."
+            return
+
+        print file_name
+        self.data.add_file(file_name[0])
 
     def update_source_selected(self, selected):
         for idx in selected:

@@ -1,5 +1,4 @@
 from PyQt5.QtCore import QAbstractItemModel, QVariant, Qt, QModelIndex, QThread
-import numpy as np
 import numbers
 import weakref
 import lcm
@@ -10,6 +9,7 @@ except ImportError:
     from io import BytesIO
 
 QMI = QModelIndex
+
 
 def get_message_types(module_handle):
     """Get the fingerprints of LCM types in the module and the mapping between."""
@@ -212,6 +212,8 @@ class MessageSource(object):
             #self.lcm = lcm.LCM("file://{}?speed=0".format(self.filename))
             lcm_log = lcm.EventLog(self.filename)
 
+            # TODO: thread this off to handle import in other thread
+
             total_size = lcm_log.size()
             last = 0
             step = 5
@@ -225,6 +227,7 @@ class MessageSource(object):
 
             self.name = self.filename  # perhaps change this to basename of the file?
         else:
+            # TODO: clean up LCM handling here
             # assume using live plots otherwise
             self.lcm = lcm.LCM()
             self.name = "Live"
