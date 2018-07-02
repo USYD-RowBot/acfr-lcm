@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QAbstractItemModel, QVariant, Qt, QModelIndex
+from PyQt5.QtCore import QAbstractItemModel, QVariant, Qt, QModelIndex, QThread
 import numpy as np
 import numbers
 import weakref
@@ -160,35 +160,87 @@ class TypeData(object):
             # arrays (of numbers, strings or other lcm types),
             # strings or
             # other lcm types.
-            for attr in data.__slots__:
-                value = getattr(data, attr)
-                if isinstance(value, numbers.Number):
-                    entry = NumericElementData(self, attr)
-                elif isinstance(value, list):
-                    entry = ListData(self, attr)
-                elif isinstance(value, basestring):
-                    continue  # we don't plot/can't plot strings
-                else:
-                    entry = TypeData(self, attr)
+            try:
+                for attr in data.__slots__:
+                    value = getattr(data, attr)
+                    if isinstance(value, numbers.Number):
+                        entry = NumericElementData(self, attr)
+                    elif isinstance(value, (tuple, list)):
+                        entry = ListData(self, attr)
+                    elif isinstance(value, basestring):
+                        continue  # we don't plot/can't plot strings
+                    else:
+                        entry = TypeData(self, attr)
 
-                self.entries.append(entry)
+                    self.entries.append(entry)
+            except AttributeError as e:
+                print e
+                print data
 
         for de in self.entries:
             de.handle_message(getattr(data, de.name))
 
 
+class LCMThread(QThread):
+    def __init__(self, lcm):
+        QThread.__init__(self)
+        self.lcm = lcm
+        self.exitting = False
+
+    def __del__(self):
+        self.wait(2000)
+
+    def do_exit(self):
+        self.exitting = True
+
+    def run(self):
+        while not self.exitting:
+            self.lcm.handle_timeout(1000)
+
+
 class MessageSource(object):
-    def __init__(self, model, live=False):
+    def __init__(self, model, filename=None):
         self.entries = list()  # the sorted list we use to track display position
         self.channel_lookup = dict()  # a dictionary that points to the same objects
         self.parent = weakref.ref(model)
-        self.name = ""
+        self.filename = filename
+        self.name = filename
 
-        # if we are listening live...
-        if live:
+    def process(self):
+        if self.filename is not None:
+            # we have a file to plot!
+            # process all the observations immediately...
+            #self.lcm = lcm.LCM("file://{}?speed=0".format(self.filename))
+            lcm_log = lcm.EventLog(self.filename)
+
+            total_size = lcm_log.size()
+            last = 0
+            step = 5
+            for event in lcm_log:
+                self.handle_message(event.channel, event.data)
+                # decode progress
+                percent = 100 * lcm_log.tell() / total_size
+                if percent >= last + step:
+                    print "{:3}".format(percent)
+                    last += step
+
+            self.name = self.filename  # perhaps change this to basename of the file?
+        else:
+            # assume using live plots otherwise
             self.lcm = lcm.LCM()
-            self.lcm.subscribe(".*", self.handle_message)
             self.name = "Live"
+            self.lcm.subscribe(".*", self.handle_message)
+            # we still need to handle the LCM object to get the messages
+
+            self.lcm_thread = LCMThread(self.lcm)
+            self.lcm_thread.start()
+
+
+    def handle(self, timeout=None):
+        if timeout is not None:
+            self.lcm.handle_timeout(timeout)
+        else:
+            self.lcm.handle()
 
     def children(self):
         return len(self.entries)
@@ -250,9 +302,25 @@ class DataModel(QAbstractItemModel):
         self.lcm_types = lcm_types
 
     def create_live(self):
-        self.beginInsertRows(QMI(), 0, 0)
-        self.sources.insert(0, MessageSource(self, live=True))
+        name = "Live"
+        idx = lambda_bisect_left(self.sources, name, key=lambda x: x.name)
+        ms = MessageSource(self)
+
+        self.beginInsertRows(QModelIndex(), idx, idx)
+        self.sources.insert(idx, ms)
         self.endInsertRows()
+
+        ms.process()
+
+    def add_file(self, filename):
+        idx = lambda_bisect_left(self.sources, filename, key=lambda x: x.name)
+        ms = MessageSource(self, filename)
+
+        self.beginInsertRows(QModelIndex(), idx, idx)
+        self.sources.insert(idx, ms)
+        self.endInsertRows()
+
+        ms.process()
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         if QModelIndex_parent.column() > 0:
@@ -299,7 +367,10 @@ class DataModel(QAbstractItemModel):
 
         if hasattr(child_item, 'parent'):
             parent_item = child_item.parent()
-            row = parent_item.row()
+            if parent_item is self:
+                return QMI()
+            else:
+                row = parent_item.row()
 
             return self.createIndex(row, 0, parent_item)
         else:
