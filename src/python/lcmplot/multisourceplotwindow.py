@@ -5,6 +5,8 @@ from .multiplotwindow import Ui_MainWindow
 
 from .multisourcemodel import NumericElementData
 
+from .plotdialogwindow import PlotDialogWindow
+
 
 def get_leaf_nodes(model_element):
     leaves = []
@@ -161,7 +163,7 @@ class MultiSourcePlotWindow(QMainWindow):
 
         self.timer = QTimer()
         self.timer.setInterval(100)  # 10Hz
-        self.timer.start(1000)  # start in a second
+        self.timer.start(100)  # start in a second
 
         self.timer.timeout.connect(self.tick)
 
@@ -190,6 +192,8 @@ class MultiSourcePlotWindow(QMainWindow):
         self.ui.sourceView.selection_update.connect(self.update_source_selected)
 
         self.ui.actionOpen.triggered.connect(self.fileopen)
+
+        self.ui.activeView.doubleClicked.connect(self.update_plot)
 
         n = 20
         self.next_pen_idx = 0
@@ -280,6 +284,11 @@ class MultiSourcePlotWindow(QMainWindow):
     def next_pen(self):
         self.next_pen_idx += 1
         return self.pens[self.next_pen_idx - 1]
+
+    def update_plot(self, idx):
+        plot_data = self.plot_model.data(idx, Qt.UserRole)
+        pdw = PlotDialogWindow(self, plot_data.value().plotitem)
+        pdw.show()
 
     def add_plot(self):
         idx = self.ui.potentialView.selectedIndexes()[0]
