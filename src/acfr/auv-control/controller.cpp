@@ -155,7 +155,7 @@ void ControllerBase::run()
         else
         {
             // the safe fallback
-            std::cout << "Dead" << std::endl;
+            //std::cout << "Dead" << std::endl;
             this->dead_control();
         }
     }
