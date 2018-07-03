@@ -11,17 +11,16 @@
 #define ITERATION_NUM 3
 
 
-class LocalPlannerTunnel : public LocalPlanner
+class LocalPlannerIver : public LocalPlanner
 {
 public:
-    LocalPlannerTunnel();
-    virtual ~LocalPlannerTunnel();
-    virtual int loadConfig(char *programName);
-    virtual int calculateWaypoints();
-    virtual int processWaypoints();
+    LocalPlannerIver();
+    virtual ~LocalPlannerIver() = default;
     
     virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc);
     virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav);
     virtual int init();
-    
+
 };
+
+
