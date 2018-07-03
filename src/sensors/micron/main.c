@@ -5,8 +5,8 @@
 #include <bot_param/param_client.h>
 
 #include "acfr-common/sensor.h"
-#include "perls-common/units.h"
-#include "perls-common/timestamp.h"
+#include "acfr-common/units.h"
+#include "acfr-common/timestamp.h"
 #include "perls-lcmtypes/senlcm_micron_ping_t.h"
 
 typedef enum
@@ -17,24 +17,29 @@ typedef enum
     angle_ultimate
 } angle_size_t;
 
+enum {SEANET_VERSION = 1, SEANET_HEAD, SEANET_SCANLINE, SEANET_ALIVE};
+
 typedef struct
 {
     lcm_t *lcm;
+    acfr_sensor_t *sensor;
     int run;
     bool raw_log;
-    double range;
+    bool verbose;
+    //double range;
     double minimum_range;
-    double range_resolution;
+    //double range_resolution;
     angle_size_t angle_resolution;
-    double left_limit;
-    double right_limit;
+    //double left_limit;
+    //double right_limit;
     double margin;
     double threshold;
     double initial_gain;
     double x_offset;
     double z_offset;
     double pitch_offset;
-    int64_t timestamp;
+    senlcm_micron_ping_t mp;
+    //int64_t timestamp;
 } state_t;
 
 #define MAX_BUF_LEN 512
@@ -80,14 +85,14 @@ int compose_head_command(unsigned char *d, state_t *state)
 
     // range, not actually used by the sonar head, just there for a reference in the
     // returned data
-    unsigned short r = (unsigned short)(state->range * 10);
+    unsigned short r = (unsigned short)(state->mp.range * 10);
     memcpy(&c[35], &r, 2);
 
     // add 10 degrees to the limits to allow margin for spurious returns at the end points - wont use extra angle returns
     // then convert the limit angles from degrees to 1/16 gradians
     // 0 is astern, 3200 is ahead, 1600 is left 90 degrees, 4800 is right 90 degrees
-    short left_limit_grad16 = (short)((state->left_limit - state->margin) / 360.0 * 400.0) * 16;
-    short right_limit_grad16 = (short)((state->right_limit + state->margin) / 360.0 * 400.0) * 16;
+    short left_limit_grad16 = (short)((state->mp.left_limit - state->margin) / 360.0 * 400.0) * 16;
+    short right_limit_grad16 = (short)((state->mp.right_limit + state->margin) / 360.0 * 400.0) * 16;
     // Chop at 0..360 degrees if beyond that with extra 10 degrees
     if (left_limit_grad16 < 0)
     {
@@ -138,19 +143,19 @@ int compose_head_command(unsigned char *d, state_t *state)
     // Calculate the AD interval and the number of bins given the desired range and resolution
     // Using a VOS of 1500 m/s
 
-    double sample_time = 2.0 * state->range / 1500.0;      // two times the time of flight
-    short num_bins = (int)(state->range / state->range_resolution);
-    if(num_bins > 800)                         // upper limit for micron sonar
-        num_bins = 800;
+    double sample_time = 2.0 * state->mp.range / 1500.0;      // two times the time of flight
+    state->mp.num_bins = (int)(state->mp.range / state->mp.range_resolution);
+    if(state->mp.num_bins > 800)                         // upper limit for micron sonar
+        state->mp.num_bins = 800;
 
     // the AD interval is in units of 640ns
-    unsigned short AD_interval = (unsigned short)(((sample_time / (double)num_bins)) / 640e-9);
+    state->mp.AD_interval = (unsigned short)(((sample_time / (double)state->mp.num_bins)) / 640e-9);
 
-    memcpy(&c[51], &AD_interval, 2);
-    memcpy(&c[53], &num_bins, 2);
+    memcpy(&c[51], &state->mp.AD_interval, 2);
+    memcpy(&c[53], &state->mp.num_bins, 2);
 
-    printf("Setting AD interval to %d with %d bins, Range %f, Range res %f\n", AD_interval, num_bins,
-           state->range, state->range_resolution
+    printf("Setting AD interval to %f with %d bins, Range %f, Range res %f\n", state->mp.AD_interval, state->mp.num_bins,
+           state->mp.range, state->mp.range_resolution
           );
 
     // set some default parameters
@@ -232,15 +237,15 @@ int decode_seanet(unsigned char *d, int len, state_t *p)
 
     case 2:         // Scanline data reply
     {
-        p->range = (double)(*(unsigned short *)&d[20]) / 10.0;
-        p->gain = (double)d[26] / 210.0;
-        p->slope = (double)(*(unsigned short *)&d[27]) / 255.0;
-        p->AD_interval = (double)(*(unsigned short *)&d[33]);
-        p->left_limit = ((double)(*(unsigned short *)&d[35]) / 16.0) / 400.0 * 2 * M_PI;
-        p->right_limit = ((double)(*(unsigned short *)&d[37]) / 16.0) / 400.0 * 2 * M_PI;
-        p->angle = ((double)(*(unsigned short *)&d[40]) / 16.0) / 400.0 * 2 * M_PI;
-        p->num_bins = (int)(*(unsigned short *)&d[42]);
-        memcpy(p->bins, &d[44], p->num_bins);
+        p->mp.range = (double)(*(unsigned short *)&d[20]) / 10.0;
+        p->mp.gain = (double)d[26] / 210.0;
+        p->mp.slope = (double)(*(unsigned short *)&d[27]) / 255.0;
+        p->mp.AD_interval = (double)(*(unsigned short *)&d[33]);
+        p->mp.left_limit = ((double)(*(unsigned short *)&d[35]) / 16.0) / 400.0 * 2 * M_PI;
+        p->mp.right_limit = ((double)(*(unsigned short *)&d[37]) / 16.0) / 400.0 * 2 * M_PI;
+        p->mp.angle = ((double)(*(unsigned short *)&d[40]) / 16.0) / 400.0 * 2 * M_PI;
+        p->mp.num_bins = (int)(*(unsigned short *)&d[42]);
+        memcpy(p->mp.bins, &d[44], p->mp.num_bins);
         ret = SEANET_SCANLINE;
         break;
     }
@@ -255,6 +260,33 @@ int decode_seanet(unsigned char *d, int len, state_t *p)
     }
 
     return ret;
+}
+
+
+int program_micron(state_t *state)
+{
+    // As the sonar doesn't always end up in a state where the software works after a
+    // restart we are going to reboot the sonar
+    unsigned char micron_cmd[128];
+    int bytes;
+    bytes = compose_reboot_command(micron_cmd);
+    acfr_sensor_write(state->sensor, (char *)micron_cmd, bytes);
+    // We delay here for the reboot to happen
+    usleep(1000000);
+
+    // Send a head command to the micron
+    bytes = compose_head_command(micron_cmd, state);
+
+    // flush serial since reboot
+    tcflush(state->sensor->fd, TCIOFLUSH);
+    acfr_sensor_write(state->sensor, (char *)micron_cmd, bytes);
+
+    // Send inital data command
+    usleep(1000);
+    bytes = compose_send_data_command(micron_cmd);
+    acfr_sensor_write(state->sensor, (char *)micron_cmd, bytes);
+
+    return 1;
 }
 
 int program_exit;
@@ -284,10 +316,10 @@ int main(int argc, char **argv)
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
     // Read the serial config to setup serial connection to motor
-    state.sensor = acfr_sensor_create(state.lcm, state.root_key);
+    state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
     {
-        fprintf(stderr, "Could not open micron OAS serial port %s\n", state.root_key);
+        fprintf(stderr, "Could not open micron OAS serial port\n");
         return 0;
     }
     acfr_sensor_noncanonical(state.sensor, 1, 0);
@@ -297,13 +329,13 @@ int main(int argc, char **argv)
     state.verbose = bot_param_get_boolean_or_fail(params, key);
 
     sprintf(key, "%s.range", rootkey);
-    state.range = bot_param_get_double_or_fail(params, key);
+    state.mp.range = bot_param_get_double_or_fail(params, key);
 
     sprintf(key, "%s.minimum_range", rootkey);
     state.minimum_range = bot_param_get_double_or_fail(params, key);
     
     sprintf(key, "%s.range_resolution", rootkey);
-    state.range_resolution = bot_param_get_double_or_fail(params, key);
+    state.mp.range_resolution = bot_param_get_double_or_fail(params, key);
 
     sprintf(key, "%s.angle_resolution", rootkey);
     char *angle_resolution = bot_param_get_str_or_fail(params, key);
@@ -322,10 +354,10 @@ int main(int argc, char **argv)
     }
 
     sprintf(key, "%s.left_limit", rootkey);
-    state.left_limit = bot_param_get_double_or_fail(params, key);
+    state.mp.left_limit = bot_param_get_double_or_fail(params, key);
 
     sprintf(key, "%s.right_limit", rootkey);
-    state.right_limit = bot_param_get_double_or_fail(params, key);
+    state.mp.right_limit = bot_param_get_double_or_fail(params, key);
 
     sprintf(key, "%s.margin", rootkey);
     state.margin = bot_param_get_double_or_fail(params, key);
@@ -345,44 +377,25 @@ int main(int argc, char **argv)
     sprintf(key, "%s.pitch_offset", rootkey);
     state.pitch_offset = bot_param_get_double_or_fail(params, key);
 
-    // As the sonar doesn't always end up in a state where the software works after a
-    // restart we are going to reboot the sonar
-    unsigned char micron_cmd[128];
-    int bytes;
-    bytes = compose_reboot_command(micron_cmd);
-    acfr_sensor_write(state->sensor, micron_command, bytes);
-    // We delay here for the reboot to happen
-    usleep(1000000);
-    
-    // Send a head command to the micron
-    bytes = compose_head_command(micron_cmd, &state);
-    // flush serial since reboot
-    tcflush(state->sensor.fd, TCIOFLUSH);
-    acfr_sensor_write(state->sensor, micron_command, bytes);
-    // Print for debug
-    //for(int i=0; i<bytes; i++)
-    //    printf("0x%02X ", micron_cmd[i] & 0xFF);
-    //printf("\n");
-    //usleep(1000);
-
-    // Send inital data command
-    usleep(1000);
-    bytes = compose_send_data_command(micron_cmd);
-    acfr_sensor_write(state->sensor, micron_command, bytes);
+    program_micron(&state);
 
     int return_count = 0;
 
     fd_set rfds;
     unsigned char buf[MAX_BUF_LEN];
-    int64_t timestamp;
+    int64_t last_timestamp;
     int lcm_fd = lcm_get_fileno(state.lcm);
+    int bytes;
+    unsigned char micron_cmd[128];
+
+    last_timestamp = timestamp_now();
 
     // now enter the main loop
     while(!program_exit)
     {
         FD_ZERO(&rfds);
         FD_SET(lcm_fd, &rfds);
-        FD_SET(state->sensor.fd, &rfds);
+        FD_SET(state.sensor->fd, &rfds);
 
         struct timeval tv;
         tv.tv_sec = 1;
@@ -397,13 +410,13 @@ int main(int argc, char **argv)
             {
                 lcm_handle(state.lcm); 
             }
-            if(FD_ISSET(state->sensor.fd, &rfds)) // serial readable
+            if(FD_ISSET(state.sensor->fd, &rfds)) // serial readable
             {
-                state.timestamp = timestamp_now();
+                state.mp.utime = timestamp_now();
                 bytes = 0;
                 do
                 {
-                    bytes += acfr_sensor_read(state->sensor, &buf[bytes], 7 - bytes);
+                    bytes += acfr_sensor_read(state.sensor, (char *)&buf[bytes], 7 - bytes);
                     //bytes += read(state->sensor.fd, &buf[bytes], 7 - bytes);
                 }
                 while(bytes < 7);
@@ -414,31 +427,39 @@ int main(int argc, char **argv)
                     // read the rest
                     do
                     {
-                        bytes += acfr_sensor_read(state->sensor, &buf[bytes], (data_len + 7 - 1) - bytes);
+                        bytes += acfr_sensor_read(state.sensor, (char *)&buf[bytes], (data_len + 7 - 1) - bytes);
                     }
                     while(bytes < (data_len + 7 - 1));
                 }
 
 
 
-                // publish the data
-                senlcm_micron_ping_t_publish(state->lcm, "MICRON", &p);
+
 
 
 
                 ret = decode_seanet(buf, bytes, &state);
+
+
+
                 // we need to send the data command for every second return data packet
                 if(ret == 1)
                 {
+                    last_timestamp = state.mp.utime;
+                    senlcm_micron_ping_t_publish(state.lcm, "MICRON", &state.mp);
+
                     if(return_count++ == 1)
                     {
                         bytes = compose_send_data_command(micron_cmd);
-                        acfr_sensor_write(state->sensor, micron_command, bytes);
+                        acfr_sensor_write(state.sensor, (char *)micron_cmd, bytes);
                         return_count = 0;
                     }
 
 
                 }
+
+                if((timestamp_now() - last_timestamp) > 2e6)
+                    program_micron(&state);
 
 
 
@@ -446,7 +467,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    acfr_sensor_destroy(state->sensor);
+    acfr_sensor_destroy(state.sensor);
 
     return 0;
 }
