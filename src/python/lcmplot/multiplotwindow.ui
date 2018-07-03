@@ -6,49 +6,78 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1024</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>LCM Data Plot</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout">
-      <item>
+     <widget class="QSplitter" name="splitter_3">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QSplitter" name="splitter_2">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
        <widget class="QGroupBox" name="groupBox_2">
         <property name="title">
          <string>New Plots</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
+        <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="DragTreeView" name="sourceView"/>
+          <widget class="QSplitter" name="splitter">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <widget class="QWidget" name="layoutWidget">
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Y</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="DragTreeView" name="sourceView"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="layoutWidget">
+            <layout class="QVBoxLayout" name="verticalLayout">
+             <item>
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>X</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListView" name="potentialView"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
          <item>
-          <widget class="QListView" name="potentialView"/>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QPushButton" name="addplotbutton">
-             <property name="text">
-              <string>Add Plot</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QPushButton" name="addplotbutton">
+           <property name="text">
+            <string>Add Plot</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
-      </item>
-      <item>
        <widget class="QGroupBox" name="groupBox">
         <property name="title">
          <string>Active Plots</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>
           <widget class="QTreeView" name="activeView"/>
          </item>
@@ -72,11 +101,9 @@
          </item>
         </layout>
        </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="DropPlotWidget" name="plotView"/>
+      </widget>
+      <widget class="DropPlotWidget" name="plotView"/>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -85,12 +112,34 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1028</width>
      <height>19</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="actionOpen"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menu_File"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpen">
+   <property name="text">
+    <string>&amp;Open</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

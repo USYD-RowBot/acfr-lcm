@@ -1,17 +1,47 @@
-from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex, QTimer
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
-from .newlcmplotwindow import Ui_MainWindow
+from .multiplotwindow import Ui_MainWindow
+
+from .multisourcemodel import NumericElementData
+
+
+def get_leaf_nodes(model_element):
+    leaves = []
+
+    for node in model_element.entries:
+        if isinstance(node, NumericElementData):
+            leaves.append((node.full_name(), node))
+        else:
+            leaves.extend(get_leaf_nodes(node))
+
+    return leaves
 
 
 class ListModel(QAbstractListModel):
-    def __init__(self, channel_data, *args, **kwargs):
+    def __init__(self, data_descriptor, *args, **kwargs):
         super(ListModel, self).__init__(*args, **kwargs)
-        self.channel_data = channel_data
+        # the descriptor is a little vague here - it may be a sub-entry
+        # not the actual channel itself
+        found = False
+        while not found:
+            while not hasattr(data_descriptor, 'data_type'):
+                data_descriptor = data_descriptor.parent()
+
+            if data_descriptor.data_type is None:
+                data_descriptor = data_descriptor.parent()
+                continue
+
+            found = True
+
+        # now we know we have the channel
+        channel_data = data_descriptor
+
+        self.channels = get_leaf_nodes(channel_data)
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         if QModelIndex_parent is None or not QModelIndex_parent.isValid():
-            return len(self.channel_data.data_elements)
+            return len(self.channels)
         else:
             if QModelIndex_parent.column() > 0:
                 return 0
@@ -30,18 +60,27 @@ class ListModel(QAbstractListModel):
             return QVariant()
 
         if int_role == Qt.DisplayRole:
-            return QVariant(self.channel_data.data_elements[index.row()].name)
+            return QVariant(self.channels[index.row()][0])
         elif int_role == Qt.UserRole:
-            return QVariant(self.channel_data.data_elements[index.row()])
+            return QVariant(self.channels[index.row()][1])
 
 
 class PlotData(object):
     def __init__(self, xdata, ydata, plotitem, xlabel, ylabel, legend):
         self.xdata = xdata
         self.ydata = ydata
+        # note that to 'update' this item a call to setData is all that is needed
+        # there isn't something special - although memory management for the underlying
+        # array/numpy array is recommended.
         self.plotitem = plotitem
-        self.xlabel = xlabel
-        self.ylabel = ylabel
+
+        # we want the channel name to avoid repeating it
+        chx = xlabel.split('->')[0]
+        chy = ylabel.split('->')[0]
+        self.channel = chx or chy  # this is a little cheeky
+        self.xlabel = xlabel.split('->')[1]
+        self.ylabel = ylabel.split('->')[1]
+
         self.legend_name = legend
 
 
@@ -58,7 +97,6 @@ class PlotModel(QAbstractTableModel):
 
     def delete_plot(self, row):
         self.beginRemoveRows(QModelIndex(), row, row)
-        print row, len(self.plots)
         del self.plots[row]
         self.endRemoveRows()
 
@@ -75,21 +113,22 @@ class PlotModel(QAbstractTableModel):
             # this is vs a not-time
             pd.legend_name = "{} vs {}".format(pd.xlabel, pd.ylabel)
 
-        self.dataChanged.emit(self.index(row, 0), self.index(row, 1))
-
+        self.dataChanged.emit(self.index(row, 1), self.index(row, 2))
 
     def rowCount(self, QModelIndex_parent=None, *args, **kwargs):
         return len(self.plots)
 
     def columnCount(self, QModelIndex_parent=None, *args, **kwargs):
-        return 2
+        return 3
 
     def headerData(self, section, orientation, int_role=None):
         if int_role == Qt.DisplayRole:
-            if section == 0:
+            if section == 1:
                 return QVariant("X")
-            elif section == 1:
+            elif section == 2:
                 return QVariant("Y")
+            elif section == 0:
+                return QVariant("Channel")
 
         return QVariant()
 
@@ -100,10 +139,12 @@ class PlotModel(QAbstractTableModel):
         if int_role == Qt.DisplayRole:
             col = index.column()
             plot = self.plots[index.row()]
-            if col == 0:
+            if col == 1:
                 return QVariant(plot.xlabel)
-            elif col == 1:
+            elif col == 2:
                 return QVariant(plot.ylabel)
+            elif col == 0:
+                return QVariant(plot.channel)
             else:
                 return QVariant()
 
@@ -113,10 +154,16 @@ class PlotModel(QAbstractTableModel):
             return QVariant(plot)
 
 
-class NewPlotWindow(QMainWindow):
+class MultiSourcePlotWindow(QMainWindow):
     def __init__(self, data_model):
-        super(NewPlotWindow, self).__init__()
+        super(MultiSourcePlotWindow, self).__init__()
         self.data = data_model
+
+        self.timer = QTimer()
+        self.timer.setInterval(100)  # 10Hz
+        self.timer.start(1000)  # start in a second
+
+        self.timer.timeout.connect(self.tick)
 
         self.plot_model = PlotModel()
 
@@ -142,43 +189,77 @@ class NewPlotWindow(QMainWindow):
 
         self.ui.sourceView.selection_update.connect(self.update_source_selected)
 
+        self.ui.actionOpen.triggered.connect(self.fileopen)
+
         n = 20
         self.next_pen_idx = 0
         self.pens = [(i, n) for i in xrange(n)]
 
+    def tick(self):
+        # for each plot, check if we need to update
+        # or more accurately just update
+        for plot in self.plot_model.plots:
+            plot.plotitem.setData(plot.xdata, plot.ydata)
+
+    def fileopen(self):
+        # display the dialog, pass the (valid) result to the data model
+        file_name = QFileDialog.getOpenFileName(self, "Open LCM log", filter="LCM Logs (*.lcm)")
+
+        if file_name is None:
+            print "No file selected."
+            return
+
+        print file_name
+        self.data.add_file(file_name[0])
+
     def update_source_selected(self, selected):
         for idx in selected:
-            parent = idx.parent()
+            if idx.isValid():
+                node = self.data.data(idx, Qt.UserRole).value()
+                if isinstance(node, NumericElementData):
+                    # we can plot this... so we can get a matching list
+                    lm = ListModel(node)
+                    self.ui.potentialView.setModel(lm)
 
-            if parent.isValid():
-                lm = ListModel(self.data.data(parent, Qt.UserRole).value())
-                self.ui.potentialView.setModel(lm)
+                    # auto select the time index
+                    utime_idx = None
+                    for ii in xrange(lm.rowCount()):
+                        if lm.data(lm.index(ii), Qt.DisplayRole).value().endswith('->utime'):
+                            utime_idx = lm.index(ii)
+                            break
 
-                # auto select the time index
-                utime_idx = None
-                for ii in xrange(lm.rowCount()):
-                    if lm.data(lm.index(ii), Qt.UserRole).value().name.endswith('->utime'):
-                        utime_idx = lm.index(ii)
-                        break
+                    if utime_idx is not None:
+                        self.ui.potentialView.selectionModel().select(utime_idx, QItemSelectionModel.ClearAndSelect)
 
-                if utime_idx is not None:
-                    self.ui.potentialView.selectionModel().select(utime_idx, QItemSelectionModel.ClearAndSelect)
+                    return
+
+        self.ui.potentialView.setModel(None)
 
     def timeplot_by_index(self, idx):
-        if idx.parent().isValid():
-            d = self.data.data(idx, Qt.UserRole).value()
-            self.plot_data(d.time, d.data, '->utime', d.name)
+        node = self.data.data(idx, Qt.UserRole).value()
+        if isinstance(node, NumericElementData):
+            # we need to find the matching utime (or other known reference)
+            lm = self.ui.potentialView.model()
+            utime_idx = None
+            for ii in xrange(lm.rowCount()):
+                if lm.data(lm.index(ii), Qt.DisplayRole).value().endswith('->utime'):
+                    utime_idx = lm.index(ii)
+                    break
+
+            if utime_idx is not None:
+                utime = lm.data(utime_idx, Qt.UserRole).value()
+                self.plot_data(utime.data, node.data, '->utime', node.full_name())
 
     def xy_by_indices(self, idx):
         # the idx refers to our x
         # we still need to get our y (dependent) from sourceView
 
         x = idx.model().data(idx, Qt.UserRole).value().data
-        xname = idx.model().data(idx, Qt.UserRole).value().name
+        xname = idx.model().data(idx, Qt.UserRole).value().full_name()
 
         for idx in self.ui.sourceView.selectedIndexes():
             y = self.data.data(idx, Qt.UserRole).value().data
-            yname = self.data.data(idx, Qt.UserRole).value().name
+            yname = self.data.data(idx, Qt.UserRole).value().full_name()
 
         self.plot_data(x, y, xname, yname)
 
