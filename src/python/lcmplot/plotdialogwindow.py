@@ -33,29 +33,28 @@ class PlotDialogWindow(QDialog):
         self.ui.point_style.addItem("Cross (x)", "x")
         self.ui.point_style.addItem("Star", "star")
 
+        # the PlotDataItem object we are editing the plot parameters for
         self.plot_data = plot_data
 
         # get the parameters of the existing plot
-        print "pen:", self.plot_data.opts['pen']
-        print "symbolPen:", self.plot_data.opts['symbolPen']
-        print "symbolBrush:", self.plot_data.opts['symbolBrush']
-        print "symbolSize:", self.plot_data.opts['symbolSize']
-        print "symbol:", self.plot_data.opts['symbol']
-
+        # safest way is to make a pen using the parameters
+        # the actual pen attribute may just be a colour tuple
         pen = mkPen(self.plot_data.opts['pen'])
         self.line_colour = pen.color()
         self.line_width = pen.widthF()
         self.line_style = pen.style()
 
+        # same deal for outlines of the symbols
         outline = mkPen(self.plot_data.opts['symbolPen'])
         self.point_outline_colour = outline.color()
         self.point_outline_width = outline.widthF()
 
+        # and now the symbol filling
         fill = mkBrush(self.plot_data.opts['symbolBrush'])
         self.point_fill_colour = fill.color()
 
+        # finally the size and what symbol (if any!) to plot
         self.point_size = self.plot_data.opts['symbolSize']
-
         self.point_style = self.plot_data.opts['symbol']
 
         # now transfer details/parameters of the existing plot to the
@@ -74,7 +73,16 @@ class PlotDialogWindow(QDialog):
         self.ui.line_width.setValue(self.line_width)
         self.ui.point_outline_width.setValue(self.point_outline_width)
 
-        # connect buttons to their actions
+        if self.line_style == Qt.NoPen:
+            self.ui.line_width.setEnabled(False)
+            self.ui.line_colour.setEnabled(False)
+        if self.point_style is None:
+            self.ui.point_outline_width.setEnabled(False)
+            self.ui.point_outline_colour.setEnabled(False)
+            self.ui.point_fill_colour.setEnabled(False)
+            self.ui.point_size.setEnabled(False)
+
+        # connect colour selection buttons to their actions
         self.ui.point_fill_colour.clicked.connect(self.update_point_fill_colour)
         self.ui.point_outline_colour.clicked.connect(self.update_point_outline_colour)
         self.ui.line_colour.clicked.connect(self.update_line_colour)
@@ -114,10 +122,28 @@ class PlotDialogWindow(QDialog):
     def line_style_changed(self, idx):
         self.line_style = self.ui.line_style.itemData(idx, Qt.UserRole)
 
+        if self.line_style == Qt.NoPen:
+            self.ui.line_width.setEnabled(False)
+            self.ui.line_colour.setEnabled(False)
+        else:
+            self.ui.line_width.setEnabled(True)
+            self.ui.line_colour.setEnabled(True)
+
         self.plot_data.setPen(self.line_colour, width=self.line_width, style=self.line_style)
 
     def point_style_changed(self, idx):
         self.point_style = self.ui.point_style.itemData(idx, Qt.UserRole)
+
+        if self.point_style is None:
+            self.ui.point_outline_width.setEnabled(False)
+            self.ui.point_outline_colour.setEnabled(False)
+            self.ui.point_fill_colour.setEnabled(False)
+            self.ui.point_size.setEnabled(False)
+        else:
+            self.ui.point_outline_width.setEnabled(True)
+            self.ui.point_outline_colour.setEnabled(True)
+            self.ui.point_fill_colour.setEnabled(True)
+            self.ui.point_size.setEnabled(True)
 
         self.plot_data.setSymbol(self.point_style)
 
