@@ -5,7 +5,7 @@ import argparse
 from lcmplot import get_message_types
 
 if __name__ == '__main__':
-    sys.path.insert(0, '/home/lachlan/Code/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+    sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
     parser = argparse.ArgumentParser()
 
