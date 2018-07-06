@@ -93,7 +93,7 @@ LocalPlanner::LocalPlanner() :
 		depthMode(0), diveMode(0), destID(0), turningRadius(1.0), maxPitch(0),
 		lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0),
 		velChangeDist(1.0), defaultLegVel(1.0), waypointTimeout(1e3),
-		forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
+		forwardBound(0.5), sideBound(2.0), depthBound(0.25), distToDestBound(2.0),
 		maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300),
 		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
 		waypointTime(timestamp_now()), replanTime(timestamp_now())
@@ -102,6 +102,7 @@ LocalPlanner::LocalPlanner() :
 
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
+
 
 	cout << endl << endl << endl << "LocalPlanner started" << endl;
 }
@@ -122,13 +123,21 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
-        return 1;
+    return 1;
 }
 
-
+int LocalPlanner::initialise()
+{
+	subscribeChannels();
+	this->init();
+	
+	return 1;
+}
+	
 /**
  * Copy current nav solution and process the waypoints
  */
+/*
 int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
 
@@ -161,11 +170,13 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 
 	return 1;
 }
+*/
 
 /**
  * We have received a new path command.
  * Let's calcualte a new path.
  */
+ /*
 int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 {
 	bool status = false;
@@ -200,7 +211,7 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 
 	return status;
 }
-
+*/
 #define DIVE_REV_VEL -0.5
 //#define DIVE_REV_VEL 0 // for lab testing
 #define DIVE_PICTH (10.0 / 180.0 * M_PI)
@@ -239,6 +250,7 @@ int LocalPlanner::calculateWaypoints()
 	if (destPoseRel.getX() < 0 ||
 	    destPoseRel.getX() > 2*turningRadius ||
 		fabs(relAngle) > 45./180*M_PI )
+	//if(0)
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -367,6 +379,9 @@ int LocalPlanner::loadConfig(char *program_name)
 
 	sprintf(key, "%s.side_bound", rootkey);
 	sideBound = bot_param_get_double_or_fail(param, key);
+	
+	sprintf(key, "%s.depth_bound", rootkey);
+	depthBound = bot_param_get_double_or_fail(param, key);
 
 	sprintf(key, "%s.drop_dist", rootkey);
 	wpDropDist = bot_param_get_double_or_fail(param, key);
@@ -539,8 +554,10 @@ int LocalPlanner::sendResponse()
 		pr.distance = waypoints.size() * wpDropDist;
 	else
 		pr.distance = currPose.positionDistance(destPose);
+
 	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
 
+	
 	return 1;
 }
 

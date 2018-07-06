@@ -45,14 +45,6 @@ namespace vehicleSimSimple
 #define BIAS_A 0.0196
 #define BIAS_G 9.6963e-06
 
-#define NGA_DIAM 0.3 
-#define NGA_RADIUS (0.5*NGA_DIAM)
-#define NGA_LENGTH 2.5 
-#define NGA_VERT_DISTANCE 2 
-#define NGA_LAT_DISTANCE 1.8 
-#define NGA_MASS 120 
-#define NGA_INERTIA ((0.0833*NGA_MASS*NGA_LENGTH*NGA_LENGTH) + (0.25*NGA_MASS*NGA_DIAM*NGA_DIAM))
-
 
 typedef boost::numeric::ublas::vector< double > state_type;
 

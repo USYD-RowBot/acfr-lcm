@@ -4,6 +4,7 @@ from PyQt5.QtCore import pyqtSignal
 
 class DropPlotWidget(PlotWidget):
     dropped_data = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super(DropPlotWidget, self).__init__(*args, **kwargs)
         self.setAcceptDrops(True)
@@ -20,8 +21,10 @@ class DropPlotWidget(PlotWidget):
         else:
             ev.ignore()
 
+    def dragLeaveEvent(self, ev):
+        ev.accept()
+
     def dropEvent(self, ev):
-        print ev.mimeData().text()
         ev.acceptProposedAction()
 
         self.dropped_data.emit(ev.mimeData().text())

@@ -19,4 +19,9 @@ public:
     virtual int loadConfig(char *programName);
     virtual int calculateWaypoints();
     virtual int processWaypoints();
+    
+    virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc);
+    virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav);
+    virtual int init();
+    
 };

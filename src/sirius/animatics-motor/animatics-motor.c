@@ -20,6 +20,7 @@ typedef struct
 	acfr_sensor_t *sensor;
     int64_t last_motor_command;
     char thruster_channel;
+    double max_rpm;
 
 } state_t;
 
@@ -66,6 +67,12 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_siri
 			rpm = mc->vertical;
 			break;
 	}
+		
+	// hard limit the rpm
+	if(rpm > state->max_rpm)
+		rpm  = state->max_rpm;
+	else if(rpm < -state->max_rpm)
+		rpm = -state->max_rpm;
 			
     send_motor_command(state->sensor, rpm);
 }
@@ -122,7 +129,7 @@ parse_args (int argc, char **argv, char **vehicle_name, char **config_key)
             strcpy(*vehicle_name, (char *)optarg);
             break;
         case 'k':
- 			n = strlen((char *)optarg);
+            n = strlen((char *)optarg);
             *config_key = malloc(n);
             strcpy(*config_key, (char *)optarg);
             got_key = 1;        	
@@ -152,11 +159,8 @@ int main(int argc, char *argv[])
     char *vehicle_name;
     char *rootkey;
     parse_args(argc, argv, &vehicle_name, &rootkey);
-    char sensor_channel[100];
-    snprintf(sensor_channel, 100, "%s.4319", vehicle_name);
 
     lcm_t *lcm = lcm_create(NULL);
-    
 
     state.sensor = acfr_sensor_create(lcm, rootkey);
     if(state.sensor == NULL)
@@ -167,11 +171,19 @@ int main(int argc, char *argv[])
     char key[128];
     sprintf(key, "%s.thruster", rootkey);
     char *thruster_name = bot_param_get_str_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.max_rpm", rootkey);
+    state.max_rpm = bot_param_get_double_or_fail(state.sensor->param, key);
     
     state.thruster_channel = thruster_name[0]; 
     
     char status_channel[128];
     snprintf(status_channel, 128, "%s.ANIMATICS_STATUS.%s", vehicle_name, thruster_name);
+    
+    char channel[128];
+    snprintf(channel, 128, "%s.THRUSTER", vehicle_name);
+    acfrlcm_auv_sirius_motor_command_t_subscribe(lcm, channel, &motor_handler, &state);
+    perllcm_heartbeat_t_subscribe(lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    
     
     char buf[MAX_MESSAGE_SIZE];
     double omega_raw, current_raw, voltage_raw, temp_raw;

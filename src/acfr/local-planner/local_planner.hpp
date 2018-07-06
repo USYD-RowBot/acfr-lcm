@@ -3,7 +3,8 @@
 #include <fstream>
 
 #include "DubinsPath.h"
-#include "perls-common/timestamp.h"
+#include "acfr-common/timestamp.h"
+
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
@@ -16,6 +17,8 @@
 #define ITERATION_NUM 3
 
 
+
+
 class LocalPlanner
 {
 public:
@@ -23,13 +26,17 @@ public:
     virtual ~LocalPlanner();
     int subscribeChannels();
     virtual int loadConfig(char *programName);
-    int onNav(const acfrlcm::auv_acfr_nav_t *nav);
-    int onPathCommand(const acfrlcm::auv_path_command_t *pc);
     int onGlobalState(const acfrlcm::auv_global_planner_state_t *gpState);
     virtual int calculateWaypoints();
     virtual int processWaypoints();
     int process();
     int sendResponse();
+    int initialise();
+    
+    // Over written by the inheriting class
+    virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc) = 0;
+    virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav) = 0;
+    virtual int init() = 0;
 
     Pose3D getCurrPose(void) const
     {
@@ -156,7 +163,8 @@ protected:
 
         if ((pRel.getX() < forwardBound) &&
             (pRel.getX() > -2 * forwardBound) &&
-            (std::fabs(pRel.getY()) < sideBound))
+            (std::fabs(pRel.getY()) < sideBound) &&
+            (std::fabs(pRel.getZ()) < depthBound))
         {
             return true;
         }
@@ -199,6 +207,7 @@ protected:
     double waypointTimeout;
     double forwardBound;
     double sideBound;
+    double depthBound;
     double distToDestBound;
     double maxAngleWaypointChange;
     double radiusIncrease;
@@ -211,6 +220,7 @@ protected:
     int64_t waypointTime;
     int64_t replanTime;
 
-        string vehicle_name = "DEFAULT";
+    string vehicle_name = "DEFAULT";
+
 
 };
