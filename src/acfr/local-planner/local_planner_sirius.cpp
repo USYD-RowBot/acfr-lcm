@@ -3,6 +3,7 @@
 
 LocalPlannerSirius::LocalPlannerSirius():LocalPlanner()
 {
+	diffSteer = true;
 }
 
 
@@ -31,7 +32,7 @@ int LocalPlannerSirius::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 	// for now only process waypoints or dive commands if we are in
 	// RUN mode.  This will need to be modified to take into account
 	// an active PAUSE mode.
-	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
 	{
 		processWaypoints();
 	}
@@ -49,36 +50,27 @@ int LocalPlannerSirius::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 	// Reset destination pose
 	destPose.setIdentity();
 
-	double x, y, z, h;
-	// Check for the Sirius no value condiciton, encoded here as NaN
-	// X and Y use what ever the current pose value is, Z is made 0 in depth mode
-	if(pc->waypoint[0] != pc->waypoint[0])
-		x = currPose.getX();
-	else
-		x = pc->waypoint[0];
-		
-	if(pc->waypoint[1] != pc->waypoint[1])
-		y = currPose.getY();
-	else
-		y = pc->waypoint[1];
-
-	if(pc->waypoint[2] != pc->waypoint[2])
+	if(pc->run_mode == acfrlcm::auv_path_command_t::HOLD)
 	{
-		z = 0;
-		depthMode = acfrlcm::auv_path_command_t::DEPTH;
+		holdPose = currPose;
+		holdMode = true;
+		return true;
 	}
 	else
-	{
-		z = pc->waypoint[2];
-		depthMode = pc->depth_mode;
-	}
+		holdMode = false;
 	
-	if(pc->waypoint[5] != pc->waypoint[5])
-		y = currPose.getYawRad();
-	else
-		y = pc->waypoint[5];
+	double x, y, z, h;
+	x = pc->waypoint[0];
+	y = pc->waypoint[1];
+	z = pc->waypoint[2];
+	depthMode = pc->depth_mode;
+	h = pc->waypoint[5];
 
+	if(x == x && y == y && h != h)
+		h = atan2(y - currPose.getY(), x - currPose.getX());
 		
+	if(z != z)
+		z = 1.5;
 
 	// Set destination pose and velocity
 	destPose.setPosition(x, y, z);
@@ -92,6 +84,7 @@ int LocalPlannerSirius::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 			<< endl;
 
 	setDestReached(false);
+	setDestReachedLatched(false);
 	setNewDest(true);
 	if ((status = calculateWaypoints()) == false)
 	{
@@ -126,7 +119,11 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 	rovtime2dsltime_str(((double)timestamp_now())/1e6, time_str);
 	
 	double distance;
-	if (waypoints.size() > 2)
+	if((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()) && (destPose.getYawRad() != destPose.getYawRad()))
+		distance = destPose.getZ() - currPose.getZ();
+	else if ((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()) && (destPose.getZ() != destPose.getZ()))
+		distance = 0.0;
+	else if (waypoints.size() > 2)
 		distance = waypoints.size() * wpDropDist;
 	else
 		distance = currPose.positionDistance(destPose);
@@ -145,9 +142,27 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 			  destID,
 			  0.0,
 			  distance,
-			  destReached, 
+			  destReachedLatched, 
 			  0.0,
 			  0);
 	send_udp(&auv_udp, auv_str, len);
+	
+	
 }
+
+//#define NAN std::numeric_limits::quiet_NaN()
+int LocalPlannerSirius::execute_abort()
+{	
+	cout << "Executing an abort" << endl;
+	abortPose.setPosition(NAN, NAN, -1.0);
+	abortPose.setRollPitchYawRad(NAN, NAN, NAN);
+	destPose = abortPose;
+	depthMode = 0;
+	setNewDest(true);
+	
+	destID = -99;
+	aborted = true;	
+	return 1;
+}
+
 

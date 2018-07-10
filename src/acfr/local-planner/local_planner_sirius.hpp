@@ -25,12 +25,13 @@ public:
     virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc);
     virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav);
     virtual int init();
+    virtual int execute_abort();
     
 private:
 	    udp_info_t auv_udp;
 	    void heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const std::string& channel,
                             const perllcm::heartbeat_t *hb);
-
+                            
 };
 
 

@@ -39,6 +39,8 @@ double rand_n(void) // generate normally distributed variable given uniformly di
     return pow(-2*log(u),0.5)*sin(2*M_PI*v);
 }
 
+static volatile bool exit_signalled;
+
 // Calculate the path, this is where the magic happens
 void VehicleSimBase::calculate() 
 {
@@ -318,9 +320,17 @@ void VehicleSimBase::publishDVL()
 
 }
 
-VehicleSimBase::VehicleSimBase() :
-    state(12), vehicle_name("DEFAULT"), interval_us(100000), time_step(interval_us*1.0e-6), exit_signalled(false)
+static void signalHandler(int signal)
 {
+	exit_signalled = true;
+}
+
+VehicleSimBase::VehicleSimBase() :
+    state(12), vehicle_name("DEFAULT"), interval_us(100000), time_step(interval_us*1.0e-6)
+{
+	exit_signalled = false;
+	std::signal(SIGINT, signalHandler);
+	
     //srand(time(NULL));
     srand(1234); // seeding the same way every time to allow filter comparisons
 
@@ -409,6 +419,8 @@ string const VehicleSimBase::getVehicleName() const
 }
 
 
+
+
 void VehicleSimBase::lcm_thread()
 {
     while (!exit_signalled)
@@ -436,7 +448,7 @@ void VehicleSimBase::run()
     {
         std::cerr << "Couldn't create timer." << std::endl;
         perror("create timer");
-        this->exit_signalled = true;
+        exit_signalled = true;
         lcm_thread_handle.join();
 
         return;
@@ -463,7 +475,7 @@ void VehicleSimBase::run()
     //if (ret) check for failure
           
     // now the period waits
-    while (!this->exit_signalled)
+    while (!exit_signalled)
     {
         unsigned long long missed;
         // this handles the timer waiting
@@ -472,7 +484,7 @@ void VehicleSimBase::run()
         {
             perror("read timer");
 
-            this->exit_signalled = true;
+            exit_signalled = true;
             lcm_thread_handle.join();
 
             return;

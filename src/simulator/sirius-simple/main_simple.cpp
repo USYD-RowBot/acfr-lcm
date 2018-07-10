@@ -382,7 +382,7 @@ void SiriusVehicleSim::publishSensorData()
 
 void SiriusVehicleSim::subscribeLCMChannels()
 {
-    lcm.subscribe(vehicle_name+".SIRIUS_MOTOR", &SiriusVehicleSim::on_motor_command, this);
+    lcm.subscribe(vehicle_name+".THRUSTER", &SiriusVehicleSim::on_motor_command, this);
 }
 
 void print_help (int exval, char **argv)
@@ -412,13 +412,13 @@ parse_args (int argc, char **argv, vehicleSimSimple::VehicleSimBase &vehicleSim)
          }                                                                      
     }                                                                           
 }
-        
+/*        
 int main_exit;
 void signal_handler(int sig)
 {
     main_exit = 1;
 }
-
+*/
 int main(int argc, char **argv)
 {
     SiriusVehicleSim vehicleSim;
@@ -426,8 +426,8 @@ int main(int argc, char **argv)
     parse_args(argc, argv, vehicleSim);
 
     // install the signal handler
-    main_exit = 0;
-    signal(SIGINT, signal_handler);
+    //main_exit = 0;
+    //signal(SIGINT, signal_handler);
 
     cout << "Starting sim..." << endl;
     vehicleSim.run();

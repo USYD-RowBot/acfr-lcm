@@ -133,30 +133,42 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         // to properly do this current should be accounted for
         // so it could be moving towards the target without actually
         // facing it
-        while (nav.heading < -M_PI)
-            nav.heading += 2 * M_PI;
-        while (nav.heading > M_PI)
-            nav.heading -= 2 * M_PI;
+        // To stop the PID doing anything stupid we'll check for a NO_VALUE heading condition here
+        if(cmd.heading != cmd.heading)
+ 	       heading_rpm = 0;
+       	else
+       	{ 	
+		    while (nav.heading < -M_PI)
+		        nav.heading += 2 * M_PI;
+		    while (nav.heading > M_PI)
+		        nav.heading -= 2 * M_PI;
 
-        while (cmd.heading < -M_PI)
-            cmd.heading += 2 * M_PI;
-        while (cmd.heading > M_PI)
-            cmd.heading -= 2 * M_PI;
+		    while (cmd.heading < -M_PI)
+		        cmd.heading += 2 * M_PI;
+		    while (cmd.heading > M_PI)
+		        cmd.heading -= 2 * M_PI;
 
-        double diff_heading = nav.heading - cmd.heading;
-        while( diff_heading < -M_PI )
-            diff_heading += 2*M_PI;
-        while( diff_heading > M_PI )
-            diff_heading -= 2*M_PI;
+		    double diff_heading = nav.heading - cmd.heading;
+		    while( diff_heading < -M_PI )
+		        diff_heading += 2*M_PI;
+		    while( diff_heading > M_PI )
+		        diff_heading -= 2*M_PI;
 
-        // Account for side slip by making the velocity bearing weighted
-        // on the desired heading
-        heading_rpm = pid(&this->gains_heading, diff_heading, 0.0, dt);
-        heading_port = +heading_rpm / 2;
+
+		    // Account for side slip by making the velocity bearing weighted
+		    // on the desired heading
+		    heading_rpm = pid(&this->gains_heading, diff_heading, 0.0, dt);
+	    }
+	    
+	    heading_port = +heading_rpm / 2;
         heading_strb = -heading_rpm / 2;
     
-        // X Velocity
-        thrust_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt);
+        // X Velocity, as above
+        if(cmd.vx != cmd.vx)
+        	cmd.vx = 0;
+        else
+	        thrust_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt);
+	        
         thrust_port = thrust_rpm / 2;
         thrust_strb = thrust_rpm / 2;
         
@@ -165,7 +177,12 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         combined_strb = thrust_strb + heading_strb;
         
         // Depth control
-        vert_rpm = pid(&this->gains_depth, nav.depth, cmd.depth, dt);
+        if(cmd.depth != cmd.depth)
+        	vert_rpm = 0;
+    	else if ((fabs(cmd.depth - 1.5) < 0.2) && (fabs(nav.depth - 1.5) < 0.2))
+    		vert_rpm = 0;
+    	else
+	        vert_rpm = pid(&this->gains_depth, nav.depth, cmd.depth, dt);
                 
         // Clipping has been moved to the animatics controller to be the same as all the other AUVs
         

@@ -37,6 +37,7 @@ public:
     virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc) = 0;
     virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav) = 0;
     virtual int init() = 0;
+    virtual int execute_abort() = 0;
 
     Pose3D getCurrPose(void) const
     {
@@ -96,7 +97,15 @@ public:
     void setDestReached(bool b)
     {
         destReached = b;
+        if(b)
+        	destReachedLatched = b;
     }
+    
+    void setDestReachedLatched(bool b)
+    {
+        destReachedLatched = b;
+    }
+
 
     bool getNewDest(void) const
     {
@@ -156,21 +165,52 @@ public:
     std::ofstream fp, fp_wp;
 
 protected:
-
+	
     bool pointWithinBound(Pose3D p)
     {
-        Pose3D pRel = getRelativePose(p);
+    	// Check to see if we are in a special mode, depth or heading only
+	    if((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getYawRad() != p.getYawRad()))
+	    {
+			if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+				return true;
+		}
+		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getZ() != p.getZ()))
+		{
+			if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
+				return true;
+		}
+		else
+		{
+		    Pose3D pRel = getRelativePose(p);
 
-        if ((pRel.getX() < forwardBound) &&
-            (pRel.getX() > -2 * forwardBound) &&
-            (std::fabs(pRel.getY()) < sideBound) &&
-            (std::fabs(pRel.getZ()) < depthBound))
-        {
-            return true;
-        }
-
+    	    if ((pRel.getX() < forwardBound) &&
+    	        (pRel.getX() > -2 * forwardBound) &&
+    	        (std::fabs(pRel.getY()) < sideBound) &&
+    	        (std::fabs(pRel.getZ()) < depthBound))
+    	    {
+    	        return true;
+    	    }
+		}
         return false;
     }
+    /*
+	bool pointWithinDepth(Pose3D p)
+	{
+		cout << "Target: " << p.getZ() << " Current: " << currPose.getZ() << " Diff: " << std::fabs(currPose.getZ() - p.getZ()) << endl;
+		if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+			return true;
+		
+		return false;
+	}
+	
+	bool pointWithinHeading(Pose3D p)
+	{
+		if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
+			return true;
+		
+		return false;
+	}
+*/
 
     Pose3D currPose;
     Vector3D currVel;
@@ -186,11 +226,20 @@ protected:
     bool newDest;
     // Global destination
     bool destReached;
+    bool destReachedLatched;
 
     int depthMode;
 
     int diveMode;
     int diveStage;
+    
+    bool diffSteer;
+    
+    bool holdMode;
+    Pose3D holdPose;
+    
+    bool aborted;
+    Pose3D abortPose;
 
     int destID;
 
@@ -208,6 +257,7 @@ protected:
     double forwardBound;
     double sideBound;
     double depthBound;
+    double headingBound;
     double distToDestBound;
     double maxAngleWaypointChange;
     double radiusIncrease;
