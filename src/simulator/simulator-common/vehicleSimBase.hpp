@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <lcm/lcm-cpp.hpp>
-#include <signal.h>
+#include <csignal>
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
@@ -88,7 +88,8 @@ protected:
 private:
     BotParam *param = NULL;
 
-    bool exit_signalled;
+	
+    
 
     void lcm_thread();
 

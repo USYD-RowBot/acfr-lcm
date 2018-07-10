@@ -93,10 +93,10 @@ LocalPlanner::LocalPlanner() :
 		depthMode(0), diveMode(0), destID(0), turningRadius(1.0), maxPitch(0),
 		lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0),
 		velChangeDist(1.0), defaultLegVel(1.0), waypointTimeout(1e3),
-		forwardBound(0.5), sideBound(2.0), depthBound(0.25), distToDestBound(2.0),
+		forwardBound(0.5), sideBound(2.0), depthBound(0.25), headingBound(0.1), distToDestBound(2.0),
 		maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300),
 		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
-		waypointTime(timestamp_now()), replanTime(timestamp_now())
+		waypointTime(timestamp_now()), replanTime(timestamp_now()), diffSteer(false), aborted(false)
 {
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
@@ -237,19 +237,41 @@ int LocalPlanner::calculateWaypoints()
 			<< destPose.getY() << "," << destPose.getZ() << " < "
 			<< destPose.getYawRad() / M_PI * 180 << endl;
 
-	Pose3D destPoseRel = getRelativePose(destPose);
-	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
-	cout << "Dest rel: X=" << destPoseRel.getX()
-			<< ", angle=" << relAngle/M_PI*180 << endl;
-
 	bool success = false;
 	vector<Pose3D> wps;
+	
+	
+	// Special case where we have no X or Y so it's a depth change or a heading change without moving
+	if((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()))
+	{
+		cout << "Depth or Heading change" << endl;
+	
+		wps.push_back(destPose);
+		waypoints.clear();
+		waypoints = wps;	
+		
+		// Save the start pose and start velocity
+		startPose = currPose;
+
+		printWaypoints();
+		publishWaypoints();
+
+		return true;
+	}
+
+	Pose3D destPoseRel = getRelativePose(destPose);
+	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
+	cout << "Dest rel: X=" << destPoseRel.getX() << " Y=" << destPoseRel.getX()
+			<< ", angle=" << relAngle/M_PI*180 << " Diff Steer mode=" << diffSteer << endl;
+
+	
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
 	if (destPoseRel.getX() < 0 ||
-	    destPoseRel.getX() > 2*turningRadius ||
-		fabs(relAngle) > 45./180*M_PI )
+	    ((destPoseRel.getX() > 2*turningRadius)) ||
+		((fabs(relAngle) > 45./180*M_PI) && !diffSteer) || 
+		((fabs(destPoseRel.getX()) > 2) && (fabs(destPoseRel.getY() > 2)) && diffSteer))
 	//if(0)
 	{
 		DubinsPath dp;
@@ -324,13 +346,21 @@ int LocalPlanner::onGlobalState(
 	 * for transitions into any state but RUN.  This may need to be
 	 * modified for more complex PAUSE or ABORT behaviours.
 	 */
-	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+	if ((gpState.state == acfrlcm::auv_global_planner_state_t::IDLE) ||
+		(gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE) ||
+		(gpState.state == acfrlcm::auv_global_planner_state_t::FAULT))
 	{
 		// form a STOP message to send
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+	}
+	
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
+	{
+		cout << "Received ABORT via LCM" << endl;
+		execute_abort();
 	}
 	return 1;
 }
@@ -382,6 +412,9 @@ int LocalPlanner::loadConfig(char *program_name)
 	
 	sprintf(key, "%s.depth_bound", rootkey);
 	depthBound = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.heading_bound", rootkey);
+	headingBound = bot_param_get_double_or_fail(param, key);
 
 	sprintf(key, "%s.drop_dist", rootkey);
 	wpDropDist = bot_param_get_double_or_fail(param, key);
@@ -437,65 +470,88 @@ int LocalPlanner::process()
  */
 int LocalPlanner::processWaypoints()
 {
-
-	// Nothing to do
-	if (waypoints.size() == 0)
+	Pose3D wp;
+	//if(aborted)
+	//	wp = abortPose;
+	if(holdMode)
+		wp = holdPose;
+	else if (waypoints.size() == 0)
 	{
+		// Nothing to do
 		return 0;
 	}
-
-	// Get the next waypoint
-	Pose3D wp = waypoints.at(0);
-
-	// We have reached the next waypoint
-	if (pointWithinBound(wp))
+	else
 	{
+		// Get the next waypoint
+		wp = waypoints.at(0);
 
-		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
-				wp.getX(),
-				wp.getY(),
-				wp.getZ() );
-		waypoints.erase(waypoints.begin());
-		resetWaypointTime(timestamp_now());
-
-		printWaypoints();
-
-		// No more waypoints to process
-		if (waypoints.size() == 0)
+		bool atDest = false;
+		// Check if we are there yet taking into consideration the depth/heading only commands
+	/*	if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getZ() != wp.getZ()))
+			atDest = pointWithinHeading(wp);
+		else if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getYawRad() != wp.getYawRad()))
 		{
-			cout << timestamp_now() << " No more waypoints!" << endl;
+			atDest = pointWithinDepth(wp);
+			cout << "Checking Depth" << endl;
+		}
+		else
+		*/
+			atDest = pointWithinBound(wp);
 
-			if (pointWithinBound(destPose))
+		// We have reached the next waypoint
+		if (atDest)
+		{
+
+			printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
+					wp.getX(),
+					wp.getY(),
+					wp.getZ() );
+			waypoints.erase(waypoints.begin());
+			resetWaypointTime(timestamp_now());
+
+			printWaypoints();
+
+			// No more waypoints to process
+			if (waypoints.size() == 0)
 			{
-				setDestReached(true);
-				cout << "We have reached our destination :)" << endl;
+				cout << timestamp_now() << " No more waypoints!" << endl;
+
+				if (pointWithinBound(destPose))
+				{
+					setDestReached(true);
+					cout << "We have reached our destination :)" << endl;
+				}
+
+	//			// form a STOP message to send
+	//			acfrlcm::auv_control_t cc;
+	//			cc.utime = timestamp_now();
+	//			cc.run_mode = acfrlcm::auv_control_t::STOP;
+	//			lcm.publish("AUV_CONTROL", &cc);
+
+				return getDestReached();
 			}
 
-//			// form a STOP message to send
-//			acfrlcm::auv_control_t cc;
-//			cc.utime = timestamp_now();
-//			cc.run_mode = acfrlcm::auv_control_t::STOP;
-//			lcm.publish("AUV_CONTROL", &cc);
-
-			return getDestReached();
 		}
-
 	}
-
 	Pose3D currPose = getCurrPose();
 
 	// Calculate desired heading to way point
 	//  This is not our bearing to the point but a global angle
-	double desHeading = atan2(wp.getY() - currPose.getY(),
+	// Special case where we have no X or Y so it's a depth change or a heading change without moving
+	double desHeading;
+	if((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()))
+		desHeading = wp.getYawRad();
+	else
+		desHeading = atan2(wp.getY() - currPose.getY(),
 			wp.getX() - currPose.getX());
 
 	// Calculate desired velocity. This is set to dest velocity by default
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
-	//double distToDest = getDistToDest();
-	//if( distToDest < velChangeDist ) {
-	//	desVel = destVel * (distToDest / velChangeDist);
-	//}
+	double distToDest = getDistToDest();
+	if( distToDest < velChangeDist ) {
+		desVel = destVel * (distToDest / velChangeDist);
+	}
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
@@ -575,7 +631,7 @@ void LocalPlanner::printWaypoints() const {
 bool LocalPlanner::publishWaypoints() {
 	acfrlcm::auv_local_path_t lp;
 	lp.utime = timestamp_now();
-	int i;
+	unsigned int i;
 	// TODO: comparison between signed and unsiged!
 	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
 		lp.x[i] = waypoints[i].getX();

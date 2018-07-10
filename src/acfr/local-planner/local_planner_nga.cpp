@@ -402,3 +402,7 @@ int LocalPlannerTunnel::init()
 {
 }
 
+int LocalPlannerTunnel::execute_abort()
+{
+}
+

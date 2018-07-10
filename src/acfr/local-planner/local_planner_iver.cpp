@@ -85,3 +85,7 @@ int LocalPlannerIver::init()
 {
 }
 
+
+int LocalPlannerIver::execute_abort()
+{
+}
