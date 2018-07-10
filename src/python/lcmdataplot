@@ -7,12 +7,6 @@ from lcmplot import get_message_types
 if __name__ == '__main__':
     sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument('filename', type=str)
-
-    args = parser.parse_args()
-
     import acfrlcm
     import senlcm
     import bot_core
@@ -38,8 +32,13 @@ if __name__ == '__main__':
     data_model = DataModel(parent=qapp)
     data_model.add_lcm_types(lcm_types)
 
-    # TODO: probably don't enable this by default
-    data_model.create_live()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', nargs='?', type=str, default=None)
+    args = parser.parse_args()
+    if args.filename is None:
+        data_model.create_live()
+    else:
+        data_model.add_file(args.filename)
 
     from lcmplot import MultiSourcePlotWindow
 
