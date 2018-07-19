@@ -24,22 +24,11 @@ typedef struct
     lcm_t *lcm;
     acfr_sensor_t *sensor;
     int run;
-    bool raw_log;
-    bool verbose;
-    //double range;
     double minimum_range;
-    //double range_resolution;
     angle_size_t angle_resolution;
-    //double left_limit;
-    //double right_limit;
     double margin;
-    double threshold;
     double initial_gain;
-    double x_offset;
-    double z_offset;
-    double pitch_offset;
     senlcm_micron_ping_t mp;
-    //int64_t timestamp;
 } state_t;
 
 #define MAX_BUF_LEN 512
@@ -149,9 +138,10 @@ int compose_head_command(unsigned char *d, state_t *state)
         state->mp.num_bins = 800;
 
     // the AD interval is in units of 640ns
-    state->mp.AD_interval = (unsigned short)(((sample_time / (double)state->mp.num_bins)) / 640e-9);
+    state->mp.AD_interval = sample_time / (double)state->mp.num_bins;
+    unsigned short AD_interval = (unsigned short)(state->mp.AD_interval / 640e-9);
 
-    memcpy(&c[51], &state->mp.AD_interval, 2);
+    memcpy(&c[51], &AD_interval, 2);
     memcpy(&c[53], &state->mp.num_bins, 2);
 
     printf("Setting AD interval to %f with %d bins, Range %f, Range res %f\n", state->mp.AD_interval, state->mp.num_bins,
@@ -173,7 +163,6 @@ int compose_head_command(unsigned char *d, state_t *state)
     memcpy(d, c, 66);
 
     return 66;
-
 }
 
 int compose_send_data_command(unsigned char *d)
@@ -245,7 +234,9 @@ int decode_seanet(unsigned char *d, int len, state_t *p)
         p->mp.right_limit = ((double)(*(unsigned short *)&d[37]) / 16.0) / 400.0 * 2 * M_PI;
         p->mp.angle = ((double)(*(unsigned short *)&d[40]) / 16.0) / 400.0 * 2 * M_PI;
         p->mp.num_bins = (int)(*(unsigned short *)&d[42]);
-        memcpy(p->mp.bins, &d[44], p->mp.num_bins);
+	p->mp.bins = &d[44];
+	//realloc(p->mp.bins, p->mp.num_bins);
+        //memcpy(p->mp.bins, &d[44], p->mp.num_bins);
         ret = SEANET_SCANLINE;
         break;
     }
@@ -289,6 +280,42 @@ int program_micron(state_t *state)
     return 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void parse_args (int argc, char **argv, char **vehicle_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *vehicle_name = malloc(strlen(default_name)+1);
+    strcpy(*vehicle_name, default_name);
+    
+    int n;
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            n = strlen((char *)optarg);
+            free(*vehicle_name);
+            *vehicle_name = malloc(n);
+            strcpy(*vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
 int program_exit;
 void
 signal_handler(int sigNum)
@@ -301,11 +328,17 @@ signal_handler(int sigNum)
 int main(int argc, char **argv)
 {
     state_t state;
+    state.mp.bins = NULL;
 
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
 
+    char *vehicle_name;
+    parse_args(argc, argv, &vehicle_name);
+    char sensor_channel[100];
+    snprintf(sensor_channel, 100, "%s.MICRON", vehicle_name);
+    
     BotParam *params;
     char rootkey[64];
     char key[64];
@@ -325,9 +358,6 @@ int main(int argc, char **argv)
     acfr_sensor_noncanonical(state.sensor, 1, 0);
 
     // Read the rest of the config
-    sprintf(key, "%s.raw_log", rootkey);
-    state.verbose = bot_param_get_boolean_or_fail(params, key);
-
     sprintf(key, "%s.range", rootkey);
     state.mp.range = bot_param_get_double_or_fail(params, key);
 
@@ -362,20 +392,8 @@ int main(int argc, char **argv)
     sprintf(key, "%s.margin", rootkey);
     state.margin = bot_param_get_double_or_fail(params, key);
 
-    sprintf(key, "%s.threshold", rootkey);
-    state.threshold = bot_param_get_double_or_fail(params, key);
-
     sprintf(key, "%s.initial_gain", rootkey);
     state.initial_gain = bot_param_get_double_or_fail(params, key);
-
-    sprintf(key, "%s.x_offset", rootkey);
-    state.x_offset = bot_param_get_double_or_fail(params, key);
-
-    sprintf(key, "%s.z_offset", rootkey);
-    state.z_offset = bot_param_get_double_or_fail(params, key);
-
-    sprintf(key, "%s.pitch_offset", rootkey);
-    state.pitch_offset = bot_param_get_double_or_fail(params, key);
 
     program_micron(&state);
 
@@ -432,21 +450,13 @@ int main(int argc, char **argv)
                     while(bytes < (data_len + 7 - 1));
                 }
 
-
-
-
-
-
-
                 ret = decode_seanet(buf, bytes, &state);
 
-
-
                 // we need to send the data command for every second return data packet
-                if(ret == 1)
+                if(ret == SEANET_SCANLINE)
                 {
                     last_timestamp = state.mp.utime;
-                    senlcm_micron_ping_t_publish(state.lcm, "MICRON", &state.mp);
+                    senlcm_micron_ping_t_publish(state.lcm, sensor_channel, &state.mp);
 
                     if(return_count++ == 1)
                     {
@@ -454,15 +464,10 @@ int main(int argc, char **argv)
                         acfr_sensor_write(state.sensor, (char *)micron_cmd, bytes);
                         return_count = 0;
                     }
-
-
                 }
 
                 if((timestamp_now() - last_timestamp) > 2e6)
                     program_micron(&state);
-
-
-
 
             }
         }
