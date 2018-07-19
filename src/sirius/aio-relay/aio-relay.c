@@ -41,14 +41,14 @@ void relay_cmd_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm
     state_t *state = (state_t *)u;
     
     // Read the current relay state
-    unsigned char values;
-    DIO_Read8(state->options.index, 0, &values);
-    if(rc->relay_request)
+    unsigned int values;
+    DIO_ReadAll(state->options.index, &values);
+    if(!rc->relay_request)
     	values |= 1 << (rc->relay_number - 1);
-	else
-		values &= ~(1 << (rc->relay_number - 1));
+    else
+	values &= ~(1 << (rc->relay_number - 1));
 		
-	DIO_Write8(state->options.index, 0 , values);
+    DIO_WriteAll(state->options.index, &values);
 }
 
 
@@ -58,8 +58,11 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
      
     acfrlcm_relay_status_t status_msg;
     status_msg.utime = timestamp_now();
-    DIO_Read8(state->options.index, 0, (unsigned char *)&status_msg.state_list[1]);
-    status_msg.state_list[1] = 0;
+    unsigned int values;
+    DIO_ReadAll(state->options.index, &values);
+//    DIO_Read8(state->options.index, 0, (unsigned char *)&status_msg.state_list[1]);
+    status_msg.state_list[0] = ~(values & 0xFF);
+    status_msg.state_list[1] = ~((values & 0xFF00) >> 8);
     status_msg.state_list[2] = 0;
     status_msg.state_list[3] = 0;
     // publish status message
@@ -155,7 +158,7 @@ int main(int argc, char *argv[])
 
     state.lcm = lcm_create(NULL);
     acfrlcm_relay_command_t_subscribe(state.lcm, state.command_channel, &relay_cmd_handler, &state);
-	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
     
     while (!program_exit)
     {
