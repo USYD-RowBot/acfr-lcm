@@ -109,7 +109,7 @@ void SiriusController::init()
 
 void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
-    std::cout << "Automatic\n";
+    //std::cout << "Automatic\n";
     acfrlcm::auv_sirius_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
