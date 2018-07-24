@@ -31,6 +31,13 @@ void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	lp->onNav(nav);
 }
 
+// Obs Avoidance callback
+void onOALCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::oa_t *oa, LocalPlanner *lp)
+{
+	lp->onOA(oa);
+}
+
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
@@ -123,6 +130,8 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
+	lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
+	
     return 1;
 }
 
@@ -437,6 +446,11 @@ int LocalPlanner::loadConfig(char *program_name)
 	sprintf(key, "%s.replan_interval", rootkey);
 	replanInterval = bot_param_get_double_or_fail(param, key);
 
+	sprintf(key, "%s.fwd_distance_slowdown", rootkey);
+	fwd_distance_slowdown = bot_param_get_double_or_fail(param, key);
+	
+    sprintf(key, "%s.fwd_distance_min", rootkey);
+	fwd_distance_min = bot_param_get_double_or_fail(param, key);
 	return 1;
 }
 
@@ -462,6 +476,90 @@ int LocalPlanner::process()
 
 	return 0;
 }
+
+// Velocity adjustments based on obstacle avoidance
+// Taken from Sirius trajectory.c
+double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitude)
+{
+    double obs_velocity = desired_velocity;
+    double alt_velocity = desired_velocity;
+
+    if((timestamp_now() - oa.utime) < 5e6)
+    {
+        if (fwd_distance_min > 0 &&  oa.forward_distance> 0)
+        {
+            /*
+      	    Obstacle avoidance slowdown.  The desired velocity will
+	        be ramped down linearly between the slowdown distance and
+	        the minimum distance.
+
+            speed
+            ^         ____________ default speed
+            |        /
+            |       /
+            |______/____________________________>  dist
+		    ^  ^
+	         min   slowdown
+            */
+            if (oa.forward_distance < fwd_distance_min)
+	        {
+	            obs_velocity = 0.0;
+                cout << "Too close to obstacle. Setting xy_vel to " << obs_velocity << endl;
+	        } 
+            else if (oa.forward_distance < fwd_distance_slowdown) 
+            {
+		        double speedRampSlope = desired_velocity/(fwd_distance_slowdown - fwd_distance_min);
+		        obs_velocity = speedRampSlope*(oa.forward_distance - fwd_distance_min);
+                cout << "Too close obstacle. Setting xy_vel to " << obs_velocity << endl;
+	        }
+        }
+
+
+        // now check the altitude following and slow down if we are outside of the desired
+        // following band
+        if(getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE)
+        {
+            /*
+            Altitude following slowdown.  The desired velocity will
+            be ramped down linearly as a function of the altitude error. Note that the desired
+            altitude is stored in tm->depth.value
+
+                         speed
+                          ^
+                   __ ___|______ default speed
+                   /     |      \
+          ___   __/      |       \______________ 0.1 speed
+                         |
+             ___________0|______________________>   alt err           
+                  ^  ^          ^  ^
+                         slowdown  max
+            */ 
+            // tm->depth.value is the desired altitude
+    	    double altitude = fmin(oa.altitude, navAltitude);
+	        double alt_error = altitude - desired_altitude;
+            double alt_error_max = 0.75; // maximum slowdown when off by 1.0m
+            double alt_error_slowdown = 0.25; // start slowing down when off by 0.25m
+            double max_slowdown_factor = 0.1; // percentage of desired speed for max slowdown
+
+            // FIXME: Create different behaviour for too high/low.  For now consider only low altitude.
+            if ( alt_error < -alt_error_max )
+	        {
+		        alt_velocity = max_slowdown_factor * desired_velocity;
+	        } 
+            else if ( alt_error <  -alt_error_slowdown && alt_error_max - alt_error_slowdown > 0 ) 
+            {
+                // calculate the normalised slope of the slowdown
+		        double speedRampSlope = (max_slowdown_factor-1)/(alt_error_max - alt_error_slowdown);
+                // calculate the normalised intercept of the slowdown
+                double speedRampIntercept = 1 - speedRampSlope*alt_error_slowdown;
+                // convert the altitude error to a desired speed as a function of the default speed
+		        alt_velocity = desired_velocity*(speedRampSlope*(fabs(alt_error)) + speedRampIntercept);
+	        }
+        } 
+    }
+    return fmin(obs_velocity, alt_velocity);
+}
+
 
 /**
  * Look at the next waypoint and
@@ -558,16 +656,24 @@ int LocalPlanner::processWaypoints()
 	cc.utime = timestamp_now();
 	cc.run_mode = acfrlcm::auv_control_t::RUN;
 	cc.heading = desHeading;
-	cc.vx = desVel;
-    static double depth_ref = 0.0;
-    double curr_depth_ref;
+	//cc.vx = desVel;
+    	static double depth_ref = 0.0;
+    	double curr_depth_ref;
+
+    // Use the obstacle avoidance altitude if available
+   	double altitude;
+	if((timestamp_now() - oa.utime) < 5e6)
+    	altitude = fmin(oa.altitude, navAltitude);
+    else
+	    altitude = navAltitude;
+
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
 
         // check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (currAltitude - minAltitude);
+		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
         if (curr_alt_ref < curr_depth_ref)
             curr_depth_ref = curr_alt_ref;
 
@@ -577,9 +683,13 @@ int LocalPlanner::processWaypoints()
 	{
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
-		curr_depth_ref = currPose.getZ() + (currAltitude - wp.getZ());
+		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
+    
+    // return velocty based on obstacle avoidance
+    cc.vx = calcVelocity(desVel, altitude);
+    
     // FIXME: limit the depth rate change to yield an achievable 
     // trajectory. This is modelled on a forward speed of 0.75m/s 
     // with a max pitch of 0.3rad.  This should be configurable or

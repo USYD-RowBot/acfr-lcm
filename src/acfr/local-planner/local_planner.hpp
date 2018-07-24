@@ -9,6 +9,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
+#include "perls-lcmtypes++/senlcm/oa_t.hpp"
 
 #pragma once
 
@@ -38,6 +39,8 @@ public:
     virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav) = 0;
     virtual int init() = 0;
     virtual int execute_abort() = 0;
+
+    double calcVelocity(double desired_velocity, double desired_altitude);
 
     Pose3D getCurrPose(void) const
     {
@@ -159,6 +162,12 @@ public:
         {
                 vehicle_name = vn;
         }
+    
+    void onOA(const senlcm::oa_t *o)
+    {
+	oa = *o;
+    }
+
     std::vector<Pose3D> waypoints;
 
     lcm::LCM lcm;
@@ -214,13 +223,15 @@ protected:
 
     Pose3D currPose;
     Vector3D currVel;
-    double currAltitude;
+    double navAltitude;
 
     Pose3D startPose;
     double startVel;
 
     Pose3D destPose;
     double destVel;
+
+    senlcm::oa_t oa;
 
     // New destination from GLOBAL
     bool newDest;
@@ -266,7 +277,8 @@ protected:
     double wpDropAngle;
     double replanInterval;
     //double depth_ref;
-
+    double fwd_distance_slowdown;
+    double fwd_distance_min;
     int64_t waypointTime;
     int64_t replanTime;
 

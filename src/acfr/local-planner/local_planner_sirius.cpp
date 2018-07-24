@@ -11,7 +11,7 @@ int LocalPlannerSirius::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
 
 	currPose.setPosition(nav->x, nav->y, nav->depth);
-	currAltitude = nav->altitude;
+	navAltitude = nav->altitude;
 
 	// Instead of heading, we make the current pose "heading" actually the slip
 	// 	angle (bearing), for control
@@ -127,7 +127,12 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 		distance = waypoints.size() * wpDropDist;
 	else
 		distance = currPose.positionDistance(destPose);
-		
+        double altitude;
+	if((timestamp_now() - oa.utime) < 5e6)
+	    altitude = fmin(oa.altitude, navAltitude);
+	else
+	    altitude = navAltitude;
+
 	int len = sprintf(auv_str,
 			  "AUV %s %s %.3f %.3f %.3f %.3f %.3f %.3f %.3f %.3f %d %.3f %.3f %d %.3f %02X\n",
 			  time_str, "SIRIUS", 
@@ -137,7 +142,7 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 			  currPose.getYawRad() / M_PI * 180,
 		      currPose.getPitchRad() / M_PI * 180,
 			  currPose.getRollRad() / M_PI * 180,
-			  currAltitude,
+			  altitude,
 			  currPose.getZ(),
 			  destID,
 			  0.0,

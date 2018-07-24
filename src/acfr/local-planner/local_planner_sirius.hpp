@@ -5,6 +5,8 @@
 #include "local_planner.hpp"
 #include "acfr-common/socket.h"
 
+#include "perls-lcmtypes++/senlcm/micron_ping_t.hpp"
+
 #pragma once
 
 
@@ -28,8 +30,8 @@ public:
     virtual int execute_abort();
     
 private:
-	    udp_info_t auv_udp;
-	    void heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const std::string& channel,
+    udp_info_t auv_udp;
+    void heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const std::string& channel,
                             const perllcm::heartbeat_t *hb);
                             
 };

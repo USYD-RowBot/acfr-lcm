@@ -13,7 +13,7 @@ int LocalPlannerIver::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
 
 	currPose.setPosition(nav->x, nav->y, nav->depth);
-	currAltitude = nav->altitude;
+	navAltitude = nav->altitude;
 
 	// Instead of heading, we make the current pose "heading" actually the slip
 	// 	angle (bearing), for control

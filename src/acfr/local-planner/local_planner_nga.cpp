@@ -280,13 +280,21 @@ int LocalPlannerTunnel::processWaypoints()
 	cc.vx = desVel;
     static double depth_ref = 0.0;
     double curr_depth_ref;
+
+    	// Use the obstacle avoidance altitude if available
+   	double altitude;
+	if((timestamp_now() - oa.utime) < 5e6)
+    	    altitude = fmin(oa.altitude, navAltitude);
+    	else
+	    altitude = navAltitude;
+
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
 
         // check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (currAltitude - minAltitude);
+		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
         if (curr_alt_ref < curr_depth_ref)
             curr_depth_ref = curr_alt_ref;
 
@@ -296,7 +304,7 @@ int LocalPlannerTunnel::processWaypoints()
 	{
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
-		curr_depth_ref = currPose.getZ() + (currAltitude - wp.getZ());
+		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
     // FIXME: limit the depth rate change to yield an achievable 
@@ -328,7 +336,7 @@ int LocalPlannerTunnel::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
 
 	currPose.setPosition(nav->x, nav->y, nav->depth);
-	currAltitude = nav->altitude;
+	navAltitude = nav->altitude;
 
 	// Instead of heading, we make the current pose "heading" actually the slip
 	// 	angle (bearing), for control
