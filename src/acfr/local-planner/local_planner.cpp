@@ -13,8 +13,6 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
-
 
 using namespace std;
 
@@ -571,11 +569,8 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 int LocalPlanner::processWaypoints()
 {
 	Pose3D wp;
-	// if(aborted){
-	// 	Pose3D currPose = getCurrPose();
-	// 	abortPose.setPosition(currPose.getX(), currPose.getY(), -1.0);
+	// if(aborted)
 	// 	wp = abortPose;
-	// }
 	// else 
 	if(holdMode)
 		wp = holdPose;
@@ -653,9 +648,8 @@ int LocalPlanner::processWaypoints()
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
 	double distToDest = getDistToDest();
-	if( distToDest < velChangeDist ) {
+	if( distToDest < velChangeDist ) 
 		desVel = destVel * (distToDest / velChangeDist);
-	}
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
@@ -759,8 +753,6 @@ bool LocalPlanner::publishWaypoints() {
 	}
 	lp.num_el = i;
 	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
-
-	acfrlcm::auv_global_planner_t gm;
 
 	return true;
 }

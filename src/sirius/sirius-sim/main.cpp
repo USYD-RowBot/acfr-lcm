@@ -162,7 +162,7 @@ veh_sim_state::veh_sim_state()
     port_command = 0.0; 
     stbd_command = 0.0;
 
-    depth = 1.5;
+    depth = 0.0;
     depth_rate = 0.0;
     roll = 0.0;
     pitch = 0.0;
@@ -371,7 +371,7 @@ veh_sim_state::update_vehicle_state(double dt)
   double rho = 1000; // kg/m^3
   double depth_A = 2*2*0.3; // very rough - two long cylinders of 2m x 0.3m
   double depth_acc = (1/(M + M33))*(-Buoy - 0.5*rho*depth_Cd*depth_A*depth_rate*
-  abs(depth_rate) + vert);
+    fabs(depth_rate) + vert);
 
   depth_rate += depth_acc * dt;
   depth += depth_rate * dt;

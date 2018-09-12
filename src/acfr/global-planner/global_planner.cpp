@@ -326,7 +326,7 @@ int GlobalPlanner::clock()
 		{
 			// check to see if we have reached our destination or we have hit the timeout,
 			// if so we can feed the next leg to the path planner
-			if (( areWeThereYet || skipWaypoint) ||
+			if ( areWeThereYet || skipWaypoint ||
 				 ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) )
 			{
 				if (areWeThereYet)

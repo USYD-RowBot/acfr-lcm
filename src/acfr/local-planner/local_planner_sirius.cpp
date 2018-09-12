@@ -4,9 +4,6 @@
 LocalPlannerSirius::LocalPlannerSirius():LocalPlanner()
 {
 	diffSteer = true;
-	forwardBound = 1.0;
-	depthBound = 1.5;
-	
 }
 
 
