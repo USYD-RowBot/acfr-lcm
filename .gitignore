@@ -6,5 +6,7 @@
 build
 *.pyc
 .idea
+third-party/
+scripts/*.data
 # ignore build directory
 build/

@@ -124,7 +124,7 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
     const double dt = this->dt();
     if (cmd.run_mode == acfrlcm::auv_control_t::RUN)
     {
-        /************************************************************
+            /************************************************************
         * Heading calculation
         * Calculate the diff between desired heading and actual heading.
         * Ensure this diff is between +/-PI
@@ -193,7 +193,6 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
 
     }
 
-    
     this->lc().publish(this->get_vehicle_name() + ".THRUSTER", &mc);
 }
 
