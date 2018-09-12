@@ -13,6 +13,8 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_control_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_local_path_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_global_planner_t.hpp"
+
 
 using namespace std;
 
@@ -32,11 +34,11 @@ void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 }
 
 // Obs Avoidance callback
-void onOALCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
-		const senlcm::oa_t *oa, LocalPlanner *lp)
-{
-	lp->onOA(oa);
-}
+// void onOALCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+// 		const senlcm::oa_t *oa, LocalPlanner *lp)
+// {
+// 	lp->onOA(oa);
+// }
 
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
@@ -130,7 +132,7 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
-	lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
+	// lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
 	
     return 1;
 }
@@ -270,10 +272,8 @@ int LocalPlanner::calculateWaypoints()
 
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
-	cout << "Dest rel: X=" << destPoseRel.getX() << " Y=" << destPoseRel.getX()
-			<< ", angle=" << relAngle/M_PI*180 << " Diff Steer mode=" << diffSteer << endl;
-
-	
+	cout << "Dest rel: X=" << destPoseRel.getX() << " Y=" << destPoseRel.getY()
+	<< ", angle=" << relAngle/M_PI*180 << " Diff Steer mode=" << diffSteer << endl;
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
@@ -446,11 +446,11 @@ int LocalPlanner::loadConfig(char *program_name)
 	sprintf(key, "%s.replan_interval", rootkey);
 	replanInterval = bot_param_get_double_or_fail(param, key);
 
-	sprintf(key, "%s.fwd_distance_slowdown", rootkey);
-	fwd_distance_slowdown = bot_param_get_double_or_fail(param, key);
+	// sprintf(key, "%s.fwd_distance_slowdown", rootkey);
+	// fwd_distance_slowdown = bot_param_get_double_or_fail(param, key);
 	
-    sprintf(key, "%s.fwd_distance_min", rootkey);
-	fwd_distance_min = bot_param_get_double_or_fail(param, key);
+ //    sprintf(key, "%s.fwd_distance_min", rootkey);
+	// fwd_distance_min = bot_param_get_double_or_fail(param, key);
 	return 1;
 }
 
@@ -479,11 +479,12 @@ int LocalPlanner::process()
 
 // Velocity adjustments based on obstacle avoidance
 // Taken from Sirius trajectory.c
+
 double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitude)
 {
     double obs_velocity = desired_velocity;
     double alt_velocity = desired_velocity;
-
+#if 0
     if((timestamp_now() - oa.utime) < 5e6)
     {
         if (fwd_distance_min > 0 &&  oa.forward_distance> 0)
@@ -557,6 +558,7 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 	        }
         } 
     }
+    #endif
     return fmin(obs_velocity, alt_velocity);
 }
 
@@ -569,8 +571,12 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 int LocalPlanner::processWaypoints()
 {
 	Pose3D wp;
-	//if(aborted)
-	//	wp = abortPose;
+	// if(aborted){
+	// 	Pose3D currPose = getCurrPose();
+	// 	abortPose.setPosition(currPose.getX(), currPose.getY(), -1.0);
+	// 	wp = abortPose;
+	// }
+	// else 
 	if(holdMode)
 		wp = holdPose;
 	else if (waypoints.size() == 0)
@@ -661,11 +667,11 @@ int LocalPlanner::processWaypoints()
     	double curr_depth_ref;
 
     // Use the obstacle avoidance altitude if available
-   	double altitude;
-	if((timestamp_now() - oa.utime) < 5e6)
-    	altitude = fmin(oa.altitude, navAltitude);
-    else
-	    altitude = navAltitude;
+    	double altitude;
+	// if((timestamp_now() - oa.utime) < 5e6)
+ //    	altitude = fmin(oa.altitude, navAltitude);
+ //    else
+	     altitude = navAltitude;
 
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
@@ -674,6 +680,7 @@ int LocalPlanner::processWaypoints()
 
         // check we don't get closer to the bottom than our minimum
 		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
+
         if (curr_alt_ref < curr_depth_ref)
             curr_depth_ref = curr_alt_ref;
 
@@ -684,6 +691,7 @@ int LocalPlanner::processWaypoints()
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
 		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
+
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
     
@@ -697,8 +705,9 @@ int LocalPlanner::processWaypoints()
     double NAV_DT = 0.1;
     double max_depth_ref_change = 0.2*NAV_DT;
     double depth_ref_error = curr_depth_ref - depth_ref;
-    if (depth_ref_error > max_depth_ref_change)
-        depth_ref += max_depth_ref_change;
+    if (depth_ref_error > max_depth_ref_change) {
+        depth_ref += max_depth_ref_change;     	
+    }
     else if (depth_ref_error < -max_depth_ref_change)
         depth_ref -= max_depth_ref_change;
     else
@@ -750,6 +759,9 @@ bool LocalPlanner::publishWaypoints() {
 	}
 	lp.num_el = i;
 	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
+
+	acfrlcm::auv_global_planner_t gm;
+
 	return true;
 }
 

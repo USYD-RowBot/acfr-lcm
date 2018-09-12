@@ -4,6 +4,9 @@
 LocalPlannerSirius::LocalPlannerSirius():LocalPlanner()
 {
 	diffSteer = true;
+	forwardBound = 1.0;
+	depthBound = 1.5;
+	
 }
 
 
@@ -128,9 +131,9 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 	else
 		distance = currPose.positionDistance(destPose);
         double altitude;
-	if((timestamp_now() - oa.utime) < 5e6)
-	    altitude = fmin(oa.altitude, navAltitude);
-	else
+	// if((timestamp_now() - oa.utime) < 5e6)
+	//     altitude = fmin(oa.altitude, navAltitude);
+	// else
 	    altitude = navAltitude;
 
 	int len = sprintf(auv_str,
@@ -162,6 +165,7 @@ int LocalPlannerSirius::execute_abort()
 	abortPose.setPosition(NAN, NAN, -1.0);
 	abortPose.setRollPitchYawRad(NAN, NAN, NAN);
 	destPose = abortPose;
+	destVel = 0;
 	depthMode = 0;
 	setNewDest(true);
 	

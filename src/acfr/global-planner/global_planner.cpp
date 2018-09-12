@@ -12,9 +12,21 @@ void onPathResponse(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 {
 	gp->areWeThereYet = pr->are_we_there_yet;
 	gp->distanceToGoal = pr->distance;
-
 	// clock the FSM
-	gp->clock();
+	if (gp->atOrigin)
+		gp->clock();
+	else
+		gp->clock_sirius();
+}
+
+void onPathCommand(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const acfrlcm::auv_path_command_t *pc, GlobalPlanner* gp)
+{
+	if (pc->run_mode == pc->NORMAL)
+		gp->globalPlannerMessage = globalPlannerRun;
+	// clock the FSM
+	gp->atOrigin = false;
+	gp->clock_sirius();
 }
 
 void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
@@ -56,31 +68,40 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 	case acfrlcm::auv_global_planner_t::RESUME:
 		// Resume the mission
+		cout << "Resuming" << endl;
 		gp->globalPlannerMessage = globalPlannerResume;
 		break;
 
 	case acfrlcm::auv_global_planner_t::PAUSE:
 		// Pause the current mission
+		cout << "Pausing" << endl;
 		gp->globalPlannerMessage = globalPlannerPause;
 		break;
 
 	case acfrlcm::auv_global_planner_t::ABORT:
 		// Abort the curent mission
+		if (!gm->str.empty())
+			cout << "ABORT reason " << gm->str << endl;
+		else
+			cout << "ABORT no reason given" << endl;
 		gp->globalPlannerMessage = globalPlannerAbort;
 		break;
 
 	case acfrlcm::auv_global_planner_t::STOP:
 		// Stop the currently running mission
+		cout << "Stopping" << endl;
 		gp->globalPlannerMessage = globalPlannerStop;
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESET:
 		// Stop the currently running mission
+		cout << "Resetting" << endl;
 		gp->globalPlannerMessage = globalPlannerReset;
 		break;
 
 	case acfrlcm::auv_global_planner_t::SKIP:
 		// Skip the current waypoint
+		cout << "Skipping" << endl;
 		gp->skipWaypoint = true;
 		break;
 
@@ -114,13 +135,14 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 }
 
 GlobalPlanner::GlobalPlanner() :
-		skipWaypoint(false), areWeThereYet(false), distanceToGoal(-1),
+		skipWaypoint(false), areWeThereYet(false), atOrigin(true), distanceToGoal(-1),
 		globalPlannerMessage(globalPlannerIdle)
 {
 
 	// subscribe to the relevant LCM messages
 	lcm.subscribeFunction(vehicle_name+".TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
 	lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", onPathResponse, this);
+	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommand, this);
 
 	// set default values
 	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
@@ -147,6 +169,129 @@ GlobalPlannerStateT GlobalPlanner::getCurrentState()
 	return currentState;
 }
 
+int GlobalPlanner::clock_sirius()
+{
+	switch (currentState)
+	{
+
+	// We only leave the idle state by going to the run state
+	case globalPlannerFsmIdle:
+		if (globalPlannerMessage == globalPlannerRun)
+		{
+			// set the start point
+			//currPoint = mis.waypoints.begin();
+			nextState = globalPlannerFsmRun;
+			//sendLeg();
+		}
+		else if (globalPlannerMessage == globalPlannerAbort)
+			nextState = globalPlannerFsmAbort;
+		else
+			nextState = globalPlannerFsmIdle;
+
+		break;
+
+	case globalPlannerFsmRun:
+		if (globalPlannerMessage == globalPlannerAbort)
+			nextState = globalPlannerFsmAbort;
+		else if (globalPlannerMessage == globalPlannerStop)
+			nextState = globalPlannerFsmIdle;
+		else if (globalPlannerMessage == globalPlannerPause) {
+			cout << "Paused..." << endl;
+			nextState = globalPlannerFsmPause;
+		}
+		else
+		{
+			// check to see if we have reached our destination 
+			if (areWeThereYet)
+			{
+				cout << timestamp_now() << " We are there!" << endl;
+				nextState = globalPlannerFsmDone;
+
+			}
+		}
+		break;
+
+	case globalPlannerFsmPause:
+		if (globalPlannerMessage == globalPlannerAbort) {
+			nextState = globalPlannerFsmAbort;
+		}
+		else if (globalPlannerMessage == globalPlannerStop) {
+			nextState = globalPlannerFsmIdle;
+		}
+		else if (globalPlannerMessage == globalPlannerResume) {
+			nextState = globalPlannerFsmRun;
+		}
+		else
+			nextState = globalPlannerFsmPause;
+		break;
+
+	case globalPlannerFsmAbort:
+		// We end up here by an external abort message
+		// we will signal the main control layer to go to abort
+		// then go into idle
+		nextState = globalPlannerFsmAbort;
+		if( globalPlannerMessage == globalPlannerReset ) {
+			nextState = globalPlannerFsmIdle;
+		}
+		break;
+
+	case globalPlannerFsmDone:
+		// the mission is complete, go back to idle
+		// TODO: send a done message up a layer to the main controller
+		nextState = globalPlannerFsmIdle;
+		break;
+
+	case globalPlannerFsmFault:
+		// with any luck we will never end up here, the state machine will need an external
+		// signal to be able to leave this state, to be implemented
+		nextState = globalPlannerFsmFault;
+		break;
+	default:
+		nextState = globalPlannerFsmAbort;
+		break;
+	}
+
+	if (nextState != currentState)
+	{
+		cout << timestamp_now() << " Current state: " << getCurrentStateString()
+				<< "  ";
+		currentState = nextState;
+		cout << " New state: " << getCurrentStateString() << endl;
+
+		// broadcast the state change
+		acfrlcm::auv_global_planner_state_t gpState;
+		gpState.utime = timestamp_now();
+		switch (nextState)
+		{
+		case globalPlannerFsmAbort:
+			gpState.state = acfrlcm::auv_global_planner_state_t::ABORT;
+			break;
+		case globalPlannerFsmIdle:
+			gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
+			break;
+		case globalPlannerFsmRun:
+			gpState.state = acfrlcm::auv_global_planner_state_t::RUN;
+			break;
+		case globalPlannerFsmDone:
+			gpState.state = acfrlcm::auv_global_planner_state_t::DONE;
+			break;
+		case globalPlannerFsmPause:
+			gpState.state = acfrlcm::auv_global_planner_state_t::PAUSE;
+			break;
+		case globalPlannerFsmFault:
+			gpState.state = acfrlcm::auv_global_planner_state_t::FAULT;
+			break;
+		}
+
+		// Send the global state change message
+		cout << "Publishing new global state: " << (int) (gpState.state)
+				<< endl;
+		lcm.publish(vehicle_name+".GLOBAL_STATE", &gpState);
+	}
+	globalPlannerMessage = globalPlannerIdle;
+	return 0;
+}
+
 int GlobalPlanner::clock()
 {
 	switch (currentState)
@@ -159,9 +304,10 @@ int GlobalPlanner::clock()
 			// set the start point
 			//currPoint = mis.waypoints.begin();
 			nextState = globalPlannerFsmRun;
-			cout << "globalplannerfsmidle" << endl;
 			//sendLeg();
 		}
+		else if (globalPlannerMessage == globalPlannerAbort)
+			nextState = globalPlannerFsmAbort;
 		else
 			nextState = globalPlannerFsmIdle;
 
@@ -180,7 +326,7 @@ int GlobalPlanner::clock()
 		{
 			// check to see if we have reached our destination or we have hit the timeout,
 			// if so we can feed the next leg to the path planner
-			if ( areWeThereYet || skipWaypoint ||
+			if (( areWeThereYet || skipWaypoint) ||
 				 ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) )
 			{
 				if (areWeThereYet)
