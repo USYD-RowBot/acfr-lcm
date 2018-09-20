@@ -46,12 +46,10 @@ public:
 	string getCurrentStateString();
 
 	int clock();
-	int clock_sirius();
 	int process();
 
 	bool skipWaypoint;
 	bool areWeThereYet;
-	bool atOrigin;
 	double distanceToGoal;
 	void set_filename(string filename);
 	bool loadNewMissionFile(string filename);

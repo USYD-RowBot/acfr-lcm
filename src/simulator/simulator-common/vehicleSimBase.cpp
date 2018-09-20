@@ -338,15 +338,30 @@ VehicleSimBase::VehicleSimBase() :
     if(param == NULL)
         return;
 
+    // BotParam *cfg;
+    
+    // cfg = bot_param_new_from_server (lcm, 1);
     char rootkey[64];
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
     double latitude_sim, longitude_sim;
-    sprintf(key, "%s.latitude", rootkey);
-    latitude_sim = bot_param_get_double_or_fail(param, key);
-    sprintf(key, "%s.longitude", rootkey);
-    longitude_sim = bot_param_get_double_or_fail(param, key);
+    // sprintf(key, "%s.latitude", rootkey);
+    // latitude_sim = bot_param_get_double_or_fail(param, key);
+    // sprintf(key, "%s.longitude", rootkey);
+    // longitude_sim = bot_param_get_double_or_fail(param, key);
+
+        // get the slam config filenames from the master LCM config for the acfr-nav module
+    // we are using this to get the origin lat and long
+    char *slam_config_filename;
+    slam_config_filename = bot_param_get_str_or_fail(param, "nav.acfr-nav-new.slam_config");
+    
+    Config_File *slam_config_file;
+    slam_config_file = new Config_File(slam_config_filename);
+    slam_config_file->get_value("LATITUDE", latitude_sim);
+    slam_config_file->get_value("LONGITUDE", longitude_sim);
+    
+    cout << "Simulator origin Lat: " << latitude_sim << " Lon: " << longitude_sim << endl;
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 

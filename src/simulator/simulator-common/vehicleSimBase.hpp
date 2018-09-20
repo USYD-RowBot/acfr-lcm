@@ -9,6 +9,7 @@
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
 #include "acfr-common/auv_map_projection.hpp"
+#include <libplankton/auv_config_file.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"

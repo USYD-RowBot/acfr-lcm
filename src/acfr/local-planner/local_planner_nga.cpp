@@ -25,6 +25,7 @@ using namespace std;
 LocalPlannerTunnel::LocalPlannerTunnel() :
     LocalPlanner()
 {
+	depthBound = 1.0;
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	fp.open("/tmp/log_waypoint.txt", ios::out);
@@ -323,7 +324,7 @@ int LocalPlannerTunnel::processWaypoints()
 
     cc.depth = depth_ref;
 
-	lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
 

@@ -18,6 +18,9 @@
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
+
 
 #include "simulator-common/vehicleSimBase.hpp"
 
@@ -180,8 +183,8 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //if(fabs(prop_force) > 10.0)
     //    prop_force = prop_force / fabs(prop_force) * 10;
     
-    double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator);
-    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator);
+    double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator); //assuming rudder straight is 0 and max range is +-pi/2 the negative sign in cos won't matter
+    double tail_y = prop_force * sin(-in.tail_rudder) ;//* cos(in.tail_elevator); //CR why is elevator a component of tail y?
     double tail_z = prop_force * sin(in.tail_elevator);
 
 
@@ -198,7 +201,7 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //
     // there is ZERO basis for this number (we use +-1500, full range is +-2048
     // from the DAC
-    double to_rps = 0.03;
+    double to_rps = 0.03; // if we are just converting from RPM to RPS then shouldn't this be 1/60 not 1/30?
 
     double n_vert_fore = in.vert_fore * to_rps;
     double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_fore) * n_vert_fore;
@@ -250,7 +253,7 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     // *************************
     double F_surge, F_sway, F_vert;
     F_surge = tail_x - Fd_surge;
-    F_sway = 0;//tail_y + mutual_lat - Fd_sway;
+    F_sway = tail_y + mutual_lat - Fd_sway;
     F_vert = tail_z + mutual_vert - Fd_vert  + F_g - F_buoy;
 
     // *************************
@@ -328,14 +331,22 @@ void NGAVehicleSim::publishSensorData()
     publishParosci();
     publishGPS();
     publishDVL();
+
+      // publish battery data
+  senlcm::os_power_system_t battery_pack;
+  battery_pack.utime = timestamp_now();
+  battery_pack.avg_charge_p = 100;
+  // need to have number of controllers set or you get a seg fault when publishing sometimes.
+  battery_pack.num_controllers = 0;
+  lcm.publish("NGA.BATTERY", &battery_pack);
 }
 
 void NGAVehicleSim::subscribeLCMChannels()
 {
     lcm.subscribe(vehicle_name+".NEXTGEN_MOTOR", &NGAVehicleSim::on_motor_command, this);
-    //lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
-    //lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
-    //lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
+    // lcm.subscribeFunction("HEARTBEAT_10HZ", calculate, &lcm);
+    // lcm.subscribeFunction("HEARTBEAT_100HZ", calculate, &lcm); // needs to happen at 100 Hz due to IMU
+    // lcm.subscribeFunction(vehicle_name+".ACFR_NAV", on_nav_store, &lcm);
 }
 
 void print_help (int exval, char **argv)

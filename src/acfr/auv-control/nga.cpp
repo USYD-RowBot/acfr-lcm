@@ -137,6 +137,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // X Velocity
         prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt);
 
+        std::cout << "Velocity: rpm= " << prop_rpm << ", curr= "<< nav.vx << ", des= " << cmd.vx << std::endl;
+
         /* For the moment, we will focus on using the tunnel thrusters to control depth and assume that pitch remains fairly stable
         // Pitch to fins
         if (cmd.depth_mode == PITCH_MODE)
@@ -187,8 +189,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
 
         // Set motor controller values
-        mc.vert_fore = mutual_vert + differential_vert;
-        mc.vert_aft = mutual_vert - differential_vert;
+        mc.vert_fore = (mutual_vert + differential_vert)/2; // had to divide by two because we were saturating the motor see main_simple.cpp 215 for why this is necessary 
+        mc.vert_aft = (mutual_vert - differential_vert)/2;
 
 	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
 

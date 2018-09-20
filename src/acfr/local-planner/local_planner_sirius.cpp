@@ -168,6 +168,7 @@ int LocalPlannerSirius::execute_abort()
 	
 	destID = -99;
 	aborted = true;	
+	calculateWaypoints();
 	return 1;
 }
 
