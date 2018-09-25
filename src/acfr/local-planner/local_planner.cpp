@@ -223,7 +223,7 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 */
 #define DIVE_REV_VEL -0.5
 //#define DIVE_REV_VEL 0 // for lab testing
-#define DIVE_PICTH (10.0 / 180.0 * M_PI)
+#define DIVE_PITCH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
 /**

@@ -176,8 +176,13 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         double target_descent = pid(&this->gains_tunnel_depth, 
                 nav.depth, cmd.depth, dt);
+
+        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << "target descent" << target_descent << std::endl;
+        plane_angle = target_descent; // seeing if the elevator works as expected
+
         double differential_vert = pid(&this->gains_tunnel_pitch,
                 nav.pitch, target_pitch, dt);
+
         double mutual_vert = pid(&this->gains_tunnel_descent,
                 nav.vz, target_descent, dt);
 
@@ -187,6 +192,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 	//mutual_vert = 0.0;
 	//differential_vert = 0.0;
 
+        // if (cmd.vx == 0 && (cmd.depth > 0.0) && (fabs(nav.pitch) <= 0.7)) //just seeing if the tunnel thrusters alone could get us to the surface without issue
+        //     prop_rpm = 0;
 
         // Set motor controller values
         mc.vert_fore = (mutual_vert + differential_vert)/2; // had to divide by two because we were saturating the motor see main_simple.cpp 215 for why this is necessary 
@@ -257,7 +264,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     }
 
     // safety hard codes
-    mc.tail_elevator = 0.0;
+    //mc.tail_elevator = 0.0;
     
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }

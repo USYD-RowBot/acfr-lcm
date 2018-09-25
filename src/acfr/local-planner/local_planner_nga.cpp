@@ -251,7 +251,7 @@ int LocalPlannerTunnel::processWaypoints()
 //			acfrlcm::auv_control_t cc;
 //			cc.utime = timestamp_now();
 //			cc.run_mode = acfrlcm::auv_control_t::STOP;
-//			lcm.publish("AUV_CONTROL", &cc);
+//			lcm.publish("NGA.AUV_CONTROL", &cc);
 
 			return getDestReached();
 		}
@@ -358,7 +358,7 @@ int LocalPlannerTunnel::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 	// for now only process waypoints or dive commands if we are in
 	// RUN mode.  This will need to be modified to take into account
 	// an active PAUSE mode.
-	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN)
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || gpState.state ==  acfrlcm::auv_global_planner_state_t::ABORT)
 	{
 		processWaypoints();
 	}
@@ -413,5 +413,18 @@ int LocalPlannerTunnel::init()
 
 int LocalPlannerTunnel::execute_abort()
 {
+	cout << "Executing an abort" << endl;
+	abortPose.setPosition(currPose.getX(), currPose.getY(), 0.0);	//set destination
+	abortPose.setRollPitchYawRad(currPose.getRollRad(), currPose.getPitchRad(), currPose.getYawRad());
+	destPose = abortPose;
+	destVel = 0.0;
+	depthMode = 0;
+	setNewDest(true);
+	
+	destID = -99;
+	aborted = true;	
+
+	calculateWaypoints();
+	return 1;
 }
 
