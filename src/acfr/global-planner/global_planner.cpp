@@ -43,11 +43,6 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission" << endl;
-			// set the start point
-			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
-			//	gp->globalPlannerMessage = globalPlannerStop;
-			//	gp->clock();
-			//}
 			gp->globalPlannerMessage = globalPlannerRun;
 			gp->mis.dumpMatlab("matlab_plot.m");
 		}
@@ -108,10 +103,6 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		else
 		{
 			cout << "\tLoaded new mission received as a task command" << endl;
-			//if( gp->getCurrentState() == globalPlannerFsmRun ) {
-			//	gp->globalPlannerMessage = globalPlannerStop;
-			//	gp->clock();
-			//}
 			gp->globalPlannerMessage = globalPlannerRun;
 		}	
                 break;
@@ -146,7 +137,7 @@ GlobalPlanner::~GlobalPlanner()
 string GlobalPlanner::getCurrentStateString()
 {
 	string GlobalPlannerStateStr[] =
-	{ "idle", "run", "abort", "pause", "done", "fault" };
+	{ "idle", "run", "abort", "pause" };
 	return GlobalPlannerStateStr[currentState];
 }
 
@@ -160,14 +151,12 @@ int GlobalPlanner::clock()
 	switch (currentState)
 	{
 
-	// We only leave the idle state by going to the run state
+	// We only leave the idle state by going to the run state or aborting
 	case globalPlannerFsmIdle:
 		if (globalPlannerMessage == globalPlannerRun)
 		{
-			// set the start point
-			//currPoint = mis.waypoints.begin();
+			//looks like we have a mission to run
 			nextState = globalPlannerFsmRun;
-			//sendLeg();
 		}
 		else if (globalPlannerMessage == globalPlannerAbort)
 			nextState = globalPlannerFsmAbort;
@@ -176,13 +165,13 @@ int GlobalPlanner::clock()
 
 		break;
 
-	case globalPlannerFsmRun:
+	case globalPlannerFsmRun: //run can move into any state
 		if (globalPlannerMessage == globalPlannerAbort)
 			nextState = globalPlannerFsmAbort;
 		else if (globalPlannerMessage == globalPlannerStop)
 			nextState = globalPlannerFsmIdle;
 		else if (globalPlannerMessage == globalPlannerPause) {
-			cout << "Paused..." << endl;
+			cout << "Paused..." << endl; //TODO: add hold position functionality
 			nextState = globalPlannerFsmPause;
 		}
 		else
@@ -211,8 +200,7 @@ int GlobalPlanner::clock()
 				// at the end of the list
 				currPoint++;
 				if (currPoint == mis.waypoints.end()){
-					//cout << "currpoint = " << currPoint << ", mis.waypoints.end()= " << mis.waypoints.end() << endl;
-					nextState = globalPlannerFsmDone;
+					nextState = globalPlannerFsmIdle;
 				}
 				else
 				{
@@ -224,7 +212,7 @@ int GlobalPlanner::clock()
 		}
 		break;
 
-	case globalPlannerFsmPause:
+	case globalPlannerFsmPause: //from pause we can move into any other state
 		if (globalPlannerMessage == globalPlannerAbort) {
 			nextState = globalPlannerFsmAbort;
 		}
@@ -246,18 +234,6 @@ int GlobalPlanner::clock()
 		if( globalPlannerMessage == globalPlannerReset ) {
 			nextState = globalPlannerFsmIdle;
 		}
-		break;
-
-	case globalPlannerFsmDone:
-		// the mission is complete, go back to idle
-		// TODO: send a done message up a layer to the main controller
-		nextState = globalPlannerFsmIdle;
-		break;
-
-	case globalPlannerFsmFault:
-		// with any luck we will never end up here, the state machine will need an external
-		// signal to be able to leave this state, to be implemented
-		nextState = globalPlannerFsmFault;
 		break;
 	default:
 		nextState = globalPlannerFsmAbort;
@@ -285,14 +261,8 @@ int GlobalPlanner::clock()
 		case globalPlannerFsmRun:
 			gpState.state = acfrlcm::auv_global_planner_state_t::RUN;
 			break;
-		case globalPlannerFsmDone:
-			gpState.state = acfrlcm::auv_global_planner_state_t::DONE;
-			break;
 		case globalPlannerFsmPause:
 			gpState.state = acfrlcm::auv_global_planner_state_t::PAUSE;
-			break;
-		case globalPlannerFsmFault:
-			gpState.state = acfrlcm::auv_global_planner_state_t::FAULT;
 			break;
 		}
 
@@ -329,71 +299,11 @@ bool GlobalPlanner::loadNewMissionString(string mission_string)
 
 int GlobalPlanner::sendLeg()
 {
-	// we need to check that both the points we have are goal points
-	// if they are not then we need to send the commands in the command
-	// point and increment the indexes appropriately
-/*
-	while ((*currPoint).goalType == COMMAND)
-	{
-		sendCommands((*currPoint).commands);
-		currPoint++;
-	}
-*/
 	// execute the commands inside the point
 	sendCommands((*currPoint).commands);
-
 	// reset the flag
 	areWeThereYet = 0;
-
-	// Account for next waypoint yaw for this waypoint (take average between the
-	// 	desired yaw and the following leg angle)
-#if 0
-	list<waypoint>::iterator ii = currPoint;
-	ii++;
-	double waypoint_yaw, yaw1, yaw2;
-	if (ii == mis.waypoints.end())
-	{
-		waypoint_yaw = (*currPoint).pose.getYawRad();
-		cout << "Compare yaw commands (final)"
-		<< (*currPoint).pose.getYawRad() * 180 / M_PI << endl;
-	}
-	else
-	{
-		yaw1 = (*currPoint).pose.getYawRad();
-		if (yaw1 > 2 * M_PI
-		)
-		yaw1 = yaw1 - 2 * M_PI;
-		else if (yaw1 < 0)
-		yaw1 = yaw1 + 2 * M_PI;
-
-		yaw2 = atan2((*ii).pose.getY() - (*currPoint).pose.getY(),
-				(*ii).pose.getX() - (*currPoint).pose.getX()) + 2 * M_PI;
-		if (yaw2 > 2 * M_PI
-		)
-		yaw2 = yaw2 - 2 * M_PI;
-		else if (yaw2 < 0)
-		yaw2 = yaw2 + 2 * M_PI;
-
-		if (yaw2 - yaw1 > M_PI
-		)
-		yaw2 = yaw2 - 2 * M_PI;
-		else if (yaw1 - yaw2 > M_PI
-		)
-		yaw1 = yaw1 - 2 * M_PI;
-
-		waypoint_yaw = (yaw1 + yaw2) / 2;
-		if (waypoint_yaw > 2 * M_PI
-		)
-		waypoint_yaw = waypoint_yaw - 2 * M_PI;
-		else if (waypoint_yaw < 0)
-		waypoint_yaw = waypoint_yaw + 2 * M_PI;
-
-		//cout << "Compare yaw commands (lookahead)" << (*currPoint).pose.getYawRad()*180/M_PI << " " << yaw2*180/M_PI << " " << waypoint_yaw*180/M_PI << endl;
-
-	}
-#else
 	double waypoint_yaw = (*currPoint).pose.getYawRad();
-#endif
 	// Put together the Waypoint message for the path planner
 	acfrlcm::auv_path_command_t pc;
 	pc.utime = timestamp_now();

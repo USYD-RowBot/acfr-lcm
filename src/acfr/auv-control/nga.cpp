@@ -177,7 +177,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double target_descent = pid(&this->gains_tunnel_depth, 
                 nav.depth, cmd.depth, dt);
 
-        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << "target descent" << target_descent << std::endl;
+        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
         plane_angle = target_descent; // seeing if the elevator works as expected
 
         double differential_vert = pid(&this->gains_tunnel_pitch,
@@ -230,6 +230,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
+
+        std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << std::endl;
 
         double differential_lat = pid(&this->gains_tunnel_heading,
                 diff_heading, 0, dt);

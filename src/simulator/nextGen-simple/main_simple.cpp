@@ -331,14 +331,7 @@ void NGAVehicleSim::publishSensorData()
     publishParosci();
     publishGPS();
     publishDVL();
-
-      // publish battery data
-  senlcm::os_power_system_t battery_pack;
-  battery_pack.utime = timestamp_now();
-  battery_pack.avg_charge_p = 100;
-  // need to have number of controllers set or you get a seg fault when publishing sometimes.
-  battery_pack.num_controllers = 0;
-  lcm.publish("NGA.BATTERY", &battery_pack);
+    publishBATTERY();
 }
 
 void NGAVehicleSim::subscribeLCMChannels()

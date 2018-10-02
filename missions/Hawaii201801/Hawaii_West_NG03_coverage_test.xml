@@ -1,0 +1,52 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+	<desc>
+		NGA sim test mission
+	</desc>
+	<global>
+		<location lat="19.9164" lon="-155.9193" />
+		<turn_radius m="5.0" /> <!-- make sure this is the same as the nga.cfg turn radius -->
+		<drop_distance m="4" />
+		<drop_angle deg="40" />
+		<mission_timeout t = "1"/>
+		<!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+	</global>
+	<primitive>
+		<goto>
+			<position x="0.0" y="0.0" z="2.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="2.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<coverage>
+			<position x="0.0" y="0.0" z="2.0"/>
+			<width m="50" />			
+			<length m="50" />
+			<direction d="cw" />
+			<offset m="5" />
+			<velocity x="2.0" />
+			<depth mode = "depth" />
+		</coverage>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="100.0" y="-100.0" z="20.0"/>
+			<heading deg="45.0" />
+			<timeout t="3000" />
+			<velocity x="2.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="0.0" y="0.0" z="0.0"/>
+			<heading deg="0.0" />
+			<timeout t="3000" />
+			<velocity x="2.0" />
+			<depth mode = "depth" />
+		</goto>
+	</primitive>
+</mission>

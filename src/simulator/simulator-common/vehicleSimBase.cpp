@@ -21,6 +21,8 @@
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 #include "simulator-common/vehicleSimBase.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -281,6 +283,25 @@ void VehicleSimBase::publishGPS()
             delete gpsd3;
         }
     }
+}
+
+void VehicleSimBase::publishBATTERY()
+{
+    int64_t timeStamp = timestamp_now();
+    // POWER
+    if (timeStamp - last_battery_time > 0.3*1e6) // once every 0.3 seconds
+    {
+        last_battery_time = timeStamp;
+
+        // publish battery data
+        senlcm::os_power_system_t battery_pack;
+        battery_pack.utime = timestamp_now();
+        battery_pack.avg_charge_p = 100;
+        // need to have number of controllers set or you get a seg fault when publishing sometimes.
+        battery_pack.num_controllers = 0;
+        lcm.publish("NGA.BATTERY", &battery_pack);
+    }
+
 }
 
 

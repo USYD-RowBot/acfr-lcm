@@ -65,7 +65,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
 	cout << "Dest rel: X=" << destPoseRel.getX()
-			<< ", angle=" << relAngle/M_PI*180 << endl;
+			<< ", angle=" << relAngle/M_PI*180 << ", turning rad " << turningRadius << endl;
 
 	bool success = false;
 	vector<Pose3D> wps;
@@ -122,6 +122,8 @@ int LocalPlannerTunnel::calculateWaypoints()
 	// Managed to calculate a path to destination
 	// TODO: do we need mutex around this?
 	waypoints.clear();
+	// wps.clear();
+	// wps.push_back(destPose);
 	waypoints = wps;
 
 	// Save the start pose and start velocity

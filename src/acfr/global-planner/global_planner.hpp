@@ -21,9 +21,7 @@ typedef enum
 	globalPlannerFsmIdle,
 	globalPlannerFsmRun,
 	globalPlannerFsmAbort,
-	globalPlannerFsmPause,
-	globalPlannerFsmDone,
-	globalPlannerFsmFault
+	globalPlannerFsmPause
 } GlobalPlannerStateT;
 
 typedef enum

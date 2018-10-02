@@ -18,7 +18,8 @@
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
-
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -76,6 +77,7 @@ protected:
     void publishParosci();
     void publishGPS();
     void publishDVL();
+    void publishBATTERY();
  
     // virtual function for derived classes to decide on channels to be subscribed to 
     //virtual void subscribeLCMChannels();
@@ -111,6 +113,7 @@ private:
     int64_t last_print_time;
     int64_t last_obs_time;
     int64_t last_parosci_time;
+    int64_t last_battery_time;
 
     // earth rotation in the navigation frame
     SMALL::Vector3D earth_rot;
