@@ -285,7 +285,7 @@ void VehicleSimBase::publishGPS()
     }
 }
 
-void VehicleSimBase::publishBATTERY()
+void VehicleSimBase::publishBattery()
 {
     int64_t timeStamp = timestamp_now();
     // POWER

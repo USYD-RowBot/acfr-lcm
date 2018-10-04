@@ -77,7 +77,7 @@ protected:
     void publishParosci();
     void publishGPS();
     void publishDVL();
-    void publishBATTERY();
+    void publishBattery();
  
     // virtual function for derived classes to decide on channels to be subscribed to 
     //virtual void subscribeLCMChannels();

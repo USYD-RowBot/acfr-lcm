@@ -25,7 +25,6 @@ using namespace std;
 LocalPlannerTunnel::LocalPlannerTunnel() :
     LocalPlanner()
 {
-	depthBound = 1.0;
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	fp.open("/tmp/log_waypoint.txt", ios::out);
@@ -60,21 +59,21 @@ int LocalPlannerTunnel::calculateWaypoints()
 			<< currPose.getYawRad() / M_PI * 180 << endl;
 	cout << setprecision(2) << "DestPose=" << destPose.getX() << ","
 			<< destPose.getY() << "," << destPose.getZ() << " < "
-			<< destPose.getYawRad() / M_PI * 180 << endl;
+			<< destPose.getYawRad() / M_PI * 180 <<"destvel= " << destVel << endl;
 
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
 	cout << "Dest rel: X=" << destPoseRel.getX()
-			<< ", angle=" << relAngle/M_PI*180 << ", turning rad " << turningRadius << endl;
+			<< ", angle=" << relAngle/M_PI*180 << endl;
 
 	bool success = false;
 	vector<Pose3D> wps;
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
-	//	on the controller to get us there.
+	//	on the controller to get us there. Use controller for aborted ascent and holding the pause location.
 	if (destPoseRel.getX() < 0 ||
 	    destPoseRel.getX() > 2*turningRadius ||
-		fabs(relAngle) > 45./180*M_PI )
+		fabs(relAngle) > 45./180*M_PI  && !aborted && !(gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -243,19 +242,22 @@ int LocalPlannerTunnel::processWaypoints()
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
-			if (pointWithinBound(destPose))
+			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+			{
+				cout << "Reached hold location" << endl;
+			}
+			else if (pointWithinBound(destPose))
 			{
 				setDestReached(true);
 				cout << "We have reached our destination :)" << endl;
+				return getDestReached();
 			}
-
 //			// form a STOP message to send
 //			acfrlcm::auv_control_t cc;
 //			cc.utime = timestamp_now();
 //			cc.run_mode = acfrlcm::auv_control_t::STOP;
 //			lcm.publish("NGA.AUV_CONTROL", &cc);
 
-			return getDestReached();
 		}
 
 	}
@@ -360,7 +362,8 @@ int LocalPlannerTunnel::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 	// for now only process waypoints or dive commands if we are in
 	// RUN mode.  This will need to be modified to take into account
 	// an active PAUSE mode.
-	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || gpState.state ==  acfrlcm::auv_global_planner_state_t::ABORT)
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || gpState.state ==  acfrlcm::auv_global_planner_state_t::ABORT 
+		|| gpState.state ==  acfrlcm::auv_global_planner_state_t::PAUSE)
 	{
 		processWaypoints();
 	}
@@ -416,10 +419,10 @@ int LocalPlannerTunnel::init()
 int LocalPlannerTunnel::execute_abort()
 {
 	cout << "Executing an abort" << endl;
-	abortPose.setPosition(currPose.getX(), currPose.getY(), 0.0);	//set destination
-	abortPose.setRollPitchYawRad(currPose.getRollRad(), currPose.getPitchRad(), currPose.getYawRad());
+	abortPose = waypoints.at(0);
+	abortPose.setZ(-1.0);	//set destination depth - -2m is still reachable in sim
 	destPose = abortPose;
-	destVel = 0.0;
+	destVel = 2.0;
 	depthMode = 0;
 	setNewDest(true);
 	

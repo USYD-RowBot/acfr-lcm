@@ -110,6 +110,10 @@ public:
     }
 
 
+    bool getAborted(void) const
+    {
+        return aborted;
+    }
     bool getNewDest(void) const
     {
         return newDest;

@@ -353,15 +353,19 @@ int LocalPlanner::onGlobalState(
 	 * for transitions into any state but RUN.  This may need to be
 	 * modified for more complex PAUSE or ABORT behaviours.
 	 */
-	if ((gpState.state == acfrlcm::auv_global_planner_state_t::IDLE) ||
-		(gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE) ||
-		(gpState.state == acfrlcm::auv_global_planner_state_t::FAULT))
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::IDLE)
 	{
 		// form a STOP message to send
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+	}
+
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE){
+		destPose = currPose;
+		calculateWaypoints();
+
 	}
 	
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
@@ -376,8 +380,7 @@ int LocalPlanner::loadConfig(char *program_name)
 {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
-	if (param == NULL
-	)
+	if (param == NULL)
 		return 0;
 
 	char rootkey[64];
@@ -620,7 +623,6 @@ int LocalPlanner::processWaypoints()
 					setDestReached(true);
 					cout << "We have reached our destination :)" << endl;
 				}
-
 	//			// form a STOP message to send
 	//			acfrlcm::auv_control_t cc;
 	//			cc.utime = timestamp_now();

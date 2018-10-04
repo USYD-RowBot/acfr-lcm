@@ -56,7 +56,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 	case acfrlcm::auv_global_planner_t::PAUSE:
 		// Pause the current mission
-		cout << "Pausing" << endl;
+		cout << "Try to pause" << endl;
 		gp->globalPlannerMessage = globalPlannerPause;
 		break;
 
@@ -71,19 +71,19 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 	case acfrlcm::auv_global_planner_t::STOP:
 		// Stop the currently running mission
-		cout << "Stopping" << endl;
+		cout << "Try to stop" << endl;
 		gp->globalPlannerMessage = globalPlannerStop;
 		break;
 
 	case acfrlcm::auv_global_planner_t::RESET:
 		// Stop the currently running mission
-		cout << "Resetting" << endl;
+		cout << "Try to reset" << endl;
 		gp->globalPlannerMessage = globalPlannerReset;
 		break;
 
 	case acfrlcm::auv_global_planner_t::SKIP:
 		// Skip the current waypoint
-		cout << "Skipping" << endl;
+		cout << "Try to skip" << endl;
 		gp->skipWaypoint = true;
 		break;
 
@@ -183,7 +183,7 @@ int GlobalPlanner::clock()
 			{
 				if (areWeThereYet)
 				{
-					cout << timestamp_now() << " We are there!" << endl;
+					cout << timestamp_now() << " waypoint reached" << endl;
 				}
 				if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6)
 				{
@@ -192,7 +192,7 @@ int GlobalPlanner::clock()
 							<< (timestamp_now() - legStartTime) << endl;
 				}
 				if( skipWaypoint ) {
-					cout << "Skipping waypoint at requested" << endl;
+					cout << "Skipping waypoint as requested" << endl;
 					skipWaypoint = false;
 				}
 
@@ -200,12 +200,13 @@ int GlobalPlanner::clock()
 				// at the end of the list
 				currPoint++;
 				if (currPoint == mis.waypoints.end()){
+					cout << "*************End of Mission*************" << endl;
+					cout << "Moving to Idle" << endl;
 					nextState = globalPlannerFsmIdle;
 				}
 				else
 				{
 					sendLeg();
-					cout << "globalplannerfsmrun" << endl;
 					nextState = globalPlannerFsmRun;
 				}
 			}

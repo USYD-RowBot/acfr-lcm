@@ -201,15 +201,15 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //
     // there is ZERO basis for this number (we use +-1500, full range is +-2048
     // from the DAC
-    double to_rps = 0.03; // if we are just converting from RPM to RPS then shouldn't this be 1/60 not 1/30?
+    double to_rps = 60.0; // if we are just converting from RPM to RPS then shouldn't this be 1/60 not *.03?
 
-    double n_vert_fore = in.vert_fore * to_rps;
+    double n_vert_fore = in.vert_fore / to_rps;
     double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_fore) * n_vert_fore;
-    double n_vert_aft = in.vert_aft * to_rps;
+    double n_vert_aft = in.vert_aft / to_rps;
     double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_aft) * n_vert_aft;
-    double n_lat_fore = in.lat_fore * to_rps;
+    double n_lat_fore = in.lat_fore / to_rps;
     double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_lat_fore) * n_lat_fore;
-    double n_lat_aft = in.lat_aft * to_rps;
+    double n_lat_aft = in.lat_aft / to_rps;
     double lat_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_lat_aft) * n_lat_aft;
 
     double mutual_vert = vert_fore_force + vert_aft_force;
@@ -301,7 +301,7 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     {
         cout << "x: " << x[XNDX] << " y: " << x[YNDX] << " z: " << x[ZNDX] << " roll: " << x[ROLLNDX] << " pitch: " << x[PITCHNDX] << " hdg: " << x[HDGNDX] << endl;
         cout << "u: " << u << " v: " << v << " w: " << w << " p: " << p << " q: " << q << " r: " << r << endl;
-        cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder << " tailElev: " << in.tail_elevator << endl;
+        cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder*180/M_PI << " tailElev: " << in.tail_elevator*180/M_PI << endl;
         cout << " Fd_vert: " << Fd_vert << " F_g: " << F_g << " F_buoy: " << F_buoy << endl;
         cout << " tail_x: " << tail_x << " tail_y: " << tail_y << " tail_z: " << tail_z << endl;
         cout << " vert_fore_force: " << vert_fore_force << " vert_aft_force: " << vert_aft_force << endl; 
@@ -331,7 +331,7 @@ void NGAVehicleSim::publishSensorData()
     publishParosci();
     publishGPS();
     publishDVL();
-    publishBATTERY();
+    publishBattery();
 }
 
 void NGAVehicleSim::subscribeLCMChannels()
