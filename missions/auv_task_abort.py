@@ -5,8 +5,7 @@
 import lcm
 import sys
 
-sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes')
-sys.path.append('/home/auv/git/acfr_lcm/src/acfr/python/')
+sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes/')
 
 from acfrlcm.auv_global_planner_t import auv_global_planner_t
 
@@ -17,5 +16,5 @@ msg.command = auv_global_planner_t.ABORT
 msg.str = "MANUAL"
     
     
-lc.publish('TASK_PLANNER_COMMAND.'+sys.argv[1], msg.encode())
+lc.publish(sys.argv[1]+'.TASK_PLANNER_COMMAND', msg.encode())
 

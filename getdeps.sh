@@ -30,6 +30,8 @@ sudo apt-get install libglib2.0-dev \
 	libreadline6-dev \
 	libncurses5-dev \
 	libproj-dev \
-	libudev-dev
+	libudev-dev \
+    python-pyqt5
 	#libturbojpeg1-dev
 
+sudo pip install pyqtgraph

@@ -8,8 +8,11 @@ struct auv_path_command_t
         
     const int8_t DEPTH = 0;
     const int8_t ALTITUDE = 1;
-        
     int8_t depth_mode;
+    
+    const int8_t NORMAL = 0;
+    const int8_t HOLD = 1;
+    int8_t run_mode;
     
     double waypoint[7];
      

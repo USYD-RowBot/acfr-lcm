@@ -64,7 +64,8 @@ timestamp_sync_free (timestamp_sync_state_t *s);
 int64_t
 timestamp_sync (timestamp_sync_state_t * s, int64_t dev_ticks, int64_t host_utime);
 
-
+// Old AUV formatter
+int rovtime2dsltime_str(double rov_time, char *str);
 
 #ifdef __cplusplus
 }

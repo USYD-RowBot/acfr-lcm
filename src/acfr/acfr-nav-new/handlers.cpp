@@ -134,7 +134,7 @@ void on_seabird_depth(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 void on_aanderaa_ct(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const aanderaa_4319_t *ct, state_c* state)
 {
     auv_data_tools::Aanderaa_4319_Data aanderaa;
-	auv_data_tools::Seabird_Data seabird;
+    auv_data_tools::Seabird_Data seabird;
     aanderaa.set_raw_timestamp((double)ct->utime/1e6);
     aanderaa.cond = ct->conductivity;
     aanderaa.temp = ct->temperature;
@@ -504,7 +504,7 @@ void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
     osc_data.heading = osc->rph[2];
     
     // The handler in seabed interface assumes the depth of this message is in feet.
-    osc_data.depth = osc->rph[4] / UNITS_FEET_TO_METER;
+    osc_data.depth = osc->depth; //osc->rph[4] / UNITS_FEET_TO_METER;
     
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 

@@ -464,7 +464,7 @@ int main(int argc, char **argv)
 
     // subscribe to the relevant LCM messages
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartBeatHandler, &state);
-    acfrlcm_auv_camera_trigger_t_subscribe(state.lcm, "CAMERA_TRIGGER", &cameraTriggerHandler, &state);
+    acfrlcm_auv_camera_trigger_t_subscribe(state.lcm, ".*CAMERA_TRIGGER", &cameraTriggerHandler, &state);
 
     // create socket read thread
     pthread_t tid;
