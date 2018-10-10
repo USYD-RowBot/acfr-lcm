@@ -27,6 +27,8 @@
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
 
+#define RUDDER_DELTA 0.2094*2*0.01 // assuming full 24 degrees motion in 10 seconds at 10 Hz
+
 class NGAController: public ControllerBase
 {
 public:
@@ -103,6 +105,8 @@ int main(int argc, char **argv)
 NGAController::NGAController(std::string const &process_name, std::string const &vehicle_name)
     : ControllerBase(process_name, vehicle_name)
 {
+    prev_rudder_angle = 0.0;
+    prev_elev_angle = 0.0;
 }
 
 void NGAController::init()
@@ -178,7 +182,18 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 nav.depth, cmd.depth, dt);
 
         std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+        
+
         plane_angle = target_descent; // seeing if the elevator works as expected
+        if (fabs(plane_angle) > 0.2094)
+            plane_angle = fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*0.2094;
+
+        if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
+            prev_elev_angle = plane_angle;
+        else{
+            plane_angle = prev_elev_angle + fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*RUDDER_DELTA;
+            prev_elev_angle = plane_angle;
+        }
 
         double differential_vert = pid(&this->gains_tunnel_pitch,
                 nav.pitch, target_pitch, dt);
@@ -211,32 +226,64 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // to properly do this current should be accounted for
         // so it could be moving towards the target without actually
         // facing it
-        while (nav.heading < -M_PI)
-            nav.heading += 2 * M_PI;
-        while (nav.heading > M_PI)
-            nav.heading -= 2 * M_PI;
 
-        while (cmd.heading < -M_PI)
-            cmd.heading += 2 * M_PI;
-        while (cmd.heading > M_PI)
-            cmd.heading -= 2 * M_PI;
+        nav.heading = fmod((nav.heading + M_PI),(2*M_PI));
+        if (nav.heading < 0.0)
+            nav.heading += 2*M_PI;
+        nav.heading -= M_PI;
 
-        double diff_heading = nav.heading - cmd.heading;
-        while( diff_heading < -M_PI )
+        cmd.heading = fmod((cmd.heading + M_PI),(2*M_PI));
+        if (cmd.heading < 0.0)
+            cmd.heading += 2*M_PI;
+        cmd.heading -= M_PI;
+
+        // while (nav.heading < -M_PI)
+        //     nav.heading += 2 * M_PI;
+        // while (nav.heading > M_PI)
+        //     nav.heading -= 2 * M_PI;
+
+        // while (cmd.heading < -M_PI)
+        //     cmd.heading += 2 * M_PI;
+        // while (cmd.heading > M_PI)
+        //     cmd.heading -= 2 * M_PI;
+
+        // double diff_heading = nav.heading - cmd.heading;
+
+        double diff_heading = fmod((nav.heading - cmd.heading + M_PI),(2*M_PI));
+        if (diff_heading < 0.0)
             diff_heading += 2*M_PI;
-        while( diff_heading > M_PI )
-            diff_heading -= 2*M_PI;
+        diff_heading -= M_PI;
+
+
+
+        // while( diff_heading < -M_PI )
+        //     diff_heading += 2*M_PI;
+        // while( diff_heading > M_PI )
+        //     diff_heading -= 2*M_PI;
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
-        std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << std::endl;
+        std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
 
-        double differential_lat = pid(&this->gains_tunnel_heading,
-                diff_heading, 0, dt);
+        // checks for impossible rudder motions
+        if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
+            prev_rudder_angle = rudder_angle;
+        else{
+            rudder_angle = prev_rudder_angle + fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle)*RUDDER_DELTA;
+            prev_rudder_angle = rudder_angle;
+        }
+        
 
-	//differential_lat = -differential_lat;
+        std::cout <<"rudder_angle: " << rudder_angle/ M_PI * 180 << " prev rudder_angle: " << prev_rudder_angle/ M_PI * 180 << std::endl;
+
+
+
+
+        double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt);
+
+	differential_lat = -differential_lat;
 	std::cout << "Diff lat: " << differential_lat << std::endl;
         mc.lat_fore = -differential_lat;
         mc.lat_aft = +differential_lat;

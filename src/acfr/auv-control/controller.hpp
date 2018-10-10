@@ -27,6 +27,8 @@ public:
     std::string const &get_vehicle_name() const;
 
     double dt() const;
+    double prev_rudder_angle;
+    double prev_elev_angle;
 
     void quit();
 

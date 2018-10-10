@@ -54,12 +54,12 @@ int LocalPlannerTunnel::calculateWaypoints()
 	double currVel = this->currVel[0];
 
 	cout << timestamp_now() << " Calculating new waypoints..." << endl;
-	cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
+	cout << "CurrPose=" << currPose.getX() << ","
 			<< currPose.getY() << "," << currPose.getZ() << " < "
 			<< currPose.getYawRad() / M_PI * 180 << endl;
-	cout << setprecision(2) << "DestPose=" << destPose.getX() << ","
+	cout << "DestPose=" << destPose.getX() << ","
 			<< destPose.getY() << "," << destPose.getZ() << " < "
-			<< destPose.getYawRad() / M_PI * 180 <<"destvel= " << destVel << endl;
+			<< destPose.getYawRad() / M_PI * 180  << endl;
 
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
@@ -70,10 +70,8 @@ int LocalPlannerTunnel::calculateWaypoints()
 	vector<Pose3D> wps;
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
-	//	on the controller to get us there. Use controller for aborted ascent and holding the pause location.
-	if (destPoseRel.getX() < 0 ||
-	    destPoseRel.getX() > 2*turningRadius ||
-		fabs(relAngle) > 45./180*M_PI  && !aborted && !(gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+	//	on the controller to get us there. Use controller for aborted ascent.
+	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 2*turningRadius || fabs(relAngle) > 60./180*M_PI ) && !aborted))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -242,15 +240,22 @@ int LocalPlannerTunnel::processWaypoints()
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
-			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+			if (pointWithinBound(destPose) && ((gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE)))
 			{
 				cout << "Reached hold location" << endl;
 			}
 			else if (pointWithinBound(destPose))
 			{
-				setDestReached(true);
-				cout << "We have reached our destination :)" << endl;
-				return getDestReached();
+				if (holdMode){
+					destPose = holdPose;
+					holdMode = false;
+					resetWaypointTime(timestamp_now());
+				}
+				else{
+					setDestReached(true);
+					cout << "We have reached our destination :)" << endl;
+					return getDestReached();
+				}
 			}
 //			// form a STOP message to send
 //			acfrlcm::auv_control_t cc;
@@ -272,10 +277,12 @@ int LocalPlannerTunnel::processWaypoints()
 	// Calculate desired velocity. This is set to dest velocity by default
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
-	//double distToDest = getDistToDest();
-	//if( distToDest < velChangeDist ) {
-	//	desVel = destVel * (distToDest / velChangeDist);
-	//}
+	double distToDest = getDistToDest();
+	// 	cout << "desVel = " << destVel << ", distToDest = " << distToDest << endl;
+	// if( distToDest < velChangeDist ) {
+	// 	desVel = destVel * (distToDest / velChangeDist);
+	// 	cout << desVel << " = " << destVel << " *( " << distToDest << " / " << velChangeDist << ")" << endl;
+	// }
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
@@ -419,6 +426,7 @@ int LocalPlannerTunnel::init()
 int LocalPlannerTunnel::execute_abort()
 {
 	cout << "Executing an abort" << endl;
+	cout << "Abort position at " << abortPose.getX() << " , " << abortPose.getY() << endl;
 	abortPose = waypoints.at(0);
 	abortPose.setZ(-1.0);	//set destination depth - -2m is still reachable in sim
 	destPose = abortPose;

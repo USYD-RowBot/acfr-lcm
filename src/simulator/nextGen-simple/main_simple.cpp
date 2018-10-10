@@ -116,7 +116,7 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
 
     // Prop force calculations
     double prop_alpha = 0.02290; //0.01; // advance ratio
-    double prop_diameter = 0.25;
+    double prop_diameter = 0.28;
     double rho = 1030;              // Water density
     double J0 = 0; // open water advance coefficient
     double Kt = 0; // propeller thrust coefficient
@@ -131,9 +131,9 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     // converting desired rpm to rps
     double n = in.tail_thruster/60;
     
-    // limit the max rpm to 1500 = 25 rps
-    if(fabs(n) > 25)
-        n = n / fabs(n) * 25;
+    // limit the max rpm to 700 = 11.666667 (105/9) rps
+    if(fabs(n) > (105.0/9))
+        n = n / fabs(n) * (105.0/9);
     
     // advance velocity as per Fossen eq 4.6
     double omega = 0.1;
@@ -142,11 +142,11 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     if(fabs(n) > 1e-3)
         J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
 
-    double alpha1 = 0.5;
-    double alpha2 = -4.0/11.0;
-    double alpha3 = (0.45 - alpha1)/(-0.2);
-    double alpha4 = 0.45 -(-0.2* (0.95-0.45) / (-0.5-(-0.2)) );
-    double alpha5 = (0.95-0.45) / (-0.5-(-0.2));
+    double alpha1 = 0.1574*4;
+    double alpha2 = (-0.0144*4)/1.0;
+    double alpha3 = (-0.1*alpha1)/(-0.2);
+    double alpha4 = alpha1*1.9;
+    double alpha5 = (alpha1) / (-0.5-(-0.2));
 
     // these need to be determined
     // but relate to the torque from the rear thruster
@@ -184,7 +184,7 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //    prop_force = prop_force / fabs(prop_force) * 10;
     
     double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator); //assuming rudder straight is 0 and max range is +-pi/2 the negative sign in cos won't matter
-    double tail_y = prop_force * sin(-in.tail_rudder) ;//* cos(in.tail_elevator); //CR why is elevator a component of tail y?
+    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator); //CR why is elevator a component of tail y?
     double tail_z = prop_force * sin(in.tail_elevator);
 
 
@@ -222,9 +222,9 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     // ***********
     // Drag forces
     // ***********
-    double Cd_surge = 3; //0.82; // modelled on a long cylinder
+    double Cd_surge = 1.0; //0.82; // modelled on a long cylinder
     double A_surge = M_PI * pow(NGA_RADIUS,2); // submerged
-    double Cd_across = 5; //1.17; // modelled on a long cylinder
+    double Cd_across = 1.5; //1.17; // modelled on a long cylinder
     double A_across = (NGA_DIAM * NGA_LENGTH);
     
     double Fd_surge = 0.5 * rho * A_surge * Cd_surge * fabs(u) * u ;

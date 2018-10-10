@@ -103,7 +103,7 @@ LocalPlanner::LocalPlanner() :
 		forwardBound(0.5), sideBound(2.0), depthBound(0.25), headingBound(0.1), distToDestBound(2.0),
 		maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300),
 		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
-		waypointTime(timestamp_now()), replanTime(timestamp_now()), diffSteer(false), aborted(false)
+		waypointTime(timestamp_now()), replanTime(timestamp_now()), diffSteer(false), aborted(false), holdMode(false)
 {
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
@@ -363,7 +363,9 @@ int LocalPlanner::onGlobalState(
 	}
 
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE){
+		holdPose = destPose;
 		destPose = currPose;
+		holdMode = true;
 		calculateWaypoints();
 
 	}

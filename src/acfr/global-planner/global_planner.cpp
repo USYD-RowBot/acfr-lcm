@@ -114,7 +114,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 GlobalPlanner::GlobalPlanner() :
 		skipWaypoint(false), areWeThereYet(false), distanceToGoal(-1),
-		globalPlannerMessage(globalPlannerIdle)
+		globalPlannerMessage(globalPlannerIdle), holdOff(false)
 {
 
 	// subscribe to the relevant LCM messages
@@ -179,7 +179,7 @@ int GlobalPlanner::clock()
 			// check to see if we have reached our destination or we have hit the timeout,
 			// if so we can feed the next leg to the path planner
 			if ( areWeThereYet || skipWaypoint ||
-				 ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6) )
+				 ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6))
 			{
 				if (areWeThereYet)
 				{
@@ -187,9 +187,13 @@ int GlobalPlanner::clock()
 				}
 				if ((timestamp_now() - legStartTime) > (*currPoint).timeout * 1e6)
 				{
-					cout << "currPoint timed out. timeout="
+					if (!holdOff)
+						cout << "currPoint timed out. timeout="
 							<< (*currPoint).timeout * 1e6 << ", curr="
 							<< (timestamp_now() - legStartTime) << endl;
+					else
+						holdOff = false;
+
 				}
 				if( skipWaypoint ) {
 					cout << "Skipping waypoint as requested" << endl;
@@ -222,6 +226,7 @@ int GlobalPlanner::clock()
 		}
 		else if (globalPlannerMessage == globalPlannerResume) {
 			nextState = globalPlannerFsmRun;
+			holdOff = true;
 		}
 		else
 			nextState = globalPlannerFsmPause;

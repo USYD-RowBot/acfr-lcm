@@ -48,6 +48,7 @@ public:
 
 	bool skipWaypoint;
 	bool areWeThereYet;
+	bool holdOff;
 	double distanceToGoal;
 	void set_filename(string filename);
 	bool loadNewMissionFile(string filename);
