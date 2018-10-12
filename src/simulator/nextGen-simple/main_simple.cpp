@@ -103,11 +103,13 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     v = v - vc_b(2);
     w = w - vc_b(3);
 
+    
     // make heading 0 to 2pi
     while(psi < 0)
         psi += 2 * M_PI;
     while(psi > (2 * M_PI))
         psi -= 2 * M_PI;
+
 
     // Where we are at, ie the auv pose
     SMALL::Pose3D auvPose;

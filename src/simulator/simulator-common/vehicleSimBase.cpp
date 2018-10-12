@@ -299,7 +299,7 @@ void VehicleSimBase::publishBattery()
         battery_pack.avg_charge_p = 100;
         // need to have number of controllers set or you get a seg fault when publishing sometimes.
         battery_pack.num_controllers = 0;
-        lcm.publish("NGA.BATTERY", &battery_pack);
+        lcm.publish(vehicle_name+".BATTERY", &battery_pack);
     }
 
 }

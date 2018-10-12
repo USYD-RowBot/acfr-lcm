@@ -71,7 +71,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there. Use controller for aborted ascent.
-	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 2*turningRadius || fabs(relAngle) > 60./180*M_PI ) && !aborted))
+	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 2*turningRadius || fabs(relAngle) > 100./180*M_PI ) && !aborted))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -426,8 +426,9 @@ int LocalPlannerTunnel::init()
 int LocalPlannerTunnel::execute_abort()
 {
 	cout << "Executing an abort" << endl;
-	cout << "Abort position at " << abortPose.getX() << " , " << abortPose.getY() << endl;
-	abortPose = waypoints.at(0);
+	cout << "Abort position at " << currPose.getX() << " , " << currPose.getY() << endl;
+	abortPose.setX(currPose.getX());
+	abortPose.setY(currPose.getY());
 	abortPose.setZ(-1.0);	//set destination depth - -2m is still reachable in sim
 	destPose = abortPose;
 	destVel = 2.0;

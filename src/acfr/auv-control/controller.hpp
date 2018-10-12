@@ -29,6 +29,7 @@ public:
     double dt() const;
     double prev_rudder_angle;
     double prev_elev_angle;
+    double prev_rpm;
 
     void quit();
 
