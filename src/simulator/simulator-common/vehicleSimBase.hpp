@@ -35,7 +35,7 @@ namespace vehicleSimSimple
 {
 #define Kdp 0.01
 //#define CURRENT 0.1
-#define CURRENT 0.0
+#define CURRENT 1.0
 #define WATER_DEPTH 30
 
 #define GPS_CHANNELS 4

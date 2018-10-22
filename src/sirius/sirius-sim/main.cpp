@@ -493,7 +493,7 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
   rdi.pd4.btv[0] = surge;
   rdi.pd4.btv[1] = sway;
   rdi.pd4.btv[2] = depth_rate;
-  rdi.pd4.altitude = 15-depth; // FIXME
+  rdi.pd4.altitude = 30-depth; // FIXME
   rdi.pd4.speed_of_sound = 0;
   rdi.pd4.btv_status = 0;
 

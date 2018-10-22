@@ -54,7 +54,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 		case acfrlcm::auv_global_planner_t::RESUME:
 			// Resume the mission
-			cout << "Resuming" << endl;
+			cout << "Try to resume" << endl;
 			gp->globalPlannerMessage = globalPlannerResume;
 			break;
 
@@ -163,9 +163,8 @@ int GlobalPlanner::clock()
 		}
 		else if (globalPlannerMessage == globalPlannerAbort)
 			nextState = globalPlannerFsmAbort;
-		else
+		else 
 			nextState = globalPlannerFsmIdle;
-
 		break;
 
 	case globalPlannerFsmRun: //run can move into any state

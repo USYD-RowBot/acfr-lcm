@@ -275,10 +275,10 @@ int LocalPlanner::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
-	if (destPoseRel.getX() < 0 ||
+	if ((destPoseRel.getX() < 0 ||
 	    ((destPoseRel.getX() > 2*turningRadius)) ||
 		((fabs(relAngle) > 45./180*M_PI) && !diffSteer) || 
-		((fabs(destPoseRel.getX()) > 2) && (fabs(destPoseRel.getY() > 2)) && diffSteer))
+		((fabs(destPoseRel.getX()) > 2) && (fabs(destPoseRel.getY() > 2)) && diffSteer))&& !aborted)
 	//if(0)
 	{
 		DubinsPath dp;
@@ -355,11 +355,16 @@ int LocalPlanner::onGlobalState(
 	 */
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::IDLE)
 	{
+		//reset waypoints
+		waypoints.clear();
+		newDest = false;
+		destReached = true;		
 		// form a STOP message to send
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+		calculateWaypoints();
 	}
 
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE){
@@ -367,7 +372,6 @@ int LocalPlanner::onGlobalState(
 		destPose = currPose;
 		holdMode = true;
 		calculateWaypoints();
-
 	}
 	
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
@@ -574,68 +578,85 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 int LocalPlanner::processWaypoints()
 {
 	Pose3D wp;
-	// if(aborted)
-	// 	wp = abortPose;
-	// else 
-	if(holdMode)
-		wp = holdPose;
-	else if (waypoints.size() == 0)
+	if (waypoints.size() == 0)
 	{
 		// Nothing to do
 		return 0;
 	}
-	else
+	// Get the next waypoint
+	wp = waypoints.at(0);
+
+	bool atDest = false;
+	// Check if we are there yet taking into consideration the depth/heading only commands
+/*	if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getZ() != wp.getZ()))
+		atDest = pointWithinHeading(wp);
+	else if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getYawRad() != wp.getYawRad()))
 	{
-		// Get the next waypoint
-		wp = waypoints.at(0);
+		atDest = pointWithinDepth(wp);
+		cout << "Checking Depth" << endl;
+	}
+	else
+	*/
+		atDest = pointWithinBound(wp);
 
-		bool atDest = false;
-		// Check if we are there yet taking into consideration the depth/heading only commands
-	/*	if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getZ() != wp.getZ()))
-			atDest = pointWithinHeading(wp);
-		else if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getYawRad() != wp.getYawRad()))
+	// We have reached the next waypoint
+	if (atDest)
+	{
+
+		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
+				wp.getX(),
+				wp.getY(),
+				wp.getZ() );
+		waypoints.erase(waypoints.begin());
+		resetWaypointTime(timestamp_now());
+
+		printWaypoints();
+
+		// No more waypoints to process
+// 		if (waypoints.size() == 0)
+// 		{
+// 			cout << timestamp_now() << " No more waypoints!" << endl;
+
+// 			if (pointWithinBound(destPose))
+// 			{
+// 				setDestReached(true);
+// 				cout << "We have reached our destination :)" << endl;
+// 			}
+// //			// form a STOP message to send
+// //			acfrlcm::auv_control_t cc;
+// //			cc.utime = timestamp_now();
+// //			cc.run_mode = acfrlcm::auv_control_t::STOP;
+// //			lcm.publish("AUV_CONTROL", &cc);
+
+// 			return getDestReached();
+// 		}
+
+	// No more waypoints to process
+		if (waypoints.size() == 0)
 		{
-			atDest = pointWithinDepth(wp);
-			cout << "Checking Depth" << endl;
-		}
-		else
-		*/
-			atDest = pointWithinBound(wp);
+			cout << timestamp_now() << " No more waypoints!" << endl;
 
-		// We have reached the next waypoint
-		if (atDest)
-		{
-
-			printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
-					wp.getX(),
-					wp.getY(),
-					wp.getZ() );
-			waypoints.erase(waypoints.begin());
-			resetWaypointTime(timestamp_now());
-
-			printWaypoints();
-
-			// No more waypoints to process
-			if (waypoints.size() == 0)
+			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
 			{
-				cout << timestamp_now() << " No more waypoints!" << endl;
-
-				if (pointWithinBound(destPose))
-				{
+				cout << "Reached hold location" << endl;
+			}
+			else if (pointWithinBound(destPose))
+			{
+				if (holdMode){
+					destPose = holdPose;
+					holdMode = false;
+					resetWaypointTime(timestamp_now());
+					cout << "Will resume in 20 seconds" <<endl;
+				}
+				else{
 					setDestReached(true);
 					cout << "We have reached our destination :)" << endl;
+					return getDestReached();
 				}
-	//			// form a STOP message to send
-	//			acfrlcm::auv_control_t cc;
-	//			cc.utime = timestamp_now();
-	//			cc.run_mode = acfrlcm::auv_control_t::STOP;
-	//			lcm.publish("AUV_CONTROL", &cc);
-
-				return getDestReached();
 			}
-
 		}
 	}
+
 	Pose3D currPose = getCurrPose();
 
 	// Calculate desired heading to way point

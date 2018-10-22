@@ -190,7 +190,6 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         mc.port = combined_port;
         mc.starboard = combined_strb;
         mc.vertical = vert_rpm;
-
     }
 
     this->lc().publish(this->get_vehicle_name() + ".THRUSTER", &mc);
