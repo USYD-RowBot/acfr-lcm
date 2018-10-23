@@ -226,7 +226,7 @@ int GlobalPlanner::clock()
 		else if (globalPlannerMessage == globalPlannerStop) {
 			nextState = globalPlannerFsmIdle;
 		}
-		else if (globalPlannerMessage == globalPlannerResume) {
+		else if ((globalPlannerMessage == globalPlannerResume) || (globalPlannerMessage == globalPlannerRun)) {
 			nextState = globalPlannerFsmRun;
 			holdOff = true;
 		}

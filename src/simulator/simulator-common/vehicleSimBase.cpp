@@ -422,8 +422,8 @@ VehicleSimBase::VehicleSimBase() :
 
     // initial conditions
     state(XNDX) = -10;
-    state(YNDX) = -10;
-    state(ZNDX) = 1.9;  //Z = 1;
+    state(YNDX) = 0;
+    state(ZNDX) = 1.0;  //Z = 1;
     state(ROLLNDX) = 0;
     state(PITCHNDX) = 0.05;
     state(HDGNDX) = 0;
@@ -529,7 +529,7 @@ void VehicleSimBase::run()
         if (missed > 1)
         {
             wakeups_missed += (missed - 1);
-                                                                                                                      std::cerr << "Missed a wakeup" << std::endl;
+            std::cerr << "Missed a wakeup" << std::endl;
         }
         
         // update the vehicle state estimate.  This will call the

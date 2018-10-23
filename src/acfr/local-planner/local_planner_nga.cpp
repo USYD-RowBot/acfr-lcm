@@ -71,7 +71,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there. Use controller for aborted ascent.
-	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 2*turningRadius || fabs(relAngle) > 100./180*M_PI ) && !aborted))
+	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && !aborted))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -225,7 +225,6 @@ int LocalPlannerTunnel::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
-
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -240,32 +239,19 @@ int LocalPlannerTunnel::processWaypoints()
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
-			if (pointWithinBound(destPose) && ((gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE)))
+			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
 			{
 				cout << "Reached hold location" << endl;
 			}
-			else if (pointWithinBound(destPose))
+			else if ((pointWithinBound(destPose) && !holdMode))
 			{
-				if (holdMode){
-					destPose = holdPose;
-					holdMode = false;
-					resetWaypointTime(timestamp_now());
-				}
-				else{
-					setDestReached(true);
-					cout << "We have reached our destination :)" << endl;
-					return getDestReached();
-				}
+				setDestReached(true);
+				cout << "We have reached our destination :)" << endl;
+				return getDestReached();
 			}
-//			// form a STOP message to send
-//			acfrlcm::auv_control_t cc;
-//			cc.utime = timestamp_now();
-//			cc.run_mode = acfrlcm::auv_control_t::STOP;
-//			lcm.publish("NGA.AUV_CONTROL", &cc);
-
 		}
-
 	}
+
 
 	Pose3D currPose = getCurrPose();
 
@@ -411,7 +397,7 @@ int LocalPlannerTunnel::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 		cerr
 				<< endl
 				<< "----------------------------------------"
-				<< "Can't calcualte a feasible path. Let's cruise and see what happens"
+				<< "Can't calculate a feasible path. Let's cruise and see what happens"
 				<< "----------------------------------------" << endl << endl;
 	}
 	resetWaypointTime(timestamp_now());
@@ -429,16 +415,17 @@ int LocalPlannerTunnel::execute_abort()
 	cout << "Abort position at " << currPose.getX() << " , " << currPose.getY() << endl;
 	abortPose.setX(currPose.getX());
 	abortPose.setY(currPose.getY());
-	abortPose.setZ(-1.0);	//set destination depth - -2m is still reachable in sim
+	abortPose.setZ(-1.0);	//set destination depth 
 	destPose = abortPose;
-	destVel = 2.0;
 	depthMode = 0;
 	setNewDest(true);
 	
 	destID = -99;
 	aborted = true;	
 
-	calculateWaypoints();
+	if (currPose.getZ() > 0.2)
+		calculateWaypoints();
+
 	return 1;
 }
 

@@ -94,7 +94,7 @@ int LocalPlannerSirius::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 		cerr
 				<< endl
 				<< "----------------------------------------"
-				<< "Can't calcualte a feasible path. Let's cruise and see what happens"
+				<< "Can't calculate a feasible path. Let's cruise and see what happens"
 				<< "----------------------------------------" << endl << endl;
 	}
 	resetWaypointTime(timestamp_now());
@@ -171,7 +171,8 @@ int LocalPlannerSirius::execute_abort()
 	
 	destID = -99;
 	aborted = true;	
-	calculateWaypoints();
+	if (currPose.getZ() > 0.2)
+		calculateWaypoints();
 	return 1;
 }
 

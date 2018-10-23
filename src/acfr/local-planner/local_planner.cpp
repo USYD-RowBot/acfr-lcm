@@ -58,16 +58,16 @@ void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
 void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp)
 {
-	// We haven't reached our goal but don't have any more waypoints.
+	// We haven't reached our goal but don't have any more waypoints. Or we are in our hold position and waiting trill we drift too far.
 	// 	Let's recalculate a feasible path.
 	// Addition: Make the replanning stage occur at a set period
 	//        if( (lp->waypoints.size() == 0) && (lp->getDestReached() == false) && (lp->getNewDest() == true))// ||  (( timestamp_now() - lp->getReplanTime() )/1000000 > 5) ) // if we want faster replanning, or a different number than the heartbeat, this callback needs to be made faster and this variable can be used
 	static long count = 0;
 	//	double timeSinceReplan = (timestamp_now() - lp->getReplanTime()) / 1000000.;
 
-	if ((lp->getDestReached() == false && lp->getNewDest() == true) &&
-	//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
-			(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()))
+	if ((((lp->getDestReached() == false && lp->getNewDest() == true)|| (lp->getHoldmode() == true)) &&
+		//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
+				(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()) ))
 	{
 
 		if (lp->getWaypointTimePassedSec() > lp->getWaypointTimeout())
@@ -349,14 +349,16 @@ int LocalPlanner::onGlobalState(
 	cout << "Change of global state to: " << (int) (gpStateLCM->state) << endl;
 	gpState = *gpStateLCM;
 
-	/* for the moment, send a STOP command to the low level controller
-	 * for transitions into any state but RUN.  This may need to be
-	 * modified for more complex PAUSE or ABORT behaviours.
+	/* State change to IDLE should immediately kill motors and stop path replanning
+	 * State change to RUN from PAUSE should move the robot to it's last position then continue the mission
+	 * State change to PAUSE should hold position and return to last position if drifting occurs
+	 * State change to ABORT should drive the robot to the surface unless it is already at the surface
 	 */
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::IDLE)
 	{
 		//reset waypoints
 		waypoints.clear();
+		//Reset flags
 		newDest = false;
 		destReached = true;		
 		// form a STOP message to send
@@ -364,13 +366,29 @@ int LocalPlanner::onGlobalState(
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+	}
+
+	if ((gpState.state == acfrlcm::auv_global_planner_state_t::RUN) && (holdMode)){
+		//hold mode is off
+		holdMode = false;
+		//check to see if we are resuming or starting a new mission
+		if (!newDest){
+			newDest = true;
+			destPose = holdPose;
+			resetWaypointTime(timestamp_now());
+		}
 		calculateWaypoints();
 	}
 
 	if (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE){
+		//save destination for later
 		holdPose = destPose;
-		destPose = currPose;
+		//make the hold point just ahead of us
+		destPose.setPosition(currPose.getX()+currVel[0], currPose.getY()+currVel[1], currPose.getZ()+currVel[2]);
+		//set flags
 		holdMode = true;
+		newDest = false;
+		waypoints.clear();
 		calculateWaypoints();
 	}
 	
@@ -613,25 +631,6 @@ int LocalPlanner::processWaypoints()
 		printWaypoints();
 
 		// No more waypoints to process
-// 		if (waypoints.size() == 0)
-// 		{
-// 			cout << timestamp_now() << " No more waypoints!" << endl;
-
-// 			if (pointWithinBound(destPose))
-// 			{
-// 				setDestReached(true);
-// 				cout << "We have reached our destination :)" << endl;
-// 			}
-// //			// form a STOP message to send
-// //			acfrlcm::auv_control_t cc;
-// //			cc.utime = timestamp_now();
-// //			cc.run_mode = acfrlcm::auv_control_t::STOP;
-// //			lcm.publish("AUV_CONTROL", &cc);
-
-// 			return getDestReached();
-// 		}
-
-	// No more waypoints to process
 		if (waypoints.size() == 0)
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
@@ -640,21 +639,15 @@ int LocalPlanner::processWaypoints()
 			{
 				cout << "Reached hold location" << endl;
 			}
-			else if (pointWithinBound(destPose))
+			else if ((pointWithinBound(destPose) && !holdMode))
 			{
-				if (holdMode){
-					destPose = holdPose;
-					holdMode = false;
-					resetWaypointTime(timestamp_now());
-					cout << "Will resume in 20 seconds" <<endl;
-				}
-				else{
-					setDestReached(true);
-					cout << "We have reached our destination :)" << endl;
-					return getDestReached();
-				}
+				setDestReached(true);
+				cout << "We have reached our destination :)" << endl;
+				return getDestReached();
 			}
+
 		}
+
 	}
 
 	Pose3D currPose = getCurrPose();

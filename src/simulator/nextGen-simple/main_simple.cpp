@@ -103,12 +103,18 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     v = v - vc_b(2);
     w = w - vc_b(3);
 
-    
+
     // make heading 0 to 2pi
     while(psi < 0)
         psi += 2 * M_PI;
     while(psi > (2 * M_PI))
         psi -= 2 * M_PI;
+
+    if(Za < 0) //stop at the water's surface and bob
+    {
+        Za = 0;
+        w = .02;
+    }
 
 
     // Where we are at, ie the auv pose

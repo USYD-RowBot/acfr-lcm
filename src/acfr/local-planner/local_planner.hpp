@@ -109,6 +109,10 @@ public:
         destReachedLatched = b;
     }
 
+    bool getHoldmode(void) const
+    {
+        return holdMode;
+    }
 
     bool getAborted(void) const
     {
