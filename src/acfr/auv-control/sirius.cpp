@@ -220,8 +220,8 @@ void SiriusController::manual_control(acfrlcm::auv_spektrum_control_command_t sc
         thrust = (double)(rcval - RC_DEADZONE) * RC_THROTTLE_MULTI;
 
 	// Add the values together
-	port += thrust;
-	strb += thrust;
+    port += thrust;
+    strb += thrust;
 	
 	mc.port= port;
 	mc.starboard = strb;

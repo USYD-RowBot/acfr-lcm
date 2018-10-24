@@ -226,8 +226,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //     prop_rpm = 0;
 
         // Set motor controller values
-        mc.vert_fore = (mutual_vert + differential_vert)/2; // had to divide by two because we were saturating the motor see main_simple.cpp 215 for why this is necessary 
-        mc.vert_aft = (mutual_vert - differential_vert)/2;
+        mc.vert_fore = (mutual_vert + differential_vert); // had to divide by two because we were saturating the motor see main_simple.cpp 215 for why this is necessary 
+        mc.vert_aft = (mutual_vert - differential_vert);
 
     	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
 
@@ -329,6 +329,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double n = prop_rpm/60;
         double prop_diameter = 0.28;
         double J0 = 0.0;
+        double threshold = M_PI/18;
+        double bias = 1.0;
         
         // limit the max rpm to 700 = 11.666667 (105/9) rps
         if(fabs(n) > (105.0/9))
@@ -342,11 +344,40 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
         std::cout << "J0: " << J0;
 
-        if (J0 > 0.4){
-            if (fabs(diff_heading) < M_PI/4){
-                mc.lat_fore = 0.0;
+        // if (J0 > 0.3){
+        //     if (fabs(diff_heading) < M_PI/18){
+        //         mc.lat_fore = 0.0;
+        //         mc.lat_aft = 0.0;
+        //         std::cout << " lat thrusters off";
+        //     } 
+        //     if (fabs(target_descent) < 0.05){
+        //         mc.vert_fore = 0.0;
+        //         mc.vert_aft = 0.0;
+        //         std::cout << " vert thrusters off";
+        //     }
+        // }
+
+
+        if ((J0 > 0.3) && !(cmd.depth < 0)){
+            if (nav.heading < -threshold && diff_heading > threshold){
+                mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
                 mc.lat_aft = 0.0;
-                std::cout << " lat thrusters off";
+                std::cout << " lat aft thruster off";
+            } 
+            else if (nav.heading < -threshold && diff_heading < -threshold){
+                mc.lat_fore = 0.0;
+                mc.lat_aft = bias*mc.lat_aft;
+                std::cout << " lat fore thruster off";
+            } 
+            else if (nav.heading > threshold && diff_heading > threshold){
+                mc.lat_fore = 0.0;
+                mc.lat_aft = bias*mc.lat_aft;
+                std::cout << " lat fore thruster off";
+            } 
+            else if (nav.heading > threshold && diff_heading < -threshold){
+                mc.lat_fore = bias*mc.lat_fore;
+                mc.lat_aft = 0.0;
+                std::cout << " lat aft thruster off";
             } 
             if (fabs(target_descent) < 0.05){
                 mc.vert_fore = 0.0;
@@ -354,11 +385,23 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 std::cout << " vert thrusters off";
             }
         }
+
         std::cout << " " << std::endl;
      }
 
     // safety hard codes
     //mc.tail_elevator = 0.0;
+
+     // //mimic thruster failure
+     // mc.vert_fore = 0.0;
+
+    //If aborted (cmd.depth == -1.0) then use tunnels to get to surface
+    // TODO: look for changes in pitch that signify a tunnel thruster failure, then use the tail primarily
+    if (cmd.depth < 0){
+        mc.tail_elevator = 0.0;
+        mc.tail_thruster = 0.0;
+        mc.tail_rudder = 0.0;
+    }
     
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }

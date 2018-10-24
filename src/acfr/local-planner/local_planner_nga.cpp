@@ -222,6 +222,11 @@ int LocalPlannerTunnel::processWaypoints()
 	// Get the next waypoint
 	Pose3D wp = waypoints.at(0);
 
+	// when executing abort, check if we are on the surface
+	if((aborted) && (currPose.getZ() < 1e-4)) 
+		destPose.setPosition(currPose.getX(), currPose.getY(), currPose.getZ());
+
+
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
@@ -312,15 +317,17 @@ int LocalPlannerTunnel::processWaypoints()
     double NAV_DT = 0.1;
     double max_depth_ref_change = 0.2*NAV_DT;
     double depth_ref_error = curr_depth_ref - depth_ref;
-    if (depth_ref_error > max_depth_ref_change)
-        depth_ref += max_depth_ref_change;
-    else if (depth_ref_error < -max_depth_ref_change)
-        depth_ref -= max_depth_ref_change;
-    else
-        depth_ref = curr_depth_ref;
+	if (depth_ref_error > max_depth_ref_change)
+		depth_ref += max_depth_ref_change;
+	else if (depth_ref_error < -max_depth_ref_change)
+		depth_ref -= max_depth_ref_change;
+	else
+		depth_ref = curr_depth_ref;
 
-    cc.depth = depth_ref;
-
+	if (aborted)
+		cc.depth = destPose.getZ();
+	else
+		cc.depth = depth_ref;
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
@@ -418,6 +425,7 @@ int LocalPlannerTunnel::execute_abort()
 	abortPose.setZ(-1.0);	//set destination depth 
 	destPose = abortPose;
 	depthMode = 0;
+	waypoints.clear();
 	setNewDest(true);
 	
 	destID = -99;
