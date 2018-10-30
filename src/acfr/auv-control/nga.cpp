@@ -213,19 +213,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double mutual_vert = pid(&this->gains_tunnel_descent,
                 nav.vz, target_descent, dt);
 
-	// this IS CORRECT!!!
-	differential_vert = -differential_vert;
-
-	//mutual_vert = 0.0;
-	//differential_vert = 0.0;
-
-
         // Set motor controller values
-        mc.vert_fore = mutual_vert + differential_vert;
-        mc.vert_aft = mutual_vert - differential_vert;
-
-	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
-
+        mc.vert_fore = mutual_vert - differential_vert;
+        mc.vert_aft = mutual_vert + differential_vert;
 
         /************************************************************
         * Heading calculation
@@ -258,10 +248,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt);
 
-	differential_lat = -differential_lat;
-	std::cout << "Diff lat: " << differential_lat << std::endl;
-        mc.lat_fore = -differential_lat;
-        mc.lat_aft = +differential_lat;
+        mc.lat_fore = differential_lat;
+        mc.lat_aft = -differential_lat;
 
         // FIXME: Might consider adding some lat tunnel thruster here
         
@@ -403,8 +391,8 @@ double NGAController::total_power()
     double tp = 0.0;
     for(int i=0; i<15; i++)
     {	
-	tp += this->psu[i];
-	tp += this->tunnel_power[i];
+        tp += this->psu[i];
+        tp += this->tunnel_power[i];
     }
     tp += this->tail_power;
 
