@@ -256,10 +256,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
-        double differential_lat = pid(&this->gains_tunnel_heading,
-                diff_heading, 0, dt);
+        double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt);
 
-	//differential_lat = -differential_lat;
+	differential_lat = -differential_lat;
 	std::cout << "Diff lat: " << differential_lat << std::endl;
         mc.lat_fore = -differential_lat;
         mc.lat_aft = +differential_lat;

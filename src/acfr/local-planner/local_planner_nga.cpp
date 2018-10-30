@@ -323,7 +323,7 @@ int LocalPlannerTunnel::processWaypoints()
 
     cc.depth = depth_ref;
 
-	lcm.publish("AUV_CONTROL."+vehicle_name, &cc);
+	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
 
