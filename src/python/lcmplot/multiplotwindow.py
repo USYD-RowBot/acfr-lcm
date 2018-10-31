@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'multiplotwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.5.1
+# Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -32,6 +32,7 @@ class Ui_MainWindow(object):
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
         self.layoutWidget.setObjectName("layoutWidget")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layoutWidget)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.label = QtWidgets.QLabel(self.layoutWidget)
         self.label.setObjectName("label")
@@ -42,6 +43,7 @@ class Ui_MainWindow(object):
         self.layoutWidget1 = QtWidgets.QWidget(self.splitter)
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget1)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(self.layoutWidget1)
         self.label_2.setObjectName("label_2")
@@ -74,20 +76,29 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.splitter_3)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1028, 19))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1024, 23))
         self.menubar.setObjectName("menubar")
         self.menu_File = QtWidgets.QMenu(self.menubar)
         self.menu_File.setObjectName("menu_File")
+        self.menuConfigs = QtWidgets.QMenu(self.menu_File)
+        self.menuConfigs.setObjectName("menuConfigs")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.actionOpen = QtWidgets.QAction(MainWindow)
+        self.actionOpen.setShortcutContext(QtCore.Qt.WindowShortcut)
         self.actionOpen.setObjectName("actionOpen")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionSave_Current = QtWidgets.QAction(MainWindow)
+        self.actionSave_Current.setObjectName("actionSave_Current")
+        self.actionLoad_Saved = QtWidgets.QAction(MainWindow)
+        self.actionLoad_Saved.setObjectName("actionLoad_Saved")
+        self.menuConfigs.addAction(self.actionLoad_Saved)
+        self.menuConfigs.addAction(self.actionSave_Current)
         self.menu_File.addAction(self.actionOpen)
-        self.menu_File.addSeparator()
+        self.menu_File.addAction(self.menuConfigs.menuAction())
         self.menu_File.addAction(self.actionExit)
         self.menubar.addAction(self.menu_File.menuAction())
 
@@ -105,9 +116,12 @@ class Ui_MainWindow(object):
         self.deleteplotbutton.setText(_translate("MainWindow", "Delete Plot"))
         self.swapaxesbutton.setText(_translate("MainWindow", "Swap X and Y"))
         self.menu_File.setTitle(_translate("MainWindow", "&File"))
+        self.menuConfigs.setTitle(_translate("MainWindow", "Configs"))
         self.actionOpen.setText(_translate("MainWindow", "&Open"))
         self.actionOpen.setShortcut(_translate("MainWindow", "Ctrl+O"))
         self.actionExit.setText(_translate("MainWindow", "E&xit"))
+        self.actionSave_Current.setText(_translate("MainWindow", "Save Current"))
+        self.actionLoad_Saved.setText(_translate("MainWindow", "Load Saved"))
 
 from .dragtree import DragTreeView
 from .dropplot import DropPlotWidget
