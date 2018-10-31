@@ -3,9 +3,11 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
 from .multiplotwindow import Ui_MainWindow
 
-from .multisourcemodel import NumericElementData
+from .multisourcemodel import NumericElementData, TypeData, DataModel, MessageSource
 
 from .plotdialogwindow import PlotDialogWindow
+
+import ConfigParser
 
 
 def get_leaf_nodes(model_element):
@@ -193,6 +195,10 @@ class MultiSourcePlotWindow(QMainWindow):
 
         self.ui.actionOpen.triggered.connect(self.fileopen)
 
+        self.ui.actionSave_Current.triggered.connect(self.save_current)
+
+        self.ui.actionLoad_Saved.triggered.connect(self.load_saved)
+
         self.ui.activeView.doubleClicked.connect(self.update_plot)
 
         n = 20
@@ -204,6 +210,80 @@ class MultiSourcePlotWindow(QMainWindow):
         # or more accurately just update
         for plot in self.plot_model.plots:
             plot.plotitem.setData(plot.xdata, plot.ydata)
+
+    def save_current(self):
+        # open dialog box to save location
+        config = ConfigParser.ConfigParser()
+
+        file_name = QFileDialog.getSaveFileName(self, 'Save File', directory='~/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
+
+        if file_name is None:
+            print "No file selected."
+        name = file_name[0]
+
+        if name.endswith('.cfg'):
+            name = name[:-4]
+
+        config.add_section(name)
+        rows = self.plot_model.rowCount()
+        for row in range(rows):
+            idx = self.plot_model.index(row, 0, QModelIndex())
+            pd = self.plot_model.data(idx, Qt.UserRole).value()
+            config.set(name, 'channel' + str(row), pd.channel)
+            config.set(name, 'X label' + str(row), pd.xlabel)
+            config.set(name, 'Y label' + str(row), pd.ylabel)
+
+        with open(name+'.cfg', 'wb') as configfile:
+            config.write(configfile)
+
+    def load_saved(self):
+        # display the dialog, to locate config file
+        file_name = QFileDialog.getOpenFileName(self, "Open Config File", directory='~/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
+
+        #check if file was selected
+        if file_name[0] == "":
+            print "No file selected."
+            return
+        name = file_name[0]
+        print name
+        #read file
+        config = ConfigParser.ConfigParser()
+        config.read(name)
+        if name.endswith('.cfg'):
+            name = name[:-4]
+        #delete existing plots
+        rows = self.plot_model.rowCount()
+        for row in range(rows):
+            idx = self.plot_model.index(0, 0, QModelIndex())
+            pd = self.plot_model.data(idx, Qt.UserRole).value()
+            self.ui.plotView.removeItem(pd.plotitem)
+            self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
+            self.plot_model.delete_plot(0)
+        #Reset number of open plots
+        self.next_pen_idx = 0
+        #Read how many items are in the file then construct the message name and look for the corresponding node for plotting
+        if not config.has_section(name):
+            print "Section not found in configuration file. Does the section name match the path name?"
+            return
+        rows = len(config.items(name))
+        for row in range(0, rows, 3):
+            xname =  config.get(name, 'channel' + str(row/3)) + '->' + config.get(name, 'X label' + str(row/3))
+            yname =  config.get(name, 'channel' + str(row/3)) + '->' + config.get(name, 'Y label' + str(row/3))
+            model_element = self.ui.sourceView.model().sources[0]
+            leaves = get_leaf_nodes(model_element)
+            for i in range(len(leaves)):
+                if leaves[i][0] == yname:
+                    node = leaves[i][1]
+                    y = node.data
+                if leaves[i][0] == xname:
+                    node = leaves[i][1]
+                    x = node.data
+            if ('y' in locals() and 'x' in locals()):
+                self.plot_data(x, y, xname, yname)
+            else:
+                print "In config file " + xname + " or " + yname + "not found in LCM list."
+
+
 
     def fileopen(self):
         # display the dialog, pass the (valid) result to the data model
