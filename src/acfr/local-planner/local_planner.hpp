@@ -9,7 +9,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
-// #include "perls-lcmtypes++/senlcm/oa_t.hpp"
+#include "perls-lcmtypes++/senlcm/oa_t.hpp"
 
 #pragma once
 
@@ -171,10 +171,10 @@ public:
                 vehicle_name = vn;
         }
     
- //    void onOA(const senlcm::oa_t *o)
- //    {
-	// oa = *o;
- //    }
+    void onOA(const senlcm::oa_t *o)
+    {
+	oa = *o;
+    }
 
     std::vector<Pose3D> waypoints;
 
@@ -240,7 +240,7 @@ protected:
     Pose3D destPose;
     double destVel;
 
-    // senlcm::oa_t oa;
+    senlcm::oa_t oa;
 
     // New destination from GLOBAL
     bool newDest;

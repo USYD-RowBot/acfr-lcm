@@ -130,9 +130,9 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 	else
 		distance = currPose.positionDistance(destPose);
         double altitude;
-	// if((timestamp_now() - oa.utime) < 5e6)
-	//     altitude = fmin(oa.altitude, navAltitude);
-	// else
+	if((timestamp_now() - oa.utime) < 5e6)
+	    altitude = fmin(oa.altitude, navAltitude);
+	else
 	    altitude = navAltitude;
 
 	int len = sprintf(auv_str,

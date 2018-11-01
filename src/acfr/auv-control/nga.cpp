@@ -11,6 +11,11 @@
 
 #include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
 
+// For power limiting
+#include "perls-lcmtypes++/senlcm/acfr_psu_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_bluefin_tail_status_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/tunnel_thruster_power_t.hpp"
+
 // set the delta T to 0.1s, 10Hz loop rate
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
@@ -56,6 +61,21 @@ private:
     pid_gains_t gains_tunnel_descent;
     pid_gains_t gains_tunnel_pitch;
     pid_gains_t gains_tunnel_heading;
+
+
+    // Callbacks for power monitoring
+    void psu_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const senlcm::acfr_psu_t *psu);
+    void tunnel_power_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const acfrlcm::tunnel_thruster_power_t *ttp);
+    void tail_power_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const acfrlcm::auv_bluefin_tail_status_t *tp);
+
+    // power limiting values
+    double psu[15];
+    double tail_power;
+    double tunnel_power[15];
+    double total_power();
 };
 
 void
@@ -122,10 +142,24 @@ void NGAController::init()
     this->gains_tunnel_descent = this->get_pid("tunnel_descent");
     this->gains_tunnel_pitch = this->get_pid("tunnel_pitch");
     this->gains_tunnel_heading = this->get_pid("tunnel_heading");
+
+    std::string vehicle_name = this->get_vehicle_name();
+    this->lc().subscribe(vehicle_name + ".PSU", &NGAController::psu_callback, this);
+    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
+    this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
+    
+    for(int i=0; i<15; i++)
+    {	
+        this->tunnel_power[i] = 0.0;
+	this->psu[i] = 0.0;
+    }
+    
+    this->tail_power = 0;
 }
 
 void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_acfr_nav_t nav)
 {
+	std::cout << "Total Power = " << this->total_power() << std::endl; 
     std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));
@@ -467,6 +501,7 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 
 void NGAController::dead_control()
 {
+	std::cout << "Total Power = " << this->total_power() << std::endl; 
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t rc;
     memset(&rc, 0, sizeof(rc));
@@ -494,4 +529,36 @@ void NGAController::reset_integrals()
     gains_pitch.integral = 0;
     gains_pitch_r.integral = 0;
     gains_heading.integral = 0;
+}
+
+
+void NGAController::psu_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const senlcm::acfr_psu_t *psu)
+{
+    this->psu[psu->address] = psu->voltage * psu->current;
+}
+
+void NGAController::tunnel_power_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const acfrlcm::tunnel_thruster_power_t *ttp)
+{
+    this->tunnel_power[ttp->addr] = (ttp->voltage[0] * ttp->current[0]) + (ttp->voltage[1] * ttp->current[1]);
+}
+
+void NGAController::tail_power_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+                              const acfrlcm::auv_bluefin_tail_status_t *tp)
+{
+    this->tail_power = tp->voltage * tp->current;
+}
+
+double NGAController::total_power()
+{
+    double tp = 0.0;
+    for(int i=0; i<15; i++)
+    {	
+        tp += this->psu[i];
+        tp += this->tunnel_power[i];
+    }
+    tp += this->tail_power;
+
+    return tp;
 }

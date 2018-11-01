@@ -286,9 +286,9 @@ int LocalPlannerTunnel::processWaypoints()
 
     	// Use the obstacle avoidance altitude if available
     	double altitude;
-	// if((timestamp_now() - oa.utime) < 5e6)
- //    	    altitude = fmin(oa.altitude, navAltitude);
- //    	else
+	if((timestamp_now() - oa.utime) < 5e6)
+    	    altitude = fmin(oa.altitude, navAltitude);
+    	else
 	     altitude = navAltitude;
 
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
