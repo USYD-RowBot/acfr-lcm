@@ -357,7 +357,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //     }
         // }
 
+        // Surface travel doesn't need vert thrusters
+        if ((nav.depth < 0.2) && (cmd.depth < 0.01)){
+            mc.vert_fore = 0.0;
+            mc.vert_aft = 0.0;
+            std::cout << " vert thrusters off";
+        }
 
+        // Thruster efficiency decreases depending of flow rate and direction .: turn off inefficient thrusters
         if ((J0 > 0.3) && !(cmd.depth < 0)){
             if (nav.heading < -threshold && diff_heading > threshold){
                 mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
@@ -385,7 +392,6 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 std::cout << " vert thrusters off";
             }
         }
-
         std::cout << " " << std::endl;
      }
 

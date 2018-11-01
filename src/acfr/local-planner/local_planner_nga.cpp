@@ -420,8 +420,8 @@ int LocalPlannerTunnel::execute_abort()
 {
 	cout << "Executing an abort" << endl;
 	cout << "Abort position at " << currPose.getX() << " , " << currPose.getY() << endl;
-	abortPose.setX(currPose.getX());
-	abortPose.setY(currPose.getY());
+	abortPose.setX(NAN);
+	abortPose.setY(NAN);
 	abortPose.setZ(-1.0);	//set destination depth 
 	destPose = abortPose;
 	depthMode = 0;
