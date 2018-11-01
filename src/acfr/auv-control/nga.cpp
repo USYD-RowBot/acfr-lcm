@@ -250,21 +250,11 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double mutual_vert = pid(&this->gains_tunnel_descent,
                 nav.vz, target_descent, dt);
 
-    	// this IS CORRECT!!!
-    	differential_vert = -differential_vert;
-
-    	//mutual_vert = 0.0;
-    	//differential_vert = 0.0;
-
-        // if (cmd.vx == 0 && (cmd.depth > 0.0) && (fabs(nav.pitch) <= 0.7)) //just seeing if the tunnel thrusters alone could get us to the surface without issue
-        //     prop_rpm = 0;
-
         // Set motor controller values
-        mc.vert_fore = (mutual_vert + differential_vert); // had to divide by two because we were saturating the motor see main_simple.cpp 215 for why this is necessary 
-        mc.vert_aft = (mutual_vert - differential_vert);
+        mc.vert_fore = (mutual_vert - differential_vert);  
+        mc.vert_aft = (mutual_vert + differential_vert);
 
     	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
-
 
         /************************************************************
         * Heading calculation
@@ -286,29 +276,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             cmd.heading += 2*M_PI;
         cmd.heading -= M_PI;
 
-        // while (nav.heading < -M_PI)
-        //     nav.heading += 2 * M_PI;
-        // while (nav.heading > M_PI)
-        //     nav.heading -= 2 * M_PI;
-
-        // while (cmd.heading < -M_PI)
-        //     cmd.heading += 2 * M_PI;
-        // while (cmd.heading > M_PI)
-        //     cmd.heading -= 2 * M_PI;
-
-        // double diff_heading = nav.heading - cmd.heading;
-
         double diff_heading = fmod((nav.heading - cmd.heading + M_PI),(2*M_PI));
         if (diff_heading < 0.0)
             diff_heading += 2*M_PI;
         diff_heading -= M_PI;
-
-
-
-        // while( diff_heading < -M_PI )
-        //     diff_heading += 2*M_PI;
-        // while( diff_heading > M_PI )
-        //     diff_heading -= 2*M_PI;
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
@@ -323,19 +294,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             rudder_angle = prev_rudder_angle + fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle)*RUDDER_DELTA;
             prev_rudder_angle = rudder_angle;
         }
-        
 
         std::cout <<"rudder_angle: " << rudder_angle/ M_PI * 180 << " prev rudder_angle: " << prev_rudder_angle/ M_PI * 180 << std::endl;
 
-
-
-
         double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt);
 
-    	differential_lat = -differential_lat;
     	std::cout << "Diff lat: " << differential_lat << std::endl;
-        mc.lat_fore = -differential_lat;
-        mc.lat_aft = +differential_lat;
+        mc.lat_fore = differential_lat;
+        mc.lat_aft = -differential_lat;
 
         // FIXME: Might consider adding some lat tunnel thruster here
         
@@ -351,9 +317,6 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             rudder_angle       = -rudder_angle;
             plane_angle      = -plane_angle;
         }
-
-        //printf("hnav:%f, hcmd:%f, rangle:%f r:%.1f p:%.1f \n",
-        // state->nav.heading, state->command.heading, rudder_angle, plane_angle);
 
         // Set motor controller values
         mc.tail_thruster = prop_rpm;
@@ -432,8 +395,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     // safety hard codes
     //mc.tail_elevator = 0.0;
 
-     // //mimic thruster failure
-     // mc.vert_fore = 0.0;
+    //mimic thruster failure
+    // mc.vert_fore = 0.0;
 
     //If aborted (cmd.depth == -1.0) then use tunnels to get to surface
     // TODO: look for changes in pitch that signify a tunnel thruster failure, then use the tail primarily
@@ -448,6 +411,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
 void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 {
+    std::cout << "Total Power = " << this->total_power() << std::endl; 
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));

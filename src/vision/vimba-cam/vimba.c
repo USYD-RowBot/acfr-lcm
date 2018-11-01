@@ -752,9 +752,9 @@ void VMB_CALL frame_done_callback(const VmbHandle_t camera , VmbFrame_t *in_fram
 
 
     // Check the status of the cameras PTP clock
-    char *ptp_status = NULL;
-    VmbFeatureEnumGet(camera , "PtpStatus", (const char **)&ptp_status);
-    printf("PTP Status : %s\n", ptp_status);
+    //char *ptp_status = NULL;
+    //VmbFeatureEnumGet(camera , "PtpStatus", (const char **)&ptp_status);
+    //printf("PTP Status : %s\n", ptp_status);
 
     // get the actual frame timestamp based on its clock and our clock
     int64_t frame_utime = timestamp_sync_private(&state->tss, frame->timestamp, utime);
