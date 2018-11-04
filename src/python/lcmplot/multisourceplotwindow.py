@@ -9,6 +9,8 @@ from .plotdialogwindow import PlotDialogWindow
 
 import ConfigParser
 
+import os
+
 
 def get_leaf_nodes(model_element):
     leaves = []
@@ -215,7 +217,9 @@ class MultiSourcePlotWindow(QMainWindow):
         # open dialog box to save location
         config = ConfigParser.ConfigParser()
 
-        file_name = QFileDialog.getSaveFileName(self, 'Save File', directory='~/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
+        path = os.path.join(os.path.expanduser('~'), 'git', 'acfr-lcm', 'src', 'python', 'config')
+
+        file_name = QFileDialog.getSaveFileName(self, 'Save File', directory = path, filter = "Configs (*.cfg)")
 
         if file_name is None:
             print "No file selected."
@@ -238,7 +242,9 @@ class MultiSourcePlotWindow(QMainWindow):
 
     def load_saved(self):
         # display the dialog, to locate config file
-        file_name = QFileDialog.getOpenFileName(self, "Open Config File", directory='~/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
+        path = os.path.join(os.path.expanduser('~'), 'git', 'acfr-lcm', 'src', 'python', 'config')
+
+        file_name = QFileDialog.getOpenFileName(self, "Open Config File", directory = path, filter = "Configs (*.cfg)")
 
         #check if file was selected
         if file_name[0] == "":
