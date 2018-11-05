@@ -66,6 +66,11 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 
 	case acfrlcm::auv_global_planner_t::ABORT:
 		// Abort the curent mission
+		if (!gm->str.empty())
+			cout<< "ABORT reason " << gm->str <<endl;
+		else
+			cout<< "ABORT no reason given" <<endl;
+
 		gp->globalPlannerMessage = globalPlannerAbort;
 		break;
 
