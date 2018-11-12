@@ -1,10 +1,11 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QPen, QBrush
 from PyQt5.QtWidgets import QDialog, QColorDialog
 
 from .plotdialog import Ui_PlotDialog
 
-from pyqtgraph import PlotDataItem, mkPen, mkBrush
+from pyqtgraph import mkPen, mkBrush
+
+from .filters import get_filters
 
 
 class PlotDialogWindow(QDialog):
@@ -33,29 +34,37 @@ class PlotDialogWindow(QDialog):
         self.ui.point_style.addItem("Cross (x)", "x")
         self.ui.point_style.addItem("Star", "star")
 
+        # load in the valid data transforms
+        for name, function in get_filters().iteritems():
+            self.ui.xtransform.addItem(name, function)
+            self.ui.ytransform.addItem(name, function)
+
         # the PlotDataItem object we are editing the plot parameters for
         self.plot_data = plot_data
+
+        # this is used more so shortcut it here
+        self.plot_item = plot_data.plotitem
 
         # get the parameters of the existing plot
         # safest way is to make a pen using the parameters
         # the actual pen attribute may just be a colour tuple
-        pen = mkPen(self.plot_data.opts['pen'])
+        pen = mkPen(self.plot_item.opts['pen'])
         self.line_colour = pen.color()
         self.line_width = pen.widthF()
         self.line_style = pen.style()
 
         # same deal for outlines of the symbols
-        outline = mkPen(self.plot_data.opts['symbolPen'])
+        outline = mkPen(self.plot_item.opts['symbolPen'])
         self.point_outline_colour = outline.color()
         self.point_outline_width = outline.widthF()
 
         # and now the symbol filling
-        fill = mkBrush(self.plot_data.opts['symbolBrush'])
+        fill = mkBrush(self.plot_item.opts['symbolBrush'])
         self.point_fill_colour = fill.color()
 
         # finally the size and what symbol (if any!) to plot
-        self.point_size = self.plot_data.opts['symbolSize']
-        self.point_style = self.plot_data.opts['symbol']
+        self.point_size = self.plot_item.opts['symbolSize']
+        self.point_style = self.plot_item.opts['symbol']
 
         # now transfer details/parameters of the existing plot to the
         # elements in the dialog
@@ -82,6 +91,12 @@ class PlotDialogWindow(QDialog):
             self.ui.point_fill_colour.setEnabled(False)
             self.ui.point_size.setEnabled(False)
 
+        idx = self.ui.xtransform.findData(self.plot_data.xfilter)
+        self.ui.xtransform.setCurrentIndex(idx)
+
+        idx = self.ui.ytransform.findData(self.plot_data.yfilter)
+        self.ui.ytransform.setCurrentIndex(idx)
+
         # connect colour selection buttons to their actions
         self.ui.point_fill_colour.clicked.connect(self.update_point_fill_colour)
         self.ui.point_outline_colour.clicked.connect(self.update_point_outline_colour)
@@ -95,13 +110,16 @@ class PlotDialogWindow(QDialog):
         self.ui.point_size.valueChanged.connect(self.point_size_changed)
         self.ui.point_outline_width.valueChanged.connect(self.point_outline_width_changed)
 
+        self.ui.xtransform.currentIndexChanged.connect(self.xfilter_changed)
+        self.ui.ytransform.currentIndexChanged.connect(self.yfilter_changed)
+
     def update_point_fill_colour(self):
         colour = QColorDialog.getColor(self.point_fill_colour, self, "Symbol Fill Colour")
         if colour is not None and colour.isValid():
             self.point_fill_colour = colour
             self.ui.point_fill_colour.setStyleSheet("background-color: " + self.point_fill_colour.name())
 
-            self.plot_data.setSymbolBrush(self.point_fill_colour)
+            self.plot_item.setSymbolBrush(self.point_fill_colour)
 
     def update_point_outline_colour(self):
         colour = QColorDialog.getColor(self.point_outline_colour, self, "Symbol Outline Colour")
@@ -109,7 +127,7 @@ class PlotDialogWindow(QDialog):
             self.point_outline_colour = colour
             self.ui.point_outline_colour.setStyleSheet("background-color: " + self.point_outline_colour.name())
 
-            self.plot_data.setSymbolPen(self.point_outline_colour, width=self.point_outline_width)
+            self.plot_item.setSymbolPen(self.point_outline_colour, width=self.point_outline_width)
 
     def update_line_colour(self):
         colour = QColorDialog.getColor(self.line_colour, self, "Line Colour")
@@ -117,7 +135,7 @@ class PlotDialogWindow(QDialog):
             self.line_colour = colour
             self.ui.line_colour.setStyleSheet("background-color: " + self.line_colour.name())
 
-            self.plot_data.setPen(self.line_colour, width=self.line_width, style=self.line_style)
+            self.plot_item.setPen(self.line_colour, width=self.line_width, style=self.line_style)
 
     def line_style_changed(self, idx):
         self.line_style = self.ui.line_style.itemData(idx, Qt.UserRole)
@@ -129,7 +147,7 @@ class PlotDialogWindow(QDialog):
             self.ui.line_width.setEnabled(True)
             self.ui.line_colour.setEnabled(True)
 
-        self.plot_data.setPen(self.line_colour, width=self.line_width, style=self.line_style)
+        self.plot_item.setPen(self.line_colour, width=self.line_width, style=self.line_style)
 
     def point_style_changed(self, idx):
         self.point_style = self.ui.point_style.itemData(idx, Qt.UserRole)
@@ -145,19 +163,25 @@ class PlotDialogWindow(QDialog):
             self.ui.point_fill_colour.setEnabled(True)
             self.ui.point_size.setEnabled(True)
 
-        self.plot_data.setSymbol(self.point_style)
+        self.plot_item.setSymbol(self.point_style)
 
     def line_width_changed(self, width):
         self.line_width = width
 
-        self.plot_data.setPen(self.line_colour, width=self.line_width, style=self.line_style)
+        self.plot_item.setPen(self.line_colour, width=self.line_width, style=self.line_style)
 
     def point_size_changed(self, size):
         self.point_size = size
 
-        self.plot_data.setSymbolSize(self.point_size)
+        self.plot_item.setSymbolSize(self.point_size)
 
     def point_outline_width_changed(self, width):
         self.point_outline_width = width
 
-        self.plot_data.setSymbolPen(self.point_outline_colour, width=self.point_outline_width)
+        self.plot_item.setSymbolPen(self.point_outline_colour, width=self.point_outline_width)
+
+    def xfilter_changed(self, idx):
+        self.plot_data.xfilter = self.ui.xtransform.itemData(idx, Qt.UserRole)
+
+    def yfilter_changed(self, idx):
+        self.plot_data.yfilter = self.ui.ytransform.itemData(idx, Qt.UserRole)

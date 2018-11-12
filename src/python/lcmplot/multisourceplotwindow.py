@@ -87,6 +87,22 @@ class PlotData(object):
 
         self.legend_name = legend
 
+        self.xfilter = None
+        self.yfilter = None
+
+    def update_data(self):
+        if self.xfilter is None:
+            x = self.xdata
+        else:
+            x = self.xfilter(self.xdata)
+
+        if self.yfilter is None:
+            y = self.ydata
+        else:
+            y = self.yfilter(self.ydata)
+
+        self.plotitem.setData(x=x, y=y)
+
 
 class PlotModel(QAbstractTableModel):
     def __init__(self, *args, **kwargs):
@@ -109,6 +125,7 @@ class PlotModel(QAbstractTableModel):
 
         pd.xlabel, pd.ylabel = pd.ylabel, pd.xlabel
         pd.xdata, pd.ydata = pd.ydata, pd.xdata
+        pd.xfilter, pd.yfilter = pd.yfilter, pd.xfilter
 
         if pd.xlabel.endswith('->utime'):
             # this is a vs time
@@ -209,7 +226,7 @@ class MultiSourcePlotWindow(QMainWindow):
         # for each plot, check if we need to update
         # or more accurately just update
         for plot in self.plot_model.plots:
-            plot.plotitem.setData(plot.xdata, plot.ydata)
+            plot.update_data()
 
     def save_current(self):
         # open dialog box to save location
@@ -367,7 +384,7 @@ class MultiSourcePlotWindow(QMainWindow):
 
     def update_plot(self, idx):
         plot_data = self.plot_model.data(idx, Qt.UserRole)
-        pdw = PlotDialogWindow(self, plot_data.value().plotitem)
+        pdw = PlotDialogWindow(self, plot_data.value())
         pdw.show()
 
     def add_plot(self):
@@ -394,9 +411,7 @@ class MultiSourcePlotWindow(QMainWindow):
         for row in rows:
             idx = self.plot_model.index(row, 0, QModelIndex())
             pd = self.plot_model.data(idx, Qt.UserRole).value()
-            pd.plotitem.setData(x=pd.ydata, y=pd.xdata)
+
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
-
             self.plot_model.swap_axes(row)
-
             self.ui.plotView.plotItem.legend.addItem(pd.plotitem, pd.legend_name)
