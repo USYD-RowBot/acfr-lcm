@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5.QtGui import QColor
 from pyqtgraph import mkPen, mkBrush
 
-from .multiplotwindow import Ui_MainWindow
+from .multiplotwindowui import Ui_MainWindow
 
 from .multisourcemodel import NumericElementData, TypeData, DataModel, MessageSource
 
