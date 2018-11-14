@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'multiplotwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.10.1
+# Created by: PyQt5 UI code generator 5.5.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -32,7 +32,6 @@ class Ui_MainWindow(object):
         self.layoutWidget = QtWidgets.QWidget(self.splitter)
         self.layoutWidget.setObjectName("layoutWidget")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layoutWidget)
-        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.label = QtWidgets.QLabel(self.layoutWidget)
         self.label.setObjectName("label")
@@ -43,7 +42,6 @@ class Ui_MainWindow(object):
         self.layoutWidget1 = QtWidgets.QWidget(self.splitter)
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget1)
-        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(self.layoutWidget1)
         self.label_2.setObjectName("label_2")

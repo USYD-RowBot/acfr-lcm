@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDialog, QColorDialog
 
-from .plotdialog import Ui_PlotDialog
+from .plotdialogui import Ui_PlotDialog
 
 from pyqtgraph import mkPen, mkBrush
 
