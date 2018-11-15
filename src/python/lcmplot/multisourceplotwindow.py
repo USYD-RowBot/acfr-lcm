@@ -321,10 +321,12 @@ class MultiSourcePlotWindow(QMainWindow):
             self.ui.plotView.removeItem(pd.plotitem)
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
             self.plot_model.delete_plot(0)
+            self.next_pen_idx = 0
 
         # Check it is roughly of the correct format?
 
         model_element = self.ui.sourceView.model().sources[0]
+
         leaves = get_leaf_nodes(model_element)
 
         for plot in config:
@@ -341,7 +343,7 @@ class MultiSourcePlotWindow(QMainWindow):
             if ('y' in locals() and 'x' in locals()):
                 pd = self.plot_data(x, y, xname, yname)
             else:
-                print "In config file " + xname + " or " + yname + "not found in LCM list."
+                print "In config file " + xname + " or " + yname + " not found in LCM list."
 
             # now we load the properties of the plot item
             # such as line style and point style
@@ -475,6 +477,7 @@ class MultiSourcePlotWindow(QMainWindow):
             self.ui.plotView.removeItem(pd.plotitem)
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
             self.plot_model.delete_plot(row)
+            self.next_pen_idx -= 1
 
     def swap_plot(self):
         indices = self.ui.activeView.selectedIndexes()
