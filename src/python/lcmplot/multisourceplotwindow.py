@@ -9,6 +9,8 @@ from .multisourcemodel import NumericElementData, TypeData, DataModel, MessageSo
 
 from .plotdialogwindow import PlotDialogWindow
 
+from .filters import get_filters, get_filter_name
+
 import json
 
 
@@ -90,18 +92,20 @@ class PlotData(object):
         self.legend_name = legend
 
         self.xfilter = None
+        self.xfilter_option = ""
         self.yfilter = None
+        self.yfilter_option = ""
 
     def update_data(self):
         if self.xfilter is None:
             x = self.xdata
         else:
-            x = self.xfilter(self.xdata)
+            x = self.xfilter(self.xdata, self.xfilter_option)
 
         if self.yfilter is None:
             y = self.ydata
         else:
-            y = self.yfilter(self.ydata)
+            y = self.yfilter(self.ydata, self.yfilter_option)
 
         self.plotitem.setData(x=x, y=y)
 
@@ -281,6 +285,14 @@ class MultiSourcePlotWindow(QMainWindow):
 
             plot["point"] = point
 
+            if pd.xfilter is not None:
+                plot["xfilter"] = get_filter_name(pd.xfilter)
+                plot["xfilter_option"] = pd.xfilter_option
+
+            if pd.yfilter is not None:
+                plot["yfilter"] = get_filter_name(pd.yfilter)
+                plot["yfilter_option"] = pd.yfilter_option
+
             config.append(plot)
 
 
@@ -349,6 +361,19 @@ class MultiSourcePlotWindow(QMainWindow):
                 pd.plotitem.setSymbolBrush(c)
                 pd.plotitem.setSymbol(plot["point"]["shape"])
                 pd.plotitem.setSymbolSize(plot["point"]["size"])
+
+                if "xfilter" in plot:
+                    pd.xfilter = get_filters()[plot["xfilter"]]
+
+                if "yfilter" in plot:
+                    pd.yfilter = get_filters()[plot["yfilter"]]
+
+                if "xfilter_option" in plot:
+                    pd.xfilter_option = plot["xfilter_option"]
+
+                if "yfilter_option" in plot:
+                    pd.yfilter_option = plot["yfilter_option"]
+
 
     def fileopen(self):
         # display the dialog, pass the (valid) result to the data model

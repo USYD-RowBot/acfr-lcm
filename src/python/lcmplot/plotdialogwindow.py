@@ -93,9 +93,11 @@ class PlotDialogWindow(QDialog):
 
         idx = self.ui.xtransform.findData(self.plot_data.xfilter)
         self.ui.xtransform.setCurrentIndex(idx)
+        self.ui.xparam.setText(self.plot_data.xfilter_option)
 
         idx = self.ui.ytransform.findData(self.plot_data.yfilter)
         self.ui.ytransform.setCurrentIndex(idx)
+        self.ui.yparam.setText(self.plot_data.yfilter_option)
 
         # connect colour selection buttons to their actions
         self.ui.point_fill_colour.clicked.connect(self.update_point_fill_colour)
@@ -112,6 +114,9 @@ class PlotDialogWindow(QDialog):
 
         self.ui.xtransform.currentIndexChanged.connect(self.xfilter_changed)
         self.ui.ytransform.currentIndexChanged.connect(self.yfilter_changed)
+
+        self.ui.xparam.textChanged.connect(self.xparam_changed)
+        self.ui.yparam.textChanged.connect(self.yparam_changed)
 
     def update_point_fill_colour(self):
         colour = QColorDialog.getColor(self.point_fill_colour, self, "Symbol Fill Colour")
@@ -185,3 +190,10 @@ class PlotDialogWindow(QDialog):
 
     def yfilter_changed(self, idx):
         self.plot_data.yfilter = self.ui.ytransform.itemData(idx, Qt.UserRole)
+
+    def xparam_changed(self, NoIdeaWhatGoesHere):
+        # may need to convert string types?
+        self.plot_data.xfilter_option = self.ui.xparam.text()
+
+    def yparam_changed(self, NoIdeaWhatGoesHere):
+        self.plot_data.yfilter_option = self.ui.yparam.text()
