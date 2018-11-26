@@ -1,15 +1,15 @@
 from PyQt5.QtCore import Qt, QAbstractListModel, QVariant, QItemSelectionModel, QAbstractTableModel, QModelIndex, QTimer
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
+from PyQt5.QtGui import QColor
+from pyqtgraph import mkPen, mkBrush
 
-from .multiplotwindow import Ui_MainWindow
+from .multiplotwindowui import Ui_MainWindow
 
 from .multisourcemodel import NumericElementData, TypeData, DataModel, MessageSource
 
 from .plotdialogwindow import PlotDialogWindow
 
-import ConfigParser
-
-import os
+import json
 
 
 def get_leaf_nodes(model_element):
@@ -89,6 +89,22 @@ class PlotData(object):
 
         self.legend_name = legend
 
+        self.xfilter = None
+        self.yfilter = None
+
+    def update_data(self):
+        if self.xfilter is None:
+            x = self.xdata
+        else:
+            x = self.xfilter(self.xdata)
+
+        if self.yfilter is None:
+            y = self.ydata
+        else:
+            y = self.yfilter(self.ydata)
+
+        self.plotitem.setData(x=x, y=y)
+
 
 class PlotModel(QAbstractTableModel):
     def __init__(self, *args, **kwargs):
@@ -111,6 +127,7 @@ class PlotModel(QAbstractTableModel):
 
         pd.xlabel, pd.ylabel = pd.ylabel, pd.xlabel
         pd.xdata, pd.ydata = pd.ydata, pd.xdata
+        pd.xfilter, pd.yfilter = pd.yfilter, pd.xfilter
 
         if pd.xlabel.endswith('->utime'):
             # this is a vs time
@@ -211,40 +228,68 @@ class MultiSourcePlotWindow(QMainWindow):
         # for each plot, check if we need to update
         # or more accurately just update
         for plot in self.plot_model.plots:
-            plot.plotitem.setData(plot.xdata, plot.ydata)
+            plot.update_data()
 
     def save_current(self):
         # open dialog box to save location
-        config = ConfigParser.ConfigParser()
+        config = []
 
-        path = os.path.join(os.path.expanduser('~'), 'git', 'acfr-lcm', 'src', 'python', 'config')
-
-        file_name = QFileDialog.getSaveFileName(self, 'Save File', directory = path, filter = "Configs (*.cfg)")
+        file_name = QFileDialog.getSaveFileName(self, 'Save File', directory='/home/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
 
         if file_name is None:
             print "No file selected."
+            return
+
         name = file_name[0]
 
         if name.endswith('.cfg'):
             name = name[:-4]
 
-        config.add_section(name)
         rows = self.plot_model.rowCount()
         for row in range(rows):
             idx = self.plot_model.index(row, 0, QModelIndex())
             pd = self.plot_model.data(idx, Qt.UserRole).value()
-            config.set(name, 'channel' + str(row), pd.channel)
-            config.set(name, 'X label' + str(row), pd.xlabel)
-            config.set(name, 'Y label' + str(row), pd.ylabel)
+            plot = dict()
+            plot["x"] = pd.xlabel
+            plot["y"] = pd.ylabel
+            plot["channel"] = pd.channel
 
-        with open(name+'.cfg', 'wb') as configfile:
-            config.write(configfile)
+            line = dict()
+            point = dict()
+            
+            line_pen = mkPen(pd.plotitem.opts['pen'])
+            # ??? if line_pen.style is Qt.NoPen:
+            c = line_pen.color()
+            line["color"] = (c.redF(), c.greenF(), c.blueF())
+            line["width"] = line_pen.widthF()
+            line["style"] = line_pen.style()
+
+            plot["line"] = line
+
+            # ??? if pd.plotitem.opts['symbol'] is None:
+            point["shape"] = pd.plotitem.opts['symbol']
+            point["size"] = pd.plotitem.opts['symbolSize']
+
+            outline_pen = mkPen(pd.plotitem.opts['symbolPen'])
+            c = outline_pen.color()
+            point["outline_color"] = (c.redF(), c.greenF(), c.blueF())
+            point["outline_width"] = outline_pen.widthF()
+
+            filling_brush = mkBrush(pd.plotitem.opts['symbolBrush'])
+            c = filling_brush.color()
+            point["fill_color"] = (c.redF(), c.greenF(), c.blueF())
+
+            plot["point"] = point
+
+            config.append(plot)
+
+
+        with open(name+'.cfg', 'w') as configfile:
+            json.dump(config, configfile, indent=4)
 
     def load_saved(self):
         # display the dialog, to locate config file
-        path = os.path.join(os.path.expanduser('~'), 'git', 'acfr-lcm', 'src', 'python', 'config')
-
-        file_name = QFileDialog.getOpenFileName(self, "Open Config File", directory = path, filter = "Configs (*.cfg)")
+        file_name = QFileDialog.getOpenFileName(self, "Open Config File", directory='/home/auv/git/acfr-lcm/src/python/config/', filter="Configs (*.cfg)")
 
         #check if file was selected
         if file_name[0] == "":
@@ -253,10 +298,9 @@ class MultiSourcePlotWindow(QMainWindow):
         name = file_name[0]
         print name
         #read file
-        config = ConfigParser.ConfigParser()
-        config.read(name)
-        if name.endswith('.cfg'):
-            name = name[:-4]
+        with open(file_name[0]) as config_file:
+            config = json.load(config_file)
+
         #delete existing plots
         rows = self.plot_model.rowCount()
         for row in range(rows):
@@ -265,31 +309,46 @@ class MultiSourcePlotWindow(QMainWindow):
             self.ui.plotView.removeItem(pd.plotitem)
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
             self.plot_model.delete_plot(0)
-        #Reset number of open plots
-        self.next_pen_idx = 0
-        #Read how many items are in the file then construct the message name and look for the corresponding node for plotting
-        if not config.has_section(name):
-            print "Section not found in configuration file. Does the section name match the path name?"
-            return
-        rows = len(config.items(name))
-        for row in range(0, rows, 3):
-            xname =  config.get(name, 'channel' + str(row/3)) + '->' + config.get(name, 'X label' + str(row/3))
-            yname =  config.get(name, 'channel' + str(row/3)) + '->' + config.get(name, 'Y label' + str(row/3))
-            model_element = self.ui.sourceView.model().sources[0]
-            leaves = get_leaf_nodes(model_element)
-            for i in range(len(leaves)):
-                if leaves[i][0] == yname:
-                    node = leaves[i][1]
-                    y = node.data
-                if leaves[i][0] == xname:
-                    node = leaves[i][1]
-                    x = node.data
+            self.next_pen_idx = 0
+
+        # Check it is roughly of the correct format?
+
+        model_element = self.ui.sourceView.model().sources[0]
+
+        leaves = get_leaf_nodes(model_element)
+
+        for plot in config:
+            xname = "{}->{}".format(plot["channel"], plot["x"])
+            yname = "{}->{}".format(plot["channel"], plot["y"])
+
+
+            for leaf in leaves:
+                if leaf[0] == yname:
+                    y = leaf[1].data
+                if leaf[0] == xname:
+                    x = leaf[1].data
+
             if ('y' in locals() and 'x' in locals()):
-                self.plot_data(x, y, xname, yname)
+                pd = self.plot_data(x, y, xname, yname)
             else:
-                print "In config file " + xname + " or " + yname + "not found in LCM list."
+                print "In config file " + xname + " or " + yname + " not found in LCM list."
 
+            # now we load the properties of the plot item
+            # such as line style and point style
+            if 'pd' in locals():
+                print plot["line"]["color"]
+                c = QColor.fromRgbF(*plot["line"]["color"])
+                pd.plotitem.setPen(c, width=plot["line"]["width"], style=plot["line"]["style"])
 
+                print plot["point"]["outline_color"]
+                c = QColor.fromRgbF(*plot["point"]["outline_color"])
+                pd.plotitem.setSymbolPen(c, width=plot["point"]["outline_width"])
+
+                print plot["point"]["fill_color"]
+                c = QColor.fromRgbF(*plot["point"]["fill_color"])
+                pd.plotitem.setSymbolBrush(c)
+                pd.plotitem.setSymbol(plot["point"]["shape"])
+                pd.plotitem.setSymbolSize(plot["point"]["size"])
 
     def fileopen(self):
         # display the dialog, pass the (valid) result to the data model
@@ -367,13 +426,15 @@ class MultiSourcePlotWindow(QMainWindow):
 
         self.plot_model.add_plot(pd)
 
+        return pd
+
     def next_pen(self):
         self.next_pen_idx += 1
         return self.pens[self.next_pen_idx - 1]
 
     def update_plot(self, idx):
         plot_data = self.plot_model.data(idx, Qt.UserRole)
-        pdw = PlotDialogWindow(self, plot_data.value().plotitem)
+        pdw = PlotDialogWindow(self, plot_data.value())
         pdw.show()
 
     def add_plot(self):
@@ -391,6 +452,7 @@ class MultiSourcePlotWindow(QMainWindow):
             self.ui.plotView.removeItem(pd.plotitem)
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
             self.plot_model.delete_plot(row)
+            self.next_pen_idx -= 1
 
     def swap_plot(self):
         indices = self.ui.activeView.selectedIndexes()
@@ -400,9 +462,7 @@ class MultiSourcePlotWindow(QMainWindow):
         for row in rows:
             idx = self.plot_model.index(row, 0, QModelIndex())
             pd = self.plot_model.data(idx, Qt.UserRole).value()
-            pd.plotitem.setData(x=pd.ydata, y=pd.xdata)
+
             self.ui.plotView.plotItem.legend.removeItem(pd.legend_name)
-
             self.plot_model.swap_axes(row)
-
             self.ui.plotView.plotItem.legend.addItem(pd.plotitem, pd.legend_name)
