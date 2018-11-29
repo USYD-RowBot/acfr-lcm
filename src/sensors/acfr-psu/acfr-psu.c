@@ -87,14 +87,15 @@ void parse_psu_response(state_t *state, char *d, int len)
 	char addr_str[3] = {0};
     char *cmd_char;
     int addr;
-    char *tokens[8];
+    char *tokens[16];
+    char pub_channel[80];
     
     memcpy(addr_str, &d[1], 2);
     addr = atoi(addr_str);
     cmd_char = &d[3];
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
-    	if(chop_string( d, ", ", tokens) == 4)
+    	if(chop_string( d, ", ", tokens) == 8)
     	{
 	    	senlcm_acfr_psu_t psu;
 	    	psu.utime = timestamp_now();
@@ -102,7 +103,13 @@ void parse_psu_response(state_t *state, char *d, int len)
 	    	psu.voltage = atof(tokens[1]);
 	    	psu.current = atof(tokens[2]);
 	    	psu.temperature = atof(tokens[3]);
-	    	senlcm_acfr_psu_t_publish(state->lcm, state->channel_name, &psu);
+            psu.voltage_max = atof(tokens[4]);
+            psu.current_max = atof(tokens[5]);
+            psu.voltage_min = atof(tokens[6]);
+            psu.current_min = atof(tokens[7]);
+            strcpy(pub_channel, state->channel_name);
+            strcat(strcat(pub_channel, "_"), addr_str);
+	    	senlcm_acfr_psu_t_publish(state->lcm, pub_channel, &psu);
     	}
     }
 }
@@ -112,7 +119,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 {
     state_t *state = (state_t *)u;
     char msg[16];
-    char resp[32];
+    char resp[75];
     int ret;
 	
 	
@@ -121,14 +128,14 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 		memset(msg, 0, sizeof(msg));
 		sprintf(msg, "#%02dS\r", state->psu_addrs[i]);
 		RS485_write(state->sensor, msg);
-	        usleep(100e3);	
+	        usleep(100);	
 		// Wait for a response with a timeout
 		memset(resp, 0, sizeof(resp));
-		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 200);
-		if(ret > 0)
+		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 50);
+		if(ret > 0){
 			parse_psu_response(state, resp, ret);
-
-		usleep(100e3);
+        }
+		usleep(100);
 	}
         
         
@@ -208,7 +215,7 @@ int main (int argc, char *argv[])
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
 state.psu = 0;
     
     while (!program_exit)
