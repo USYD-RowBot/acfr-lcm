@@ -144,7 +144,7 @@ void NGAController::init()
     this->gains_tunnel_heading = this->get_pid("tunnel_heading");
 
     std::string vehicle_name = this->get_vehicle_name();
-    this->lc().subscribe(vehicle_name + ".PSU", &NGAController::psu_callback, this);
+    this->lc().subscribe(vehicle_name + ".PSU_.*", &NGAController::psu_callback, this);
     this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
     this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
     
@@ -165,6 +165,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
 
+    bool surface_travel = false, thruster_flow_dependant = false, tail_only_abort = false;
     double prop_rpm = 0.0;
     double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
@@ -250,11 +251,16 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double mutual_vert = pid(&this->gains_tunnel_descent,
                 nav.vz, target_descent, dt);
 
-        // Set motor controller values
-        mc.vert_fore = (mutual_vert - differential_vert);  
-        mc.vert_aft = (mutual_vert + differential_vert);
+        // testing variable pitch rpm based of mutual value saturation
+        double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
+        double differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
 
-    	std::cout << "Vertical control mutual: " << mutual_vert << " diff: " << differential_vert << std::endl;
+        // Set motor controller values
+        mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+        mc.vert_aft = (mutual_vert + differential_vert_corrected);
+
+    	std::cout << "Vertical control mutual: " << mutual_vert << std::endl;
+        std::cout << " diff: " << differential_vert << " c_diff: " << differential_vert_corrected << std::endl;
 
         /************************************************************
         * Heading calculation
@@ -355,14 +361,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // }
 
         // Surface travel doesn't need vert thrusters
-        if ((nav.depth < 0.2) && (cmd.depth < 0.01)){
+        if (((nav.depth < 0.2) && (cmd.depth < 0.01)) && surface_travel){
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
             std::cout << " vert thrusters off";
         }
 
         // Thruster efficiency decreases depending of flow rate and direction .: turn off inefficient thrusters
-        if ((J0 > 0.3) && !(cmd.depth < 0)){
+        if (((J0 > 0.3) && !(cmd.depth < 0))&& thruster_flow_dependant){
             if (nav.heading < -threshold && diff_heading > threshold){
                 mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
                 mc.lat_aft = 0.0;
@@ -400,7 +406,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
     //If aborted (cmd.depth == -1.0) then use tunnels to get to surface
     // TODO: look for changes in pitch that signify a tunnel thruster failure, then use the tail primarily
-    if (cmd.depth < 0){
+    if (cmd.depth < 0 && tail_only_abort){
         mc.tail_elevator = 0.0;
         mc.tail_thruster = 0.0;
         mc.tail_rudder = 0.0;
