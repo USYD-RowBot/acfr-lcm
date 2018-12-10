@@ -466,7 +466,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	    rdi_data.nz = 0.0;
 	    rdi_data.vx = dvl->vx;
 	    rdi_data.vy = dvl->vy;
-	    rdi_data.vz = -vz;
+	    rdi_data.vz = vz;
 	    rdi_data.COG = 0;   // FIXME
 	    rdi_data.SOG = 0;   // FIXME
 	    rdi_data.bt_status = btv_ok ? 0 : 1;
