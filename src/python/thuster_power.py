@@ -23,12 +23,12 @@ def handle_acfr_psu(channel_name, data):
     for key in volts.keys():
         power = volts[key] * amps[key]
         total_power += power
-        out_str += '{:2.2f}V\t{:3.2f}A\t{:3.2f}W\t{:2.2f}C\t\t'.format(volts[key], amps[key], power, temp[key])
+        out_str += '{} {:2.2f}V\t{:3.2f}A\t{:3.2f}W\t{:2.2f}C\t\t'.format(key,volts[key], amps[key], power, temp[key])
     print out_str + '{:3.2f}W'.format(total_power)
 
 if __name__ == '__main__':
     lc = lcm.LCM()
-    lc.subscribe('.*PSU', handle_acfr_psu)
+    lc.subscribe('.*PSU_.*', handle_acfr_psu)
     while(1):
         lc.handle()
 

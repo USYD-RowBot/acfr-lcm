@@ -29,12 +29,10 @@ lc = lcm.LCM();
 
 msg = auv_nga_motor_command_t()
 
-for test in tests:
-    inc1 = (test[1] - test[0]) / test[4]
-    inc2 = (test[2] - test[3]) / test[4]
-    for t in range(0, test[4]+1):
-        thrust1 = (t * inc1) + test[0]
-        thrust2 = (t * inc2) + test[2]
+thrust1 = 1000
+thrust2 = 1000
+
+while True:
         msg.utime = int(time.time() * 1000000)
         msg.lat_fore = thrust1
         msg.vert_fore = thrust2
@@ -42,5 +40,4 @@ for test in tests:
         msg.vert_aft = thrust2
         lc.publish('NGA.NEXTGEN_MOTOR', msg.encode())
         time.sleep(.1)		
-    print "Next test"
 		
