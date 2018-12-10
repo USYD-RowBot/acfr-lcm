@@ -140,7 +140,7 @@ void NGAController::init()
     this->gains_tunnel_heading = this->get_pid("tunnel_heading");
 
     std::string vehicle_name = this->get_vehicle_name();
-    this->lc().subscribe(vehicle_name + ".PSU", &NGAController::psu_callback, this);
+    this->lc().subscribe(vehicle_name + ".PSU_.*" , &NGAController::psu_callback, this);
     this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
     this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
     
@@ -211,7 +211,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double differential_vert = pid(&this->gains_tunnel_pitch,
                 nav.pitch, target_pitch, dt);
         double mutual_vert = pid(&this->gains_tunnel_descent,
-                nav.vz, target_descent, dt);
+              nav.depth, cmd.depth, dt); // nav.vz, target_descent, dt);
+
+	std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+
 
         // Set motor controller values
         mc.vert_fore = mutual_vert - differential_vert;
