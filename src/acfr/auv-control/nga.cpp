@@ -141,7 +141,7 @@ void NGAController::init()
 
     std::string vehicle_name = this->get_vehicle_name();
     this->lc().subscribe(vehicle_name + ".PSU_.*" , &NGAController::psu_callback, this);
-    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
+    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER.*", &NGAController::tunnel_power_callback, this);
     this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
     
     for(int i=0; i<15; i++)

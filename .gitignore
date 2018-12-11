@@ -10,3 +10,4 @@ build
 # ignore build directory
 build/
 third-party/libbot2/bot2-*
+third-party/AVT*
