@@ -13,4 +13,7 @@ struct auv_bluefin_tail_status_t
 	int8_t comp1;
 	int8_t comp2;
 	int8_t leak;
+
+	double current_rpm;
+	double target_rpm;
 }

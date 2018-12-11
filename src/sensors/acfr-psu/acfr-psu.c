@@ -111,7 +111,7 @@ void parse_psu_response(state_t *state, char *d, int len)
 			psu.current_min = atof(tokens[7]);
 			strcpy(pub_channel, state->channel_name);
 			strcat(strcat(pub_channel, "_"), addr_str);
-			if (psu.voltage_max != 0 && psu.voltage_min != 0 && psu.current_max != 0 && psu.current_min !=0 )
+			if (fabs(psu.voltage_max) >1e-3  && fabs(psu.voltage_min) >1e-3 && fabs(psu.current_max) >1e-3 && fabs(psu.current_min) >1e-3 )
 				senlcm_acfr_psu_t_publish(state->lcm, pub_channel, &psu);
     		}
     	}	

@@ -139,6 +139,19 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 return 1;
             }
         }
+
+        if(d[3] == 'Q' && d[4] == '0')
+        {
+            char *tok[16];
+            int ret = chop_string(d, " ", tok);
+            if(ret == 4)
+            {
+                state->bf_status.current_rpm = atoi(tok[2]);
+                state->bf_status.target_rpm = atoi(tok[3]);
+                
+                return 1;
+            }            
+        }
     }
     // Rudder reponses
     if(addr == 2)
@@ -311,6 +324,24 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
     {
         sprintf(msg, "#01MV %d\n", state->thruster);
+        printf("Sending, attemp %d: %s\n", retry, msg);
+        ret = bluefin_write_respond(state, msg, 1);
+        if(ret == 1 && state->error_main)
+        {
+            printf("Failed, reset, retry\n");
+            bluefin_write_respond(state, "#01AO\n", 1);
+      //      usleep(10000);
+        }
+        else
+            commanded = true;
+    }
+
+    // RPM target and current
+    commanded = false;
+    retry = 0;
+    while(!commanded && retry++ < 5)
+    {
+        sprintf(msg, "#01Q0");
         printf("Sending, attemp %d: %s\n", retry, msg);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_main)
