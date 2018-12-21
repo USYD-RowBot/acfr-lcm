@@ -619,7 +619,6 @@ int LocalPlanner::processWaypoints()
 	// We have reached the next waypoint
 	if (atDest)
 	{
-
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),

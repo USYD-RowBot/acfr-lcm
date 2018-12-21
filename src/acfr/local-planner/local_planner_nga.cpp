@@ -71,7 +71,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there. Use controller for aborted ascent.
-	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && !aborted))
+	if ((((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && this->destID > 0) && !aborted))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -230,6 +230,8 @@ int LocalPlannerTunnel::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
+		cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
+			<< currPose.getY() << "," << currPose.getZ() << endl;
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -314,14 +316,14 @@ int LocalPlannerTunnel::processWaypoints()
     // trajectory. This is modelled on a forward speed of 0.75m/s 
     // with a max pitch of 0.3rad.  This should be configurable or
     // calculated automatically.
-    double NAV_DT = 0.1;
-    double max_depth_ref_change = 0.2*NAV_DT;
-    double depth_ref_error = curr_depth_ref - depth_ref;
-	if (depth_ref_error > max_depth_ref_change)
-		depth_ref += max_depth_ref_change;
-	else if (depth_ref_error < -max_depth_ref_change)
-		depth_ref -= max_depth_ref_change;
-	else
+ //    double NAV_DT = 0.1;
+ //    double max_depth_ref_change = 0.2*NAV_DT;
+ //    double depth_ref_error = curr_depth_ref - depth_ref;
+	// if (depth_ref_error > max_depth_ref_change)
+	// 	depth_ref += max_depth_ref_change;
+	// else if (depth_ref_error < -max_depth_ref_change)
+	// 	depth_ref -= max_depth_ref_change;
+	// else
 		depth_ref = curr_depth_ref;
 
 	if (aborted)

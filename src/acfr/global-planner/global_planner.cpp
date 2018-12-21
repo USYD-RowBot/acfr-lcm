@@ -194,7 +194,10 @@ int GlobalPlanner::clock()
 							<< (*currPoint).timeout * 1e6 << ", curr="
 							<< (timestamp_now() - legStartTime) << endl;
 					else
+					{
 						holdOff = false;
+						currPoint--;
+					}
 
 				}
 				if( skipWaypoint ) {
