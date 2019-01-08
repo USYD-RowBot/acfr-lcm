@@ -111,7 +111,7 @@ void parse_psu_response(state_t *state, char *d, int len)
 			psu.current_min = atof(tokens[7]);
 			strcpy(pub_channel, state->channel_name);
 			strcat(strcat(pub_channel, "_"), addr_str);
-			if (psu.voltage_max != 0 && psu.voltage_min != 0 && psu.current_max != 0 && psu.current_min !=0 )
+			if (psu.voltage_max < 1e-4 && psu.voltage_min < 1e-4 && psu.current_max < 1e-4 && psu.current_min < 1e-4)
 				senlcm_acfr_psu_t_publish(state->lcm, pub_channel, &psu);
     		}
     	}	
@@ -205,8 +205,8 @@ int main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
 
-	// Read the PSU addresses we are interested in
-	char key[64];
+    // Read the PSU addresses we are interested in
+    char key[64];
 	sprintf(key, "%s.addrs", rootkey);
 	state.num_psu = bot_param_get_int_array(state.sensor->param, key, state.psu_addrs, MAX_PSUS);
 	

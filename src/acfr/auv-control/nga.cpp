@@ -25,9 +25,9 @@
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
 #define RC_HALF_RANGE 685
-#define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE
+#define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
-#define RC_MAX_PROP_RPM 1500
+#define RC_MAX_PROP_RPM 700
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
@@ -379,21 +379,25 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     int aft = 0;
     double rudder;
 
-    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
-    aft = (sc.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
+    //Strafe - this is side to side on left stick - always available
+    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+    aft = fore;
         
-    // Check the steering mode switch
-    if(sc.values[RC_GEAR] > 1200)
+    // Check the steering mode switch - top switch on right side
+    if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
     {
-        fore += (sc.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
-        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
+        //tunnel turning when switch is back
+        fore = (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+        aft = -fore;
         rudder = 0;
     }
     else 
     {
+        //or rudder turning when switch is forward
         rudder = -(sc.values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
     }
 
+    // elevator is always available on right stick forward and back
     mc.tail_elevator = -(sc.values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
     mc.tail_rudder = rudder; 
     mc.lat_aft = aft;
@@ -409,12 +413,19 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     }
     else
     {
-        mc.tail_thruster = (rcval - RC_DEADZONE) * RCMULT;
-        if (mc.tail_thruster > RC_MAX_PROP_RPM)
-            mc.tail_thruster = RC_MAX_PROP_RPM;
-        else if (mc.tail_thruster < -RC_MAX_PROP_RPM)
-            mc.tail_thruster = -RC_MAX_PROP_RPM;
-    }        
+        mc.tail_thruster = (rcval - RC_DEADZONE)* gains_vel.sat/RC_HALF_RANGE;
+        if (fabs(mc.tail_thruster) > gains_vel.sat)
+            mc.tail_thruster = gains_vel.sat*mc.tail_thruster/fabs(mc.tail_thruster);
+    }
+
+    //brown out limiting
+    if (abs(rcval) > RC_DEADZONE)
+    {
+        // if we have a tail rpm then don't run lat tunnels at same time, but allow elevator and rudder commands
+        // if no tail rpm then look for tunnel rpm, can no longer strafe and diff steer at same time. Steer has priority
+        mc.lat_fore = 0.0;
+        mc.lat_aft = 0.0;
+    }
 
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }
