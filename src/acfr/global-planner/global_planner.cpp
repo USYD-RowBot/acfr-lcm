@@ -30,6 +30,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		switch (gm->command)
 		{
 		case acfrlcm::auv_global_planner_t::LOAD:
+			if (gp->turningRadius > 0)
+				gp->mis.setTurnRadius(gp->turningRadius);
 			// Check if file exists
 			fs = new fstream(gm->str.c_str(), ios::in);
 			// load a mission file and run said mission
@@ -116,7 +118,7 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 }
 
 GlobalPlanner::GlobalPlanner() :
-		skipWaypoint(false), areWeThereYet(false), holdOff(false), distanceToGoal(-1),
+		skipWaypoint(false), areWeThereYet(false), holdOff(false), distanceToGoal(-1), turningRadius(-1),
 		globalPlannerMessage(globalPlannerIdle), currentState(globalPlannerFsmIdle)
 {
 
@@ -129,6 +131,7 @@ GlobalPlanner::GlobalPlanner() :
 	cameraTriggerMsg.freq = 1;
 	cameraTriggerMsg.pulseWidthUs = -1;
 	cameraTriggerMsg.strobeDelayUs = 1;
+	loadConfig();
 
 	cout << endl << endl << endl << "GlobalPlanner started" << endl;
 }
@@ -441,6 +444,33 @@ int GlobalPlanner::process()
 			lcm.handle();
 	}
 
+	return 1;
+}
+
+int GlobalPlanner::loadConfig()
+{
+	BotParam *param = NULL;
+	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
+	if (param == NULL)
+		return 0;
+
+	char rootkey[64];
+	char key[128];
+
+	string lower_case_vn;
+	locale loc;
+
+	for(string::size_type i=0; i < vehicle_name.length(); i++)
+		lower_case_vn.push_back(tolower(vehicle_name[i], loc));
+
+	char *cstr = &lower_case_vn[0u];
+	sprintf(rootkey, "acfr.local-planner-%s", cstr);
+
+	sprintf(key, "%s.turning_radius", rootkey);
+
+	//cout << key << endl;
+	turningRadius = bot_param_get_double_or_fail(param, key);
+	//cout << turningRadius << endl;
 	return 1;
 }
 
