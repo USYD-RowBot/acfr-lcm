@@ -723,7 +723,7 @@ int LocalPlanner::processWaypoints()
     else
         depth_ref = curr_depth_ref;
 
-    cc.depth = depth_ref;
+    cc.depth = curr_depth_ref;
 
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
