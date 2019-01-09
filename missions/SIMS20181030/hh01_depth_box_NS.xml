@@ -15,8 +15,8 @@
         <goto>
             <position x="0" y="10" z="20.0"/>
             <heading deg="325" />
-            <timeout t="120" />
-            <velocity x="1.0" />
+            <timeout t="300" />
+            <velocity x="0.5" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
@@ -25,8 +25,8 @@
         <goto>
             <position x="50" y="-30" z="20.0"/>
             <heading deg="235" />
-            <timeout t="120" />
-            <velocity x="1.0" />
+            <timeout t="300" />
+            <velocity x="0.5" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
@@ -35,8 +35,8 @@
         <goto>
             <position x="20" y="-80" z="20.0"/>
             <heading deg="90" />
-            <timeout t="120" />
-            <velocity x="1.0" />
+            <timeout t="300" />
+            <velocity x="0.5" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
@@ -45,8 +45,8 @@
         <goto>
             <position x="0" y="10" z="20.0"/>
             <heading deg="135" />
-            <timeout t="120" />
-            <velocity x="1.0" />
+            <timeout t="300" />
+            <velocity x="0.5" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
