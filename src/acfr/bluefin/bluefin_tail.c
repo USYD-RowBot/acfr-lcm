@@ -335,24 +335,6 @@ int send_bluefin_tail_commands(state_t *state)
         else
             commanded = true;
     }
-
-    // RPM target and current
-    commanded = false;
-    retry = 0;
-    while(!commanded && retry++ < 5)
-    {
-        sprintf(msg, "#01Q0");
-        printf("Sending, attemp %d: %s\n", retry, msg);
-        ret = bluefin_write_respond(state, msg, 1);
-        if(ret == 1 && state->error_main)
-        {
-            printf("Failed, reset, retry\n");
-            bluefin_write_respond(state, "#01AO\n", 1);
-      //      usleep(10000);
-        }
-        else
-            commanded = true;
-    }
     
     // Rudder
     commanded = false;
@@ -401,7 +383,11 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     // On the heart beat we will get the ouput voltage and current if the thruster is enabled
     //if(state->enabled)
     {
+        // fill status message
+        bluefin_write_respond(state, "#01Q0\n", 1);
+        bluefin_write_respond(state, "#01Q1\n", 1);
         bluefin_write_respond(state, "#04S\n", 1);
+
         
         // If we are enabled then we send the tail commands every second for the timeout period
         // after receiving a command
