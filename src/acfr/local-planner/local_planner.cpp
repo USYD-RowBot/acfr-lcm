@@ -619,7 +619,6 @@ int LocalPlanner::processWaypoints()
 	// We have reached the next waypoint
 	if (atDest)
 	{
-
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -724,7 +723,7 @@ int LocalPlanner::processWaypoints()
     else
         depth_ref = curr_depth_ref;
 
-    cc.depth = depth_ref;
+    cc.depth = curr_depth_ref;
 
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;

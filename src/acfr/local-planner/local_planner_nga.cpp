@@ -54,12 +54,12 @@ int LocalPlannerTunnel::calculateWaypoints()
 	double currVel = this->currVel[0];
 
 	cout << timestamp_now() << " Calculating new waypoints..." << endl;
-	cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
+	cout << "CurrPose=" << currPose.getX() << ","
 			<< currPose.getY() << "," << currPose.getZ() << " < "
 			<< currPose.getYawRad() / M_PI * 180 << endl;
-	cout << setprecision(2) << "DestPose=" << destPose.getX() << ","
+	cout << "DestPose=" << destPose.getX() << ","
 			<< destPose.getY() << "," << destPose.getZ() << " < "
-			<< destPose.getYawRad() / M_PI * 180 << endl;
+			<< destPose.getYawRad() / M_PI * 180  << endl;
 
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
@@ -71,7 +71,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there. Use controller for aborted ascent.
-	if (((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && !aborted))
+	if ((((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && this->destID > 0) && !aborted))
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -119,6 +119,8 @@ int LocalPlannerTunnel::calculateWaypoints()
 	// Managed to calculate a path to destination
 	// TODO: do we need mutex around this?
 	waypoints.clear();
+	// wps.clear();
+	// wps.push_back(destPose);
 	waypoints = wps;
 
 	// Save the start pose and start velocity
@@ -228,7 +230,8 @@ int LocalPlannerTunnel::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
-
+		cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
+			<< currPose.getY() << "," << currPose.getZ() << endl;
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -256,6 +259,7 @@ int LocalPlannerTunnel::processWaypoints()
 		}
 	}
 
+
 	Pose3D currPose = getCurrPose();
 
 	// Calculate desired heading to way point
@@ -266,10 +270,12 @@ int LocalPlannerTunnel::processWaypoints()
 	// Calculate desired velocity. This is set to dest velocity by default
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
-	//double distToDest = getDistToDest();
-	//if( distToDest < velChangeDist ) {
-	//	desVel = destVel * (distToDest / velChangeDist);
-	//}
+	double distToDest = getDistToDest();
+	// 	cout << "desVel = " << destVel << ", distToDest = " << distToDest << endl;
+	// if( distToDest < velChangeDist ) {
+	// 	desVel = destVel * (distToDest / velChangeDist);
+	// 	cout << desVel << " = " << destVel << " *( " << distToDest << " / " << velChangeDist << ")" << endl;
+	// }
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
@@ -281,11 +287,11 @@ int LocalPlannerTunnel::processWaypoints()
     double curr_depth_ref;
 
     	// Use the obstacle avoidance altitude if available
-   	double altitude;
+    	double altitude;
 	if((timestamp_now() - oa.utime) < 5e6)
     	    altitude = fmin(oa.altitude, navAltitude);
     	else
-	    altitude = navAltitude;
+	     altitude = navAltitude;
 
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
@@ -310,15 +316,15 @@ int LocalPlannerTunnel::processWaypoints()
     // trajectory. This is modelled on a forward speed of 0.75m/s 
     // with a max pitch of 0.3rad.  This should be configurable or
     // calculated automatically.
-    double NAV_DT = 0.1;
-    double max_depth_ref_change = 0.2*NAV_DT;
-    double depth_ref_error = curr_depth_ref - depth_ref;
-    if (depth_ref_error > max_depth_ref_change)
-        depth_ref += max_depth_ref_change;
-    else if (depth_ref_error < -max_depth_ref_change)
-        depth_ref -= max_depth_ref_change;
-    else
-        depth_ref = curr_depth_ref;
+ //    double NAV_DT = 0.1;
+ //    double max_depth_ref_change = 0.2*NAV_DT;
+ //    double depth_ref_error = curr_depth_ref - depth_ref;
+	// if (depth_ref_error > max_depth_ref_change)
+	// 	depth_ref += max_depth_ref_change;
+	// else if (depth_ref_error < -max_depth_ref_change)
+	// 	depth_ref -= max_depth_ref_change;
+	// else
+		depth_ref = curr_depth_ref;
 
 	if (aborted)
 		cc.depth = destPose.getZ();

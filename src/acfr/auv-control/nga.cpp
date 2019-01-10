@@ -25,9 +25,9 @@
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
 #define RC_HALF_RANGE 685
-#define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE
+#define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
-#define RC_MAX_PROP_RPM 1500
+#define RC_MAX_PROP_RPM 700
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
@@ -165,7 +165,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
 
-    bool surface_travel = false, thruster_flow_dependant = false, tail_only_abort = false, elevator_disabled = true;
+    bool thruster_flow_dependant = true, elevator_disabled = false;
     double prop_rpm = 0.0;
     double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
@@ -194,7 +194,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double target_descent = pid(&this->gains_tunnel_depth, 
                 nav.depth, cmd.depth, dt);
 
-        //std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
         pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
 
@@ -220,7 +220,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 nav.pitch, target_pitch, dt);
 
         double mutual_vert = pid(&this->gains_tunnel_descent,
-                nav.vz, target_descent, dt);
+                nav.depth, cmd.depth, dt);
 
         // testing variable pitch rpm based of mutual value saturation
         double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
@@ -262,7 +262,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
-        //std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
+        std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
 
         // checks for impossible rudder motions
         if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
@@ -303,68 +303,63 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         else
             mc.tail_elevator = plane_angle;
 
-        double n = prop_rpm/60;
-        double prop_diameter = 0.28;
-        double J0 = 0.0;
         double threshold = M_PI/18;
         double bias = 1.0;
         
-        // limit the max rpm to 700 = 11.666667 (105/9) rps
-        if(fabs(n) > (105.0/9))
-            n = n / fabs(n) * (105.0/9);
-        
-        // advance velocity as per Fossen eq 4.6
-        double omega = 0.1;
-        double Va = (1 - omega) * nav.vx;
-        
-        if(fabs(n) > 1e-3)
-            J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
-        //std::cout << "J0: " << J0;
-
-        // Surface travel doesn't need vert thrusters
-        if (((nav.depth < 0.2) && (cmd.depth < 0.01)) && surface_travel){
+        // power management
+        // dive with thrusters if large dive
+        if (fabs(nav.depth - cmd.depth) > 1.0   || cmd.depth < 0){
+            mc.lat_fore = 0.0;
+            mc.lat_aft = 0.0;
+            mc.tail_thruster = 0.0;
+            mc.tail_elevator = 0.0;
+            mc.tail_rudder = 0.0;
+            std::cout << " vert thrusters only";
+        }
+        //turn on spot if zero advance speed and large turn angle
+        else if (fabs(diff_heading) > M_PI/3){
+            mc.tail_thruster = 0.0;
+            mc.tail_elevator = 0.0;
+            mc.tail_rudder = 0.0;
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
-            std::cout << " vert thrusters off";
-        }
+            std::cout << " lat thrusters only";
 
-        // Thruster efficiency decreases depending of flow rate and direction .: turn off inefficient thrusters
-        if (((J0 > 0.3) && !(cmd.depth < 0))&& thruster_flow_dependant){
-            if (nav.heading < -threshold && diff_heading > threshold){
-                mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
-                mc.lat_aft = 0.0;
-                std::cout << " lat aft thruster off";
-            } 
-            else if (nav.heading < -threshold && diff_heading < -threshold){
-                mc.lat_fore = 0.0;
-                mc.lat_aft = bias*mc.lat_aft;
-                std::cout << " lat fore thruster off";
-            } 
-            else if (nav.heading > threshold && diff_heading > threshold){
-                mc.lat_fore = 0.0;
-                mc.lat_aft = bias*mc.lat_aft;
-                std::cout << " lat fore thruster off";
-            } 
-            else if (nav.heading > threshold && diff_heading < -threshold){
-                mc.lat_fore = bias*mc.lat_fore;
-                mc.lat_aft = 0.0;
-                std::cout << " lat aft thruster off";
-            } 
-            if (fabs(target_descent) < 0.05){
-                mc.vert_fore = 0.0;
-                mc.vert_aft = 0.0;
-                std::cout << " vert thrusters off";
+            // adding lat tunnel efficiency code here for tests
+            if (thruster_flow_dependant)
+            {
+                if (nav.heading < -threshold && diff_heading > threshold){
+                    mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
+                    mc.lat_aft = 0.0;
+                    std::cout << " lat aft thruster off";
+                } 
+                else if (nav.heading < -threshold && diff_heading < -threshold){
+                    mc.lat_fore = 0.0;
+                    mc.lat_aft = bias*mc.lat_aft;
+                    std::cout << " lat fore thruster off";
+                } 
+                else if (nav.heading > threshold && diff_heading > threshold){
+                    mc.lat_fore = 0.0;
+                    mc.lat_aft = bias*mc.lat_aft;
+                    std::cout << " lat fore thruster off";
+                } 
+                else if (nav.heading > threshold && diff_heading < -threshold){
+                    mc.lat_fore = bias*mc.lat_fore;
+                    mc.lat_aft = 0.0;
+                    std::cout << " lat aft thruster off";
+                } 
             }
         }
+        else {
+            //all else use tail thruster plus elevator and rudder
+            mc.vert_fore = 0.0;
+            mc.vert_aft = 0.0;
+            mc.lat_fore = 0.0;
+            mc.lat_aft = 0.0;
+            std::cout << " tail thruster only";
+        }
         std::cout << " " << std::endl;
-     }
 
-    //If aborted (cmd.depth == -1.0) then use tunnels to get to surface
-    // TODO: look for changes in pitch that signify a tunnel thruster failure, then use the tail primarily
-    if (cmd.depth < 0 && tail_only_abort){
-        mc.tail_elevator = 0.0;
-        mc.tail_thruster = 0.0;
-        mc.tail_rudder = 0.0;
     }
 
     // safety hard codes
@@ -387,21 +382,25 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     int aft = 0;
     double rudder;
 
-    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
-    aft = (sc.values[RC_RUDDER] - RC_OFFSET) * RC_TUNNEL_MULTI;
+    //Strafe - this is side to side on left stick - always available
+    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+    aft = fore;
         
-    // Check the steering mode switch
-    if(sc.values[RC_GEAR] > 1200)
+    // Check the steering mode switch - top switch on right side
+    if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
     {
-        fore += (sc.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
-        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * RC_TUNNEL_MULTI;
+        //tunnel turning when switch is back
+        fore = (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+        aft = -fore;
         rudder = 0;
     }
     else 
     {
+        //or rudder turning when switch is forward
         rudder = -(sc.values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
     }
 
+    // elevator is always available on right stick forward and back
     mc.tail_elevator = -(sc.values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
     mc.tail_rudder = rudder; 
     mc.lat_aft = aft;
@@ -417,12 +416,19 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     }
     else
     {
-        mc.tail_thruster = (rcval - RC_DEADZONE) * RCMULT;
-        if (mc.tail_thruster > RC_MAX_PROP_RPM)
-            mc.tail_thruster = RC_MAX_PROP_RPM;
-        else if (mc.tail_thruster < -RC_MAX_PROP_RPM)
-            mc.tail_thruster = -RC_MAX_PROP_RPM;
-    }        
+        mc.tail_thruster = (rcval - RC_DEADZONE)* gains_vel.sat/RC_HALF_RANGE;
+        if (fabs(mc.tail_thruster) > gains_vel.sat)
+            mc.tail_thruster = gains_vel.sat*mc.tail_thruster/fabs(mc.tail_thruster);
+    }
+
+    //brown out limiting
+    if (abs(rcval) > RC_DEADZONE)
+    {
+        // if we have a tail rpm then don't run lat tunnels at same time, but allow elevator and rudder commands
+        // if no tail rpm then look for tunnel rpm, can no longer strafe and diff steer at same time. Steer has priority
+        mc.lat_fore = 0.0;
+        mc.lat_aft = 0.0;
+    }
 
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }

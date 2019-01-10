@@ -134,6 +134,8 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         // so it could be moving towards the target without actually
         // facing it
         // To stop the PID doing anything stupid we'll check for a NO_VALUE heading condition here
+        double diff_heading = nav.heading - cmd.heading;
+
         if(cmd.heading != cmd.heading)
  	       heading_rpm = 0;
        	else
@@ -148,7 +150,6 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
 		    while (cmd.heading > M_PI)
 		        cmd.heading -= 2 * M_PI;
 
-		    double diff_heading = nav.heading - cmd.heading;
 		    while( diff_heading < -M_PI )
 		        diff_heading += 2*M_PI;
 		    while( diff_heading > M_PI )
@@ -190,6 +191,17 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         mc.port = combined_port;
         mc.starboard = combined_strb;
         mc.vertical = vert_rpm;
+
+        if (fabs(cmd.depth - nav.depth) > 2.0)
+        {
+            mc.port = 0.0;
+            mc.starboard = 0.0;
+        }
+        else if (diff_heading > M_PI/3)
+        {
+            mc.port = heading_port;
+            mc.starboard = heading_strb;
+        }
     }
 
     this->lc().publish(this->get_vehicle_name() + ".THRUSTER", &mc);
