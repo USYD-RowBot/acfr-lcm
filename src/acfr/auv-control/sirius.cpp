@@ -124,7 +124,7 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
     const double dt = this->dt();
     if (cmd.run_mode == acfrlcm::auv_control_t::RUN)
     {
-        /************************************************************
+            /************************************************************
         * Heading calculation
         * Calculate the diff between desired heading and actual heading.
         * Ensure this diff is between +/-PI
@@ -190,10 +190,8 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         mc.port = combined_port;
         mc.starboard = combined_strb;
         mc.vertical = vert_rpm;
-
     }
 
-    
     this->lc().publish(this->get_vehicle_name() + ".THRUSTER", &mc);
 }
 
@@ -222,8 +220,8 @@ void SiriusController::manual_control(acfrlcm::auv_spektrum_control_command_t sc
         thrust = (double)(rcval - RC_DEADZONE) * RC_THROTTLE_MULTI;
 
 	// Add the values together
-	port += thrust;
-	strb += thrust;
+    port += thrust;
+    strb += thrust;
 	
 	mc.port= port;
 	mc.starboard = strb;

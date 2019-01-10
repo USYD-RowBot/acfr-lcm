@@ -109,7 +109,15 @@ public:
         destReachedLatched = b;
     }
 
+    bool getHoldmode(void) const
+    {
+        return holdMode;
+    }
 
+    bool getAborted(void) const
+    {
+        return aborted;
+    }
     bool getNewDest(void) const
     {
         return newDest;
@@ -199,6 +207,7 @@ protected:
     	    {
     	        return true;
     	    }
+
 		}
         return false;
     }
@@ -243,14 +252,6 @@ protected:
 
     int diveMode;
     int diveStage;
-    
-    bool diffSteer;
-    
-    bool holdMode;
-    Pose3D holdPose;
-    
-    bool aborted;
-    Pose3D abortPose;
 
     int destID;
 
@@ -281,6 +282,14 @@ protected:
     double fwd_distance_min;
     int64_t waypointTime;
     int64_t replanTime;
+
+    bool diffSteer;
+
+    bool aborted;
+    Pose3D abortPose;
+    
+    bool holdMode;
+    Pose3D holdPose;
 
     string vehicle_name = "DEFAULT";
 

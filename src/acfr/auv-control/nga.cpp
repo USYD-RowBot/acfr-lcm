@@ -32,6 +32,8 @@
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
 
+#define RUDDER_DELTA 0.2094*2*0.1 // assuming full 24 degrees motion in 1 second at 10 Hz
+
 class NGAController: public ControllerBase
 {
 public:
@@ -123,6 +125,8 @@ int main(int argc, char **argv)
 NGAController::NGAController(std::string const &process_name, std::string const &vehicle_name)
     : ControllerBase(process_name, vehicle_name)
 {
+    prev_rudder_angle = 0.0;
+    prev_elev_angle = 0.0;
 }
 
 void NGAController::init()
@@ -140,8 +144,8 @@ void NGAController::init()
     this->gains_tunnel_heading = this->get_pid("tunnel_heading");
 
     std::string vehicle_name = this->get_vehicle_name();
-    this->lc().subscribe(vehicle_name + ".PSU_.*" , &NGAController::psu_callback, this);
-    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER.*", &NGAController::tunnel_power_callback, this);
+    this->lc().subscribe(vehicle_name + ".PSU_.*", &NGAController::psu_callback, this);
+    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
     this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
     
     for(int i=0; i<15; i++)
@@ -161,6 +165,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     memset(&mc, 0, sizeof(mc));
     mc.utime = timestamp_now();
 
+    bool surface_travel = false, thruster_flow_dependant = false, tail_only_abort = false, elevator_disabled = true;
     double prop_rpm = 0.0;
     double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
@@ -171,34 +176,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // X Velocity
         prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt);
 
-        /* For the moment, we will focus on using the tunnel thrusters to control depth and assume that pitch remains fairly stable
-        // Pitch to fins
-        if (cmd.depth_mode == PITCH_MODE)
-        {
-            pitch = cmd.pitch;
-        }
-        // Altitude to pitch
-        else if (state->command.depth_mode == ALTITUDE_MODE)
-        {
-            // Invert sign of pitch reference to reflect pitch
-            // orientation
-            pitch = -pid(&this->gains_altitude, nav.altitude, cmd.altitude,
-                        dt);
-        }
-        // Depth to pitch mode
-        else
-        {
-            pitch = -pid(&this->gains_depth, nav.depth, cmd.depth,
-                        dt);
+        if((fabs(prop_rpm - prev_rpm) < 20))
+            prev_rpm = prop_rpm;
+        else{
+            prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*20;
+            prev_rpm = prop_rpm;
         }
 
-        if ((nav.vx > -0.05) || (prop_rpm > -100))
-            plane_angle = pid(&this->gains_pitch, nav.pitch, pitch,
-                            dt);
-        else
-            plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch,
-                            dt);
-        */
+        //std::cout << "Velocity: rpm= " << prop_rpm << ", curr= "<< nav.vx << ", des= " << cmd.vx << std::endl;
         /************************************************************
         * Depth calculation
         * Diving with NGA is a little special. we have tunnel thrusters
@@ -208,17 +193,45 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         double target_descent = pid(&this->gains_tunnel_depth, 
                 nav.depth, cmd.depth, dt);
+
+        //std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+                    
+        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
+
+        if ((nav.vx > -0.05) || (prop_rpm > -100))
+            plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt);
+        else
+            plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch, dt);
+
+        //std::cout << "pitch: " << pitch/ M_PI * 180 << " nav pitch: " << nav.pitch/ M_PI * 180 << " plane_angle: " << plane_angle/ M_PI * 180 << std::endl;
+
+        //plane_angle = target_descent; // seeing if the elevator works as expected
+        if (fabs(plane_angle) > 0.2094)
+            plane_angle = fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*0.2094;
+
+        if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
+            prev_elev_angle = plane_angle;
+        else{
+            plane_angle = prev_elev_angle + fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*RUDDER_DELTA;
+            prev_elev_angle = plane_angle;
+        }
+
         double differential_vert = pid(&this->gains_tunnel_pitch,
                 nav.pitch, target_pitch, dt);
+
         double mutual_vert = pid(&this->gains_tunnel_descent,
-              nav.depth, cmd.depth, dt); // nav.vz, target_descent, dt);
+                nav.vz, target_descent, dt);
 
-	std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
-
+        // testing variable pitch rpm based of mutual value saturation
+        double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
+        double differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
 
         // Set motor controller values
-        mc.vert_fore = mutual_vert - differential_vert;
-        mc.vert_aft = mutual_vert + differential_vert;
+        mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+        mc.vert_aft = (mutual_vert + differential_vert_corrected);
+
+    	//std::cout << "Vertical control mutual: " << mutual_vert << std::endl;
+        //std::cout << " diff: " << differential_vert << " c_diff: " << differential_vert_corrected << std::endl;
 
         /************************************************************
         * Heading calculation
@@ -229,28 +242,41 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // to properly do this current should be accounted for
         // so it could be moving towards the target without actually
         // facing it
-        while (nav.heading < -M_PI)
-            nav.heading += 2 * M_PI;
-        while (nav.heading > M_PI)
-            nav.heading -= 2 * M_PI;
 
-        while (cmd.heading < -M_PI)
-            cmd.heading += 2 * M_PI;
-        while (cmd.heading > M_PI)
-            cmd.heading -= 2 * M_PI;
+        nav.heading = fmod((nav.heading + M_PI),(2*M_PI));
+        if (nav.heading < 0.0)
+            nav.heading += 2*M_PI;
+        nav.heading -= M_PI;
 
-        double diff_heading = nav.heading - cmd.heading;
-        while( diff_heading < -M_PI )
+        cmd.heading = fmod((cmd.heading + M_PI),(2*M_PI));
+        if (cmd.heading < 0.0)
+            cmd.heading += 2*M_PI;
+        cmd.heading -= M_PI;
+
+        double diff_heading = fmod((nav.heading - cmd.heading + M_PI),(2*M_PI));
+        if (diff_heading < 0.0)
             diff_heading += 2*M_PI;
-        while( diff_heading > M_PI )
-            diff_heading -= 2*M_PI;
+        diff_heading -= M_PI;
 
         // Account for side slip by making the velocity bearing weighted
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
+        //std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
+
+        // checks for impossible rudder motions
+        if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
+            prev_rudder_angle = rudder_angle;
+        else{
+            rudder_angle = prev_rudder_angle + fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle)*RUDDER_DELTA;
+            prev_rudder_angle = rudder_angle;
+        }
+
+        //std::cout <<"rudder_angle: " << rudder_angle/ M_PI * 180 << " prev rudder_angle: " << prev_rudder_angle/ M_PI * 180 << std::endl;
+
         double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt);
 
+    	//std::cout << "Diff lat: " << differential_lat << std::endl;
         mc.lat_fore = differential_lat;
         mc.lat_aft = -differential_lat;
 
@@ -269,13 +295,76 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             plane_angle      = -plane_angle;
         }
 
-        //printf("hnav:%f, hcmd:%f, rangle:%f r:%.1f p:%.1f \n",
-        // state->nav.heading, state->command.heading, rudder_angle, plane_angle);
-
         // Set motor controller values
         mc.tail_thruster = prop_rpm;
         mc.tail_rudder = rudder_angle;
-        mc.tail_elevator = plane_angle;
+        if (elevator_disabled)
+            mc.tail_elevator = 0.0;
+        else
+            mc.tail_elevator = plane_angle;
+
+        double n = prop_rpm/60;
+        double prop_diameter = 0.28;
+        double J0 = 0.0;
+        double threshold = M_PI/18;
+        double bias = 1.0;
+        
+        // limit the max rpm to 700 = 11.666667 (105/9) rps
+        if(fabs(n) > (105.0/9))
+            n = n / fabs(n) * (105.0/9);
+        
+        // advance velocity as per Fossen eq 4.6
+        double omega = 0.1;
+        double Va = (1 - omega) * nav.vx;
+        
+        if(fabs(n) > 1e-3)
+            J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
+        //std::cout << "J0: " << J0;
+
+        // Surface travel doesn't need vert thrusters
+        if (((nav.depth < 0.2) && (cmd.depth < 0.01)) && surface_travel){
+            mc.vert_fore = 0.0;
+            mc.vert_aft = 0.0;
+            std::cout << " vert thrusters off";
+        }
+
+        // Thruster efficiency decreases depending of flow rate and direction .: turn off inefficient thrusters
+        if (((J0 > 0.3) && !(cmd.depth < 0))&& thruster_flow_dependant){
+            if (nav.heading < -threshold && diff_heading > threshold){
+                mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
+                mc.lat_aft = 0.0;
+                std::cout << " lat aft thruster off";
+            } 
+            else if (nav.heading < -threshold && diff_heading < -threshold){
+                mc.lat_fore = 0.0;
+                mc.lat_aft = bias*mc.lat_aft;
+                std::cout << " lat fore thruster off";
+            } 
+            else if (nav.heading > threshold && diff_heading > threshold){
+                mc.lat_fore = 0.0;
+                mc.lat_aft = bias*mc.lat_aft;
+                std::cout << " lat fore thruster off";
+            } 
+            else if (nav.heading > threshold && diff_heading < -threshold){
+                mc.lat_fore = bias*mc.lat_fore;
+                mc.lat_aft = 0.0;
+                std::cout << " lat aft thruster off";
+            } 
+            if (fabs(target_descent) < 0.05){
+                mc.vert_fore = 0.0;
+                mc.vert_aft = 0.0;
+                std::cout << " vert thrusters off";
+            }
+        }
+        std::cout << " " << std::endl;
+     }
+
+    //If aborted (cmd.depth == -1.0) then use tunnels to get to surface
+    // TODO: look for changes in pitch that signify a tunnel thruster failure, then use the tail primarily
+    if (cmd.depth < 0 && tail_only_abort){
+        mc.tail_elevator = 0.0;
+        mc.tail_thruster = 0.0;
+        mc.tail_rudder = 0.0;
     }
 
     // safety hard codes
@@ -286,7 +375,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
 void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 {
-	std::cout << "Total Power = " << this->total_power() << std::endl; 
+    std::cout << "Total Power = " << this->total_power() << std::endl; 
     this->reset_integrals();
     acfrlcm::auv_nga_motor_command_t mc;
     memset(&mc, 0, sizeof(mc));

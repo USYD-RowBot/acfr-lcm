@@ -18,6 +18,8 @@
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 
 using namespace std;
@@ -657,6 +659,14 @@ void calculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const
             gpsd3->tag = strdup("");
             lcm->publish(vehicle_name+".GPSD_CLIENT", gpsd3);
             delete gpsd3;
+
+                              // publish battery data
+              senlcm::os_power_system_t battery_pack;
+              battery_pack.utime = timestamp_now();
+              battery_pack.avg_charge_p = 100;
+              // need to have number of controllers set or you get a seg fault when publishing sometimes.
+              battery_pack.num_controllers = 0;
+              lcm->publish("NGA.BATTERY", &battery_pack);
         }
     }
 

@@ -21,9 +21,7 @@ typedef enum
 	globalPlannerFsmIdle,
 	globalPlannerFsmRun,
 	globalPlannerFsmAbort,
-	globalPlannerFsmPause,
-	globalPlannerFsmDone,
-	globalPlannerFsmFault
+	globalPlannerFsmPause
 } GlobalPlannerStateT;
 
 typedef enum
@@ -50,6 +48,7 @@ public:
 
 	bool skipWaypoint;
 	bool areWeThereYet;
+	bool holdOff;
 	double distanceToGoal;
 	void set_filename(string filename);
 	bool loadNewMissionFile(string filename);
