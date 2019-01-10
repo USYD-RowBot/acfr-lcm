@@ -19,9 +19,8 @@
             <position x="0" y="0" z="-0.1"/>
             <heading deg="315" />
             <timeout t="3000" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
-            <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
@@ -29,9 +28,8 @@
             <position x="24" y="-24" z="-0.1"/>
             <heading deg="315" />
             <timeout t="3000" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
-            <command device="camera" onoff="start"/>
         </goto>
     </primitive>
 </mission>
