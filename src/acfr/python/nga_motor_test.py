@@ -14,7 +14,6 @@ lc = lcm.LCM();
 
 msg = auv_nga_motor_command_t()
 
-<<<<<<< HEAD
 msg.vert_fore = 850
 msg.vert_aft = 850
 msg.lat_fore = 0
@@ -22,15 +21,6 @@ msg.lat_aft = 0
 msg.tail_thruster = 700
 msg.tail_rudder = 2
 msg.tail_elevator = 6
-=======
-msg.vert_fore = -50
-msg.vert_aft = 0
-msg.lat_fore = 0
-msg.lat_aft = 0
-msg.tail_thruster = 1000
-msg.tail_rudder = 0
-msg.tail_elevator = 0.0
->>>>>>> ChristianR
 
 
 for i in xrange(80):
