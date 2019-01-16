@@ -145,7 +145,7 @@ void NGAController::init()
 
     std::string vehicle_name = this->get_vehicle_name();
     this->lc().subscribe(vehicle_name + ".PSU_.*", &NGAController::psu_callback, this);
-    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER", &NGAController::tunnel_power_callback, this);
+    this->lc().subscribe(vehicle_name + ".TUNNEL_THRUSTER_POWER.*", &NGAController::tunnel_power_callback, this);
     this->lc().subscribe(vehicle_name + ".BLUEFIN_STATUS", &NGAController::tail_power_callback, this);
     
     for(int i=0; i<15; i++)
@@ -194,7 +194,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double target_descent = pid(&this->gains_tunnel_depth, 
                 nav.depth, cmd.depth, dt);
 
-        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+        // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
         pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
 
@@ -262,7 +262,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // 	on the desired heading
         rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt);
 
-        std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
+        // std::cout << "nav heading: " << nav.heading/ M_PI * 180 << " cmd heading: " << cmd.heading/ M_PI * 180 << " diff heading: " << diff_heading/ M_PI * 180 << " rudder_angle: " << rudder_angle/ M_PI * 180 << std::endl;
 
         // checks for impossible rudder motions
         if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
@@ -314,16 +314,16 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.tail_thruster = 0.0;
             mc.tail_elevator = 0.0;
             mc.tail_rudder = 0.0;
-            std::cout << " vert thrusters only";
+            // std::cout << " vert thrusters only";
         }
         //turn on spot if zero advance speed and large turn angle
         else if (fabs(diff_heading) > M_PI/3){
-            mc.tail_thruster = 0.0;
-            mc.tail_elevator = 0.0;
-            mc.tail_rudder = 0.0;
+            // mc.tail_thruster = 0.0;
+            // mc.tail_elevator = 0.0;
+            // mc.tail_rudder = 0.0;
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
-            std::cout << " lat thrusters only";
+            // std::cout << " lat thrusters only";
 
             // adding lat tunnel efficiency code here for tests
             if (thruster_flow_dependant)
@@ -331,22 +331,22 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 if (nav.heading < -threshold && diff_heading > threshold){
                     mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
                     mc.lat_aft = 0.0;
-                    std::cout << " lat aft thruster off";
+                    // std::cout << " lat aft thruster off";
                 } 
                 else if (nav.heading < -threshold && diff_heading < -threshold){
                     mc.lat_fore = 0.0;
                     mc.lat_aft = bias*mc.lat_aft;
-                    std::cout << " lat fore thruster off";
+                    // std::cout << " lat fore thruster off";
                 } 
                 else if (nav.heading > threshold && diff_heading > threshold){
                     mc.lat_fore = 0.0;
                     mc.lat_aft = bias*mc.lat_aft;
-                    std::cout << " lat fore thruster off";
+                    // std::cout << " lat fore thruster off";
                 } 
                 else if (nav.heading > threshold && diff_heading < -threshold){
                     mc.lat_fore = bias*mc.lat_fore;
                     mc.lat_aft = 0.0;
-                    std::cout << " lat aft thruster off";
+                    // std::cout << " lat aft thruster off";
                 } 
             }
         }
@@ -356,14 +356,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.vert_aft = 0.0;
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
-            std::cout << " tail thruster only";
+            // std::cout << " tail thruster only";
         }
-        std::cout << " " << std::endl;
+        // std::cout << " " << std::endl;
 
     }
 
     // safety hard codes
-    mc.tail_elevator = 0.0;
+    //mc.tail_elevator = 0.0;
     
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
 }

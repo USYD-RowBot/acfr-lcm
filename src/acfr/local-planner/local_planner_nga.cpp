@@ -71,7 +71,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there. Use controller for aborted ascent.
-	if ((((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && this->destID > 0) && !aborted))
+	if ((((destPoseRel.getX() < 0 ||   destPoseRel.getX() > 4*turningRadius) && this->destID > 0) && !aborted) && !holdMode)
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);

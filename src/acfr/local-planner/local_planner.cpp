@@ -385,6 +385,7 @@ int LocalPlanner::onGlobalState(
 		holdPose = destPose;
 		//make the hold point just ahead of us
 		destPose.setPosition(currPose.getX()+currVel[0], currPose.getY()+currVel[1], currPose.getZ()+currVel[2]);
+		destPose.setRollPitchYawRad(0, 0, currPose.getYawRad());
 		//set flags
 		holdMode = true;
 		newDest = false;
