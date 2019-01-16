@@ -307,19 +307,19 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
 
     if (loopCount++ > 100)
     {
-        cout << "x: " << x[XNDX] << " y: " << x[YNDX] << " z: " << x[ZNDX] << " roll: " << x[ROLLNDX] << " pitch: " << x[PITCHNDX] << " hdg: " << x[HDGNDX] << endl;
-        cout << "u: " << u << " v: " << v << " w: " << w << " p: " << p << " q: " << q << " r: " << r << endl;
-        cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder*180/M_PI << " tailElev: " << in.tail_elevator*180/M_PI << endl;
-        cout << " Fd_vert: " << Fd_vert << " F_g: " << F_g << " F_buoy: " << F_buoy << endl;
-        cout << " tail_x: " << tail_x << " tail_y: " << tail_y << " tail_z: " << tail_z << endl;
-        cout << " vert_fore_force: " << vert_fore_force << " vert_aft_force: " << vert_aft_force << endl; 
-        cout << " mutual_vert: " << mutual_vert << " differential_vert: " << differential_vert << endl;
-        cout << " lat_fore_force: " << lat_fore_force << " lat_aft_force: " << lat_aft_force << endl; 
-        cout << " mutual_lat: " << mutual_lat << " differential_lat: " << differential_lat << endl;
-        cout << "T_hdg: " << T_hdg << " Td_hdg: " << Td_hdg << endl;
-        cout << "T_pitch: " << T_pitch << " Td_pitch: " << Td_pitch << " T_buoy: " << T_buoy << " T_g: " << T_g <<  endl;
-        cout << "dx:" << dxdt[XNDX] << " dy:" << dxdt[YNDX] << " dz: " << dxdt[ZNDX] << " droll: " << dxdt[ROLLNDX] << " dpitch: " << dxdt[PITCHNDX] << " dhdg: " << dxdt[HDGNDX] << endl;
-        cout << "dxdot: " << dxdt[XDOTNDX] << " dydot: " << dxdt[YDOTNDX] << " dzdot: " << dxdt[ZDOTNDX] << " drolldot: " << dxdt[ROLLDOTNDX] << " dpitchdot: " << dxdt[PITCHDOTNDX] <<  " dhdgdot:" << dxdt[HDGDOTNDX] << endl;
+        // cout << "x: " << x[XNDX] << " y: " << x[YNDX] << " z: " << x[ZNDX] << " roll: " << x[ROLLNDX] << " pitch: " << x[PITCHNDX] << " hdg: " << x[HDGNDX] << endl;
+        // cout << "u: " << u << " v: " << v << " w: " << w << " p: " << p << " q: " << q << " r: " << r << endl;
+        // cout << "Fsurge: " << F_surge << " F_sway:" << F_sway << " F_vert:" << F_vert << " prop_force: " << prop_force << " tailRudder: " << in.tail_rudder*180/M_PI << " tailElev: " << in.tail_elevator*180/M_PI << endl;
+        // cout << " Fd_vert: " << Fd_vert << " F_g: " << F_g << " F_buoy: " << F_buoy << endl;
+        // cout << " tail_x: " << tail_x << " tail_y: " << tail_y << " tail_z: " << tail_z << endl;
+        // cout << " vert_fore_force: " << vert_fore_force << " vert_aft_force: " << vert_aft_force << endl; 
+        // cout << " mutual_vert: " << mutual_vert << " differential_vert: " << differential_vert << endl;
+        // cout << " lat_fore_force: " << lat_fore_force << " lat_aft_force: " << lat_aft_force << endl; 
+        // cout << " mutual_lat: " << mutual_lat << " differential_lat: " << differential_lat << endl;
+        // cout << "T_hdg: " << T_hdg << " Td_hdg: " << Td_hdg << endl;
+        // cout << "T_pitch: " << T_pitch << " Td_pitch: " << Td_pitch << " T_buoy: " << T_buoy << " T_g: " << T_g <<  endl;
+        // cout << "dx:" << dxdt[XNDX] << " dy:" << dxdt[YNDX] << " dz: " << dxdt[ZNDX] << " droll: " << dxdt[ROLLNDX] << " dpitch: " << dxdt[PITCHNDX] << " dhdg: " << dxdt[HDGNDX] << endl;
+        // cout << "dxdot: " << dxdt[XDOTNDX] << " dydot: " << dxdt[YDOTNDX] << " dzdot: " << dxdt[ZDOTNDX] << " drolldot: " << dxdt[ROLLDOTNDX] << " dpitchdot: " << dxdt[PITCHDOTNDX] <<  " dhdgdot:" << dxdt[HDGDOTNDX] << endl;
         loopCount = 0;
     }
 }

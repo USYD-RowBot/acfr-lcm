@@ -13,40 +13,40 @@
     </global>
     <primitive>
         <goto>
-            <position x="0" y="10" z="20.0"/>
+            <position x="0" y="10" z="1.0"/>
             <heading deg="325" />
             <timeout t="300" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="50" y="-30" z="20.0"/>
+            <position x="50" y="-30" z="1.0"/>
             <heading deg="235" />
             <timeout t="300" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="20" y="-80" z="20.0"/>
+            <position x="20" y="-80" z="1.0"/>
             <heading deg="90" />
             <timeout t="300" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="0" y="10" z="20.0"/>
+            <position x="0" y="10" z="1.0"/>
             <heading deg="135" />
             <timeout t="300" />
-            <velocity x="0.5" />
+            <velocity x="1.0" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
