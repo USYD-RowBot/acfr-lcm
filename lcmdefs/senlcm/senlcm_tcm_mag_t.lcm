@@ -11,4 +11,7 @@ struct tcm_mag_t
     double mag_x;
     double mag_y;
     double mag_z;
+    double acc_x;
+    double acc_y;
+    double acc_z;
 }
