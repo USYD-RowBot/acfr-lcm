@@ -26,34 +26,35 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     char msg[32];
     char resp[75];
     int ret;
-    
-    for(int i=0; i<state->num_oas; i++)
-    {
+    char pub_channel[80];
         char value[16];
         senlcm_micron_sounder_t micron;
         for(int i=0; i < state->num_oas ; i++)
         {
             memset(msg, 0, sizeof(msg));
-            sprintf(msg, "z\r");
+            sprintf(msg, "Z");
             acfr_sensor_write(state->sensor[i], msg, strlen(msg));
-                usleep(100);    
+                usleep(1e6/(state->num_oas * 3));    
             // Wait for a response with a timeout
             memset(resp, 0, sizeof(resp));
-            ret = acfr_sensor_read_timeoutms(state->sensor[i], resp, sizeof(resp), 50);
+            ret = acfr_sensor_read_timeoutms(state->sensor[i], resp, sizeof(resp), 1e3/(state->num_oas*3));
             if(ret > 0){
                 // parse out the range value leaving the m off then end
                 micron.utime = timestamp_now();
                 memset(value, 0, sizeof(value));
+		//printf("%s", resp);
                 strncpy(value, resp, strlen(resp) - 1);
                 micron.altitude = atof(value);
+		strcpy(pub_channel, state->channel_name);
                 memset(msg, 0, sizeof(msg));
                 sprintf(msg, "_%d", state->oas_ports[i]);
-                strcat(state->channel_name, msg);
-                senlcm_micron_sounder_t_publish(state->lcm, state->channel_name, &micron);            
+                strcat(pub_channel, msg);
+		//printf("%s = %f\n", pub_channel, value);
+                senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);            
             }
-            usleep(100);
+            usleep(1e6/(state->num_oas*3));
         }
-    }    
+    
 }
 
 void
@@ -148,11 +149,9 @@ main (int argc, char *argv[])
     {
         lcm_handle_timeout(state.lcm, 1000);
     }
-
-    for(int i=0; i < state.num_oas ; i++)
-    {
-    acfr_sensor_destroy(state.sensor[i]);   
-    }
+    
+    acfr_sensor_destroy(state.sensor[0]);   
+    
     return 1;
 }
 
