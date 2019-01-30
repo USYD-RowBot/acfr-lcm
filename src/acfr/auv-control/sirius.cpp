@@ -124,7 +124,7 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
     const double dt = this->dt();
     if (cmd.run_mode == acfrlcm::auv_control_t::RUN)
     {
-        /************************************************************
+            /************************************************************
         * Heading calculation
         * Calculate the diff between desired heading and actual heading.
         * Ensure this diff is between +/-PI
@@ -134,6 +134,8 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         // so it could be moving towards the target without actually
         // facing it
         // To stop the PID doing anything stupid we'll check for a NO_VALUE heading condition here
+        double diff_heading = nav.heading - cmd.heading;
+
         if(cmd.heading != cmd.heading)
  	       heading_rpm = 0;
        	else
@@ -148,7 +150,6 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
 		    while (cmd.heading > M_PI)
 		        cmd.heading -= 2 * M_PI;
 
-		    double diff_heading = nav.heading - cmd.heading;
 		    while( diff_heading < -M_PI )
 		        diff_heading += 2*M_PI;
 		    while( diff_heading > M_PI )
@@ -191,9 +192,18 @@ void SiriusController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::au
         mc.starboard = combined_strb;
         mc.vertical = vert_rpm;
 
+        if (fabs(cmd.depth - nav.depth) > 2.0)
+        {
+            mc.port = 0.0;
+            mc.starboard = 0.0;
+        }
+        else if (diff_heading > M_PI/3)
+        {
+            mc.port = heading_port;
+            mc.starboard = heading_strb;
+        }
     }
 
-    
     this->lc().publish(this->get_vehicle_name() + ".THRUSTER", &mc);
 }
 
@@ -222,8 +232,8 @@ void SiriusController::manual_control(acfrlcm::auv_spektrum_control_command_t sc
         thrust = (double)(rcval - RC_DEADZONE) * RC_THROTTLE_MULTI;
 
 	// Add the values together
-	port += thrust;
-	strb += thrust;
+    port += thrust;
+    strb += thrust;
 	
 	mc.port= port;
 	mc.starboard = strb;

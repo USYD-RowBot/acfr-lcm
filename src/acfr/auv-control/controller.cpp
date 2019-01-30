@@ -214,6 +214,7 @@ void ControllerBase::control_callback(const lcm::ReceiveBuffer*rbuf, const std::
 
     this->planner_command_time = timestamp_now();
     this->planner_command = *control;
+    nan_to_nav();
 }
 
 void ControllerBase::spektrum_callback(const lcm::ReceiveBuffer *rbuf, const std::string& channel,

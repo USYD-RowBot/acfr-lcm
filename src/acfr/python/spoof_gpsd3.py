@@ -6,7 +6,7 @@ import sys
 import math
 import time
 
-LCMROOT='/home/stefanw/git/acfr_lcm'
+LCMROOT='/home/auv/git/acfr-lcm'
 
 sys.path.append('{}/build/lib/python2.7/dist-packages/perls/lcmtypes'.format(LCMROOT))
 from senlcm import gpsd3_t, gpsd3_fix_t, gpsd3_dop_t, gpsd3_devconfig_t
@@ -27,6 +27,8 @@ count = 0
 
 while True:
     msg.utime = int(time.time() * 1000000)
+    msg.status = 1
+
     
     lat = rad * math.cos(math.radians(angle))     
     lon = rad * math.sin(math.radians(angle))
@@ -34,6 +36,7 @@ while True:
     fix = gpsd3_fix_t()
     fix.latitude = math.radians(olat + lat * inc )
     fix.longitude = math.radians(olon + lon * inc)
+    fix.mode = 2
 
     dop = gpsd3_dop_t()
     devconfig = gpsd3_devconfig_t()
@@ -42,7 +45,7 @@ while True:
     msg.dop = dop
     msg.dev = devconfig
     
-    lc.publish("GPSD", msg.encode())
+    lc.publish("NGA.GPSD_CLIENT", msg.encode())
     
     angle = angle + 0.5
     

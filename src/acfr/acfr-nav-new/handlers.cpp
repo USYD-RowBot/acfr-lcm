@@ -184,6 +184,12 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	}
 
 	state->bottomLock = btv_ok;
+        
+	if (btv_ok)
+	{
+            double last_altitude = state->altitude;
+            state->altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
+	}
 
 	if( true ) // btv_ok )
 	{
@@ -207,9 +213,6 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	    rdi_data.p_gimbal = 0;   // FIXME
 	    rdi_data.sv = rdi->pd4.speed_of_sound;
 	    rdi_data.depth_rate = 0;   // FIXME
-        
-        double last_altitude = state->altitude;
-        state->altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
 
         if(state->mode == NAV)
     		state->slam->handle_dvl_data(rdi_data);

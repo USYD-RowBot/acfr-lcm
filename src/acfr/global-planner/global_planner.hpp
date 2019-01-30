@@ -8,6 +8,8 @@
 #include "perls-lcmtypes++/acfrlcm/auv_camera_trigger_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_control_t.hpp"
 #include "perls-common/timestamp.h"
+#include <bot_param/param_client.h>
+
 
 #include "acfr-mission/mission.hpp"
 #include "acfr-mission/mission_command.hpp"
@@ -21,9 +23,7 @@ typedef enum
 	globalPlannerFsmIdle,
 	globalPlannerFsmRun,
 	globalPlannerFsmAbort,
-	globalPlannerFsmPause,
-	globalPlannerFsmDone,
-	globalPlannerFsmFault
+	globalPlannerFsmPause
 } GlobalPlannerStateT;
 
 typedef enum
@@ -50,11 +50,13 @@ public:
 
 	bool skipWaypoint;
 	bool areWeThereYet;
+	bool holdOff;
 	double distanceToGoal;
 	void set_filename(string filename);
 	bool loadNewMissionFile(string filename);
 	bool loadNewMissionString(string mission_string);
-
+	int loadConfig();
+	double turningRadius;
 
 	Mission mis;
 	globalPlannerMessageT globalPlannerMessage;

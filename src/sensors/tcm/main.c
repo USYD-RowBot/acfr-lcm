@@ -77,6 +77,21 @@ int parse_tcm(char *buf, senlcm_tcm_t *tcm, senlcm_tcm_mag_t *tcm_mag)
                 current_pos += 4;
                 index++;
                 break;
+            case kPAligned:
+                tcm_mag->acc_x = (*(float *)current_pos);
+                current_pos += 4;
+                index++;
+                break;
+            case kRAligned:
+                tcm_mag->acc_y = (*(float *)current_pos);
+                current_pos += 4;
+                index++;
+                break;
+            case kIZAligned:
+                tcm_mag->acc_z = (*(float *)current_pos);
+                current_pos += 4;
+                index++;
+                break;
 
             }
             if(index == count)
@@ -113,7 +128,7 @@ int program_tcm(acfr_sensor_t *s)
     // set the return types
     memset(data, 0, sizeof(data));
     data[0] = kSetDataComponents;
-    data[1] = 7;
+    data[1] = 10;
     data[2] = kHeading;
     data[3] = kPAngle;
     data[4] = kRAngle;
@@ -121,7 +136,10 @@ int program_tcm(acfr_sensor_t *s)
     data[6] = kXAligned;
     data[7] = kYAligned;
     data[8] = kZAligned;
-    len = tcm_form_message(data, 9, out);
+    data[9] = kPAligned;
+    data[10] = kRAligned;
+    data[11] = kIZAligned;
+    len = tcm_form_message(data, 12, out);
     acfr_sensor_write(s, out, len);
 
 
@@ -326,7 +344,7 @@ main (int argc, char *argv[])
 
                     unsigned short data_len = (buf[0] << 8) + buf[1];
                     //printf ("Looking for %d bytes\n", data_len);
-                    if(data_len > 5 && data_len < 56)
+                    if(data_len > 5 && data_len < 60)
                     {
                         // read the rest of the data
                         while(len < data_len)

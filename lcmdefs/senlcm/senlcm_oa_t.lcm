@@ -1,0 +1,8 @@
+package senlcm;
+
+struct oa_t
+{
+    int64_t utime;
+    double forward_distance;
+    double altitude;
+}

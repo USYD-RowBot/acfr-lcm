@@ -139,6 +139,19 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 return 1;
             }
         }
+
+        if(d[3] == 'Q' && d[4] == '0')
+        {
+            char *tok[16];
+            int ret = chop_string(d, " ", tok);
+            if(ret == 4)
+            {
+                state->bf_status.current_rpm = atoi(tok[2]);
+                state->bf_status.target_rpm = atoi(tok[3]);
+                
+                return 1;
+            }            
+        }
     }
     // Rudder reponses
     if(addr == 2)
@@ -235,7 +248,7 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->enabled = atoi(tok[1]);    
                 state->bf_status.voltage = atof(tok[2]);
                 state->bf_status.current = atof(tok[3]);
-                state->bf_status.psu_temp = atof(tok[4]);
+                state->bf_status.psu_temp = atof(tok[4])/0.0625;
                 
                 acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "NGA.BLUEFIN_STATUS", &state->bf_status);
                 return 1;
@@ -272,7 +285,7 @@ int bluefin_write_respond(state_t *state, char *d, int timeout)
         if(bytes > 0)
             return parse_bluefin_message(state, buf, bytes);
         else
-            printf("RX timeout\n");
+            printf("RX timeout %s\n", d);
     }
     else
         return -2;
@@ -366,17 +379,30 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 {
     state_t *state = (state_t *)u;
     
-       // bluefin_write_respond(state, "#04S\n", 1);
+      // bluefin_write_respond(state, "#04S\n", 1);
     // On the heart beat we will get the ouput voltage and current if the thruster is enabled
     //if(state->enabled)
-    {
+    
+        // fill status message
+	//usleep(1e5);
+        bluefin_write_respond(state, "#01Q0\n", 1);
+       // usleep(1e5);
+	bluefin_write_respond(state, "#01Q1\n", 10);
+       // usleep(1e5);
         bluefin_write_respond(state, "#04S\n", 1);
+	//usleep(1e5);
         
         // If we are enabled then we send the tail commands every second for the timeout period
         // after receiving a command
         if((hb->utime - state->command_utime) < COMMAND_TIMEOUT)
            send_bluefin_tail_commands(state);
-    }            
+      	else if(state->thruster > 0)
+       	{
+		state->thruster = 0;
+		state->rudder = 0;
+		state->elevator = 0;
+		send_bluefin_tail_commands(state);
+	}	
 }
 
 void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)

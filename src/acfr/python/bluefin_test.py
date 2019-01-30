@@ -22,5 +22,5 @@ if (len(sys.argv) == 4):
     msg.lat_fore = 0
     msg.lat_aft = 0
 
-    lc.publish('NGA_MOTOR', msg.encode())
+    lc.publish('NGA.NEXTGEN_MOTOR', msg.encode())
 

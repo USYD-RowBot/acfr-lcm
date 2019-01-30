@@ -27,6 +27,9 @@ public:
     std::string const &get_vehicle_name() const;
 
     double dt() const;
+    double prev_rudder_angle;
+    double prev_elev_angle;
+    double prev_rpm;
 
     void quit();
 
@@ -44,6 +47,20 @@ protected:
     // if necessary. It is called with every spektrum control
     // message and sets an internal flag
     virtual ControlSource spektrum_control_mode(acfrlcm::auv_spektrum_control_command_t sc);
+
+    void nan_to_nav()
+    {
+        if (isnan(this->planner_command.heading))
+            this->planner_command.heading = this->nav.heading;
+        if (isnan(this->planner_command.depth))
+            this->planner_command.depth = this->nav.depth;
+        if (isnan(this->planner_command.altitude))
+            this->planner_command.altitude = this->nav.altitude;
+        if (isnan(this->planner_command.pitch))
+            this->planner_command.pitch = this->nav.pitch;
+        if (isnan(this->planner_command.vx))
+            this->planner_command.vx = this->nav.vx;
+    }
 
     // used to load parameters from the config
     // in practice the only needed parameters are PID

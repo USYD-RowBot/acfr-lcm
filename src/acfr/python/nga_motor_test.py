@@ -14,16 +14,16 @@ lc = lcm.LCM();
 
 msg = auv_nga_motor_command_t()
 
-msg.vert_fore = 0
-msg.vert_aft = 1000
+msg.vert_fore = 850
+msg.vert_aft = 850
 msg.lat_fore = 0
 msg.lat_aft = 0
-msg.tail_thruster = 0
-msg.tail_rudder = 0
-msg.tail_elevator = 0.0
+msg.tail_thruster = 700
+msg.tail_rudder = 2
+msg.tail_elevator = 6
 
 
-for i in xrange(50):
+for i in xrange(80):
     msg.utime = int(time.time() * 1000000)
     time.sleep(0.5)
 
