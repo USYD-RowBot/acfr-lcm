@@ -317,7 +317,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // std::cout << " vert thrusters only";
         }
         //turn on spot if zero advance speed and large turn angle
-        else if (fabs(diff_heading) > M_PI/3){
+        else if (fabs(diff_heading) > M_PI/15){
             // mc.tail_thruster = 0.0;
             // mc.tail_elevator = 0.0;
             // mc.tail_rudder = 0.0;
