@@ -238,11 +238,10 @@ int LocalPlannerTunnel::processWaypoints()
 				wp.getZ() );
 		waypoints.erase(waypoints.begin());
 		resetWaypointTime(timestamp_now());
-
-		printWaypoints();
-
+		if (!(waypoints.size() == 0))
+			printWaypoints();
 		// No more waypoints to process
-		if (waypoints.size() == 0)
+		else
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
