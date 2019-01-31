@@ -58,7 +58,7 @@ int main()
         }
 
         printf("f=%f, d=%d, w=%d, e=%d\n", ct.freq, ct.strobeDelayUs, ct.pulseWidthUs, ct.enabled);
-        acfrlcm_auv_camera_trigger_t_publish(lcm, ".*CAMERA_TRIGGER", &ct);
+        acfrlcm_auv_camera_trigger_t_publish(lcm, "NGA.CAMERA_TRIGGER", &ct);
     }
 
     return 0;
