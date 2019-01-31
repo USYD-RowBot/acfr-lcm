@@ -298,7 +298,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // Set motor controller values
         mc.tail_thruster = prop_rpm;
         mc.tail_rudder = rudder_angle;
-        if (elevator_disabled)
+        if (elevator_disabled || fabs(cmd.depth) < 1e-3)
             mc.tail_elevator = 0.0;
         else
             mc.tail_elevator = plane_angle;
@@ -389,9 +389,10 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     // Check the steering mode switch - top switch on right side
     if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
     {
+
         //tunnel turning when switch is back
-        fore = (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
-        aft = -fore;
+        fore += (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+        aft -= fore;
         rudder = 0;
     }
     else 
