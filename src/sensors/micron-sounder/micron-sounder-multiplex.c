@@ -23,37 +23,40 @@ typedef struct
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
+    static int beat_count = 0;
+    static int sensor_count = 0;
+
     char msg[32];
     char resp[75];
-    int ret;
     char pub_channel[80];
-        char value[16];
-        senlcm_micron_sounder_t micron;
-        for(int i=0; i < state->num_oas ; i++)
-        {
+    char value[16];
+    senlcm_micron_sounder_t micron;
+    if ( beat_count++ % 5 == 0)
+    {
+        memset(msg, 0, sizeof(msg));
+        sprintf(msg, "Z");
+        acfr_sensor_write(state->sensor[sensor_count], msg, strlen(msg));
+        // Wait for a response with a timeout
+        memset(resp, 0, sizeof(resp));
+        int ret = acfr_sensor_read_timeoutms(state->sensor[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
+        if(ret > 0){
+            // parse out the range value leaving the m off then end
+            micron.utime = timestamp_now();
+            memset(value, 0, sizeof(value));
+            //printf("%s", resp);
+            strncpy(value, resp, strlen(resp) - 1);
+            micron.altitude = atof(value);
+            strcpy(pub_channel, state->channel_name);
             memset(msg, 0, sizeof(msg));
-            sprintf(msg, "Z");
-            acfr_sensor_write(state->sensor[i], msg, strlen(msg));
-                usleep(1e6/(state->num_oas * 3));    
-            // Wait for a response with a timeout
-            memset(resp, 0, sizeof(resp));
-            ret = acfr_sensor_read_timeoutms(state->sensor[i], resp, sizeof(resp), 1e3/(state->num_oas*3));
-            if(ret > 0){
-                // parse out the range value leaving the m off then end
-                micron.utime = timestamp_now();
-                memset(value, 0, sizeof(value));
-		//printf("%s", resp);
-                strncpy(value, resp, strlen(resp) - 1);
-                micron.altitude = atof(value);
-		strcpy(pub_channel, state->channel_name);
-                memset(msg, 0, sizeof(msg));
-                sprintf(msg, "_%d", state->oas_ports[i]);
-                strcat(pub_channel, msg);
-		//printf("%s = %f\n", pub_channel, value);
-                senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);            
-            }
-            usleep(1e6/(state->num_oas*3));
+            sprintf(msg, "_%d", state->oas_ports[sensor_count]);
+            strcat(pub_channel, msg);
+            //printf("%s = %f\n", pub_channel, value);
+            senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);            
         }
+        beat_count = 0;
+        if (sensor_count++ == state->num_oas)
+            sensor_count =0;
+    }
     
 }
 
@@ -143,7 +146,7 @@ main (int argc, char *argv[])
     acfr_sensor_canonical(state.sensor[i], '\r', '\n');
     }
 
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_5HZ", &heartbeat_handler, &state);
 
     while (!program_exit)
     {
