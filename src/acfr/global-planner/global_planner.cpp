@@ -90,7 +90,10 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		case acfrlcm::auv_global_planner_t::SKIP:
 			// Skip the current waypoint
 			cout << "Try to skip" << endl;
-			gp->skipWaypoint = true;
+			if (gp->getCurrentState() != globalPlannerFsmRun)
+				cout << "Can't skip, no mission loaded" << endl;
+			else
+				gp->skipWaypoint = true;
 			break;
 
 		// We have received a task command. Parse the xml mission string 

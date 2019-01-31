@@ -370,10 +370,12 @@ int LocalPlannerTunnel::onNav(const acfrlcm::auv_acfr_nav_t *nav)
  
 int LocalPlannerTunnel::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 {
+	if (!getDestReached())
+		oldPose = destPose; // we were asked to skip a waypoint so update the oldPose
+	
 	bool status = false;
 	// Reset destination pose
 	destPose.setIdentity();
-
 	// Set destination pose and velocity
 	destPose.setPosition(pc->waypoint[0], pc->waypoint[1], pc->waypoint[2]);
 	destPose.setRollPitchYawRad(pc->waypoint[3], pc->waypoint[4],
