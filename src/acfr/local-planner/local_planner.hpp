@@ -290,6 +290,7 @@ protected:
     
     bool holdMode;
     Pose3D holdPose;
+    Pose3D oldPose;
 
     string vehicle_name = "DEFAULT";
 

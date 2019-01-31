@@ -374,6 +374,7 @@ int LocalPlanner::onGlobalState(
 		//check to see if we are resuming or starting a new mission
 		if (!newDest){
 			newDest = true;
+			oldPose = destPose;
 			destPose = holdPose;
 			resetWaypointTime(timestamp_now());
 		}

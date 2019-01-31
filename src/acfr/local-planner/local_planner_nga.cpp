@@ -79,18 +79,14 @@ int LocalPlannerTunnel::calculateWaypoints()
 		dp.setWaypointDropDist(wpDropDist);
 		dp.setWaypointDropAngleFromDropDist();
 
-		// Don't use current pose but a pose looking a bit ahead. We adjust this
-		//	by employing the current velocity
-		double lookAheadTime = 0.2; // [s]
-		Pose3D lookAheadPose;
-		// Using fabs of vel to ensure that even if we are going backwards the
-		// lookaheadpose is in front of us
-		lookAheadPose.setX(fabs(currVel) * lookAheadTime);
-		Pose3D startPose = currPose.compose(lookAheadPose);
-
 		// Try to calculate a feasible Dubins path. If we fail we try
 		//  a second time with twice the circle radius
-		wps = dp.calcPath(startPose, destPose);
+		Pose3D startPoseRel = getRelativePose(oldPose);
+
+		if (startPoseRel.getX() < 10)
+			wps = dp.calcPath(oldPose, destPose); //path from start waypoint (if after hold then use last dubins waypoint) to end waypoint
+		else
+			wps = dp.calcPath(currPose, destPose); // path from current position to end waypoint
 
 		// TODO: should we be more intelligent here?
 		// maybe increase the radius and try again (we had this behavior before)
@@ -119,14 +115,9 @@ int LocalPlannerTunnel::calculateWaypoints()
 	// Managed to calculate a path to destination
 	// TODO: do we need mutex around this?
 	waypoints.clear();
-	// wps.clear();
-	// wps.push_back(destPose);
 	waypoints = wps;
-
 	// Save the start pose and start velocity
 	startPose = currPose;
-
-	//setDestReached( false );
 
 	printWaypoints();
 	publishWaypoints();
@@ -230,8 +221,6 @@ int LocalPlannerTunnel::processWaypoints()
 	// We have reached the next waypoint
 	if (pointWithinBound(wp))
 	{
-		cout << setprecision(2) << "CurrPose=" << currPose.getX() << ","
-			<< currPose.getY() << "," << currPose.getZ() << endl;
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -252,6 +241,7 @@ int LocalPlannerTunnel::processWaypoints()
 			else if ((pointWithinBound(destPose) && !holdMode))
 			{
 				setDestReached(true);
+				oldPose = destPose; // save destpose for use in dubins next time
 				cout << "We have reached our destination :)" << endl;
 				return getDestReached();
 			}
