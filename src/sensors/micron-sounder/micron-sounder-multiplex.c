@@ -54,7 +54,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);            
         }
         beat_count = 0;
-        if (sensor_count++ == state->num_oas)
+        if (sensor_count++ >= state->num_oas)
             sensor_count =0;
     }
     
@@ -123,6 +123,7 @@ main (int argc, char *argv[])
     if(state.sensor[0] == NULL)
         return 0;
 
+    printf("OAS serial port open at %s\n", state.sensor[0]->serial_dev);
     // Get the serial_port names
     char key[64];
     char msg[16];
@@ -137,13 +138,16 @@ main (int argc, char *argv[])
             state.sensor[i] = state.sensor[0];
             state.sensor[i]->serial_dev = msg;
             state.sensor[i]->port_open = 0;
-            acfr_sensor_open(state.sensor[i]);      
+            acfr_sensor_open(state.sensor[i]);
+            printf("OAS serial port open at %s\n", state.sensor[i]->serial_dev);
+            if(state.sensor[i] == NULL)
+                return 0;
         }
     }
 
     for(int i=0; i < state.num_oas ; i++)
     {
-    acfr_sensor_canonical(state.sensor[i], '\r', '\n');
+        acfr_sensor_canonical(state.sensor[i], '\r', '\n');
     }
 
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_5HZ", &heartbeat_handler, &state);
@@ -153,7 +157,10 @@ main (int argc, char *argv[])
         lcm_handle_timeout(state.lcm, 1000);
     }
     
-    acfr_sensor_destroy(state.sensor[0]);   
+    //for(int i=0; i < state.num_oas ; i++)
+    {
+        acfr_sensor_destroy(state.sensor[i]);
+    }
     
     return 1;
 }
