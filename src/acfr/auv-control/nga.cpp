@@ -393,6 +393,10 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
         //tunnel turning when switch is back
         fore += (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
         aft -= fore;
+        if (fore > gains_tunnel_heading.sat)
+            fore = gains_tunnel_heading.sat;
+        if (aft >gains_tunnel_heading.sat)
+            aft = gains_tunnel_heading.sat;
         rudder = 0;
     }
     else 
