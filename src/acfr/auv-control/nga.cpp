@@ -191,8 +191,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         *************************************************************/
         double target_pitch = 0.0;
 
-        double target_descent = pid(&this->gains_tunnel_depth, 
-                nav.depth, cmd.depth, dt);
+        ///double target_descent = pid(&this->gains_tunnel_depth, nav.depth, cmd.depth, dt);
 
         // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
@@ -205,14 +204,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         //std::cout << "pitch: " << pitch/ M_PI * 180 << " nav pitch: " << nav.pitch/ M_PI * 180 << " plane_angle: " << plane_angle/ M_PI * 180 << std::endl;
 
-        //plane_angle = target_descent; // seeing if the elevator works as expected
-        if (fabs(plane_angle) > 0.2094)
-            plane_angle = fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*0.2094;
-
         if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
             prev_elev_angle = plane_angle;
         else{
-            plane_angle = prev_elev_angle + fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle)*RUDDER_DELTA;
+            plane_angle = prev_elev_angle + (fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle))*RUDDER_DELTA;
             prev_elev_angle = plane_angle;
         }
 
@@ -268,7 +263,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
             prev_rudder_angle = rudder_angle;
         else{
-            rudder_angle = prev_rudder_angle + fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle)*RUDDER_DELTA;
+            rudder_angle = prev_rudder_angle + (fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle))*RUDDER_DELTA;
             prev_rudder_angle = rudder_angle;
         }
 
