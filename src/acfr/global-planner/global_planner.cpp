@@ -248,6 +248,16 @@ int GlobalPlanner::clock()
 		// we will signal the main control layer to go to abort
 		// then go into idle
 		nextState = globalPlannerFsmAbort;
+		if(cameraTriggerMsg.enabled == 1){		
+			// send stop command to strobes and camera
+			memset(&cameraTriggerMsg, 0, sizeof(cameraTriggerMsg));
+			cameraTriggerMsg.utime = timestamp_now();
+			cameraTriggerMsg.command =	acfrlcm::auv_camera_trigger_t::SET_STATE;
+			cameraTriggerMsg.enabled = 0;
+			// Send the trigger command 
+			std::cout << "Sending camera trigger stop"<< endl;
+			lcm.publish(vehicle_name+".CAMERA_TRIGGER", &cameraTriggerMsg);
+		}
 		if( globalPlannerMessage == globalPlannerReset ) {
 			nextState = globalPlannerFsmIdle;
 		}
