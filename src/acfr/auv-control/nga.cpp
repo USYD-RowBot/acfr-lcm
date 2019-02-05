@@ -294,7 +294,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         mc.tail_thruster = prop_rpm;
         mc.tail_rudder = rudder_angle;
         if (elevator_disabled || fabs(cmd.depth) < 1e-3)
-            mc.tail_elevator = 0.0;
+            mc.tail_elevator = 0.0; // mc.tail_elevator = pid(&this->gains_pitch, nav.pitch, (5*M_PI)/180, dt); //target pitch of 5 degrees to make tail more efficient
         else
             mc.tail_elevator = plane_angle;
 
