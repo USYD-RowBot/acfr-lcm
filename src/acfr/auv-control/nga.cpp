@@ -195,7 +195,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
-        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
+        pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt);
 
         if ((nav.vx > -0.05) || (prop_rpm > -100))
             plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt);
@@ -300,10 +300,11 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         double threshold = M_PI/18;
         double bias = 1.0;
-        
+        double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
+        double transition_percentage = (distance_to_depth_goal-0.5)/1.5;
         // power management
         // dive with thrusters if large dive
-        if (fabs(nav.depth - cmd.depth) > 1.0   || cmd.depth < 0){
+        if (distance_to_depth_goal > 2.0   || cmd.depth < 0){
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
             mc.tail_thruster = 0.0;
@@ -311,7 +312,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.tail_rudder = 0.0;
             // std::cout << " vert thrusters only";
         }
-        //turn on spot if zero advance speed and large turn angle
+        else if (distance_to_depth_goal <= 2.0 && distance_to_depth_goal > 0.5){
+            mc.lat_fore = 0.0;
+            mc.lat_aft = 0.0;
+            mc.tail_thruster = mc.tail_thruster*(1-transition_percentage);
+            mc.vert_fore = transition_percentage*mc.vert_fore;
+            mc.vert_aft = transition_percentage*mc.vert_aft;
+        }
+        //turn on spot if large turn angle
         else if (fabs(diff_heading) > M_PI/15){
             // mc.tail_thruster = 0.0;
             // mc.tail_elevator = 0.0;
@@ -387,7 +395,7 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 
         //tunnel turning when switch is back
         fore += (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
-        aft -= fore;
+        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
         if (fore > gains_tunnel_heading.sat)
             fore = gains_tunnel_heading.sat;
         if (aft >gains_tunnel_heading.sat)
