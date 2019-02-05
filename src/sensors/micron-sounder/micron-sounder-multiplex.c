@@ -23,7 +23,7 @@ typedef struct
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-    static int beat_count = 0;
+    static int beat_count = 1;
     static int sensor_count = 0;
 
     char msg[32];
@@ -53,8 +53,8 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             //printf("%s = %f\n", pub_channel, value);
             senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);            
         }
-        beat_count = 0;
-        if (sensor_count++ >= state->num_oas)
+        beat_count = 1;
+        if (sensor_count++ == (state->num_oas-1))
             sensor_count =0;
     }
     
@@ -140,8 +140,6 @@ main (int argc, char *argv[])
             state.sensor[i]->port_open = 0;
             acfr_sensor_open(state.sensor[i]);
             printf("OAS serial port open at %s\n", state.sensor[i]->serial_dev);
-            if(state.sensor[i] == NULL)
-                return 0;
         }
     }
 
@@ -150,7 +148,7 @@ main (int argc, char *argv[])
         acfr_sensor_canonical(state.sensor[i], '\r', '\n');
     }
 
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_5HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
 
     while (!program_exit)
     {
