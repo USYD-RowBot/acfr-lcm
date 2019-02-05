@@ -348,7 +348,7 @@ int LocalPlanner::onGlobalState(
 {
 	cout << "Change of global state to: " << (int) (gpStateLCM->state) << endl;
 	gpState = *gpStateLCM;
-
+	aborted = false;	
 	/* State change to IDLE should immediately kill motors and stop path replanning
 	 * State change to RUN from PAUSE should move the robot to it's last position then continue the mission
 	 * State change to PAUSE should hold position and return to last position if drifting occurs
