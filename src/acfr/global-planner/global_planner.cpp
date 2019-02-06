@@ -126,7 +126,7 @@ GlobalPlanner::GlobalPlanner() :
 {
 
 	// subscribe to the relevant LCM messages
-	lcm.subscribeFunction(vehicle_name+".TASK_PLANNER_COMMAND", onGlobalPlannerCommand, this);
+	lcm.subscribeFunction("TASK_PLANNER_COMMAND." + vehicle_name, onGlobalPlannerCommand, this);
 	lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", onPathResponse, this);
 
 	// set default values
