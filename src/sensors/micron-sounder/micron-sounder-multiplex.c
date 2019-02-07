@@ -13,11 +13,10 @@
 typedef struct 
 {
     lcm_t *lcm;
-    acfr_sensor_t *sensor[MAX_OAS];
     int num_oas;
     int oas_ports[MAX_OAS];
-    int altitude;
     char *channel_name;
+    acfr_sensor_t *sensors[MAX_OAS];
 } state_t;
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
@@ -35,10 +34,10 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     {
         memset(msg, 0, sizeof(msg));
         sprintf(msg, "Z");
-        acfr_sensor_write(state->sensor[sensor_count], msg, strlen(msg));
+        acfr_sensor_write(state->sensors[sensor_count], msg, strlen(msg));
         // Wait for a response with a timeout
         memset(resp, 0, sizeof(resp));
-        int ret = acfr_sensor_read_timeoutms(state->sensor[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
+        int ret = acfr_sensor_read_timeoutms(state->sensors[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
         if(ret > 0){
             // parse out the range value leaving the m off then end
             micron.utime = timestamp_now();
@@ -105,47 +104,92 @@ void signal_handler(int sig_num)
 int
 main (int argc, char *argv[])
 {
+    state_t state;
+    memset(&state, 0, sizeof(state_t));
+
     // install the signal handler
     program_exit = 0;
     signal(SIGINT, signal_handler);
 
-    state_t state;
-
     parse_args(argc, argv, &state.channel_name);
 
-    //Initalise LCM object - specReading
-    state.lcm = lcm_create(NULL);
-
+    // read the config file
+    BotParam *param;
     char rootkey[64];
+    char key[64];
+
+    state.lcm = lcm_create(NULL);
+    param = bot_param_new_from_server (state.lcm, 1);
+
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
-    state.sensor[0] = acfr_sensor_create(state.lcm, rootkey);
-    if(state.sensor[0] == NULL)
-        return 0;
+    // read the config file
+    char *io_str;
+    int io;
+    sprintf(key, "%s.io", rootkey);
+    io_str = bot_param_get_str_or_fail(param, key);
+    if(!strcmp(io_str, "serial"))
+        io = io_serial;
+    else if(!strcmp(io_str, "tcp"))
+        io = io_tcp;
+    else
+        return -1;
 
-    printf("OAS serial port open at %s\n", state.sensor[0]->serial_dev);
-    // Get the serial_port names
-    char key[64];
-    char msg[16];
+    char **serial_devs;
+    char **inet_ports;
+    char *ip;
+    int baud;
+    char *parity;
+
     sprintf(key, "%s.serial_ports", rootkey);
-    state.num_oas = bot_param_get_int_array(state.sensor[0]->param, key, state.oas_ports, MAX_OAS);
-    if (state.num_oas > 1)
+    state.num_oas = bot_param_get_int_array(param, key, state.oas_ports, MAX_OAS);
+
+    if(io == io_serial)
     {
-        for(int i=1; i < state.num_oas ; i++)
-        {
-            memset(msg, 0, sizeof(msg));
-            sprintf(msg, "/dev/ttyCTI%d", state.oas_ports[i]);
-            state.sensor[i] = state.sensor[0];
-            state.sensor[i]->serial_dev = msg;
-            state.sensor[i]->port_open = 0;
-            acfr_sensor_open(state.sensor[i]);
-            printf("OAS serial port open at %s\n", state.sensor[i]->serial_dev);
-        }
+        sprintf(key, "%s.serial_dev", rootkey);
+        serial_devs = bot_param_get_str_or_fail(param, key);
+
+        sprintf(key, "%s.baud", rootkey);
+        baud = bot_param_get_int_or_fail(param, key);
+
+        sprintf(key, "%s.parity", rootkey);
+        parity = bot_param_get_str_or_fail(param, key);
     }
 
-    for(int i=0; i < state.num_oas ; i++)
+    if(io == io_tcp)
     {
-        acfr_sensor_canonical(state.sensor[i], '\r', '\n');
+        sprintf(key, "%s.ip", rootkey);
+        ip = bot_param_get_str_or_fail(param, key);
+
+        sprintf(key, "%s.ports", rootkey);
+        inet_ports = bot_param_get_str_array_alloc(param, key);
+    }
+
+    int lcm_fd = lcm_get_fileno(state.lcm);
+    char msg[16];
+
+    for(int i=0; i<state.num_oas; i++)
+    {
+        memset(state.sensors[i], 0, sizeof(acfr_sensor_t));
+        if(io == io_tcp)
+        {
+            printf("*");
+            state.sensors[i]->io_type = io;
+            state.sensors[i]->ip = ip;
+            state.sensors[i]->inet_port = inet_ports[i];
+        }
+        else
+        {
+            state.sensors[i]->io_type = io;
+            memset(msg, 0, sizeof(msg));
+            sprintf(msg, "/dev/ttyCTI%d", state.oas_ports[i]);
+            state.sensors[i]->serial_dev = msg;
+            state.sensors[i]->baud = baud;
+            state.sensors[i]->parity = parity;
+        }
+        acfr_sensor_open(state.sensors[i]);
+        acfr_sensor_canonical(state.sensors[i], '\r', '\n');
+        printf("OAS serial port open at %s\n", state.sensors[i]->serial_dev);
     }
 
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
@@ -155,9 +199,9 @@ main (int argc, char *argv[])
         lcm_handle_timeout(state.lcm, 1000);
     }
     
-    //for(int i=0; i < state.num_oas ; i++)
+    for(int i=0; i < state.num_oas ; i++)
     {
-        acfr_sensor_destroy(state.sensor[0]);
+        acfr_sensor_destroy(state.sensors[i]);
     }
     
     return 1;
