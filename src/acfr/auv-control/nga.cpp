@@ -386,7 +386,7 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     double rudder;
 
     //Strafe - this is side to side on left stick - always available
-    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
+    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
     aft = fore;
         
     // Check the steering mode switch - top switch on right side
@@ -394,12 +394,12 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     {
 
         //tunnel turning when switch is back
-        fore += (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
-        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * gains_tunnel_heading.sat/RC_HALF_RANGE;
-        if (fore > gains_tunnel_heading.sat)
-            fore = gains_tunnel_heading.sat;
-        if (aft >gains_tunnel_heading.sat)
-            aft = gains_tunnel_heading.sat;
+        fore += (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+        if (fore > 1500)
+            fore = 1500;
+        if (aft > 1500)
+            aft = 1500;
         rudder = 0;
     }
     else 
@@ -424,9 +424,9 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     }
     else
     {
-        mc.tail_thruster = (rcval - RC_DEADZONE)* gains_vel.sat/RC_HALF_RANGE;
-        if (fabs(mc.tail_thruster) > gains_vel.sat)
-            mc.tail_thruster = gains_vel.sat*mc.tail_thruster/fabs(mc.tail_thruster);
+        mc.tail_thruster = (rcval - RC_DEADZONE)* 700/RC_HALF_RANGE;
+        if (fabs(mc.tail_thruster) > 700)
+            mc.tail_thruster = 700*mc.tail_thruster/fabs(mc.tail_thruster);
     }
 
     //brown out limiting
