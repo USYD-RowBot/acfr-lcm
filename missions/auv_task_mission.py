@@ -23,5 +23,5 @@ msg.str = missionString
     
 vehicle_name = sys.argv[2];
     
-lc.publish(vehicle_name+'.TASK_PLANNER_COMMAND', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.'+vehicle_name, msg.encode())
 

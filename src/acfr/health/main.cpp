@@ -423,7 +423,7 @@ int HealthMonitor::sendAbortMessage(const char *msg)
 	acfrlcm::auv_global_planner_t abortMsg;
 	abortMsg.command = acfrlcm::auv_global_planner_t::ABORT;
 	abortMsg.str = msg;
-	lcm.publish(vehicle_name+".TASK_PLANNER_COMMAND", &abortMsg);
+	lcm.publish("TASK_PLANNER_COMMAND."+vehicle_name, &abortMsg);
 
 	return 1;
 }
