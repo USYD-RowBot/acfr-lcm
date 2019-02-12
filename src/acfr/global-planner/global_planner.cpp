@@ -16,6 +16,15 @@ void onPathResponse(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 
 }
 
+void onUSBLAbort(const lcm::ReceiveBuffer* rbuf, const std::string& channel, 
+	const acfrlcm::auv_global_planner_usbl_abort_t *gu, GlobalPlanner* gp)
+{
+	// we just got a message from the USBL - assume it is abort
+	cout << "\nReceived new USBL abort command\n" << endl;
+	gp->globalPlannerMessage = globalPlannerAbort;
+	gp->clock();
+}
+
 void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_global_planner_t *gm,
 		GlobalPlanner* gp)
@@ -128,6 +137,7 @@ GlobalPlanner::GlobalPlanner() :
 	// subscribe to the relevant LCM messages
 	lcm.subscribeFunction("TASK_PLANNER_COMMAND." + vehicle_name, onGlobalPlannerCommand, this);
 	lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", onPathResponse, this);
+	lcm.subscribeFunction("ABORT." + vehicle_name, onUSBLAbort, this);
 
 	// set default values
 	cameraTriggerMsg.command = acfrlcm::auv_camera_trigger_t::SET_STATE;
