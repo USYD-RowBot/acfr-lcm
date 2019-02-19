@@ -319,6 +319,9 @@ int LocalPlannerTunnel::processWaypoints()
 		cc.depth = destPose.getZ();
 	else
 		cc.depth = depth_ref;
+
+	// LT: unsure why, but this might need to be done manually
+	cc.pitch = 0.0;
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }

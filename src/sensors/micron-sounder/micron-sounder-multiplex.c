@@ -196,7 +196,7 @@ main (int argc, char *argv[])
     
     for(int i=0; i < state.num_oas ; i++)
     {
-        //acfr_sensor_destroy(state.sensors[i]);
+        acfr_sensor_destroy(&state.sensors[i]);
     }
     
     return 1;

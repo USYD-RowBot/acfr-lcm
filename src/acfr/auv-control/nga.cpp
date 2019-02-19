@@ -195,7 +195,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
-        pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt);
+        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
 
         if ((nav.vx > -0.05) || (prop_rpm > -100))
             plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt);
@@ -301,10 +301,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double threshold = M_PI/18;
         double bias = 1.0;
         double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
-        double transition_percentage = (distance_to_depth_goal-0.5)/1.5;
+        double transition_percentage = (distance_to_depth_goal-0.5);
         // power management
         // dive with thrusters if large dive
-        if (distance_to_depth_goal > 2.0   || cmd.depth < 0){
+        if (distance_to_depth_goal > 1.5   || cmd.depth < 0){
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
             mc.tail_thruster = 0.0;
@@ -312,12 +312,18 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.tail_rudder = 0.0;
             // std::cout << " vert thrusters only";
         }
-        else if (distance_to_depth_goal <= 2.0 && distance_to_depth_goal > 0.5){
+        else if (distance_to_depth_goal <= 1.5 && distance_to_depth_goal > 0.5){
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
             mc.tail_thruster = mc.tail_thruster*(1-transition_percentage);
+	    if((mc.tail_thruster < 200.0) && ((mc.tail_thruster)/(1-transition_percentage) > 200.0))
+		    mc.tail_thruster = 200.0;
             mc.vert_fore = transition_percentage*mc.vert_fore;
+	    if((mc.vert_fore <1000.0) && ((mc.vert_fore)/(transition_percentage) >1000.0))
+		    mc.vert_fore = 1000.0;
             mc.vert_aft = transition_percentage*mc.vert_aft;
+	    if((mc.vert_aft <1000.0) && ((mc.vert_aft)/(transition_percentage) >1000.0))
+		    mc.vert_aft = 1000.0;
         }
         //turn on spot if large turn angle
         else if (fabs(diff_heading) > M_PI/15){
