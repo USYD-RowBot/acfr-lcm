@@ -195,7 +195,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
-        pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt);
+        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt);
 
         if ((nav.vx > -0.05) || (prop_rpm > -100))
             plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt);
@@ -300,11 +300,16 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         double threshold = M_PI/18;
         double bias = 1.0;
+        double dive_goal_threshold = 1.5; //m
+        double tail_goal_threshold = 0.5; //m
         double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
-        double transition_percentage = (distance_to_depth_goal-0.5)/1.5;
+        double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
+        int tail_transition_value = 200;
+        int tunnel_transition_value = 1000;
+
         // power management
         // dive with thrusters if large dive
-        if (distance_to_depth_goal > 2.0   || cmd.depth < 0){
+        if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0){
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
             mc.tail_thruster = 0.0;
@@ -312,27 +317,31 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.tail_rudder = 0.0;
             // std::cout << " vert thrusters only";
         }
-        else if (distance_to_depth_goal <= 2.0 && distance_to_depth_goal > 0.5){
+        else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold){
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
+            // limit floor value of tail to 200 RPM when in transition zone
             mc.tail_thruster = mc.tail_thruster*(1-transition_percentage);
+            if(mc.tail_thruster < tail_transition_value && mc.tail_thruster/(1-transition_percentage) > tail_transition_value)
+                mc.tail_thruster = tail_transition_value;
+            // limit ceiling value of tunnels to 1000 mean value for fore and aft
             mc.vert_fore = transition_percentage*mc.vert_fore;
+            if (mc.vert_fore < tunnel_transition_value && mc.vert_fore/transition_percentage > tunnel_transition_value)
+                mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
             mc.vert_aft = transition_percentage*mc.vert_aft;
+            if (mc.vert_aft < tunnel_transition_value && mc.vert_aft/transition_percentage > tunnel_transition_value)
+                mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
         }
         //turn on spot if large turn angle
         else if (fabs(diff_heading) > M_PI/15){
-            // mc.tail_thruster = 0.0;
-            // mc.tail_elevator = 0.0;
-            // mc.tail_rudder = 0.0;
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
-            // std::cout << " lat thrusters only";
-
+            // std::cout << "tunnel turning";
             // adding lat tunnel efficiency code here for tests
             if (thruster_flow_dependant)
             {
                 if (nav.heading < -threshold && diff_heading > threshold){
-                    mc.lat_fore = bias*mc.lat_fore;  //TODO: check which way to spin thrusters on NGA
+                    mc.lat_fore = bias*mc.lat_fore;
                     mc.lat_aft = 0.0;
                     // std::cout << " lat aft thruster off";
                 } 
