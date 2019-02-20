@@ -67,22 +67,20 @@ for key, value in dd.iteritems() :
         for msg in value:
             if key == 'mission waypoints':
                 if write_header:
-                    f.write('utime goal_id waypoint\n')
+                    f.write('utime,goal_id,waypoint\n')
                     write_header = False
-                f.write('{} {} {}\n'.format(msg.utime, msg.goal_id, msg.waypoint))
+                f.write('{},{},{}\n'.format(msg.utime, msg.goal_id, msg.waypoint))
             elif key == 'nav':
                 if write_header:
-                    f.write('utime latitude longitude x y depth roll pitch heading vx vy vz\n')
+                    f.write('utime,latitude,longitude,x,y,depth,roll,pitch,heading,vx,vy,vz\n')
                     write_header = False
-                f.write('{} {} {} {} {} {} {} {} {} {} {} {}\n'.format(msg.utime, msg.latitude, msg.longitude, msg.x, msg.y, msg.depth, msg.roll, msg.pitch, msg.heading, msg.vx, msg.vy, msg.vz))
+                f.write('{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(msg.utime, msg.latitude, msg.longitude, msg.x, msg.y, msg.depth, msg.roll, msg.pitch, msg.heading, msg.vx, msg.vy, msg.vz))
             else:
                 try:
-                    f.write('{} {}\n'.format(msg.utime, msg.text))
                     if (("abort" in msg.text) or ("ABORT:" in msg.text) or ("Sending camera trigger" in msg.text) or ("Sending way point" in msg.text) or ("waypoint reached" in msg.text)):
-                        log.write('{} {}\n'.format(msg.utime, msg.text))
+                        log.write('{},{}\n'.format(msg.utime, msg.text))
                 except:
-                    print 'bad data'
-
+                    pass
     f.close()
 log.close()
         
