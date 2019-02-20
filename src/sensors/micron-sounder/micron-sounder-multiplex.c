@@ -16,7 +16,7 @@ typedef struct
     int num_oas;
     int oas_ports[MAX_OAS];
     char *channel_name;
-    acfr_sensor_t sensors[MAX_OAS];
+    acfr_sensor_t *sensors[MAX_OAS];
 } state_t;
 
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
@@ -34,10 +34,10 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     {
         memset(msg, 0, sizeof(msg));
         sprintf(msg, "Z");
-        acfr_sensor_write(&state->sensors[sensor_count], msg, strlen(msg));
+        acfr_sensor_write(state->sensors[sensor_count], msg, strlen(msg));
         // Wait for a response with a timeout
         memset(resp, 0, sizeof(resp));
-        int ret = acfr_sensor_read_timeoutms(&state->sensors[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
+        int ret = acfr_sensor_read_timeoutms(state->sensors[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
         if(ret > 0){
             // parse out the range value leaving the m off then end
             micron.utime = timestamp_now();
@@ -184,8 +184,8 @@ main (int argc, char *argv[])
             state.sensors[i].baud = baud;
             state.sensors[i].parity = parity;
         }
-        acfr_sensor_open(&state.sensors[i]);
-        acfr_sensor_canonical(&state.sensors[i], '\r', '\n');
+        acfr_sensor_open(state.sensors[i]);
+        acfr_sensor_canonical(state.sensors[i], '\r', '\n');
     }
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
 
@@ -196,7 +196,7 @@ main (int argc, char *argv[])
     
     for(int i=0; i < state.num_oas ; i++)
     {
-        //acfr_sensor_destroy(state.sensors[i]);
+        acfr_sensor_destroy(state.sensors[i]);
     }
     
     return 1;
