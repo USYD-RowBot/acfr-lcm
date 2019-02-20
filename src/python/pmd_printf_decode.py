@@ -57,13 +57,10 @@ try:
     os.mkdir(subdirectory)
 except Exception:
     pass
-log = open(os.path.join(subdirectory, 'log.txt'), 'w')
 for key, value in dd.iteritems() :
     filename = '{}.txt'.format(key)
     write_header = True
-
     with open(os.path.join(subdirectory, filename), 'w') as f:
-    #f = open(filename, 'w')
         for msg in value:
             if key == 'mission waypoints':
                 if write_header:
@@ -77,13 +74,17 @@ for key, value in dd.iteritems() :
                 f.write('{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(msg.utime, msg.latitude, msg.longitude, msg.x, msg.y, msg.depth, msg.roll, msg.pitch, msg.heading, msg.vx, msg.vy, msg.vz))
             else:
                 try:
-                    if (("abort" in msg.text) or ("ABORT:" in msg.text) or ("Sending camera trigger" in msg.text) or ("Sending way point" in msg.text) or ("waypoint reached" in msg.text)):
-                        log.write('{},{}\n'.format(msg.utime, msg.text))
+                    f.write('{} {}\n'.format(msg.utime, msg.text))
                 except:
                     pass
     f.close()
+
+#overall logs - searching for keywords across all channels
+log = open(os.path.join(subdirectory, 'log.txt'), 'w')
+for key, value in dd.iteritems() :
+    for msg in value:
+        if (("abort" in msg.text) or ("ABORT:" in msg.text) or ("Sending camera trigger" in msg.text) or ("Sending way point" in msg.text) or ("waypoint reached" in msg.text)):
+            log.write('{} {}\n'.format(msg.utime, msg.text))
 log.close()
-        
-    
 
 
