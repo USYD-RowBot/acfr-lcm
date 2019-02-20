@@ -1,0 +1,16 @@
+package acfrlcm;
+
+struct auv_base_pid_t
+{
+    double kp;
+    double ki;
+    double kd;
+    double integral;
+    double derivative;
+    double prev_error;
+    double error;
+    double sat;   
+}
+   
+    
+ 
