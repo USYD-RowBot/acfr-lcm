@@ -333,7 +333,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
         }
         //turn on spot if large turn angle
-        else if (fabs(diff_heading) > M_PI/15){
+        else if (fabs(diff_heading) > M_PI/6){
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
             // std::cout << "tunnel turning";
