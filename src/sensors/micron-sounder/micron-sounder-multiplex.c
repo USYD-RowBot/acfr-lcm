@@ -172,17 +172,17 @@ main (int argc, char *argv[])
         if(io == io_tcp)
         {
             printf("*");
-            state.sensors[i].io_type = io;
-            state.sensors[i].ip = ip;
-            state.sensors[i].inet_port = inet_ports[i];
+            state.sensors[i]->io_type = io;
+            state.sensors[i]->ip = ip;
+            state.sensors[i]->inet_port = inet_ports[i];
         }
         else
         {
             printf("#");
-            state.sensors[i].io_type = io;
-            state.sensors[i].serial_dev = serial_devs[i];
-            state.sensors[i].baud = baud;
-            state.sensors[i].parity = parity;
+            state.sensors[i]->io_type = io;
+            state.sensors[i]->serial_dev = serial_devs[i];
+            state.sensors[i]->baud = baud;
+            state.sensors[i]->parity = parity;
         }
         acfr_sensor_open(state.sensors[i]);
         acfr_sensor_canonical(state.sensors[i], '\r', '\n');
