@@ -107,7 +107,10 @@ class PlotData(object):
         else:
             y = self.yfilter(self.ydata, self.yfilter_option)
 
-        self.plotitem.setData(x=x, y=y)
+        try:
+            self.plotitem.setData(x=x, y=y)
+        except:
+            print 'x and y data different sizes'
 
 
 class PlotModel(QAbstractTableModel):
