@@ -472,6 +472,14 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         send_bluefin_tail_commands(state);
     else
         state->enabled = false;
+
+    if(mot->reset_tail == 1)
+    {
+        bluefin_write_respond(state, "#02AO\n", 2);
+        bluefin_write_respond(state, "#02HM\n", 10);
+        bluefin_write_respond(state, "#03AO\n", 2);
+        bluefin_write_respond(state, "#03HM\n", 10);
+    }
 }
 
 int main (int argc, char *argv[])
