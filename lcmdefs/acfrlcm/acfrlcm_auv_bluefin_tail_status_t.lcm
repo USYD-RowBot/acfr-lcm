@@ -16,4 +16,10 @@ struct auv_bluefin_tail_status_t
 
 	double current_rpm;
 	double target_rpm;
+
+	double current_rudder;
+	double target_rudder;
+	
+	double current_elevator;
+	double target_elevator;
 }

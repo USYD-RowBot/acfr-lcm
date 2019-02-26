@@ -11,5 +11,4 @@ struct auv_nga_motor_command_t
     double tail_thruster;    // RPM
     double tail_rudder;      // Rad
     double tail_elevator;    // Rad
-    
 }
