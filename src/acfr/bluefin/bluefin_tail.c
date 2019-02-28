@@ -55,6 +55,7 @@ typedef struct
     bool error_rudder;
     bool error_elevator; 
     bool homed;   
+    bool zero_target;
 } state_t;
 
 int bluefin_write_respond(state_t *state, char *d, int timeout);
@@ -184,7 +185,8 @@ int parse_bluefin_message(state_t *state, char *d, int len)
             {
                 state->bf_status.current_rudder = atoi(tok[2]);
                 state->bf_status.target_rudder = atoi(tok[3]);
-                
+                if ((state->bf_status.current_rudder < 1e-3) && (state->bf_status.target_rudder <1e-3))
+                    state->zero_target = true;
                 return 1;
             }            
         }
@@ -473,7 +475,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     else
         state->enabled = false;
 
-    if(mot->reset_tail == 1)
+    if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
     {
         bluefin_write_respond(state, "#02AO\n", 2);
         bluefin_write_respond(state, "#02HM\n", 10);
