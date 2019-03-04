@@ -16,11 +16,11 @@ available_dirs = os.listdir(DIR)
 for name in available_dirs:
 	try:
 		with open('/sys/class/hwmon/'+name+'/name', 'r') as check_file:
-			if 'coretemp' in check_file.read():
+			if 'temp' in check_file.read():
 				right_dir = name
 				print 'coretemp stored here:/sys/class/hwmon/'+right_dir+'/temp1_input'
 		with open('/sys/class/hwmon/'+name+'/device/name', 'r') as check_file:
-			if 'coretemp' in check_file.read():
+			if 'temp' in check_file.read():
 				right_dir = name
 				print 'coretemp stored here:/sys/class/hwmon/'+right_dir+'/device/temp1_input'
 	except Exception:
