@@ -14,10 +14,17 @@ lc = lcm.LCM()
 DIR = '/sys/class/hwmon/'
 available_dirs = os.listdir(DIR)
 for name in available_dirs:
-	with open('/sys/class/hwmon/'+name+'/name', 'r') as check_file:
-		if 'coretemp' in check_file.read():
-			right_dir = name
-			print 'coretemp stored here:/sys/class/hwmon/'+right_dir+'/temp1_input'
+	try:
+		with open('/sys/class/hwmon/'+name+'/name', 'r') as check_file:
+			if 'coretemp' in check_file.read():
+				right_dir = name
+				print 'coretemp stored here:/sys/class/hwmon/'+right_dir+'/temp1_input'
+		with open('/sys/class/hwmon/'+name+'/device/name', 'r') as check_file:
+			if 'coretemp' in check_file.read():
+				right_dir = name
+				print 'coretemp stored here:/sys/class/hwmon/'+right_dir+'/device/temp1_input'
+	except Exception:
+		pass
     
 def heartbeat_handler(channel, data):
 	hb = heartbeat_t.decode(data)
