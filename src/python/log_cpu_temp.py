@@ -55,11 +55,11 @@ def heartbeat_handler(channel, data):
 	tm.all_time_max = max_val
 	tm.current_avg = total/len(current_temp)
 	lc.publish(vehicle_name+".CPU_TEMP", tm.encode())
-	with open('temp_log.txt', 'a') as log_file:
-		log_file.write(str(hb.utime).rstrip('\n'))
-		for value in current_temp:
-			log_file.write(str(','+value).rstrip('\n'))
-		log_file.write('\n')
+	# with open('temp_log.txt', 'a') as log_file:
+	# 	log_file.write(str(hb.utime).rstrip('\n'))
+	# 	for value in current_temp:
+	# 		log_file.write(str(','+value).rstrip('\n'))
+	# 	log_file.write('\n')
 
 lc.subscribe("HEARTBEAT_1HZ", heartbeat_handler)
 
