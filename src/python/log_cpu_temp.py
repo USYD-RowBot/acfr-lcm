@@ -65,7 +65,7 @@ def heartbeat_handler(channel, data):
 lc.subscribe("HEARTBEAT_1HZ", heartbeat_handler)
 
 
-while ():
+while (1):
 	lc.handle()
 
 
