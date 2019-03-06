@@ -11,7 +11,7 @@ from perllcm.heartbeat_t import heartbeat_t
 from acfrlcm import auv_cpu_temp_monitor_t
 
 lc = lcm.LCM()
-vehicle_name = sys.argv[1];
+#vehicle_name = sys.argv[1];
 # find the right dir that stores coretemp
 DIR = '/sys/class/hwmon/'
 available_dirs = os.listdir(DIR)
@@ -54,7 +54,8 @@ def heartbeat_handler(channel, data):
 	tm.temp_readings = list(map(int, current_temp))
 	tm.all_time_max = max_val
 	tm.current_avg = total/len(current_temp)
-	lc.publish(vehicle_name+".CPU_TEMP", tm.encode())
+	lc.publish("CPU_TEMP", tm.encode())
+	#lc.publish(vehicle_name+".CPU_TEMP", tm.encode())
 	# with open('temp_log.txt', 'a') as log_file:
 	# 	log_file.write(str(hb.utime).rstrip('\n'))
 	# 	for value in current_temp:
@@ -63,9 +64,12 @@ def heartbeat_handler(channel, data):
 
 lc.subscribe("HEARTBEAT_1HZ", heartbeat_handler)
 
-while True:
-    lc.handle()
-	
+
+while ():
+	lc.handle()
+
+
+exit
     
     
 
