@@ -18,10 +18,14 @@ available_dirs = os.listdir(DIR)
 right_dir = list()
 global max_val
 max_val = 0
+dev_names = list()
 for name in available_dirs:
 	try:
 		with open('/sys/class/hwmon/'+name+'/name', 'r') as check_file:
-			if 'temp' in check_file.read():
+                        label = check_file.read()
+                        dev_names.append(label)
+                        print label
+			if 'temp' in label:
 				right_dir.append(name)
 				print 'coretemp stored here:/sys/class/hwmon/'+name+'/temp1_input'
 		with open('/sys/class/hwmon/'+name+'/device/name', 'r') as check_file:
@@ -36,8 +40,10 @@ def heartbeat_handler(channel, data):
 	tm = auv_cpu_temp_monitor_t()
 	current_temp = list()
 	total = 0
+        path_name = list()
 	global max_val
-	for folder in right_dir:
+        available_dir = os.listdir('/sys/class/hwmon/')
+	for folder in available_dir:
 		file_names = os.listdir('/sys/class/hwmon/'+ folder)
 		for file_name in file_names:
 			if 'input' in file_name:
@@ -45,12 +51,14 @@ def heartbeat_handler(channel, data):
 					str_val = temp_file.read()
 					int_val = int(str_val[:-4])
 					total += int_val
+                                        path_name.append(folder+'/'+file_name)
 					current_temp.append(str_val[:-4])
 					if int_val > max_val:
 						max_val = int_val
 
 	tm.utime = hb.utime
 	tm.num_readings = len(current_temp)
+        tm.names = list(path_name)
 	tm.temp_readings = list(map(int, current_temp))
 	tm.all_time_max = max_val
 	tm.current_avg = total/len(current_temp)
