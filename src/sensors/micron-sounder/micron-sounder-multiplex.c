@@ -22,9 +22,11 @@ typedef struct
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
+    const char *Sensor_direction[2];
+    Sensor_direction[0]= "FWD";
+    Sensor_direction[1] = "DWN";
     static int beat_count = 1;
     static int sensor_count = 0;
-
     char msg[32];
     char resp[75];
     char pub_channel[80];
@@ -40,16 +42,19 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         int ret = acfr_sensor_read_timeoutms(state->sensors[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
         if(ret > 0){
             // parse out the range value leaving the m off then end
-            micron.utime = timestamp_now();
+             micron.utime = timestamp_now();
             memset(value, 0, sizeof(value));
             //printf("%s", resp);
             strncpy(value, resp, strlen(resp) - 1);
-            micron.altitude = atof(value);
-            strcpy(pub_channel, state->channel_name);
-            memset(msg, 0, sizeof(msg));
-            sprintf(msg, "_%d", state->oas_ports[sensor_count]);
-            strcat(pub_channel, msg);
-            senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);
+             micron.altitude = 0;
+            if (micron.altitude > 1e-4)
+            {
+                strcpy(pub_channel, state->channel_name);
+                memset(msg, 0, sizeof(msg));
+                sprintf(msg, "_%s", Sensor_direction[sensor_count]);
+                strcat(pub_channel, msg);
+                senlcm_micron_sounder_t_publish(state->lcm, pub_channel, &micron);
+            }
         }
         beat_count = 1;
         if (sensor_count++ == (state->num_oas-1))
