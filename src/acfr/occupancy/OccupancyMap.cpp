@@ -116,7 +116,9 @@ void incMap( state_t * state, vector<Vector4D> pVec ) {
 					state->iter++ ) {
 			// increment voxel
 			if( ((*state->iter).loc - pN).normSq() < 1e-3 ) {
-				(*state->iter).votes += state->MAP_HIT_VAL;
+				(*state->iter).votes += state->MAP_HIT_VAL*pVec[i][3];
+				if ((*state->iter).votes > state->MAP_MAX_VAL)
+					(*state->iter).votes = state->MAP_MAX_VAL;
 				(*state->iter).timestamp = t;
 				exists = true;
 				break;
@@ -164,7 +166,11 @@ vector<Vector4D> getSonarPoints( double range, double coneAngleH, double coneAng
  * Read RDI range from one of the beams and return 3D point
  */
 void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::rdi_pd5_t *msg, state_t* state) {
-
+	static int found = 0;
+	if(found == 0){
+		found =1;
+		cout << "found RDI" << endl;
+	}
     state->time = (double)(msg->utime)/1.0e6;
 
     Vector4D p4;
@@ -181,26 +187,52 @@ void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& chan
 	    double offset = 0.1315;
 	    double a = M_PI / 2.0 * (beam + 1);// NOTE: THIS IS THE OFFSET TO BEAM zero! + M_PI / 4.0;
 	    Matrix44 R1, R2;
-	    R1 = cos( rot ), 0, sin( rot ), 0, 0, 1, 0, 0, -sin( rot ), 0, cos( rot ), 0, 0, 0, 0, 1;
-	    R2 = 1, 0, 0, 0, 0, cos( a ), -sin( a ), 0, 0, sin( a ), cos( a ), 0, 0, 0, 0, 1;
+	    R1 = 	
+	    cos( rot ), 0, sin( rot ), 0,
+	    0, 	1, 0, 0, 
+	    -sin( rot ), 0, cos( rot ), 0,
+	    0, 0, 0, 1;
+
+	    R2 = 
+	    1, 0, 0, 0, 
+	    0, cos( a ), -sin( a ), 0, 
+	    0, sin( a ), cos( a ), 0, 
+	    0, 0, 0, 1;
 
     	vector<Vector4D> pVecTemp = getSonarPoints(
 	    			range + offset, state->RDI_CONEANGLE, state->RDI_CONEANGLE, state->voxelSize );
+    	bool exists = false;
 	    for( unsigned int i = 0; i < pVecTemp.size(); i++ ) {
 		    p4 = R2 * R1 * pVecTemp[i];
 
     		// Convert 3D point seen from RDI beam
 	    	// to 3D point seen from vehicle
 	    	p4 = state->RDI_T * p4;
-            pVec.push_back( p4 );	    	
+	    	for( int i = 0; i < pVec.size(); i++)
+	    	{
+	    		if(((pVec[i][0] - p4[0]) < 1e-3) && ((pVec[i][1] - p4[1]) < 1e-3) && ((pVec[i][2] - p4[2]) < 1e-3))
+	    		{
+	    			exists = true;
+	    			pVec[i][3] += 1;
+	    		}
+	    	}
+
+	    	if(!exists)
+			{
+				pVec.push_back( p4 );	 
+				//cout << p4[0] <<", "<< p4[1] <<", "<< p4[2] << ", " << p4[3]<< endl; 
+			}  	
 	    }// For every point in this beam
 	}// For every beam
-
     incMap( state, pVec );
 }
 
 void senlcm_micron_ping_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::micron_ping_t *msg, state_t* state) {
-
+	static int found = 0;
+	if(found == 0){
+		found =1;
+		cout << "found Micron Pinger" << endl;
+	}
     // TODO: Put this somewhere sensible
     uint8_t minReturnThresh = 0;
     
@@ -338,7 +370,6 @@ void perllcm_heartbeat_t_handle(const lcm::ReceiveBuffer* rbuf, const std::strin
         lcmMap.elements.push_back(e);
     }
     state->lcm.publish(state->vehicle_name + ".OCC_MAP", &lcmMap);
-
 	return ;
 }
 
