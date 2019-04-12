@@ -46,7 +46,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             memset(value, 0, sizeof(value));
             //printf("%s", resp);
             strncpy(value, resp, strlen(resp) - 1);
-             micron.altitude = 0;
+             micron.altitude = atof(value);
             if (micron.altitude > 1e-4)
             {
                 strcpy(pub_channel, state->channel_name);
