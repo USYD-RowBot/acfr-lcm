@@ -561,7 +561,7 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 
         // now check the altitude following and slow down if we are outside of the desired
         // following band
-        if(getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE)
+        if((getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE) && oa.altitude > 0)
         {
             /*
             Altitude following slowdown.  The desired velocity will
