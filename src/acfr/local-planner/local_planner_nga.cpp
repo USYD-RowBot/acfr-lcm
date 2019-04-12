@@ -16,7 +16,6 @@
 
 using namespace std;
 
-
 /** *************************************************************************
  *
  * LocalPlanner
@@ -38,8 +37,6 @@ LocalPlannerTunnel::LocalPlannerTunnel() :
 LocalPlannerTunnel::~LocalPlannerTunnel()
 {
 }
-
-
 
 /**
  * Call Dubins path planner to generate a path from current location to the
@@ -192,6 +189,12 @@ int LocalPlannerTunnel::loadConfig(char *program_name)
 	sprintf(key, "%s.replan_interval", rootkey);
 	replanInterval = bot_param_get_double_or_fail(param, key);
 
+	sprintf(key, "%s.fwd_distance_slowdown", rootkey);
+	fwd_distance_slowdown = bot_param_get_double_or_fail(param, key);
+	
+    sprintf(key, "%s.fwd_distance_min", rootkey);
+	fwd_distance_min = bot_param_get_double_or_fail(param, key);
+
 	return 1;
 }
 
@@ -271,17 +274,22 @@ int LocalPlannerTunnel::processWaypoints()
 	cc.utime = timestamp_now();
 	cc.run_mode = acfrlcm::auv_control_t::RUN;
 	cc.heading = desHeading;
-	cc.vx = desVel;
+	//cc.vx = desVel;
     static double depth_ref = 0.0;
     double curr_depth_ref;
 
     	// Use the obstacle avoidance altitude if available
     	double altitude;
-	if((timestamp_now() - oa.utime) < 5e6)
-    	    altitude = fmin(oa.altitude, navAltitude);
-    	else
-	     altitude = navAltitude;
+	if(((timestamp_now() - oa.utime) < 5e6) && oa.altitude > 1e-4)
+    	altitude = fmin(oa.altitude, navAltitude);
+    else
+	    altitude = navAltitude;
 
+	if(((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 1e-4)
+		cc.vx = calcVelocity(desVel, altitude);
+	else 
+		cc.vx = desVel;
+	
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
