@@ -206,6 +206,7 @@ int LocalPlannerTunnel::loadConfig(char *program_name)
  */
 int LocalPlannerTunnel::processWaypoints()
 {
+    static double depth_ref = 0.0;
 
 	// Nothing to do
 	if (waypoints.size() == 0)
@@ -215,14 +216,25 @@ int LocalPlannerTunnel::processWaypoints()
 
 	// Get the next waypoint
 	Pose3D wp = waypoints.at(0);
+	// bound check for alt
+	Pose3D awp = waypoints.at(0);
 
+	Pose3D adp = destPose;
+	
 	// when executing abort, check if we are on the surface
 	if((aborted) && (currPose.getZ() < 1e-4)) 
 		destPose.setPosition(currPose.getX(), currPose.getY(), currPose.getZ());
 
-
+	// // this is just to do the bounding box check
+	if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
+	{
+		if(depth_ref != 0)
+			awp.setZ(depth_ref);
+		adp.setZ(depth_ref);
+	}
+	// wp = waypoints.at(0);
 	// We have reached the next waypoint
-	if (pointWithinBound(wp))
+	if (pointWithinBound(awp))
 	{
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
@@ -237,11 +249,11 @@ int LocalPlannerTunnel::processWaypoints()
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
-			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+			if ((pointWithinBound(adp)) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
 			{
 				cout << "Reached hold location" << endl;
 			}
-			else if ((pointWithinBound(destPose) && !holdMode))
+			else if ((pointWithinBound(adp)) && !holdMode)
 			{
 				setDestReached(true);
 				oldPose = destPose; // save destpose for use in dubins next time
@@ -275,7 +287,8 @@ int LocalPlannerTunnel::processWaypoints()
 	cc.run_mode = acfrlcm::auv_control_t::RUN;
 	cc.heading = desHeading;
 	//cc.vx = desVel;
-    static double depth_ref = 0.0;
+	cc.altitude = 0;
+	cc.pitch = 0;
     double curr_depth_ref;
 
     	// Use the obstacle avoidance altitude if available
@@ -289,7 +302,7 @@ int LocalPlannerTunnel::processWaypoints()
 		cc.vx = calcVelocity(desVel, altitude);
 	else 
 		cc.vx = desVel;
-	
+
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
@@ -307,7 +320,12 @@ int LocalPlannerTunnel::processWaypoints()
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
 		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
-		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
+		// check we don't get closer to the bottom than our minimum
+		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
+        if (curr_alt_ref < curr_depth_ref)
+            curr_depth_ref = curr_alt_ref;
+        cc.altitude = wp.getZ();
+		cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
 	}
     // FIXME: limit the depth rate change to yield an achievable 
     // trajectory. This is modelled on a forward speed of 0.75m/s 
@@ -321,15 +339,21 @@ int LocalPlannerTunnel::processWaypoints()
 	// else if (depth_ref_error < -max_depth_ref_change)
 	// 	depth_ref -= max_depth_ref_change;
 	// else
-		depth_ref = curr_depth_ref;
+
+	// cc.pitch = -atan((oa.altitude - navAltitude)/1.5);
+	// // if we are likely to run aground then re calc the waypoints so we don't
+	// if (fabs(depth_ref - curr_depth_ref) > 1e-3)
+	// {
+	 	depth_ref = curr_depth_ref;
+	// 	destPose.setZ(depth_ref);
+	// 	cc.pitch = -atan((oa.altitude - navAltitude)/1.5); 
+	// }
 
 	if (aborted)
 		cc.depth = destPose.getZ();
 	else
 		cc.depth = depth_ref;
 
-	// LT: unsure why, but this might need to be done manually
-	cc.pitch = 0.0;
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
 }
@@ -429,6 +453,7 @@ int LocalPlannerTunnel::execute_abort()
 	abortPose.setZ(-1.0);	//set destination depth 
 	destPose = abortPose;
 	depthMode = 0;
+	destVel = 0;
 	waypoints.clear();
 	setNewDest(true);
 	
