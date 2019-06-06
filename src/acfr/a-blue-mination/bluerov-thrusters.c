@@ -14,7 +14,7 @@
 #include <bot_param/param_client.h>
 #include "acfr-common/sensor.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
-#include "perls-lcmtypes/acfrlcm_tunnel_thruster_command_t.h"
+#include "perls-lcmtypes/acfrlcm_auv_abluemination_t.h"
 #include "perls-lcmtypes/acfrlcm_tunnel_thruster_power_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_nga_motor_command_t.h"
 
@@ -26,7 +26,7 @@
 // 1024 is really slow, nowhere near the limit
 #define TUNNEL_MAX 1750
 #define TUNNEL_MIN -1750
-
+#define MAX_DSHOT_VALUE 1000
 #define COMMAND_TIMEOUT_THRUST 50
 #define COMMAND_TIMEOUT 50
 
@@ -35,6 +35,7 @@ typedef struct
     lcm_t *lcm;
     acfr_sensor_t *sensor;
     int64_t command_utime;
+    int max_rpm;
     int port_top;
     int port_middle;
     int port_bottom;
@@ -185,46 +186,80 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     acfrlcm_auv_nga_motor_command_t mc;
 
     memcpy(&mc, mot, sizeof(acfrlcm_auv_nga_motor_command_t));
-
-
- // Copy the commands and set the limits
     
     state->command_utime = mot->utime;
-    
-    /* do math here
-    mc.lat_fore *= state->lf_pos_right;
-    if(mc.lat_fore > TUNNEL_MAX)
-    	state->lat_fore = TUNNEL_MAX;
-    else if (mc.lat_fore < TUNNEL_MIN)
-    	state->lat_fore = TUNNEL_MIN;
-    else
-        state->lat_fore = mc.lat_fore;
-		
-    mc.vert_fore *= state->vf_pos_down;
-    if(mc.vert_fore > TUNNEL_MAX)
-    	state->vert_fore = TUNNEL_MAX;
-    else if (mc.vert_fore < TUNNEL_MIN)
-    	state->vert_fore = TUNNEL_MIN;
-    else
-        state->vert_fore = mc.vert_fore;
+    //Get a thrust value in percent form that does not exceed 100%
+    double thrust_max_value = 32.5/100.0;
+    double thrust_percentage = mot->tail_thruster/state->max_rpm;
+    if (fabs(thrust_percentage) > 1.0)
+        thrust_percentage = thrust_percentage/fabs(thrust_percentage);
+    // Rudder percentage values
+    double rudder_max_value = 40.0/100.0;
+    double rudder_min_value = 22.5/100.0;
+    double rudder_port = 0.0;
+    double rudder_stb = 0.0;
+    double rudder_percentage = mot->tail_rudder/(12*M_PI/180);
+    if (fabs(rudder_percentage) > 1.0)
+        rudder_percentage = rudder_percentage/fabs(rudder_percentage);
 
-    mc.lat_aft *= state->la_pos_right;
-    if(mc.lat_aft > TUNNEL_MAX)
-    	state->lat_aft = TUNNEL_MAX;
-    else if (mc.lat_aft < TUNNEL_MIN)
-    	state->lat_aft = TUNNEL_MIN;
-    else
-        state->lat_aft = mc.lat_aft;
-		
-    mc.vert_aft *= state->va_pos_down;
-    if(mc.vert_aft > TUNNEL_MAX)
-    	state->vert_aft = TUNNEL_MAX;
-    else if (mc.vert_aft < TUNNEL_MIN)
-    	state->vert_aft = TUNNEL_MIN;
-    else
-        state->vert_aft = mc.vert_aft;
+    if (rudder_percentage < 0.0){
+        rudder_port = thrust_max_value-fabs(rudder_percentage)*(thrust_max_value-rudder_min_value);
+        rudder_stb = thrust_max_value+fabs(rudder_percentage)*(rudder_max_value-thrust_max_value);
+    }
+    else if (rudder_percentage > 0.0){
+        rudder_port = thrust_max_value+fabs(rudder_percentage)*(rudder_max_value-thrust_max_value);
+        rudder_stb = thrust_max_value-fabs(rudder_percentage)*(thrust_max_value-rudder_min_value);
+    }
+    else {
+        rudder_port = thrust_max_value;
+        rudder_stb = thrust_max_value;
+    }
+    // Elevator percentage values
+    double elevator_max_value = 37.5/100.0;
+    double elevator_min_value = 25.0/100.0;
+    double elevator_top = 0.0;
+    double elevator_mid = 0.0;
+    double elevator_btm = 0.0;
+    double elevator_percentage = mot->tail_elevator/(12*M_PI/180);
+    if (fabs(elevator_percentage) > 1.0)
+        elevator_percentage = elevator_percentage/fabs(elevator_percentage);
 
-    if(state->vert_aft == 0 && state->vert_fore == 0 && state->lat_aft == 0 && state->lat_fore == 0)
+    if (elevator_percentage < 0.0){
+        elevator_top = thrust_max_value+fabs(elevator_percentage)*(elevator_max_value-thrust_max_value);
+        elevator_mid = thrust_max_value;
+        elevator_btm = thrust_max_value-fabs(elevator_percentage)*(thrust_max_value-elevator_min_value);
+    }
+    else if (elevator_percentage > 0.0){
+        elevator_top = thrust_max_value-fabs(elevator_percentage)*(thrust_max_value-elevator_min_value);
+        elevator_mid = thrust_max_value;
+        elevator_btm = thrust_max_value+fabs(elevator_percentage)*(elevator_max_value-thrust_max_value);
+    }
+    else{
+        elevator_top = thrust_max_value;
+        elevator_mid = thrust_max_value;
+        elevator_btm = thrust_max_value;
+    }
+    //naive reconciliation through averaging
+    state->port_top     =   state->pt_cw*((rudder_port+  elevator_top)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+    state->port_middle  =   state->pm_cw*((rudder_port+  elevator_mid)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+    state->port_bottom  =   state->pb_cw*((rudder_port+  elevator_btm)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+    state->stb_top      =   state->st_cw*((rudder_stb+   elevator_top)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+    state->stb_middle   =   state->sm_cw*((rudder_stb+   elevator_mid)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+    state->stb_bottom   =   state->sb_cw*((rudder_stb+   elevator_btm)/2)*thrust_percentage*MAX_DSHOT_VALUE;
+
+    acfrlcm_auv_abluemination_t bluey;
+    bluey.utime = timestamp_now();
+    bluey.port_top = state->port_top;
+    bluey.port_middle = state->port_middle;
+    bluey.port_bottom = state->port_bottom;
+    bluey.stb_top = state->stb_top;
+    bluey.stb_middle = state->stb_middle;
+    bluey.stb_bottom = state->stb_bottom; 
+    char channel[100];
+    snprintf(channel, 100, "NGA.ABLUEMINATION_THRUST");
+    acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
+
+    if(state->port_top == 0 && state->port_middle == 0 && state->port_bottom == 0 && state->stb_top == 0 && state->stb_middle == 0 && state->stb_bottom == 0)
     {
 	int64_t time_now = timestamp_now();
 	state->zero_time += time_now - state->last_zero_time;
@@ -235,20 +270,19 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
 	state->last_zero_time = timestamp_now();
 	state->zero_time = 0;
     }
-    */
 
     if(state->zero_time < 10e6)
     {
         static int sent_last = 0;
-	if (sent_last == 1)
-	{
-        send_tunnel_commands(state);
-	    sent_last = 0;
-	}
-        else
-	{
-	    sent_last = 1;
-	}
+    	if (sent_last == 1)
+    	{
+            send_tunnel_commands(state);
+    	    sent_last = 0;
+    	}
+            else
+    	{
+    	    sent_last = 1;
+    	}
     }
 }
         
@@ -304,6 +338,8 @@ int main (int argc, char *argv[])
     state.sm_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.sb_cw", rootkey);
     state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
+
+    state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, "acfr.bluefin-tail.max_rpm");
 
     if (state.pt_cw == 0)
         state.pt_cw = -1;
