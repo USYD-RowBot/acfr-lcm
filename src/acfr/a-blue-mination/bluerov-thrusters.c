@@ -338,8 +338,8 @@ int main (int argc, char *argv[])
     state.sm_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.sb_cw", rootkey);
     state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
-
-    state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, "acfr.bluefin-tail.max_rpm");
+    sprintf(key, "%s.max_rpm", rootkey);
+    state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
 
     if (state.pt_cw == 0)
         state.pt_cw = -1;
