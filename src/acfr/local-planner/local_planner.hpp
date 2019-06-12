@@ -10,6 +10,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/senlcm/oa_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
 
 #pragma once
 
@@ -174,6 +175,28 @@ public:
     void onOA(const senlcm::oa_t *o)
     {
 	oa = *o;
+    }
+
+    void onFwd(const senlcm::micron_sounder_t *fwd)
+    {    
+        if ((fwd->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.altitude =0.0;
+        }
+        oa.forward_distance = fwd->altitude;
+        //std::cout << "time diff: " << (fwd->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = fwd->utime;
+    }
+
+    void onDwn(const senlcm::micron_sounder_t *dwn)
+    {    
+        if ((dwn->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.forward_distance =0.0;
+        }
+        oa.altitude = dwn->altitude;
+        //std::cout << "time diff: " << (dwn->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = dwn->utime;
     }
 
     std::vector<Pose3D> waypoints;

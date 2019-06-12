@@ -197,7 +197,21 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
                     
-        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.depth);
+        if (cmd.depth_mode == acfrlcm::auv_control_t::PITCH_MODE)
+            {
+                pitch = cmd.pitch;
+                std::cout << "PITCH_MODE" << std::endl; 
+            }
+        else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
+            {
+                pitch = -pid(&this->gains_depth, nav.altitude, cmd.altitude, dt, &cp.depth);
+                std::cout << "ALTITUDE_MODE" << std::endl;         
+            }
+        else
+            {
+                pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.depth);
+                std::cout << "DEPTH_MODE" << std::endl; 
+            }
 
         if ((nav.vx > -0.05) || (prop_rpm > -100))
             plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &cp.pitch);

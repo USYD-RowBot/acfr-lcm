@@ -38,6 +38,20 @@ void onOALCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	lp->onOA(oa);
 }
 
+// oa callback
+void onfwdLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::micron_sounder_t *fwd, LocalPlanner *lp)
+{
+	lp->onFwd(fwd);
+}
+
+// oa callback
+void ondwnLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::micron_sounder_t *dwn, LocalPlanner *lp)
+{
+	lp->onDwn(dwn);
+}
+
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
@@ -123,6 +137,7 @@ LocalPlanner::~LocalPlanner()
 		fp_wp.close();
 }
 
+
 int LocalPlanner::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
@@ -131,7 +146,8 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
 	lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
-	
+	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_FWD", onfwdLCM, this);
+	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_DWN", ondwnLCM, this);
     return 1;
 }
 
@@ -545,7 +561,7 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
 
         // now check the altitude following and slow down if we are outside of the desired
         // following band
-        if(getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE)
+        if((getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE) && oa.altitude > 0)
         {
             /*
             Altitude following slowdown.  The desired velocity will
