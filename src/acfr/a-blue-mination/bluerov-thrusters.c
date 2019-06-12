@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <signal.h>
 #include <libgen.h>
+#include <math.h>
 #include <sys/ioctl.h>
 #include <bot_param/param_client.h>
 #include "acfr-common/sensor.h"
