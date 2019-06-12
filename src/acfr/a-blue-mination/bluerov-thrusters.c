@@ -174,7 +174,7 @@ int send_tunnel_commands(state_t *state)
 {
 	// Send the thrust values to the controllers
 	char msg[64];
-	sprintf(msg, "#%02uT %d, %d, %d, %d, %d, %d\r", 01, state->port_top, state->port_middle, state->port_bottom, state->stb_top, state->stb_middle, state->stb_bottom);
+	sprintf(msg, "#%02uT %d, %d, %d, %d, %d, %d\r", 01, state->stb_bottom, state->stb_middle, state->stb_top, state->port_bottom, state->port_middle, state->port_top);
 	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;
