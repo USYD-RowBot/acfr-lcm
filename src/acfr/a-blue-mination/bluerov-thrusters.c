@@ -19,14 +19,6 @@
 #include "perls-lcmtypes/acfrlcm_tunnel_thruster_power_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_nga_motor_command_t.h"
 
-// actual max values supported
-//#define TUNNEL_MAX 2047
-//#define TUNNEL_MIN -2048
-
-// but with power issues...
-// 1024 is really slow, nowhere near the limit
-#define TUNNEL_MAX 1750
-#define TUNNEL_MIN -1750
 #define MAX_DSHOT_VALUE 1000
 #define COMMAND_TIMEOUT_THRUST 50
 #define COMMAND_TIMEOUT 50
@@ -53,108 +45,27 @@ typedef struct
     int64_t last_zero_time;
 } state_t;
 
-#define RS485_SEALEVEL
-
-int set_rts(int fd, int level)
-{
-    int status;
-    if (ioctl(fd, TIOCMGET, &status) == -1)
-    {
-        perror("setRTS(): TIOCMGET");
-        return 0;
-    }
-    if (level)
-        status |= TIOCM_RTS;
-    else
-        status &= ~TIOCM_RTS;
-    if (ioctl(fd, TIOCMSET, &status) == -1)
-    {
-        perror("setRTS(): TIOCMSET");
-        return 0;
-    }
-    return 1;
-}
-
 int RS485_write(acfr_sensor_t *sensor, char *d)
 {
-#ifdef RS485_SEALEVEL
-    // set the RTS pin to enable sending
-//	set_rts(sensor->fd, 1);
-#endif
-
     int ret = acfr_sensor_write(sensor, d, strlen(d));
-
-#ifdef RS485_SEALEVEL
-    // clear the RTS pin to enable receiving
-//    set_rts(sensor->fd, 0);
-#endif
-
     return ret;
-}
-
-   
-int chop_string(char *data, char *delim, char **tokens)
-{
-    char *token;
-    int i = 0;
-
-    token = strtok(data, delim);
-    while(token != NULL)
-    {
-        tokens[i++] = token;
-        token = strtok(NULL, delim);
-    }
-
-    return i;
 }
 
 int parse_thruster_response(state_t *state, char *d, int len)
 {
-    char *cmd_char;
-    char *tokens[8];
-  
+    // ESC board sends back telemetry with format b'[*<values>\r]
     if(d[0] == '*')
     {
-	    	acfrlcm_tunnel_thruster_power_t ttp;
-	    	ttp.utime = timestamp_now();
-	    	ttp.addr = 1;
+	    acfrlcm_tunnel_thruster_power_t ttp;
+	    ttp.utime = timestamp_now();
+	    ttp.addr = 1;
 	    ttp.voltage[0] = (double)(*((int32_t *)&d[1]))/1000;
 	    ttp.current[0] = (double)(*((int32_t *)&d[5]))/100000;
 	    ttp.current[1] = 0.0;
 	    ttp.voltage[1] = 0.0;
 	    ttp.temperature = (double)(*((int32_t *)&d[9]))/1000;
-
-		char channel[100];
-		snprintf(channel, 100, "NGA.ABLUEMINATION_POWER");
-	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, channel, &ttp);
-	    	
-	    	return 1;
-    }
-
-    cmd_char = &d[3];
-    //if(*cmd_char == 'T' || *cmd_char == 't')
-    //{
-//	return 1;
-  //  }
-
-    if(*cmd_char == 'S' || *cmd_char == 's')
-    {
-    	if(chop_string(d, ", ", tokens) == 4)
-    	{
-	    	acfrlcm_tunnel_thruster_power_t ttp;
-	    	ttp.utime = timestamp_now();
-	    	ttp.addr = 1;
-	    	ttp.voltage[0] = atof(tokens[1]);
-	    	ttp.current[0] = atof(tokens[2]);
-		ttp.voltage[1] = 0.0;
-		ttp.current[1] = 0.0;
-	    	ttp.temperature = atof(tokens[3]);
-		char channel[100];
-		snprintf(channel, 100, "NGA.ABLUEMINATION_POWER");
-	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, channel, &ttp);
-	    	
-	    	return 1;
-    	}
+	    acfrlcm_tunnel_thruster_power_t_publish(state->lcm, "NGA.ABLUEMINATION_POWER", &ttp);
+	    return 1;
     }
     return 0;
 }
@@ -162,9 +73,7 @@ int parse_thruster_response(state_t *state, char *d, int len)
 // Send a command and wait for a response and parse
 int tunnel_write_respond(state_t *state, char *d, int timeout)
 {
-    //printf("****Sending data: %s\n", d);
     int ret =  RS485_write(state->sensor, d);
-    
     char buf[64];
     memset(buf, 0, sizeof(buf));
     int bytes;
@@ -179,24 +88,20 @@ int tunnel_write_respond(state_t *state, char *d, int timeout)
     }
     else
         return -2;
-        
     return 0;                
 }
 
-    	 
 int send_tunnel_commands(state_t *state);
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
+    // make telemetry request message #?\r
     char msg[16];
     msg[0] = '#';
     msg[1] = '?';
     msg[2] = '\r';
-	//memset(msg, 0, sizeof(msg));
-	//sprintf(msg, "#?\r");
-	//acfr_sensor_write(state->sensor, "#?\r", 3);
 	tunnel_write_respond(state, msg, 10);
-//	printf("hb time=%d , cmd time=%d, diff = %d", hb->utime, state->command_utime, (hb->utime-state->command_utime)/10000); 
+    // check if a recent command is loaded into state struct, if yes send command else send zeros
 	if((hb->utime - state->command_utime)/10000 < COMMAND_TIMEOUT)
 	{  
 		send_tunnel_commands(state);
@@ -215,16 +120,13 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
 int send_tunnel_commands(state_t *state)
 {
-	// Send the thrust values to the controllers
+	// Send the thrust values to the controllers format b'[#!<values>\r]
 	char msg[64];
 	msg[0] = '#';
-        msg[1] = '!';
+    msg[1] = '!';
 	memcpy(&msg[2], &state->stb_bottom, 12);
 	msg[14] = '\r';
-//	printf("%d, %d, %d, %d, %d, %d\r", state->stb_bottom, state->stb_middle, state->stb_top, state->port_bottom, state->port_middle, state->port_top);
-	acfr_sensor_write(state->sensor, msg, 15);
-	//tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
-	
+	acfr_sensor_write(state->sensor, msg, 15);	
 	return 1;
 }	
 
@@ -250,7 +152,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     double rudder_percentage = mot->tail_rudder/(12*M_PI/180);
     if (fabs(rudder_percentage) > 1.0)
         rudder_percentage = rudder_percentage/fabs(rudder_percentage);
-
+    rudder_percentage *= state->invert_rudder;
     if (rudder_percentage < 0.0){
         rudder_port = thrust_max_value-fabs(rudder_percentage)*(thrust_max_value-rudder_min_value);
         rudder_stb = thrust_max_value+fabs(rudder_percentage)*(rudder_max_value-thrust_max_value);
@@ -272,7 +174,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     double elevator_percentage = mot->tail_elevator/(12*M_PI/180);
     if (fabs(elevator_percentage) > 1.0)
         elevator_percentage = elevator_percentage/fabs(elevator_percentage);
-
+    elevator_percentage *= state->invert_elevator;
     if (elevator_percentage < 0.0){
         elevator_top = thrust_max_value+fabs(elevator_percentage)*(elevator_max_value-thrust_max_value);
         elevator_mid = thrust_max_value;
@@ -306,7 +208,6 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     bluey.stb_bottom = state->stb_bottom; 
     char channel[100];
     snprintf(channel, 100, "NGA.ABLUEMINATION_THRUST");
-    //acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
 
     if(state->port_top == 0 && state->port_middle == 0 && state->port_bottom == 0 && state->stb_top == 0 && state->stb_middle == 0 && state->stb_bottom == 0)
     {
@@ -335,8 +236,6 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     	}
     }
 }
-        
-
 
 int program_exit;
 void
@@ -366,16 +265,7 @@ int main (int argc, char *argv[])
         return 0;
         
     // Read the PSU addresses we are interested in
-     char key[64];
- //    sprintf(key, "%s.addrs", rootkey);
- //    int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 2);
- //    if(num_thrusters != 2)
-	// {
-	// 	printf("Wrong number of thruster addresses\n");
-	// 	acfr_sensor_destroy(state.sensor);
-	// 	return 0;
-	// }
-
+    char key[64];
     sprintf(key, "%s.pt_cw", rootkey);
     state.pt_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.pm_cw", rootkey);
@@ -387,6 +277,10 @@ int main (int argc, char *argv[])
     sprintf(key, "%s.sm_cw", rootkey);
     state.sm_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.sb_cw", rootkey);
+    state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.invert_rudder", rootkey);
+    state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.invert_elevator", rootkey);
     state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.max_rpm", rootkey);
     state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
@@ -403,6 +297,10 @@ int main (int argc, char *argv[])
         state.sm_cw = -1;
     if (state.sb_cw == 0)
         state.sb_cw = -1;
+    if (state.invert_rudder == 0)
+        state.invert_rudder = -1;
+    if (state.invert_elevator == 0)
+        state.invert_elevator = -1;
 
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
