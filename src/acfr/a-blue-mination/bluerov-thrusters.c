@@ -37,12 +37,12 @@ typedef struct
     acfr_sensor_t *sensor;
     int64_t command_utime;
     int max_rpm;
-    int port_top;
-    int port_middle;
-    int port_bottom;
-    int stb_top;
-    int stb_middle;
-    int stb_bottom;
+    int16_t stb_bottom;
+    int16_t stb_middle;
+    int16_t stb_top;
+    int16_t port_bottom;
+    int16_t port_middle;
+    int16_t port_top;
     int8_t pt_cw;
     int8_t pm_cw;
     int8_t pb_cw;
@@ -112,9 +112,31 @@ int parse_thruster_response(state_t *state, char *d, int len)
 {
     char *cmd_char;
     char *tokens[8];
-    
+  
+    if(d[0] == '*')
+    {
+	    	acfrlcm_tunnel_thruster_power_t ttp;
+	    	ttp.utime = timestamp_now();
+	    	ttp.addr = 1;
+	    ttp.voltage[0] = (double)(*((int32_t *)&d[1]))/1000;
+	    ttp.current[0] = (double)(*((int32_t *)&d[5]))/100000;
+	    ttp.current[1] = 0.0;
+	    ttp.voltage[1] = 0.0;
+	    ttp.temperature = (double)(*((int32_t *)&d[9]))/1000;
+
+		char channel[100];
+		snprintf(channel, 100, "NGA.ABLUEMINATION_POWER");
+	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, channel, &ttp);
+	    	
+	    	return 1;
+    }
+
     cmd_char = &d[3];
-    
+    //if(*cmd_char == 'T' || *cmd_char == 't')
+    //{
+//	return 1;
+  //  }
+
     if(*cmd_char == 'S' || *cmd_char == 's')
     {
     	if(chop_string(d, ", ", tokens) == 4)
@@ -124,6 +146,8 @@ int parse_thruster_response(state_t *state, char *d, int len)
 	    	ttp.addr = 1;
 	    	ttp.voltage[0] = atof(tokens[1]);
 	    	ttp.current[0] = atof(tokens[2]);
+		ttp.voltage[1] = 0.0;
+		ttp.current[1] = 0.0;
 	    	ttp.temperature = atof(tokens[3]);
 		char channel[100];
 		snprintf(channel, 100, "NGA.ABLUEMINATION_POWER");
@@ -138,8 +162,8 @@ int parse_thruster_response(state_t *state, char *d, int len)
 // Send a command and wait for a response and parse
 int tunnel_write_respond(state_t *state, char *d, int timeout)
 {
-    printf("****Sending data: %s\n", d);
-    int ret = RS485_write(state->sensor, d);
+    //printf("****Sending data: %s\n", d);
+    int ret =  RS485_write(state->sensor, d);
     
     char buf[64];
     memset(buf, 0, sizeof(buf));
@@ -160,22 +184,46 @@ int tunnel_write_respond(state_t *state, char *d, int timeout)
 }
 
     	 
-
+int send_tunnel_commands(state_t *state);
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
     char msg[16];
-	memset(msg, 0, sizeof(msg));
-	sprintf(msg, "#01S\r");
-	tunnel_write_respond(state, msg, COMMAND_TIMEOUT);	    
+    msg[0] = '#';
+    msg[1] = '?';
+    msg[2] = '\r';
+	//memset(msg, 0, sizeof(msg));
+	//sprintf(msg, "#?\r");
+	//acfr_sensor_write(state->sensor, "#?\r", 3);
+	tunnel_write_respond(state, msg, 10);
+//	printf("hb time=%d , cmd time=%d, diff = %d", hb->utime, state->command_utime, (hb->utime-state->command_utime)/10000); 
+	if((hb->utime - state->command_utime)/10000 < COMMAND_TIMEOUT)
+	{  
+		send_tunnel_commands(state);
+	}
+	else
+	{
+		state->port_top = 0.0;
+		state->port_middle = 0.0;
+		state->port_bottom = 0.0;
+		state->stb_top = 0.0;
+		state->stb_middle = 0.0;
+		state->stb_bottom = 0.0;
+		send_tunnel_commands(state);
+	}	
 }
 
 int send_tunnel_commands(state_t *state)
 {
 	// Send the thrust values to the controllers
 	char msg[64];
-	sprintf(msg, "#%02uT %d, %d, %d, %d, %d, %d\r", 01, state->stb_bottom, state->stb_middle, state->stb_top, state->port_bottom, state->port_middle, state->port_top);
-	tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
+	msg[0] = '#';
+        msg[1] = '!';
+	memcpy(&msg[2], &state->stb_bottom, 12);
+	msg[14] = '\r';
+//	printf("%d, %d, %d, %d, %d, %d\r", state->stb_bottom, state->stb_middle, state->stb_top, state->port_bottom, state->port_middle, state->port_top);
+	acfr_sensor_write(state->sensor, msg, 15);
+	//tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
 	
 	return 1;
 }	
@@ -258,7 +306,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     bluey.stb_bottom = state->stb_bottom; 
     char channel[100];
     snprintf(channel, 100, "NGA.ABLUEMINATION_THRUST");
-    acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
+    //acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
 
     if(state->port_top == 0 && state->port_middle == 0 && state->port_bottom == 0 && state->stb_top == 0 && state->stb_middle == 0 && state->stb_bottom == 0)
     {
@@ -278,7 +326,8 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     	if (sent_last == 1)
     	{
             send_tunnel_commands(state);
-    	    sent_last = 0;
+    	    acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
+	    sent_last = 0;
     	}
             else
     	{

@@ -17,9 +17,9 @@ if (len(sys.argv) == 1):
         for r in numpy.arange(-12, 12, 1.0):
             msg = auv_nga_motor_command_t()
             msg.utime = int(time.time() * 1000000)
-            msg.tail_thruster = 120
-            msg.tail_rudder = r/180*3.15
-            msg.tail_elevator = e/180*3.14
+            msg.tail_thruster = 200
+            msg.tail_rudder = 0.0 #-12.0*3.15/180.0
+            msg.tail_elevator = -12.3*3.15/180 #0.0
             msg.vert_fore = 0
             msg.vert_aft = 0
             msg.lat_fore = 0
