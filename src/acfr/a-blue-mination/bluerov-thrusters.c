@@ -192,10 +192,8 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     msg[0] = '#';
     msg[1] = '?';
     msg[2] = '\r';
-	//memset(msg, 0, sizeof(msg));
-	//sprintf(msg, "#?\r");
-	//acfr_sensor_write(state->sensor, "#?\r", 3);
-	tunnel_write_respond(state, msg, 10);
+    //tunnel write respond makes the I2C hang and bad things happen
+//	tunnel_write_respond(state, msg, 10);
 //	printf("hb time=%d , cmd time=%d, diff = %d", hb->utime, state->command_utime, (hb->utime-state->command_utime)/10000); 
 	if((hb->utime - state->command_utime)/10000 < COMMAND_TIMEOUT)
 	{  
@@ -215,7 +213,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
 int send_tunnel_commands(state_t *state)
 {
-	// Send the thrust values to the controllers
+	// Send the thrust values to the controllers		
 	char msg[64];
 	msg[0] = '#';
         msg[1] = '!';
@@ -223,8 +221,17 @@ int send_tunnel_commands(state_t *state)
 	msg[14] = '\r';
 //	printf("%d, %d, %d, %d, %d, %d\r", state->stb_bottom, state->stb_middle, state->stb_top, state->port_bottom, state->port_middle, state->port_top);
 	acfr_sensor_write(state->sensor, msg, 15);
-	//tunnel_write_respond(state, msg, COMMAND_TIMEOUT_THRUST);
-	
+	acfrlcm_auv_abluemination_t bluey;
+    	bluey.utime = timestamp_now();
+    	bluey.port_top = state->port_top;
+    	bluey.port_middle = state->port_middle;
+    	bluey.port_bottom = state->port_bottom;
+    	bluey.stb_top = state->stb_top;
+    	bluey.stb_middle = state->stb_middle;
+    	bluey.stb_bottom = state->stb_bottom; 
+    	char channel[100];
+    	snprintf(channel, 100, "NGA.ABLUEMINATION_THRUST");
+    	acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
 	return 1;
 }	
 
@@ -296,18 +303,6 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     state->stb_middle   =   state->sm_cw*((rudder_stb+   elevator_mid)/2)*thrust_percentage*MAX_DSHOT_VALUE;
     state->stb_bottom   =   state->sb_cw*((rudder_stb+   elevator_btm)/2)*thrust_percentage*MAX_DSHOT_VALUE;
 
-    acfrlcm_auv_abluemination_t bluey;
-    bluey.utime = timestamp_now();
-    bluey.port_top = state->port_top;
-    bluey.port_middle = state->port_middle;
-    bluey.port_bottom = state->port_bottom;
-    bluey.stb_top = state->stb_top;
-    bluey.stb_middle = state->stb_middle;
-    bluey.stb_bottom = state->stb_bottom; 
-    char channel[100];
-    snprintf(channel, 100, "NGA.ABLUEMINATION_THRUST");
-    //acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
-
     if(state->port_top == 0 && state->port_middle == 0 && state->port_bottom == 0 && state->stb_top == 0 && state->stb_middle == 0 && state->stb_bottom == 0)
     {
 	int64_t time_now = timestamp_now();
@@ -326,7 +321,6 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     	if (sent_last == 1)
     	{
             send_tunnel_commands(state);
-    	    acfrlcm_auv_abluemination_t_publish(state->lcm, channel, &bluey);
 	    sent_last = 0;
     	}
             else
@@ -367,14 +361,6 @@ int main (int argc, char *argv[])
         
     // Read the PSU addresses we are interested in
      char key[64];
- //    sprintf(key, "%s.addrs", rootkey);
- //    int num_thrusters = bot_param_get_int_array(state.sensor->param, key, state.addrs, 2);
- //    if(num_thrusters != 2)
-	// {
-	// 	printf("Wrong number of thruster addresses\n");
-	// 	acfr_sensor_destroy(state.sensor);
-	// 	return 0;
-	// }
 
     sprintf(key, "%s.pt_cw", rootkey);
     state.pt_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
