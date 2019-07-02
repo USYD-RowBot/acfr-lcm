@@ -40,13 +40,14 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
         // Wait for a response with a timeout
         memset(resp, 0, sizeof(resp));
         int ret = acfr_sensor_read_timeoutms(state->sensors[sensor_count], resp, sizeof(resp), 1e3/(state->num_oas));
+        //int ret = 1;
         if(ret > 0){
             // parse out the range value leaving the m off then end
-             micron.utime = timestamp_now();
+            micron.utime = timestamp_now();
             memset(value, 0, sizeof(value));
             //printf("%s", resp);
             strncpy(value, resp, strlen(resp) - 1);
-             micron.altitude = atof(value);
+            micron.altitude = atof(value);
             if (micron.altitude > 1e-4)
             {
                 strcpy(pub_channel, state->channel_name);
@@ -109,7 +110,7 @@ int
 main (int argc, char *argv[])
 {
     state_t state;
-    //memset(&state, 0, sizeof(state_t));
+    memset(&state, 0, sizeof(state_t));
 
     // install the signal handler
     program_exit = 0;
@@ -138,7 +139,8 @@ main (int argc, char *argv[])
         io = io_tcp;
     else
         return -1;
-
+    printf("Device IO type: %s\n" , io_str);
+    printf("Device IO number: %i\n" , io);
     char **serial_devs;
     char **inet_ports;
     char *ip;
@@ -152,31 +154,45 @@ main (int argc, char *argv[])
     {
         sprintf(key, "%s.serial_dev", rootkey);
         serial_devs = bot_param_get_str_array_alloc(param, key);
-
+        for(int i=0; i<state.num_oas; i++)
+        {
+            printf("Device on port: %s\n" , serial_devs[i]);
+        }
         sprintf(key, "%s.baud", rootkey);
         baud = bot_param_get_int_or_fail(param, key);
+        printf("Device baud rate: %i\n" , baud);
 
         sprintf(key, "%s.parity", rootkey);
         parity = bot_param_get_str_or_fail(param, key);
+        printf("Device parity: %s\n" , parity);
     }
 
     if(io == io_tcp)
     {
         sprintf(key, "%s.ip", rootkey);
         ip = bot_param_get_str_or_fail(param, key);
-
+        printf("Device IP: %s\n" , ip);
         sprintf(key, "%s.ports", rootkey);
         inet_ports = bot_param_get_str_array_alloc(param, key);
     }
 
     int lcm_fd = lcm_get_fileno(state.lcm);
+    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    state.sensors[0] = acfr_sensor_create(state.lcm, rootkey);
+    if(state.sensors[0] == NULL)
+        return 0;
+
+    acfr_sensor_canonical(state.sensors[0], '\r', '\n');
 
     printf("oas devs found = %d\n" , state.num_oas);
-    for(int i=0; i<state.num_oas; i++)
+    for(int i=1; i<state.num_oas; i++)
     {
+        memset(&state.sensors[i], 0, sizeof(acfr_sensor_t));
         if(io == io_tcp)
         {
             printf("*");
+            printf("Opening device on port: %s\n" , inet_ports[i]);
             state.sensors[i]->io_type = io;
             state.sensors[i]->ip = ip;
             state.sensors[i]->inet_port = inet_ports[i];
@@ -184,11 +200,19 @@ main (int argc, char *argv[])
         else
         {
             printf("#");
+            printf("Opening device on port: %s\n" , serial_devs[i]);
+            state.sensors[i] = state.sensors[0];
             state.sensors[i]->io_type = io;
+            printf("Device IO type: %i\n" , state.sensors[i]->io_type);
             state.sensors[i]->serial_dev = serial_devs[i];
+            printf("Device on port: %s\n" , state.sensors[i]->serial_dev);
             state.sensors[i]->baud = baud;
+            printf("Device baud rate: %i\n" , state.sensors[i]->baud);
             state.sensors[i]->parity = parity;
+            printf("Device parity: %s\n" , state.sensors[i]->parity);
+            state.sensors[i]->port_open = 0;
         }
+        printf("Opened device on port: %s\n" , serial_devs[i]);
         acfr_sensor_open(state.sensors[i]);
         acfr_sensor_canonical(state.sensors[i], '\r', '\n');
     }
