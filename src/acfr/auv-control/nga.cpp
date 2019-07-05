@@ -167,7 +167,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     memset(&mc, 0, sizeof(mc));
     cp.utime = mc.utime = timestamp_now();
 
-    bool thruster_flow_dependant = true, elevator_disabled = false;
+    bool thruster_flow_dependant = false, elevator_disabled = false;
     double prop_rpm = 0.0;
     double pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0;
 
@@ -204,7 +204,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             }
         else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
             {
-                pitch = -pid(&this->gains_depth, nav.altitude, cmd.altitude, dt, &cp.depth);
+                pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &cp.altitude);
                 std::cout << "ALTITUDE_MODE" << std::endl;         
             }
         else
@@ -351,6 +351,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         else if (fabs(diff_heading) > M_PI/6){
             mc.vert_fore = 0.0;
             mc.vert_aft = 0.0;
+	    mc.tail_thruster = 0.0;
             // std::cout << "tunnel turning";
             // adding lat tunnel efficiency code here for tests
             if (thruster_flow_dependant)
@@ -416,8 +417,8 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     {
 
         //tunnel turning when switch is back
-        fore += (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
-        aft -= (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+        fore -= (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+        aft += (sc.values[RC_AILERON] - RC_OFFSET) * 1500/RC_HALF_RANGE;
         if (fore > 1500)
             fore = 1500;
         if (aft > 1500)

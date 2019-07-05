@@ -41,6 +41,8 @@ typedef struct
     int8_t st_cw;
     int8_t sm_cw;
     int8_t sb_cw;
+    int8_t invert_rudder;
+    int8_t invert_elevator;
     int64_t zero_time;
     int64_t last_zero_time;
 } state_t;
@@ -161,7 +163,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         thrust_percentage = thrust_percentage/fabs(thrust_percentage);
     // Rudder percentage values
     double rudder_max_value = 40.0/100.0;
-    double rudder_min_value = 22.5/100.0;
+    double rudder_min_value = 1.0/100.0;
     double rudder_port = 0.0;
     double rudder_stb = 0.0;
     double rudder_percentage = mot->tail_rudder/(12*M_PI/180);
@@ -181,8 +183,8 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         rudder_stb = thrust_max_value;
     }
     // Elevator percentage values
-    double elevator_max_value = 37.5/100.0;
-    double elevator_min_value = 25.0/100.0;
+    double elevator_max_value = 40.0/100.0;
+    double elevator_min_value = 1.0/100.0;
     double elevator_top = 0.0;
     double elevator_mid = 0.0;
     double elevator_btm = 0.0;
@@ -282,9 +284,9 @@ int main (int argc, char *argv[])
     sprintf(key, "%s.sb_cw", rootkey);
     state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.invert_rudder", rootkey);
-    state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    state.invert_rudder = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.invert_elevator", rootkey);
-    state.sb_cw = bot_param_get_boolean_or_fail(state.sensor->param, key);
+    state.invert_elevator = bot_param_get_boolean_or_fail(state.sensor->param, key);
     sprintf(key, "%s.max_rpm", rootkey);
     state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
 

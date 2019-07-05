@@ -4,26 +4,29 @@ import sys
 
 
 sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
-from senlcm import  acfr_parosci_t
+from acfrlcm import auv_acfr_nav_t
+from senlcm import tcm_mag_t
 
 
-def handle_depth(channel_name, data):
-    msg = acfr_psu_t.decode(data)
-    volts[psu.address] = psu.voltage
-    amps[psu.address] = psu.current
-    temp[psu.address] = psu.temperature
+def handle_acfr_nav(channel_name, data):
+    msg = auv_acfr_nav_t.decode(data)
+    global nav_pitch
+    nav_pitch = msg.pitch;
 
-    out_str = ''
-    total_power = 0
-    for key in volts.keys():
-        power = volts[key] * amps[key]
-        total_power += power
-        out_str += '{:2.2f}V\t{:3.2f}A\t{:3.2f}W\t{:2.2f}C\t\t'.format(volts[key], amps[key], power, temp[key])
-    print out_str + '{:3.2f}W'.format(total_power)
+def handle_tcm(channel_name, data):
+    msg = tcm_mag_t.decode(data)
+    global sen_pitch
+    sen_pitch = msg.pitch;
+
+
+nav_pitch = 0.0
+sen_pitch = 0.0
 
 if __name__ == '__main__':
     lc = lcm.LCM()
-    lc.subscribe('NGA.PSU', handle_acfr_psu)
+    lc.subscribe('NGA.ACFR_NAV', handle_acfr_nav)
+    lc.subscribe('NGA.TCM_MAG', handle_tcm)
     while(1):
         lc.handle()
+        print "{:8.1f} {:8.1f}".format(nav_pitch * 180 / 3.14159, sen_pitch * 180 / 3.14159)
 

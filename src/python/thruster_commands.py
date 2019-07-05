@@ -9,7 +9,7 @@ from acfrlcm import auv_nga_motor_command_t
 
 def handle_acfr_psu(channel_name, data):
     msg = auv_nga_motor_command_t.decode(data)
-    print msg.vert_fore, msg.vert_aft
+    print msg.tail_elevator
 
 if __name__ == '__main__':
     lc = lcm.LCM()

@@ -1,0 +1,97 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    <desc>
+        This is a test mission
+    </desc>
+    <global>
+    <location lat="-33.839459" lon="151.254380" />
+        <turn_radius m='2' />
+        <drop_distance m="4" />
+        <drop_angle deg="40" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+    <primitive>
+        <goto>
+	    <position x="0" y="10" z="0"/>
+            <heading deg="270" />
+            <timeout t="1200" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+	    <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="5" z="0"/>
+            <heading deg="270" />
+            <timeout t="20" />
+            <velocity x="1.0" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="0" z="3"/>
+            <heading deg="270" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="-15" z="3"/>
+            <heading deg="270" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="-30" z="3"/>
+            <heading deg="270" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="-45" z="3"/>
+            <heading deg="270" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="0" y="-60" z="3"/>
+            <heading deg="270" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+	</primitive>
+    	<primitive>
+        <goto>
+	    <position x="15" y="-60" z="3"/>
+            <heading deg="0" />
+            <timeout t="30" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+	    <position x="20" y="-60" z="0"/>
+            <heading deg="0" />
+            <timeout t="40" />
+            <velocity x="1.0" />
+	    <depth mode = "depth" />
+	    <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>
