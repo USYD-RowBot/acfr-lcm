@@ -31,6 +31,27 @@ void onNavLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	lp->onNav(nav);
 }
 
+// Obs Avoidance callback
+void onOALCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::oa_t *oa, LocalPlanner *lp)
+{
+	lp->onOA(oa);
+}
+
+// oa callback
+void onfwdLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::micron_sounder_t *fwd, LocalPlanner *lp)
+{
+	lp->onFwd(fwd);
+}
+
+// oa callback
+void ondwnLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::micron_sounder_t *dwn, LocalPlanner *lp)
+{
+	lp->onDwn(dwn);
+}
+
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
@@ -51,16 +72,16 @@ void onGlobalStateLCM(const lcm::ReceiveBuffer* rbuf,
 void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 		const perllcm::heartbeat_t *heartbeat, LocalPlanner *lp)
 {
-	// We haven't reached our goal but don't have any more waypoints.
+	// We haven't reached our goal but don't have any more waypoints. Or we are in our hold position and waiting trill we drift too far.
 	// 	Let's recalculate a feasible path.
 	// Addition: Make the replanning stage occur at a set period
 	//        if( (lp->waypoints.size() == 0) && (lp->getDestReached() == false) && (lp->getNewDest() == true))// ||  (( timestamp_now() - lp->getReplanTime() )/1000000 > 5) ) // if we want faster replanning, or a different number than the heartbeat, this callback needs to be made faster and this variable can be used
 	static long count = 0;
 	//	double timeSinceReplan = (timestamp_now() - lp->getReplanTime()) / 1000000.;
 
-	if ((lp->getDestReached() == false && lp->getNewDest() == true) &&
-	//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
-			(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()))
+	if ((((lp->getDestReached() == false && lp->getNewDest() == true)|| (lp->getHoldmode() == true)) &&
+		//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
+				(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()) ))
 	{
 
 		if (lp->getWaypointTimePassedSec() > lp->getWaypointTimeout())
@@ -93,15 +114,16 @@ LocalPlanner::LocalPlanner() :
 		depthMode(0), diveMode(0), destID(0), turningRadius(1.0), maxPitch(0),
 		lookaheadVelScale(0), maxDistFromLine(0), maxAngleFromLine(0),
 		velChangeDist(1.0), defaultLegVel(1.0), waypointTimeout(1e3),
-		forwardBound(0.5), sideBound(2.0), distToDestBound(2.0),
+		forwardBound(0.5), sideBound(2.0), depthBound(0.25), headingBound(0.1), distToDestBound(2.0),
 		maxAngleWaypointChange(0.0), radiusIncrease(1.0), maxAngle(300),
 		wpDropDist(4.0), wpDropAngle(M_PI / 18.), replanInterval(1.5),
-		waypointTime(timestamp_now()), replanTime(timestamp_now())
+		waypointTime(timestamp_now()), replanTime(timestamp_now()), diffSteer(false), aborted(false), holdMode(false)
 {
 	gpState.state = acfrlcm::auv_global_planner_state_t::IDLE;
 
 	fp.open("/tmp/log_waypoint.txt", ios::out);
 	fp_wp.open("/tmp/log_waypoint_now.txt", ios::out);
+
 
 	cout << endl << endl << endl << "LocalPlanner started" << endl;
 }
@@ -115,6 +137,7 @@ LocalPlanner::~LocalPlanner()
 		fp_wp.close();
 }
 
+
 int LocalPlanner::subscribeChannels()
 {
 	// sunscribe to the required LCM messages
@@ -122,13 +145,24 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".PATH_COMMAND", onPathCommandLCM, this);
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", onGlobalStateLCM, this);
 	lcm.subscribeFunction("HEARTBEAT_5HZ", recalculate, this);
-        return 1;
+	lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
+	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_FWD", onfwdLCM, this);
+	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_DWN", ondwnLCM, this);
+    return 1;
 }
 
-
+int LocalPlanner::initialise()
+{
+	subscribeChannels();
+	this->init();
+	
+	return 1;
+}
+	
 /**
  * Copy current nav solution and process the waypoints
  */
+/*
 int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 {
 
@@ -161,11 +195,13 @@ int LocalPlanner::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 
 	return 1;
 }
+*/
 
 /**
  * We have received a new path command.
  * Let's calcualte a new path.
  */
+ /*
 int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 {
 	bool status = false;
@@ -200,10 +236,10 @@ int LocalPlanner::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 
 	return status;
 }
-
+*/
 #define DIVE_REV_VEL -0.5
 //#define DIVE_REV_VEL 0 // for lab testing
-#define DIVE_PICTH (10.0 / 180.0 * M_PI)
+#define DIVE_PITCH (10.0 / 180.0 * M_PI)
 #define DIVE_DEPTH 0.5
 
 /**
@@ -226,19 +262,40 @@ int LocalPlanner::calculateWaypoints()
 			<< destPose.getY() << "," << destPose.getZ() << " < "
 			<< destPose.getYawRad() / M_PI * 180 << endl;
 
-	Pose3D destPoseRel = getRelativePose(destPose);
-	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
-	cout << "Dest rel: X=" << destPoseRel.getX()
-			<< ", angle=" << relAngle/M_PI*180 << endl;
-
 	bool success = false;
 	vector<Pose3D> wps;
+	
+	
+	// Special case where we have no X or Y so it's a depth change or a heading change without moving
+	if((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()))
+	{
+		cout << "Depth or Heading change" << endl;
+	
+		wps.push_back(destPose);
+		waypoints.clear();
+		waypoints = wps;	
+		
+		// Save the start pose and start velocity
+		startPose = currPose;
+
+		printWaypoints();
+		publishWaypoints();
+
+		return true;
+	}
+
+	Pose3D destPoseRel = getRelativePose(destPose);
+	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
+	cout << "Dest rel: X=" << destPoseRel.getX() << " Y=" << destPoseRel.getY()
+	<< ", angle=" << relAngle/M_PI*180 << " Diff Steer mode=" << diffSteer << endl;
 
 	// If the waypoint is just ahead of us no need to use Dubins. We will rely
 	//	on the controller to get us there.
-	if (destPoseRel.getX() < 0 ||
-	    destPoseRel.getX() > 2*turningRadius ||
-		fabs(relAngle) > 45./180*M_PI )
+	if ((destPoseRel.getX() < 0 ||
+	    ((destPoseRel.getX() > 2*turningRadius)) ||
+		((fabs(relAngle) > 45./180*M_PI) && !diffSteer) || 
+		((fabs(destPoseRel.getX()) > 2) && (fabs(destPoseRel.getY() > 2)) && diffSteer))&& !aborted)
+	//if(0)
 	{
 		DubinsPath dp;
 		dp.setCircleRadius(turningRadius);
@@ -307,18 +364,56 @@ int LocalPlanner::onGlobalState(
 {
 	cout << "Change of global state to: " << (int) (gpStateLCM->state) << endl;
 	gpState = *gpStateLCM;
-
-	/* for the moment, send a STOP command to the low level controller
-	 * for transitions into any state but RUN.  This may need to be
-	 * modified for more complex PAUSE or ABORT behaviours.
+	aborted = false;	
+	/* State change to IDLE should immediately kill motors and stop path replanning
+	 * State change to RUN from PAUSE should move the robot to it's last position then continue the mission
+	 * State change to PAUSE should hold position and return to last position if drifting occurs
+	 * State change to ABORT should drive the robot to the surface unless it is already at the surface
 	 */
-	if (gpState.state != acfrlcm::auv_global_planner_state_t::RUN)
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::IDLE)
 	{
+		//reset waypoints
+		waypoints.clear();
+		//Reset flags
+		newDest = false;
+		destReached = true;		
 		// form a STOP message to send
 		acfrlcm::auv_control_t cc;
 		cc.utime = timestamp_now();
 		cc.run_mode = acfrlcm::auv_control_t::STOP;
 		lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
+	}
+
+	if ((gpState.state == acfrlcm::auv_global_planner_state_t::RUN) && (holdMode)){
+		//hold mode is off
+		holdMode = false;
+		//check to see if we are resuming or starting a new mission
+		if (!newDest){
+			newDest = true;
+			oldPose = destPose;
+			destPose = holdPose;
+			resetWaypointTime(timestamp_now());
+		}
+		calculateWaypoints();
+	}
+
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE){
+		//save destination for later
+		holdPose = destPose;
+		//make the hold point just ahead of us
+		destPose.setPosition(currPose.getX()+currVel[0], currPose.getY()+currVel[1], currPose.getZ()+currVel[2]);
+		destPose.setRollPitchYawRad(0, 0, currPose.getYawRad());
+		//set flags
+		holdMode = true;
+		newDest = false;
+		waypoints.clear();
+		calculateWaypoints();
+	}
+	
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
+	{
+		cout << "Received ABORT via LCM" << endl;
+		execute_abort();
 	}
 	return 1;
 }
@@ -327,8 +422,7 @@ int LocalPlanner::loadConfig(char *program_name)
 {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
-	if (param == NULL
-	)
+	if (param == NULL)
 		return 0;
 
 	char rootkey[64];
@@ -367,6 +461,12 @@ int LocalPlanner::loadConfig(char *program_name)
 
 	sprintf(key, "%s.side_bound", rootkey);
 	sideBound = bot_param_get_double_or_fail(param, key);
+	
+	sprintf(key, "%s.depth_bound", rootkey);
+	depthBound = bot_param_get_double_or_fail(param, key);
+
+	sprintf(key, "%s.heading_bound", rootkey);
+	headingBound = bot_param_get_double_or_fail(param, key);
 
 	sprintf(key, "%s.drop_dist", rootkey);
 	wpDropDist = bot_param_get_double_or_fail(param, key);
@@ -389,6 +489,11 @@ int LocalPlanner::loadConfig(char *program_name)
 	sprintf(key, "%s.replan_interval", rootkey);
 	replanInterval = bot_param_get_double_or_fail(param, key);
 
+	sprintf(key, "%s.fwd_distance_slowdown", rootkey);
+	fwd_distance_slowdown = bot_param_get_double_or_fail(param, key);
+	
+    sprintf(key, "%s.fwd_distance_min", rootkey);
+	fwd_distance_min = bot_param_get_double_or_fail(param, key);
 	return 1;
 }
 
@@ -415,6 +520,91 @@ int LocalPlanner::process()
 	return 0;
 }
 
+// Velocity adjustments based on obstacle avoidance
+// Taken from Sirius trajectory.c
+
+double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitude)
+{
+    double obs_velocity = desired_velocity;
+    double alt_velocity = desired_velocity;
+
+    if((timestamp_now() - oa.utime) < 5e6)
+    {
+        if (fwd_distance_min > 0 &&  oa.forward_distance> 0)
+        {
+            /*
+      	    Obstacle avoidance slowdown.  The desired velocity will
+	        be ramped down linearly between the slowdown distance and
+	        the minimum distance.
+
+            speed
+            ^         ____________ default speed
+            |        /
+            |       /
+            |______/____________________________>  dist
+		    ^  ^
+	         min   slowdown
+            */
+            if (oa.forward_distance < fwd_distance_min)
+	        {
+	            obs_velocity = 0.0;
+                cout << "Too close to obstacle. Setting xy_vel to " << obs_velocity << endl;
+	        } 
+            else if (oa.forward_distance < fwd_distance_slowdown) 
+            {
+		        double speedRampSlope = desired_velocity/(fwd_distance_slowdown - fwd_distance_min);
+		        obs_velocity = speedRampSlope*(oa.forward_distance - fwd_distance_min);
+                cout << "Too close obstacle. Setting xy_vel to " << obs_velocity << endl;
+	        }
+        }
+
+
+        // now check the altitude following and slow down if we are outside of the desired
+        // following band
+        if((getDepthMode() == acfrlcm::auv_path_command_t::ALTITUDE) && oa.altitude > 0)
+        {
+            /*
+            Altitude following slowdown.  The desired velocity will
+            be ramped down linearly as a function of the altitude error. Note that the desired
+            altitude is stored in tm->depth.value
+
+                         speed
+                          ^
+                   __ ___|______ default speed
+                   /     |      \
+          ___   __/      |       \______________ 0.1 speed
+                         |
+             ___________0|______________________>   alt err           
+                  ^  ^          ^  ^
+                         slowdown  max
+            */ 
+            // tm->depth.value is the desired altitude
+    	    double altitude = fmin(oa.altitude, navAltitude);
+	        double alt_error = altitude - desired_altitude;
+            double alt_error_max = 0.75; // maximum slowdown when off by 1.0m
+            double alt_error_slowdown = 0.25; // start slowing down when off by 0.25m
+            double max_slowdown_factor = 0.1; // percentage of desired speed for max slowdown
+
+            // FIXME: Create different behaviour for too high/low.  For now consider only low altitude.
+            if ( alt_error < -alt_error_max )
+	        {
+		        alt_velocity = max_slowdown_factor * desired_velocity;
+	        } 
+            else if ( alt_error <  -alt_error_slowdown && alt_error_max - alt_error_slowdown > 0 ) 
+            {
+                // calculate the normalised slope of the slowdown
+		        double speedRampSlope = (max_slowdown_factor-1)/(alt_error_max - alt_error_slowdown);
+                // calculate the normalised intercept of the slowdown
+                double speedRampIntercept = 1 - speedRampSlope*alt_error_slowdown;
+                // convert the altitude error to a desired speed as a function of the default speed
+		        alt_velocity = desired_velocity*(speedRampSlope*(fabs(alt_error)) + speedRampIntercept);
+	        }
+        } 
+    }
+    return fmin(obs_velocity, alt_velocity);
+}
+
+
 /**
  * Look at the next waypoint and
  * 1) remove it from the list if we have reached it or
@@ -422,20 +612,31 @@ int LocalPlanner::process()
  */
 int LocalPlanner::processWaypoints()
 {
-
-	// Nothing to do
+	Pose3D wp;
 	if (waypoints.size() == 0)
 	{
+		// Nothing to do
 		return 0;
 	}
-
 	// Get the next waypoint
-	Pose3D wp = waypoints.at(0);
+	wp = waypoints.at(0);
+
+	bool atDest = false;
+	// Check if we are there yet taking into consideration the depth/heading only commands
+/*	if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getZ() != wp.getZ()))
+		atDest = pointWithinHeading(wp);
+	else if((wp.getX() != wp.getX()) && (wp.getY() != wp.getY()) && (wp.getYawRad() != wp.getYawRad()))
+	{
+		atDest = pointWithinDepth(wp);
+		cout << "Checking Depth" << endl;
+	}
+	else
+	*/
+		atDest = pointWithinBound(wp);
 
 	// We have reached the next waypoint
-	if (pointWithinBound(wp))
+	if (atDest)
 	{
-
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),
 				wp.getY(),
@@ -450,19 +651,17 @@ int LocalPlanner::processWaypoints()
 		{
 			cout << timestamp_now() << " No more waypoints!" << endl;
 
-			if (pointWithinBound(destPose))
+			if (pointWithinBound(destPose) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+			{
+				cout << "Reached hold location" << endl;
+			}
+			else if ((pointWithinBound(destPose) && !holdMode))
 			{
 				setDestReached(true);
 				cout << "We have reached our destination :)" << endl;
+				return getDestReached();
 			}
 
-//			// form a STOP message to send
-//			acfrlcm::auv_control_t cc;
-//			cc.utime = timestamp_now();
-//			cc.run_mode = acfrlcm::auv_control_t::STOP;
-//			lcm.publish("AUV_CONTROL", &cc);
-
-			return getDestReached();
 		}
 
 	}
@@ -471,32 +670,45 @@ int LocalPlanner::processWaypoints()
 
 	// Calculate desired heading to way point
 	//  This is not our bearing to the point but a global angle
-	double desHeading = atan2(wp.getY() - currPose.getY(),
+	// Special case where we have no X or Y so it's a depth change or a heading change without moving
+	double desHeading;
+	if((destPose.getX() != destPose.getX()) && (destPose.getY() != destPose.getY()))
+		desHeading = wp.getYawRad();
+	else
+		desHeading = atan2(wp.getY() - currPose.getY(),
 			wp.getX() - currPose.getX());
 
 	// Calculate desired velocity. This is set to dest velocity by default
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
-	//double distToDest = getDistToDest();
-	//if( distToDest < velChangeDist ) {
-	//	desVel = destVel * (distToDest / velChangeDist);
-	//}
+	double distToDest = getDistToDest();
+	if( distToDest < velChangeDist ) 
+		desVel = destVel * (distToDest / velChangeDist);
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
 	cc.utime = timestamp_now();
 	cc.run_mode = acfrlcm::auv_control_t::RUN;
 	cc.heading = desHeading;
-	cc.vx = desVel;
-    static double depth_ref = 0.0;
-    double curr_depth_ref;
+	//cc.vx = desVel;
+    	static double depth_ref = 0.0;
+    	double curr_depth_ref;
+
+    // Use the obstacle avoidance altitude if available
+    	double altitude;
+	if((timestamp_now() - oa.utime) < 5e6)
+    	altitude = fmin(oa.altitude, navAltitude);
+    else
+	     altitude = navAltitude;
+
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
 
         // check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (currAltitude - minAltitude);
+		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
+
         if (curr_alt_ref < curr_depth_ref)
             curr_depth_ref = curr_alt_ref;
 
@@ -506,9 +718,14 @@ int LocalPlanner::processWaypoints()
 	{
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
-		curr_depth_ref = currPose.getZ() + (currAltitude - wp.getZ());
+		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
+
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
+    
+    // return velocty based on obstacle avoidance
+    cc.vx = calcVelocity(desVel, altitude);
+    
     // FIXME: limit the depth rate change to yield an achievable 
     // trajectory. This is modelled on a forward speed of 0.75m/s 
     // with a max pitch of 0.3rad.  This should be configurable or
@@ -516,14 +733,15 @@ int LocalPlanner::processWaypoints()
     double NAV_DT = 0.1;
     double max_depth_ref_change = 0.2*NAV_DT;
     double depth_ref_error = curr_depth_ref - depth_ref;
-    if (depth_ref_error > max_depth_ref_change)
-        depth_ref += max_depth_ref_change;
+    if (depth_ref_error > max_depth_ref_change) {
+        depth_ref += max_depth_ref_change;     	
+    }
     else if (depth_ref_error < -max_depth_ref_change)
         depth_ref -= max_depth_ref_change;
     else
         depth_ref = curr_depth_ref;
 
-    cc.depth = depth_ref;
+    cc.depth = curr_depth_ref;
 
 	lcm.publish(vehicle_name+".AUV_CONTROL", &cc);
 	return 1;
@@ -539,8 +757,10 @@ int LocalPlanner::sendResponse()
 		pr.distance = waypoints.size() * wpDropDist;
 	else
 		pr.distance = currPose.positionDistance(destPose);
+
 	lcm.publish(vehicle_name+".PATH_RESPONSE", &pr);
 
+	
 	return 1;
 }
 
@@ -558,7 +778,7 @@ void LocalPlanner::printWaypoints() const {
 bool LocalPlanner::publishWaypoints() {
 	acfrlcm::auv_local_path_t lp;
 	lp.utime = timestamp_now();
-	int i;
+	unsigned int i;
 	// TODO: comparison between signed and unsiged!
 	for( i = 0; i < waypoints.size() && i < lp.max_num_el; i++  ) {
 		lp.x[i] = waypoints[i].getX();
@@ -567,6 +787,7 @@ bool LocalPlanner::publishWaypoints() {
 	}
 	lp.num_el = i;
 	lcm.publish(vehicle_name+".LOCAL_PATH", &lp);
+
 	return true;
 }
 

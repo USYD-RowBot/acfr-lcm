@@ -30,10 +30,10 @@ msg.depth = float(0.0)
 time.sleep(0.5)
 lc.publish('NGA.AUV_CONTROL', msg.encode())
 
-msg.heading = float(math.pi / 2)
+msg.heading = float(0.0)
 
-for i in xrange(10):
-    msg.depth = float(2.0)
+for i in xrange(80):
+    msg.depth = float(3.0)
 
     msg.utime = int(time.time() * 1000000)
     time.sleep(0.5)
@@ -42,14 +42,14 @@ for i in xrange(10):
     print "Sent dive command"
 
 
-for i in xrange(10):
+for i in xrange(30):
     msg.utime = int(time.time() * 1000000)
-    msg.depth = -0.09
+    msg.depth = 0.0
     lc.publish('NGA.AUV_CONTROL', msg.encode())
     print "Sent surface command"
     time.sleep(0.5)
 
 msg.utime = int(time.time() * 1000000)
 msg.run_mode = auv_control_t.STOP
-lc.publish('AUV_CONTROL', msg.encode())
+lc.publish('NGA.AUV_CONTROL', msg.encode())
 print "Sent STOP command"

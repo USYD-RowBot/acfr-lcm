@@ -8,6 +8,9 @@ BASE_PATH=/media/data
 PLATFORM_NAME="UG"
 CURRENT_DATE=$(date '+%Y%m%d_%H%M%S')
 
+## incase mission already running
+~/stop_mission.sh
+
 LCMROOT="/home/auv/git/acfr-lcm"
 ORIGIN_DIR="$LCMROOT/config/origins/$PLATFORM_NAME"
 COUNTFILE="$ORIGIN_DIR/$REGION_NAME.count"

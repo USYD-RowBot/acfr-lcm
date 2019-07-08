@@ -12,6 +12,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <vector>
+#include <unistd.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <libgen.h>
@@ -64,7 +65,7 @@ typedef struct STATE {
 
     Pose3D pose;
     Pose3D posePrev;
-    
+    std::string vehicle_name;
     double time;
         
 	double MAP_HALF_TIME; // [s]

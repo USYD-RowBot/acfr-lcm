@@ -14,5 +14,5 @@ msg = auv_global_planner_t()
 msg.command = auv_global_planner_t.STOP
     
     
-lc.publish('TASK_PLANNER_COMMAND.IVERAME', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.'+sys.argv[1], msg.encode())
 

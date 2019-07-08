@@ -150,6 +150,9 @@ senlcm_ahrs_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
 
 void
 senlcm_bk9115_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
-                       const senlcm_bk9115_t *msg, void *user);                   
+                       const senlcm_bk9115_t *msg, void *user);            
 
+void
+senlcm_acfr_psu_t_handler (const lcm_recv_buf_t *rbuf, const char *channel,
+                       const senlcm_acfr_psu_t *msg, void *user);                   
 #endif //__HANDLERS_SENLCM_H__

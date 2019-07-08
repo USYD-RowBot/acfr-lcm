@@ -24,6 +24,6 @@ if (len(sys.argv) > 3):
     msg.pitch = float(sys.argv[3]) / 180 * math.pi
     
 
-    lc.publish('AUV_CONTROL', msg.encode())
+    lc.publish('NGA.AUV_CONTROL', msg.encode())
 else:
     print 'Wrong number of args'

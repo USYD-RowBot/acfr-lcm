@@ -42,7 +42,6 @@ bool boundaryCheck( state_t * state, Vector3D & p ) {
  * UPDATE MAP by moving the location of the occupied cells according to the shift in vehicle pose
  */
 void updateMap( state_t * state, Matrix44 & T ) {
-
 	Vector3D pN;
 	Vector4D p4;
 	for( state->iter = state->map.begin(); state->iter < state->map.end(); state->iter++ ) {
@@ -117,7 +116,9 @@ void incMap( state_t * state, vector<Vector4D> pVec ) {
 					state->iter++ ) {
 			// increment voxel
 			if( ((*state->iter).loc - pN).normSq() < 1e-3 ) {
-				(*state->iter).votes += state->MAP_HIT_VAL;
+				(*state->iter).votes += state->MAP_HIT_VAL*pVec[i][3];
+				if ((*state->iter).votes > state->MAP_MAX_VAL)
+					(*state->iter).votes = state->MAP_MAX_VAL;
 				(*state->iter).timestamp = t;
 				exists = true;
 				break;
@@ -129,7 +130,6 @@ void incMap( state_t * state, vector<Vector4D> pVec ) {
 			state->map.push_back( OccMapCell( pN, state->MAP_HIT_VAL, t ) );
 		}
 	}
-
 }
 
 /**
@@ -166,14 +166,19 @@ vector<Vector4D> getSonarPoints( double range, double coneAngleH, double coneAng
  * Read RDI range from one of the beams and return 3D point
  */
 void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::rdi_pd5_t *msg, state_t* state) {
+	static int found = 0;
+	if(found == 0){
+		found =1;
+		cout << "found RDI" << endl;
+	}
+    state->time = (double)(msg->utime)/1.0e6;
 
     Vector4D p4;
     vector<Vector4D> pVec;
     
 	for( int beam = 0; beam < 4; beam++ ) {
-	    double range = msg->pd4.range[beam];
-
-    	if( range > state->RDI_MAX_RANGE || range < state->RDI_MIN_RANGE ) {
+	    double range = msg->pd4.range[beam];    	
+	    if( range > state->RDI_MAX_RANGE || range < state->RDI_MIN_RANGE ) {
     		return;
 	    }
 
@@ -182,28 +187,52 @@ void senlcm_rdi_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& chan
 	    double offset = 0.1315;
 	    double a = M_PI / 2.0 * (beam + 1);// NOTE: THIS IS THE OFFSET TO BEAM zero! + M_PI / 4.0;
 	    Matrix44 R1, R2;
-	    R1 = cos( rot ), 0, sin( rot ), 0, 0, 1, 0, 0, -sin( rot ), 0, cos( rot ), 0, 0, 0, 0, 1;
-	    R2 = 1, 0, 0, 0, 0, cos( a ), -sin( a ), 0, 0, sin( a ), cos( a ), 0, 0, 0, 0, 1;
+	    R1 = 	
+	    cos( rot ), 0, sin( rot ), 0,
+	    0, 	1, 0, 0, 
+	    -sin( rot ), 0, cos( rot ), 0,
+	    0, 0, 0, 1;
+
+	    R2 = 
+	    1, 0, 0, 0, 
+	    0, cos( a ), -sin( a ), 0, 
+	    0, sin( a ), cos( a ), 0, 
+	    0, 0, 0, 1;
 
     	vector<Vector4D> pVecTemp = getSonarPoints(
 	    			range + offset, state->RDI_CONEANGLE, state->RDI_CONEANGLE, state->voxelSize );
+    	bool exists = false;
 	    for( unsigned int i = 0; i < pVecTemp.size(); i++ ) {
 		    p4 = R2 * R1 * pVecTemp[i];
 
     		// Convert 3D point seen from RDI beam
 	    	// to 3D point seen from vehicle
 	    	p4 = state->RDI_T * p4;
+	    	for( int i = 0; i < pVec.size(); i++)
+	    	{
+	    		if(((pVec[i][0] - p4[0]) < 1e-3) && ((pVec[i][1] - p4[1]) < 1e-3) && ((pVec[i][2] - p4[2]) < 1e-3))
+	    		{
+	    			exists = true;
+	    			pVec[i][3] += 1;
+	    		}
+	    	}
 
-            pVec.push_back( p4 );	    	
+	    	if(!exists)
+			{
+				pVec.push_back( p4 );	 
+				//cout << p4[0] <<", "<< p4[1] <<", "<< p4[2] << ", " << p4[3]<< endl; 
+			}  	
 	    }// For every point in this beam
 	}// For every beam
-
     incMap( state, pVec );
-    
 }
 
 void senlcm_micron_ping_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const senlcm::micron_ping_t *msg, state_t* state) {
-
+	static int found = 0;
+	if(found == 0){
+		found =1;
+		cout << "found Micron Pinger" << endl;
+	}
     // TODO: Put this somewhere sensible
     uint8_t minReturnThresh = 0;
     
@@ -310,10 +339,9 @@ void acfrlcm_auv_acfr_nav_t_handle(const lcm::ReceiveBuffer* rbuf, const std::st
  */
 void perllcm_heartbeat_t_handle(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const perllcm::heartbeat_t *msg, state_t* state) {
 
+    state->time = (double)(msg->utime)/1.0e6;
     Pose3D pose;
     Pose3D posePrev;
-    
-    state->time = (double)(msg->utime)/1.0e6;
 
 	// decay with the delta time
     decMap( state );
@@ -341,8 +369,7 @@ void perllcm_heartbeat_t_handle(const lcm::ReceiveBuffer* rbuf, const std::strin
         e.timestamp = state->map[i].timestamp;
         lcmMap.elements.push_back(e);
     }
-    state->lcm.publish("OCC_MAP", &lcmMap);
-
+    state->lcm.publish(state->vehicle_name + ".OCC_MAP", &lcmMap);
 	return ;
 }
 
@@ -355,13 +382,43 @@ void signalHandler(int sig_num)
 /**
  *
  */
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, state_t *state)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            state->vehicle_name = optarg;
+            break;
+         }
+    }
+}
+
 int main( int argc, char ** argv ) {
 
     programExit = 0;
     signal(SIGINT, signalHandler);
 
 	state_t state;
-	
+	parse_args (argc, argv, &state);
 	// Read the config variables from the param server
 	BotParam *param = NULL;
     param = bot_param_new_from_server (state.lcm.getUnderlyingLCM(), 1);
@@ -395,7 +452,7 @@ int main( int argc, char ** argv ) {
     double pos[6];
     
     sprintf(key, "sensors.micron.position");
-    bot_param_get_double_array_or_fail(param, key, pos, 6);	
+    bot_param_get_double_array(param, key, pos, 6);	
 	state.MICRON_T = Pose3D(makeVector(pos[0], pos[1], pos[2]), Rotation3D(pos[3]*DTOR, pos[4]*DTOR, pos[5]*DTOR)).get4x4TransformationMatrix();
 	
     sprintf(key, "sensors.rdi.position");
@@ -408,12 +465,12 @@ int main( int argc, char ** argv ) {
 	
 	// RDI specific variables
 	sprintf(key, "%s.rdi_min_range", rootkey);
-    state.RDI_MIN_RANGE = bot_param_get_double_or_fail(param, key);
+    state.RDI_MIN_RANGE = 0.1;
     
-    sprintf(key, "%s.rdi_max_range", rootkey);
+    sprintf(key, "sensors.rdi.range");
     state.RDI_MAX_RANGE = bot_param_get_double_or_fail(param, key);
     
-    sprintf(key, "%s.rdi_cone_angle", rootkey);
+    sprintf(key, "sensors.rdi.cone_angle");
     state.RDI_CONEANGLE = bot_param_get_double_or_fail(param, key) * DTOR;
 	
 /*	// Imagenex OAS specific variables
@@ -428,10 +485,10 @@ int main( int argc, char ** argv ) {
 */
 	
 	//senlcm_oas_t_subscribe( state.lcm, "OAS", &senlcm_oas_t_handle, &state );
-	state.lcm.subscribeFunction("RDI", senlcm_rdi_t_handle, &state);
-    state.lcm.subscribeFunction("ACFR_NAV", acfrlcm_auv_acfr_nav_t_handle, &state );
+	state.lcm.subscribeFunction(state.vehicle_name + ".RDI", senlcm_rdi_t_handle, &state);
+    state.lcm.subscribeFunction(state.vehicle_name + ".ACFR_NAV", acfrlcm_auv_acfr_nav_t_handle, &state );
 	state.lcm.subscribeFunction("HEARTBEAT_1HZ", perllcm_heartbeat_t_handle, &state );
-	state.lcm.subscribeFunction("MICRON", senlcm_micron_ping_t_handle, &state );
+	state.lcm.subscribeFunction(state.vehicle_name + ".MICRON", senlcm_micron_ping_t_handle, &state );
 
     int fd = state.lcm.getFileno();
     fd_set rfds;
@@ -448,6 +505,10 @@ int main( int argc, char ** argv ) {
     }
     
 	// Clean up
-
+	//print map
+	ofstream printmap;
+	printmap.open("/tmp/"+state.vehicle_name+"_occ_map.txt");
+ 	printMap(&state, &printmap);
+ 	printmap.close();
 	return 0;
 }

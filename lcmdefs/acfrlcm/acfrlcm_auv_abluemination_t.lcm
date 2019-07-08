@@ -1,0 +1,13 @@
+package acfrlcm;
+
+struct auv_abluemination_t
+{
+    int64_t utime;
+    
+    double port_top;
+    double port_middle;
+    double port_bottom;
+    double stb_top;
+    double stb_middle;
+    double stb_bottom;
+}

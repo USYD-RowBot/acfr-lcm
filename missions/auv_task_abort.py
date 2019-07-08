@@ -5,8 +5,7 @@
 import lcm
 import sys
 
-sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes')
-sys.path.append('/home/auv/git/acfr_lcm/src/acfr/python/')
+sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes/')
 
 from acfrlcm.auv_global_planner_t import auv_global_planner_t
 

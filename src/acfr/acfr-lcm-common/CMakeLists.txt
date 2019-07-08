@@ -13,6 +13,7 @@ set (SRC
 
 include_directories ( 
 	/usr/include/uf-3.2
+	/usr/include/glib-2.0
 	)	
 
 perls_add_library (acfr-common ${SRC})

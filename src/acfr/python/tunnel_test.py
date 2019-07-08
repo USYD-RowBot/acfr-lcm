@@ -40,7 +40,7 @@ for test in tests:
         msg.vert_fore = thrust2
         msg.lat_aft = thrust1
         msg.vert_aft = thrust2
-        lc.publish('NGA_MOTOR', msg.encode())
+        lc.publish('NGA.NEXTGEN_MOTOR', msg.encode())
         time.sleep(.1)		
     print "Next test"
 		

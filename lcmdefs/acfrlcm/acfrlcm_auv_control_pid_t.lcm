@@ -1,0 +1,21 @@
+package acfrlcm;
+
+struct auv_control_pid_t
+{
+    int64_t utime;
+    
+    auv_base_pid_t velocity;
+    auv_base_pid_t roll;
+    auv_base_pid_t pitch;
+    auv_base_pid_t pitch_r;
+    auv_base_pid_t depth;
+    auv_base_pid_t altitude;
+    auv_base_pid_t heading;
+    auv_base_pid_t tunnel_depth;
+    auv_base_pid_t tunnel_descent;
+    auv_base_pid_t tunnel_pitch;
+    auv_base_pid_t tunnel_heading;    
+}
+   
+    
+ 

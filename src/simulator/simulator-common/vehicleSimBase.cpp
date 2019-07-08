@@ -21,6 +21,8 @@
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 #include "simulator-common/vehicleSimBase.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -38,6 +40,8 @@ double rand_n(void) // generate normally distributed variable given uniformly di
 
     return pow(-2*log(u),0.5)*sin(2*M_PI*v);
 }
+
+static volatile bool exit_signalled;
 
 // Calculate the path, this is where the magic happens
 void VehicleSimBase::calculate() 
@@ -281,6 +285,25 @@ void VehicleSimBase::publishGPS()
     }
 }
 
+void VehicleSimBase::publishBattery()
+{
+    int64_t timeStamp = timestamp_now();
+    // POWER
+    if (timeStamp - last_battery_time > 0.3*1e6) // once every 0.3 seconds
+    {
+        last_battery_time = timeStamp;
+
+        // publish battery data
+        senlcm::os_power_system_t battery_pack;
+        battery_pack.utime = timestamp_now();
+        battery_pack.avg_charge_p = 100;
+        // need to have number of controllers set or you get a seg fault when publishing sometimes.
+        battery_pack.num_controllers = 0;
+        lcm.publish(vehicle_name+".BATTERY", &battery_pack);
+    }
+
+}
+
 
 void VehicleSimBase::publishDVL()
 {
@@ -318,9 +341,17 @@ void VehicleSimBase::publishDVL()
 
 }
 
-VehicleSimBase::VehicleSimBase() :
-    state(12), vehicle_name("DEFAULT"), interval_us(100000), time_step(interval_us*1.0e-6), exit_signalled(false)
+static void signalHandler(int signal)
 {
+	exit_signalled = true;
+}
+
+VehicleSimBase::VehicleSimBase() :
+    state(12), vehicle_name("DEFAULT"), interval_us(100000), time_step(interval_us*1.0e-6)
+{
+	exit_signalled = false;
+	std::signal(SIGINT, signalHandler);
+	
     //srand(time(NULL));
     srand(1234); // seeding the same way every time to allow filter comparisons
 
@@ -328,15 +359,30 @@ VehicleSimBase::VehicleSimBase() :
     if(param == NULL)
         return;
 
+    // BotParam *cfg;
+    
+    // cfg = bot_param_new_from_server (lcm, 1);
     char rootkey[64];
     char key[128];
     sprintf (rootkey, "nav.acfr-nav-new");
 
     double latitude_sim, longitude_sim;
-    sprintf(key, "%s.latitude", rootkey);
-    latitude_sim = bot_param_get_double_or_fail(param, key);
-    sprintf(key, "%s.longitude", rootkey);
-    longitude_sim = bot_param_get_double_or_fail(param, key);
+    // sprintf(key, "%s.latitude", rootkey);
+    // latitude_sim = bot_param_get_double_or_fail(param, key);
+    // sprintf(key, "%s.longitude", rootkey);
+    // longitude_sim = bot_param_get_double_or_fail(param, key);
+
+        // get the slam config filenames from the master LCM config for the acfr-nav module
+    // we are using this to get the origin lat and long
+    char *slam_config_filename;
+    slam_config_filename = bot_param_get_str_or_fail(param, "nav.acfr-nav-new.slam_config");
+    
+    Config_File *slam_config_file;
+    slam_config_file = new Config_File(slam_config_filename);
+    slam_config_file->get_value("LATITUDE", latitude_sim);
+    slam_config_file->get_value("LONGITUDE", longitude_sim);
+    
+    cout << "Simulator origin Lat: " << latitude_sim << " Lon: " << longitude_sim << endl;
 
     map_projection_sim = new Local_WGS84_TM_Projection(latitude_sim, longitude_sim);
 
@@ -376,8 +422,8 @@ VehicleSimBase::VehicleSimBase() :
 
     // initial conditions
     state(XNDX) = -10;
-    state(YNDX) = -10;
-    state(ZNDX) = 1.9;  //Z = 1;
+    state(YNDX) = 0;
+    state(ZNDX) = 1.0;  //Z = 1;
     state(ROLLNDX) = 0;
     state(PITCHNDX) = 0.05;
     state(HDGNDX) = 0;
@@ -409,6 +455,8 @@ string const VehicleSimBase::getVehicleName() const
 }
 
 
+
+
 void VehicleSimBase::lcm_thread()
 {
     while (!exit_signalled)
@@ -436,7 +484,7 @@ void VehicleSimBase::run()
     {
         std::cerr << "Couldn't create timer." << std::endl;
         perror("create timer");
-        this->exit_signalled = true;
+        exit_signalled = true;
         lcm_thread_handle.join();
 
         return;
@@ -463,7 +511,7 @@ void VehicleSimBase::run()
     //if (ret) check for failure
           
     // now the period waits
-    while (!this->exit_signalled)
+    while (!exit_signalled)
     {
         unsigned long long missed;
         // this handles the timer waiting
@@ -472,7 +520,7 @@ void VehicleSimBase::run()
         {
             perror("read timer");
 
-            this->exit_signalled = true;
+            exit_signalled = true;
             lcm_thread_handle.join();
 
             return;
@@ -481,7 +529,7 @@ void VehicleSimBase::run()
         if (missed > 1)
         {
             wakeups_missed += (missed - 1);
-                                                                                                                      std::cerr << "Missed a wakeup" << std::endl;
+            std::cerr << "Missed a wakeup" << std::endl;
         }
         
         // update the vehicle state estimate.  This will call the
