@@ -45,7 +45,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
             // parse out the range value leaving the m off then end
             micron.utime = timestamp_now();
             memset(value, 0, sizeof(value));
-            //printf("%s", resp);
+            //printf(state->sensors[sensor_count]->serial_dev);
             strncpy(value, resp, strlen(resp) - 1);
             micron.altitude = atof(value);
             if (micron.altitude > 1e-4)
@@ -178,17 +178,13 @@ main (int argc, char *argv[])
 
     int lcm_fd = lcm_get_fileno(state.lcm);
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
-
-    state.sensors[0] = acfr_sensor_create(state.lcm, rootkey);
-    if(state.sensors[0] == NULL)
-        return 0;
-
-    acfr_sensor_canonical(state.sensors[0], '\r', '\n');
-
+    
     printf("oas devs found = %d\n" , state.num_oas);
-    for(int i=1; i<state.num_oas; i++)
+    for(int i=0; i<state.num_oas; i++)
     {
-        //memset(&state.sensors[i], 0, sizeof(acfr_sensor_t));
+	state.sensors[i] = acfr_sensor_create(state.lcm, rootkey);
+	if(state.sensors[i] == NULL)
+		return 0;
         if(io == io_tcp)
         {
             printf("*");
@@ -201,7 +197,6 @@ main (int argc, char *argv[])
         {
             printf("#");
             printf("Opening device on port: %s\n" , serial_devs[i]);
-            state.sensors[i] = state.sensors[0];
             state.sensors[i]->io_type = io;
             printf("Device IO type: %i\n" , state.sensors[i]->io_type);
             state.sensors[i]->serial_dev = serial_devs[i];
@@ -217,7 +212,6 @@ main (int argc, char *argv[])
         acfr_sensor_canonical(state.sensors[i], '\r', '\n');
     }
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
-
     while (!program_exit)
     {
         lcm_handle_timeout(state.lcm, 1000);
