@@ -127,8 +127,7 @@ int LocalPlannerTunnel::loadConfig(char *program_name)
 {
 	BotParam *param = NULL;
 	param = bot_param_new_from_server(lcm.getUnderlyingLCM(), 1);
-	if (param == NULL
-	)
+    if (param == NULL)
 		return 0;
 
 	char rootkey[64];
@@ -210,9 +209,8 @@ int LocalPlannerTunnel::processWaypoints()
 
 	// Nothing to do
 	if (waypoints.size() == 0)
-	{
 		return 0;
-	}
+
 
 	// Get the next waypoint
 	Pose3D wp = waypoints.at(0);
@@ -228,7 +226,7 @@ int LocalPlannerTunnel::processWaypoints()
 	// // this is just to do the bounding box check
 	if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
 	{
-		if(depth_ref != 0)
+        if(depth_ref < 1e-4)
 			awp.setZ(depth_ref);
 		adp.setZ(depth_ref);
 	}
@@ -274,7 +272,7 @@ int LocalPlannerTunnel::processWaypoints()
 	// Calculate desired velocity. This is set to dest velocity by default
 	double desVel = destVel;
 	// Ramp down the velocity when close to the destination
-	double distToDest = getDistToDest();
+    //double distToDest = getDistToDest();
 	// 	cout << "desVel = " << destVel << ", distToDest = " << distToDest << endl;
 	// if( distToDest < velChangeDist ) {
 	// 	desVel = destVel * (distToDest / velChangeDist);
@@ -298,7 +296,7 @@ int LocalPlannerTunnel::processWaypoints()
     else
 	    altitude = navAltitude;
 
-	if(((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 1e-4)
+	if((((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 1e-4) && currPose.getZ() > 2)
 		cc.vx = calcVelocity(desVel, altitude);
 	else 
 		cc.vx = desVel;
