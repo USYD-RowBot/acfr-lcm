@@ -183,11 +183,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         rudder_stb = thrust_max_value;
     }
     // Elevator percentage values
-<<<<<<< HEAD
     double elevator_max_value = 40.0/100.0;
-=======
-    double elevator_max_value = 45.0/100.0;
->>>>>>> cf2459ab107cbae0bebcfa0bce8e6120961efb11
     double elevator_min_value = 1.0/100.0;
     double elevator_top = 0.0;
     double elevator_mid = 0.0;
