@@ -178,13 +178,15 @@ main (int argc, char *argv[])
 
     int lcm_fd = lcm_get_fileno(state.lcm);
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
-    
+
     printf("oas devs found = %d\n" , state.num_oas);
-    for(int i=0; i<state.num_oas; i++)
+    for(int i=1; i<state.num_oas; i++)
     {
+
 	state.sensors[i] = acfr_sensor_create(state.lcm, rootkey);
 	if(state.sensors[i] == NULL)
 		return 0;
+
         if(io == io_tcp)
         {
             printf("*");
@@ -197,6 +199,7 @@ main (int argc, char *argv[])
         {
             printf("#");
             printf("Opening device on port: %s\n" , serial_devs[i]);
+
             state.sensors[i]->io_type = io;
             printf("Device IO type: %i\n" , state.sensors[i]->io_type);
             state.sensors[i]->serial_dev = serial_devs[i];

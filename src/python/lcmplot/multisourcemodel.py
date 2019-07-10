@@ -95,6 +95,8 @@ class ListData(object):
                 entry_name = '[{}]'.format(ii)
                 if isinstance(d, numbers.Number):
                     entry = NumericElementData(self, entry_name)
+                elif isinstance(d, basestring):
+                    continue  # we don't plot/can't plot strings
                 else:
                     entry = TypeData(self, entry_name)
 
@@ -175,6 +177,7 @@ class TypeData(object):
             except AttributeError as e:
                 print e
                 print data
+                raise
 
         for de in self.entries:
             de.handle_message(getattr(data, de.name))
