@@ -180,7 +180,7 @@ main (int argc, char *argv[])
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
     printf("oas devs found = %d\n" , state.num_oas);
-    for(int i=1; i<state.num_oas; i++)
+    for(int i=0; i<state.num_oas; i++)
     {
 
 	state.sensors[i] = acfr_sensor_create(state.lcm, rootkey);
