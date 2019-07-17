@@ -224,12 +224,12 @@ int LocalPlannerTunnel::processWaypoints()
 		destPose.setPosition(currPose.getX(), currPose.getY(), currPose.getZ());
 
 	// // this is just to do the bounding box check
-	if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
-	{
-        if(depth_ref < 1e-4)
-			awp.setZ(depth_ref);
-		adp.setZ(depth_ref);
-	}
+	// if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
+	// {
+ //        if(depth_ref < 1e-4)
+	// 		awp.setZ(depth_ref);
+	// 	adp.setZ(depth_ref);
+	// }
 	// wp = waypoints.at(0);
 	// We have reached the next waypoint
 	if (pointWithinBound(awp))
@@ -296,21 +296,10 @@ int LocalPlannerTunnel::processWaypoints()
     else
 	    altitude = navAltitude;
 
-	if((((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 1e-4) && currPose.getZ() > 2)
-		cc.vx = calcVelocity(desVel, altitude);
-	else 
-		cc.vx = desVel;
-
 	if (getDepthMode() == acfrlcm::auv_path_command_t::DEPTH)
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
-
-        // check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
-        if (curr_alt_ref < curr_depth_ref)
-            curr_depth_ref = curr_alt_ref;
-
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	else
@@ -318,13 +307,21 @@ int LocalPlannerTunnel::processWaypoints()
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
 		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
-		// check we don't get closer to the bottom than our minimum
-		double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
-        if (curr_alt_ref < curr_depth_ref)
-            curr_depth_ref = curr_alt_ref;
         cc.altitude = wp.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
 	}
+	
+	// check we don't get closer to the bottom than our minimum
+	double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
+    if (curr_alt_ref < curr_depth_ref)
+        curr_depth_ref = curr_alt_ref;
+
+	if(((((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 0.4) && oa.altitude > 0.4) && currPose.getZ() > 2)
+	{
+		cc.vx = calcVelocity(desVel, cc.altitude);
+	}
+	else 
+		cc.vx = desVel;
     // FIXME: limit the depth rate change to yield an achievable 
     // trajectory. This is modelled on a forward speed of 0.75m/s 
     // with a max pitch of 0.3rad.  This should be configurable or
@@ -339,6 +336,46 @@ int LocalPlannerTunnel::processWaypoints()
 	// else
 
 	// cc.pitch = -atan((oa.altitude - navAltitude)/1.5);
+
+	vector<double> x;
+	vector<double> y;
+
+	if(((timestamp_now() - oa.utime) < 5e6) && oa.altitude > 1e-4)
+	{
+		x.push_back(1250.0);
+		y.push_back(-oa.altitude);
+	}
+
+	x.push_back(0.0);
+	y.push_back(-navAltitude);
+
+    for (int i = 0; i < 4; i++)
+    {
+    	if(rdi[i] > 1e-4)
+    	{
+    		y.push_back(-rdi[i]*cos((30/180)*M_PI));
+    		if(i == 0 || i == 3)
+    			x.push_back(-rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI));
+    		else
+    			x.push_back(rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI));
+    	}
+    }
+    double n = x.size();
+    if(n>1){
+    	double avgX = accumulate(x.begin(), x.end(), 0.0) / n;
+	    double avgY = accumulate(y.begin(), y.end(), 0.0) / n;
+
+	    double numerator = 0.0;
+	    double denominator = 0.0;
+
+	    for(int i=0; i<n; ++i){
+	        numerator += (x[i] - avgX) * (y[i] - avgY);
+	        denominator += (x[i] - avgX) * (x[i] - avgX);
+	    }
+
+	    cc.pitch = atan2(numerator , denominator);
+    }
+
 	// // if we are likely to run aground then re calc the waypoints so we don't
 	// if (fabs(depth_ref - curr_depth_ref) > 1e-3)
 	// {
