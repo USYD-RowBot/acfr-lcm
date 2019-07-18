@@ -1184,6 +1184,9 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
         {
             success = true;
             std::cout << "Message delivered.\n";
+
+            // Get the propagation time.
+            send_query("AT?T");
         }
         else if (starts_with(message_text, "CANCELLED"))
         {
