@@ -48,7 +48,7 @@ int LocalPlannerTunnel::calculateWaypoints()
 	// Get a copy of curr and dest pose
 	Pose3D currPose = this->currPose;
 	Pose3D destPose = this->destPose;
-	double currVel = this->currVel[0];
+	//double currVel = this->currVel[0];
 
 	cout << timestamp_now() << " Calculating new waypoints..." << endl;
 	cout << "CurrPose=" << currPose.getX() << ","
@@ -300,6 +300,7 @@ int LocalPlannerTunnel::processWaypoints()
 	{
 		//cc.depth = wp.getZ();
         curr_depth_ref = wp.getZ();
+        cc.altitude = altitude + currPose.getZ() - wp.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::DEPTH_MODE;
 	}
 	else
@@ -310,11 +311,12 @@ int LocalPlannerTunnel::processWaypoints()
         cc.altitude = wp.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
 	}
-	
+
 	// check we don't get closer to the bottom than our minimum
 	double curr_alt_ref = currPose.getZ() + (altitude - minAltitude);
-    if (curr_alt_ref < curr_depth_ref)
+    if(curr_alt_ref < curr_depth_ref){
         curr_depth_ref = curr_alt_ref;
+    }
 
 	if(((((timestamp_now() - oa.utime) < 5e6) && oa.forward_distance > 0.4) && oa.altitude > 0.4) && currPose.getZ() > 2)
 	{
@@ -337,43 +339,45 @@ int LocalPlannerTunnel::processWaypoints()
 
 	// cc.pitch = -atan((oa.altitude - navAltitude)/1.5);
 
-	vector<double> x;
-	vector<double> y;
 
+	//setting up simple linear regression to determine pitch angle based on oa and rdi altitude readings
+	vector<double> x;
+	vector<double> z;
+	//if oa data is good then we use it
 	if(((timestamp_now() - oa.utime) < 5e6) && oa.altitude > 1e-4)
 	{
 		x.push_back(1250.0);
-		y.push_back(-oa.altitude);
+		z.push_back(-oa.altitude);
 	}
-
+	//we should always have the nav altitude, currently the nav alt is only based off the rdi, change this in future is oa alt is piped into nav alt
 	x.push_back(0.0);
-	y.push_back(-navAltitude);
-
+	z.push_back(-navAltitude);
+	//rdi sends out 4 beams at 30 degrees, if the data for a beam is good we find the alt at the beam end and the x distance from veh origin
     for (int i = 0; i < 4; i++)
     {
     	if(rdi[i] > 1e-4)
     	{
-    		y.push_back(-rdi[i]*cos((30/180)*M_PI));
+    		z.push_back(-rdi[i]*cos((30/180)*M_PI)); // trig to go from range to alt
     		if(i == 0 || i == 3)
-    			x.push_back(-rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI));
+    			x.push_back(-rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI)); // trig to go from alt to x dist
     		else
-    			x.push_back(rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI));
+    			x.push_back(rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI)); // or x dist in opp direction
     	}
     }
     double n = x.size();
     if(n>1){
-    	double avgX = accumulate(x.begin(), x.end(), 0.0) / n;
-	    double avgY = accumulate(y.begin(), y.end(), 0.0) / n;
+    	double avgX = accumulate(x.begin(), x.end(), 0.0) / n; //avg of x values
+	    double avgZ = accumulate(z.begin(), z.end(), 0.0) / n; //average of z values
 
 	    double numerator = 0.0;
 	    double denominator = 0.0;
 
 	    for(int i=0; i<n; ++i){
-	        numerator += (x[i] - avgX) * (y[i] - avgY);
+	        numerator += (x[i] - avgX) * (z[i] - avgZ);
 	        denominator += (x[i] - avgX) * (x[i] - avgX);
 	    }
 
-	    cc.pitch = atan2(numerator , denominator);
+	    cc.pitch = atan2(numerator , denominator); // check this direction is correct in real life
     }
 
 	// // if we are likely to run aground then re calc the waypoints so we don't

@@ -205,7 +205,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
             {
                 //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &cp.altitude);
-                pitch = -pid(&this->gains_altitude, nav.depth, cmd.depth, dt, &cp.altitude);
+                pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.altitude);
                 std::cout << "ALTITUDE_MODE" << std::endl;         
             }
         else
@@ -337,10 +337,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // std::cout << " vert thrusters only";
         }
         else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold){
-            differential_vert = transitional_diff_vert;
-            double differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
-            mc.vert_fore = (mutual_vert - differential_vert_corrected);  
-            mc.vert_aft = (mutual_vert + differential_vert_corrected);
+            // differential_vert = transitional_diff_vert;
+            // double differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
+            // mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+            // mc.vert_aft = (mutual_vert + differential_vert_corrected);
             mc.lat_fore = 0.0;
             mc.lat_aft = 0.0;
             // limit floor value of tail to 200 RPM when in transition zone
