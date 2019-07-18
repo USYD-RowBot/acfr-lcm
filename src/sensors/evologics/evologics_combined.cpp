@@ -1704,7 +1704,8 @@ void EvologicsModem::run()
     // first step is make sure we are connected!
     while (!this->connect_modem())
     {
-        std::cerr << "Failed to connect to modem. Trying again." << std::endl;
+        std::cerr << "Failed to connect to modem. Trying again after 1s." << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::cout << "Modem connected." << std::endl;
