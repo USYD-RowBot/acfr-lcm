@@ -277,7 +277,7 @@ protected:
     double destVel;
 
     senlcm::oa_t oa;
-
+    double rdi[4];
     // New destination from GLOBAL
     bool newDest;
     // Global destination
