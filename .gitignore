@@ -3,6 +3,7 @@
 # ignore temporary files
 *~
 *.swp
+*.orig
 build
 *.pyc
 .idea
