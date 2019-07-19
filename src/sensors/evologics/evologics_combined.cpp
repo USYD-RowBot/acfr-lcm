@@ -3,6 +3,7 @@
 #include <vector>
 #include <tuple>
 #include <utility>
+#include <unordered_map>
 
 #include <chrono>
 
@@ -45,14 +46,16 @@
 
 struct ChannelSubscription
 {
-    ChannelSubscription(std::string regex, bool use_pbm, lcm::Subscription *subscription)
-        : channel_regex(regex), use_pbm(use_pbm), subscription(subscription)
+    ChannelSubscription(std::string regex, bool use_pbm, bool high_priority, lcm::Subscription *subscription)
+        : channel_regex(regex), use_pbm(use_pbm), high_priority(high_priority),
+            subscription(subscription)
     {
     
     }
 
     std::string channel_regex;
     bool use_pbm;
+    bool high_priority;
     lcm::Subscription *subscription;
 };
 
@@ -98,6 +101,7 @@ public:
 
     // the three handlers we need for incoming LCM messages
     void on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::string &channel);
+    void on_lcm_guaranteed_data(const lcm::ReceiveBuffer* rbuf, const std::string &channel);
     void on_lcm_pbm_data(const lcm::ReceiveBuffer* rbuf, const std::string &channel);
     // the usbl fix handling has special cases the other messages do not
     // so we make it separate to simplify handling
@@ -177,7 +181,7 @@ private:
     // handling the LCM tunnel to all platforms
     // these are per-regex and will detect the target
     // on the fly (all are handled by the same function)
-    std::list<ChannelSubscription> lcm_channels;
+    std::list<ChannelSubscription> lcm_subscriptions;
 
     // handling who is being pinged, and how often
     // this also handles the USBL_FIX channels
@@ -191,9 +195,21 @@ private:
 
     std::condition_variable message_added;
     std::mutex queue_message_mutex;
-    std::list<std::pair<int, std::vector<uint8_t>>> queued_messages;
+    // stores the next ping message and target
+    // takes a lower priority than sending a message
     std::vector<uint8_t> next_ping;
     int next_ping_target;
+
+    // we have a high priority message (no queues, guaranteed send - unless overwritten)
+    bool high_priority;
+    std::pair<int, std::vector<uint8_t>> high_priority_message;
+    // and all other messages, a given channel message can be overwritten
+    // they will only attempt to send once (ignoring BUSY)
+    // priorities is a queue of channel names - so even if a message
+    // is updated it isn't pushed to the back, and only latest data is sent
+    std::list<std::string> queued_priorities;
+    // the messages to look up by channel name
+    std::unordered_map<std::string, std::pair<int, std::vector<uint8_t>>> channel_messages;
 };
 
 bool starts_with(std::string const &full_string, std::string const &prefix)
@@ -356,7 +372,24 @@ bool EvologicsModem::load_configuration(char *program_name)
         while (lcm_channels[ii] != nullptr)
         {
             lcm::Subscription *sub = lcm.subscribe(lcm_channels[ii], &EvologicsModem::on_lcm_data, this);
-            this->lcm_channels.push_back(ChannelSubscription(lcm_channels[ii], false, sub));
+            this->lcm_subscriptions.push_back(ChannelSubscription(lcm_channels[ii], false, false, sub));
+            std::cout << "Subscribed: " << lcm_channels[ii] << std::endl;
+            ++ii;
+        }
+
+        bot_param_str_array_free(lcm_channels);
+    }
+
+    sprintf(key, "%s.lcm_guaranteed", rootkey);
+    lcm_channels = bot_param_get_str_array_alloc(param, key);
+
+    if (lcm_channels)
+    {
+        int ii = 0;
+        while (lcm_channels[ii] != nullptr)
+        {
+            lcm::Subscription *sub = lcm.subscribe(lcm_channels[ii], &EvologicsModem::on_lcm_guaranteed_data, this);
+            this->lcm_subscriptions.push_back(ChannelSubscription(lcm_channels[ii], true, true, sub));
             std::cout << "Subscribed: " << lcm_channels[ii] << std::endl;
             ++ii;
         }
@@ -374,7 +407,7 @@ bool EvologicsModem::load_configuration(char *program_name)
         while (lcm_channels[ii] != nullptr)
         {
             lcm::Subscription *sub = lcm.subscribe(lcm_channels[ii], &EvologicsModem::on_lcm_pbm_data, this);
-            this->lcm_channels.push_back(ChannelSubscription(lcm_channels[ii], true, sub));
+            this->lcm_subscriptions.push_back(ChannelSubscription(lcm_channels[ii], true, false, sub));
             std::cout << "Subscribed: " << lcm_channels[ii] << std::endl;
             ++ii;
         }
@@ -907,16 +940,40 @@ void EvologicsModem::on_lcm_data(const lcm::ReceiveBuffer* rbuf, const std::stri
     // queue the message for sending, don't just fire it off
     int target_channel = get_target_channel(channel);
 
-    std::vector<unsigned char> message;
-    int message_type;
-
-    std::tie(message_type, message) = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), false);
+    auto message = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), false);
 
     // now to queue the message
     std::lock_guard<std::mutex> lg(this->queue_message_mutex);
 
-    this->queued_messages.emplace_back(message_type, std::vector<uint8_t>());
-    this->queued_messages.back().second.swap(message);
+    auto result = this->channel_messages.insert(std::make_pair(channel, message));
+
+    // if the insertion didn't work it means the channel is already queued
+    // so just replace the message, if it worked we need to add the channel
+    // to the queue of messages to send
+    if (result.second == false)
+    {
+        result.first->second.swap(message);
+    }
+    else
+    {
+        this->queued_priorities.push_back(channel);
+    }
+
+    this->message_added.notify_one();
+}
+
+void EvologicsModem::on_lcm_guaranteed_data(const lcm::ReceiveBuffer* rbuf, const std::string &channel)
+{
+    // queue the message for sending, don't just fire it off
+    int target_channel = get_target_channel(channel);
+
+    auto message = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target_channel, channel.c_str(), false);
+
+    // now to queue the message
+    std::lock_guard<std::mutex> lg(this->queue_message_mutex);
+
+    this->high_priority = true;
+    this->high_priority_message = message;
 
     this->message_added.notify_one();
 }
@@ -963,17 +1020,8 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
 
     if (send_fix)
     {
-        std::vector<uint8_t> message;
-        int message_type;
-        std::tie(message_type, message) = this->build_lcm_data_message((uint8_t *)rbuf->data, rbuf->data_size, target, channel.c_str(), false);
-
-        // now to queue the message
-        std::lock_guard<std::mutex> lg(this->queue_message_mutex);
-
-        this->queued_messages.emplace_back(message_type, std::vector<uint8_t>());
-        this->queued_messages.back().second.swap(message);
-
-        this->message_added.notify_one();
+        // use the standard code to send the message
+        this->on_lcm_data(rbuf, channel);
     }
 }
 
@@ -1136,6 +1184,9 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
         {
             success = true;
             std::cout << "Message delivered.\n";
+
+            // Get the propagation time.
+            send_query("AT?T");
         }
         else if (starts_with(message_text, "CANCELLED"))
         {
@@ -1653,7 +1704,8 @@ void EvologicsModem::run()
     // first step is make sure we are connected!
     while (!this->connect_modem())
     {
-        std::cerr << "Failed to connect to modem. Trying again." << std::endl;
+        std::cerr << "Failed to connect to modem. Trying again after 1s." << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
     std::cout << "Modem connected." << std::endl;
@@ -1676,21 +1728,41 @@ void EvologicsModem::run()
 
     while (!loop_exit)
     {
-        usleep(5e5);
         std::cout << "========================================\n";
         std::cout << "Waiting for message to send." << std::endl;
         std::unique_lock<std::mutex> ul(this->queue_message_mutex);
-        while (!loop_exit && this->queued_messages.size() == 0 && this->next_ping.size() == 0)
+
+        // if we aren't existing, have high priority, burst message data or a ping to send
+        // just keep waiting...
+        while (!loop_exit && !this->high_priority && this->queued_priorities.size() == 0 && this->next_ping.size() == 0)
         {
-            this->message_added.wait_for(ul, std::chrono::milliseconds(500));
+            // this timeout is irrelevant if a message is triggered as the signal
+            // will cause it to break. Only delays loop_exit response.
+            this->message_added.wait_for(ul, std::chrono::seconds(1));
         }
 
+        // used to restack the message if it fails
+        bool message_is_high_priority;
 
-        if (this->queued_messages.size() > 0)
+        // first check is high priority message
+        if (this->high_priority)
+        {
+            // extract the message and reset
+            message.swap(this->high_priority_message.second);
+            message_type = this->high_priority_message.first;
+            this->high_priority = false;
+            message_is_high_priority = true;
+        }
+        else if (this->queued_priorities.size() > 0)
         {
             // sending burst/data IM
-            auto queued = this->queued_messages.front();
+            message_is_high_priority = false;
 
+            // get the next message in the queue, then remove the channel and the data
+            std::string next_channel = this->queued_priorities.front();
+
+            auto queued = this->channel_messages[next_channel];
+            this->channel_messages.erase(next_channel);
 
             message.swap(queued.second);
             message_type = queued.first;
@@ -1708,7 +1780,7 @@ void EvologicsModem::run()
                 std::cout << "Sending queued UNKNOWN message from LCM\n";
             }
 
-            this->queued_messages.pop_front();
+            this->queued_priorities.pop_front();
 
         }
         else if (this->next_ping.size() > 0)
@@ -1718,6 +1790,7 @@ void EvologicsModem::run()
             message.swap(next_ping);
             next_ping.clear();
             message_type = MSG_IM;
+            message_is_high_priority = false;
             for (auto &pt : this->ping_targets)
             {
                 if (pt.target_id == next_ping_target)
@@ -1738,7 +1811,20 @@ void EvologicsModem::run()
         // block to go through the sending process
         ul.unlock();
 
-        send_message(message_type, (char *)message.data(), message.size());
+        if (!send_message(message_type, (char *)message.data(), message.size()))
+        {
+            if (message_is_high_priority)
+            {
+                ul.lock();
+                // need to check in case a new message has been stacked for guaranteed
+                // delivery (permits overwriting with new one. Don't keep a massive stack)
+                if (!this->high_priority)
+                {
+                    this->high_priority = true;
+                    this->high_priority_message = std::make_pair(message_type, message);
+                }
+            }
+        }
     }
 
     this->close_threads = true;

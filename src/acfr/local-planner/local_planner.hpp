@@ -1,6 +1,10 @@
 #include <lcm/lcm-cpp.hpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
 
 #include "DubinsPath.h"
 #include "acfr-common/timestamp.h"
@@ -11,6 +15,8 @@
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/senlcm/oa_t.hpp"
 #include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
+#include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
+
 
 #pragma once
 
@@ -199,6 +205,14 @@ public:
         oa.utime = dwn->utime;
     }
 
+    void onRdi(const senlcm::rdi_pd5_t *Rdi)
+    {    
+        for (int i = 0; i < 4; i++)
+        {
+            rdi[i] = Rdi->pd4.range[i];
+        }
+    }
+
     std::vector<Pose3D> waypoints;
 
     lcm::LCM lcm;
@@ -214,7 +228,7 @@ protected:
 			//if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
 				return true;
 		}
-		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()))//) && (p.getZ() != p.getZ()))
+		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) )//&& (p.getZ() != p.getZ()))
 		{
 			if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
 				return true;
@@ -225,7 +239,7 @@ protected:
 
     	    if ((pRel.getX() < forwardBound) &&
     	        (pRel.getX() > -2 * forwardBound) &&
-    	        (std::fabs(pRel.getY()) < sideBound))// &&    (std::fabs(pRel.getZ()) < depthBound))
+    	        (std::fabs(pRel.getY()) < sideBound)) //&&    	        (std::fabs(pRel.getZ()) < depthBound))
     	    {
     	        return true;
     	    }

@@ -2,6 +2,7 @@
 import lcm
 import sys
 import os.path
+import matplotlib.pyplot as plt
 
 sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes')
 from bot_procman import printf_t
@@ -16,7 +17,13 @@ print lcm_url
 lc = lcm.LCM(lcm_url)
 
 dd = {}
-
+utime = []
+depth = []
+altitude = []
+water_depth = []
+zero_nav_time = []
+distance_est = []
+dist = 0
 
 def handler(channel, data):
     msg = printf_t.decode(data)
@@ -63,6 +70,8 @@ except Exception:
 for key, value in dd.iteritems():
     filename = '{}.txt'.format(key)
     write_header = True
+    plot_nav = True
+    get_time_zero = True
     if 'mission waypoints' in filename:
         with open(os.path.join(subdirectory, filename), 'w+') as f:
             for msg in value:
@@ -73,10 +82,21 @@ for key, value in dd.iteritems():
     elif 'nav' in filename:
         with open(os.path.join(subdirectory, filename), 'w+') as f:
             for msg in value:
+                if plot_nav:
+                    if get_time_zero:
+                        zero_nav_time = msg.utime
+                        get_time_zero = False
+                    utime.append((msg.utime-zero_nav_time)/1000000.0)
+                    dist = dist + 0.1*msg.vx
+                    distance_est.append(dist)
+                    depth.append(msg.depth)
+                    altitude.append(msg.altitude)
+                    water_depth.append(-1.0*(msg.depth+msg.altitude))
                 if write_header:
-                    f.write('utime,latitude,longitude,x,y,depth,roll,pitch,heading,vx,vy,vz\n')
+                    f.write('utime,latitude,longitude,x,y,depth,altitude,roll,pitch,heading,vx,vy,vz,water_depth\n')
                     write_header = False
-                f.write('{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(msg.utime, msg.latitude, msg.longitude, msg.x, msg.y, msg.depth, msg.roll, msg.pitch, msg.heading, msg.vx, msg.vy, msg.vz))        
+                f.write('{},{},{},{},{},{},{},{},{},{},{},{},{},{}\n'.format(msg.utime, msg.latitude, msg.longitude, msg.x, msg.y, msg.depth, msg.altitude, msg.roll, msg.pitch, msg.heading, msg.vx, msg.vy, msg.vz,(msg.depth+msg.altitude)))
+
 
 log =  open(os.path.join(subdirectory, 'log.txt'), 'w+')
 for key, value in dd.iteritems():
@@ -87,5 +107,29 @@ for key, value in dd.iteritems():
         except:
             pass
 log.close()
+
+if plot_nav:  
+    plt.figure(1)
+    plt.subplot(311)
+    plt.title('Nav Depth')
+    plt.xlabel('Seconds')
+    plt.ylabel('Metres')
+    plt.grid(True)
+    plt.plot(utime, depth, 'b--')
+
+    plt.subplot(312)
+    plt.title('Nav Altitude')
+    plt.xlabel('Seconds')
+    plt.ylabel('Metres')
+    plt.grid(True)
+    plt.plot(utime, altitude, 'r--')
+
+    plt.subplot(313)
+    plt.title('Depth + Altitude = sea floor profile')
+    plt.xlabel('Seconds')
+    plt.ylabel('Metres')
+    plt.grid(True)
+    plt.plot(utime, water_depth, 'g--')
+    plt.show()
 
 

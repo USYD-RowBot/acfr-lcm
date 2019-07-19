@@ -52,6 +52,13 @@ void ondwnLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	lp->onDwn(dwn);
 }
 
+// rdu callback
+void onRdiLCM(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
+		const senlcm::rdi_pd5_t *rdi, LocalPlanner *lp)
+{
+	lp->onRdi(rdi);
+}
+
 // Path command callback
 void onPathCommandLCM(const lcm::ReceiveBuffer* rbuf,
 		const std::string& channel, const acfrlcm::auv_path_command_t *pc,
@@ -148,6 +155,7 @@ int LocalPlanner::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".OA", onOALCM, this);
 	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_FWD", onfwdLCM, this);
 	lcm.subscribeFunction(vehicle_name+".MICRON_SOUNDER_DWN", ondwnLCM, this);
+	lcm.subscribeFunction(vehicle_name+".RDI", onRdiLCM, this);
     return 1;
 }
 
