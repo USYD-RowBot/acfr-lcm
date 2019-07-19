@@ -257,7 +257,7 @@ void signal_handler(int sig)
 }
 
 EvologicsModem::EvologicsModem()
-    : lcm(lcm::LCM()), close_threads(false), topside_id(0)
+    : lcm(lcm::LCM()), close_threads(false), topside_id(0), high_priority(false)
 {
     lcm.subscribe("HEARTBEAT_1HZ", &EvologicsModem::on_heartbeat, this);
     lcm.subscribe("EVOLOGICS_CONTROL", &EvologicsModem::on_evo_control, this);
@@ -1186,7 +1186,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
             std::cout << "Message delivered.\n";
 
             // Get the propagation time.
-            send_query("AT?T");
+            //send_query("AT?T");
         }
         else if (starts_with(message_text, "CANCELLED"))
         {
@@ -1747,6 +1747,7 @@ void EvologicsModem::run()
         // first check is high priority message
         if (this->high_priority)
         {
+            std::cout << "Sending HIGH PRIORITY message from LCM\n";
             // extract the message and reset
             message.swap(this->high_priority_message.second);
             message_type = this->high_priority_message.first;
