@@ -79,9 +79,9 @@ void recalculate(const lcm::ReceiveBuffer* rbuf, const std::string& channel,
 	static long count = 0;
 	//	double timeSinceReplan = (timestamp_now() - lp->getReplanTime()) / 1000000.;
 
-	if ((((lp->getDestReached() == false && lp->getNewDest() == true)|| (lp->getHoldmode() == true)) &&
+	if ((((lp->getDestReached() == false && lp->getNewDest() == true)) &&
 		//((lp->waypoints.size() == 0) || (timeSinceReplan > lp->getReplanInterval()))
-				(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()) ))
+				(lp->getWaypointTimePassedSec() > lp->getWaypointTimeout()) )|| (lp->getHoldmode() == true))
 	{
 
 		if (lp->getWaypointTimePassedSec() > lp->getWaypointTimeout())

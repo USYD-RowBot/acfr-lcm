@@ -325,8 +325,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         // power management
         // dive with thrusters if large dive
         if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0){
-            mc.lat_fore = 0.0;
-            mc.lat_aft = 0.0;
+            if(mc.lat_fore > 500.0)
+		    mc.lat_fore = 500.0;
+            if(mc.lat_aft > 500.0)
+		    mc.lat_aft  = 500.0;
             mc.tail_thruster = 0.0;
             mc.tail_elevator = 0.0;
             mc.tail_rudder = 0.0;

@@ -211,10 +211,10 @@ protected:
     	// Check to see if we are in a special mode, depth or heading only
 	    if((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getYawRad() != p.getYawRad()))
 	    {
-			if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+			//if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
 				return true;
 		}
-		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getZ() != p.getZ()))
+		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()))//) && (p.getZ() != p.getZ()))
 		{
 			if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
 				return true;
@@ -225,8 +225,7 @@ protected:
 
     	    if ((pRel.getX() < forwardBound) &&
     	        (pRel.getX() > -2 * forwardBound) &&
-    	        (std::fabs(pRel.getY()) < sideBound) &&
-    	        (std::fabs(pRel.getZ()) < depthBound))
+    	        (std::fabs(pRel.getY()) < sideBound))// &&    (std::fabs(pRel.getZ()) < depthBound))
     	    {
     	        return true;
     	    }
