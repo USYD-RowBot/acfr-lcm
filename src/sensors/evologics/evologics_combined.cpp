@@ -1517,14 +1517,15 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         std::cerr << "IMS expired." << std::endl;
         return;
     }
-    else if (starts_with(response, "CANCELLEDIMS"))
+    else if (starts_with(response, "CANCELLEDIMS") || starts_with(response, "CANCELEDIMS"))
     {
-        std::cerr << "IMS expired." << std::endl;
+        std::cerr << "IMS cancelled." << std::endl;
         return;
     }
-    else if (starts_with(response, "CANCELLEDPBM"))
+    // typos in evologics output
+    else if (starts_with(response, "CANCELLEDPBM") || starts_with(response, "CANCELEDPBM"))
     {
-        std::cerr << "IMS expired." << std::endl;
+        std::cerr << "PBM cancelled." << std::endl;
         return;
     }
 
