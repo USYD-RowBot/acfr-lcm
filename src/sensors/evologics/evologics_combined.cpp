@@ -110,7 +110,6 @@ public:
     void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec);
     void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
 
-    std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
     bool send_message(int message_type, char const *data, int length);
 
     void modem_read_thread();
@@ -211,6 +210,10 @@ private:
     // the messages to look up by channel name
     std::unordered_map<std::string, std::pair<int, std::vector<uint8_t>>> channel_messages;
 };
+
+std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
+
+std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size);
 
 bool starts_with(std::string const &full_string, std::string const &prefix)
 {
@@ -1031,8 +1034,29 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
     }
 }
 
-std::pair<int, std::vector<unsigned char>>
-EvologicsModem::build_lcm_data_message
+std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size)
+{
+    // first check the crc
+    unsigned long crc = crc32(0, d + 3, size - 9);
+    unsigned long data_crc = *(uint32_t *)&d[size - 6];
+
+    if((data_crc & 0xFFFFFFFF) != (crc & 0xFFFFFFFF))
+    {
+        std::cerr << "LCM data CRC error\n";
+        //printf("0x%X 0x%X\n", crc, data_crc);
+        return;
+    }
+
+    std::string channel(d + 4, d[3]);
+
+    // get the payload location
+    void *lcm_data_start = &d[d[3] + 4];
+    int lcm_data_length = size - d[3] - 10;
+
+    return std::make_tuple(channel, lcm_data_start, lcm_data_length);
+}
+
+std::pair<int, std::vector<unsigned char>> build_lcm_data_message
     (
         unsigned char *lcm_data,
         int lcm_data_size,
@@ -1680,34 +1704,16 @@ void EvologicsModem::process_burst(int64_t timestamp, std::string const &message
 
 void EvologicsModem::process_lcm_data(uint8_t *d, int size)
 {
-    // first check the crc
-    unsigned long crc = crc32(0, d + 3, size - 9);
-    unsigned long data_crc = *(uint32_t *)&d[size - 6];
-    
-    if((data_crc & 0xFFFFFFFF) != (crc & 0xFFFFFFFF))
-    {
-        std::cerr << "LCM data CRC error\n";
-        //printf("0x%X 0x%X\n", crc, data_crc);
-        return;
-    }
+    std::string channel;
+    void *lcm_data_start;
+    int lcm_data_length;
 
-    // get the channel name
-    char *channel = (char *)malloc(d[3] + 1);
-    memset(channel, 0, d[3] + 1);
-    memcpy(channel, &d[4], d[3]);
-
-    // get the payload location
-    void *lcm_data_start = &d[d[3] + 4];
-    int lcm_data_length = size - d[3] - 10;
-    
+    std::tie(channel, lcm_data_start, lcm_data_length) = extract_lcm_data(d, size);
     std::cout << "Publishing lcm data on channel name: " << channel << std::endl;
-    
+
     // publish the LCM data
     lcm.publish(channel, lcm_data_start, lcm_data_length);
-
-    free(channel);
 }
-
 
 void EvologicsModem::run()
 {
