@@ -50,7 +50,7 @@ struct ChannelSubscription
         : channel_regex(regex), use_pbm(use_pbm), high_priority(high_priority),
             subscription(subscription)
     {
-    
+
     }
 
     std::string channel_regex;
@@ -66,7 +66,7 @@ struct PingTarget
         in_water(true), send_fixes(false), minimum_period(period),
         last_sent_fix_time(0), last_fix_time(0), last_ping_time(0)
     {
-    
+
     }
 
     std::string target_name;
@@ -79,7 +79,7 @@ struct PingTarget
     int64_t last_ping_time;
 };
 
-enum 
+enum
 {
     MSG_PBM=0,
     MSG_BURST,
@@ -111,6 +111,7 @@ public:
     void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
 
     bool send_message(int message_type, char const *data, int length);
+    std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
 
     void modem_read_thread();
     void lcm_handle_thread();
@@ -211,7 +212,6 @@ private:
     std::unordered_map<std::string, std::pair<int, std::vector<uint8_t>>> channel_messages;
 };
 
-std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
 
 std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size);
 
@@ -277,8 +277,8 @@ bool EvologicsModem::load_configuration(char *program_name)
     param = bot_param_new_from_server (this->lcm.getUnderlyingLCM(), 1);
     if(param == NULL)
         return false;
-        
-    char rootkey[64];        
+
+    char rootkey[64];
     char key[128];
     sprintf (rootkey, "sensors.%s", program_name);
 
@@ -331,7 +331,7 @@ bool EvologicsModem::load_configuration(char *program_name)
             *term = '\r';
             term_len = 1;
         }
-            
+
         if (use_ip_comm)
         {
             *term = '\n';
@@ -343,16 +343,16 @@ bool EvologicsModem::load_configuration(char *program_name)
     vehicle_name = bot_param_get_str_or_fail(param, key);
 
     lcm.subscribe(vehicle_name + "\\.USBL_FIX\\..*", &EvologicsModem::on_usbl_fix, this);
-    
+
     sprintf(key, "%s.ack_timeout", rootkey);
     ack_timeout = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.gain", rootkey);
     gain = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.source_level", rootkey);
     source_level = bot_param_get_int_or_fail(param, key);
-    
+
     sprintf(key, "%s.auto_gain", rootkey);
     auto_gain = bot_param_get_boolean_or_fail(param, key);
 
@@ -464,7 +464,6 @@ bool EvologicsModem::load_configuration(char *program_name)
         }
     }
 
-
     return 0;
 }
 
@@ -545,16 +544,16 @@ bool EvologicsModem::connect_modem()
         exit(1);
     }
 
-    
+
     return success;
 }
 
 void EvologicsModem::modem_write(char const *command, int length)
 {
-    // (this includes many RECV and SEND cmds, but not all!)
-    //std::cout << "Sending to modem:\n<<" << 
-    std::cout << "<<" << 
+    std::cout << "<<" <<
         std::string(command, strcspn(command, ",\n\r")) << std::endl;
+
+    // publish messages we send to the modem
     /*senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
     msg.size = buf.size() - 1;
@@ -641,7 +640,7 @@ bool EvologicsModem::send_query(const char *d)
         std::string message_text((char *)message.second.data(), message.second.size());
 
         expected_lines--;
-        std::cout << "=>" << 
+        std::cout << "=>" <<
             std::string((char *)message_text.data(), strcspn((char *)message_text.data(), ",\r\n")) << std::endl;
     }
 
@@ -694,7 +693,7 @@ bool EvologicsModem::send_command(const char *d)
     {
         // we don't want to get stuck here
         success = false;
-        std::cerr << "Unknown response to command:\n>" << message_text << "\n"; 
+        std::cerr << "Unknown response to command:\n>" << message_text << "\n";
     }
 
     return success;
@@ -746,7 +745,7 @@ bool EvologicsModem::send_mode(const char *d)
     {
         // we don't want to get stuck here
         success = false;
-        std::cerr << "Unknown response to mode change:\n>" << message_text << "\n"; 
+        std::cerr << "Unknown response to mode change:\n>" << message_text << "\n";
     }
 
     return success;
@@ -796,12 +795,12 @@ bool EvologicsModem::configure_modem()
 
     // request USBL positioning data
     if (!send_command("AT@ZU1"))
-        return false;     
+        return false;
 
     // request extended notifications
     if (!send_command("AT@ZX1"))
         return false;
-    
+
     // set the retry timeout on burst data
     if (!send_command("AT!RT1500"))
         return false;
@@ -838,7 +837,6 @@ int EvologicsModem::get_target_channel(std::string const &channel)
     {
         target_channel = this->topside_id;
     }
-
 
     return target_channel;
 }
@@ -922,8 +920,8 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
             }
         }
     }
-
 }
+
 void EvologicsModem::on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc)
 {
     for (auto &pt : this->ping_targets)
@@ -1044,10 +1042,10 @@ std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size)
     {
         std::cerr << "LCM data CRC error\n";
         //printf("0x%X 0x%X\n", crc, data_crc);
-        return;
+        return std::make_tuple(std::string(), (void *)0, 0);
     }
 
-    std::string channel(d + 4, d[3]);
+    std::string channel((char *)d + 4, d[3]);
 
     // get the payload location
     void *lcm_data_start = &d[d[3] + 4];
@@ -1056,7 +1054,7 @@ std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size)
     return std::make_tuple(channel, lcm_data_start, lcm_data_length);
 }
 
-std::pair<int, std::vector<unsigned char>> build_lcm_data_message
+std::pair<int, std::vector<unsigned char>> EvologicsModem::build_lcm_data_message
     (
         unsigned char *lcm_data,
         int lcm_data_size,
@@ -1146,7 +1144,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     // to this we expect a few things
     // namely an OK, BUSY or ERROR response
     // followed by a final message depending on the message type
-    
+
     std::cout << "Waiting for SEND response" << std::endl;
     std::unique_lock<std::mutex> ul(this->queue_response_mutex);
 
@@ -1180,7 +1178,7 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
     {
         // we don't want to get stuck here
         success = false;
-        std::cerr << "Unknown response to SEND:\n>" << message_text << "\n"; 
+        std::cerr << "Unknown response to SEND:\n>" << message_text << "\n";
     }
 
     // we get feedback as long as it isn't a PBM
@@ -1233,13 +1231,12 @@ bool EvologicsModem::send_message(int message_type, char const *data, int length
         {
             // we don't want to get stuck here
             success = false;
-            std::cerr << "Unknown delivery report response:\n>" << message_text << "\n"; 
+            std::cerr << "Unknown delivery report response:\n>" << message_text << "\n";
         }
     }
 
     return success;
 }
-
 
 void EvologicsModem::lcm_handle_thread()
 {
@@ -1258,7 +1255,7 @@ void EvologicsModem::modem_read_thread()
     //buf.reserve(1024);
     size_t bytes;
     int64_t timestamp;
-    
+
     while(!this->close_threads)
     {
         FD_ZERO (&rfds);
@@ -1266,7 +1263,7 @@ void EvologicsModem::modem_read_thread()
         struct timeval timeout;
         timeout.tv_sec = 0;
         timeout.tv_usec = 500000;
-        
+
         int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &timeout);
         timestamp = timestamp_now();
         if(ret > 0)
@@ -1304,7 +1301,6 @@ void EvologicsModem::modem_read_thread()
             buf.push_back(message_start[1]);
             buf.push_back(message_start[2]);
 
-
             // now we can check if it is a recv
             if (buf[0] == 'R' && buf[1] == 'E' && buf[2] == 'C')
             {
@@ -1334,7 +1330,6 @@ void EvologicsModem::modem_read_thread()
 
     std::cout << "Read thread exit\n";
 }
-
 
 void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
 {
@@ -1379,10 +1374,9 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
             field = 9;
     }
 
-
     // this is straightforward
     // read until 'field' commas have been read in
-    // ascii to integer the number between 
+    // ascii to integer the number between
     size_t comma_count = 0;
     if (buf.back() == ',')
     {
@@ -1417,7 +1411,7 @@ void EvologicsModem::parse_recv(std::vector<uint8_t> &buf)
 
         if (ret >= 0)
         {
-            data_read += ret; 
+            data_read += ret;
         }
         else
         {
@@ -1463,8 +1457,7 @@ void EvologicsModem::publish_modem_response(int64_t timestamp, std::vector<uint8
 {
     //TODO: update this to display all messages excluding any data fields
     // (this includes many RECV and SEND cmds, but not all!)
-    //std::cout << "Received from modem:\n>>" << 
-    std::cout << ">>" << 
+    std::cout << ">>" <<
         std::string((char *)buf.data(), strcspn((char *)buf.data(), ",\r\n")) << std::endl;
     senlcm::evologics_modem_t msg;
     msg.utime = timestamp;
@@ -1575,14 +1568,14 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
 void EvologicsModem::process_usbllong(int64_t timestamp, std::string const &message)
 {
     std::vector<std::string> tokens = chop_string(message, 17);
-    
+
     if(tokens.size() != 17)
         return;
-    
+
     // Work out the actual time that the measurment was taken
     double measurement_time = stof(tokens[2]);
     double current_time = stof(tokens[1]);
-    
+
     senlcm::evologics_usbl_t ud;
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
@@ -1601,7 +1594,7 @@ void EvologicsModem::process_usbllong(int64_t timestamp, std::string const &mess
     ud.rssi = stoi(tokens[14]);
     ud.integrity = stoi(tokens[15]);
     ud.accuracy = stof(tokens[16]);
-    
+
     std::string target_name = get_target_name(ud.remote_id);
     std::string usbl_fix_channel_name = vehicle_name + ".EVO_USBLFIX." + target_name;
 
@@ -1611,17 +1604,17 @@ void EvologicsModem::process_usbllong(int64_t timestamp, std::string const &mess
 void EvologicsModem::process_usblangles(int64_t timestamp, std::string const &message)
 {
     std::vector<std::string> tokens = chop_string(message, 17);
-    
+
     if(tokens.size() != 14)
         return;
-    
+
     // Work out the actual time that the measurment was taken
     double measurement_time = stof(tokens[2]);
     double current_time = stof(tokens[1]);
-    
+
     // we will correct the time as it may not be sync'd with the computer running this code
     //double time_diff = current_time - measurement_time;
-    
+
     senlcm::evologics_usbl_angles_t ud;
     ud.utime = timestamp;// + (int64_t)(time_diff * 1e6);
     ud.mtime = (int64_t)(measurement_time * 1e6);
@@ -1709,10 +1702,12 @@ void EvologicsModem::process_lcm_data(uint8_t *d, int size)
     int lcm_data_length;
 
     std::tie(channel, lcm_data_start, lcm_data_length) = extract_lcm_data(d, size);
-    std::cout << "Publishing lcm data on channel name: " << channel << std::endl;
 
-    // publish the LCM data
-    lcm.publish(channel, lcm_data_start, lcm_data_length);
+    if (lcm_data_start != 0)
+    {
+        std::cout << "Publishing lcm data on channel name: " << channel << std::endl;
+        lcm.publish(channel, lcm_data_start, lcm_data_length);
+    }
 }
 
 void EvologicsModem::run()
