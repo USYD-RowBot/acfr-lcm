@@ -601,6 +601,8 @@ bool EvologicsModem::send_query(const char *d)
 
     this->modem_write(command, data_length + term_len);
 
+    free(command);
+
     // most queries have a single response line
     // but two of them (that I've found) have more
     int expected_lines = 1;
@@ -653,6 +655,8 @@ bool EvologicsModem::send_command(const char *d)
 
     this->modem_write(command, data_length + term_len);
 
+    free(command);
+
     // now we wait for the response
     // the challenge is that this can vary depending on the command
     std::unique_lock<std::mutex> ul(this->queue_response_mutex);
@@ -702,6 +706,8 @@ bool EvologicsModem::send_mode(const char *d)
     memcpy(command + data_length, term, term_len);
 
     this->modem_write(command, data_length + term_len);
+
+    free(command);
 
     // now we wait for the response
     // the challenge is that this can vary depending on the command
@@ -1696,6 +1702,8 @@ void EvologicsModem::process_lcm_data(uint8_t *d, int size)
     
     // publish the LCM data
     lcm.publish(channel, lcm_data_start, lcm_data_length);
+
+    free(channel);
 }
 
 
