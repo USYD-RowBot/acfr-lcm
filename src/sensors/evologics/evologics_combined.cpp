@@ -1094,7 +1094,8 @@ EvologicsModem::build_lcm_data_message
     memcpy(buf + bufpos, lcm_data, lcm_data_size);
     bufpos += lcm_data_size;
 
-    uint32_t crc = crc32(0, (unsigned char *)buf + 3, lcm_data_size + strlen(dest_channel) + 1);
+    // buf includes the SEND* stuff, have to account for header size
+    uint32_t crc = crc32(0, (unsigned char *)buf + header_size + 3, lcm_data_size + strlen(dest_channel) + 1);
     memcpy(buf + bufpos, &crc, sizeof(crc));
     bufpos += sizeof(crc);
 
