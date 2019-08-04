@@ -18,6 +18,7 @@
             <timeout t="240" />
             <velocity x="1.0" />
 	    <depth mode = "depth" />
+	    <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
@@ -26,7 +27,7 @@
             <heading deg="225" />
             <timeout t="240" />
             <velocity x="1.0" />
-	    <depth mode = "altitude" />
+	    <depth mode="depth" />
         </goto>
     </primitive>
     <primitive>
@@ -35,7 +36,7 @@
             <heading deg="0" />
             <timeout t="240" />
             <velocity x="1.0" />
-	    <depth mode = "altitude" />
+	    <depth mode = "depth" />
         </goto>
 </primitive>
     <primitive>
@@ -45,6 +46,7 @@
             <timeout t="240" />
             <velocity x="1.0" />
 	    <depth mode = "depth" />
+	    <command device="camera" onoff="stop"/>
         </goto>
 	</primitive>
 

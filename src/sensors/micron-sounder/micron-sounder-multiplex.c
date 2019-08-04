@@ -23,8 +23,8 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 {
     state_t *state = (state_t *)u;
     const char *Sensor_direction[2];
-    Sensor_direction[0]= "FWD";
-    Sensor_direction[1] = "DWN";
+    Sensor_direction[0]= "DWN";
+    Sensor_direction[1] = "FWD";
     static int beat_count = 1;
     static int sensor_count = 0;
     char msg[32];
@@ -177,7 +177,7 @@ main (int argc, char *argv[])
     }
 
     int lcm_fd = lcm_get_fileno(state.lcm);
-    sprintf(rootkey, "sensors.%s", basename(argv[0]));
+    //sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
     printf("oas devs found = %d\n" , state.num_oas);
     for(int i=0; i<state.num_oas; i++)
@@ -220,10 +220,10 @@ main (int argc, char *argv[])
         lcm_handle_timeout(state.lcm, 1000);
     }
     
-   /* for(int i=0; i < state.num_oas ; i++)
+    for(int i=0; i < state.num_oas ; i++)
     {
         acfr_sensor_destroy(state.sensors[i]);
-    }*/
+    }
     
     return 1;
 }
