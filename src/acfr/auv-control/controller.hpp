@@ -10,6 +10,14 @@
 
 #include "pid.h"
 
+typedef enum
+{
+    TunnelDive,
+    TransitionDive,
+    TunnelTurn,
+    TailTravel
+} NGAStateT;
+
 enum class ControlSource : char
 {
     Automatic,
@@ -30,6 +38,7 @@ public:
     double prev_rudder_angle;
     double prev_elev_angle;
     double prev_rpm;
+    NGAStateT currentstate;
 
     void quit();
 
@@ -74,7 +83,6 @@ private:
 
     std::string root_key;
     std::string vehicle_name;
-
     bool exit_signalled;
 
     void lcm_thread();

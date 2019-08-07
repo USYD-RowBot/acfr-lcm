@@ -195,7 +195,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
         ///double target_descent = pid(&this->gains_tunnel_depth, nav.depth, cmd.depth, dt);
 
-        // std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth << " target descent: " << target_descent << std::endl;
+        std::cout << "nav depth: " << nav.depth << " cmd depth: " << cmd.depth <<  std::endl;
                     
         if (cmd.depth_mode == acfrlcm::auv_control_t::PITCH_MODE)
             {
@@ -325,14 +325,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
         int tail_transition_value = 200;
         int tunnel_transition_value = 1000;
-
+        int heading_correction_limit = 500;
         // power management
         // dive with thrusters if large dive
         if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0){
-            if(mc.lat_fore > 500.0)
-		    mc.lat_fore = 500.0;
-            if(mc.lat_aft > 500.0)
-		    mc.lat_aft  = 500.0;
+            if(fabs(mc.lat_fore) > heading_correction_limit) //fabs this
+		      mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
+            if(fabs(mc.lat_aft) > heading_correction_limit) //fabs this
+                mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
             mc.tail_thruster = 1.0; // don't trigger the idle reset on tail during a dive
             mc.tail_elevator = 0.0;
             mc.tail_rudder = 0.0;
