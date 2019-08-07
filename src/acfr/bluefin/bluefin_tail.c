@@ -56,6 +56,7 @@ typedef struct
     bool error_elevator; 
     bool homed;   
     bool zero_target;
+    int8_t invert_tail;
 } state_t;
 
 int bluefin_write_respond(state_t *state, char *d, int timeout);
@@ -298,7 +299,7 @@ int bluefin_write(acfr_sensor_t *sensor, char *d)
 // Send a command and wait for a response and parse
 int bluefin_write_respond(state_t *state, char *d, int timeout)
 {
-    //printf("****Sending data: %s\n", d);
+    printf("****Sending data: %s\n", d);
     int ret = acfr_sensor_write(state->sensor, d, strlen(d));
     
     //usleep(10000);
@@ -369,7 +370,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#02MP %2.1f\n", state->rudder * RTOD);
+        sprintf(msg, "#02MP %2.1f\n", state->invert_tail * state->rudder * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_rudder)
         {
@@ -387,7 +388,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
 
     {
-        sprintf(msg, "#03MP %2.1f\n", state->elevator * RTOD);
+        sprintf(msg, "#03MP %2.1f\n", state->invert_tail * state->elevator * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_elevator)
         {
@@ -475,13 +476,13 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     else
         state->enabled = false;
 
-    if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
-    {
-        bluefin_write_respond(state, "#02AO\n", 2);
-        bluefin_write_respond(state, "#02HM\n", 10);
-        bluefin_write_respond(state, "#03AO\n", 2);
-        bluefin_write_respond(state, "#03HM\n", 10);
-    }
+    // if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
+    // {
+    //     bluefin_write_respond(state, "#02AO\n", 2);
+    //     bluefin_write_respond(state, "#02HM\n", 10);
+    //     bluefin_write_respond(state, "#03AO\n", 2);
+    //     bluefin_write_respond(state, "#03HM\n", 10);
+    // }
 }
 
 int main (int argc, char *argv[])
@@ -512,7 +513,11 @@ int main (int argc, char *argv[])
     char key[64];
     sprintf(key, "%s.max_rpm", rootkey);
     state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.invert_tail", rootkey);
+    state.invert_tail = bot_param_get_boolean_or_fail(state.sensor->param, key);
 
+    if (state.invert_tail == 0)
+        state.invert_tail = -1;
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
 /*

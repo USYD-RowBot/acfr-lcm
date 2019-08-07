@@ -333,7 +333,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 		    mc.lat_fore = 500.0;
             if(mc.lat_aft > 500.0)
 		    mc.lat_aft  = 500.0;
-            mc.tail_thruster = 0.0;
+            mc.tail_thruster = 1.0; // don't trigger the idle reset on tail during a dive
             mc.tail_elevator = 0.0;
             mc.tail_rudder = 0.0;
             // std::cout << " vert thrusters only";
