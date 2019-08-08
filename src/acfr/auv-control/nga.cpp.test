@@ -249,34 +249,35 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 rudder_angle = prev_rudder_angle + (fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle))*RUDDER_DELTA;
                 prev_rudder_angle = rudder_angle;
             }
-
-            if (cmd.depth_mode == acfrlcm::auv_control_t::PITCH_MODE)
-                {
-                    pitch = cmd.pitch;
-                    std::cout << "PITCH_MODE" << std::endl; 
+            if ( (distance_to_depth_goal <= dive_goal_threshold) &&(fabs(nav.depth) > 0.5)){
+                if (cmd.depth_mode == acfrlcm::auv_control_t::PITCH_MODE)
+                    {
+                        pitch = cmd.pitch;
+                        std::cout << "PITCH_MODE" << std::endl; 
+                    }
+                else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
+                    {
+                        //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &cp.altitude);
+                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.altitude);
+                        std::cout << "ALTITUDE_MODE" << std::endl;         
+                    }
+                else
+                    {
+                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.depth);
+                        std::cout << "DEPTH_MODE" << std::endl; 
+                    }
+    
+                if ((nav.vx > -0.05) || (prop_rpm > -100))
+                    plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &cp.pitch);
+                else
+                    plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch, dt, &cp.pitch_r);
+    
+                if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
+                    prev_elev_angle = plane_angle;
+                else{
+                    plane_angle = prev_elev_angle + (fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle))*RUDDER_DELTA;
+                    prev_elev_angle = plane_angle;
                 }
-            else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
-                {
-                    //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &cp.altitude);
-                    pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.altitude);
-                    std::cout << "ALTITUDE_MODE" << std::endl;         
-                }
-            else
-                {
-                    pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.depth);
-                    std::cout << "DEPTH_MODE" << std::endl; 
-                }
-
-            if ((nav.vx > -0.05) || (prop_rpm > -100))
-                plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &cp.pitch);
-            else
-                plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch, dt, &cp.pitch_r);
-
-            if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
-                prev_elev_angle = plane_angle;
-            else{
-                plane_angle = prev_elev_angle + (fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle))*RUDDER_DELTA;
-                prev_elev_angle = plane_angle;
             }
             //  printf("prop_rpm: %f\n",prop_rpm);
             // Reverse all the fin angles for reverse direction (given rpm is
@@ -396,7 +397,7 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     // Lateral tunnel thrusters
     int fore = 0;
     int aft = 0;
-    double rudder;
+    double rudder, elevator_hc;
 
     //Strafe - this is side to side on left stick - always available
     fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
@@ -420,9 +421,21 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
         //or rudder turning when switch is forward
         rudder = -(sc.values[RC_AILERON] - RC_OFFSET) * RC_TO_RAD;
     }
-
+    if((fabs(rudder - prev_rudder_angle) < RUDDER_DELTA))
+        prev_rudder_angle = rudder;
+    else{
+        rudder = prev_rudder_angle + (fabs(rudder - prev_rudder_angle)/(rudder - prev_rudder_angle))*RUDDER_DELTA;
+        prev_rudder_angle = rudder;
+    }
+    elevator_hc = -(sc.values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
+    if((fabs(elevator_hc - prev_elev_angle) < RUDDER_DELTA))
+            prev_elev_angle = elevator_hc;
+    else{
+        elevator_hc = prev_elev_angle + (fabs(elevator_hc - prev_elev_angle)/(elevator_hc - prev_elev_angle))*RUDDER_DELTA;
+        prev_elev_angle = elevator_hc;
+    }
     // elevator is always available on right stick forward and back
-    mc.tail_elevator = -(sc.values[RC_ELEVATOR] - RC_OFFSET) * RC_TO_RAD;
+    mc.tail_elevator = elevator_hc;
     mc.tail_rudder = rudder; 
     mc.lat_aft = aft;
     mc.lat_fore = fore; 

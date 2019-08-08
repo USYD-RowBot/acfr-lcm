@@ -24,6 +24,7 @@ extern double
 pid(pid_gains_t *gains, double value, double goal, double dt);
 extern double
 pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_base_pid_t *msg);
-
+extern void
+reset_pid(pid_gains_t *gains);
 
 #endif // PID_H
