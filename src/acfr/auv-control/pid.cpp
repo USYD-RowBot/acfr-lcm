@@ -77,3 +77,10 @@ pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_base_
     return u;
 }
 
+void
+reset_pid(pid_gains_t *gains)
+{
+    gains->integral = 0;
+    gains->prev_error = 0;
+}
+
