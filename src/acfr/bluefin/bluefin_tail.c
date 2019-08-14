@@ -56,6 +56,7 @@ typedef struct
     bool error_elevator; 
     bool homed;   
     bool zero_target;
+    bool current_warning;
     int8_t invert_tail;
 } state_t;
 
@@ -278,7 +279,8 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->bf_status.voltage = atof(tok[2]);
                 state->bf_status.current = atof(tok[3]);
                 state->bf_status.psu_temp = atof(tok[4])/0.0625;
-                
+                if (state->bf_status.current > 8.0)
+                    state->bf_status.current_warning = true;
                 acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "NGA.BLUEFIN_STATUS", &state->bf_status);
                 return 1;
             }
@@ -441,7 +443,11 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         state->thruster = -state->max_rpm;
     else
         state->thruster = mot->tail_thruster;
-        
+    if (stat->bf_status.current_warning)
+    {
+        state->thruster = state->thruster*0.5; //if we see a brown out coming then limit the thruster values to 50% requested. At max rpm of 600 this will be limited to 300rpm
+        state->bf_status.current_warning = false;
+    }
     if(mot->tail_rudder > BF_RE_MAX)
         state->rudder = BF_RE_MAX;
     else if(mot->tail_rudder < BF_RE_MIN)
@@ -497,7 +503,7 @@ int main (int argc, char *argv[])
 //    memset(&state.bf_command, 0, sizeof(acfrlcm_auv_bluefin_tail_command_t));
     memset(&state.bf_status, 0, sizeof(acfrlcm_auv_bluefin_tail_status_t));
     state.enabled = false;
-    
+    state.current_warning = false;
     //Initalise LCM object
     state.lcm = lcm_create(NULL);
     
