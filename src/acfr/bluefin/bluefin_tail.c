@@ -56,6 +56,8 @@ typedef struct
     bool error_elevator; 
     bool homed;   
     bool zero_target;
+    bool current_warning;
+    int8_t invert_tail;
 } state_t;
 
 int bluefin_write_respond(state_t *state, char *d, int timeout);
@@ -277,7 +279,8 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->bf_status.voltage = atof(tok[2]);
                 state->bf_status.current = atof(tok[3]);
                 state->bf_status.psu_temp = atof(tok[4])/0.0625;
-                
+                if (state->bf_status.current > 8.0)
+                    state->current_warning = true;
                 acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "NGA.BLUEFIN_STATUS", &state->bf_status);
                 return 1;
             }
@@ -369,7 +372,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#02MP %2.1f\n", -state->rudder * RTOD);
+        sprintf(msg, "#02MP %2.1f\n", state->invert_tail * state->rudder * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_rudder)
         {
@@ -387,7 +390,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
 
     {
-        sprintf(msg, "#03MP %2.1f\n", -state->elevator * RTOD);
+        sprintf(msg, "#03MP %2.1f\n", state->invert_tail * state->elevator * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_elevator)
         {
@@ -440,7 +443,11 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         state->thruster = -state->max_rpm;
     else
         state->thruster = mot->tail_thruster;
-        
+    if (state->current_warning)
+    {
+        state->thruster = state->thruster*0.5; //if we see a brown out coming then limit the thruster values to 50% requested. At max rpm of 600 this will be limited to 300rpm
+        state->current_warning = false;
+    }
     if(mot->tail_rudder > BF_RE_MAX)
         state->rudder = BF_RE_MAX;
     else if(mot->tail_rudder < BF_RE_MIN)
@@ -496,7 +503,7 @@ int main (int argc, char *argv[])
 //    memset(&state.bf_command, 0, sizeof(acfrlcm_auv_bluefin_tail_command_t));
     memset(&state.bf_status, 0, sizeof(acfrlcm_auv_bluefin_tail_status_t));
     state.enabled = false;
-    
+    state.current_warning = false;
     //Initalise LCM object
     state.lcm = lcm_create(NULL);
     
@@ -512,7 +519,11 @@ int main (int argc, char *argv[])
     char key[64];
     sprintf(key, "%s.max_rpm", rootkey);
     state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.invert_tail", rootkey);
+    state.invert_tail = bot_param_get_boolean_or_fail(state.sensor->param, key);
 
+    if (state.invert_tail == 0)
+        state.invert_tail = -1;
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
 /*
