@@ -298,7 +298,7 @@ int bluefin_write(acfr_sensor_t *sensor, char *d)
 // Send a command and wait for a response and parse
 int bluefin_write_respond(state_t *state, char *d, int timeout)
 {
-    //printf("****Sending data: %s\n", d);
+    printf("****Sending data: %s\n", d);
     int ret = acfr_sensor_write(state->sensor, d, strlen(d));
     
     //usleep(10000);
@@ -309,7 +309,7 @@ int bluefin_write_respond(state_t *state, char *d, int timeout)
     if(ret > 0)
     {
         bytes =  acfr_sensor_read_timeout(state->sensor, buf, sizeof(buf), timeout);
-        //printf("****Got %d bytes, response %s\n", bytes, buf);
+        printf("****Got %d bytes, response %s\n", bytes, buf);
         if(bytes > 0)
             return parse_bluefin_message(state, buf, bytes);
         else
@@ -369,7 +369,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#02MP %2.1f\n", state->rudder * RTOD);
+        sprintf(msg, "#02MP %2.1f\n", -state->rudder * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_rudder)
         {
@@ -387,7 +387,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
 
     {
-        sprintf(msg, "#03MP %2.1f\n", state->elevator * RTOD);
+        sprintf(msg, "#03MP %2.1f\n", -state->elevator * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_elevator)
         {
@@ -475,13 +475,13 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     else
         state->enabled = false;
 
-    if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
+    /*if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
     {
         bluefin_write_respond(state, "#02AO\n", 2);
         bluefin_write_respond(state, "#02HM\n", 10);
         bluefin_write_respond(state, "#03AO\n", 2);
         bluefin_write_respond(state, "#03HM\n", 10);
-    }
+    }*/
 }
 
 int main (int argc, char *argv[])
@@ -566,7 +566,7 @@ int main (int argc, char *argv[])
         return 0;
     }
 */
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_5HZ", &heartbeat_handler, &state);
     //acfrlcm_auv_bluefin_tail_command_t_subscribe(state.lcm, "BLUEFIN_COMMAND", &bluefin_command_handler, &state);
     acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA.NEXTGEN_MOTOR", &nga_motor_command_handler, &state);
 

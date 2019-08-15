@@ -25,10 +25,10 @@
 // RC constants
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
-#define RC_HALF_RANGE 685
+#define RC_HALF_RANGE 685.0
 #define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
-#define RC_MAX_PROP_RPM 700
+#define RC_MAX_PROP_RPM 700.0
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
@@ -457,9 +457,9 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     }
     else
     {
-        mc.tail_thruster = (rcval - RC_DEADZONE)* 700/RC_HALF_RANGE;
-        if (fabs(mc.tail_thruster) > 700)
-            mc.tail_thruster = 700*mc.tail_thruster/fabs(mc.tail_thruster);
+        mc.tail_thruster = (rcval)* RC_MAX_PROP_RPM/RC_HALF_RANGE;
+        if (fabs(mc.tail_thruster) > RC_MAX_PROP_RPM)
+            mc.tail_thruster = RC_MAX_PROP_RPM*mc.tail_thruster/fabs(mc.tail_thruster);
     }
 
     //brown out limiting
