@@ -445,7 +445,7 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         state->thruster = mot->tail_thruster;
     if (state->current_warning)
     {
-        state->thruster = state->thruster*0.5; //if we see a brown out coming then limit the thruster values to 50% requested. At max rpm of 600 this will be limited to 300rpm
+        state->thruster = state->thruster*0.33; //if we see a brown out coming then limit the thruster values to 50% requested. At max rpm of 600 this will be limited to 300rpm
         state->current_warning = false;
     }
     if(mot->tail_rudder > BF_RE_MAX)

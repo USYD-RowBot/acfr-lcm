@@ -29,7 +29,7 @@
 #define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
 #define RC_MAX_PROP_RPM 700.0
-#define RC_MIN_PROP_RPM -300.0
+#define RC_MIN_PROP_RPM -700.0
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
