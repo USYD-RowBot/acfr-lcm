@@ -10,6 +10,7 @@ acfr_nav::acfr_nav()
     state->mode = NAV;
     state->lcm = new lcm::LCM();
     state->altitude = 0;
+    state->depth = 0;
     state->bottomLock = false;
     state->broken_iver_alt = false;
 }

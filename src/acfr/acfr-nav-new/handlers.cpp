@@ -42,7 +42,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 	// asynchronously --- a mode 2 fix may still be reported after
 	// the number of satellites has dropped to 0.
 
-    if((gps->status >= 1) && (gps->fix.mode >= 2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
+    if((gps->status >= 1) && (gps->fix.mode >= 2) && (state->depth < 0.2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
     {
         if(state->mode == NAV)
         {
@@ -62,6 +62,7 @@ void on_parosci(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	// use the parosci depth sensor
 	auv_data_tools::Depth_Data depth;
     depth.depth = parosci->depth;
+    state->depth = depth.depth;
     depth.set_raw_timestamp((double)parosci->utime/1e6);
     if(state->mode == NAV)
     	state->slam->handle_depth_data(depth);

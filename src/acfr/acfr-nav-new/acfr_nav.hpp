@@ -71,6 +71,7 @@ class state_c
         
         // persistant variables
         double altitude;
+        double depth;
         double oas_altitude;
         double fwd_obs_dist;
         int lowRateCount;
