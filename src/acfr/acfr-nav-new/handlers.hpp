@@ -59,4 +59,5 @@ void on_uvc_osi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state);
 void on_seabotix_sensors(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const seabotix_sensors_t *ss, state_c* state);
 void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state);
+void on_dwn(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state);
 #endif
