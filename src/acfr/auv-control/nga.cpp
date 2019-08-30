@@ -25,10 +25,11 @@
 // RC constants
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
-#define RC_HALF_RANGE 685
+#define RC_HALF_RANGE 685.0
 #define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
-#define RC_MAX_PROP_RPM 700
+#define RC_MAX_PROP_RPM 700.0
+#define RC_MIN_PROP_RPM -700.0
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
@@ -398,7 +399,7 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     // Lateral tunnel thrusters
     int fore = 0;
     int aft = 0;
-    double rudder, elevator_hc;
+    double rudder, elevator_hc, prop_rpm = 0;
 
     //Strafe - this is side to side on left stick - always available
     fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
@@ -447,14 +448,29 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     // if in deadzone at centre
     if (abs(rcval) < RC_DEADZONE)
     {
-        mc.tail_thruster = 0;
+        //mc.tail_thruster = 0;
+	prop_rpm = 0;
     }
     else
     {
-        mc.tail_thruster = (rcval - RC_DEADZONE)* 700/RC_HALF_RANGE;
-        if (fabs(mc.tail_thruster) > 700)
-            mc.tail_thruster = 700*mc.tail_thruster/fabs(mc.tail_thruster);
+        //mc.tail_thruster = (rcval - RC_DEADZONE)* 700/RC_HALF_RANGE;
+        //if (fabs(mc.tail_thruster) > 700)
+        //    mc.tail_thruster = 700*mc.tail_thruster/fabs(mc.tail_thruster);
+	prop_rpm = (rcval)*RC_MAX_PROP_RPM/RC_HALF_RANGE;
+	if (prop_rpm > RC_MAX_PROP_RPM)
+		prop_rpm = RC_MAX_PROP_RPM;
+	if (prop_rpm < RC_MIN_PROP_RPM)
+		prop_rpm = RC_MIN_PROP_RPM;
+
     }
+
+    if ((fabs(prop_rpm - prev_rpm) < 20))
+	    prev_rpm = prop_rpm;
+    else {
+	    prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*20;
+	    prev_rpm = prop_rpm;
+    }
+    mc.tail_thruster = prop_rpm;
 
     //brown out limiting
     if (abs(rcval) > RC_DEADZONE)
