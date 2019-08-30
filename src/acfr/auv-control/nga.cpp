@@ -21,7 +21,7 @@
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
-
+#define BF_TAIL_RAMP 10
 // RC constants
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
@@ -236,10 +236,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // X Velocity
             prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt, &cp.velocity);
 
-            if((fabs(prop_rpm - prev_rpm) < 10))
+            if((fabs(prop_rpm - prev_rpm) < BF_TAIL_RAMP))
                 prev_rpm = prop_rpm;
             else{
-                prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*10;
+                prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
                 prev_rpm = prop_rpm;
             }
             rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt, &cp.heading);
@@ -464,10 +464,10 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
 
     }
 
-    if ((fabs(prop_rpm - prev_rpm) < 20))
+    if ((fabs(prop_rpm - prev_rpm) < BF_TAIL_RAMP))
 	    prev_rpm = prop_rpm;
     else {
-	    prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*20;
+	    prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
 	    prev_rpm = prop_rpm;
     }
     mc.tail_thruster = prop_rpm;
