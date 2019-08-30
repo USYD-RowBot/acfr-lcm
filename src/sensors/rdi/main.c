@@ -434,7 +434,7 @@ main (int argc, char *argv[])
     if(state.sensor == NULL)
         return 0;
     
-    pthread_mutex_init(&state.count_lock, (void *)&state);
+    pthread_mutex_init(&state.count_lock, NULL);
     int pd5_count = 0, pd0_count = 0;
 
 
