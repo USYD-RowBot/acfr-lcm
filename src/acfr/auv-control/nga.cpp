@@ -236,10 +236,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // X Velocity
             prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt, &cp.velocity);
 
-            if((fabs(prop_rpm - prev_rpm) < 20))
+            if((fabs(prop_rpm - prev_rpm) < 10))
                 prev_rpm = prop_rpm;
             else{
-                prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*20;
+                prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*10;
                 prev_rpm = prop_rpm;
             }
             rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt, &cp.heading);
