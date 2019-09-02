@@ -11,6 +11,7 @@ elseif (CMAKE_SYSTEM_PROCESSOR STREQUAL "i686")
 else ()
   message (SEND_ERROR "Uknown CMAKE_SYSTEM_PROCESSOR=${CMAKE_SYSTEM_PROCESSOR}")
 endif ()
+set (CMAKE_BUILD_TYPE Debug)
 
 # CONFIGURE C
 #========================================================================

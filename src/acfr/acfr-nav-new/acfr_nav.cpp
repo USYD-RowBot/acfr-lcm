@@ -10,6 +10,8 @@ acfr_nav::acfr_nav()
     state->mode = NAV;
     state->lcm = new lcm::LCM();
     state->altitude = 0;
+    state->oas_altitude = 0;
+    state->depth = 0;
     state->bottomLock = false;
     state->broken_iver_alt = false;
 }
@@ -66,6 +68,10 @@ int acfr_nav::initialise()
 
     // Always subscribe to the IMU
     state->lcm->subscribeFunction(vehicle_name+".IMU", on_imu, state);
+
+
+    // Always subscribe to the DWN oas nimbus
+    state->lcm->subscribeFunction(vehicle_name+".MICRON_SOUNDER_DWN", on_dwn, state);
     
     // Subscribe to the Evologics USBL
     if(evologics_channel != NULL)
@@ -167,8 +173,10 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		//nav.altitude = min(state->altitude, state->oas_altitude);
-		nav.altitude = state->altitude;
+        if(((((timestamp_now() - state->oas_utime) < 5e6)) && state->oas_altitude > 0.5))
+		  nav.altitude = min(state->altitude, state->oas_altitude);
+        else
+		  nav.altitude = state->altitude;
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		

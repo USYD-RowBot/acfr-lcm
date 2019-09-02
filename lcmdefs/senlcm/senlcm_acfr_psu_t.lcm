@@ -8,6 +8,10 @@ struct acfr_psu_t
 	double voltage;
 	double current;
 	double temperature;
+	double voltage_max;
+	double current_max;
+	double voltage_min;
+	double current_min;
 }
 
 

@@ -1,0 +1,11 @@
+package acfrlcm;
+
+struct auv_cpu_temp_monitor_t
+{
+    int64_t utime;
+    int8_t num_readings;
+    string names[num_readings];
+    double temp_readings[num_readings];
+    double all_time_max;
+    double current_avg;     
+}

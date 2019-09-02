@@ -4,11 +4,12 @@
 #include <iostream>
 #include <fstream>
 #include <lcm/lcm-cpp.hpp>
-#include <signal.h>
+#include <csignal>
 #include <boost/numeric/odeint.hpp>
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
 #include "acfr-common/auv_map_projection.hpp"
+#include <libplankton/auv_config_file.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
@@ -17,7 +18,8 @@
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
-
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -44,14 +46,6 @@ namespace vehicleSimSimple
 #define STD_G 0.00010732
 #define BIAS_A 0.0196
 #define BIAS_G 9.6963e-06
-
-#define NGA_DIAM 0.3 
-#define NGA_RADIUS (0.5*NGA_DIAM)
-#define NGA_LENGTH 2.5 
-#define NGA_VERT_DISTANCE 2 
-#define NGA_LAT_DISTANCE 1.8 
-#define NGA_MASS 120 
-#define NGA_INERTIA ((0.0833*NGA_MASS*NGA_LENGTH*NGA_LENGTH) + (0.25*NGA_MASS*NGA_DIAM*NGA_DIAM))
 
 
 typedef boost::numeric::ublas::vector< double > state_type;
@@ -83,6 +77,7 @@ protected:
     void publishParosci();
     void publishGPS();
     void publishDVL();
+    void publishBattery();
  
     // virtual function for derived classes to decide on channels to be subscribed to 
     //virtual void subscribeLCMChannels();
@@ -96,7 +91,8 @@ protected:
 private:
     BotParam *param = NULL;
 
-    bool exit_signalled;
+	
+    
 
     void lcm_thread();
 
@@ -117,6 +113,7 @@ private:
     int64_t last_print_time;
     int64_t last_obs_time;
     int64_t last_parosci_time;
+    int64_t last_battery_time;
 
     // earth rotation in the navigation frame
     SMALL::Vector3D earth_rot;

@@ -1,5 +1,6 @@
 
 # BINARIES
+perls_add_folder (a-blue-mination "Build a-blue-mination process?" ON)
 #perls_add_folder (acfr-nav "Build ACFR Nav process?" OFF)
 perls_add_folder (acfr-nav-new "Build ACFR Nav (new) process?" OFF)
 perls_add_folder (acfr-nav-translate "Build ACFR Nav Translate process?" ON)
@@ -25,3 +26,4 @@ perls_add_folder (rov-control "Build seabotix ROV control process?" ON)
 perls_add_folder (ship-status "Build ship status process?" ON)
 perls_add_folder (tunnel-thrusters "Build tunnel-thrusters process?" ON)
 perls_add_folder (spektrum-control "Build spektrum-control?" ON)
+perls_add_folder (oa-processor "Build Obstacle Avoidance processor ?" ON)

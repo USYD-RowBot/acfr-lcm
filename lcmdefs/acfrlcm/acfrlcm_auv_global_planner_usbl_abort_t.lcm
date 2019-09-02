@@ -1,0 +1,26 @@
+package acfrlcm;
+
+struct auv_global_planner_usbl_abort_t
+{
+    int64_t utime;
+
+    int32_t id;
+    
+    const int8_t GOTO = 0;
+    const int8_t LEG = 1;
+    const int8_t GRID = 2;
+    const int8_t SPIRAL = 3;
+    const int8_t ZAMBONIE = 4;
+    
+    const int8_t LOAD = 5;
+    
+    const int8_t RESUME = 6;
+    const int8_t PAUSE = 7;
+    const int8_t ABORT = 8;
+    const int8_t STOP = 9;
+    const int8_t SKIP = 10;
+    const int8_t RESET = 11;
+    const int8_t MISSION = 12;
+    
+    int8_t command;
+}

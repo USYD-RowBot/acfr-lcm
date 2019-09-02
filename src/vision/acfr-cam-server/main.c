@@ -136,7 +136,7 @@ int parse_message(char *data, state_t *state)
         sprintf(command, "mkdir -p %s\n", state->dir);
         system(command);
         system("killall acfr-cam-logger");
-        sprintf(command, "/home/auv/git/acfr_lcm/build/bin/acfr-cam-logger -c PROSILICA_..16 -o %s &\n", state->dir);
+        sprintf(command, "/home/auv/git/acfr-lcm/build/bin/acfr-cam-logger -c PROSILICA_..16 -o %s &\n", state->dir);
         printf("Command: %s", command);
         system(command);
 
@@ -256,7 +256,7 @@ int main()
 
     // subscribe to the required lcm messages
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
-    acfrlcm_auv_vis_rawlog_t_subscribe(state.lcm, "ACFR_AUV_VIS_RAWLOG", &vis_rawlog_handler, &state);
+    acfrlcm_auv_vis_rawlog_t_subscribe(state.lcm, "SIRIUS.ACFR_AUV_VIS_RAWLOG", &vis_rawlog_handler, &state);
 
     // now accepting tcp connections
     struct timeval tv;

@@ -55,6 +55,9 @@ typedef struct
     bool error_rudder;
     bool error_elevator; 
     bool homed;   
+    bool zero_target;
+    bool current_warning;
+    int8_t invert_tail;
 } state_t;
 
 int bluefin_write_respond(state_t *state, char *d, int timeout);
@@ -139,6 +142,19 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 return 1;
             }
         }
+
+        if(d[3] == 'Q' && d[4] == '0')
+        {
+            char *tok[16];
+            int ret = chop_string(d, " ", tok);
+            if(ret == 4)
+            {
+                state->bf_status.current_rpm = atoi(tok[2]);
+                state->bf_status.target_rpm = atoi(tok[3]);
+                
+                return 1;
+            }            
+        }
     }
     // Rudder reponses
     if(addr == 2)
@@ -161,6 +177,20 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->homed = false;
                 
             return 1;
+        }
+
+        if(d[3] == 'Q' && d[4] == '0')
+        {
+            char *tok[16];
+            int ret = chop_string(d, " ", tok);
+            if(ret == 4)
+            {
+                state->bf_status.current_rudder = atoi(tok[2]);
+                state->bf_status.target_rudder = atoi(tok[3]);
+                if ((state->bf_status.current_rudder < 1e-3) && (state->bf_status.target_rudder <1e-3))
+                    state->zero_target = true;
+                return 1;
+            }            
         }
     }
 
@@ -185,6 +215,19 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->homed = false;
                 
             return 1;
+        }
+
+        if(d[3] == 'Q' && d[4] == '0')
+        {
+            char *tok[16];
+            int ret = chop_string(d, " ", tok);
+            if(ret == 4)
+            {
+                state->bf_status.current_elevator = atoi(tok[2]);
+                state->bf_status.target_elevator = atoi(tok[3]);
+                
+                return 1;
+            }            
         }
 
     }
@@ -235,9 +278,10 @@ int parse_bluefin_message(state_t *state, char *d, int len)
                 state->enabled = atoi(tok[1]);    
                 state->bf_status.voltage = atof(tok[2]);
                 state->bf_status.current = atof(tok[3]);
-                state->bf_status.psu_temp = atof(tok[4]);
-                
-                acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "BLUEFIN_STATUS", &state->bf_status);
+                state->bf_status.psu_temp = atof(tok[4])/0.0625;
+                if (state->bf_status.current > 8.0)
+                    state->current_warning = true;
+                acfrlcm_auv_bluefin_tail_status_t_publish(state->lcm, "NGA.BLUEFIN_STATUS", &state->bf_status);
                 return 1;
             }
         }
@@ -257,7 +301,7 @@ int bluefin_write(acfr_sensor_t *sensor, char *d)
 // Send a command and wait for a response and parse
 int bluefin_write_respond(state_t *state, char *d, int timeout)
 {
-    //printf("****Sending data: %s\n", d);
+    printf("****Sending data: %s\n", d);
     int ret = acfr_sensor_write(state->sensor, d, strlen(d));
     
     //usleep(10000);
@@ -268,11 +312,11 @@ int bluefin_write_respond(state_t *state, char *d, int timeout)
     if(ret > 0)
     {
         bytes =  acfr_sensor_read_timeout(state->sensor, buf, sizeof(buf), timeout);
-        //printf("****Got %d bytes, response %s\n", bytes, buf);
+        printf("****Got %d bytes, response %s\n", bytes, buf);
         if(bytes > 0)
             return parse_bluefin_message(state, buf, bytes);
         else
-            printf("RX timeout\n");
+            printf("RX timeout %s\n", d);
     }
     else
         return -2;
@@ -311,7 +355,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
     {
         sprintf(msg, "#01MV %d\n", state->thruster);
-        //printf("Sending, attemp %d: %s\n", retry, msg);
+        printf("Sending, attemp %d: %s\n", retry, msg);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_main)
         {
@@ -328,7 +372,7 @@ int send_bluefin_tail_commands(state_t *state)
     retry = 0;
     while(!commanded && retry++ < 5)
     {
-        sprintf(msg, "#02MP %2.1f\n", state->rudder * RTOD);
+        sprintf(msg, "#02MP %2.1f\n", state->invert_tail * state->rudder * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_rudder)
         {
@@ -346,7 +390,7 @@ int send_bluefin_tail_commands(state_t *state)
     while(!commanded && retry++ < 5)
 
     {
-        sprintf(msg, "#03MP %2.1f\n", state->elevator * RTOD);
+        sprintf(msg, "#03MP %2.1f\n", state->invert_tail * state->elevator * RTOD);
         ret = bluefin_write_respond(state, msg, 1);
         if(ret == 1 && state->error_elevator)
         {
@@ -365,18 +409,24 @@ int send_bluefin_tail_commands(state_t *state)
 void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat_t *hb, void *u)
 {
     state_t *state = (state_t *)u;
-    
-       // bluefin_write_respond(state, "#04S\n", 1);
-    // On the heart beat we will get the ouput voltage and current if the thruster is enabled
-    if(state->enabled)
-    {
-        bluefin_write_respond(state, "#04S\n", 1);
-        
-        // If we are enabled then we send the tail commands every second for the timeout period
-        // after receiving a command
-        if((hb->utime - state->command_utime) < COMMAND_TIMEOUT)
-           send_bluefin_tail_commands(state);
-    }            
+    // fill status message
+    bluefin_write_respond(state, "#01Q0\n", 1);
+    bluefin_write_respond(state, "#02Q0\n", 1);
+    bluefin_write_respond(state, "#03Q0\n", 1);
+	bluefin_write_respond(state, "#01Q1\n", 10);
+    bluefin_write_respond(state, "#04S\n", 1);
+
+    // If we are enabled then we send the tail commands every second for the timeout period
+    // after receiving a command
+    if((hb->utime - state->command_utime) < COMMAND_TIMEOUT)
+        send_bluefin_tail_commands(state);
+  	else if(state->thruster > 0)
+   	{
+    	state->thruster = 0;
+    	state->rudder = 0;
+    	state->elevator = 0;
+    	send_bluefin_tail_commands(state);
+	}	
 }
 
 void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_nga_motor_command_t *mot, void *u)
@@ -387,13 +437,17 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     // Copy the commands and set the limits
     
     state->command_utime = mot->utime;
-    if(abs(mot->tail_thruster) > state->max_rpm)
+    if(mot->tail_thruster > state->max_rpm)
         state->thruster = state->max_rpm;
-    else if(abs(mot->tail_thruster) > state->max_rpm)
+    else if(mot->tail_thruster < -state->max_rpm)
         state->thruster = -state->max_rpm;
     else
         state->thruster = mot->tail_thruster;
-        
+    if (state->current_warning)
+    {
+        state->thruster = state->thruster*0.33; //if we see a brown out coming then limit the thruster values to 50% requested. At max rpm of 600 this will be limited to 300rpm
+        state->current_warning = false;
+    }
     if(mot->tail_rudder > BF_RE_MAX)
         state->rudder = BF_RE_MAX;
     else if(mot->tail_rudder < BF_RE_MIN)
@@ -427,6 +481,14 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
         send_bluefin_tail_commands(state);
     else
         state->enabled = false;
+
+    /*if(state->zero_target && (fabs(mot->tail_rudder) > 6e-4))
+    {
+        bluefin_write_respond(state, "#02AO\n", 2);
+        bluefin_write_respond(state, "#02HM\n", 10);
+        bluefin_write_respond(state, "#03AO\n", 2);
+        bluefin_write_respond(state, "#03HM\n", 10);
+    }*/
 }
 
 int main (int argc, char *argv[])
@@ -441,7 +503,7 @@ int main (int argc, char *argv[])
 //    memset(&state.bf_command, 0, sizeof(acfrlcm_auv_bluefin_tail_command_t));
     memset(&state.bf_status, 0, sizeof(acfrlcm_auv_bluefin_tail_status_t));
     state.enabled = false;
-    
+    state.current_warning = false;
     //Initalise LCM object
     state.lcm = lcm_create(NULL);
     
@@ -457,7 +519,11 @@ int main (int argc, char *argv[])
     char key[64];
     sprintf(key, "%s.max_rpm", rootkey);
     state.max_rpm = bot_param_get_int_or_fail(state.sensor->param, key);
+    sprintf(key, "%s.invert_tail", rootkey);
+    state.invert_tail = bot_param_get_boolean_or_fail(state.sensor->param, key);
 
+    if (state.invert_tail == 0)
+        state.invert_tail = -1;
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
 /*
@@ -511,7 +577,7 @@ int main (int argc, char *argv[])
         return 0;
     }
 */
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_5HZ", &heartbeat_handler, &state);
     //acfrlcm_auv_bluefin_tail_command_t_subscribe(state.lcm, "BLUEFIN_COMMAND", &bluefin_command_handler, &state);
     acfrlcm_auv_nga_motor_command_t_subscribe(state.lcm, "NGA.NEXTGEN_MOTOR", &nga_motor_command_handler, &state);
 

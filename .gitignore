@@ -3,8 +3,14 @@
 # ignore temporary files
 *~
 *.swp
+*.orig
 build
 *.pyc
 .idea
+*.data
+third-party/
+scripts/*.data
 # ignore build directory
 build/
+third-party/libbot2/bot2-*
+third-party/AVT*

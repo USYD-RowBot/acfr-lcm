@@ -41,7 +41,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     state->send_next = 1;
 }
 
-// Takes they type of device we are looking for, eg /dev/ttyUSB*, the serial number of the device we are looking fot
+// Takes the type of device we are looking for, eg /dev/ttyUSB*, the serial number of the device we are looking for
 // and will return the actual device eg /dev/ttyUSB0
 int find_device(char *serial_number, char *port)
 {

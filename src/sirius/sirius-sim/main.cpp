@@ -20,10 +20,10 @@
 #include <math.h>
 #include <gps.h> // from debian package libgps-dev
 
-#include "perls-common/serial.h"
-#include "perls-common/timestamp.h"
-#include "perls-common/lcm_util.h"
-#include "perls-common/units.h"
+//#include "perls-common/serial.h"
+#include "acfr-common/timestamp.h"
+//#include "perls-common/lcm_util.h"
+#include "acfr-common/units.h"
 
 #include <bot_param/param_client.h>
 #include "perls-lcmtypes/acfrlcm_auv_sirius_motor_command_t.h"
@@ -36,6 +36,10 @@
 #endif //GPS3
 #include "perls-lcmtypes/senlcm_rdi_pd5_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
+#include "perls-lcmtypes/senlcm_os_power_system_t.h"
+#include "perls-lcmtypes/senlcm_os_power_cont_t.h"
+
+
 
 #include <libplankton/auv_map_projection.hpp>
 #include <libplankton/auv_config_file.hpp>
@@ -44,16 +48,10 @@
 using namespace std;
 using namespace libplankton;
 
-#ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
-#else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
-#endif
-
 #define MAX_MESSAGE_SIZE 128
 #define MOTOR_TIMEOUT 100000000  // this is in microseconds
 
-#define DTOR (UNITS_DEGREE_TO_RADIAN)
+
 
 // FIXME: this is duplicated from the gpsd_client tool.  Should be common.
 static void
@@ -104,6 +102,9 @@ public:
 
     // veh state updates
     int64_t last_vehicle_update_t;
+
+    // battery status
+    int32_t avg_charge_p;
 
     // thrust
     double vert;
@@ -173,6 +174,7 @@ veh_sim_state::veh_sim_state()
     surge = 0.0;
     sway = 0.0;
     port = stbd = vert = 0;
+    avg_charge_p = 100;
 /*
 	// vehicle parameters (FIXME: should be read in from a config file)
     M = 250;                   //Kg
@@ -203,15 +205,9 @@ veh_sim_state::load_config(char *name)
     BotParam *cfg;
 	char rootkey[64];
 	char key[64];
-	
-	char *path = getenv ("BOT_CONF_PATH");
-    if (!path) 
-        path = DEFAULT_BOT_CONF_PATH;
-    cfg = bot_param_new_from_file(path);
-    if(cfg == NULL) {
-        printf("cound not open config file\n");
-        return 0;
-    }
+
+    
+    cfg = bot_param_new_from_server (lcm, 1);
     
     sprintf(rootkey, "acfr.%s", name);
 
@@ -256,7 +252,7 @@ veh_sim_state::load_config(char *name)
 	// get the slam config filenames from the master LCM config for the acfr-nav module
 	// we are using this to get the origin lat and long
 	char *slam_config_filename;
-	slam_config_filename = bot_param_get_str_or_fail(cfg, "nav.acfr-nav.slamConfig");
+	slam_config_filename = bot_param_get_str_or_fail(cfg, "nav.acfr-nav-new.slam_config");
 	
 	Config_File *slam_config_file;
 	slam_config_file = new Config_File(slam_config_filename);
@@ -305,7 +301,7 @@ motor_handler(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_siri
     state->update_motor_command(mc->vertical, mc->port, mc->starboard);
     pthread_mutex_unlock(&state->port_lock);
 }
-
+/*
 void
 motor_handler_vert(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_sirius_motor_command_t *mc, void *u)
 {
@@ -333,7 +329,7 @@ motor_handler_lat(const lcm_recv_buf_t *rbuf, const char *ch, const acfrlcm_auv_
     state->update_motor_command_lat(mc->port, mc->starboard);
     pthread_mutex_unlock(&state->port_lock);
 }
-
+*/
 
 void
 veh_sim_state::update_vehicle_state(double dt)
@@ -375,7 +371,7 @@ veh_sim_state::update_vehicle_state(double dt)
   double rho = 1000; // kg/m^3
   double depth_A = 2*2*0.3; // very rough - two long cylinders of 2m x 0.3m
   double depth_acc = (1/(M + M33))*(-Buoy - 0.5*rho*depth_Cd*depth_A*depth_rate*
-        fabs(depth_rate) + vert);
+    fabs(depth_rate) + vert);
 
   depth_rate += depth_acc * dt;
   depth += depth_rate * dt;
@@ -404,9 +400,23 @@ veh_sim_state::update_vehicle_state(double dt)
   double sway_acc = (1/(M+M33))*(-0.5*rho*sway_Cd*sway_A*rel_water_vel_sway*fabs(rel_water_vel_sway) - 10*rel_water_vel_sway);
   sway += sway_acc*dt;
 
+  
   // heading
   double thruster_lever = 0.5; // m
   double heading_acc = (1/(J+J11))*(-yaw_damping*heading_rate + (port - stbd)*thruster_lever);
+    
+  int truc = 1;
+  if (heading_acc != heading_acc)
+  {
+    cout << "attach " ;
+    while(truc);
+  }
+  
+  if(heading_acc != heading_acc)
+  {
+  	cout << "Heading Acc Nan\n";
+  	heading_acc = 0.0;
+  } 
   heading_rate += heading_acc*dt;
   heading += heading_rate*dt;
 
@@ -417,6 +427,7 @@ veh_sim_state::update_vehicle_state(double dt)
   // position update
   x += x_rate*dt;
   y += y_rate*dt;
+
 
   // project into geographic coordinates
   map_projection->calc_geo_coords( x, y, curr_lat, curr_lon);
@@ -430,8 +441,7 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
   parosci.utime = t;
   parosci.raw = depth;
   parosci.depth = depth;
-  
-  senlcm_parosci_t_publish(lcm, "PAROSCI", &parosci);
+  senlcm_parosci_t_publish(lcm, "SIRIUS.PAROSCI", &parosci);
 
   // publish GPS data if not submerged
   if ( depth < 1.5 )
@@ -446,16 +456,20 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
       gd.fix.speed = sqrt(x_rate*x_rate + y_rate*y_rate);
       gd.fix.track = atan2(y_rate, x_rate);
       gd.fix.mode = 2;
-      gd. status = 2; 
+      gd.status = 2; 
       gd.satellites_used = 11;
       gd.satellites_visible = 11;
-      char tag[] = "";
-      gd.tag = tag;
+//      char tag[1];
+      gd.tag = strdup ("");
+      gd.dev.path = strdup ("");
+      gd.dev.driver = strdup ("");
+      gd.dev.subtype = strdup ("");
       for (int i=0; i<gd.satellites_used; i++)
         gd.used[i] = 0;
 
       //FIXME: this seems to make the simulator crash.
-      senlcm_gpsd3_t_publish(lcm, "GPSD_CLIENT", &gd);
+      senlcm_gpsd3_t_publish(lcm, "SIRIUS.GPSD_CLIENT", &gd);
+
       free_lcm_gpsd( &gd );
     #else
       senlcm_gpsd_t gd;
@@ -465,26 +479,33 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
       gd.speed = sqrt(x_rate*x_rate + y_rate*y_rate);
       gd.track = atan2(y_rate, x_rate);
       gd.mode = 2;
-      gd. status = 2; 
-
-      senlcm_gpsd_t_publish(lcm, "GPSD_CLIENT", &gd);
+      gd.status = 2; 
+      senlcm_gpsd_t_publish(lcm, "SIRIUS.GPSD_CLIENT", &gd);
     #endif
   }
 
   // publish RDI data
   senlcm_rdi_pd5_t rdi;
   rdi.utime = t;
-  rdi.heading = heading*180/M_PI;
+  rdi.heading = heading;
   rdi.pitch = pitch;
   rdi.roll = roll;
   rdi.pd4.btv[0] = surge;
   rdi.pd4.btv[1] = sway;
   rdi.pd4.btv[2] = depth_rate;
-  rdi.pd4.altitude = 15-depth; // FIXME
+  rdi.pd4.altitude = 30-depth; // FIXME
   rdi.pd4.speed_of_sound = 0;
   rdi.pd4.btv_status = 0;
 
-  senlcm_rdi_pd5_t_publish(lcm, "RDI", &rdi);
+  senlcm_rdi_pd5_t_publish(lcm, "SIRIUS.RDI", &rdi);
+
+  // publish battery data
+  senlcm_os_power_system_t battery_pack;
+  battery_pack.utime = t;
+  battery_pack.avg_charge_p = avg_charge_p;
+  // need to have number of controllers set or you get a seg fault when publishing sometimes.
+  battery_pack.num_controllers = 0;
+  senlcm_os_power_system_t_publish(lcm, "SIRIUS.BATTERY", &battery_pack);
 
   // publish Thruster data
 
@@ -540,6 +561,8 @@ int
 main(int argc, char **argv)
 {
     veh_sim_state state;
+    // lets start LCM
+	state.lcm = lcm_create(NULL);
     if(!state.load_config(basename(argv[0])))
         return 0; 
  
@@ -548,21 +571,17 @@ main(int argc, char **argv)
     signal(SIGINT, signal_handler);   
     
  	
-	// lets start LCM
-	state.lcm = lcm_create(NULL);
 	
-	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS_MOTOR", &motor_handler, &state);
-	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS_MOTOR_VERT", &motor_handler_vert, &state);
-	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS_MOTOR_LAT", &motor_handler_lat, &state);
+	
+	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS.THRUSTER", &motor_handler, &state);
+//	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS_MOTOR_VERT", &motor_handler_vert, &state);
+//	acfrlcm_auv_sirius_motor_command_t_subscribe(state.lcm, "SIRIUS_MOTOR_LAT", &motor_handler_lat, &state);
 	perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
 	
 	// listen to LCM and all three serial ports
 	while(!program_exit) 
 	{
-		struct timeval tv;
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
-        lcmu_handle_timeout(state.lcm, &tv);
+        lcm_handle_timeout(state.lcm, 1000);
 //cout << "X: " << state.x << " Y: " << state.y << " Hdg: " << state.heading*180/M_PI <<  " Depth: " << state.depth << " surge: " << state.surge << " sway: " << state.sway << endl;
 	}
 cout << "Done!" << endl;

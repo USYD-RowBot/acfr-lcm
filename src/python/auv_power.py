@@ -28,7 +28,7 @@ def handle_acfr_psu(channel_name, data):
 
 if __name__ == '__main__':
     lc = lcm.LCM()
-    lc.subscribe('PSU', handle_acfr_psu)
+    lc.subscribe('NGA.PSU.*', handle_acfr_psu)
     while(1):
         lc.handle()
 

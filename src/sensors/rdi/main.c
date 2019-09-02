@@ -127,7 +127,9 @@ program_dvl(state_t * state) //const char *config)
 
     // Convert the max depth in meters to the command in decimeters
     char max_depth_cmd[8];
+    char low_gain_switch_altitude[8];
     sprintf( max_depth_cmd, "BX%05d\r", (int)state->range*10 );
+    sprintf( low_gain_switch_altitude, "BI%03d\r", (int)1 ); // metres, 0 to 999, default 3
     printf( "Sending max depth command: %s\n", max_depth_cmd);
 
     if(state->mode == MODE_PD5)
@@ -135,6 +137,7 @@ program_dvl(state_t * state) //const char *config)
         printf("Programming PD5 mode\n");
         rdi_send_command(state->sensor, "BP001\r", EXPECT_RESPONSE); // Bottom tracking ping
         rdi_send_command(state->sensor, max_depth_cmd, EXPECT_RESPONSE); // max depth in decimetre
+        rdi_send_command(state->sensor, low_gain_switch_altitude, EXPECT_RESPONSE); // range to change from low to high gain mode
         rdi_send_command(state->sensor, "WP00000\r", EXPECT_RESPONSE); // No water profiling
         rdi_send_command(state->sensor, "PD5\r", EXPECT_RESPONSE);
         rdi_send_command(state->sensor, "CF11110\r", EXPECT_RESPONSE);
@@ -146,6 +149,7 @@ program_dvl(state_t * state) //const char *config)
         printf("Programming PD4 mode\n");
         rdi_send_command(state->sensor, "BP001\r", EXPECT_RESPONSE);
         rdi_send_command(state->sensor, max_depth_cmd, EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, low_gain_switch_altitude, EXPECT_RESPONSE); // range to change from low to high gain mode
         rdi_send_command(state->sensor, "WP00000\r", EXPECT_RESPONSE);
         rdi_send_command(state->sensor, "PD4\r", EXPECT_RESPONSE);
         rdi_send_command(state->sensor, "CF11110\r", EXPECT_RESPONSE);

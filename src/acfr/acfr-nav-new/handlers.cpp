@@ -42,7 +42,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 	// asynchronously --- a mode 2 fix may still be reported after
 	// the number of satellites has dropped to 0.
 
-    if((gps->status >= 1) && (gps->fix.mode >= 2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
+    if((gps->status >= 1) && (gps->fix.mode >= 2) && (state->depth < 0.2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
     {
         if(state->mode == NAV)
         {
@@ -62,6 +62,7 @@ void on_parosci(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	// use the parosci depth sensor
 	auv_data_tools::Depth_Data depth;
     depth.depth = parosci->depth;
+    state->depth = depth.depth;
     depth.set_raw_timestamp((double)parosci->utime/1e6);
     if(state->mode == NAV)
     	state->slam->handle_depth_data(depth);
@@ -131,6 +132,35 @@ void on_seabird_depth(const lcm::ReceiveBuffer* rbuf, const std::string& channel
 
 }
 
+void on_aanderaa_ct(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const aanderaa_4319_t *ct, state_c* state)
+{
+    auv_data_tools::Aanderaa_4319_Data aanderaa;
+    auv_data_tools::Seabird_Data seabird;
+    aanderaa.set_raw_timestamp((double)ct->utime/1e6);
+    aanderaa.cond = ct->conductivity;
+    aanderaa.temp = ct->temperature;
+    aanderaa.sal = ct->salinity;
+    aanderaa.dens = ct->density;
+    aanderaa.sos = ct->speed;
+    if(state->mode == NAV)
+	{
+		seabird.set_raw_timestamp(aanderaa.get_raw_timestamp());
+		seabird.cond = aanderaa.cond;
+		seabird.temp = aanderaa.temp;
+		seabird.sal = aanderaa.sal;
+		seabird.pres = 0;
+		seabird.sos = aanderaa.sos;
+        state->slam->handle_salinitytemp_data(seabird);
+	}
+    else if(state->mode == RAW)
+    {
+        aanderaa.print(state->raw_out);
+        state->raw_out << endl;
+    }
+
+}
+
+
 // handle a message from the RDI DVL, the old code used the PD0 message
 // we are using the PD5 message as the LCM module was already written
 void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rdi_pd5_t *rdi, state_c* state) 
@@ -155,6 +185,12 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	}
 
 	state->bottomLock = btv_ok;
+        
+	if (btv_ok)
+	{
+            double last_altitude = state->altitude;
+            state->altitude = 0.5*rdi->pd4.altitude + 0.5*last_altitude;
+	}
 
 	if( true ) // btv_ok )
 	{
@@ -178,9 +214,6 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	    rdi_data.p_gimbal = 0;   // FIXME
 	    rdi_data.sv = rdi->pd4.speed_of_sound;
 	    rdi_data.depth_rate = 0;   // FIXME
-        
-        double last_altitude = state->altitude;
-        state->altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
 
         if(state->mode == NAV)
     		state->slam->handle_dvl_data(rdi_data);
@@ -387,7 +420,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 {
 
 
-    const double bad_value = 999.999;
+    const double bad_value = 32.768;
 
 	/*
 	 * Check the status of the bottom tracking
@@ -404,11 +437,20 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 
 	}
 
-	state->bottomLock = btv_ok;
-	if(!state->broken_iver_alt)
-	    state->altitude = dvl->alt;
 	
-	//if( btv_ok )
+
+	state->bottomLock = btv_ok;
+	double vz;
+	if(!state->broken_iver_alt)
+	{
+	    state->altitude = dvl->alt;
+	    vz = dvl->vz;
+	}
+	else
+	    vz = 0;
+	    //vz = state->iver_vz;
+	
+	if( btv_ok )
 	{
 	    auv_data_tools::RDI_Data rdi_data;
 	    rdi_data.set_raw_timestamp((double)dvl->utime/1e6);
@@ -425,7 +467,7 @@ void on_uvc_dvl(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	    rdi_data.nz = 0.0;
 	    rdi_data.vx = dvl->vx;
 	    rdi_data.vy = dvl->vy;
-	    rdi_data.vz = dvl->vz;
+	    rdi_data.vz = vz;
 	    rdi_data.COG = 0;   // FIXME
 	    rdi_data.SOG = 0;   // FIXME
 	    rdi_data.bt_status = btv_ok ? 0 : 1;
@@ -450,6 +492,12 @@ void on_uvc_osi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 {
     // Fix for broken altimeter on the Umich Iver
     state->altitude = osi->altimeter;
+    if(state->broken_iver_alt)
+    {
+        state->iver_vz = (state->uvc_prev_alt - state->altitude)/((osi->utime - state->uvc_osi_prev_utime)/1e6);
+        state->uvc_osi_prev_utime = osi->utime;
+        state->uvc_prev_alt = state->altitude;
+    }
 }
 
 void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const uvc_rphtd_t *osc, state_c* state)
@@ -460,7 +508,7 @@ void on_uvc_rph(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
     osc_data.heading = osc->rph[2];
     
     // The handler in seabed interface assumes the depth of this message is in feet.
-    osc_data.depth = osc->rph[4] / UNITS_FEET_TO_METER;
+    osc_data.depth = osc->depth; //osc->rph[4] / UNITS_FEET_TO_METER;
     
     osc_data.set_raw_timestamp((double)osc->utime/1e6);
 
@@ -509,6 +557,24 @@ void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channe
         rdi_data.print(state->raw_out);
         state->raw_out << endl;
     }
+}
+
+// This is not complete, it spoofs the RDI DVL and only fills in the altitude variable to be used with processing the images 
+void on_dwn(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state)
+{
+    if(fabs(ms->altitude) < 0.000001)
+        return;
+    auv_data_tools::RDI_Data rdi_data;
+    memset(&rdi_data, 0, sizeof(auv_data_tools::RDI_Data));
+    rdi_data.set_raw_timestamp((double)ms->utime/1e6);
+    rdi_data.alt = ms->altitude;
+    if(state->mode == RAW)
+    {
+        rdi_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+    state->oas_utime = ms->utime;
+    state->oas_altitude = ms->altitude;
 }
 
 

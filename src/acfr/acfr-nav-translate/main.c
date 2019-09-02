@@ -95,11 +95,11 @@ void incoming_msg_handler(const lcm_recv_buf_t *rbuf, const char *ch, const senl
 	double velocity_magnitude = sqrt(msg_in->east_velocity * msg_in->east_velocity + msg_in->north_velocity * msg_in->north_velocity);
     double velocity_body_angle = velocity_compass_angle - nav.heading; 
   	
-    	nav.vy = velocity_magnitude * sin(velocity_body_angle);	// Body F.O.R. Starboard velocity (m/s)
-   	nav.vx = velocity_magnitude * cos(velocity_body_angle);	// Body F.O.R. Forward velocity (m/s)
+    nav.vy = velocity_magnitude * sin(velocity_body_angle);	// Body F.O.R. Forward velocity (m/s)
+    nav.vx = velocity_magnitude * cos(velocity_body_angle);	// Body F.O.R. Starboard velocity (m/s)
     
-	nav.vz = -msg_in->up_velocity; 	    // not used for wam-v 2D planner  
-	nav.rollRate = 0;					// not used for wam-v 2D planner 
+    nav.vz = -msg_in->up_velocity; 	    // not used for wam-v 2D planner  
+    nav.rollRate = 0;					// not used for wam-v 2D planner 
     nav.pitchRate = 0;					// not used for wam-v 2D planner 
     nav.headingRate = 0;				// not used for wam-v 2D planner 
     nav.altitude = 0;					// not used for wam-v 2D planner 

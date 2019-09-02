@@ -1,19 +1,30 @@
 #include <lcm/lcm-cpp.hpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
 
 #include "DubinsPath.h"
-#include "perls-common/timestamp.h"
+#include "acfr-common/timestamp.h"
+
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
+#include "perls-lcmtypes++/senlcm/oa_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
+#include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
+
 
 #pragma once
 
 
 #define DOUBLE_MAX std::numeric_limits< double >::max()
 #define ITERATION_NUM 3
+
+
 
 
 class LocalPlanner
@@ -23,13 +34,20 @@ public:
     virtual ~LocalPlanner();
     int subscribeChannels();
     virtual int loadConfig(char *programName);
-    int onNav(const acfrlcm::auv_acfr_nav_t *nav);
-    int onPathCommand(const acfrlcm::auv_path_command_t *pc);
     int onGlobalState(const acfrlcm::auv_global_planner_state_t *gpState);
     virtual int calculateWaypoints();
     virtual int processWaypoints();
     int process();
     int sendResponse();
+    int initialise();
+    
+    // Over written by the inheriting class
+    virtual int onPathCommand(const acfrlcm::auv_path_command_t *pc) = 0;
+    virtual int onNav(const acfrlcm::auv_acfr_nav_t *nav) = 0;
+    virtual int init() = 0;
+    virtual int execute_abort() = 0;
+
+    double calcVelocity(double desired_velocity, double desired_altitude);
 
     Pose3D getCurrPose(void) const
     {
@@ -89,8 +107,24 @@ public:
     void setDestReached(bool b)
     {
         destReached = b;
+        if(b)
+        	destReachedLatched = b;
+    }
+    
+    void setDestReachedLatched(bool b)
+    {
+        destReachedLatched = b;
     }
 
+    bool getHoldmode(void) const
+    {
+        return holdMode;
+    }
+
+    bool getAborted(void) const
+    {
+        return aborted;
+    }
     bool getNewDest(void) const
     {
         return newDest;
@@ -143,30 +177,98 @@ public:
         {
                 vehicle_name = vn;
         }
+    
+    void onOA(const senlcm::oa_t *o)
+    {
+	oa = *o;
+    }
+
+    void onFwd(const senlcm::micron_sounder_t *fwd)
+    {    
+        if ((fwd->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.altitude =0.0;
+        }
+        oa.forward_distance = fwd->altitude;
+        //std::cout << "time diff: " << (fwd->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = fwd->utime;
+    }
+
+    void onDwn(const senlcm::micron_sounder_t *dwn)
+    {    
+        if ((dwn->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.forward_distance =0.0;
+        }
+        oa.altitude = dwn->altitude;
+        //std::cout << "time diff: " << (dwn->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = dwn->utime;
+    }
+
+    void onRdi(const senlcm::rdi_pd5_t *Rdi)
+    {    
+        for (int i = 0; i < 4; i++)
+        {
+            rdi[i] = Rdi->pd4.range[i];
+        }
+    }
+
     std::vector<Pose3D> waypoints;
 
     lcm::LCM lcm;
     std::ofstream fp, fp_wp;
 
 protected:
-
+	
     bool pointWithinBound(Pose3D p)
     {
-        Pose3D pRel = getRelativePose(p);
+    	// Check to see if we are in a special mode, depth or heading only
+	    if((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getYawRad() != p.getYawRad()))
+	    {
+			//if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+				return true;
+		}
+		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) )//&& (p.getZ() != p.getZ()))
+		{
+			if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
+				return true;
+		}
+		else
+		{
+		    Pose3D pRel = getRelativePose(p);
 
-        if ((pRel.getX() < forwardBound) &&
-            (pRel.getX() > -2 * forwardBound) &&
-            (std::fabs(pRel.getY()) < sideBound))
-        {
-            return true;
-        }
+    	    if ((pRel.getX() < forwardBound) &&
+    	        (pRel.getX() > -2 * forwardBound) &&
+    	        (std::fabs(pRel.getY()) < sideBound)) //&&    	        (std::fabs(pRel.getZ()) < depthBound))
+    	    {
+    	        return true;
+    	    }
 
+		}
         return false;
     }
+    /*
+	bool pointWithinDepth(Pose3D p)
+	{
+		cout << "Target: " << p.getZ() << " Current: " << currPose.getZ() << " Diff: " << std::fabs(currPose.getZ() - p.getZ()) << endl;
+		if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+			return true;
+		
+		return false;
+	}
+	
+	bool pointWithinHeading(Pose3D p)
+	{
+		if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
+			return true;
+		
+		return false;
+	}
+*/
 
     Pose3D currPose;
     Vector3D currVel;
-    double currAltitude;
+    double navAltitude;
 
     Pose3D startPose;
     double startVel;
@@ -174,10 +276,13 @@ protected:
     Pose3D destPose;
     double destVel;
 
+    senlcm::oa_t oa;
+    double rdi[4];
     // New destination from GLOBAL
     bool newDest;
     // Global destination
     bool destReached;
+    bool destReachedLatched;
 
     int depthMode;
 
@@ -199,6 +304,8 @@ protected:
     double waypointTimeout;
     double forwardBound;
     double sideBound;
+    double depthBound;
+    double headingBound;
     double distToDestBound;
     double maxAngleWaypointChange;
     double radiusIncrease;
@@ -207,10 +314,21 @@ protected:
     double wpDropAngle;
     double replanInterval;
     //double depth_ref;
-
+    double fwd_distance_slowdown;
+    double fwd_distance_min;
     int64_t waypointTime;
     int64_t replanTime;
 
-        string vehicle_name = "DEFAULT";
+    bool diffSteer;
+
+    bool aborted;
+    Pose3D abortPose;
+    
+    bool holdMode;
+    Pose3D holdPose;
+    Pose3D oldPose;
+
+    string vehicle_name = "DEFAULT";
+
 
 };

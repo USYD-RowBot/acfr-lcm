@@ -9,6 +9,7 @@
 #include "handlers.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
+#include "acfr-common/timestamp.h"
 
 extern "C"
 {
@@ -71,12 +72,17 @@ class state_c
         
         // persistant variables
         double altitude;
+        double depth;
+        double oas_utime;
         double oas_altitude;
         double fwd_obs_dist;
         int lowRateCount;
 
         bool bottomLock;
 	bool broken_iver_alt;
+	int64_t uvc_osi_prev_utime;
+	double uvc_prev_alt;
+	double iver_vz;
 };
 
 class acfr_nav
