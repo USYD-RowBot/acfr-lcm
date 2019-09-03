@@ -27,6 +27,7 @@
 #include "perls-lcmtypes++/acfrlcm/auv_status_short_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_path_response_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_bluefin_tail_status_t.hpp"
 
 
 class HealthMonitor
@@ -61,6 +62,7 @@ public:
     acfrlcm::auv_global_planner_state_t global_state;
     senlcm::os_power_system_t battery;
     acfrlcm::auv_path_response_t path_response;
+    acfrlcm::auv_bluefin_tail_status_t bf_status;
 
     //lcm_t *lcm;
     lcm::LCM lcm;
@@ -77,6 +79,7 @@ private:
     double min_alt;
     double max_alt; // not used
     double max_pitch;
+    double max_tail_current;
 
     bool abort_on_out_of_bound;
     bool abort_on_no_compass;
@@ -97,6 +100,7 @@ private:
     int64_t dvlbl_timeout;
     int64_t depth_timeout;
     int64_t oas_timeout;
+    int64_t bf_tail_timeout;
 
     int64_t dvlbl_utime;
     

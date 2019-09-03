@@ -355,7 +355,7 @@ pack_gpsd (gpsdata_t *ud, senlcm_gpsd3_t *gd)
 #if GPSD_API_MAJOR_VERSION < 6
     gd->tag = strdup (ud->tag);
 #else
-    gd->tag = "";
+    gd->tag = strdup("");
 #endif
 
     return 0;

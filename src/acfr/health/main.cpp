@@ -14,6 +14,7 @@
 #define DVLBL_TIMEOUT 	10000000 // 10sec?
 #define DEPTH_TIMEOUT 	1000000
 #define OAS_TIMEOUT 	1000000
+#define BF_TAIL_TIMEOUT 10000000
 
 #define DVL_BIT 	    0b0000000000000001 //0x0001
 #define DVL_BL_BIT 	    0b0000000000000010 //0x0002
@@ -88,6 +89,12 @@ void handle_nav(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 	state->nav = *sensor;
 }
 
+void handle_bf_tail(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
+		const acfrlcm::auv_bluefin_tail_status_t *sensor, HealthMonitor *state)
+{
+	state->bf_status = *sensor;
+}
+
 void handle_vis(const lcm::ReceiveBuffer *rbuf, const std::string& channel,
 		const acfrlcm::auv_vis_rawlog_t *sensor, HealthMonitor *state)
 {
@@ -141,6 +148,7 @@ HealthMonitor::HealthMonitor()
 	ysi.utime = 0;
 	ysi.depth = 0;
 	oas.utime = 0;
+	bf_status.utime = 0;
 	image_count = 0;
     
 
@@ -162,6 +170,7 @@ HealthMonitor::HealthMonitor()
 	dvlbl_timeout = DVLBL_TIMEOUT;
 	depth_timeout = DEPTH_TIMEOUT;
 	oas_timeout = OAS_TIMEOUT;
+	bf_tail_timeout = BF_TAIL_TIMEOUT;
 }
 
 
@@ -181,6 +190,7 @@ int HealthMonitor::subscribeChannels()
 	lcm.subscribeFunction(vehicle_name+".LEAK", handle_leak, this);
 	lcm.subscribeFunction(vehicle_name+".GLOBAL_STATE", handle_global_state, this);
 	lcm.subscribeFunction(vehicle_name+".BATTERY", handle_battery, this);
+	lcm.subscribeFunction(vehicle_name+".BLUEFIN_STATUS", handle_bf_tail, this);
 
     // Subscribe to path response to report waypoint progress in *.AUVSTAT
     lcm.subscribeFunction(vehicle_name+".PATH_RESPONSE", handle_path_response, this);
@@ -459,6 +469,11 @@ int HealthMonitor::checkAbortConditions()
 				nav.x << "/" << nav.y << std::endl;
 		print_bounding_box();
 		sendAbortMessage("BOUNDS exceeded");
+	}
+	if (bf_status.voltage <= 15)
+	{
+		std::cerr << "ABORT: Tail Undervoltage :" << bf_status.voltage << std::endl;
+		sendAbortMessage("Tail Blackout risk");
 	}
 
 	return 0;

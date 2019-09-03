@@ -42,7 +42,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 	// asynchronously --- a mode 2 fix may still be reported after
 	// the number of satellites has dropped to 0.
 
-    if((gps->status >= 1) && (gps->fix.mode >= 2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
+    if((gps->status >= 1) && (gps->fix.mode >= 2) && (state->depth < 0.2))// && (gps->dop.hdop == gps->dop.hdop)) // & (gps->satellites_used >= 3 ))
     {
         if(state->mode == NAV)
         {
@@ -62,6 +62,7 @@ void on_parosci(const lcm::ReceiveBuffer* rbuf, const std::string& channel, cons
 	// use the parosci depth sensor
 	auv_data_tools::Depth_Data depth;
     depth.depth = parosci->depth;
+    state->depth = depth.depth;
     depth.set_raw_timestamp((double)parosci->utime/1e6);
     if(state->mode == NAV)
     	state->slam->handle_depth_data(depth);
@@ -188,7 +189,7 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	if (btv_ok)
 	{
             double last_altitude = state->altitude;
-            state->altitude = 0.05*rdi->pd4.altitude + 0.95*last_altitude;
+            state->altitude = 0.5*rdi->pd4.altitude + 0.5*last_altitude;
 	}
 
 	if( true ) // btv_ok )
@@ -556,6 +557,24 @@ void on_micron_sounder(const lcm::ReceiveBuffer* rbuf, const std::string& channe
         rdi_data.print(state->raw_out);
         state->raw_out << endl;
     }
+}
+
+// This is not complete, it spoofs the RDI DVL and only fills in the altitude variable to be used with processing the images 
+void on_dwn(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const micron_sounder_t *ms, state_c* state)
+{
+    if(fabs(ms->altitude) < 0.000001)
+        return;
+    auv_data_tools::RDI_Data rdi_data;
+    memset(&rdi_data, 0, sizeof(auv_data_tools::RDI_Data));
+    rdi_data.set_raw_timestamp((double)ms->utime/1e6);
+    rdi_data.alt = ms->altitude;
+    if(state->mode == RAW)
+    {
+        rdi_data.print(state->raw_out);
+        state->raw_out << endl;
+    }
+    state->oas_utime = ms->utime;
+    state->oas_altitude = ms->altitude;
 }
 
 
