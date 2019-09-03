@@ -770,6 +770,7 @@ bool EvologicsModem::configure_modem()
     if (!send_command(cmd))
         return false;
 
+    // should the source level adjust on the remote target
     if(auto_gain)
     {
         if (!send_command("AT!LC1"))
@@ -852,7 +853,7 @@ std::string EvologicsModem::get_target_name(int target_id)
     }
 
     // couldn't map the name
-    return std::string();
+    return std::to_string(target_id);
 }
 
 void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb)
