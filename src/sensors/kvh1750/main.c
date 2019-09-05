@@ -22,8 +22,8 @@ int program_imu(int fd, int rate)
     serial_set_canonical(fd, '\r', '\n');
 
     // put it in config mode
-    sprintf(msg_out, "=config,1\r");
-    write(fd, msg_out, strlen(msg_out));
+    sprintf(msg_out, "=config,1\r\n");
+    //write(fd, msg_out, strlen(msg_out));
     printf("Entering Configuration Mode\n");
 
     // get response
@@ -31,6 +31,8 @@ int program_imu(int fd, int rate)
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
+    	write(fd, msg_out, strlen(msg_out));
+	usleep(100e3);
         read(fd, msg_in, sizeof(msg_in)-1);
 	count++;
 	//printf("%s\n", msg_in);
@@ -225,7 +227,7 @@ int main(int argc, char **argv)
     printf("Serial Port Open (%i)\n", serial_fd);
 
     // Set the sample rate and output format
-    program_imu(serial_fd, sample_rate);
+    //program_imu(serial_fd, sample_rate);
     serial_set_noncanonical(serial_fd, 1, 0);
 
 

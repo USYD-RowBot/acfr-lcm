@@ -119,9 +119,9 @@ parse_rc(char *buf, state_t *state)
     for(int i=1; i<8; i++)
     {
         // we have an offset of 2 as the first two bytes are status/flags
-        if(state->dsm_preamble == 0xA2)
+        if(state->dsm_preamble == 0xB2)
         {
-            channel_id = (buf[i*2] & 0xF8) >> 3;
+            channel_id = (buf[i*2] & 0x78) >> 3;
             channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
         }
         else
@@ -135,14 +135,14 @@ parse_rc(char *buf, state_t *state)
         
 
         //printf("%i-%i ", (int)channel_id, (int)channel_value);
-        //printf("%02x-%02x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
+        printf("%02x-%02x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
 
         if (channel_id < state->channels)
         {
             channel_values[(int)channel_id] = channel_value;
         }
     }
-    //printf("\n");
+    printf("\n");
 
     acfrlcm_auv_spektrum_control_command_t sc;
     sc.utime = timestamp_now();
@@ -226,7 +226,6 @@ void realign(acfr_sensor_t *sensor, state_t *state)
     // but we need to find the start of the packet
     // based on decoding with an oscilloscope
     // the first two bytes of the message is 0xE1 0xA2
-
     fd_set rfds;
     char buf[16];
     uint8_t aligned = 0;
@@ -319,7 +318,7 @@ main(int argc, char **argv)
     if(!strcmp(dsm_str, "DX5"))
         state.dsm_preamble = 0x01;
     else
-        state.dsm_preamble = 0xA2;
+        state.dsm_preamble = 0xB2;
 
     printf("Setting DSM premable to 0x%02X\n", state.dsm_preamble & 0xFF);
 
