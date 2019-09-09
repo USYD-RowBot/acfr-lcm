@@ -10,7 +10,7 @@
 #include "acfr-common/spektrum-control.h"
 
 #include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_control_pid_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_control_ext_pid_t.hpp"
 
 // For power limiting
 #include "perls-lcmtypes++/senlcm/acfr_psu_t.hpp"
@@ -163,7 +163,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 	std::cout << "Total Power = " << this->total_power() << std::endl; 
     std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
-    acfrlcm::auv_control_pid_t cp;
+    acfrlcm::auv_control_ext_pid_t cp;
     memset(&cp, 0, sizeof(cp));
     memset(&mc, 0, sizeof(mc));
     cp.utime = mc.utime = timestamp_now();
@@ -300,6 +300,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             else
                 mc.tail_elevator = plane_angle;
         }
+        else 
+        {
+            prop_rpm = 1.0;
+            prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
+            prev_rpm = prop_rpm;
+        }
         //state machine
         switch(currentstate){
             case TunnelDive:
@@ -308,7 +314,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
                 if(fabs(mc.lat_aft) > heading_correction_limit) //fabs this
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
-                mc.tail_thruster = 1.0; // don't trigger the idle reset on tail during a dive
+                mc.tail_thruster = prop_rpm; // don't trigger the idle reset on tail during a dive
                 mc.tail_elevator = 0.0;
                 mc.tail_rudder = 0.0;    
                 break;            
@@ -338,7 +344,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             {   printf("TunnelTurn\n");
                 mc.vert_fore = 0.0;
                 mc.vert_aft = 0.0;
-                mc.tail_thruster = 0.0;
+                mc.tail_thruster = prop_rpm;
                 // std::cout << "tunnel turning";
                 // adding lat tunnel efficiency code here for tests
                 if (thruster_flow_dependant)
