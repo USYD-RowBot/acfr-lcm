@@ -40,7 +40,7 @@ pid(pid_gains_t *gains, double value, double goal, double dt)
 }
 
 double
-pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_base_pid_t *msg)
+pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_ext_pid_t *msg)
 {
     double u;
 
@@ -73,6 +73,10 @@ pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_base_
     msg->prev_error = gains->prev_error;
     msg->error = error;
     msg->sat = gains->sat;
+    msg->input = value;
+    msg->output = u;
+    msg->goal = goal;
+    msg->dt = dt;
 
     return u;
 }
