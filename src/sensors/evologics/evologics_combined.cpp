@@ -35,6 +35,7 @@
 #include "perls-lcmtypes++/senlcm/evologics_ping_control_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_ping_status_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_range_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_raw_message_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 
 // this is 'legacy' for seabed_modem_gui control
@@ -109,6 +110,7 @@ public:
     void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb);
     void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec);
     void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
+    void on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_raw_message_t *erm);
 
     bool send_message(int message_type, char const *data, int length);
     std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
@@ -265,6 +267,7 @@ EvologicsModem::EvologicsModem()
     lcm.subscribe("HEARTBEAT_1HZ", &EvologicsModem::on_heartbeat, this);
     lcm.subscribe("EVOLOGICS_CONTROL", &EvologicsModem::on_evo_control, this);
     lcm.subscribe("EVOLOGICS_PING_CONTROL", &EvologicsModem::on_evo_ping_control, this);
+    lcm.subscribe("EVOLOGICS_RAW_MESSAGE", &EvologicsModem::on_evo_raw_message, this);
 };
 
 EvologicsModem::~EvologicsModem()
@@ -935,6 +938,45 @@ void EvologicsModem::on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const s
             break;
         }
     }
+}
+
+void EvologicsModem::on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_raw_message_t *erm)
+{
+    // we want to check if a command or query
+    // and that the message is even an AT thing to begin with
+    if (erm->message.length() < 3 || erm->message[0] != 'A' || erm->message[1] != 'T')
+    {
+        std::cerr << "Received invalid message from LCM." << std::endl;
+        return;
+    }
+
+    switch (erm->message[2])
+    {
+    case '?':
+        // a query output will show in the logs
+        // we don't save it otherwise (have a way to intercept it)
+        std::cout << "Received query from LCM." << std::endl;
+        this->send_query(erm->message.data());
+        break;
+
+    case '@':
+    case '!':
+        // a command, send and check for OK
+        // probably should check the class of commands we want to permit
+        // without confusing things and potentially intercept some that
+        // make up the state here
+        std::cout << "Received command from LCM." << std::endl;
+        this->send_command(erm->message.data());
+        break;
+
+    case '*':
+        // SEND something
+        // don't do this (probably)
+
+    default:
+        // MODE changes are unhandled, a number of other cases too.
+        break;
+    };
 }
 
 void EvologicsModem::on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec)
