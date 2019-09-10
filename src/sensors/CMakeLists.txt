@@ -48,4 +48,5 @@ perls_add_folder (acfr-psu "Build ACFR PSU driver?" ON)
 perls_add_folder (aanderaa-4319 "Build Aanderaa 4319 CT driver?" ON)
 perls_add_folder (xsens "Build Xsens AHRS driver?" ON)
 perls_add_folder (isa500 "Build ISA500 sonar driver?" ON)
+perls_add_folder (keller-depth "Build Keller Depth driver?" ON)
 
