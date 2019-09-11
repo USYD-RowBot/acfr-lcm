@@ -12,10 +12,10 @@ if __name__ == "__main__":
     msg = evologics_raw_message_t()
 
     msg.utime = long(time.time())*1000000
-    msg.msg = sys.argv[2]
+    msg.message = sys.argv[2]
 
     lc = lcm.LCM()
 
-    channel = "EVOLOGICS_RAW_MESSAGE"
+    channel = "{}.EVOLOGICS_RAW_MESSAGE".format(sys.argv[1])
 
     lc.publish(channel, msg.encode())
