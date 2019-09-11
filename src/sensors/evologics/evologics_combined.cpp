@@ -82,7 +82,8 @@ struct PingTarget
 
 enum
 {
-    MSG_PBM=0,
+    MSG_INVALID=0,
+    MSG_PBM,
     MSG_BURST,
     MSG_IM,
     MSG_IMS,
@@ -1084,6 +1085,7 @@ void EvologicsModem::on_lcm_pbm_data(const lcm::ReceiveBuffer* rbuf, const std::
     {
         std::cerr << "PBM message could not be constructed for " << channel << "." << std::endl;
     }
+    else
     {
         this->send_message(MSG_PBM, (char *)message.data(), message.size());
     }
