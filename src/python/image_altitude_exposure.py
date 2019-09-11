@@ -10,7 +10,10 @@ from acfrlcm import auv_vis_rawlog_t, auv_acfr_nav_t
 
 class ImageAltitude(object):
     def __init__(self, lcm_source=None):
-        lcm_source = "file://{}?speed=0".format(lcm_source) or ""
+        if lcm_source is None:
+            lcm_source = ""
+        else:
+            lcm_source = "file://{}?speed=0".format(lcm_source) or ""
         self.lcmhandler = lcm.LCM(lcm_source)
         self.last_alt = None
 
@@ -34,7 +37,7 @@ class ImageAltitude(object):
                 break
 
 if __name__ == "__main__":
-    if len(sys.argv > 1):
+    if len(sys.argv) > 1:
         # can pass in a filename
         ia = ImageAltitude(sys.argv[1])
     else:
