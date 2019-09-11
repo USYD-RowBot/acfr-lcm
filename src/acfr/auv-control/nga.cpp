@@ -10,7 +10,9 @@
 #include "acfr-common/spektrum-control.h"
 
 #include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
-#include "perls-lcmtypes++/acfrlcm/auv_control_pid_t.hpp"
+//#include "perls-lcmtypes++/acfrlcm/auv_control_ext_pid_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_ext_pid_t.hpp"
+
 
 // For power limiting
 #include "perls-lcmtypes++/senlcm/acfr_psu_t.hpp"
@@ -163,13 +165,24 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 	std::cout << "Total Power = " << this->total_power() << std::endl; 
     std::cout << "Automatic\n";
     acfrlcm::auv_nga_motor_command_t mc;
-    acfrlcm::auv_control_pid_t cp;
-    memset(&cp, 0, sizeof(cp));
+    acfrlcm::auv_ext_pid_t msg_velocity;
+    acfrlcm::auv_ext_pid_t msg_roll;
+    acfrlcm::auv_ext_pid_t msg_depth;
+    acfrlcm::auv_ext_pid_t msg_altitude;
+    acfrlcm::auv_ext_pid_t msg_pitch;
+    acfrlcm::auv_ext_pid_t msg_pitch_r;
+    acfrlcm::auv_ext_pid_t msg_heading;
+    acfrlcm::auv_ext_pid_t msg_tunnel_depth;
+    acfrlcm::auv_ext_pid_t msg_tunnel_descent;
+    acfrlcm::auv_ext_pid_t msg_tunnel_pitch;
+    acfrlcm::auv_ext_pid_t msg_tunnel_heading;
+    // acfrlcm::auv_control_ext_pid_t cp;
+    // memset(&cp, 0, sizeof(cp));
     memset(&mc, 0, sizeof(mc));
-    cp.utime = mc.utime = timestamp_now();
+    msg_velocity.utime = msg_roll.utime = msg_depth.utime = msg_altitude.utime = msg_pitch.utime = msg_pitch_r.utime = msg_heading.utime = msg_tunnel_depth.utime = msg_tunnel_descent.utime = msg_tunnel_pitch.utime = msg_tunnel_heading.utime = mc.utime = timestamp_now();
 
     bool thruster_flow_dependant = false, elevator_disabled = false;
-    double prop_rpm = 0.0;
+    double prop_rpm = 1.0;
     double pitch = 0.0, target_pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0, differential_vert_corrected = 0.0;
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
@@ -209,15 +222,19 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         else 
             currentstate = TailTravel;
         //do the appropriate pid calculations
-        if((currentstate == TransitionDive)||(currentstate == TunnelDive)){
+        if((currentstate == TransitionDive)||(currentstate == TunnelDive))
+        {
             double differential_vert = pid(&this->gains_tunnel_pitch,
-                    nav.pitch, target_pitch, dt, &cp.tunnel_pitch);
+                    nav.pitch, target_pitch, dt, &msg_tunnel_pitch);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
 
             double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
-                    nav.pitch, cmd.pitch, dt, &cp.tunnel_pitch);
+                    nav.pitch, cmd.pitch, dt, &msg_tunnel_pitch);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
 
             double mutual_vert = pid(&this->gains_tunnel_descent,
-                    nav.depth, cmd.depth, dt, &cp.tunnel_descent);
+                    nav.depth, cmd.depth, dt, &msg_tunnel_descent);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
 
             // testing variable pitch rpm based of mutual value saturation
             double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
@@ -228,13 +245,17 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             mc.vert_aft = (mutual_vert + differential_vert_corrected);
         }
         if((currentstate == TunnelTurn)||(currentstate == TunnelDive)){
-            double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt, &cp.tunnel_heading);
+            double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt, &msg_tunnel_heading);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_HEADING", &msg_tunnel_heading);
+
             mc.lat_fore = differential_lat;
             mc.lat_aft = -differential_lat;
         }
-        if((currentstate == TransitionDive)||(currentstate == TailTravel)){
+        if((currentstate == TransitionDive)||(currentstate == TailTravel))
+        {
             // X Velocity
-            prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt, &cp.velocity);
+            prop_rpm = pid(&this->gains_vel, nav.vx, cmd.vx, dt, &msg_velocity);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_VELOCITY", &msg_velocity);
 
             if((fabs(prop_rpm - prev_rpm) < BF_TAIL_RAMP))
                 prev_rpm = prop_rpm;
@@ -242,7 +263,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
                 prev_rpm = prop_rpm;
             }
-            rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt, &cp.heading);
+            rudder_angle = pid(&this->gains_heading, diff_heading, 0.0, dt, &msg_heading);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_HEADING", &msg_heading);
+
             // checks for impossible rudder motions
             if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
                 prev_rudder_angle = rudder_angle;
@@ -258,20 +281,30 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                     }
                 else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
                     {
-                        //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &cp.altitude);
-                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.altitude);
+                        //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &msg_altitude);
+                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_altitude);
+                        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_ALTITUDE", &msg_altitude);
+
                         std::cout << "ALTITUDE_MODE" << std::endl;         
                     }
                 else
                     {
-                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &cp.depth);
+                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_depth);
+                        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_DEPTH", &msg_depth);
+
                         std::cout << "DEPTH_MODE" << std::endl; 
                     }
     
                 if ((nav.vx > -0.05) || (prop_rpm > -100))
-                    plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &cp.pitch);
+                {
+                    plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &msg_pitch);
+                    this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_PITCH", &msg_pitch);
+                }
                 else
-                    plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch, dt, &cp.pitch_r);
+                {
+                    plane_angle = pid(&this->gains_pitch_r, nav.pitch, pitch, dt, &msg_pitch_r);
+                    this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_PITCH_R", &msg_pitch_r);
+                }
     
                 if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
                     prev_elev_angle = plane_angle;
@@ -300,6 +333,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             else
                 mc.tail_elevator = plane_angle;
         }
+        else 
+        {
+            prop_rpm = 1.0;
+            prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
+            prev_rpm = prop_rpm;
+        }
         //state machine
         switch(currentstate){
             case TunnelDive:
@@ -308,9 +347,11 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
                 if(fabs(mc.lat_aft) > heading_correction_limit) //fabs this
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
-                mc.tail_thruster = 1.0; // don't trigger the idle reset on tail during a dive
+                mc.tail_thruster = prop_rpm; // don't trigger the idle reset on tail during a dive
                 mc.tail_elevator = 0.0;
                 mc.tail_rudder = 0.0;    
+                if (cmd.depth < 0)
+                    printf("Abort - Emergency Surface\n");
                 break;            
             }              
             case TransitionDive:
@@ -338,7 +379,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             {   printf("TunnelTurn\n");
                 mc.vert_fore = 0.0;
                 mc.vert_aft = 0.0;
-                mc.tail_thruster = 0.0;
+                mc.tail_thruster = prop_rpm;
                 // std::cout << "tunnel turning";
                 // adding lat tunnel efficiency code here for tests
                 if (thruster_flow_dependant)
@@ -384,7 +425,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     // safety hard codes
     //mc.tail_elevator = 0.0;
     this->lc().publish(this->get_vehicle_name() + ".NEXTGEN_MOTOR", &mc);
-    this->lc().publish(this->get_vehicle_name() + ".PID_TUNING", &cp);
+    //this->lc().publish(this->get_vehicle_name() + ".PID_TUNING", &cp);
 }
 
 void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)

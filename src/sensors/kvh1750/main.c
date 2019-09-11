@@ -31,6 +31,8 @@ int program_imu(int fd, int rate)
     memset(msg_in, 0, sizeof(msg_in));
     do
     {
+    	write(fd, msg_out, strlen(msg_out));
+	usleep(100e3);
         read(fd, msg_in, sizeof(msg_in)-1);
 	count++;
 	//printf("%s\n", msg_in);
