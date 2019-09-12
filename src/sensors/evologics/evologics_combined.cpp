@@ -35,6 +35,7 @@
 #include "perls-lcmtypes++/senlcm/evologics_ping_control_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_ping_status_t.hpp"
 #include "perls-lcmtypes++/senlcm/evologics_range_t.hpp"
+#include "perls-lcmtypes++/senlcm/evologics_raw_message_t.hpp"
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 
 // this is 'legacy' for seabed_modem_gui control
@@ -63,7 +64,7 @@ struct PingTarget
 {
     PingTarget(std::string target_name, uint8_t target_id, int period)
         : target_name(target_name), target_id(target_id),
-        in_water(true), send_fixes(false), minimum_period(period),
+        send_pings(true), send_fixes(false), minimum_period(period),
         last_sent_fix_time(0), last_fix_time(0), last_ping_time(0)
     {
 
@@ -71,7 +72,7 @@ struct PingTarget
 
     std::string target_name;
     uint8_t target_id;
-    bool in_water;
+    bool send_pings;
     bool send_fixes;
     int64_t minimum_period;
     int64_t last_sent_fix_time;
@@ -81,7 +82,8 @@ struct PingTarget
 
 enum
 {
-    MSG_PBM=0,
+    MSG_INVALID=0,
+    MSG_PBM,
     MSG_BURST,
     MSG_IM,
     MSG_IMS,
@@ -109,9 +111,13 @@ public:
     void on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const perllcm::heartbeat_t *hb);
     void on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec);
     void on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc);
+    void on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_raw_message_t *erm);
 
     bool send_message(int message_type, char const *data, int length);
     std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
+
+    void queue_ping();
+    void publish_status();
 
     void modem_read_thread();
     void lcm_handle_thread();
@@ -264,7 +270,6 @@ EvologicsModem::EvologicsModem()
 {
     lcm.subscribe("HEARTBEAT_1HZ", &EvologicsModem::on_heartbeat, this);
     lcm.subscribe("EVOLOGICS_CONTROL", &EvologicsModem::on_evo_control, this);
-    lcm.subscribe("EVOLOGICS_PING_CONTROL", &EvologicsModem::on_evo_ping_control, this);
 };
 
 EvologicsModem::~EvologicsModem()
@@ -343,6 +348,8 @@ bool EvologicsModem::load_configuration(char *program_name)
     vehicle_name = bot_param_get_str_or_fail(param, key);
 
     lcm.subscribe(vehicle_name + "\\.USBL_FIX\\..*", &EvologicsModem::on_usbl_fix, this);
+    lcm.subscribe(vehicle_name + ".EVOLOGICS_PING_CONTROL", &EvologicsModem::on_evo_ping_control, this);
+    lcm.subscribe(vehicle_name + ".EVOLOGICS_RAW_MESSAGE", &EvologicsModem::on_evo_raw_message, this);
 
     sprintf(key, "%s.ack_timeout", rootkey);
     ack_timeout = bot_param_get_int_or_fail(param, key);
@@ -863,12 +870,18 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
     // heartbeat! we need to see if we have to ping someone
     // first check if we have a ping queued. if we do, then do nothing
 
-    if (this->next_ping.size() > 0)
+    if (this->next_ping.size() == 0)
     {
-        // have a queued ping. don't replace it
-        return;
+        // only queue a ping if we don't have one
+        this->queue_ping();
     }
 
+    // send out current status
+    this->publish_status();
+}
+
+void EvologicsModem::queue_ping()
+{
     // what is our highest priority target to ping?
     // a target is immediately ignored if we have sent a fix too recently
     // (we base on this not pings in case extra messages have been sent to it
@@ -882,7 +895,7 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
     for (auto &pt : this->ping_targets)
     {
         int64_t cutoff = now - pt.minimum_period;
-        if (pt.in_water && pt.last_sent_fix_time < cutoff && pt.last_ping_time < cutoff)
+        if (pt.send_pings && pt.last_sent_fix_time < cutoff && pt.last_ping_time < cutoff)
         {
             if (pt.last_ping_time < last_ping_time)
             {
@@ -923,18 +936,91 @@ void EvologicsModem::on_heartbeat(const lcm::ReceiveBuffer* rbuf, const std::str
     }
 }
 
+void EvologicsModem::publish_status()
+{
+    senlcm::evologics_ping_status_t status;
+    int64_t utime = timestamp_now();
+    status.modem_id = 0;
+    status.modem_name = this->vehicle_name;
+    status.utime = utime;
+
+    for (auto &pt : this->ping_targets)
+    {
+        senlcm::evologics_ping_target_t target;
+
+        target.target_name = pt.target_name;
+        target.target_id = pt.target_id;
+        target.send_pings = pt.send_pings;
+        target.send_fixes = pt.send_fixes;
+        target.minimum_period = pt.minimum_period;
+        target.last_sent_fix_time = pt.last_sent_fix_time;
+        target.last_fix_time = pt.last_fix_time;
+        target.last_ping_time = pt.last_ping_time;
+
+        target.utime = utime;
+
+        status.targets.push_back(target);
+    }
+
+    status.target_count = status.targets.size();
+
+    this->lcm.publish(vehicle_name + ".EVOLOGICS_STATUS", &status);
+}
+
 void EvologicsModem::on_evo_ping_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_ping_control_t *epc)
 {
     for (auto &pt : this->ping_targets)
     {
         if (epc->target_id == pt.target_id)
         {
-            pt.in_water = epc->in_water;
+            pt.send_pings = epc->send_pings;
             pt.send_fixes = epc->send_fixes;
             pt.minimum_period = epc->ping_rate * 1e6;
             break;
         }
     }
+}
+
+void EvologicsModem::on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_raw_message_t *erm)
+{
+    // we want to check if a command or query
+    // and that the message is even an AT thing to begin with
+    if (erm->message.length() < 3 || erm->message[0] != 'A' || erm->message[1] != 'T')
+    {
+        std::cerr << "Received invalid message from LCM." << std::endl;
+        return;
+    }
+
+    switch (erm->message[2])
+    {
+    case '?':
+        // a query output will show in the logs
+        // we don't save it otherwise (have a way to intercept it)
+        std::cout << "Received query from LCM." << std::endl;
+        this->send_query(erm->message.data());
+        break;
+
+    case '@':
+    case '!':
+        // a command, send and check for OK
+        // probably should check the class of commands we want to permit
+        // without confusing things and potentially intercept some that
+        // make up the state here
+        std::cout << "Received command from LCM." << std::endl;
+        this->send_command(erm->message.data());
+        break;
+
+    case '*':
+        // SEND something
+        // don't do this (probably)
+        std::cerr << "Refusing to use SEND with raw messages." << std::endl;
+        break;
+
+    default:
+        // MODE changes are unhandled, a number of other cases too.
+        std::cerr << "Unknown message type to send raw to modem." << std::endl;
+        break;
+    };
 }
 
 void EvologicsModem::on_evo_control(const lcm::ReceiveBuffer* rbuf, const std::string &channel, const senlcm::evologics_command_t *ec)
@@ -999,6 +1085,7 @@ void EvologicsModem::on_lcm_pbm_data(const lcm::ReceiveBuffer* rbuf, const std::
     {
         std::cerr << "PBM message could not be constructed for " << channel << "." << std::endl;
     }
+    else
     {
         this->send_message(MSG_PBM, (char *)message.data(), message.size());
     }
@@ -1017,7 +1104,8 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
     {
         if (pt.target_id == target)
         {
-            if (pt.in_water && pt.send_fixes && pt.last_sent_fix_time < now - pt.minimum_period)
+            pt.last_fix_time = now;
+            if (pt.send_pings && pt.send_fixes && pt.last_sent_fix_time < now - pt.minimum_period)
             {
                 send_fix = true;
                 pt.last_sent_fix_time = now;
@@ -1042,7 +1130,6 @@ std::tuple<std::string, void *, int> extract_lcm_data(uint8_t *d, int size)
     if((data_crc & 0xFFFFFFFF) != (crc & 0xFFFFFFFF))
     {
         std::cerr << "LCM data CRC error\n";
-        //printf("0x%X 0x%X\n", crc, data_crc);
         return std::make_tuple(std::string(), (void *)0, 0);
     }
 

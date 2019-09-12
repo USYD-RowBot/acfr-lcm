@@ -1,0 +1,14 @@
+package senlcm;
+
+struct isa500_t
+{
+    int64_t utime;
+
+	double distance;
+	double heading;
+	double pitch;
+	double roll;
+}
+
+
+

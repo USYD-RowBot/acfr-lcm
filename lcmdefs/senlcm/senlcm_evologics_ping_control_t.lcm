@@ -5,7 +5,7 @@ struct evologics_ping_control_t
     int64_t utime;
     
     int8_t target_id;
-    boolean in_water; // whether to ping/send messages at all
+    boolean send_pings; // whether to ping/send messages at all
     boolean send_fixes; // whether to send the usbl_fixes
     int16_t ping_rate; // seconds, negative indicates don't ping
 }
