@@ -47,6 +47,7 @@ pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_ext_p
     double error = goal - value;
     double derivative = (error - gains->prev_error) / dt;
     gains->integral += error * dt;
+    msg->prev_error = gains->prev_error;
     gains->prev_error = error;
 
 
@@ -70,7 +71,6 @@ pid(pid_gains_t *gains, double value, double goal, double dt, acfrlcm::auv_ext_p
     msg->kd = gains->kd;
     msg->integral = gains->integral;
     msg->derivative = derivative;
-    msg->prev_error = gains->prev_error;
     msg->error = error;
     msg->sat = gains->sat;
     msg->input = value;
