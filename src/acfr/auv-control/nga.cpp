@@ -29,7 +29,7 @@
 #define RC_TO_RAD (12*M_PI/180)/RC_HALF_RANGE //12 multipier because full rudder ROM is 24 degrees
 #define RC_TO_RPM 8              // Mitch
 #define RC_MAX_PROP_RPM 700.0
-#define RC_MIN_PROP_RPM -700.0
+#define RC_MIN_PROP_RPM -300.0
 #define RC_DEADZONE 80 // Testing 160902016 JJM
 #define RCMULT RC_MAX_PROP_RPM/(RC_HALF_RANGE-RC_DEADZONE)
 #define RC_TUNNEL_MULTI 2047/(RC_HALF_RANGE)
@@ -299,7 +299,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.tail_elevator = 0.0; // mc.tail_elevator = pid(&this->gains_pitch, nav.pitch, (5*M_PI)/180, dt); //target pitch of 5 degrees to make tail more efficient
             else
                 mc.tail_elevator = plane_angle;
-        }
+        } else {
+	    // Suspect that prev_rpm not being set to zero in other modes
+	    // makes us brownout as we force RPM to be too high when re-entering
+	    // tail modes.
+	    prev_rpm = 0;
+	}
         //state machine
         switch(currentstate){
             case TunnelDive:
@@ -402,8 +407,8 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     double rudder, elevator_hc, prop_rpm = 0;
 
     //Strafe - this is side to side on left stick - always available
-    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
-    aft = fore;
+    //fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+    //aft = fore;
         
     // Check the steering mode switch - top switch on right side
     if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
