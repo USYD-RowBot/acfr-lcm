@@ -443,8 +443,8 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     double rudder, elevator_hc, prop_rpm = 0;
 
     //Strafe - this is side to side on left stick - always available
-    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
-    aft = fore;
+//    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+//    aft = fore;
         
     // Check the steering mode switch - top switch on right side
     if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
