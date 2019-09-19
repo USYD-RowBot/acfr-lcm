@@ -182,7 +182,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     msg_velocity.utime = msg_roll.utime = msg_depth.utime = msg_altitude.utime = msg_pitch.utime = msg_pitch_r.utime = msg_heading.utime = msg_tunnel_depth.utime = msg_tunnel_descent.utime = msg_tunnel_pitch.utime = msg_tunnel_heading.utime = mc.utime = timestamp_now();
 
     bool thruster_flow_dependant = false, elevator_disabled = false;
-    double prop_rpm = 1.0;
+    double prop_rpm = BF_TAIL_RAMP;
     double pitch = 0.0, target_pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0, differential_vert_corrected = 0.0;
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
@@ -335,7 +335,6 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         }
         else 
         {
-            prop_rpm = 1.0;
             prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
             prev_rpm = prop_rpm;
         }
@@ -346,7 +345,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 if(fabs(mc.lat_fore) > heading_correction_limit) //fabs this
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
                 if(fabs(mc.lat_aft) > heading_correction_limit) //fabs this
-                    mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
+                    mc.lat_aft = (heading_correction_limit*fabs(mc.lat_aft))/(mc.lat_aft);
                 mc.tail_thruster = prop_rpm; // don't trigger the idle reset on tail during a dive
                 mc.tail_elevator = 0.0;
                 mc.tail_rudder = 0.0;    
