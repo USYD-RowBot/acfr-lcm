@@ -23,7 +23,6 @@
 #define DTOR M_PI/180
 #define LEAP_SECONDS 16
 
-#define UNDEFINED_STATUS 13
 
 static char const *novatel_status[] =
 {
@@ -43,7 +42,8 @@ static char const *novatel_status[] =
     "Undefined\0"
 };
 
-static const uint32_t max_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 1;
+static const uint32_t max_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 2;
+static const uint32_t undefined_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 1;
 
 static char *bestpos_status[] = 
 {
@@ -129,7 +129,7 @@ int parse_inspvab(state_t *state, char *d, char *channel_name)
     int status = *(uint32_t *)&d[84];
     //printf("Status: %d\n", status);
     if(status < 0 || status > max_status)
-       status = UNDEFINED_STATUS;
+       status = undefined_status;
     //printf("Status: %d\n", status);
     char *ns = malloc(strlen(novatel_status[status]) + 1);
     memset(ns, 0, strlen(novatel_status[status]) + 1);
