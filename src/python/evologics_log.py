@@ -8,7 +8,7 @@ from senlcm import evologics_modem_t
 if len(sys.argv) > 1:
     lcm_url = "file://{}?speed=0".format(sys.argv[1])
 else:
-    lcm_url = None
+    lcm_url = ""
 
 lc = lcm.LCM(lcm_url)
 
