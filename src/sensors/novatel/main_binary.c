@@ -23,10 +23,9 @@
 #define DTOR M_PI/180
 #define LEAP_SECONDS 16
 
-#define UNDEFINED_STATUS 10
+#define UNDEFINED_STATUS 13
 
-static const uint32_t max_status = 9;
-static char *novatel_status[] =
+static char const *novatel_status[] =
 {
     "INS Inactive\0",
     "INS Aligning\0",
@@ -38,8 +37,13 @@ static char *novatel_status[] =
     "INS Alignment Complete\0",
     "Determining IMU Orientation wrt Gravity\0",
     "Waiting Initial Position for Alignment\0",
+    "Waiting for Azimuth Entry\0",
+    "Initialising Biases\0",
+    "Motion Detected (Unaligned)\0",
     "Undefined\0"
 };
+
+static const uint32_t max_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 1;
 
 static char *bestpos_status[] = 
 {
