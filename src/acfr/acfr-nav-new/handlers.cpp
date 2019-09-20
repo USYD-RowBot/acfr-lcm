@@ -189,7 +189,7 @@ void on_rdi(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const rd
 	if (btv_ok)
 	{
             double last_altitude = state->altitude;
-            state->altitude = 0.5*rdi->pd4.altitude + 0.5*last_altitude;
+            state->altitude = rdi->pd4.altitude;
 	}
 
 	if( true ) // btv_ok )

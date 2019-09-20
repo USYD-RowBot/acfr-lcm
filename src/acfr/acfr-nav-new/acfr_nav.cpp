@@ -173,10 +173,12 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-    //     if(((((timestamp_now() - state->oas_utime) < 5e6)) && state->oas_altitude > 0.5))
-		  // nav.altitude = min(state->altitude, state->oas_altitude);
-    //     else
-		  nav.altitude = state->altitude;
+		double oas_transformed_alt = state->oas_altitude*cos(nav.pitch) - 1.25*sin(nav.pitch);
+		double sea_floor_est = nav.depth + min(state->altitude, oas_transformed_alt);
+         if(((((timestamp_now() - state->oas_utime) < 2e6)) && state->oas_altitude > 0.5))
+		  nav.altitude = min(state->altitude, oas_transformed_alt);
+         else
+		  nav.altitude = min(state->altitude, sea_floor_est - nav.depth);
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		
