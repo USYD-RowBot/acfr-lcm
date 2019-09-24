@@ -8,6 +8,8 @@ sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes')
 
 from acfrlcm.auv_spektrum_control_command_t import auv_spektrum_control_command_t 
 
+
+
 global lc 
 lc = lcm.LCM();
 
@@ -31,21 +33,23 @@ if (len(sys.argv) > 1):
 else:
     print 'Wrong number of args'
 
-print textwrap.dedent("""\
+def print_help():
+    print textwrap.dedent("""\
 ===================================            
             Controls
             W - Forwards
-            S - Back/slow
+            S - Back/Slow
             A - Turn Left
             D - Turn Right
-            Q - Rudder mode
-            E - Tunnel Turn mode
+            Q - Rudder Mode
+            E - Tunnel Turn Mode
             Z - Strafe Left
-            X - Strafe Right
-            1 - Auto mode
-            2 - Dead mode
+            C - Strafe Right
+            1 - Auto Mode
+            2 - Dead Mode
             3 - Manual Mode
-            p - Kill proc
+            h - print Help Menu
+            p - Kill Process then press ctrl + c
 ===================================
             """)
 
@@ -155,28 +159,12 @@ def listen_to_keyboard():
             msg.values[auv_spektrum_control_command_t.RC_AUX1] = 200
 
         elif (char == "h"):
-            print textwrap.dedent("""\
-===================================            
-            Controls
-            W - Forwards
-            S - Back/Slow
-            A - Turn Left
-            D - Turn Right
-            Q - Rudder Mode
-            E - Tunnel Turn Mode
-            Z - Strafe Left
-            C - Strafe Right
-            1 - Auto Mode
-            2 - Dead Mode
-            3 - Manual Mode
-            h - print Help Menu
-            p - Kill Process then press ctrl + c
-===================================
-            """)
-
+            print_help()
 
         lc.publish(vehicle_name+'.SPEKTRUM_CONTROL', msg.encode())
         time.sleep(button_delay/2)
+
+print_help()
 
 try:
     thread.start_new_thread( listen_to_keyboard , ())
