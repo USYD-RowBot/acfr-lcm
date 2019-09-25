@@ -23,7 +23,8 @@
 #define DTOR M_PI/180
 #define LEAP_SECONDS 16
 
-static char *novatel_status[] =
+
+static char const *novatel_status[] =
 {
     "INS Inactive\0",
     "INS Aligning\0",
@@ -33,8 +34,16 @@ static char *novatel_status[] =
     "Reserved\0",
     "Bad INS/GPS Agreement\0",
     "INS Alignment Complete\0",
-    "Undefined"
+    "Determining IMU Orientation wrt Gravity\0",
+    "Waiting Initial Position for Alignment\0",
+    "Waiting for Azimuth Entry\0",
+    "Initialising Biases\0",
+    "Motion Detected (Unaligned)\0",
+    "Undefined\0"
 };
+
+static const uint32_t max_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 2;
+static const uint32_t undefined_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 1;
 
 static char *bestpos_status[] = 
 {
@@ -101,7 +110,7 @@ int program_novatel(state_t *state, int rate, char *com_port)
     return 1;
 }
 
-int parse_inspvab(state_t *state, char *d)
+int parse_inspvab(state_t *state, char *d, char *channel_name)
 {
     // Reference: Novatel Span OEM Firmware Manual 5.2.23 INSPVA p.147
     senlcm_novatel_t nov;
@@ -117,22 +126,25 @@ int parse_inspvab(state_t *state, char *d)
     nov.north_velocity = *(double *)&d[36];
     nov.east_velocity = *(double *)&d[44];
     nov.up_velocity = *(double *)&d[52];
-    //int status = *(int *)&d[84];
+    int status = *(uint32_t *)&d[84];
     //printf("Status: %d\n", status);
-    char *ns = malloc(strlen(novatel_status[*(int *)&d[84]]) + 1);
-    memset(ns, 0, strlen(novatel_status[*(int *)&d[84]]) + 1);
-    strncpy(ns, novatel_status[*(int *)&d[84]], strlen(novatel_status[*(int *)&d[84]]));
-    nov.status = ns; //novatel_status[*(int *)&d[84]];
+    if(status < 0 || status > max_status)
+       status = undefined_status;
+    //printf("Status: %d\n", status);
+    char *ns = malloc(strlen(novatel_status[status]) + 1);
+    memset(ns, 0, strlen(novatel_status[status]) + 1);
+    strncpy(ns, novatel_status[status], strlen(novatel_status[status]));
+    nov.status = ns;
     nov.latitude_sd = state->lat_std;
     nov.longitude_sd = state->lon_std;
 
-    senlcm_novatel_t_publish(state->lcm, "NOVATEL", &nov);
+    senlcm_novatel_t_publish(state->lcm, channel_name, &nov);
 
     return 1;
 }
 
 // We only extract the standard deviations out of this message
-int parse_bestposb(state_t *state, char *d)
+int parse_bestposb(state_t *state, char *d, char *channel_name)
 {
     state->lat_std = *(float *)&d[40];
     state->lon_std = *(float *)&d[44];
@@ -161,10 +173,11 @@ int parse_bestposb(state_t *state, char *d)
 		nov.east_velocity = sin(state->gps_tog*DTOR)*state->gps_sog;
 		nov.up_velocity = state->gps_vz;
 		int status = *(int *)&d[0];
-		if(status  > 10)
+		if(status  > 10 || status < 0)
 			status = 10;
 		//printf("Status %d\n", status);
-		char *ns = malloc(strlen(bestpos_status[status]) + 1);
+                char *ns = malloc(strlen(bestpos_status[status]) + 1);
+		
 		memset(ns, 0, strlen(bestpos_status[status]) + 1);
 		strncpy(ns, bestpos_status[status], strlen(bestpos_status[status]));
 		nov.status = ns; 
@@ -208,6 +221,41 @@ signal_handler(int sig_num)
         program_exit = 1;
 }
 
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char **channel_name)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT.NOVATEL";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+    
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            free(*channel_name);
+            *channel_name = malloc(200);
+            snprintf(*channel_name, 200, "%s.NOVATEL", (char *)optarg);
+            break;
+         }
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -223,6 +271,9 @@ main (int argc, char *argv[])
 
     char rootkey[64];
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
+
+    char *channel_name;
+    parse_args(argc, argv, &channel_name);
 
     state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
@@ -326,10 +377,10 @@ main (int argc, char *argv[])
                 	switch(message_id)
                 	{
                     	case 507:
-                    		parse_inspvab(&state, &buf[header_length]);
+                    		parse_inspvab(&state, &buf[header_length], channel_name);
 							break;
                     	case 42:
-                        	parse_bestposb(&state, &buf[header_length]);
+                        	parse_bestposb(&state, &buf[header_length], channel_name);
                         	break;
                     	case 99:
                         	parse_bestvelb(&state, &buf[header_length]);

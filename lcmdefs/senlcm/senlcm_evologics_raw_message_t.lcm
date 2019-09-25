@@ -1,0 +1,7 @@
+package senlcm;
+
+struct evologics_raw_message_t
+{
+    int64_t utime;
+    string message;
+}

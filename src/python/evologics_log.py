@@ -5,7 +5,12 @@ import sys
 sys.path.append('/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 from senlcm import evologics_modem_t
 
-lc = lcm.LCM()
+if len(sys.argv) > 1:
+    lcm_url = "file://{}?speed=0".format(sys.argv[1])
+else:
+    lcm_url = ""
+
+lc = lcm.LCM(lcm_url)
 
 def handler(channel, data):
     msg = evologics_modem_t.decode(data)

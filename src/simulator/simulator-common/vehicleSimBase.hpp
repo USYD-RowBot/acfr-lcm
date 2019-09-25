@@ -9,6 +9,7 @@
 #include <small/Pose3D.hh>
 #include <bot_param/param_client.h>
 #include "acfr-common/auv_map_projection.hpp"
+#include <libplankton/auv_config_file.hpp>
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
@@ -17,7 +18,8 @@
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
-
+#include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
+#include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -75,6 +77,7 @@ protected:
     void publishParosci();
     void publishGPS();
     void publishDVL();
+    void publishBattery();
  
     // virtual function for derived classes to decide on channels to be subscribed to 
     //virtual void subscribeLCMChannels();
@@ -110,6 +113,7 @@ private:
     int64_t last_print_time;
     int64_t last_obs_time;
     int64_t last_parosci_time;
+    int64_t last_battery_time;
 
     // earth rotation in the navigation frame
     SMALL::Vector3D earth_rot;

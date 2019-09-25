@@ -3,10 +3,10 @@ set (SRC
 )
 
 perls_add_library (simulator-common ${SRC})
-perls_target_link_libraries ( simulator-common perls-lcmtypes++ perls-common bot2-param-client acfr-common )
+perls_target_link_libraries ( simulator-common perls-lcmtypes++ perls-common bot2-param-client acfr-common plankton)
 
 include_directories (                                                           
-       /usr/include/uf-3.2                                                         
+       /usr/local/include/uf-3.2                                                         
 )                                                                           
 
 link_directories (/usr/local/lib)

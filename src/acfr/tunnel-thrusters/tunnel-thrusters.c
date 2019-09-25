@@ -27,8 +27,8 @@
 #define TUNNEL_MAX 1750
 #define TUNNEL_MIN -1750
 
-#define COMMAND_TIMEOUT_THRUST 10
-#define COMMAND_TIMEOUT 10
+#define COMMAND_TIMEOUT_THRUST 50
+#define COMMAND_TIMEOUT 50
 
 typedef struct 
 {
@@ -126,7 +126,9 @@ int parse_thruster_response(state_t *state, char *d, int len)
 	    	ttp.voltage[1] = atof(tokens[3]);
 	    	ttp.current[1] = atof(tokens[4]);
 	    	ttp.temperature = atof(tokens[5]);
-	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, "TUNNEL_THRUSTER_POWER", &ttp);
+		char channel[100];
+		snprintf(channel, 100, "NGA.TUNNEL_THRUSTER_POWER_%i", ttp.addr);
+	    	acfrlcm_tunnel_thruster_power_t_publish(state->lcm, channel, &ttp);
 	    	
 	    	return 1;
     	}
@@ -256,7 +258,18 @@ void nga_motor_command_handler(const lcm_recv_buf_t *rbuf, const char *ch, const
     }
 
     if(state->zero_time < 10e6)
-    	send_tunnel_commands(state);
+    {
+        static int sent_last = 0;
+	if (sent_last == 1)
+	{
+            send_tunnel_commands(state);
+	    sent_last = 0;
+	}
+        else
+	{
+	    sent_last = 1;
+	}
+    }
 }
         
 

@@ -32,7 +32,9 @@ int LocalPlannerSirius::onNav(const acfrlcm::auv_acfr_nav_t *nav)
 	// for now only process waypoints or dive commands if we are in
 	// RUN mode.  This will need to be modified to take into account
 	// an active PAUSE mode.
-	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || gpState.state == acfrlcm::auv_global_planner_state_t::ABORT)
+	if (gpState.state == acfrlcm::auv_global_planner_state_t::RUN || 
+		gpState.state == acfrlcm::auv_global_planner_state_t::ABORT || 
+		gpState.state ==  acfrlcm::auv_global_planner_state_t::PAUSE)
 	{
 		processWaypoints();
 	}
@@ -92,7 +94,7 @@ int LocalPlannerSirius::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 		cerr
 				<< endl
 				<< "----------------------------------------"
-				<< "Can't calcualte a feasible path. Let's cruise and see what happens"
+				<< "Can't calculate a feasible path. Let's cruise and see what happens"
 				<< "----------------------------------------" << endl << endl;
 	}
 	resetWaypointTime(timestamp_now());
@@ -159,14 +161,18 @@ void LocalPlannerSirius::heartbeat_callback(const lcm::ReceiveBuffer*rbuf, const
 int LocalPlannerSirius::execute_abort()
 {	
 	cout << "Executing an abort" << endl;
-	abortPose.setPosition(NAN, NAN, -1.0);
-	abortPose.setRollPitchYawRad(NAN, NAN, NAN);
+	cout << "Abort position at " << currPose.getX() << " , " << currPose.getY() << endl;
+	abortPose.setPosition(currPose.getX(), currPose.getY(), -1.0);
+	//abortPose.setRollPitchYawRad(NAN, NAN, NAN);
 	destPose = abortPose;
+	destVel = 0;
 	depthMode = 0;
 	setNewDest(true);
 	
 	destID = -99;
 	aborted = true;	
+	if (currPose.getZ() > 0.2)
+		calculateWaypoints();
 	return 1;
 }
 

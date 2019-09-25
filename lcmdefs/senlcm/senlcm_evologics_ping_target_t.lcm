@@ -1,0 +1,20 @@
+package senlcm;
+
+struct evologics_ping_target_t
+{
+    int64_t utime;
+
+    // target properties
+    string target_name;
+    int8_t target_id;
+
+    // control values
+    boolean send_pings;
+    boolean send_fixes;
+    int64_t minimum_period;
+
+    // status variables
+    int64_t last_sent_fix_time;
+    int64_t last_fix_time;
+    int64_t last_ping_time;
+}

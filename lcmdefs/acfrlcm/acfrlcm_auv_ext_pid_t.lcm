@@ -1,0 +1,21 @@
+package acfrlcm;
+
+struct auv_ext_pid_t
+{
+	int64_t utime;
+    double kp;
+    double ki;
+    double kd;
+    double integral;
+    double derivative;
+    double prev_error;
+    double error;
+    double sat;
+    double input;
+    double output;
+    double goal; 
+    double dt;  
+}
+   
+    
+ 

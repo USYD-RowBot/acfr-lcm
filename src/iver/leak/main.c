@@ -18,7 +18,38 @@ typedef struct
     lcm_t *lcm;
     int leak_fd;
     int leak;
+    char channel_name[128];
 } state_t;
+
+void
+print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void
+parse_args (int argc, char **argv, char *vehicle_name)
+{
+    int opt;
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+        case 'h':
+            print_help (0, argv);
+            break;
+        case 'n':
+            strcpy(vehicle_name, (char *)optarg);
+            break;
+         }
+    }
+}
+
 
 int main_exit;
 void signal_handler(int sigNum)
@@ -40,7 +71,7 @@ leak_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm_heartbeat
             state->leak = 1;
 
         leak.leak = state->leak;
-        senlcm_leak_t_publish(state->lcm, "LEAK", &leak);
+        senlcm_leak_t_publish(state->lcm, state->channel_name, &leak);
     }
 }
 
@@ -63,6 +94,11 @@ int main(int argc, char **argv)
         printf("Could not open leak device %s\n", LEAK_DEVICE);
         return 0;
     }
+
+    char vehicle_name[128] = "DEFAULT";
+    parse_args(argc, argv, vehicle_name);
+
+    sprintf(state.channel_name, "%s.LEAK", vehicle_name);
 
     state.lcm = lcm_create(NULL);
     perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &leak_handler, &state);

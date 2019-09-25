@@ -1,7 +1,7 @@
-all: multiplotwindow.py plotdialog.py
+all: multiplotwindowui.py plotdialogui.py
 
-multiplotwindow.py: multiplotwindow.ui
-	pyuic5 multiplotwindow.ui > multiplotwindow.py
+multiplotwindowui.py: multiplotwindow.ui
+	pyuic5 multiplotwindow.ui > multiplotwindowui.py
 
-plotdialog.py: plotdialog.ui
-	pyuic5 plotdialog.ui > plotdialog.py
+plotdialogui.py: plotdialog.ui
+	pyuic5 plotdialog.ui > plotdialogui.py

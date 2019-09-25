@@ -36,6 +36,10 @@
 #endif //GPS3
 #include "perls-lcmtypes/senlcm_rdi_pd5_t.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
+#include "perls-lcmtypes/senlcm_os_power_system_t.h"
+#include "perls-lcmtypes/senlcm_os_power_cont_t.h"
+
+
 
 #include <libplankton/auv_map_projection.hpp>
 #include <libplankton/auv_config_file.hpp>
@@ -98,6 +102,9 @@ public:
 
     // veh state updates
     int64_t last_vehicle_update_t;
+
+    // battery status
+    int32_t avg_charge_p;
 
     // thrust
     double vert;
@@ -167,6 +174,7 @@ veh_sim_state::veh_sim_state()
     surge = 0.0;
     sway = 0.0;
     port = stbd = vert = 0;
+    avg_charge_p = 100;
 /*
 	// vehicle parameters (FIXME: should be read in from a config file)
     M = 250;                   //Kg
@@ -363,7 +371,7 @@ veh_sim_state::update_vehicle_state(double dt)
   double rho = 1000; // kg/m^3
   double depth_A = 2*2*0.3; // very rough - two long cylinders of 2m x 0.3m
   double depth_acc = (1/(M + M33))*(-Buoy - 0.5*rho*depth_Cd*depth_A*depth_rate*
-        fabs(depth_rate) + vert);
+    fabs(depth_rate) + vert);
 
   depth_rate += depth_acc * dt;
   depth += depth_rate * dt;
@@ -433,7 +441,6 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
   parosci.utime = t;
   parosci.raw = depth;
   parosci.depth = depth;
-  
   senlcm_parosci_t_publish(lcm, "SIRIUS.PAROSCI", &parosci);
 
   // publish GPS data if not submerged
@@ -449,7 +456,7 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
       gd.fix.speed = sqrt(x_rate*x_rate + y_rate*y_rate);
       gd.fix.track = atan2(y_rate, x_rate);
       gd.fix.mode = 2;
-      gd. status = 2; 
+      gd.status = 2; 
       gd.satellites_used = 11;
       gd.satellites_visible = 11;
 //      char tag[1];
@@ -462,6 +469,7 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
 
       //FIXME: this seems to make the simulator crash.
       senlcm_gpsd3_t_publish(lcm, "SIRIUS.GPSD_CLIENT", &gd);
+
       free_lcm_gpsd( &gd );
     #else
       senlcm_gpsd_t gd;
@@ -471,8 +479,7 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
       gd.speed = sqrt(x_rate*x_rate + y_rate*y_rate);
       gd.track = atan2(y_rate, x_rate);
       gd.mode = 2;
-      gd. status = 2; 
-
+      gd.status = 2; 
       senlcm_gpsd_t_publish(lcm, "SIRIUS.GPSD_CLIENT", &gd);
     #endif
   }
@@ -486,11 +493,19 @@ veh_sim_state::send_vehicle_sensor_obs(double t)
   rdi.pd4.btv[0] = surge;
   rdi.pd4.btv[1] = sway;
   rdi.pd4.btv[2] = depth_rate;
-  rdi.pd4.altitude = 15-depth; // FIXME
+  rdi.pd4.altitude = 30-depth; // FIXME
   rdi.pd4.speed_of_sound = 0;
   rdi.pd4.btv_status = 0;
 
   senlcm_rdi_pd5_t_publish(lcm, "SIRIUS.RDI", &rdi);
+
+  // publish battery data
+  senlcm_os_power_system_t battery_pack;
+  battery_pack.utime = t;
+  battery_pack.avg_charge_p = avg_charge_p;
+  // need to have number of controllers set or you get a seg fault when publishing sometimes.
+  battery_pack.num_controllers = 0;
+  senlcm_os_power_system_t_publish(lcm, "SIRIUS.BATTERY", &battery_pack);
 
   // publish Thruster data
 

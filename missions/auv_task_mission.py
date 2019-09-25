@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# send a new mission <argv[1]> to veicle <argv[2]>
+# send a new mission <argv[1]> to vehicle <argv[2]>
 
 import lcm
 import sys
@@ -23,5 +23,5 @@ msg.str = missionString
     
 vehicle_name = sys.argv[2];
     
-lc.publish(vehicle_name+'.TASK_PLANNER_COMMAND', msg.encode())
+lc.publish('TASK_PLANNER_COMMAND.'+vehicle_name, msg.encode())
 

@@ -15,15 +15,15 @@ lc = lcm.LCM();
 msg = auv_nga_motor_command_t()
 
 msg.vert_fore = 0
-msg.vert_aft = 1000
+msg.vert_aft = 0
 msg.lat_fore = 0
 msg.lat_aft = 0
-msg.tail_thruster = 0
+msg.tail_thruster = 50
 msg.tail_rudder = 0
-msg.tail_elevator = 0.0
+msg.tail_elevator = 0
 
 
-for i in xrange(50):
+for i in xrange(80):
     msg.utime = int(time.time() * 1000000)
     time.sleep(0.5)
 

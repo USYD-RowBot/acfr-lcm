@@ -3,7 +3,11 @@ package senlcm;
 struct evologics_ping_status_t
 {
     int64_t utime;
-    int8_t target_count;
 
-    evologics_ping_control_t targets[target_count];
+    // attributes of this modem
+    string modem_name;
+    int8_t modem_id;
+
+    int8_t target_count;
+    evologics_ping_target_t targets[target_count];
 }

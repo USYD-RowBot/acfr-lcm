@@ -67,7 +67,7 @@ if (len(sys.argv) > 1):
  	else:
 		print_usage()
         
-	lc.publish("CAMERA_TRIGGER", msg.encode())
+	lc.publish("NGA.CAMERA_TRIGGER", msg.encode())
     
 else :
 	print_usage()

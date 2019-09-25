@@ -227,6 +227,26 @@ int acfr_sensor_read_timeoutms(acfr_sensor_t *s, char *d, int len, int timeout)
         else
             return -1;
     }
+    if(s->io_type == io_serial && !s->canonical && timeout > 0)
+    {
+        fd_set rfds;
+        struct timeval tv;
+        tv.tv_sec = timeout_sec;
+        tv.tv_usec = timeout_usec;
+        FD_ZERO(&rfds);
+        FD_SET(s->fd, &rfds);
+        int ret = select (FD_SETSIZE, &rfds, NULL, NULL, &tv);
+        if(ret > 0)
+	{
+	    int bytes = 0;
+            while(bytes < len)
+               bytes += read(s->fd, &d[bytes], len - bytes);
+            return bytes;
+        
+	}
+	else
+            return 0;
+    }
     else if(s->io_type == io_serial && s->canonical && timeout == -1)
         return read(s->fd, d, len);
     else if((s->io_type == io_tcp || s->io_type == io_udp) && s->canonical)

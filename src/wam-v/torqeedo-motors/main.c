@@ -372,7 +372,7 @@ int main(int argc, char **argv)
             {
                 mask_next_value = false; // no escape characters currently detected
                 // while there are more characters to read
-                while(!end_found && (acfr_sensor_read(state.sensor, &buf[i], 1))) // && (i < MATCH_BYTE_LEN))
+                while(!end_found && (acfr_sensor_read_timeout(state.sensor, &buf[i], 1,1))) // && (i < MATCH_BYTE_LEN))
                 {   
                     //printf("%02X %i\n", (uint8_t)buf[i], i);
                     // match message start

@@ -67,6 +67,11 @@ set (CONFIG_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/share/perls)
 # be nice and add our own include files to the search path
 include_directories (${INCLUDE_OUTPUT_PATH})
 
+include_directories ( 
+  /usr/include/uf-3.2
+  /usr/include/glib-2.0
+  ) 
+
 
 # CUSTOMIZE HOW LIBRARIES ARE BUILT
 #=======================================================================

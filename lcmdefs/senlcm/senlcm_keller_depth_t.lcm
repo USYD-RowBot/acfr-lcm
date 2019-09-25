@@ -1,0 +1,13 @@
+package senlcm;
+
+struct keller_depth_t
+{
+    int64_t utime;
+
+	double pressure;
+	double depth;
+	double temperature;
+}
+
+
+

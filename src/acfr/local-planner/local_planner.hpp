@@ -1,6 +1,10 @@
 #include <lcm/lcm-cpp.hpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
+#include <iostream>
+#include <numeric>
+#include <vector>
 
 #include "DubinsPath.h"
 #include "acfr-common/timestamp.h"
@@ -10,6 +14,9 @@
 #include "perls-lcmtypes++/acfrlcm/auv_path_command_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_global_planner_state_t.hpp"
 #include "perls-lcmtypes++/senlcm/oa_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
+#include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
+
 
 #pragma once
 
@@ -109,7 +116,15 @@ public:
         destReachedLatched = b;
     }
 
+    bool getHoldmode(void) const
+    {
+        return holdMode;
+    }
 
+    bool getAborted(void) const
+    {
+        return aborted;
+    }
     bool getNewDest(void) const
     {
         return newDest;
@@ -168,6 +183,36 @@ public:
 	oa = *o;
     }
 
+    void onFwd(const senlcm::micron_sounder_t *fwd)
+    {    
+        if ((fwd->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.altitude =0.0;
+        }
+        oa.forward_distance = fwd->altitude;
+        //std::cout << "time diff: " << (fwd->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = fwd->utime;
+    }
+
+    void onDwn(const senlcm::micron_sounder_t *dwn)
+    {    
+        if ((dwn->utime - oa.utime)/1e6 > 1.0)
+        {
+            oa.forward_distance =0.0;
+        }
+        oa.altitude = dwn->altitude;
+        //std::cout << "time diff: " << (dwn->utime -oa.utime)/1e6 << ", time: " << oa.utime << ", alt: "<< oa.altitude << ", fd: "<< oa.forward_distance << std::endl;
+        oa.utime = dwn->utime;
+    }
+
+    void onRdi(const senlcm::rdi_pd5_t *Rdi)
+    {    
+        for (int i = 0; i < 4; i++)
+        {
+            rdi[i] = Rdi->pd4.range[i];
+        }
+    }
+
     std::vector<Pose3D> waypoints;
 
     lcm::LCM lcm;
@@ -180,10 +225,10 @@ protected:
     	// Check to see if we are in a special mode, depth or heading only
 	    if((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getYawRad() != p.getYawRad()))
 	    {
-			if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+			//if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
 				return true;
 		}
-		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getZ() != p.getZ()))
+		else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) )//&& (p.getZ() != p.getZ()))
 		{
 			if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
 				return true;
@@ -194,11 +239,11 @@ protected:
 
     	    if ((pRel.getX() < forwardBound) &&
     	        (pRel.getX() > -2 * forwardBound) &&
-    	        (std::fabs(pRel.getY()) < sideBound) &&
-    	        (std::fabs(pRel.getZ()) < depthBound))
+    	        (std::fabs(pRel.getY()) < sideBound)) //&&    	        (std::fabs(pRel.getZ()) < depthBound))
     	    {
     	        return true;
     	    }
+
 		}
         return false;
     }
@@ -232,7 +277,7 @@ protected:
     double destVel;
 
     senlcm::oa_t oa;
-
+    double rdi[4];
     // New destination from GLOBAL
     bool newDest;
     // Global destination
@@ -243,14 +288,6 @@ protected:
 
     int diveMode;
     int diveStage;
-    
-    bool diffSteer;
-    
-    bool holdMode;
-    Pose3D holdPose;
-    
-    bool aborted;
-    Pose3D abortPose;
 
     int destID;
 
@@ -281,6 +318,15 @@ protected:
     double fwd_distance_min;
     int64_t waypointTime;
     int64_t replanTime;
+
+    bool diffSteer;
+
+    bool aborted;
+    Pose3D abortPose;
+    
+    bool holdMode;
+    Pose3D holdPose;
+    Pose3D oldPose;
 
     string vehicle_name = "DEFAULT";
 

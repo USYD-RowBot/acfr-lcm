@@ -226,7 +226,6 @@ void realign(acfr_sensor_t *sensor, state_t *state)
     // but we need to find the start of the packet
     // based on decoding with an oscilloscope
     // the first two bytes of the message is 0xE1 0xA2
-
     fd_set rfds;
     char buf[16];
     uint8_t aligned = 0;
