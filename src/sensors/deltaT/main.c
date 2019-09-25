@@ -60,9 +60,9 @@
 #define DELTAT_TERM_CHAR 0xFC
 
 #ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
+#define DEFAULT_BOT_CONF_PATH "/home/auv/git/acfr-lcm/config/sirius.cfg"
 #else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
+#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/sirius.cfg"
 #endif
 
 // DeltaT configuration variables, these can be changed by the mission controller
@@ -721,7 +721,7 @@ int main(int argc, char *argv[])
     int connected = 0;
 
     // main loop
-    printf("Data Capture: 0");
+    printf("Data Capture: 0\n");
     while(!deltaTExit)
     {
         if(!connected)
