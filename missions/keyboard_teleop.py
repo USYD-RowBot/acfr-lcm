@@ -19,7 +19,6 @@ msg.channels = 6
 global mid_value
 mid_value = 1024
 msg.values = [mid_value]*6
-#msg.values[auv_spektrum_control_command_t.RC_AUX1] = 800
 global max_value 
 max_value = 1624
 global min_value 
@@ -35,22 +34,24 @@ else:
 
 def print_help():
     print textwrap.dedent("""\
-===================================            
-            Controls
+======================================================================
+        Initial Mode is DEAD
+======================================================================
+            Controls:
             W - Forwards
             S - Back/Slow
             A - Turn Left
             D - Turn Right
-            Q - Rudder Mode
-            E - Tunnel Turn Mode
             Z - Strafe Left
             C - Strafe Right
             1 - Auto Mode
             2 - Dead Mode
             3 - Manual Mode
-            h - print Help Menu
-            p - Kill Process then press ctrl + c
-===================================
+            Q - Rudder Mode
+            E - Tunnel Turn Mode
+            H - print Help Menu
+            P - Kill Process then press ctrl + c
+======================================================================
             """)
 
 def getch():
@@ -74,7 +75,7 @@ def listen_to_keyboard():
         char = getch()
 
         if (char == "p"):
-            print("Stop!")
+            print("Now press crtl + c")
             msg.values = [1024]*6
             exit(0)
 
@@ -86,7 +87,6 @@ def listen_to_keyboard():
                 msg.values[auv_spektrum_control_command_t.RC_RUDDER] = min_value
             print "z pressed - strafe left - current val {}".format(msg.values[auv_spektrum_control_command_t.RC_RUDDER] - mid_value)
 
-
         if (char == "c"):
             msg.values[auv_spektrum_control_command_t.RC_RUDDER] = msg.values[auv_spektrum_control_command_t.RC_RUDDER] - 100
             if (msg.values[auv_spektrum_control_command_t.RC_RUDDER] > max_value):
@@ -94,8 +94,6 @@ def listen_to_keyboard():
             elif (msg.values[auv_spektrum_control_command_t.RC_RUDDER] < min_value):
                 msg.values[auv_spektrum_control_command_t.RC_RUDDER] = min_value
             print "c pressed - strafe right - current val {}".format(msg.values[auv_spektrum_control_command_t.RC_RUDDER] - mid_value)
-
-
 
         if (char == "a"):
             msg.values[auv_spektrum_control_command_t.RC_AILERON] = msg.values[auv_spektrum_control_command_t.RC_AILERON] + 100
