@@ -335,7 +335,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         }
         else 
         {
-            prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
+            prop_rpm = prev_rpm - copysign(prop_rpm, (prev_rpm - prop_rpm));
+	    //prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
             prev_rpm = prop_rpm;
         }
         //state machine
