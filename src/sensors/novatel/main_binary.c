@@ -23,7 +23,8 @@
 #define DTOR M_PI/180
 #define LEAP_SECONDS 16
 
-static char *novatel_status[] =
+
+static char const *novatel_status[] =
 {
     "INS Inactive\0",
     "INS Aligning\0",
@@ -33,8 +34,16 @@ static char *novatel_status[] =
     "Reserved\0",
     "Bad INS/GPS Agreement\0",
     "INS Alignment Complete\0",
-    "Undefined"
+    "Determining IMU Orientation wrt Gravity\0",
+    "Waiting Initial Position for Alignment\0",
+    "Waiting for Azimuth Entry\0",
+    "Initialising Biases\0",
+    "Motion Detected (Unaligned)\0",
+    "Undefined\0"
 };
+
+static const uint32_t max_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 2;
+static const uint32_t undefined_status = sizeof(novatel_status) / sizeof(novatel_status[0]) - 1;
 
 static char *bestpos_status[] = 
 {
@@ -117,12 +126,15 @@ int parse_inspvab(state_t *state, char *d, char *channel_name)
     nov.north_velocity = *(double *)&d[36];
     nov.east_velocity = *(double *)&d[44];
     nov.up_velocity = *(double *)&d[52];
-    //int status = *(int *)&d[84];
+    int status = *(uint32_t *)&d[84];
     //printf("Status: %d\n", status);
-    char *ns = malloc(strlen(novatel_status[*(int *)&d[84]]) + 1);
-    memset(ns, 0, strlen(novatel_status[*(int *)&d[84]]) + 1);
-    strncpy(ns, novatel_status[*(int *)&d[84]], strlen(novatel_status[*(int *)&d[84]]));
-    nov.status = ns; //novatel_status[*(int *)&d[84]];
+    if(status < 0 || status > max_status)
+       status = undefined_status;
+    //printf("Status: %d\n", status);
+    char *ns = malloc(strlen(novatel_status[status]) + 1);
+    memset(ns, 0, strlen(novatel_status[status]) + 1);
+    strncpy(ns, novatel_status[status], strlen(novatel_status[status]));
+    nov.status = ns;
     nov.latitude_sd = state->lat_std;
     nov.longitude_sd = state->lon_std;
 
@@ -161,10 +173,11 @@ int parse_bestposb(state_t *state, char *d, char *channel_name)
 		nov.east_velocity = sin(state->gps_tog*DTOR)*state->gps_sog;
 		nov.up_velocity = state->gps_vz;
 		int status = *(int *)&d[0];
-		if(status  > 10)
+		if(status  > 10 || status < 0)
 			status = 10;
 		//printf("Status %d\n", status);
-		char *ns = malloc(strlen(bestpos_status[status]) + 1);
+                char *ns = malloc(strlen(bestpos_status[status]) + 1);
+		
 		memset(ns, 0, strlen(bestpos_status[status]) + 1);
 		strncpy(ns, bestpos_status[status], strlen(bestpos_status[status]));
 		nov.status = ns; 
@@ -223,7 +236,7 @@ parse_args (int argc, char **argv, char **channel_name)
 {
     int opt;
 
-    const char *default_name = "DEFAULT";
+    const char *default_name = "DEFAULT.NOVATEL";
     *channel_name = malloc(strlen(default_name)+1);
     strcpy(*channel_name, default_name);
     
