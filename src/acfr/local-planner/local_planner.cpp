@@ -556,13 +556,13 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
             if (oa.forward_distance < fwd_distance_min)
 	        {
 	            obs_velocity = 0.0;
-                cout << "Too close to obstacle. Setting xy_vel to " << obs_velocity << endl;
+                cout << "Too close to obstacle. Stopping vehicle " << endl;
 	        } 
             else if (oa.forward_distance < fwd_distance_slowdown) 
             {
 		        double speedRampSlope = desired_velocity/(fwd_distance_slowdown - fwd_distance_min);
 		        obs_velocity = speedRampSlope*(oa.forward_distance - fwd_distance_min);
-                cout << "Too close obstacle. Setting xy_vel to " << obs_velocity << endl;
+                cout << "Too close to obstacle. Setting xy_vel to " << obs_velocity << endl;
 	        }
         }
 
@@ -597,6 +597,7 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
             if ( alt_error < -alt_error_max )
 	        {
 		        alt_velocity = max_slowdown_factor * desired_velocity;
+		        cout << "Too close to bottom. Stopping vehicle " << endl;
 	        } 
             else if ( alt_error <  -alt_error_slowdown && alt_error_max - alt_error_slowdown > 0 ) 
             {
@@ -606,6 +607,7 @@ double LocalPlanner::calcVelocity(double desired_velocity, double desired_altitu
                 double speedRampIntercept = 1 - speedRampSlope*alt_error_slowdown;
                 // convert the altitude error to a desired speed as a function of the default speed
 		        alt_velocity = desired_velocity*(speedRampSlope*(fabs(alt_error)) + speedRampIntercept);
+				cout << "Too close to bottom. Setting xy_vel to " << obs_velocity << endl;
 	        }
         } 
     }
