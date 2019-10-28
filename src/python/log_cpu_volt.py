@@ -35,7 +35,7 @@ def heartbeat_handler(channel, data):
     vm.volt_readings = list(current_volt)
     lc.publish("CPU_VOLT", vm.encode())        
         
-lc.subscribe("HEARTBEAT_1HZ", heartbeat_handler)
+lc.subscribe("HEARTBEAT_10HZ", heartbeat_handler)
 
 while (1):
     lc.handle()
