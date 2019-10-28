@@ -17,7 +17,7 @@ sensors.init()
 
 def heartbeat_handler(channel, data):
     hb = heartbeat_t.decode(data)
-    vm = auv_cpu_temp_monitor_t()
+    vm = auv_cpu_voltage_monitor_t()
     current_volt = list()
     name = list()
 
