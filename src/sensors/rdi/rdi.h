@@ -14,9 +14,9 @@ extern "C" {
 
 typedef enum _rdi_pd_mode rdi_pd_mode_t;
 enum _rdi_pd_mode {
-    RDI_PD0_MODE=0, 
-    RDI_PD4_MODE=4, 
-    RDI_PD5_MODE=5, 
+    RDI_PD0_MODE=0,
+    RDI_PD4_MODE=4,
+    RDI_PD5_MODE=5,
     RDI_PD6_MODE=6
 };
 
@@ -208,7 +208,7 @@ struct _rdi_pd5 {
     */
     int16_t pitch;
 
-    /* Contains the ExplorerDVL roll angle (ER - Roll Angle).  This value 
+    /* Contains the ExplorerDVL roll angle (ER - Roll Angle).  This value
        may be a manual setting or a reading from a tilt sensor.  For up-facing
        ExplorerDVLs, positive values mean that Beam #2 is spatially higher than
        Beam #1.  For down-facing ExplorerDVLs, positive values mean that Beam #1
@@ -234,7 +234,7 @@ struct _rdi_pd5 {
 
     /* Contain the distance made good over the water-mass layer since the
        time ofthe first ping after initialization or <BREAK>.
-       
+
        Scaling: LSD = 1 dm; Range = -10,000,000 to 10,000,000 dm
     */
     int32_t dmg_wtv[4]; /* [East, North, Up, Error] */
@@ -251,18 +251,18 @@ struct _rdi_pd5 {
 // the PD0 message is dynamic in size so we need multiple structures for the different parts
 
 // start of the header
-typedef struct 
+typedef struct
 {
-    uint8_t header_id;      
+    uint8_t header_id;
     uint8_t data_id;
-    int16_t nbytes;        
-    uint8_t spare;      
+    int16_t nbytes;
+    uint8_t spare;
     uint8_t num_data_types;
     uint16_t *offsets;
-} __attribute__ ((packed)) rdi_pd0_header_t;      
+} __attribute__ ((packed)) rdi_pd0_header_t;
 
 // PD0 fixed leader
-typedef struct 
+typedef struct
 {
     uint16_t leader_id;
     uint8_t cpu_fw_ver;
@@ -274,7 +274,7 @@ typedef struct
     uint8_t num_cells;
     int16_t pings_per_ens;
     int16_t depth_cell_length;
-    int16_t blank_after_xmit;   
+    int16_t blank_after_xmit;
     uint8_t profiling_mode;
     uint8_t low_corr_threshold;
     uint8_t num_code_reps;
@@ -296,11 +296,12 @@ typedef struct
     int16_t xmit_lag_dist;
     uint8_t cpu_serial[8];
     int16_t sys_bw;
+    uint8_t sys_power;
     uint8_t spare3[6];
 } __attribute__ ((packed)) rdi_pd0_fixed_leader_t;
 
 // PD0 variable leader
-typedef struct 
+typedef struct
 {
     uint16_t leader_id;
     int16_t ens_num;
@@ -331,36 +332,43 @@ typedef struct
     uint16_t spare1;
     uint32_t pressure;
     uint32_t press_var;
-    uint16_t spare2;
-//    uint8_t rtc_2k_cent;
-//    uint8_t rtc_2k_year;
-//    uint8_t rtc_2k_mon;
-//    uint8_t rtc_2k_day;
-//    uint8_t rtc_2k_hour;
-//    uint8_t rtc_2k_min;
-//    uint8_t rtc_2k_sec;
-//    uint8_t rtc_2k_hund;
-} __attribute__ ((packed)) rdi_pd0_variable_leader_t;    
+    uint8_t spare2;
+    uint8_t rtc_2k_cent;
+    uint8_t rtc_2k_year;
+    uint8_t rtc_2k_mon;
+    uint8_t rtc_2k_day;
+    uint8_t rtc_2k_hour;
+    uint8_t rtc_2k_min;
+    uint8_t rtc_2k_sec;
+    uint8_t rtc_2k_hund;
+} __attribute__ ((packed)) rdi_pd0_variable_leader_t;
 
-typedef struct 
+typedef struct
 {
-    int16_t d[4];
-} vel_cell_t;    
-
-typedef struct 
-{
-    uint16_t id;
+    uint16_t leader_id;
     int16_t *vel;
-} __attribute__ ((packed)) rdi_pd0_velocity_t;
+} rdi_pd0_velocity_t;
 
-/*
-typedef struct 
+typedef struct
 {
-    uint16_t id;
-    cell_t *cell;
-} pd0_cep_t;
-*/    
-typedef struct 
+    uint16_t leader_id;
+    uint8_t *correlation;
+} rdi_pd0_correlation_t;
+
+
+typedef struct
+{
+    uint16_t leader_id;
+    uint8_t *count;
+} rdi_pd0_echointensity_t;
+
+typedef struct
+{
+    uint16_t leader_id;
+    uint8_t *percent_good;
+} rdi_pd0_percent_good_t;
+
+typedef struct
 {
     uint16_t bt_id;
     uint16_t pings_per_ens;
@@ -387,7 +395,7 @@ typedef struct
     uint8_t gain;
     uint8_t range_msb[4];
     uint8_t reserved2[4];
-} rdi_pd0_bt_t;    
+} __attribute__ ((packed)) rdi_pd0_bt_t;
 
 
 
@@ -397,8 +405,8 @@ typedef struct
     rdi_pd0_fixed_leader_t fixed;
     rdi_pd0_variable_leader_t variable;
     rdi_pd0_velocity_t velocity;
-} rdi_pd0_t;    
-    
+} rdi_pd0_t;
+
 
 /* Returns 0 pass, -1 error */
 int
@@ -434,7 +442,7 @@ rdi_pd0_to_lcm_pd0 (const rdi_pd0_t *pd0);
 
 /* Computes RDI bathymetry in reference frame w
  * r1 to r4 - slant range as measured along beams 1 thru 4
- * x_ws     - 6x1 vector [x,y,z,r,p,h] of sensor pose w.r.t. frame w, 
+ * x_ws     - 6x1 vector [x,y,z,r,p,h] of sensor pose w.r.t. frame w,
               (set to all or zeros or NULL to report result w.r.t. sensor ref frame)
  */
 senlcm_rdi_bathy_t

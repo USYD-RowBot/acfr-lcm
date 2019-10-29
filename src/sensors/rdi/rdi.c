@@ -53,8 +53,8 @@ rdi_parse_pd4 (const char *buf, int len, rdi_pd4_t *pd4)
 {
     if (0!=rdi_verify_checksum (buf, len) || len!=RDI_PD4_LEN)
     {
-        printf("Vaild on checksum\n");
-        return -1;
+        fprintf(stderr, "PD4 failed on checksum\n");
+        return 0;
     }
 
     memcpy (pd4, buf, sizeof (rdi_pd4_t));
@@ -83,9 +83,12 @@ int
 rdi_parse_pd0(const char *buf, int len, rdi_pd0_t *pd0)
 {
     if (rdi_verify_checksum (buf, len) != 0)
-        return -1;
+    {
+        fprintf(stderr, "PD0 failed checksum.\n");
+        return 0;
+    }
 
-    char *ptr = buf;
+    const char *ptr = buf;
 
 
     // copy the header info
@@ -94,7 +97,10 @@ rdi_parse_pd0(const char *buf, int len, rdi_pd0_t *pd0)
 
     // check the length
     if((pd0->header.nbytes + 2) != len)
+    {
+        fprintf(stderr, "PD0 message invalid length.\n");
         return 0;
+    }
 
 
     // copy offset information
@@ -106,23 +112,63 @@ rdi_parse_pd0(const char *buf, int len, rdi_pd0_t *pd0)
     memcpy(&pd0->fixed, ptr, sizeof(rdi_pd0_fixed_leader_t));
     ptr += sizeof(rdi_pd0_fixed_leader_t);
     if(pd0->fixed.leader_id != 0x0000)
+    {
+        fprintf(stderr, "PD0 message invalid fixed leader id.\n");
         return 0;
+    }
 
 
     // copy the variable leader
     memcpy(&pd0->variable, ptr, sizeof(rdi_pd0_variable_leader_t));
     ptr += sizeof(rdi_pd0_variable_leader_t);
-    if(pd0->variable.leader_id != 0x8000)
-        return 0;
+    if(pd0->variable.leader_id != 0x0080)
+    {
+        fprintf(stderr, "PD0 message invalid variable leader id. (0x%x)\n", pd0->variable.leader_id);
+        //return 0;
+    }
 
+    for (int i=0;i < pd0->header.num_data_types; ++i)
+    {
+        uint16_t leader_id = (uint16_t *)ptr;
+
+        switch (leader_id)
+        {
+            case 0x0080:
+                // variable leader
+                break;
+            case 0x0000:
+                // fixed leader
+                break;
+            case 0x0100:
+                // velocity leader
+                break;
+            case 0x0200:
+                // correlation magnitude leader
+                break;
+            case 0x0300:
+                // echo intensity leader
+                break;
+            case 0x0400:
+                // percent good leader
+                break;
+            case 0x0600
+                // bottom track data
+                break;
+        }
+
+    }
 
     // copy the velocity data
+    // should check we are capturing it...
     memcpy(&pd0->velocity.id, ptr, sizeof(unsigned short));
     ptr += sizeof(unsigned short);
     pd0->velocity.vel = (int16_t *)malloc(pd0->fixed.num_cells * 4 * sizeof(int16_t));
     memcpy(pd0->velocity.vel, ptr, pd0->fixed.num_cells * sizeof(int16_t) * 4);
     if(pd0->velocity.id != 0x0100)
+    {
+        fprintf(stderr, "PD0 message invalid velocity id (0x%x)\n", pd0->velocity.id);
         return 0;
+    }
 
 
     return 1;
