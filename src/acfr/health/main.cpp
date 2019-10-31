@@ -159,6 +159,7 @@ HealthMonitor::HealthMonitor()
 	abort_on_no_imu = false;
 	abort_on_no_dvl = false;
 	abort_on_no_depth = false;
+	abort_on_bf_tail = false;
 	abort_on_no_oas = false;
 
 	compass_timeout = COMPASS_TIMEOUT;
@@ -298,6 +299,11 @@ int HealthMonitor::loadConfig(char *program_name)
 	sprintf(key, "%s.abort_on_no_oas", rootkey);
 	if (0 == bot_param_get_double(param, key, &tmp_double))
 		abort_on_no_oas = tmp_double;
+
+	sprintf(key, "%s.abort_on_bf_tail", rootkey);
+	if (0 == bot_param_get_double(param, key, &tmp_double))
+		abort_on_bf_tail = tmp_double;
+
 	sprintf(key, "%s.oas_timeout", rootkey);
 	if (0 == bot_param_get_double(param, key, &tmp_double))
 		oas_timeout = tmp_double;
@@ -470,7 +476,7 @@ int HealthMonitor::checkAbortConditions()
 		print_bounding_box();
 		sendAbortMessage("BOUNDS exceeded");
 	}
-	if (bf_status.voltage <= 15)
+	if (bf_status.voltage <= 15 && abort_on_bf_tail)
 	{
 		std::cerr << "ABORT: Tail Undervoltage :" << bf_status.voltage << std::endl;
 		sendAbortMessage("Tail Blackout risk");
