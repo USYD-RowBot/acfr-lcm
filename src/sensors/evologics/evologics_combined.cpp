@@ -347,7 +347,7 @@ bool EvologicsModem::load_configuration(char *program_name)
     sprintf(key, "%s.vehicle_name", rootkey);
     vehicle_name = bot_param_get_str_or_fail(param, key);
 
-    lcm.subscribe(vehicle_name + "\\.USBL_FIX\\..*", &EvologicsModem::on_usbl_fix, this);
+    lcm.subscribe(vehicle_name + ".USBL_FIX..*", &EvologicsModem::on_usbl_fix, this);
     lcm.subscribe(vehicle_name + ".EVOLOGICS_PING_CONTROL", &EvologicsModem::on_evo_ping_control, this);
     lcm.subscribe(vehicle_name + ".EVOLOGICS_RAW_MESSAGE", &EvologicsModem::on_evo_raw_message, this);
 
@@ -1094,6 +1094,8 @@ void EvologicsModem::on_lcm_pbm_data(const lcm::ReceiveBuffer* rbuf, const std::
 void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::string &channel)
 {
     int target = get_target_channel(channel);
+    std::cout << "Received USBL FIX message on channel: " << channel << "\n";
+    std::cout << "Checking if needing to send to target " << target << "\n";
 
     int64_t now = timestamp_now();
 
@@ -1105,8 +1107,14 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
         if (pt.target_id == target)
         {
             pt.last_fix_time = now;
-            if (pt.send_pings && pt.send_fixes && pt.last_sent_fix_time < now - pt.minimum_period)
+            int64_t cutoff = now - pt.minimum_period;
+            std::cout << "Found target. Last sent: " << pt.last_sent_fix_time << " cutoff " << now - pt.minimum_period << "\n";
+            std::cout << "Send Pings? " << pt.send_pings;
+            std::cout << ", Send Fixes? " << pt.send_fixes;
+            std::cout << ", Within cutoff? " << (pt.last_sent_fix_time < cutoff) << "\n";
+            if (pt.send_pings && pt.send_fixes && (pt.last_sent_fix_time < cutoff))
             {
+                std::cout << "Sending to target.\n";
                 send_fix = true;
                 pt.last_sent_fix_time = now;
             }
@@ -1116,6 +1124,7 @@ void EvologicsModem::on_usbl_fix(const lcm::ReceiveBuffer* rbuf, const std::stri
 
     if (send_fix)
     {
+        std::cout << "Sending to target (send_fix).\n";
         // use the standard code to send the message
         this->on_lcm_data(rbuf, channel);
     }
