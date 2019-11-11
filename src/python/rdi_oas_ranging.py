@@ -86,12 +86,16 @@ if __name__ == "__main__":
 
     altitude_estimator = AltitudeEstimator()
 
+    last_range = None
+
     def update_dvl_range(channel, data):
         alt = altitude_estimator.compute_and_clear()
+        global last_range
         max_range = alt * 1.25
         binned_max_range = min([args.max_range, max([math.ceil(max_range / 5.0) * 5.0, 10])])
-        publish_range_update(lcmh, binned_max_range)
-        print alt, binned_max_range
+        if not binned_max_range == last_range:
+            publish_range_update(lcmh, binned_max_range)
+            last_range = binned_max_range
 
 
     lcmh.subscribe(args.channel, altitude_estimator.altitude_observations)
