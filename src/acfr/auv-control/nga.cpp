@@ -23,7 +23,7 @@
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
-#define BF_TAIL_RAMP 10
+#define BF_TAIL_RAMP 30
 // RC constants
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
@@ -187,11 +187,11 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
     double dive_goal_threshold = 1.5; //m
-    double tail_goal_threshold = 0.5; //m
+    double tail_goal_threshold = 0.0; //m
     double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
     double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
-    int tail_transition_value = 200;
-    int tunnel_transition_value = 1000;
+    int tail_transition_value = 400;
+    int tunnel_transition_value = 1200;
     int heading_correction_limit = 500;
 
     nav.heading = fmod((nav.heading + M_PI),(2*M_PI));
@@ -215,12 +215,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //determine what state we will be in for this loop
         if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0)
             currentstate = TunnelDive;
-        else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
-            currentstate = TransitionDive;
+       // else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
+       //     currentstate = TransitionDive;
         else if (fabs(diff_heading) > M_PI/6)
             currentstate = TunnelTurn;
         else 
-            currentstate = TailTravel;
+            currentstate = TransitionDive; //TailTravel;
         //do the appropriate pid calculations
         if((currentstate == TransitionDive)||(currentstate == TunnelDive))
         {
@@ -294,7 +294,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
                         std::cout << "DEPTH_MODE" << std::endl; 
                     }
-    
+           
                 if ((nav.vx > -0.05) || (prop_rpm > -100))
                 {
                     plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &msg_pitch);
@@ -441,10 +441,6 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     int fore = 0;
     int aft = 0;
     double rudder, elevator_hc, prop_rpm = 0;
-
-    //Strafe - this is side to side on left stick - always available
-//    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
-//    aft = fore;
         
     // Check the steering mode switch - top switch on right side
     if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
@@ -458,6 +454,12 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
         if (aft > 1500)
             aft = 1500;
         rudder = 0;
+    }
+    //Strafe - this is side to side on left stick - always available
+    else if(sc.values[RC_GEAR] > CENTER_POS_CUTOFF)
+    {
+	    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+	    aft = fore;
     }
     else 
     {
