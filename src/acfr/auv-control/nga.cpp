@@ -187,11 +187,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
     double dive_goal_threshold = 1.5; //m
-    double tail_goal_threshold = 0.0; //m
+    double tail_goal_threshold = 0.5; //m
     double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
     double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
     int tail_transition_value = 400;
     int tunnel_transition_value = 1200;
+    int tunnel_transition_lower_value = 500;
     int heading_correction_limit = 500;
 
     nav.heading = fmod((nav.heading + M_PI),(2*M_PI));
@@ -215,12 +216,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //determine what state we will be in for this loop
         if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0)
             currentstate = TunnelDive;
-       // else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
-       //     currentstate = TransitionDive;
+        else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
+            currentstate = TransitionDive;
         else if (fabs(diff_heading) > M_PI/6)
             currentstate = TunnelTurn;
         else 
-            currentstate = TransitionDive; //TailTravel;
+            currentstate = TailTravel;
         //do the appropriate pid calculations
         if((currentstate == TransitionDive)||(currentstate == TunnelDive))
         {
@@ -370,9 +371,14 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.vert_fore = transition_percentage*mc.vert_fore;
                 if (mc.vert_fore < tunnel_transition_value && mc.vert_fore/transition_percentage > tunnel_transition_value)
                     mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
+		if (mc.vert_fore < tunnel_transition_value)
+			mc.vert_fore = tunnel_transition_lower_value;
                 mc.vert_aft = transition_percentage*mc.vert_aft;
                 if (mc.vert_aft < tunnel_transition_value && mc.vert_aft/transition_percentage > tunnel_transition_value)
                     mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
+		if (mc.vert_aft < tunnel_transition_lower_value);
+			mc.vert_aft = tunnel_transition_lower_value;
+
                 break;
             }
             case TunnelTurn:
