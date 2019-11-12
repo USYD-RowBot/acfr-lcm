@@ -39,8 +39,9 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 		switch (gm->command)
 		{
 		case acfrlcm::auv_global_planner_t::LOAD:
-			if (gp->turningRadius > 0)
-				gp->mis.setTurnRadius(gp->turningRadius);
+			//if (gp->turningRadius < 0)
+			gp->mis.setTurnRadius(gp->turningRadius);
+		    	cout<<"set turn radius "<< gp->turningRadius<<"\n" <<endl;
 			// Check if file exists
 			fs = new fstream(gm->str.c_str(), ios::in);
 			// load a mission file and run said mission
@@ -120,6 +121,8 @@ void onGlobalPlannerCommand(const lcm::ReceiveBuffer* rbuf,
 			}
 			else
 			{
+				gp->mis.setTurnRadius(gp->turningRadius);
+		    		cout<<"set turn radius "<< gp->turningRadius<<"\n" <<endl;
 				cout << "\tLoaded new mission received as a task command" << endl;
 				gp->globalPlannerMessage = globalPlannerRun;
 			}	
