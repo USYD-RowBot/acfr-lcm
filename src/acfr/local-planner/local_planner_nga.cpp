@@ -238,6 +238,7 @@ int LocalPlannerTunnel::processWaypoints()
 				wp.getX(),
 				wp.getY(),
 				wp.getZ() );
+		oldPose = awp; // save destpose for use in dubins next time
 		waypoints.erase(waypoints.begin());
 		resetWaypointTime(timestamp_now());
 		if (!(waypoints.size() == 0))
@@ -254,7 +255,6 @@ int LocalPlannerTunnel::processWaypoints()
 			else if ((pointWithinBound(adp)) && !holdMode)
 			{
 				setDestReached(true);
-				oldPose = destPose; // save destpose for use in dubins next time
 				cout << "We have reached our destination :)" << endl;
 				return getDestReached();
 			}
