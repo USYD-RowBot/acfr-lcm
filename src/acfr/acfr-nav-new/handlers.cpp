@@ -60,7 +60,7 @@ void on_gps(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const gp
 void on_parosci(const lcm::ReceiveBuffer* rbuf, const std::string& channel, const parosci_t *parosci, state_c* state) 
 {
 	// use the parosci depth sensor
-	auv_data_tools::Depth_Data depth;
+	auv_data_tools::Parosci_Data depth;
     depth.depth = parosci->depth;
     state->depth = depth.depth;
     depth.set_raw_timestamp((double)parosci->utime/1e6);
@@ -405,7 +405,7 @@ void on_evologics(const lcm::ReceiveBuffer* rbuf, const std::string& channel, co
     usbl_data.target_x = usbl->target_x;
     usbl_data.target_y = usbl->target_y;
     usbl_data.target_z = usbl->target_z;
-    
+
     if(state->mode == NAV)
        	state->slam->handle_evologicsfix_data(usbl_data);
     else if(state->mode == RAW)

@@ -232,7 +232,7 @@ int LocalPlannerTunnel::processWaypoints()
 	// }
 	// wp = waypoints.at(0);
 	// We have reached the next waypoint
-	if (pointWithinBound(awp))
+	if (pointWithinBound(awp) && !aborted)
 	{
 		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
 				wp.getX(),

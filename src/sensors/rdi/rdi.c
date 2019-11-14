@@ -151,7 +151,7 @@ rdi_parse_pd0(const char *buf, int len, rdi_pd0_t *pd0)
             case 0x0400:
                 // percent good leader
                 break;
-            case 0x0600
+	    case 0x0600:
                 // bottom track data
                 break;
         }
@@ -160,13 +160,13 @@ rdi_parse_pd0(const char *buf, int len, rdi_pd0_t *pd0)
 
     // copy the velocity data
     // should check we are capturing it...
-    memcpy(&pd0->velocity.id, ptr, sizeof(unsigned short));
+    memcpy(&pd0->velocity.leader_id, ptr, sizeof(unsigned short));
     ptr += sizeof(unsigned short);
     pd0->velocity.vel = (int16_t *)malloc(pd0->fixed.num_cells * 4 * sizeof(int16_t));
     memcpy(pd0->velocity.vel, ptr, pd0->fixed.num_cells * sizeof(int16_t) * 4);
-    if(pd0->velocity.id != 0x0100)
+    if(pd0->velocity.leader_id != 0x0100)
     {
-        fprintf(stderr, "PD0 message invalid velocity id (0x%x)\n", pd0->velocity.id);
+        fprintf(stderr, "PD0 message invalid velocity id (0x%x)\n", pd0->velocity.leader_id);
         return 0;
     }
 

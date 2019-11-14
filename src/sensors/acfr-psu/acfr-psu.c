@@ -12,10 +12,12 @@
 #include <signal.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
+#include <math.h>
 #include <bot_param/param_client.h>
 #include "acfr-common/sensor.h"
 #include "perls-lcmtypes/perllcm_heartbeat_t.h"
-#include "perls-lcmtypes/senlcm_acfr_psu_t.h"
+#include "perls-lcmtypes/senlcm_acfr_psu_type_1_t.h"
+#include "perls-lcmtypes/senlcm_acfr_psu_type_2_t.h"
 
 #define MAX_PSUS 8
 
@@ -25,6 +27,7 @@ typedef struct
     acfr_sensor_t *sensor;
     int num_psu;
     int psu_addrs[MAX_PSUS];
+    int psu_type[MAX_PSUS];
     int psu;
     char *channel_name;
 } state_t;
@@ -82,9 +85,21 @@ int chop_string(char *data, char *delim, char **tokens)
     return i;
 }
 
+double l112f(char *d)
+{
+    uint16_t data = strtol(d, NULL, 16);
+    int8_t exponent = data >> 11;
+    // extract mantissa as LS 11 bits
+    int16_t mantissa = data & 0x7ff;
+    // sign extend exponent from 5 to 8 bits
+    if( exponent > 0x0F ) exponent |= 0xE0;
+    // sign extend mantissa from 11 to 16 bits
+    if( mantissa > 0x03FF ) mantissa |= 0xF800;
+    return mantissa * pow(2,exponent);
+}
 void parse_psu_response(state_t *state, char *d, int len)
 {
-	char addr_str[3] = {0};
+    char addr_str[3] = {0};
     char *cmd_char;
     int addr;
     char *tokens[16];
@@ -92,29 +107,71 @@ void parse_psu_response(state_t *state, char *d, int len)
     
     memcpy(addr_str, &d[1], 2);
     addr = atoi(addr_str);
-    if (addr >= 0 && addr <= MAX_PSUS)
+    int psu_type = -1;
+    for(int i = 0; i<MAX_PSUS; i++)
+        if(state->psu_addrs[i] == addr)
+            psu_type = state->psu_type[i];
+    if(psu_type == -1)
+    {
+        fprintf(stderr, "Unknown PSU type for address %d.\nSupplied message: %*s", addr, len, d);
+	return;
+    }
+
+    //if (addr >= 0 && addr <= MAX_PSUS)
+    // Get the index to determine the type
     {
     	cmd_char = &d[3];
     	if(*cmd_char == 'S' || *cmd_char == 's')
     	{
-    		if(chop_string( d, ", ", tokens) == 8)
+            int num_tokens = chop_string( d, ", ", tokens);
+	    if(psu_type == 1)
+    		if(num_tokens == 8)
     		{
-	    		senlcm_acfr_psu_t psu;
-	    		psu.utime = timestamp_now();
-	    		psu.address = addr;
-	    		psu.voltage = atof(tokens[1]);
-	    		psu.current = atof(tokens[2]);
-	    		psu.temperature = atof(tokens[3]);
-			psu.voltage_max = atof(tokens[4]);
-			psu.current_max = atof(tokens[5]);
-			psu.voltage_min = atof(tokens[6]);
-			psu.current_min = atof(tokens[7]);
-			strcpy(pub_channel, state->channel_name);
-			strcat(strcat(pub_channel, "_"), addr_str);
-			if (fabs(psu.voltage_max) >1e-3  && fabs(psu.voltage_min) >1e-3 && fabs(psu.current_max) >1e-3 && fabs(psu.current_min) >1e-3 )
-				senlcm_acfr_psu_t_publish(state->lcm, pub_channel, &psu);
-    		}
-    	}	
+			
+    		    senlcm_acfr_psu_type_1_t psu;
+	    	    psu.utime = timestamp_now();
+	    	    psu.address = addr;
+	    	    psu.voltage = atof(tokens[1]);
+	    	    psu.current = atof(tokens[2]);
+	    	    psu.temperature = atof(tokens[3]);
+	            psu.voltage_max = atof(tokens[4]);
+		    psu.current_max = atof(tokens[5]);
+		    psu.voltage_min = atof(tokens[6]);
+		    psu.current_min = atof(tokens[7]);
+		    strcpy(pub_channel, state->channel_name);
+		    strcat(strcat(pub_channel, "_"), addr_str);
+		    if (fabs(psu.voltage_max) >1e-3  && fabs(psu.voltage_min) >1e-3 && fabs(psu.current_max) >1e-3 && fabs(psu.current_min) >1e-3 )
+				senlcm_acfr_psu_type_1_t_publish(state->lcm, pub_channel, &psu);
+		}
+	    if(psu_type == 2)
+	    {
+    		if(num_tokens == 9)
+		{
+		    senlcm_acfr_psu_type_2_t psu;
+	    	    psu.utime = timestamp_now();
+	    	    psu.address = addr;
+	    	    psu.voltage_in[0] = l112f(tokens[1]);
+	    	    psu.voltage_out[0] = l112f(tokens[2]);
+	    	    psu.current_out[0] = l112f(tokens[3]);
+	    	    psu.temperature[0] = l112f(tokens[4]);
+	    	    psu.voltage_in[1] = l112f(tokens[5]);
+	    	    psu.voltage_out[1] = l112f(tokens[6]);
+	    	    psu.current_out[1] = l112f(tokens[7]);
+	    	    psu.temperature[1] = l112f(tokens[8]);
+		    strcpy(pub_channel, state->channel_name);
+		    strcat(strcat(pub_channel, "_"), addr_str);
+		    senlcm_acfr_psu_type_2_t_publish(state->lcm, pub_channel, &psu);
+		}
+	        else
+		{
+			fprintf(stderr, "Couldn't decode PSU Type 2 message: %*s", len, d);
+		}
+	    }
+    	}
+	else
+	{
+	    fprintf(stderr, "Sentinel value 'S' not found in: %*s", len, d);
+	}
     }	
 }	
     	 
@@ -135,7 +192,9 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 		memset(resp, 0, sizeof(resp));
 		ret = acfr_sensor_read_timeoutms(state->sensor, resp, sizeof(resp), 1000/(state->num_psu));
 		if(ret > 0)
-			parse_psu_response(state, resp, ret);
+		    parse_psu_response(state, resp, ret);
+		else
+		    fprintf(stderr, "No response from %d\n", state->psu_addrs[i]);
 		usleep(10e3);
 	}			    
 }
@@ -203,18 +262,22 @@ int main (int argc, char *argv[])
 
     state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
+    {
         return 0;
+    }
 
-	// Read the PSU addresses we are interested in
-	char key[64];
-	sprintf(key, "%s.addrs", rootkey);
-	state.num_psu = bot_param_get_int_array(state.sensor->param, key, state.psu_addrs, MAX_PSUS);
+    // Read the PSU addresses we are interested in
+    char key[64];
+    sprintf(key, "%s.addrs", rootkey);
+    state.num_psu = bot_param_get_int_array(state.sensor->param, key, state.psu_addrs, MAX_PSUS);
+    sprintf(key, "%s.type", rootkey);
+    state.num_psu = bot_param_get_int_array(state.sensor->param, key, state.psu_type, MAX_PSUS);
 	
     // Set canonical mode
     acfr_sensor_canonical(state.sensor, '\r', '\n');
   
-    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_10HZ", &heartbeat_handler, &state);
-state.psu = 0;
+    perllcm_heartbeat_t_subscribe(state.lcm, "HEARTBEAT_1HZ", &heartbeat_handler, &state);
+    state.psu = 0;
     
     while (!program_exit)
     {
