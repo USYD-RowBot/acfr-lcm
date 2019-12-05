@@ -322,6 +322,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
 	    double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
                     nav.pitch, pitch, dt, &msg_tunnel_trans_pitch);
+        // This controller uses tunnels to match the sea floor slope.
+        //double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
+        //           cmd.pitch, 0.0, dt, &msg_tunnel_trans_pitch);
             this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_TRANS_PITCH", &msg_tunnel_trans_pitch);
 
             double mutual_vert = pid(&this->gains_tunnel_descent,
