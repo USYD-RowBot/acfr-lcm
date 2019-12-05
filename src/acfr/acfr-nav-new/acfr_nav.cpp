@@ -14,6 +14,8 @@ acfr_nav::acfr_nav()
     state->depth = 0;
     state->bottomLock = false;
     state->broken_iver_alt = false;
+    state->oas_transformed_alt = 0;
+    state->sea_floor_est = 0;
 }
 
 acfr_nav::~acfr_nav()
@@ -173,12 +175,13 @@ void publish_nav(const lcm::ReceiveBuffer* rbuf, const std::string& channel, con
 		nav.pitchRate = estimate.x[SB_VEHICLE_THETA_RATE];
 		nav.headingRate = estimate.x[SB_VEHICLE_PSI_RATE];
 		nav.utime = (int64_t)(estimate.timestamp*1e6);
-		double oas_transformed_alt = state->oas_altitude*cos(nav.pitch) - 1.25*sin(nav.pitch);
-		double sea_floor_est = nav.depth + min(state->altitude, oas_transformed_alt);
-         if(((((timestamp_now() - state->oas_utime) < 2e6)) && state->oas_altitude > 0.5))
-		  nav.altitude = min(state->altitude, oas_transformed_alt);
+         if(((((timestamp_now() - state->oas_utime) < 2e6)) && state->oas_altitude > 0.5)){
+            state->oas_transformed_alt = state->oas_altitude*cos(nav.pitch) - 1.25*sin(nav.pitch);
+            state->sea_floor_est = nav.depth + min(state->altitude, state->oas_transformed_alt);
+            nav.altitude = min(state->altitude, state->oas_transformed_alt);
+         }
          else
-		  nav.altitude = min(state->altitude, sea_floor_est - nav.depth);
+		  nav.altitude = state->altitude;
 		nav.fwd_obstacle_dist = state->fwd_obs_dist;
 		
 		

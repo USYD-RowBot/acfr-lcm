@@ -76,6 +76,8 @@ class state_c
         double oas_utime;
         double oas_altitude;
         double fwd_obs_dist;
+        double oas_transformed_alt;
+        double sea_floor_est;
         int lowRateCount;
 
         bool bottomLock;
