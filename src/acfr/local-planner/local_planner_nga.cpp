@@ -339,29 +339,29 @@ int LocalPlannerTunnel::processWaypoints()
 
 	// cc.pitch = -atan((oa.altitude - navAltitude)/1.5);
 
-
+	const double cos30 = 0.866025403784439; // cos(30*DTOR)
 	//setting up simple linear regression to determine pitch angle based on oa and rdi altitude readings
 	vector<double> x;
 	vector<double> z;
 	//if oa data is good then we use it
 	if(((timestamp_now() - oa.utime) < 5e6) && oa.altitude > 1e-4)
 	{
-		x.push_back(1250.0);
-		z.push_back(-oa.altitude);
+		x.push_back(1.250);
+		z.push_back(oa.altitude);
 	}
 	//we should always have the nav altitude, currently the nav alt is only based off the rdi, change this in future is oa alt is piped into nav alt
 	x.push_back(0.0);
-	z.push_back(-navAltitude);
+	z.push_back(navAltitude);
 	//rdi sends out 4 beams at 30 degrees, if the data for a beam is good we find the alt at the beam end and the x distance from veh origin
     for (int i = 0; i < 4; i++)
     {
     	if(rdi[i] > 1e-4)
     	{
-    		z.push_back(-rdi[i]*cos((30/180)*M_PI)); // trig to go from range to alt
+    		z.push_back(rdi[i]*cos30); // trig to go from range to alt
     		if(i == 0 || i == 3)
-    			x.push_back(-rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI)); // trig to go from alt to x dist
+    			x.push_back(-rdi[i]*cos30*0.5); // trig to go from alt to x dist
     		else
-    			x.push_back(rdi[i]*cos((30/180)*M_PI)*sin((30/180)*M_PI)); // or x dist in opp direction
+    			x.push_back(rdi[i]*cos30*0.5);// or x dist in opp direction
     	}
     }
     double n = x.size();
@@ -375,9 +375,13 @@ int LocalPlannerTunnel::processWaypoints()
 	    for(int i=0; i<n; ++i){
 	        numerator += (x[i] - avgX) * (z[i] - avgZ);
 	        denominator += (x[i] - avgX) * (x[i] - avgX);
+	        //cout << "x= " << x[i] << " z= " << z[i] << ", ";
 	    }
 
+	    //cout << "avgX = "<< avgX << " avgZ = " << avgZ << ", ";
+
 	    cc.pitch = atan2(numerator , denominator); // check this direction is correct in real life
+	    //cout << "pitch = "<< cc.pitch << endl;
     }
 
 	// // if we are likely to run aground then re calc the waypoints so we don't
