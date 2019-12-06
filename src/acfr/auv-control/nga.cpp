@@ -263,7 +263,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
                     {
                         //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &msg_altitude);
-                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_altitude);
+                        pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_altitude);
                         this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_ALTITUDE", &msg_altitude);
 
                         std::cout << "ALTITUDE_MODE" << std::endl;         
@@ -326,7 +326,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
         //           cmd.pitch, 0.0, dt, &msg_tunnel_trans_pitch);
             this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_TRANS_PITCH", &msg_tunnel_trans_pitch);
-
+            transitional_diff_vert = 0.0;
             double mutual_vert = pid(&this->gains_tunnel_descent,
                     nav.depth, cmd.depth, dt, &msg_tunnel_descent);
             this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
