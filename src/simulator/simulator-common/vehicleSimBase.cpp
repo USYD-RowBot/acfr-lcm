@@ -355,7 +355,7 @@ void VehicleSimBase::publishDWN_OAS()
         memset(&oas, 0, sizeof(oas));
 
         oas.utime = timeStamp;
-        oas.altitude = nav.altitude + rand_n()*0.003 - rand_n()*0.003;
+        oas.altitude = nav.altitude + rand_n()*0.003;
         lcm.publish(vehicle_name+".MICRON_SOUNDER_DWN", &oas);
     }
 }
@@ -374,10 +374,10 @@ void VehicleSimBase::publishDVL()
         rdi.pd4.utime = timeStamp;
         rdi.pd4.xducer_head_temp = 20;
         const double cos30 = 0.866025403784439; // cos(30*DTOR)
-        rdi.pd4.range[0] = nav.altitude/cos30 + rand_n()*0.003 - rand_n()*0.003;
-        rdi.pd4.range[1] = nav.altitude/cos30 + rand_n()*0.003 - rand_n()*0.003;
-        rdi.pd4.range[2] = nav.altitude/cos30 + rand_n()*0.003 - rand_n()*0.003;
-        rdi.pd4.range[3] = nav.altitude/cos30 + rand_n()*0.003 - rand_n()*0.003;
+        rdi.pd4.range[0] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[1] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[2] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[3] = nav.altitude/cos30 + rand_n()*0.003;
         rdi.pd4.altitude = ((rdi.pd4.range[0]+rdi.pd4.range[1]+rdi.pd4.range[2]+rdi.pd4.range[3])/4)*cos30;
         rdi.pd4.btv[0] = nav.vx + rand_n()*0.003;
         rdi.pd4.btv[1] = nav.vy + rand_n()*0.003;
