@@ -350,12 +350,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.vert_aft = (mutual_vert + differential_vert_corrected);
             }
         }
-        else 
-        {
-            prop_rpm = prev_rpm - copysign(prop_rpm, (prev_rpm - prop_rpm));
-            //prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
-            prev_rpm = prop_rpm;
-        }
+        // else 
+        // {
+        //     prop_rpm = prev_rpm - copysign(prop_rpm, (prev_rpm - prop_rpm));
+        //     //prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
+        //     prev_rpm = prop_rpm;
+        // }
         //state machine
         switch(currentstate)
         {
@@ -393,10 +393,10 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                     mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
                 //	if (mc.vert_aft < tunnel_transition_lower_value);
                 //		mc.vert_aft = tunnel_transition_lower_value;
-                if (fabs(mc.vert_fore) < 50.0)
-                    mc.vert_fore = 0.0;
-                if (fabs(mc.vert_aft) < 50.0)
-                    mc.vert_aft = 0.0;
+                // if (fabs(mc.vert_fore) < 50.0)
+                //     mc.vert_fore = 0.0;
+                // if (fabs(mc.vert_aft) < 50.0)
+                //     mc.vert_aft = 0.0;
                 break;
             }
             case TunnelTurn:
