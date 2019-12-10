@@ -247,6 +247,35 @@ protected:
 		}
         return false;
     }
+
+        bool pointWithinBoundEnd(Pose3D p)
+    {
+        // Check to see if we are in a special mode, depth or heading only
+        if((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getYawRad() != p.getYawRad()))
+        {
+            if(std::fabs(currPose.getZ() - p.getZ()) < depthBound)
+                return true;
+        }
+        else if ((p.getX() != p.getX()) && (p.getY() != p.getY()) && (p.getZ() != p.getZ()))
+        {
+            if(std::fabs(currPose.getYawRad() - p.getYawRad()) < headingBound)
+                return true;
+        }
+        else
+        {
+            Pose3D pRel = getRelativePose(p);
+
+            if ((pRel.getX() < forwardBound) &&
+                (pRel.getX() > -2 * forwardBound) &&
+                (std::fabs(pRel.getY()) < sideBound)&&              (std::fabs(pRel.getZ()) < depthBound))
+            {
+                return true;
+            }
+
+        }
+        return false;
+    }
+
     /*
 	bool pointWithinDepth(Pose3D p)
 	{

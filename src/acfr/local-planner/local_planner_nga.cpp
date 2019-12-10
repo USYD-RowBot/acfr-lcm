@@ -57,11 +57,19 @@ int LocalPlannerTunnel::calculateWaypoints()
 	cout << "DestPose=" << destPose.getX() << ","
 			<< destPose.getY() << "," << destPose.getZ() << " < "
 			<< destPose.getYawRad() / M_PI * 180  << endl;
+	// cout << "oldPose=" << oldPose.getX() << ","
+	// 		<< oldPose.getY() << "," << oldPose.getZ() << " < "
+	// 		<< oldPose.getYawRad() / M_PI * 180  << endl;
 
 	Pose3D destPoseRel = getRelativePose(destPose);
 	double relAngle = atan2( destPoseRel.getY(), destPoseRel.getX() );
 	cout << "Dest rel: X=" << destPoseRel.getX()
 			<< ", angle=" << relAngle/M_PI*180 << endl;
+
+	Pose3D startPoseRel = getRelativePose(oldPose);
+	// double relAngle2 = atan2( startPoseRel.getY(), startPoseRel.getX() );
+	// cout << "old rel: X=" << startPoseRel.getX()
+	// << ", angle=" << relAngle2/M_PI*180 << endl;
 
 	bool success = false;
 	vector<Pose3D> wps;
@@ -78,10 +86,12 @@ int LocalPlannerTunnel::calculateWaypoints()
 
 		// Try to calculate a feasible Dubins path. If we fail we try
 		//  a second time with twice the circle radius
-		Pose3D startPoseRel = getRelativePose(oldPose);
 
 		if (startPoseRel.getX() < 10)
+		{
+			//cout << "full length" << endl;
 			wps = dp.calcPath(oldPose, destPose); //path from start waypoint (if after hold then use last dubins waypoint) to end waypoint
+		}
 		else
 			wps = dp.calcPath(currPose, destPose); // path from current position to end waypoint
 
@@ -218,49 +228,6 @@ int LocalPlannerTunnel::processWaypoints()
 	Pose3D awp = waypoints.at(0);
 
 	Pose3D adp = destPose;
-	
-	// when executing abort, check if we are on the surface
-	if((aborted) && (currPose.getZ() < 1e-4)) 
-		destPose.setPosition(currPose.getX(), currPose.getY(), currPose.getZ());
-
-	// // this is just to do the bounding box check
-	// if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
-	// {
- //        if(depth_ref < 1e-4)
-	// 		awp.setZ(depth_ref);
-	// 	adp.setZ(depth_ref);
-	// }
-	// wp = waypoints.at(0);
-	// We have reached the next waypoint
-	if (pointWithinBound(awp) && !aborted)
-	{
-		printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
-				wp.getX(),
-				wp.getY(),
-				wp.getZ() );
-		oldPose = awp; // save destpose for use in dubins next time
-		waypoints.erase(waypoints.begin());
-		resetWaypointTime(timestamp_now());
-		if (!(waypoints.size() == 0))
-			printWaypoints();
-		// No more waypoints to process
-		else
-		{
-			cout << timestamp_now() << " No more waypoints!" << endl;
-
-			if ((pointWithinBound(adp)) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
-			{
-				cout << "Reached hold location" << endl;
-			}
-			else if ((pointWithinBound(adp)) && !holdMode)
-			{
-				setDestReached(true);
-				cout << "We have reached our destination :)" << endl;
-				return getDestReached();
-			}
-		}
-	}
-
 
 	Pose3D currPose = getCurrPose();
 
@@ -278,6 +245,7 @@ int LocalPlannerTunnel::processWaypoints()
 	// 	desVel = destVel * (distToDest / velChangeDist);
 	// 	cout << desVel << " = " << destVel << " *( " << distToDest << " / " << velChangeDist << ")" << endl;
 	// }
+
 
 	// form a message to send
 	acfrlcm::auv_control_t cc;
@@ -308,8 +276,64 @@ int LocalPlannerTunnel::processWaypoints()
 		// set the depth goal using the filtered desired altitude.
 		//cc.depth = currPose.getZ() + (currAltitude - wp.getZ());
 		curr_depth_ref = currPose.getZ() + (altitude - wp.getZ());
+		awp.setZ(curr_depth_ref);
+		adp.setZ(curr_depth_ref);
         cc.altitude = wp.getZ();
 		cc.depth_mode = acfrlcm::auv_control_t::ALTITUDE_MODE;
+	}
+	
+	// when executing abort, check if we are on the surface
+	if((aborted) && (currPose.getZ() < 1e-4)) 
+		destPose.setPosition(currPose.getX(), currPose.getY(), currPose.getZ());
+
+	// // this is just to do the bounding box check
+	// if (getDepthMode() == acfrlcm::auv_control_t::ALTITUDE_MODE)
+	// {
+ //        if(depth_ref < 1e-4)
+	// 		awp.setZ(depth_ref);
+	// 	adp.setZ(depth_ref);
+	// }
+	// wp = waypoints.at(0);
+	// We have reached the next waypoint
+	if (pointWithinBound(awp) && !aborted)
+	{
+		waypoints.erase(waypoints.begin());
+		if (!(waypoints.size() == 0))
+		{
+			resetWaypointTime(timestamp_now());
+			printf( "[%3.2f, %3.2f, %3.2f] reached.\n",
+			wp.getX(),
+			wp.getY(),
+			wp.getZ() );
+			oldPose = wp; // save destpose for use in dubins next time
+			oldPose.setRollPitchYawRad(0,0,destPose.getYawRad());
+			printWaypoints();
+			// 	cout << "DestPose calc section =" << wp.getX() << ","
+			// << wp.getY() << "," << wp.getZ() << " < "
+			// << wp.getYawRad() / M_PI * 180  << endl;
+			// 			cout << "oldPose calc section =" << oldPose.getX() << ","
+			// << oldPose.getY() << "," << oldPose.getZ() << " < "
+			// << oldPose.getYawRad() / M_PI * 180  << endl;
+		}
+		// No more waypoints to process
+		else
+		{
+			//cout << timestamp_now() << " No more waypoints!" << endl;
+
+			if ((pointWithinBoundEnd(adp)) && (gpState.state == acfrlcm::auv_global_planner_state_t::PAUSE))
+			{
+				cout << "Reached hold location" << endl;
+			}
+			else if ((pointWithinBoundEnd(adp)) && !holdMode)
+			{
+				setDestReached(true);
+				cout << "We have reached our destination :)" << endl;
+				return getDestReached();
+			}
+			//cout <<  " Ran out of waypoints but didn't reach goal! Resending last waypoint" << endl;
+			// 
+			waypoints.push_back(wp);
+		}
 	}
 
 	// check we don't get closer to the bottom than our minimum
@@ -450,6 +474,13 @@ int LocalPlannerTunnel::onPathCommand(const acfrlcm::auv_path_command_t *pc)
 {
 	if (!getDestReached())
 		oldPose = destPose; // we were asked to skip a waypoint so update the oldPose
+
+	// cout << "DestPose PC =" << destPose.getX() << ","
+	// << destPose.getY() << "," << destPose.getZ() << " < "
+	// << destPose.getYawRad() / M_PI * 180  << endl;
+	// cout << "oldPose PC =" << oldPose.getX() << ","
+	// << oldPose.getY() << "," << oldPose.getZ() << " < "
+	// << oldPose.getYawRad() / M_PI * 180  << endl;
 	
 	bool status = false;
 	// Reset destination pose
