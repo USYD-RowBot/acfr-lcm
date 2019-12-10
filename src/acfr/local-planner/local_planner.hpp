@@ -267,7 +267,7 @@ protected:
 
             if ((pRel.getX() < forwardBound) &&
                 (pRel.getX() > -2 * forwardBound) &&
-                (std::fabs(pRel.getY()) < sideBound)&&              (std::fabs(pRel.getZ()) < depthBound))
+                (std::fabs(pRel.getY()) < sideBound)&&              (std::fabs(pRel.getZ()) < depthBound*5))
             {
                 return true;
             }
