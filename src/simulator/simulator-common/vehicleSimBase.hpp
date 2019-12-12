@@ -20,6 +20,10 @@
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
 #include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
 #include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_bluefin_tail_status_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
+
+
 
 using namespace std;
 using namespace boost::numeric::odeint;
@@ -78,7 +82,10 @@ protected:
     void publishGPS();
     void publishDVL();
     void publishBattery();
- 
+    void publishBluefinTail();
+    void publishDWN_OAS();
+
+
     // virtual function for derived classes to decide on channels to be subscribed to 
     //virtual void subscribeLCMChannels();
     virtual void subscribeLCMChannels() = 0;
@@ -114,6 +121,8 @@ private:
     int64_t last_obs_time;
     int64_t last_parosci_time;
     int64_t last_battery_time;
+    int64_t last_bluefin_time;
+    int64_t last_dwn_oas_time;
 
     // earth rotation in the navigation frame
     SMALL::Vector3D earth_rot;

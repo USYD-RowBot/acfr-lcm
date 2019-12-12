@@ -14,12 +14,14 @@
 #include "perls-lcmtypes++/perllcm/heartbeat_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_acfr_nav_t.hpp"
 #include "perls-lcmtypes++/acfrlcm/auv_nga_motor_command_t.hpp"
+#include "perls-lcmtypes++/acfrlcm/auv_bluefin_tail_status_t.hpp"
 #include "perls-common/timestamp.h"
 #include "perls-lcmtypes++/senlcm/tcm_t.hpp"
 #include "perls-lcmtypes++/senlcm/ysi_t.hpp"
 #include "perls-lcmtypes++/senlcm/gpsd3_t.hpp"
 #include "perls-lcmtypes++/senlcm/rdi_pd5_t.hpp"
 #include "perls-lcmtypes++/senlcm/IMU_t.hpp"
+#include "perls-lcmtypes++/senlcm/micron_sounder_t.hpp"
 #include "simulator-common/vehicleSimBase.hpp"
 #include "perls-lcmtypes++/senlcm/os_power_system_t.hpp"
 #include "perls-lcmtypes++/senlcm/os_power_cont_t.hpp"
@@ -66,7 +68,7 @@ void VehicleSimBase::calculate()
     nav.pitchRate = state(PITCHDOTNDX);
     nav.headingRate = state(HDGDOTNDX);
 
-    nav.altitude = WATER_DEPTH - nav.depth;
+    nav.altitude = WATER_DEPTH- nav.depth;//*(1-nav.y/50) - nav.depth;
 
     double latitude_fix, longitude_fix;
     map_projection_sim->calc_geo_coords( nav.x + rand_n()*0.1, nav.y + rand_n()*0.1, latitude_fix, longitude_fix );
@@ -169,7 +171,7 @@ void VehicleSimBase::publishParosci()
         last_parosci_time = timeStamp;
         senlcm::parosci_t parosci;
         parosci.utime = timeStamp;
-        parosci.depth = state(2) + rand_n()*0.1;
+        parosci.depth = state(2) + rand_n()*0.01;
 	parosci.raw = parosci.depth;
 
         lcm.publish(vehicle_name+".PAROSCI", &parosci);
@@ -188,7 +190,7 @@ void VehicleSimBase::publishYSI()
         ysi.utime = timeStamp;
         ysi.salinity = 35; // ppt
         ysi.temperature = 20;
-        ysi.depth = state(2) + rand_n()*0.1;
+        ysi.depth = state(2) + rand_n()*0.01;
         ysi.turbidity = 0;
         ysi.chlorophyl = 0;
         ysi.conductivity = 0;
@@ -295,6 +297,7 @@ void VehicleSimBase::publishBattery()
 
         // publish battery data
         senlcm::os_power_system_t battery_pack;
+        memset(&battery_pack, 0, sizeof(battery_pack));
         battery_pack.utime = timestamp_now();
         battery_pack.avg_charge_p = 100;
         // need to have number of controllers set or you get a seg fault when publishing sometimes.
@@ -304,6 +307,58 @@ void VehicleSimBase::publishBattery()
 
 }
 
+void VehicleSimBase::publishBluefinTail()
+{
+    int64_t timeStamp = timestamp_now();
+    // Tail telemetry for decktest
+    if (timeStamp - last_bluefin_time > 0.3*1e6) // once every 0.3 seconds
+    {
+        last_bluefin_time = timeStamp;
+
+        // publish bluefin tail data
+        acfrlcm::auv_bluefin_tail_status_t BFstatus;
+        memset(&BFstatus, 0, sizeof(BFstatus));
+        BFstatus.utime = timestamp_now();
+        BFstatus.tail_utime = timestamp_now();
+
+        BFstatus.voltage = 30;
+        BFstatus.current = 5; 
+        BFstatus.psu_temp = 30;
+
+        BFstatus.tail_temp = 30;
+        BFstatus.comp1 = 1;
+        BFstatus.comp2 = 1;
+        BFstatus.leak = 1;
+
+        BFstatus.current_rpm = 0;
+        BFstatus.target_rpm = 0;
+
+        BFstatus.current_rudder = 0;
+        BFstatus.target_rudder = 0;
+
+        BFstatus.current_elevator = 0;
+        BFstatus.target_elevator = 0;
+
+        lcm.publish(vehicle_name+".BLUEFIN_STATUS", &BFstatus);
+    }
+
+}
+
+void VehicleSimBase::publishDWN_OAS()
+{
+    int64_t timeStamp = timestamp_now();
+
+   if (timeStamp - last_dwn_oas_time > 0.3*1e6) // once every 0.3 seconds
+    {
+        last_dwn_oas_time = timeStamp;
+        senlcm::micron_sounder_t oas;
+        memset(&oas, 0, sizeof(oas));
+
+        oas.utime = timeStamp;
+        oas.altitude = nav.altitude + rand_n()*0.003;
+        lcm.publish(vehicle_name+".MICRON_SOUNDER_DWN", &oas);
+    }
+}
 
 void VehicleSimBase::publishDVL()
 {
@@ -313,14 +368,17 @@ void VehicleSimBase::publishDVL()
     {
         last_dvl_time = timeStamp;
         senlcm::rdi_pd5_t rdi;
+        memset(&rdi, 0, sizeof(rdi));
 
         rdi.utime = timeStamp;
+        rdi.pd4.utime = timeStamp;
         rdi.pd4.xducer_head_temp = 20;
-        rdi.pd4.altitude = nav.altitude;
-        rdi.pd4.range[0] = nav.altitude;
-        rdi.pd4.range[1] = nav.altitude;
-        rdi.pd4.range[2] = nav.altitude;
-        rdi.pd4.range[3] = nav.altitude;
+        const double cos30 = 0.866025403784439; // cos(30*DTOR)
+        rdi.pd4.range[0] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[1] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[2] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.range[3] = nav.altitude/cos30 + rand_n()*0.003;
+        rdi.pd4.altitude = ((rdi.pd4.range[0]+rdi.pd4.range[1]+rdi.pd4.range[2]+rdi.pd4.range[3])/4)*cos30;
         rdi.pd4.btv[0] = nav.vx + rand_n()*0.003;
         rdi.pd4.btv[1] = nav.vy + rand_n()*0.003;
         rdi.pd4.btv[2] = nav.vz + rand_n()*0.003;

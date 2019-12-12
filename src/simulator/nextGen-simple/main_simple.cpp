@@ -185,14 +185,14 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
     //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
     if(prop_force !=  prop_force)
     {
-        cerr << "Prop force error" << endl;
+        cout << "Prop force error. Prop force = "<< prop_force << endl;
         prop_force = 0;
     }
     //if(fabs(prop_force) > 10.0)
     //    prop_force = prop_force / fabs(prop_force) * 10;
     
     double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator); //assuming rudder straight is 0 and max range is +-pi/2 the negative sign in cos won't matter
-    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator); //CR why is elevator a component of tail y?
+    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator); 
     double tail_z = prop_force * sin(in.tail_elevator);
 
 
@@ -340,6 +340,8 @@ void NGAVehicleSim::publishSensorData()
     publishGPS();
     publishDVL();
     publishBattery();
+    publishBluefinTail();
+    publishDWN_OAS();
 }
 
 void NGAVehicleSim::subscribeLCMChannels()
