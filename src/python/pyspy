@@ -187,13 +187,13 @@ class Interface(object):
 
         # we have two column separators
         if self.width > 80:
-            self.col_widths = [29, 29, self.width - 60]
-            self.col_starts = [0, 30, 60]
+            self.col_widths = [29, 29, self.width - 58]
+            self.col_starts = [0, 29, 58]
         else:
             # integer rounding, leave an extra column for divider
-            fixed_width = self.width / 3 - 1
+            fixed_width = self.width / 3
             self.col_widths = [fixed_width, fixed_width, self.width - 2 * fixed_width]
-            self.col_starts = [0, fixed_width + 1, 2 * fixed_width + 2]
+            self.col_starts = [0, fixed_width, 2 * fixed_width]
 
     def __call__(self, screen):
         self.screen = screen
@@ -233,15 +233,45 @@ class Interface(object):
                         index = 0
                     self.selected_channel = sorted_channels[index]
 
+            elif key == curses.KEY_RESIZE:
+                self.resize()
+
             elif key == ord('q') or key == ord('Q'):
                 self.quitting = True
+
+    def calculate_top_row_index(self, elements, visible, selected_element):
+        midpoint = visible / 2 + 1
+
+        if selected_element is None:
+            return 0
+
+        return max(0, min(selected_element - midpoint, elements - visible))
 
     def render(self):
         spy = self.spyinstance
 
+        if len(spy.channels) > self.height:
+            # we have too many channels
+            # must slide view to show them based on current selected channel
+            if self.selected_channel is None:
+                start_index = 0
+
+        try:
+            idx = sorted(spy.channels.iterkeys()).index(self.selected_channel)
+        except ValueError:
+            idx = None
+
+        starting_index = self.calculate_top_row_index(len(spy.channels), self.height, idx)
+
         for i, name in enumerate(sorted(spy.channels.iterkeys())):
+            if i < starting_index:
+                continue
+
+            if i - starting_index >= self.height:
+                break
+
             if name == self.selected_channel:
-                self.screen.addstr(i, self.col_starts[0], field(name, self.col_widths[0]), curses.A_BOLD)
+                self.screen.addstr(i - starting_index, self.col_starts[0], field(name, self.col_widths[0], True), curses.A_BOLD)
 
                 print_row = 0
 
@@ -253,7 +283,7 @@ class Interface(object):
 
                 attrs = spy.channels[name].list_attributes(spy.lcm_type_set)
                 for attr, value in attrs:
-                    self.screen.addstr(print_row, self.col_starts[1], field(attr, self.col_widths[1]))
+                    self.screen.addstr(print_row, self.col_starts[1], field(attr, self.col_widths[1], True))
                     try:
                         self.screen.addstr(print_row, self.col_starts[2], field(value, self.col_widths[2]))
                     except curses.error as e:
@@ -266,29 +296,31 @@ class Interface(object):
                         break
 
                 for j in xrange(print_row, self.last_attr_count):
-                    self.screen.addstr(j, self.col_starts[1], field("", self.col_widths[1]))
+                    self.screen.addstr(j, self.col_starts[1], field("", self.col_widths[1], True))
                     self.screen.addstr(j, self.col_starts[2], field("", self.col_widths[2]))
 
                 self.last_attr_count = print_row
 
             else:
-                self.screen.addstr(i, self.col_starts[0], field(name, self.col_widths[0]))
+                self.screen.addstr(i - starting_index, self.col_starts[0], field(name, self.col_widths[0], True))
 
-        height = 30
-        width = 80
         for i, row in enumerate(self.log[-10:-1]):
-            self.screen.addstr(height-10+i, 0, field(name, width))
+            self.screen.addstr(self.height-10+i, 0, field(name, self.width))
 
     
 
-def field(string, width):
+def field(string, width, clear_final=False):
     printable = ""
     for c in string:
         try:
             printable += curses.ascii.unctrl(str(c))
         except UnicodeEncodeError:
             printable += c
-    return printable.ljust(width)[:width]
+
+    if clear_final:
+        return printable.ljust(width)[:width-1] + " "
+    else:
+        return printable.ljust(width)[:width]
 
 if __name__ == '__main__':
     sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
