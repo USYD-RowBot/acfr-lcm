@@ -629,7 +629,6 @@ bool EvologicsModem::send_query(const char *d)
                 expected_lines = 8;
                 break;
         }
-
     }
 
     // now we wait for the response
@@ -670,9 +669,19 @@ bool EvologicsModem::send_command(const char *d)
     // the challenge is that this can vary depending on the command
     std::unique_lock<std::mutex> ul(this->queue_response_mutex);
 
-    while (this->queued_responses.size() == 0)
+
+    // we should wait... but it shouldn't go forever
+    // this can get stuck if the modem isn't responding
+    int loop_count = 0;
+    while (this->queued_responses.size() == 0 || loop_count > 10)
     {
-        this->response_added.wait(ul);
+        this->response_added.wait_for(ul, std::chrono::milliseconds(100));
+        loop_count++;
+    }
+
+    if (loop_count > 10)
+    {
+        return false;
     }
 
     auto message = this->queued_responses.front();
