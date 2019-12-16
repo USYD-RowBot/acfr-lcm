@@ -1,0 +1,9 @@
+package acfrlcm;
+
+struct auv_cpu_voltage_monitor_t
+{
+    int64_t utime;
+    int8_t num_readings;
+    string names[num_readings];
+    double volt_readings[num_readings];
+}

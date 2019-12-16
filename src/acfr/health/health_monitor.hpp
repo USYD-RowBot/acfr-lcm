@@ -90,6 +90,7 @@ private:
     bool abort_on_no_dvl;
     bool abort_on_no_depth;
     bool abort_on_no_oas;
+    bool abort_on_bf_tail;
 
     int64_t compass_timeout;
     int64_t gps_timeout;

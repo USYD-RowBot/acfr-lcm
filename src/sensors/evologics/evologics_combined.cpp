@@ -1814,6 +1814,13 @@ void EvologicsModem::run()
     {
         std::cerr << "Failed to connect to modem. Trying again after 1s." << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        // if the modem doesn't exist make it easier to kill it
+        // read/lcm threads not created at this point
+        if (loop_exit)
+        {
+            return;
+        }
     }
 
     std::cout << "Modem connected." << std::endl;
@@ -1822,14 +1829,25 @@ void EvologicsModem::run()
     // it will queue to a list of responses that we need
     // both generally and whilst configuring
     std::thread read_thread(&EvologicsModem::modem_read_thread, this);
-    std::thread handle_thread(&EvologicsModem::lcm_handle_thread, this);
 
     // and configured!
     while (!this->configure_modem())
     {
-        std::cerr << "Failed to configure modem. Trying again." << std::endl;
+        std::cerr << "Failed to configure modem. Trying again after 1s." << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        if (loop_exit)
+        {
+            this->close_threads = true;
+            read_thread.join();
+            return;
+        }
     }
     std::cout << "Modem configured." << std::endl;
+
+
+    // don't listen to lcm messages before we are configured.
+    std::thread handle_thread(&EvologicsModem::lcm_handle_thread, this);
 
     std::vector<uint8_t> message;
     int message_type;

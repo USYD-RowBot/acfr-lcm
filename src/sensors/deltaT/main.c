@@ -60,9 +60,9 @@
 #define DELTAT_TERM_CHAR 0xFC
 
 #ifndef BOT_CONF_DIR
-#define DEFAULT_BOT_CONF_PATH "../config/master.cfg"
+#define DEFAULT_BOT_CONF_PATH "../config/sirius.cfg"
 #else
-#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/master.cfg"
+#define DEFAULT_BOT_CONF_PATH BOT_CONF_DIR "/sirius.cfg"
 #endif
 
 // DeltaT configuration variables, these can be changed by the mission controller
@@ -576,6 +576,41 @@ lcmThread (void *context)
     return 0;
 }
 
+void print_help (int exval, char **argv)
+{
+    printf("Usage:%s [-h] [-n VEHICLE_NAME]\n\n", argv[0]);
+
+    printf("  -h                               print this help and exit\n");
+    printf("  -n VEHICLE_NAME                  set the vehicle_name\n");
+    exit (exval);
+}
+
+void parse_args (int argc, char **argv, char **channel_name, char **channel_name2)
+{
+    int opt;
+
+    const char *default_name = "DEFAULT";
+    *channel_name = malloc(strlen(default_name)+1);
+    strcpy(*channel_name, default_name);
+
+    while ((opt = getopt (argc, argv, "hn:")) != -1)
+    {
+        switch(opt)
+        {
+            case 'h':
+                print_help (0, argv);
+                break;
+            case 'n':
+                free(*channel_name);
+                *channel_name = malloc(200);
+                snprintf(*channel_name, 200, "%s.DELTAT", (char *)optarg);
+		*channel_name2 = malloc(200);
+		snprintf(*channel_name2, 200, "%s.DELTAT_PING", (char *)optarg);
+                break;
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -585,20 +620,31 @@ int main(int argc, char *argv[])
 
     double roll, pitch, heading;
 
+    char *channel_name;
+    char *channel_name2;
+    parse_args(argc, argv, &channel_name, &channel_name2);
+    // now we have a connection to the sonar we can start LCM so we can listen for messages
+    // about the config settings
+    printf("Initialising LCM: ");
+    lcm_t *lcm = lcm_create (NULL);
+    printf("OK\n");
+
     // read the config file
     BotParam *cfg;
     char rootkey[64];
     char key[64];
 
-    char *path = getenv ("BOT_CONF_PATH");
-    if (!path)
-        path = DEFAULT_BOT_CONF_PATH;
-    cfg = bot_param_new_from_file(path);
-    if(cfg == NULL)
-    {
-        printf("cound not open config file\n");
-        return 0;
-    }
+    cfg = bot_param_new_from_server (lcm, 1);
+
+    //char *path = getenv ("BOT_CONF_PATH");
+    //if (!path)
+    //    path = DEFAULT_BOT_CONF_PATH;
+    //cfg = bot_param_new_from_file(path);
+    //if(cfg == NULL)
+   // {
+    //    printf("cound not open config file\n");
+    //    return 0;
+   // }
 
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
 
@@ -656,12 +702,6 @@ int main(int argc, char *argv[])
     pthread_t socketthread;
     socketInfo.portStr = "4040";
     pthread_create(&socketthread, NULL, socket_handler, &socketInfo);
-
-    // now we have a connection to the sonar we can start LCM so we can listen for messages
-    // about the config settings
-    printf("Initialising LCM: ");
-    lcm_t *lcm = lcm_create (NULL);
-    printf("OK\n");
 
     // listen for config changes
     printf("Subscribing to deltaTConfiguration: ");
@@ -721,7 +761,7 @@ int main(int argc, char *argv[])
     int connected = 0;
 
     // main loop
-    printf("Data Capture: 0");
+    printf("Data Capture: 0\n");
     while(!deltaTExit)
     {
         if(!connected)
@@ -885,9 +925,9 @@ int main(int argc, char *argv[])
                 packetNumber = 0;
 
                 // report that we have written a packet
-                senlcm_deltat_t_publish(lcm, "DELTA_T", &deltaTStats);
+                senlcm_deltat_t_publish(lcm, channel_name, &deltaTStats);
                 // report the packet itself
-                senlcm_deltat_ping_t_publish(lcm, "DELTA_T_PING", &ping);
+                senlcm_deltat_ping_t_publish(lcm, channel_name2, &ping);
             }
 
             // send it out to the listening deltat windows computer if it is connected

@@ -13,16 +13,8 @@
 #include "perls-lcmtypes/senlcm_rdi_pd0_t.h"
 #include "perls-lcmtypes/senlcm_rdi_control_t.h"
 #include "perls-lcmtypes/senlcm_raw_ascii_t.h"
+#include "perls-lcmtypes/senlcm_raw_t.h"
 #include "perls-lcmtypes/acfrlcm_auv_relay_t.h"
-
-/*
-#include "perls-common/units.h"
-#include "perls-common/error.h"
-#include "perls-common/timestamp.h"
-#include "perls-common/getopt.h"
-#include "perls-common/lcm_util.h"
-#include "perls-common/generic_sensor_driver.h"
-*/
 
 #include "acfr-common/units.h"
 #include "acfr-common/error.h"
@@ -46,13 +38,13 @@ typedef struct
     int pd0_count_max;
     pthread_mutex_t count_lock;
     int mode;
-    //generic_sensor_driver_t *gsd;
     lcm_t *lcm;
     acfr_sensor_t *sensor;
     int programming;
     double range;
     char PD5_channel[128];
     char PD0_channel[128];
+    char RAW_channel[128];
 } state_t;
 
 rdi_pd_mode_t rdi_pd_mode = RDI_PD5_MODE;
@@ -82,9 +74,12 @@ int rdi_send_command(acfr_sensor_t *sensor, char *cmd, int er)
         {
             acfr_sensor_read(sensor, &buf, 1);
             if(++count == 50)
+            {
                 return 0;
+            }
         }
         while(buf != '>');
+
     }
     return 1;
 }
@@ -120,13 +115,12 @@ program_dvl(state_t * state) //const char *config)
     do
     {
         acfr_sensor_read(state->sensor, buf, 1);
-        printf("%c", buf[0]);
 
     }
     while(buf[0] != '>');
 
     // Convert the max depth in meters to the command in decimeters
-    char max_depth_cmd[8];
+    char max_depth_cmd[15];
     char low_gain_switch_altitude[8];
     sprintf( max_depth_cmd, "BX%05d\r", (int)state->range*10 );
     sprintf( low_gain_switch_altitude, "BI%03d\r", (int)1 ); // metres, 0 to 999, default 3
@@ -161,6 +155,8 @@ program_dvl(state_t * state) //const char *config)
         printf("Programming PD0 mode\n");
         rdi_send_command(state->sensor, "WD 100 000 000\r", EXPECT_RESPONSE);
         rdi_send_command(state->sensor, "CF01110\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "WS0020\r", EXPECT_RESPONSE);
+        rdi_send_command(state->sensor, "WN025\r", EXPECT_RESPONSE);
     }
     fflush(NULL);
 }
@@ -203,6 +199,13 @@ int get_rdi_and_send(state_t *state, timestamp_sync_state_t *tss)
     while(len < (data_len + 2))
         len += acfr_sensor_read(state->sensor, &buf[len], data_len + 2 - len);
 
+    senlcm_raw_t raw_msg;
+
+    raw_msg.utime = timestamp;
+    raw_msg.length = len;
+    raw_msg.data = (uint8_t *)buf;
+
+    senlcm_raw_t_publish(state->lcm, state->RAW_channel, &raw_msg);
 
     if(buf[0] == RDI_PD0_HEADER)
     {
@@ -217,9 +220,10 @@ int get_rdi_and_send(state_t *state, timestamp_sync_state_t *tss)
             //gsd_update_stats (gsd, true);
             free_rdi_pd0(&pd0);
         }
-        //else
-            //gsd_update_stats (gsd, false);
-
+        else
+        {
+            fprintf(stderr, "Failed to parse PD0 message.\n");
+        }
     }
     else if(buf[0] == RDI_PD45_HEADER)
     {
@@ -235,11 +239,9 @@ int get_rdi_and_send(state_t *state, timestamp_sync_state_t *tss)
                 lcm_pd4.utime = rdi_timestamp_sync (tss, pd4.tofp_hour, pd4.tofp_minute, pd4.tofp_second,
                                                     pd4.tofp_hundredth, timestamp);
                 senlcm_rdi_pd4_t_publish (state->lcm, state->PD5_channel, &lcm_pd4);
-                //gsd_update_stats (gsd, true);
             }
             else
             {
-                //gsd_update_stats (gsd, false);
                 printf("parse error, PD4\n");
             }
             break;
@@ -253,21 +255,22 @@ int get_rdi_and_send(state_t *state, timestamp_sync_state_t *tss)
                 lcm_pd5.utime = lcm_pd5.pd4.utime = timestamp; //rdi_timestamp_sync (tss, pd5.tofp_hour, pd5.tofp_minute,
                 //       pd5.tofp_second, pd5.tofp_hundredth, timestamp);
                 senlcm_rdi_pd5_t_publish (state->lcm, state->PD5_channel, &lcm_pd5);
-                //gsd_update_stats (gsd, true);
             }
             else
             {
-                //gsd_update_stats (gsd, false);
                 printf("parse error, PD5\n");
             }
 
             break;
         }
         default:
-            ERROR ("unsupported PD mode by driver");
+            printf("unsupported PD mode by driver");
             //gsd_update_stats (gsd, -1);
         } // switch
+    } else {
+        printf("Unknown header.\n");
     }
+
 
     return 1;
 }
@@ -381,7 +384,7 @@ parse_args (int argc, char **argv, char **vehicle_name)
     const char *default_name = "DEFAULT";
     *vehicle_name = malloc(strlen(default_name)+1);
     strcpy(*vehicle_name, default_name);
-    
+
     int n;
     while ((opt = getopt (argc, argv, "hn:")) != -1)
     {
@@ -420,20 +423,21 @@ main (int argc, char *argv[])
     state_t state;
     //state.gsd = gsd_create (argc, argv, NULL, &myopts);
     //gsd_launch (state.gsd);
-    
+
     char *vehicle_name;
     parse_args(argc, argv, &vehicle_name);
     snprintf(state.PD5_channel, 128, "%s.RDI", vehicle_name);
     snprintf(state.PD0_channel, 128, "%s.RDI_PD0", vehicle_name);
-    
-    
+    snprintf(state.RAW_channel, 128, "%s.RDI.RAW", vehicle_name);
+
+
     state.lcm = lcm_create(NULL);
     char rootkey[64];
     sprintf(rootkey, "sensors.%s", basename(argv[0]));
     state.sensor = acfr_sensor_create(state.lcm, rootkey);
     if(state.sensor == NULL)
         return 0;
-    
+
     pthread_mutex_init(&state.count_lock, NULL);
     int pd5_count = 0, pd0_count = 0;
 

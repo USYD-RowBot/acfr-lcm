@@ -1,0 +1,15 @@
+package senlcm;
+
+struct acfr_psu_type_2_t
+{
+    int64_t utime;
+
+	int8_t address;
+	double voltage_in[2];
+	double voltage_out[2];
+	double current_out[2];
+	double temperature[2];
+}
+
+
+

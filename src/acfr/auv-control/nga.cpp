@@ -23,7 +23,7 @@
 //#define W_BEARING 0.95 //amount to weight the velocity bearing (slip angle) in the heading controller, to account for water currents
 //#define W_HEADING 0.05 //amount to weight the heading in the heading controller
 
-#define BF_TAIL_RAMP 10
+#define BF_TAIL_RAMP 30
 // RC constants
 #define RC_OFFSET 1024
 #define RC_THROTTLE_OFFSET 1024     // Testing 16092016 JJM
@@ -176,10 +176,11 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     acfrlcm::auv_ext_pid_t msg_tunnel_descent;
     acfrlcm::auv_ext_pid_t msg_tunnel_pitch;
     acfrlcm::auv_ext_pid_t msg_tunnel_heading;
+    acfrlcm::auv_ext_pid_t msg_tunnel_trans_pitch;
     // acfrlcm::auv_control_ext_pid_t cp;
     // memset(&cp, 0, sizeof(cp));
     memset(&mc, 0, sizeof(mc));
-    msg_velocity.utime = msg_roll.utime = msg_depth.utime = msg_altitude.utime = msg_pitch.utime = msg_pitch_r.utime = msg_heading.utime = msg_tunnel_depth.utime = msg_tunnel_descent.utime = msg_tunnel_pitch.utime = msg_tunnel_heading.utime = mc.utime = timestamp_now();
+    msg_velocity.utime = msg_roll.utime = msg_depth.utime = msg_altitude.utime = msg_pitch.utime = msg_pitch_r.utime = msg_heading.utime = msg_tunnel_depth.utime = msg_tunnel_trans_pitch.utime = msg_tunnel_descent.utime = msg_tunnel_pitch.utime = msg_tunnel_heading.utime = mc.utime = timestamp_now();
 
     bool thruster_flow_dependant = false, elevator_disabled = false;
     double prop_rpm = BF_TAIL_RAMP;
@@ -187,11 +188,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
     double dive_goal_threshold = 1.5; //m
-    double tail_goal_threshold = 0.5; //m
+    double tail_goal_threshold = 0.0; //m
     double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
     double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
-    int tail_transition_value = 200;
-    int tunnel_transition_value = 1000;
+    int tail_transition_value = 400;
+    int tunnel_transition_value = 1200;
+    //int tunnel_transition_lower_value = 500;
     int heading_correction_limit = 500;
 
     nav.heading = fmod((nav.heading + M_PI),(2*M_PI));
@@ -215,36 +217,15 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
         //determine what state we will be in for this loop
         if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0)
             currentstate = TunnelDive;
-        else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
-            currentstate = TransitionDive;
+            //  else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
+            //      currentstate = TransitionDive;
         else if (fabs(diff_heading) > M_PI/6)
             currentstate = TunnelTurn;
         else 
-            currentstate = TailTravel;
-        //do the appropriate pid calculations
-        if((currentstate == TransitionDive)||(currentstate == TunnelDive))
+            currentstate =TransitionDive; //TailTravel;
+            //do the appropriate pid calculations
+        if((currentstate == TunnelTurn)||(currentstate == TunnelDive))
         {
-            double differential_vert = pid(&this->gains_tunnel_pitch,
-                    nav.pitch, target_pitch, dt, &msg_tunnel_pitch);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
-
-            double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
-                    nav.pitch, cmd.pitch, dt, &msg_tunnel_pitch);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
-
-            double mutual_vert = pid(&this->gains_tunnel_descent,
-                    nav.depth, cmd.depth, dt, &msg_tunnel_descent);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
-
-            // testing variable pitch rpm based of mutual value saturation
-            double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
-            differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
-
-            // Set motor controller values
-            mc.vert_fore = (mutual_vert - differential_vert_corrected);  
-            mc.vert_aft = (mutual_vert + differential_vert_corrected);
-        }
-        if((currentstate == TunnelTurn)||(currentstate == TunnelDive)){
             double differential_lat = pid(&this->gains_tunnel_heading, diff_heading, 0, dt, &msg_tunnel_heading);
             this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_HEADING", &msg_tunnel_heading);
 
@@ -259,7 +240,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
             if((fabs(prop_rpm - prev_rpm) < BF_TAIL_RAMP))
                 prev_rpm = prop_rpm;
-            else{
+            else
+            {
                 prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
                 prev_rpm = prop_rpm;
             }
@@ -269,11 +251,13 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // checks for impossible rudder motions
             if((fabs(rudder_angle - prev_rudder_angle) < RUDDER_DELTA))
                 prev_rudder_angle = rudder_angle;
-            else{
+            else
+            {
                 rudder_angle = prev_rudder_angle + (fabs(rudder_angle - prev_rudder_angle)/(rudder_angle - prev_rudder_angle))*RUDDER_DELTA;
                 prev_rudder_angle = rudder_angle;
             }
-            if ( (distance_to_depth_goal <= dive_goal_threshold) &&(fabs(nav.depth) > 0.5)){
+            if ( (distance_to_depth_goal <= dive_goal_threshold) &&(fabs(nav.depth) > 0.5))
+            {
                 if (cmd.depth_mode == acfrlcm::auv_control_t::PITCH_MODE)
                     {
                         pitch = cmd.pitch;
@@ -282,7 +266,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 else if (cmd.depth_mode == acfrlcm::auv_control_t::ALTITUDE_MODE)
                     {
                         //pitch = pid(&this->gains_altitude, nav.altitude, cmd.altitude, dt, &msg_altitude);
-                        pitch = -pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_altitude);
+                        pitch = pid(&this->gains_depth, nav.depth, cmd.depth, dt, &msg_altitude);
                         this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_ALTITUDE", &msg_altitude);
 
                         std::cout << "ALTITUDE_MODE" << std::endl;         
@@ -294,7 +278,6 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
 
                         std::cout << "DEPTH_MODE" << std::endl; 
                     }
-    
                 if ((nav.vx > -0.05) || (prop_rpm > -100))
                 {
                     plane_angle = pid(&this->gains_pitch, nav.pitch, pitch, dt, &msg_pitch);
@@ -308,12 +291,13 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     
                 if((fabs(plane_angle - prev_elev_angle) < RUDDER_DELTA))
                     prev_elev_angle = plane_angle;
-                else{
+                else
+                {
                     plane_angle = prev_elev_angle + (fabs(plane_angle - prev_elev_angle)/(plane_angle - prev_elev_angle))*RUDDER_DELTA;
                     prev_elev_angle = plane_angle;
                 }
             }
-            //  printf("prop_rpm: %f\n",prop_rpm);
+           //  printf("prop_rpm: %f\n",prop_rpm);
             // Reverse all the fin angles for reverse direction (given rpm is
             //  negative and so is velocity, so water relative should be
             //  negative, or soon will be). May not be enough due to completely
@@ -328,20 +312,56 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             // Set motor controller values
             mc.tail_thruster = prop_rpm;
             mc.tail_rudder = rudder_angle;
-            if (elevator_disabled || fabs(cmd.depth) < 1e-3)
+            if (elevator_disabled)// || fabs(cmd.depth) < 1e-3)
                 mc.tail_elevator = 0.0; // mc.tail_elevator = pid(&this->gains_pitch, nav.pitch, (5*M_PI)/180, dt); //target pitch of 5 degrees to make tail more efficient
             else
                 mc.tail_elevator = plane_angle;
         }
-        else 
+
+        if((currentstate == TransitionDive)||(currentstate == TunnelDive))
         {
-            prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
-            prev_rpm = prop_rpm;
+            double differential_vert = pid(&this->gains_tunnel_pitch,
+                    nav.pitch, target_pitch, dt, &msg_tunnel_pitch);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
+
+            double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
+                        nav.pitch, pitch, dt, &msg_tunnel_trans_pitch);
+            // This controller uses tunnels to match the sea floor slope.
+            //double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
+            //           cmd.pitch, 0.0, dt, &msg_tunnel_trans_pitch);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_TRANS_PITCH", &msg_tunnel_trans_pitch);
+            transitional_diff_vert = 0.0;
+            double mutual_vert = pid(&this->gains_tunnel_descent,
+                    nav.depth, cmd.depth, dt, &msg_tunnel_descent);
+            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
+
+            // testing variable pitch rpm based of mutual value saturation
+            double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
+            differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
+
+            // Set motor controller values
+            mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+            mc.vert_aft = (mutual_vert + differential_vert_corrected);
+            if(currentstate == TransitionDive)
+            {
+                differential_vert = transitional_diff_vert;
+                differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
+                mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+                mc.vert_aft = (mutual_vert + differential_vert_corrected);
+            }
         }
+        // else 
+        // {
+        //     prop_rpm = prev_rpm - copysign(prop_rpm, (prev_rpm - prop_rpm));
+        //     //prop_rpm = prev_rpm + fabs(prop_rpm - prev_rpm)/(prop_rpm - prev_rpm)*BF_TAIL_RAMP;
+        //     prev_rpm = prop_rpm;
+        // }
         //state machine
-        switch(currentstate){
+        switch(currentstate)
+        {
             case TunnelDive:
-            {   printf("TunnelDive\n");
+            {   
+                printf("TunnelDive\n");
                 if(fabs(mc.lat_fore) > heading_correction_limit) //fabs this
                     mc.lat_fore = (heading_correction_limit*fabs(mc.lat_fore))/(mc.lat_fore);
                 if(fabs(mc.lat_aft) > heading_correction_limit) //fabs this
@@ -354,11 +374,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 break;            
             }              
             case TransitionDive:
-            {   printf("TransitionDive\n");
-                // differential_vert = transitional_diff_vert;
-                // double differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
-                // mc.vert_fore = (mutual_vert - differential_vert_corrected);  
-                // mc.vert_aft = (mutual_vert + differential_vert_corrected);
+            {   
+                printf("TransitionDive\n");
                 mc.lat_fore = 0.0;
                 mc.lat_aft = 0.0;
                 // limit floor value of tail to 200 RPM when in transition zone
@@ -369,13 +386,22 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.vert_fore = transition_percentage*mc.vert_fore;
                 if (mc.vert_fore < tunnel_transition_value && mc.vert_fore/transition_percentage > tunnel_transition_value)
                     mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
+                //	if (mc.vert_fore < tunnel_transition_value)
+                //		mc.vert_fore = tunnel_transition_lower_value;
                 mc.vert_aft = transition_percentage*mc.vert_aft;
                 if (mc.vert_aft < tunnel_transition_value && mc.vert_aft/transition_percentage > tunnel_transition_value)
                     mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
+                //	if (mc.vert_aft < tunnel_transition_lower_value);
+                //		mc.vert_aft = tunnel_transition_lower_value;
+                // if (fabs(mc.vert_fore) < 50.0)
+                //     mc.vert_fore = 0.0;
+                // if (fabs(mc.vert_aft) < 50.0)
+                //     mc.vert_aft = 0.0;
                 break;
             }
             case TunnelTurn:
-            {   printf("TunnelTurn\n");
+            {   
+                printf("TunnelTurn\n");
                 mc.vert_fore = 0.0;
                 mc.vert_aft = 0.0;
                 mc.tail_thruster = prop_rpm;
@@ -383,22 +409,26 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 // adding lat tunnel efficiency code here for tests
                 if (thruster_flow_dependant)
                 {
-                    if (nav.heading < -threshold && diff_heading > threshold){
+                    if (nav.heading < -threshold && diff_heading > threshold)
+                    {
                         mc.lat_fore = bias*mc.lat_fore;
                         mc.lat_aft = 0.0;
                         // std::cout << " lat aft thruster off";
                     } 
-                    else if (nav.heading < -threshold && diff_heading < -threshold){
+                    else if (nav.heading < -threshold && diff_heading < -threshold)
+                    {
                         mc.lat_fore = 0.0;
                         mc.lat_aft = bias*mc.lat_aft;
                         // std::cout << " lat fore thruster off";
                     } 
-                    else if (nav.heading > threshold && diff_heading > threshold){
+                    else if (nav.heading > threshold && diff_heading > threshold)
+                    {
                         mc.lat_fore = 0.0;
                         mc.lat_aft = bias*mc.lat_aft;
                         // std::cout << " lat fore thruster off";
                     } 
-                    else if (nav.heading > threshold && diff_heading < -threshold){
+                    else if (nav.heading > threshold && diff_heading < -threshold)
+                    {
                         mc.lat_fore = bias*mc.lat_fore;
                         mc.lat_aft = 0.0;
                         // std::cout << " lat aft thruster off";
@@ -407,7 +437,8 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 break;
             }
             case TailTravel:
-            {   printf("TailTravel\n");
+            {   
+                printf("TailTravel\n");
                 //all else use tail thruster plus elevator and rudder
                 mc.vert_fore = 0.0;
                 mc.vert_aft = 0.0;
@@ -440,10 +471,6 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
     int fore = 0;
     int aft = 0;
     double rudder, elevator_hc, prop_rpm = 0;
-
-    //Strafe - this is side to side on left stick - always available
-//    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
-//    aft = fore;
         
     // Check the steering mode switch - top switch on right side
     if(sc.values[RC_GEAR] > REAR_POS_CUTOFF)
@@ -457,6 +484,12 @@ void NGAController::manual_control(acfrlcm::auv_spektrum_control_command_t sc)
         if (aft > 1500)
             aft = 1500;
         rudder = 0;
+    }
+    //Strafe - this is side to side on left stick - always available
+    else if(sc.values[RC_GEAR] > CENTER_POS_CUTOFF)
+    {
+	    fore = (sc.values[RC_RUDDER] - RC_OFFSET) * 1500/RC_HALF_RANGE;
+	    aft = fore;
     }
     else 
     {
