@@ -478,6 +478,14 @@ bool EvologicsModem::connect_modem()
 {
     bool success = false;
 
+    // just call close
+    // it may create an error (returns -1)
+    // but we ignore it as we expect that to be the case most of the
+    // time - we can indicate a disconnect when ATZ1 happens and we expect
+    // this to work.
+    // worse errors will happen if the fd is still open!
+    close(this->modem_fd);
+
     if (this->use_serial_comm)
     {
         this->modem_fd = serial_open(
@@ -710,6 +718,64 @@ bool EvologicsModem::send_command(const char *d)
         // we don't want to get stuck here
         success = false;
         std::cerr << "Unknown response to command:\n>" << message_text << "\n";
+    }
+
+    return success;
+}
+
+bool EvologicsModem::send_reset(uint8_t level)
+{
+    if (level > 4 || level == 2)
+    {
+        // unknown message types
+        return false;
+    }
+
+    char command[10];
+    snprintf(command, 20, "ATZ%i");
+    size_t data_length = strlen(command);
+    memcpy(command + data_length, term, term_len);
+
+    this->modem_write(command, data_length + term_len);
+
+    switch (level) {
+    case 0:
+        // expect nothing, full reset
+        //
+        // indicate the pipe has broken (even if it isn't)
+        // this will trigger a reconnect and configure
+        pipe_broken = 1;
+        break;
+    case 1:
+        // dropping burst + acoustic connections
+    case 3:
+        // dropping IMs
+    case 4:
+        // dropping TX Buffer, IMs and BURST
+
+        // check for okay... that's about it
+        std::unique_lock<std::mutex> ul(this->queue_response_mutex);
+
+        while (this->queued_responses.size() == 0)
+        {
+            this->response_added.wait(ul);
+        }
+
+        auto message = this->queued_responses.front();
+        this->queued_responses.pop_front();
+
+        std::string message_text((char *)message.second.data(), message.second.size());
+
+        if (starts_with("OK"))
+        {
+            success = true;
+        }
+        else
+        {
+            // we don't want to get stuck here
+            success = false;
+            std::cerr << "Unknown response to mode change:\n>" << message_text << "\n";
+        }
     }
 
     return success;
@@ -1024,6 +1090,18 @@ void EvologicsModem::on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const st
         // don't do this (probably)
         std::cerr << "Refusing to use SEND with raw messages." << std::endl;
         break;
+
+
+    case 'Z':
+        // Reset, if type 1 will reset connection and need to reconfigure...
+        uint8_t level = 0;
+
+        if (erm->message.size() >= 4)
+        {
+            level = erm->message[3] - '0'; // HACK!
+        }
+
+        this->send_reset(level);
 
     default:
         // MODE changes are unhandled, a number of other cases too.
@@ -1832,6 +1910,9 @@ void EvologicsModem::run()
         }
     }
 
+    // just connected, shouldn't have a broken connection
+    pipe_broken = 0;
+
     std::cout << "Modem connected." << std::endl;
 
     // spin off the thread to read from the modem
@@ -1845,7 +1926,7 @@ void EvologicsModem::run()
         std::cerr << "Failed to configure modem. Trying again after 1s." << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
-        if (loop_exit)
+        if (loop_exit || pipe_broken)
         {
             this->close_threads = true;
             read_thread.join();
@@ -1861,7 +1942,7 @@ void EvologicsModem::run()
     std::vector<uint8_t> message;
     int message_type;
 
-    while (!loop_exit)
+    while (!loop_exit && !pipe_broken)
     {
         std::cout << "========================================\n";
         std::cout << "Waiting for message to send." << std::endl;
@@ -1869,7 +1950,7 @@ void EvologicsModem::run()
 
         // if we aren't existing, have high priority, burst message data or a ping to send
         // just keep waiting...
-        while (!loop_exit && !this->high_priority && this->queued_priorities.size() == 0 && this->next_ping.size() == 0)
+        while (!loop_exit && !pipe_broken && !this->high_priority && this->queued_priorities.size() == 0 && this->next_ping.size() == 0)
         {
             // this timeout is irrelevant if a message is triggered as the signal
             // will cause it to break. Only delays loop_exit response.
@@ -1980,7 +2061,10 @@ int main(int argc, char **argv)
 
     modem->load_configuration(basename((argv[0])));
 
-    modem->run();
+    while (loop_exit == 0)
+    {
+        modem->run();
+    }
 
     delete modem;
 
