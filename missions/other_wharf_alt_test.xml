@@ -11,38 +11,36 @@
         <mission_timeout t = "1"/>
         <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
     </global>
+    
+        
+        
     <primitive>
         <goto>
-            <position x="20" y="-5" z="0.0"/>
-            <heading deg="150" />
-            <timeout t="300" />
+	    <position x="-130" y="-120" z="0"/>
+            <heading deg="270" />
+            <timeout t="100" />
             <velocity x="0.75" />
             <depth mode = "depth" />
-            <command device="camera" onoff="start"/>
+	    <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
-        <zambonie>
-            <position x="15" y="-5" z="2.0"/>
-            <heading deg="150" />
-            <spacing m="5.0" />
-            <length m="42" />
-            <width m="42" />
-            <timeout t="14400" />
+        <goto>
+            <position x="-130" y="-120" z="2"/>
+            <heading deg="270" />
+            <timeout t="100" />
             <velocity x="0.75" />
-            <direction d="cw" />
-            <pitch deg="0" />
-            <depth mode="altitude" />
-        </zambonie>
+            <depth mode = "altitude" />
+        </goto>
     </primitive>
     <primitive>
         <goto>
-            <position x="5" y="0" z="3.0"/>
-            <heading deg="150" />
-            <timeout t="300" />
+	    <position x="-143" y="-146" z="2"/>
+            <heading deg="90" />
+            <timeout t="1000" />
             <velocity x="0.75" />
-            <depth mode = "altitude" />
-            <command device="camera" onoff="stop"/>
+	    <depth mode = "altitude" />
+	    <command device="camera" onoff="stop"/>
         </goto>
     </primitive>
 </mission>

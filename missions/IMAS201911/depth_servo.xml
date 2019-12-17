@@ -4,7 +4,7 @@
         This is a test mission
     </desc>
     <global>
-    <location lat="-33.839459" lon="151.254380" />
+    <location lat="-42.88872836" lon="147.34052852" />
         <turn_radius m='2' />
         <drop_distance m="4" />
         <drop_angle deg="40" />
@@ -13,8 +13,8 @@
     </global>
     <primitive>
         <goto>
-            <position x="20" y="-5" z="0.0"/>
-            <heading deg="150" />
+            <position x="-5.0" y="-5.0" z="5.0"/>
+            <heading deg="0" />
             <timeout t="300" />
             <velocity x="0.75" />
             <depth mode = "depth" />
@@ -22,26 +22,12 @@
         </goto>
     </primitive>
     <primitive>
-        <zambonie>
-            <position x="15" y="-5" z="2.0"/>
-            <heading deg="150" />
-            <spacing m="5.0" />
-            <length m="42" />
-            <width m="42" />
-            <timeout t="14400" />
-            <velocity x="0.75" />
-            <direction d="cw" />
-            <pitch deg="0" />
-            <depth mode="altitude" />
-        </zambonie>
-    </primitive>
-    <primitive>
         <goto>
-            <position x="5" y="0" z="3.0"/>
-            <heading deg="150" />
+            <position x="-5.0" y="-5.0" z="0.0"/>
+            <heading deg="0" />
             <timeout t="300" />
             <velocity x="0.75" />
-            <depth mode = "altitude" />
+            <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
     </primitive>

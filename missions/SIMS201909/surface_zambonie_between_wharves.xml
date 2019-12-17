@@ -18,12 +18,11 @@
             <timeout t="300" />
             <velocity x="0.75" />
             <depth mode = "depth" />
-            <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
         <zambonie>
-            <position x="15" y="-5" z="2.0"/>
+            <position x="15" y="-5" z="0.0"/>
             <heading deg="150" />
             <spacing m="5.0" />
             <length m="42" />
@@ -31,8 +30,7 @@
             <timeout t="14400" />
             <velocity x="0.75" />
             <direction d="cw" />
-            <pitch deg="0" />
-            <depth mode="altitude" />
+            <depth mode="depth" />
         </zambonie>
     </primitive>
     <primitive>
@@ -42,7 +40,6 @@
             <timeout t="300" />
             <velocity x="0.75" />
             <depth mode = "altitude" />
-            <command device="camera" onoff="stop"/>
         </goto>
     </primitive>
 </mission>
