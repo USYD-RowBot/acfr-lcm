@@ -115,6 +115,7 @@ public:
 
     bool send_message(int message_type, char const *data, int length);
     std::pair<int, std::vector<unsigned char>> build_lcm_data_message(unsigned char *d, int size, int target, const char *dest_channel, bool use_pbm);
+    bool send_reset(uint8_t level);
 
     void queue_ping();
     void publish_status();
@@ -732,7 +733,7 @@ bool EvologicsModem::send_reset(uint8_t level)
     }
 
     char command[10];
-    snprintf(command, 20, "ATZ%i");
+    snprintf(command, 20, "ATZ%hhi", level);
     size_t data_length = strlen(command);
     memcpy(command + data_length, term, term_len);
     bool success = false;
@@ -768,7 +769,7 @@ bool EvologicsModem::send_reset(uint8_t level)
 
         std::string message_text((char *)message.second.data(), message.second.size());
 
-        if (starts_with("OK"))
+        if (starts_with(message_text, "OK"))
         {
             success = true;
         }
@@ -1068,6 +1069,7 @@ void EvologicsModem::on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const st
         return;
     }
 
+    uint8_t level = 0;
     switch (erm->message[2])
     {
     case '?':
@@ -1096,14 +1098,14 @@ void EvologicsModem::on_evo_raw_message(const lcm::ReceiveBuffer* rbuf, const st
 
     case 'Z':
         // Reset, if type 1 will reset connection and need to reconfigure...
-        uint8_t level = 0;
 
         if (erm->message.size() >= 4)
         {
             level = erm->message[3] - '0'; // HACK!
         }
-
         this->send_reset(level);
+
+	break;
 
     default:
         // MODE changes are unhandled, a number of other cases too.
