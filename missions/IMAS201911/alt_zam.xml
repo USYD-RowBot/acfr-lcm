@@ -13,12 +13,11 @@
     </global>
     <primitive>
         <goto>
-            <position x="0" y="0" z="0.0"/>
+            <position x="0" y="0" z="7.0"/>
             <heading deg="180" />
             <timeout t="300" />
-            <velocity x="1.0" />
+            <velocity x="0.75" />
             <depth mode = "depth" />
-            <command device="camera" onoff="start"/>
         </goto>
     </primitive>
     <primitive>
@@ -29,10 +28,10 @@
             <length m="80" />
             <width m="20" />
             <timeout t="14400" />
-            <velocity x="0.5" />
+            <velocity x="0.75" />
             <direction d="ccw" />
             <pitch deg="0" />
-            <depth mode="altitude" />
+	    <depth mode="altitude" />
         </zambonie>
     </primitive>
     <primitive>
@@ -40,7 +39,7 @@
             <position x="0" y="0" z="0.0"/>
             <heading deg="0" />
             <timeout t="300" />
-            <velocity x="1.0" />
+            <velocity x="0.75" />
             <depth mode = "depth" />
             <command device="camera" onoff="stop"/>
         </goto>
