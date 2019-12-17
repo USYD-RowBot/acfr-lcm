@@ -91,7 +91,6 @@
             <timeout t="1800" />
             <velocity x="0.75" />
             <depth mode = "altitude" />
-            <command device="camera" onoff="stop"/>
         </goto>
     </primitive>
     <primitive>

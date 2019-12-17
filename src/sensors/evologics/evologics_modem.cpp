@@ -392,7 +392,7 @@ printf("Term char = 0x%02X\n", (unsigned int)*term);
     //send_command("ATA");      // listen state
     //send_command("ATD");      // establish an acoustic connection
 
-    send_command("AT!RT1500");     // set the retry count on burst data
+    send_command("AT!RT3000");     // set the retry count on burst data
     send_command("AT!RC1");     // set the retry timeout on burst data
 
 

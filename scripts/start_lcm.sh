@@ -8,4 +8,3 @@ PATH=$PATH:/home/auv/git/acfr-lcm/build/bin
 bot-procman-deputy 2> /dev/null &
 sleep 1
 bot-procman-sheriff -n --on-script-complete exit /home/auv/git/acfr-lcm/config/procman/procman-$HOSTNAME.cfg $HOSTNAME
-

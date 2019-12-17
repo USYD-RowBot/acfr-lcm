@@ -5,7 +5,7 @@
     </desc>
     <global>
     <location lat="-43.10862806" lon="147.39115119" />
-        <turn_radius m='2' />
+        <turn_radius m='1' />
         <drop_distance m="4" />
         <drop_angle deg="40" />
         <mission_timeout t = "1"/>
@@ -32,7 +32,6 @@
             <direction d="ccw" />
             <pitch deg="0" />
 	    <depth mode="altitude" />
-	    <command device="camera" onoff="start"/>
         </zambonie>
     </primitive>
     <primitive>

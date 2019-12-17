@@ -1,0 +1,84 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+	<desc>
+		../vic-gippslandlakes-spermwhale-cam-test.xml
+	</desc>
+	<global>
+		<location lat="-37.9493183462" lon="147.712749632" />
+		<turn_radius m="5" />
+		<drop_distance m="4" />
+		<drop_angle deg="40" />
+		<mission_timeout t = "1"/>
+		<!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+	</global>
+	<primitive>
+		<goto>
+			<position x="0.00" y="0.00" z="0.00"/>
+			<heading deg="261.00" />
+			<timeout t="0.00" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="3.28" y="19.74" z="0.00"/>
+			<heading deg="261.00" />
+			<timeout t="103.67" />
+			<velocity x="1.5" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="8.51" y="51.19" z="3.00"/>
+			<heading deg="261.00" />
+			<timeout t="165.23" />
+			<velocity x="1.5" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="11.79" y="70.93" z="2.00"/>
+			<heading deg="261.00" />
+			<timeout t="155.51" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="15.07" y="90.66" z="2.00"/>
+			<heading deg="261.00" />
+			<timeout t="155.51" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="34" y="190" z="2.00"/>
+			<heading deg="81.00" />
+			<timeout t="9330.46" />
+			<velocity x="1.0" />
+			<depth mode = "altitude" />
+			<command device="camera" onoff="start" freq="2.0"/>
+		</goto>
+	</primitive>
+	<primitive>
+		<goto>
+			<position x="36" y="208" z="0"/>
+			<heading deg="66.96" />
+			<timeout t="1166.31" />
+			<velocity x="1.0" />
+			<depth mode = "depth" />
+			<command device="camera" onoff="stop"/>
+		</goto>
+	</primitive>
+</mission>
