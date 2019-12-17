@@ -735,6 +735,7 @@ bool EvologicsModem::send_reset(uint8_t level)
     snprintf(command, 20, "ATZ%i");
     size_t data_length = strlen(command);
     memcpy(command + data_length, term, term_len);
+    bool success = false;
 
     this->modem_write(command, data_length + term_len);
 
@@ -745,6 +746,7 @@ bool EvologicsModem::send_reset(uint8_t level)
         // indicate the pipe has broken (even if it isn't)
         // this will trigger a reconnect and configure
         pipe_broken = 1;
+        success = true;
         break;
     case 1:
         // dropping burst + acoustic connections
