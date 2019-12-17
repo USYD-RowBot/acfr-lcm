@@ -645,7 +645,7 @@ bool EvologicsModem::send_query(const char *d)
     {
         while (this->queued_responses.size() == 0)
         {
-            this->response_added.wait(ul);
+            this->response_added.wait_for(ul, std::chrono::milliseconds(100));
         }
 
         auto message = this->queued_responses.front();
@@ -758,7 +758,7 @@ bool EvologicsModem::send_reset(uint8_t level)
 
         while (this->queued_responses.size() == 0)
         {
-            this->response_added.wait(ul);
+            this->response_added.wait_for(ul, std::chrono::milliseconds(100));
         }
 
         auto message = this->queued_responses.front();
@@ -799,7 +799,7 @@ bool EvologicsModem::send_mode(const char *d)
 
     while (this->queued_responses.size() == 0)
     {
-        this->response_added.wait(ul);
+        this->response_added.wait_for(ul, std::chrono::milliseconds(100));
     }
 
     auto message = this->queued_responses.front();
