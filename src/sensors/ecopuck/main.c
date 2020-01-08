@@ -71,6 +71,8 @@ int main (int argc, char *argv[])
     gsd_flush (gsd);
     gsd_reset_stats (gsd);
 
+    gsd_write (gsd, ECOPUCK_START_CMD, strlen(ECOPUCK_START_CMD));
+    
     // loop to collect data, parse and send it on its way
     while(!gsd->done)
     {
