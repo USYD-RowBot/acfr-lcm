@@ -1,0 +1,88 @@
+<?xml version="1.0" standalone="no" ?>
+<mission>
+    <desc>
+        This is a test mission
+    </desc>
+    <global>
+    <location lat="-43.206463" lon="147.479445" />
+        <turn_radius m='2' />
+        <drop_distance m="4" />
+        <drop_angle deg="40" />
+        <mission_timeout t = "1"/>
+        <!-- Mission timeout not implemented. To have the same drop distance in the corners use drop_angle [rad] = drop_distance / turn_radius -->
+    </global>
+    <primitive>
+        <goto>
+            <position x="0" y="0" z="0.0"/>
+            <heading deg="114" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "depth" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="0" y="0" z="2.0"/>
+            <heading deg="114" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="0" y="0" z="2.0"/>
+            <heading deg="114" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+            <command device="camera" onoff="start"/>
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-280" y="607" z="2.0"/>
+            <heading deg="114" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-1067" y="319" z="2.0"/>
+            <heading deg="200" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-1293" y="899" z="2.0"/>
+            <heading deg="111" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-2140" y="619" z="2.0"/>
+            <heading deg="198" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "altitude" />
+        </goto>
+    </primitive>
+    <primitive>
+        <goto>
+            <position x="-2140" y="619" z="0.0"/>
+            <heading deg="0" />
+            <timeout t="1800" />
+            <velocity x="0.75" />
+            <depth mode = "depth" />
+            <command device="camera" onoff="stop"/>
+        </goto>
+    </primitive>
+</mission>
