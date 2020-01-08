@@ -50,12 +50,15 @@ def heartbeat_handler(channel, data):
 			if 'input' in file_name:
 				with open('/sys/class/hwmon/'+folder+'/'+file_name, 'r') as temp_file:
 					str_val = temp_file.read()
-					int_val = int(str_val[:-4])
-					total += int_val
-                                        path_name.append(folder+'/'+file_name)
-					current_temp.append(str_val[:-4])
-					if int_val > max_val:
-						max_val = int_val
+					try:
+						int_val = int(str_val[:-4])
+						total += int_val
+	                    path_name.append(folder+'/'+file_name)
+						current_temp.append(str_val[:-4])
+						if int_val > max_val:
+							max_val = int_val
+					except Exception:
+						pass
 
 	tm.utime = hb.utime
 	tm.num_readings = len(current_temp)
