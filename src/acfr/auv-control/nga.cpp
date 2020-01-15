@@ -187,7 +187,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     double pitch = 0.0, target_pitch = 0.0, plane_angle = 0.0, rudder_angle = 0.0, differential_vert_corrected = 0.0;
     double threshold = M_PI/18; //what angle is enough to warrant tunnel turning
     double bias = 1.0;
-    double dive_goal_threshold = 1.5; //m
+    double dive_goal_threshold = 1.0; //m
     double tail_goal_threshold = 0.0; //m
     double distance_to_depth_goal = fabs(nav.depth - cmd.depth);
     double transition_percentage = (distance_to_depth_goal-tail_goal_threshold)/(dive_goal_threshold-tail_goal_threshold);
@@ -215,7 +215,7 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
     if (cmd.run_mode == acfrlcm::auv_control_t::RUN)
     {
         //determine what state we will be in for this loop
-        if (distance_to_depth_goal > dive_goal_threshold   || cmd.depth < 0)
+        if (fabs(distance_to_depth_goal) > dive_goal_threshold   || cmd.depth < 0)
             currentstate = TunnelDive;
             //  else if (distance_to_depth_goal <= dive_goal_threshold && distance_to_depth_goal > tail_goal_threshold)
             //      currentstate = TransitionDive;
@@ -384,12 +384,12 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                     mc.tail_thruster = tail_transition_value;
                 // limit ceiling value of tunnels to 1000 mean value for fore and aft
                 mc.vert_fore = transition_percentage*mc.vert_fore;
-                if (mc.vert_fore < tunnel_transition_value && mc.vert_fore/transition_percentage > tunnel_transition_value)
+                if (fabs(mc.vert_fore) < tunnel_transition_value && fabs(mc.vert_fore/transition_percentage) > tunnel_transition_value)
                     mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
                 //	if (mc.vert_fore < tunnel_transition_value)
                 //		mc.vert_fore = tunnel_transition_lower_value;
                 mc.vert_aft = transition_percentage*mc.vert_aft;
-                if (mc.vert_aft < tunnel_transition_value && mc.vert_aft/transition_percentage > tunnel_transition_value)
+                if (fabs(mc.vert_aft) < tunnel_transition_value && fabs(mc.vert_aft/transition_percentage) > tunnel_transition_value)
                     mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
                 //	if (mc.vert_aft < tunnel_transition_lower_value);
                 //		mc.vert_aft = tunnel_transition_lower_value;
