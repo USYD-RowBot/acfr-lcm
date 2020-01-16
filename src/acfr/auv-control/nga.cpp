@@ -318,38 +318,44 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.tail_elevator = plane_angle;
         }
 
-        if((currentstate == TransitionDive)||(currentstate == TunnelDive))
+        //if((currentstate == TransitionDive)||(currentstate == TunnelDive))
+        //{
+        double differential_vert = pid(&this->gains_tunnel_pitch,
+                nav.pitch, target_pitch, dt, &msg_tunnel_pitch);
+        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
+
+        double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
+                    nav.pitch, pitch, dt, &msg_tunnel_trans_pitch);
+        // This controller uses tunnels to match the sea floor slope.
+        //double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
+        //           cmd.pitch, 0.0, dt, &msg_tunnel_trans_pitch);
+        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_TRANS_PITCH", &msg_tunnel_trans_pitch);
+        transitional_diff_vert = 0.0;
+
+        double mutual_vert_descent_rate = pid(&this->gains_tunnel_depth,
+                nav.depth, cmd.depth, dt, &msg_tunnel_depth);
+        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DEPTH", &msg_tunnel_depth);
+
+
+        double mutual_vert = pid(&this->gains_tunnel_descent,
+                nav.vz, mutual_vert_descent_rate, dt, &msg_tunnel_descent);
+        this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
+
+        // testing variable pitch rpm based of mutual value saturation
+        double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
+        differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
+
+        // Set motor controller values
+        mc.vert_fore = (mutual_vert - differential_vert_corrected);  
+        mc.vert_aft = (mutual_vert + differential_vert_corrected);
+        if(currentstate == TransitionDive)
         {
-            double differential_vert = pid(&this->gains_tunnel_pitch,
-                    nav.pitch, target_pitch, dt, &msg_tunnel_pitch);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_PITCH", &msg_tunnel_pitch);
-
-            double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
-                        nav.pitch, pitch, dt, &msg_tunnel_trans_pitch);
-            // This controller uses tunnels to match the sea floor slope.
-            //double transitional_diff_vert = pid(&this->gains_tunnel_pitch,
-            //           cmd.pitch, 0.0, dt, &msg_tunnel_trans_pitch);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_TRANS_PITCH", &msg_tunnel_trans_pitch);
-            transitional_diff_vert = 0.0;
-            double mutual_vert = pid(&this->gains_tunnel_descent,
-                    nav.depth, cmd.depth, dt, &msg_tunnel_descent);
-            this->lc().publish(this->get_vehicle_name() + ".PID_TUNING_TUNNEL_DESCENT", &msg_tunnel_descent);
-
-            // testing variable pitch rpm based of mutual value saturation
-            double mutual_percent = abs(mutual_vert/gains_tunnel_descent.sat);
+            differential_vert = transitional_diff_vert;
             differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
-
-            // Set motor controller values
             mc.vert_fore = (mutual_vert - differential_vert_corrected);  
             mc.vert_aft = (mutual_vert + differential_vert_corrected);
-            if(currentstate == TransitionDive)
-            {
-                differential_vert = transitional_diff_vert;
-                differential_vert_corrected = differential_vert *(cos(mutual_percent) - sin(mutual_percent)/2);
-                mc.vert_fore = (mutual_vert - differential_vert_corrected);  
-                mc.vert_aft = (mutual_vert + differential_vert_corrected);
-            }
         }
+        //}
         // else 
         // {
         //     prop_rpm = prev_rpm - copysign(prop_rpm, (prev_rpm - prop_rpm));
@@ -379,18 +385,18 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
                 mc.lat_fore = 0.0;
                 mc.lat_aft = 0.0;
                 // limit floor value of tail to 200 RPM when in transition zone
-                mc.tail_thruster = mc.tail_thruster*(1-transition_percentage);
-                if(mc.tail_thruster < tail_transition_value && mc.tail_thruster/(1-transition_percentage) > tail_transition_value)
-                    mc.tail_thruster = tail_transition_value;
+                // mc.tail_thruster = mc.tail_thruster*(1-transition_percentage);
+                // if(mc.tail_thruster < tail_transition_value && mc.tail_thruster/(1-transition_percentage) > tail_transition_value)
+                //     mc.tail_thruster = tail_transition_value;
                 // limit ceiling value of tunnels to 1000 mean value for fore and aft
-                mc.vert_fore = transition_percentage*mc.vert_fore;
-                if (fabs(mc.vert_fore) < tunnel_transition_value && fabs(mc.vert_fore/transition_percentage) > tunnel_transition_value)
-                    mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
+                // mc.vert_fore = transition_percentage*mc.vert_fore;
+                // if (fabs(mc.vert_fore) < tunnel_transition_value && fabs(mc.vert_fore/transition_percentage) > tunnel_transition_value)
+                //     mc.vert_fore = tunnel_transition_value - differential_vert_corrected; //added in the differential values for pitch control during transition
                 //	if (mc.vert_fore < tunnel_transition_value)
                 //		mc.vert_fore = tunnel_transition_lower_value;
-                mc.vert_aft = transition_percentage*mc.vert_aft;
-                if (fabs(mc.vert_aft) < tunnel_transition_value && fabs(mc.vert_aft/transition_percentage) > tunnel_transition_value)
-                    mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
+                // mc.vert_aft = transition_percentage*mc.vert_aft;
+                // if (fabs(mc.vert_aft) < tunnel_transition_value && fabs(mc.vert_aft/transition_percentage) > tunnel_transition_value)
+                //     mc.vert_aft = tunnel_transition_value + differential_vert_corrected;
                 //	if (mc.vert_aft < tunnel_transition_lower_value);
                 //		mc.vert_aft = tunnel_transition_lower_value;
                 // if (fabs(mc.vert_fore) < 50.0)
@@ -402,8 +408,9 @@ void NGAController::automatic_control(acfrlcm::auv_control_t cmd, acfrlcm::auv_a
             case TunnelTurn:
             {   
                 printf("TunnelTurn\n");
-                mc.vert_fore = 0.0;
-                mc.vert_aft = 0.0;
+                // keep vertical tunnels firing during turn
+                //mc.vert_fore = 0.0;
+                //mc.vert_aft = 0.0;
                 mc.tail_thruster = prop_rpm;
                 // std::cout << "tunnel turning";
                 // adding lat tunnel efficiency code here for tests
