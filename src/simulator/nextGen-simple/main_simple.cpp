@@ -179,21 +179,23 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
         Kq = beta1 + beta2 * J0;
     }
 
-    double prop_force;//, prop_torque;
-    prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
+    double tail_prop_force;//, prop_torque;
+    tail_prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
+
+    tail_prop_force = prop_force(prop_diameter, in.tail_thruster, u);
     //prop_torque = rho * pow(prop_diameter,5) * Kq * fabs(n) * n; // Fossen 6.113
     //    cout << "n = " << n << " Va = " << Va << " J0 = " << J0 << " Kt = " << Kt << " F = " << prop_force << endl;
-    if(prop_force !=  prop_force)
+    if(tail_prop_force !=  tail_prop_force)
     {
-        cout << "Prop force error. Prop force = "<< prop_force << endl;
-        prop_force = 0;
+        cout << "Prop force error. Prop force = "<< tail_prop_force << endl;
+        tail_prop_force = 0;
     }
     //if(fabs(prop_force) > 10.0)
     //    prop_force = prop_force / fabs(prop_force) * 10;
     
-    double tail_x = prop_force * cos(-in.tail_rudder) * cos(in.tail_elevator); //assuming rudder straight is 0 and max range is +-pi/2 the negative sign in cos won't matter
-    double tail_y = prop_force * sin(-in.tail_rudder) * cos(in.tail_elevator); 
-    double tail_z = prop_force * sin(in.tail_elevator);
+    double tail_x = tail_prop_force * cos(-in.tail_rudder) * cos(-in.tail_elevator); //assuming rudder straight is 0 and max range is +-pi/2 the negative sign in cos won't matter
+    double tail_y = tail_prop_force * sin(-in.tail_rudder) * cos(-in.tail_elevator); 
+    double tail_z = tail_prop_force * sin(-in.tail_elevator);
 
 
     // ****************************************
@@ -213,8 +215,10 @@ void NGAVehicleSim::updateState( const state_type &x , state_type &dxdt , const 
 
     double n_vert_fore = in.vert_fore / to_rps;
     double vert_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_fore) * n_vert_fore;
+    vert_fore_force = prop_force(tunnel_diameter, in.vert_fore, w);
     double n_vert_aft = in.vert_aft / to_rps;
     double vert_aft_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_vert_aft) * n_vert_aft;
+    vert_aft_force = prop_force(tunnel_diameter, in.vert_aft, w);
     double n_lat_fore = in.lat_fore / to_rps;
     double lat_fore_force = rho * pow(tunnel_diameter,4) * Kt * fabs(n_lat_fore) * n_lat_fore;
     double n_lat_aft = in.lat_aft / to_rps;

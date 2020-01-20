@@ -512,7 +512,54 @@ string const VehicleSimBase::getVehicleName() const
     return vehicle_name;
 }
 
+double VehicleSimBase::prop_force( double prop_diameter, double prop_rpm, double water_velocity)
+{
+    double rho = 1030;              // Water density
+    double J0 = 0; // open water advance coefficient
+    double Kt = 0; // propeller thrust coefficient
+    double Kq = 0; // properler torque coefficient
+    double n = prop_rpm/60;
+    
+        // advance velocity as per Fossen eq 4.6
+    double omega = 0.1;
+    double Va = (1 - omega) * water_velocity;
+    
+    if(fabs(n) > 1e-3)
+        J0 = Va / (n * prop_diameter);      // as per Fossen eq 6.107
 
+    double alpha1 = 0.1574*4;
+    double alpha2 = (-0.0144*4)/1.0;
+    double alpha3 = (-0.1*alpha1)/(-0.2);
+    double alpha4 = alpha1*1.9;
+    double alpha5 = (alpha1) / (-0.5-(-0.2));
+
+    // these need to be determined
+    // but relate to the torque from the rear thruster
+    // not sure but it may result in a torque not around
+    // the x-axis of the vehicle
+    double beta1 = 0.0;
+    double beta2 = -0.0;
+
+    if (J0 > 0)
+    {
+        Kt = alpha1 + alpha2 * J0;   // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else if (J0 > -0.2)
+    {
+        Kt = alpha1 + alpha3 * J0;          // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+    else
+    {
+        Kt = alpha4 + alpha5 * J0; // Fossen eq 6.113
+        Kq = beta1 + beta2 * J0;
+    }
+
+    double prop_force;//, prop_torque;
+    prop_force = rho * pow(prop_diameter,4) * Kt * fabs(n) * n;     // As per Fossen eq 4.2
+    return prop_force;
+}
 
 
 void VehicleSimBase::lcm_thread()
