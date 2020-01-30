@@ -4,7 +4,7 @@
 		Iver compass calibration mission
 	</desc>
 	<global>
-		<location lat="-29.4366" lon="159.0802" />
+		<location lat="-29.4355" lon="159.0802" />
 		<turn_radius m="5" />
 		<drop_distance m="4" />
 		<drop_angle deg="40" />
