@@ -25,6 +25,10 @@ struct posmv_t
     /* From $xxGST */
     double latitude_sd;
     double longitude_sd;
+
+    /* From $xxVTG */
+    double velocity_heading;
+    double velocity;
     
 //    string status;
 }
