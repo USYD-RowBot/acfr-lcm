@@ -13,8 +13,8 @@
 	</global>
 	<primitive>
 		<goto>
-			<position x="1019.0554519" y="-2178.25430095" z="0.0"/>
-			<heading deg="80.0671009361" />
+			<position x="-2178.25430095" y="1019.0554519" z="5.0"/>
+			<heading deg="9.93289906395" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "depth" />
@@ -22,8 +22,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1019.0554519" y="-2178.25430095" z="2.0"/>
-			<heading deg="80.0671009361" />
+			<position x="-2178.25430095" y="1019.0554519" z="2.0"/>
+			<heading deg="9.93289906395" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -31,8 +31,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1019.0554519" y="-2178.25430095" z="2.0"/>
-			<heading deg="80.0671009361" />
+			<position x="-2178.25430095" y="1019.0554519" z="2.0"/>
+			<heading deg="9.93289906395" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -41,8 +41,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1277.90041159" y="-700.151143866" z="2.0"/>
-			<heading deg="170.067084068" />
+			<position x="-700.151143866" y="1277.90041159" z="2.0"/>
+			<heading deg="-80.0670840685" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -50,8 +50,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1179.36020295" y="-682.89478364" z="2.0"/>
-			<heading deg="-99.9328990875" />
+			<position x="-682.89478364" y="1179.36020295" z="2.0"/>
+			<heading deg="-170.067100913" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -59,8 +59,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="920.515235011" y="-2160.99798423" z="2.0"/>
-			<heading deg="170.067118047" />
+			<position x="-2160.99798423" y="920.515235011" z="2.0"/>
+			<heading deg="-80.0671180474" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -68,8 +68,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="841.683056638" y="-2147.19294223" z="2.0"/>
-			<heading deg="170.06712764" />
+			<position x="-2147.19294223" y="841.683056638" z="2.0"/>
+			<heading deg="-80.0671276395" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -77,8 +77,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="821.975008675" y="-2143.74168454" z="2.0"/>
-			<heading deg="80.0671005886" />
+			<position x="-2143.74168454" y="821.975008675" z="2.0"/>
+			<heading deg="9.93289941136" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -86,8 +86,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1080.81999486" y="-665.638428925" z="2.0"/>
-			<heading deg="80.0671005886" />
+			<position x="-665.638428925" y="1080.81999486" z="2.0"/>
+			<heading deg="9.93289941136" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "altitude" />
@@ -95,8 +95,8 @@
 	</primitive>
 	<primitive>
 		<goto>
-			<position x="1080.81999486" y="-665.638428925" z="0.0"/>
-			<heading deg="80.0671005886" />
+			<position x="-665.638428925" y="1080.81999486" z="0.0"/>
+			<heading deg="9.93289941136" />
 			<timeout t="3000" />
 			<velocity x="0.75" />
 			<depth mode = "depth" />
