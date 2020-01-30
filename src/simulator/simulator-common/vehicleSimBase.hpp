@@ -84,6 +84,8 @@ protected:
     void publishBattery();
     void publishBluefinTail();
     void publishDWN_OAS();
+    double prop_force( double prop_diameter, double prop_rpm, double water_velocity);
+
 
 
     // virtual function for derived classes to decide on channels to be subscribed to 

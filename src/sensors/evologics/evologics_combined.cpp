@@ -631,6 +631,8 @@ bool EvologicsModem::send_query(const char *d)
         {
             case 'S':
                 // general state
+                // note that AT mode (NET is out default)
+                // has only 1 status line expected.
                 expected_lines = 5;
                 break;
             case 'P':
@@ -855,6 +857,17 @@ bool EvologicsModem::configure_modem()
     if (!send_command(cmd))
         return false;
 
+    // carrier waveform, 0-1 for top&bottom only, 2-2 or 3-3 for networking
+    snprintf(cmd, sizeof(cmd), "AT!C%d", 2);
+    if (!send_command(cmd))
+        return false;
+
+    // highest address possible - we generally use 14
+    // other valid values are 2, 6, 14, 30, 62, 126, 254
+    snprintf(cmd, sizeof(cmd), "AT!AM%d", 14);
+    if (!send_command(cmd))
+        return false;
+
     // should the source level adjust on the remote target
     if(auto_gain)
     {
@@ -866,14 +879,6 @@ bool EvologicsModem::configure_modem()
         if (!send_command("AT!LC0"))
             return false;
     }
-
-    // Get the local address
-    if (!send_query("AT?AL"))
-        return false;
-
-    // get the general status
-    if (!send_query("AT?S"))
-        return false;
 
     // set LISTEN mode
     /*if (!send_mode("ATA"))
@@ -897,6 +902,18 @@ bool EvologicsModem::configure_modem()
 
     // set max address to 14
     if (!send_command("AT!AM14"))
+        return false;
+
+    // Get the local address
+    if (!send_query("AT?AL"))
+        return false;
+
+    // Get the battery voltage
+    if (!send_query("AT?BV"))
+        return false;
+
+    // get the general status
+    if (!send_query("AT?S"))
         return false;
 
     return true;
@@ -1684,6 +1701,8 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
             this->process_pbm(timestamp, response);
         }
 
+        // ignore other messages (RECV[START|END|SRV])
+
         return;
     }
     else if (starts_with(response, "SEND"))
@@ -1715,6 +1734,10 @@ void EvologicsModem::queue_modem_response(int64_t timestamp, std::vector<uint8_t
         return;
     }
     else if (starts_with(response, "SRCLEVEL"))
+    {
+        return;
+    }
+    else if (starts_with(response, "STATUS"))
     {
         return;
     }
