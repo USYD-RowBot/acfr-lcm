@@ -23,6 +23,7 @@ killall -q lcm-logger
 # copy the curent config file into the data directory
 cp /home/auv/git/acfr-lcm/config/nga.cfg $LOGDIR
 cp /home/auv/git/acfr-lcm/config/slam_nga.cfg $LOGDIR
+cp /tmp/magnetic_variation.cfg $LOGDIR
 
 /home/auv/git/acfr-lcm/src/acfr/python/cam_control.py path $IMAGE_LOGDIR
 /home/auv/git/acfr-lcm/src/acfr/python/cam_control.py start
