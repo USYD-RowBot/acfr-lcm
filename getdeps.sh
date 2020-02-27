@@ -1,5 +1,9 @@
 #!/bin/bash
 sudo apt-get install libglib2.0-dev \
+    liblcm1\
+    liblcm-dev\
+    liblcm-java\
+    python-liblcm\
 	python-dev \
     	python-gtk2 \
     	libgtk2.0-dev \
@@ -8,9 +12,7 @@ sudo apt-get install libglib2.0-dev \
     	libglu1-mesa-dev \
     	freeglut3-dev \
     	libjpeg-dev \
-	openjdk-8-jdk \
-	openjdk-8-jre \
-	libcv-dev \
+	default-jdk \
 	libxml++2.6-dev \
 	libglibmm-2.4-dev \
 	doxygen \
@@ -24,14 +26,16 @@ sudo apt-get install libglib2.0-dev \
 	build-essential \
 	subversion \
 	libatlas-base-dev \
-	libcvaux-dev \
-	libhighgui-dev \
-	libcv-dev \
-	libreadline6-dev \
+	libreadline-dev \
 	libncurses5-dev \
 	libproj-dev \
 	libudev-dev \
-    python-pyqt5
+    python-pyqt5 \
+    cmake \
+    build-essential\
+    libatlas-base-dev \
+    libxml2-dev \
+    libsigc++-2.0-dev \
 	#libturbojpeg1-dev
 
 sudo pip install pyqtgraph

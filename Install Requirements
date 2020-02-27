@@ -1,0 +1,36 @@
+git clone https://github.com/USYD-Rowbot/acfr-lcm
+
+
+Installing Dependecies:
+sudo apt-get install update
+
+cd acfr-lcm
+./getdeps.sh
+
+#Install Libbot
+cd third-party/libbot2
+sudo make BUILD_PREFIX=/usr/local
+
+#INstall acfrlcm
+sudo apt install cmake-curses-gui
+
+#Probably get christian at this point
+ccmake ..
+
+press c to actuall make the confugration
+t to get the advanded menu
+space to enable/disable things
+
+when you have made things then do:
+make
+#This will make the binaries and stuff if you get errors you need to disable more stuff that we dont need from the ccmake .. command.
+
+
+#USAGE
+
+Now you have LCM, and libbot installed.
+
+The way acfr runs their code is through a script that launches all the programs they actually want to launch. They have a tool that allows you to analyse the programs and check their statues and etc called bot-procman. The bot-proman-deputy manages these programs. the bot-procman-sherrif launches the code.
+
+start
+
