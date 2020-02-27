@@ -269,8 +269,8 @@ int main(int argc, char **argv)
         }
         if(opt == 'h')
         {
-            fprintf(stderr, "Usage: torqeedo -k <config key> -n <vehicle name>\n");
-            fprintf(stderr, " e.g.: torqeedo -k torqeedo.port-motor -n WAMV\n");
+            fprintf(stderr, "Usage: vesc-controller -k <config key> -n <vehicle name>\n");
+            fprintf(stderr, " e.g.: vesc-controller -k torqeedo.port-motor -n WAMV\n");
             return 0;
         }
         if(opt == 'n')

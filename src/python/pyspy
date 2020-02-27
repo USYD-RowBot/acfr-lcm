@@ -323,7 +323,7 @@ def field(string, width, clear_final=False):
         return printable.ljust(width)[:width]
 
 if __name__ == '__main__':
-    sys.path.insert(0, '/home/auv/git/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
+    sys.path.insert(0, '/home/johnsumskas/robotx/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 
     import acfrlcm
     import senlcm

@@ -14,3 +14,4 @@ scripts/*.data
 build/
 third-party/libbot2/bot2-*
 third-party/AVT*
+.vscode/

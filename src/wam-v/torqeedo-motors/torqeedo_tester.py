@@ -4,7 +4,7 @@ import sys
 import readchar
 
 
-sys.path.append('/usr/local/lib/python2.7/dist-packages/perls/lcmtypes')
+sys.path.append('/home/johnsumskas/robotx/acfr-lcm/build/lib/python2.7/dist-packages/perls/lcmtypes')
 from acfrlcm import asv_torqeedo_motor_command_t
 
 
@@ -13,7 +13,7 @@ def Main():
     global f_speed
     global r_speed
 
-    channel = 'PORT_MOTOR_CONTROL'
+    channel = 'WAMV.PORT_MOTOR_CONTROL'
     if len(sys.argv) > 1:
         channel = sys.argv[1] # e.g. 'STARBOARD_MOTOR_CONTROL'
 

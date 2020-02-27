@@ -39,3 +39,5 @@ sudo apt-get install libglib2.0-dev \
 	#libturbojpeg1-dev
 
 sudo pip install pyqtgraph
+
+default-jdk
