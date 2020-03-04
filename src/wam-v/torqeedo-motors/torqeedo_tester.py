@@ -39,14 +39,15 @@ def Main():
         choice = int((readchar.readkey()))
         if choice == 8:
             # increase speed ^
-            cmd_speed = (cmd_speed + 10) #%(650)
+            cmd_speed = (cmd_speed + 100) #%(650)
         elif choice == 2:
-            cmd_speed = (cmd_speed - 10)
+            cmd_speed = (cmd_speed - 100)
         elif choice == 5:
             # reverse <
             cmd_speed = 0
 
         msg.command_speed = cmd_speed
+        msg.enabled = True
         msg.utime = long(time.time())*1000000
         lc.publish(channel, msg.encode())
         

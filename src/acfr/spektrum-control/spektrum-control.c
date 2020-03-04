@@ -25,10 +25,12 @@ typedef struct {
     char rootkey[BUFSIZE];
 
     int channels;
+    short channel_values[16];
 
     char send_next;
     int dsm_level;
     unsigned char dsm_preamble;
+
 
     lcm_t *lcm;
     acfrlcm_auv_spektrum_control_command_t sc;
@@ -111,7 +113,8 @@ parse_rc(char *buf, state_t *state)
 
     unsigned short channel_value;
     char channel_id;
-    short channel_values[state->channels];
+    // short channel_values[state->channels];
+
 
     // packet size is always 16, first two bytes are status/flags
     // and data isn't necessarily ordered
@@ -119,7 +122,7 @@ parse_rc(char *buf, state_t *state)
     for(int i=1; i<8; i++)
     {
         // we have an offset of 2 as the first two bytes are status/flags
-        if(state->dsm_preamble == 0xA2)
+        if(state->dsm_preamble == 0x12)
         {
             channel_id = (buf[i*2] & 0xF8) >> 3;
             channel_value = ((buf[i*2] & 0x07) << 8) | (buf[(i*2)+1] & 0xFF);
@@ -134,20 +137,22 @@ parse_rc(char *buf, state_t *state)
         }
         
 
-        //printf("%i-%i ", (int)channel_id, (int)channel_value);
-        //printf("%02x-%02x ", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
-
+        
+        //printf("%02x-%02x \t", (unsigned char)buf[i*2], (unsigned char)buf[i*2+1]);
         if (channel_id < state->channels)
         {
-            channel_values[(int)channel_id] = channel_value;
+            //printf("%i-%i \t", (int)channel_id, (int)channel_value);
+            state->channel_values[(int)channel_id] = channel_value;
         }
     }
     //printf("\n");
 
+
+
     acfrlcm_auv_spektrum_control_command_t sc;
     sc.utime = timestamp_now();
     sc.channels = state->channels;
-    sc.values = channel_values;
+    sc.values = state->channel_values;
 
     if (state->send_next)
     {
@@ -230,7 +235,7 @@ void realign(acfr_sensor_t *sensor, state_t *state)
     char buf[16];
     uint8_t aligned = 0;
 
-    printf("Aligning to message.\n");
+    //printf("Aligning to message.\n");
     while(!aligned && !main_exit)
     {
         if(broken_pipe)
@@ -263,7 +268,12 @@ void realign(acfr_sensor_t *sensor, state_t *state)
             // deliberately don't align with expected packet size of 16 bytes
             int bytes = 16;
             len = acfr_sensor_read(sensor, buf, bytes);
-            printf("%i\n", len);
+            //printf("%i\n", len);
+            for(int i=0;i<16; i++)
+                printf("0x%02X ", buf[i] & 0xFF);
+            printf("\n");
+            
+            
             if(len == bytes && (unsigned char)buf[1] == state->dsm_preamble)
             {
                 aligned = 1;
@@ -271,8 +281,9 @@ void realign(acfr_sensor_t *sensor, state_t *state)
             else
             {
                 len = acfr_sensor_read(sensor, buf, 1);
-                fprintf(stderr, "Shifting alignment, 0x%02X, 0x%02X\n", state->dsm_preamble& 0xFF, buf[1] & 0xFF);
+                //fprintf(stderr, "Shifting alignment, 0x%02X, 0x%02X\n", state->dsm_preamble& 0xFF, buf[1] & 0xFF);
             }
+            
         }
         //else
         //{
@@ -280,7 +291,7 @@ void realign(acfr_sensor_t *sensor, state_t *state)
         //}
     }
 
-    printf("Aligned packet.\n");
+    //printf("Aligned packet.\n");
 }
 
 int
@@ -318,7 +329,7 @@ main(int argc, char **argv)
     if(!strcmp(dsm_str, "DX5"))
         state.dsm_preamble = 0x01;
     else
-        state.dsm_preamble = 0xA2;
+        state.dsm_preamble = 0x12;
 
     printf("Setting DSM premable to 0x%02X\n", state.dsm_preamble & 0xFF);
 

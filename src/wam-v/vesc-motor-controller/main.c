@@ -69,7 +69,7 @@
 #define MSG_3082 3082
 #define MSG3082_LEN 10              // speed command message length - note: most are 10, could be up to 13 with added escape chars so all packed to 13
 #define MAX_SUBS 3                  // maximum number of control character substitutions that could occur per message
-#define MAX_SPEED 1000              // maximum prop control speed value +&-
+#define MAX_SPEED 5000              // maximum prop control speed value +&-
 #define MSG3082_SPEED_POS 5         // postion of speed value in outgoing serial msg
 // Other contants
 #define CMD_TIMEOUT 2000000
@@ -204,12 +204,14 @@ void signal_handler(int sig_num)
 {
     // do a safe exit
     if(sig_num == SIGINT)
+        bldc_interface_set_rpm(0);
         program_exit = 1;
 }
 
 int send_motor_command()
 {
-    if ((state.enabled) && (state.cmd_speed != 0))
+    //if ((state.enabled) && (state.cmd_speed != 0))
+    if ((state.enabled))
     {
         printf("F: %d\n", state.cmd_speed);
         if (state.cmd_speed > MAX_SPEED)
@@ -223,6 +225,9 @@ int send_motor_command()
             fprintf(stderr, "Torqeedo: Speed control value (reverse) out of range.");
         }
         bldc_interface_set_rpm(state.cmd_speed);
+    }
+    else
+    {
     }
 }
 
@@ -251,7 +256,7 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
     }
     else
     {
-        printf("Acquiring values: \n");
+        //printf("Acquiring values: \n");
         bldc_interface_get_values();
     }
     state.counter++;
@@ -260,20 +265,20 @@ void heartbeat_handler(const lcm_recv_buf_t *rbuf, const char *ch, const perllcm
 
 void bldc_val_received(mc_values *val)
 {
-    printf("\r\n");
-    printf("Input voltage: %.2f V\r\n", val->v_in);
-    printf("Temp:          %.2f degC\r\n", val->temp_mos);
-    printf("Current motor: %.2f A\r\n", val->current_motor);
-    printf("Current in:    %.2f A\r\n", val->current_in);
-    printf("RPM:           %.1f RPM\r\n", val->rpm);
-    printf("Duty cycle:    %.1f %%\r\n", val->duty_now * 100.0);
-    printf("Ah Drawn:      %.4f Ah\r\n", val->amp_hours);
-    printf("Ah Regen:      %.4f Ah\r\n", val->amp_hours_charged);
-    printf("Wh Drawn:      %.4f Wh\r\n", val->watt_hours);
-    printf("Wh Regen:      %.4f Wh\r\n", val->watt_hours_charged);
-    printf("Tacho:         %i counts\r\n", val->tachometer);
-    printf("Tacho ABS:     %i counts\r\n", val->tachometer_abs);
-    printf("Fault Code:    %s\r\n", bldc_interface_fault_to_string(val->fault_code));
+    // printf("\r\n");
+    // printf("Input voltage: %.2f V\r\n", val->v_in);
+    // printf("Temp:          %.2f degC\r\n", val->temp_mos);
+    // printf("Current motor: %.2f A\r\n", val->current_motor);
+    // printf("Current in:    %.2f A\r\n", val->current_in);
+    // printf("RPM:           %.1f RPM\r\n", val->rpm);
+    // printf("Duty cycle:    %.1f %%\r\n", val->duty_now * 100.0);
+    // printf("Ah Drawn:      %.4f Ah\r\n", val->amp_hours);
+    // printf("Ah Regen:      %.4f Ah\r\n", val->amp_hours_charged);
+    // printf("Wh Drawn:      %.4f Wh\r\n", val->watt_hours);
+    // printf("Wh Regen:      %.4f Wh\r\n", val->watt_hours_charged);
+    // printf("Tacho:         %i counts\r\n", val->tachometer);
+    // printf("Tacho ABS:     %i counts\r\n", val->tachometer_abs);
+    // printf("Fault Code:    %s\r\n", bldc_interface_fault_to_string(val->fault_code));
 
     // fill LCM motor status message from serial buffer
     state.mot_status.prop_speed = val->rpm;
@@ -399,7 +404,7 @@ int main(int argc, char **argv)
     if (fd < 0)
     {
         printf("Error opening %s: %s\n", portname, strerror(errno));
-        // return -1;
+        return -1;
         while(!program_exit)
         {
             lcm_handle(state.lcm);
